@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef ATLAS_ENGINE_DEV_CAMERA_HPP
+#define ATLAS_ENGINE_DEV_CAMERA_HPP
 
 namespace atlas::vizkit {
 ATLAS_HOST ATLAS_FORCE_INLINE void
@@ -56,3 +56,5 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
     }
 }
 }
+
+#endif

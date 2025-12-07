@@ -1,0 +1,7 @@
+if (ATLAS_USE_CUDA)
+    add_executable(triangle_mesh main.cu)
+    target_link_libraries(triangle_mesh PRIVATE atlas-core)
+else ()
+    add_executable(triangle_mesh main.cpp)
+    target_link_libraries(triangle_mesh PRIVATE atlas-core)
+endif ()

@@ -1,0 +1,7 @@
+if (ATLAS_USE_CUDA)
+    add_executable(solver main.cu)
+    target_link_libraries(solver PRIVATE atlas-core)
+else ()
+    add_executable(solver main.cpp)
+    target_link_libraries(sovler PRIVATE atlas-core)
+endif ()

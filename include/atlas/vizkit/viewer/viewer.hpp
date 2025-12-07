@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef ATLAS_ENGINE_DEV_VIEWER_HPP
+#define ATLAS_ENGINE_DEV_VIEWER_HPP
 
 #include <stdexcept>
 
@@ -123,3 +123,5 @@ Viewer<T>::cleanup_gl() {
 }
 
 }
+
+#endif

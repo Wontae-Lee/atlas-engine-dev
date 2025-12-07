@@ -1,5 +1,68 @@
+#ifndef INCLUDE_ATLAS_ATLAS_H
+#define INCLUDE_ATLAS_ATLAS_H
 
-#pragma once
+#include <atlas/advector/advector.h>
+#include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
+#include <atlas/collider/collider.h>
+#include <atlas/collider/collider_surface_interaction.h>
+#include <atlas/core/macros.h>
+#include <atlas/detail/remove.h>
+#include <atlas/detail/tuple.h>
+#include <atlas/detail/zip_iterator.h>
+#include <atlas/emitter/emitter.h>
+#include <atlas/field/field.h>
+#include <atlas/generator/generator.h>
+#include <atlas/geometry/box.h>
+#include <atlas/geometry/cylinder.h>
+#include <atlas/geometry/plane.h>
+#include <atlas/geometry/sphere.h>
+#include <atlas/geometry/surface.h>
+#include <atlas/geometry/trace_operator.h>
+#include <atlas/geometry/triangle.h>
+#include <atlas/geometry/triangle_mesh.h>
+#include <atlas/logging/logging.h>
+#include <atlas/math/constants.h>
+#include <atlas/math/detail/config.h>
+#include <atlas/math/detail/ops.h>
+#include <atlas/math/matrix/elementwise.h>
+#include <atlas/math/matrix/expression.h>
+#include <atlas/math/matrix/matrix.h>
+#include <atlas/math/matrix/matrix2x2.h>
+#include <atlas/math/matrix/matrix3x3.h>
+#include <atlas/math/matrix/matrix4x4.h>
+#include <atlas/math/matrix/operators.h>
+#include <atlas/math/matrix/reductions.h>
+#include <atlas/math/matrix/statistics.h>
+#include <atlas/math/quaternion.h>
+#include <atlas/math/vector/elementwise.h>
+#include <atlas/math/vector/expression.h>
+#include <atlas/math/vector/operators.h>
+#include <atlas/math/vector/reductions.h>
+#include <atlas/math/vector/statistics.h>
+#include <atlas/math/vector/vector.h>
+#include <atlas/math/vector/vector2.h>
+#include <atlas/math/vector/vector3.h>
+#include <atlas/math/vector/vector4.h>
+#include <atlas/memory/memory.h>
+#include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/parallel/parallel.h>
+#include <atlas/parallel/parallel_for.h>
+#include <atlas/random/random.h>
+#include <atlas/random/sampling.h>
+#include <atlas/remover/remover.h>
+#include <atlas/searcher/searcher.h>
+#include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/solver/dsmc/dsmc.h>
+#include <atlas/solver/solver.h>
+#include <atlas/spatial/axis_aligned_bounding_box.h>
+#include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
+#include <atlas/spatial/bounding_volume_hierarchy/lbvh.h>
+#include <atlas/spatial/bounding_volume_hierarchy/sah_bvh.h>
+#include <atlas/spatial/ray.h>
+#include <atlas/system/particle_data.h>
+#include <atlas/system/particle_system.h>
+#include <atlas/time/timer.h>
 
 #ifdef ATLAS_ENABLE_VIZKIT
 #include <atlas/vizkit/camera/camera.h>
@@ -12,4 +75,6 @@
 #include <atlas/vizkit/shader/glsl.h>
 #include <atlas/vizkit/shader/shader_program.h>
 #include <atlas/vizkit/viewer/viewer.h>
+#endif
+
 #endif

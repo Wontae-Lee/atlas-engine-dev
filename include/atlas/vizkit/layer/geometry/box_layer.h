@@ -1,19 +1,23 @@
-
-#pragma once
+#ifndef ATLAS_ENGINE_DEV_BOX_LAYER_H
+#define ATLAS_ENGINE_DEV_BOX_LAYER_H
 
 #include <atlas/core/macros.h>
-#include <atlas/math/math.h>
 #include <atlas/vizkit/layer/geometry/geometry_layer.h>
+#include <atlas/math/math.h>
 
 namespace atlas::vizkit {
+
 
 template <typename T>
 class BoxLayer final : public GeometryLayer<T> {
 public:
+
+
     ATLAS_HOST ATLAS_FORCE_INLINE
     BoxLayer(const Vector3<T>& min_corner, const Vector3<T>& max_corner);
 
-    ATLAS_HOST ATLAS_FORCE_INLINE ~BoxLayer() override = default;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    ~BoxLayer() override = default;
 
 protected:
     void
@@ -27,3 +31,5 @@ private:
 }
 
 #include <atlas/vizkit/layer/geometry/box_layer.hpp>
+
+#endif

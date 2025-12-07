@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef ATLAS_ENGINE_DEV_VIEWER_H
+#define ATLAS_ENGINE_DEV_VIEWER_H
 #ifdef ATLAS_ENABLE_VIZKIT
 #include <atlas/vizkit/camera/camera.h>
 #include <atlas/vizkit/layer/layer.h>
@@ -52,4 +52,5 @@ private:
 
 #include <atlas/vizkit/viewer/viewer.hpp>
 
+#endif
 #endif

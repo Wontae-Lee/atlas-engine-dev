@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef INCLUDE_VIZKIT_SHADER_SHADER_PROGRAM_HPP
+#define INCLUDE_VIZKIT_SHADER_SHADER_PROGRAM_HPP
 
 namespace atlas::vizkit {
 ATLAS_HOST ATLAS_FORCE_INLINE
@@ -50,3 +50,4 @@ ShaderProgram::compile(GLenum type, const char* src) {
 }
 
 }
+#endif

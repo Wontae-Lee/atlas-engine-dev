@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef ATLAS_ENGINE_DEV_BOX_LAYER_HPP
+#define ATLAS_ENGINE_DEV_BOX_LAYER_HPP
 
 namespace atlas::vizkit {
 
@@ -29,6 +29,7 @@ BoxLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 
     positions.reserve(24);
 
+
     positions.push_back(v0);
     positions.push_back(v1);
     positions.push_back(v1);
@@ -38,6 +39,7 @@ BoxLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
     positions.push_back(v2);
     positions.push_back(v0);
 
+
     positions.push_back(v4);
     positions.push_back(v5);
     positions.push_back(v5);
@@ -46,6 +48,7 @@ BoxLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
     positions.push_back(v6);
     positions.push_back(v6);
     positions.push_back(v4);
+
 
     positions.push_back(v0);
     positions.push_back(v4);
@@ -58,3 +61,5 @@ BoxLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 }
 
 }
+
+#endif

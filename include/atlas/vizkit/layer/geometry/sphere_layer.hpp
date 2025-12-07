@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef ATLAS_ENGINE_DEV_SPHERE_LAYER_HPP
+#define ATLAS_ENGINE_DEV_SPHERE_LAYER_HPP
 
 #include <algorithm>
 #include <cmath>
@@ -30,6 +30,7 @@ SphereLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
         return;
     }
 
+
     const T pi     = static_cast<T>(3.14159265358979323846);
     const T two_pi = static_cast<T>(2.0) * pi;
 
@@ -53,6 +54,7 @@ SphereLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 
     positions.reserve(static_cast<std::size_t>(_stacks) * static_cast<std::size_t>(_slices) * 6);
 
+
     for (int i = 0; i < _stacks; ++i) {
         const int i_next = i + 1;
         if (i_next > _stacks) continue;
@@ -65,9 +67,14 @@ SphereLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
             Vector3<T> v10 = sample(i_next, j);
             Vector3<T> v11 = sample(i_next, j_next);
 
+
+
+
+
             positions.push_back(v00);
             positions.push_back(v10);
             positions.push_back(v11);
+
 
             positions.push_back(v00);
             positions.push_back(v11);
@@ -77,3 +84,5 @@ SphereLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 }
 
 }
+
+#endif

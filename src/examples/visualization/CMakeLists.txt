@@ -1,0 +1,7 @@
+if (ATLAS_USE_CUDA)
+    add_executable(visualization main.cu)
+    target_link_libraries(visualization PRIVATE atlas-core )
+else ()
+    add_executable(visaulization main.cpp)
+    target_link_libraries(visaulization PRIVATE atlas-core)
+endif ()

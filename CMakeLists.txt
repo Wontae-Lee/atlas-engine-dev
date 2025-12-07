@@ -1,257 +1,151 @@
-# ================================================================
-# CMake configuration for the atlas-engine-dev project
-#   - Defines a header-only visualization toolkit library
-#     exposed as the target: atlas::vizkit
-#   - Core dependency: Intel TBB
-#   - Optional dependencies: OpenGL / GLFW / GLEW / GLUT, CUDA
-# ================================================================
+# =====================================================
+# Top-level CMake configuration for atlas-engine-dev
+# =====================================================
 cmake_minimum_required(VERSION 3.20)
 
-# ----------------------------------------------------------------
-# Project declaration
-#
-# LANGUAGES CXX:
-#   - This project only uses C++ at the CMake level.
-#   - CUDA is handled as an optional runtime dependency (via CUDAToolkit),
-#     but this particular target is a header-only C++ library.
-# ----------------------------------------------------------------
+# NOTE:
+# - LANGUAGES only declares which languages this project may use.
+# - CUDA is enabled later conditionally via enable_language(CUDA).
 project(atlas-engine-dev LANGUAGES CXX)
 
-# ----------------------------------------------------------------
+# =====================================================
 # C++ standard configuration
-#
-# CMAKE_CXX_STANDARD 20:
-#   - Request C++20 as the language standard for all C++ targets
-#     unless they override it explicitly.
-#
-# CMAKE_CXX_STANDARD_REQUIRED ON:
-#   - Enforce that the compiler must support C++20; do not silently
-#     fall back to an older standard.
-#
-# CMAKE_CXX_EXTENSIONS OFF:
-#   - Disable compiler-specific language extensions (e.g. GNU++20),
-#     ensuring more portable and standard-compliant code.
-# ----------------------------------------------------------------
+# =====================================================
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# ----------------------------------------------------------------
-# Configuration options
-#
-# ATLAS_USE_VIZKIT:
-#   - Controls whether the OpenGL / windowing stack is enabled.
-#   - When ON, additional dependencies (GLFW, GLEW, GLUT, OpenGL)
-#     are required and ATLAS_ENABLE_VIZKIT is defined for consumers.
-#
-# ATLAS_USE_CUDA:
-#   - Controls whether CUDA runtime support is linked.
-#   - This target remains header-only; CUDA is treated as a runtime
-#     library dependency (e.g. CUDA::cudart) rather than enabling
-#     CUDA language compilation.
-# ----------------------------------------------------------------
-option(ATLAS_USE_VIZKIT "Enable Vizkit (OpenGL/windowing) stack" ON)
-option(ATLAS_USE_CUDA "Enable CUDA runtime support" OFF)
+# =====================================================
+# User options (cache variables)
+# =====================================================
+# Visualization / vizkit-related code
+option(ATLAS_USE_VIZKIT "Build vizkit-based visualization modules" ON)
 
-# ----------------------------------------------------------------
-# Public include directories
-#
-# ATLAS_VIZEKIT_INCLUDE_DIR:
-#   - Root include directory for all public headers of the vizkit
-#     component of this project.
-#
-# ATLAS_VIZEKIT_PUBLIC_DIR:
-#   - Namespace root inside the include tree (e.g. include/atlas).
-#   - Used mainly for IDE convenience and header discovery; the
-#     actual include path exported to consumers is ATLAS_VIZEKIT_INCLUDE_DIR.
-# ----------------------------------------------------------------
-set(ATLAS_VIZEKIT_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
-set(ATLAS_VIZEKIT_PUBLIC_DIR "${ATLAS_VIZEKIT_INCLUDE_DIR}/atlas")
+# CUDA acceleration (enabled if a CUDA toolkit is available)
+option(ATLAS_USE_CUDA "Enable CUDA acceleration" ON)
 
-# ----------------------------------------------------------------
-# Header discovery (for IDE integration / tooling)
-#
-# file(GLOB_RECURSE ...):
-#   - Collects all .h files under the public include tree.
-#   - This does not affect the build of the header-only library
-#     itself (INTERFACE targets have no compiled sources), but
-#     helps IDEs display the header list in their project trees.
-#
-# NOTE:
-#   - CONFIGURE_DEPENDS tells CMake to re-run configuration when
-#     the set of matching header files changes, which is useful
-#     while actively developing the public API.
-# ----------------------------------------------------------------
-file(GLOB_RECURSE atlas_vizkit_headers
-        CONFIGURE_DEPENDS
-        "${ATLAS_VIZEKIT_PUBLIC_DIR}/*.h"
-)
+# Testing and benchmarking
+option(ATLAS_ENABLE_TESTS "Enable GoogleTest-based tests" OFF)
+option(ATLAS_ENABLE_BENCH "Enable Google Benchmark-based benchmarks" OFF)
 
-# ----------------------------------------------------------------
-# Header-only library target
-#
-# add_library(atlas-vizkit INTERFACE):
-#   - Declares an INTERFACE library, meaning:
-#       * It has no compiled object files of its own.
-#       * It is simply a collection of usage requirements
-#         (include directories, compile definitions, linked
-#         libraries) that are propagated to consumers.
-#
-# add_library(atlas::vizkit ALIAS atlas-vizkit):
-#   - Provides a namespaced alias so other targets can link
-#     against the library using the canonical form:
-#       target_link_libraries(<consumer> PRIVATE atlas::vizkit)
-# ----------------------------------------------------------------
-add_library(atlas-vizkit INTERFACE)
-add_library(atlas::vizkit ALIAS atlas-vizkit)
+# Logging
+option(ATLAS_LOGGING "Enable logging functionality" ON)
 
-# ----------------------------------------------------------------
-# Include directories for the header-only target
-#
-# target_include_directories(... INTERFACE ...):
-#   - INTERFACE scope means:
-#       * These include paths are NOT used to build atlas-vizkit
-#         itself (it has no sources).
-#       * They ARE propagated to any target that links against
-#         atlas::vizkit.
-#
-# Consumers will be able to include headers such as:
-#   #include <atlas/…>
-# as long as they link to atlas::vizkit.
-# ----------------------------------------------------------------
-target_include_directories(atlas-vizkit
-        INTERFACE
-        "${ATLAS_VIZEKIT_INCLUDE_DIR}"
-)
-
-# ================================================================
-# Core CPU-side dependencies
-#   - Intel oneTBB (Threading Building Blocks)
-# ================================================================
-# ----------------------------------------------------------------
-# find_package(TBB REQUIRED):
-#   - Locates a system installation of oneTBB.
-#   - Fails configuration if TBB is not found.
-#   - Exposes the imported target TBB::tbb on success.
-# ----------------------------------------------------------------
-find_package(TBB REQUIRED)
-
-# ----------------------------------------------------------------
-# Link TBB as an INTERFACE dependency
-#
-# target_link_libraries(atlas-vizkit INTERFACE TBB::tbb):
-#   - Any consumer of atlas::vizkit automatically links against TBB.
-#   - This also ensures that any TBB-related compile options are
-#     propagated to dependent targets.
-# ----------------------------------------------------------------
-target_link_libraries(atlas-vizkit
-        INTERFACE
-        TBB::tbb
-)
-
-# ================================================================
-# Optional Vizkit / OpenGL stack
-#   - Controlled by ATLAS_USE_VIZKIT
-#   - When enabled:
-#       * ATLAS_ENABLE_VIZKIT is defined for consumers.
-#       * OpenGL and windowing libraries are added as dependencies.
-# ================================================================
-if (ATLAS_USE_VIZKIT)
-    # ------------------------------------------------------------
-    # Public compile definition for consumers
-    #
-    # ATLAS_ENABLE_VIZKIT:
-    #   - Can be used in user code to conditionally compile
-    #     visualization-related features, e.g.:
-    #
-    #       #ifdef ATLAS_ENABLE_VIZKIT
-    #           // Vizkit / OpenGL code
-    #       #endif
-    # ------------------------------------------------------------
-    target_compile_definitions(atlas-vizkit
-            INTERFACE
-            ATLAS_ENABLE_VIZKIT
-    )
-
-    # ------------------------------------------------------------
-    # OpenGL / windowing dependencies
-    #
-    # glfw3:
-    #   - Cross-platform window and input library.
-    #
-    # OpenGL / GLU:
-    #   - Core OpenGL rendering API and the OpenGL Utility Library.
-    #
-    # GLUT:
-    #   - Utility toolkit for managing windows and rendering contexts.
-    #
-    # GLEW:
-    #   - OpenGL Extension Wrangler, used to load OpenGL extensions
-    #     at runtime.
-    #
-    # NOTE:
-    #   - These find_package calls are REQUIRED when ATLAS_USE_VIZKIT
-    #     is ON; configuration will fail if any of them is missing.
-    # ------------------------------------------------------------
-    find_package(glfw3 REQUIRED)
-    find_package(OpenGL REQUIRED)
-    find_package(GLUT REQUIRED)
-    find_package(GLEW REQUIRED)
-
-    # ------------------------------------------------------------
-    # Propagate OpenGL / windowing libraries to consumers
-    #
-    # All link libraries are added with INTERFACE scope so that:
-    #   - atlas-vizkit remains a header-only target.
-    #   - Any consumer that links atlas::vizkit also links these
-    #     graphics libraries and inherits the necessary compile
-    #     and link options.
-    # ------------------------------------------------------------
-    target_link_libraries(atlas-vizkit
-            INTERFACE
-            glfw
-            GLEW::GLEW
-            GL
-            GLU
-            glut
-    )
+# =====================================================
+# Global compile-time definitions
+# =====================================================
+if (ATLAS_LOGGING)
+    # Enable logging in the codebase (checked via ATLAS_ENABLE_LOGGING)
+    add_compile_definitions(ATLAS_ENABLE_LOGGING)
 endif ()
 
-# ================================================================
-# Optional CUDA runtime support
-#   - Controlled by ATLAS_USE_CUDA
-#   - When enabled and CUDA::cudart is available:
-#       * The CUDA runtime library is added as an INTERFACE
-#         dependency of atlas::vizkit.
-#   - The target itself is still header-only; no CUDA sources
-#     are compiled here.
-# ================================================================
+# =====================================================
+# Resource directory
+#   - Exposed via RESOURCES_DIR macro to the code
+# =====================================================
+set(RESOURCES_DIR
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+        CACHE PATH "Path to runtime resources"
+)
+add_compile_definitions(RESOURCES_DIR="${RESOURCES_DIR}")
+
+# =====================================================
+# Common include directories
+#   NOTE:
+#   - These are global; you may prefer target_include_directories()
+#     inside each library/executable for better isolation.
+# =====================================================
+include_directories(
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobj"
+)
+
+# =====================================================
+# Common compile options (warnings, sanitizers, etc.)
+#   - Implemented in cmake/CompileOptions.cmake
+# =====================================================
+include(cmake/CompileOptions.cmake)
+
+# =====================================================
+# CUDA configuration (optional)
+#   - Only enables CUDA language; actual usage is handled in subdirs.
+#   - Do NOT put global THRUST / ATLAS_TASKING_* macros here anymore;
+#     they should be applied per-target in src/atlas or other CUDA libs.
+# =====================================================
 if (ATLAS_USE_CUDA)
-    # ------------------------------------------------------------
-    # Attempt to find the CUDA toolkit quietly
-    #
-    # QUIET:
-    #   - Avoids noisy output when CUDA is not installed.
-    #   - The presence of the imported target CUDA::cudart is
-    #     checked explicitly below to decide whether to link it.
-    # ------------------------------------------------------------
-    find_package(CUDAToolkit QUIET)
+    message(STATUS "CUDA support is enabled.")
 
-    # ------------------------------------------------------------
-    # Conditionally link the CUDA runtime (if available)
-    #
-    # CUDA::cudart:
-    #   - Imported target representing the CUDA runtime library.
-    #
-    # INTERFACE scope:
-    #   - Any consumer of atlas::vizkit will automatically link
-    #     against the CUDA runtime when ATLAS_USE_CUDA is ON and
-    #     CUDA::cudart is present.
-    # ------------------------------------------------------------
-    if (TARGET CUDA::cudart)
-        target_link_libraries(atlas-vizkit
-                INTERFACE
-                CUDA::cudart
-        )
+    # Enable CUDA language in this project (after project())
+    enable_language(CUDA)
+
+    # CUDA standard and architectures; adjust as needed.
+    set(CMAKE_CUDA_STANDARD 20)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    # Example: compute capability 8.6 (RTX 30xx)
+    set(CMAKE_CUDA_ARCHITECTURES 86)
+
+    # If a specific CUDA toolkit install is required, configure it here
+    if (EXISTS "/usr/local/cuda-12.9/include")
+        include_directories("/usr/local/cuda-12.9/include")
     endif ()
+else ()
+    message(STATUS "CUDA support is disabled.")
 endif ()
+
+# =====================================================
+# Third-party (in-tree) libraries
+#   - tinyobjloader (for mesh loading)
+# =====================================================
+add_subdirectory(external/tinyobj)
+
+# =====================================================
+# atlas core / engine (src/atlas)
+#   - Contains main math, system, CUDA kernels, etc.
+#   - Controlled by ATLAS_USE_ENGINE option.
+# =====================================================
+add_subdirectory(src/atlas)
+
+# =====================================================
+# Tests (optional)
+#   - All test targets / infrastructure live under src/tests
+# =====================================================
+if (ATLAS_ENABLE_TESTS)
+    add_subdirectory(src/tests)
+endif ()
+
+# =====================================================
+# Examples (optional)
+#   - Multiple example modules live under src/examples
+#   - Individual example CMakeLists can check ATLAS_USE_VIZKIT / ATLAS_USE_CUDA
+#     and add their own executables conditionally.
+# =====================================================
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/examples")
+    message(STATUS "[ATLAS] Adding example modules.")
+    add_subdirectory(src/examples)
+endif ()
+
+# =====================================================
+# Benchmarks (optional)
+#   - Google Benchmark-based micro-benchmarks under src/benchmarks
+# =====================================================
+if (ATLAS_ENABLE_BENCH)
+    add_subdirectory(src/benchmarks)
+endif ()
+
+# =====================================================
+# Build configuration summary
+# =====================================================
+message(STATUS "")
+message(STATUS "========== ATLAS CONFIG SUMMARY ==========")
+message(STATUS "C++ Standard          : ${CMAKE_CXX_STANDARD}")
+message(STATUS "ATLAS_USE_ENGINE      : ${ATLAS_USE_ENGINE}")
+message(STATUS "ATLAS_USE_VIZKIT      : ${ATLAS_USE_VIZKIT}")
+message(STATUS "ATLAS_USE_CUDA        : ${ATLAS_USE_CUDA}")
+message(STATUS "ATLAS_ENABLE_TESTS    : ${ATLAS_ENABLE_TESTS}")
+message(STATUS "ATLAS_ENABLE_BENCH    : ${ATLAS_ENABLE_BENCH}")
+if (ATLAS_USE_CUDA)
+    message(STATUS "CUDA Archs            : ${CMAKE_CUDA_ARCHITECTURES}")
+endif ()
+message(STATUS "Resources Dir         : ${RESOURCES_DIR}")
+message(STATUS "==========================================")
+message(STATUS "")

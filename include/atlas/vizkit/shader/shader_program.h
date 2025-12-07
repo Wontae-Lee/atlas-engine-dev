@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef INCLUDE_VIZKIT_SHADER_SHADER_PROGRAM_H
+#define INCLUDE_VIZKIT_SHADER_SHADER_PROGRAM_H
 #ifdef ATLAS_ENABLE_VIZKIT
 #include <atlas/core/macros.h>
 
@@ -29,4 +29,5 @@ private:
 
 #include <atlas/vizkit/shader/shader_program.hpp>
 
+#endif
 #endif

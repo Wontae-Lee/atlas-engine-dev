@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef ATLAS_ENGINE_DEV_PARTICLE_LAYER_H
+#define ATLAS_ENGINE_DEV_PARTICLE_LAYER_H
 #ifdef ATLAS_ENABLE_VIZKIT
 #include <atlas/math/math.h>
 #include <atlas/system/particle_system.h>
@@ -56,4 +56,5 @@ private:
 
 #include <atlas/vizkit/layer/particle/particle_layer.hpp>
 
+#endif
 #endif

@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef ATLAS_ENGINE_DEV_PARTICLE_LAYER_HPP
+#define ATLAS_ENGINE_DEV_PARTICLE_LAYER_HPP
 #include <atlas/vizkit/shader/glsl.h>
 #include <stdexcept>
 
@@ -135,3 +135,5 @@ ParticleLayer<T>::copy_positions_to_vbo(const Vector3F* d_src, int count) {
 }
 
 }
+
+#endif

@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef INCLUDE_VIZKIT_CAMERA_CAMERA_H
+#define INCLUDE_VIZKIT_CAMERA_CAMERA_H
 #ifdef ATLAS_ENABLE_VIZKIT
 #include <atlas/core/macros.h>
 
@@ -19,4 +19,5 @@ struct Camera {
 
 #include <atlas/vizkit/camera/camera.hpp>
 
+#endif
 #endif

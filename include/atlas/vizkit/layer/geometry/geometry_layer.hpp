@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef ATLAS_ENGINE_DEV_GEOMETRY_LAYER_HPP
+#define ATLAS_ENGINE_DEV_GEOMETRY_LAYER_HPP
 #include <atlas/vizkit/shader/glsl.h>
 #include <stdexcept>
 #include <type_traits>
@@ -89,3 +89,5 @@ GeometryLayer<T>::shutdown() {
 }
 
 }
+
+#endif

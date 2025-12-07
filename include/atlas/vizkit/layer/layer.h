@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef ATLAS_ENGINE_DEV_LAYER_H
+#define ATLAS_ENGINE_DEV_LAYER_H
 #ifdef ATLAS_ENABLE_VIZKIT
 #include <atlas/core/macros.h>
 #include <atlas/vizkit/camera/camera.h>
@@ -24,4 +24,5 @@ public:
 
 }
 
+#endif
 #endif

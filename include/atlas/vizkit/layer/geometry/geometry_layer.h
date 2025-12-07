@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef ATLAS_ENGINE_DEV_GEOMETRY_LAYER_H
+#define ATLAS_ENGINE_DEV_GEOMETRY_LAYER_H
 #ifdef ATLAS_ENABLE_VIZKIT
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
@@ -12,12 +12,14 @@
 
 namespace atlas::vizkit {
 
+
 template <typename T>
 class GeometryLayer : public Layer<T> {
 public:
     ATLAS_HOST ATLAS_FORCE_INLINE explicit GeometryLayer(unsigned int primitive_mode);
 
     ATLAS_HOST ATLAS_FORCE_INLINE ~GeometryLayer() override = default;
+
 
     ATLAS_HOST void
     init(GLFWwindow* window, Camera& camera) override;
@@ -29,6 +31,7 @@ public:
     shutdown() override;
 
 protected:
+
     virtual void
     build_geometry(std::vector<Vector3<T>>& positions)
         = 0;
@@ -46,4 +49,5 @@ protected:
 
 #include <atlas/vizkit/layer/geometry/geometry_layer.hpp>
 
+#endif
 #endif

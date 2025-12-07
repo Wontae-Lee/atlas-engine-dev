@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef INCLUDE_VIZKIT_SHADER_GLSL_H
+#define INCLUDE_VIZKIT_SHADER_GLSL_H
 
 #ifdef ATLAS_ENABLE_VIZKIT
 namespace atlas::vizkit {
@@ -32,4 +32,5 @@ void main(){ FragColor = uColor; }
 )";
 }
 
+#endif
 #endif

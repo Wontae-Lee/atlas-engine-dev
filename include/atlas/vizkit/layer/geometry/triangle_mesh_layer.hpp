@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef ATLAS_ENGINE_DEV_TRIANGLE_MESH_LAYER_HPP
+#define ATLAS_ENGINE_DEV_TRIANGLE_MESH_LAYER_HPP
 
 #include <stdexcept>
 
@@ -23,6 +23,7 @@ TriangleMeshLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
         return;
     }
 
+
     const std::size_t tri_vertex_count = (_vertices.size() / 3) * 3;
 
     positions.reserve(tri_vertex_count);
@@ -32,3 +33,5 @@ TriangleMeshLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 }
 
 }
+
+#endif
