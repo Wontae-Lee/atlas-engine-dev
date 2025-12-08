@@ -12,7 +12,7 @@ ColliderSurfaceInteraction<T>::set_diffuse_sampling(DiffuseSampling mode) {
 template <typename T>
 void
 ColliderSurfaceInteraction<T>::set_restitution(T restitution_coeff_) {
-    _restituion_coeff = restitution_coeff_;
+    _restitution_coeff = restitution_coeff_;
 }
 
 template <typename T>
@@ -30,7 +30,7 @@ ColliderSurfaceInteraction<T>::diffuse_sampling() const {
 template <typename T>
 T
 ColliderSurfaceInteraction<T>::restitution() const {
-    return _restituion_coeff;
+    return _restitution_coeff;
 }
 
 template <typename T>
@@ -44,7 +44,7 @@ Vector3<T>
 ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
                                           const Vector3<T>& normal) const {
     if (_tmac <= T(0)) {
-        return math::reflected(incident, normal) * _restituion_coeff;
+        return math::reflected(incident, normal) * _restitution_coeff;
     }
     const Vector3<T> spec_dir = math::reflected(incident, normal);
     const T u1                = random::rand01(incident);
@@ -62,6 +62,6 @@ ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
     } else {
         out_dir = spec_dir;
     }
-    return out_dir * _restituion_coeff;
+    return out_dir * _restitution_coeff;
 }
 }

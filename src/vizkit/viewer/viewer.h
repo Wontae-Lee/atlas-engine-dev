@@ -3,7 +3,7 @@
 #ifdef ATLAS_ENABLE_VIZKIT
 #include <vizkit/camera/camera.h>
 #include <vizkit/layer/layer.h>
-
+#include <vizkit/macros/macros.h>
 #include <memory>
 #include <vector>
 

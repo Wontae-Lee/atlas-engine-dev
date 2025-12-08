@@ -6,14 +6,6 @@
 #else
 #define ATLAS_ASSERT(x) ((void)0)
 #endif
-do {
-    cudaError_t err = (x);
-    if (err != cudaSuccess) {
-        fprintf(stderr, "CUDA Error %s at %s:%d\n", cudaGetErrorString(err), __FILE__, __LINE__);
-        exit(1);
-    }
-} while (
-    0)
 #if defined(__CUDACC__)
 #define ATLAS_HOST __host__
 #define ATLAS_DEVICE __device__
@@ -102,17 +94,5 @@ do {
     } while (0)
 #else
 #define PRINT_DEVICE_PROPERTIES() printf("Unknown platform\n")
-#endif
-#endif
-#ifdef ATLAS_ENABLE_VIZKIT
-#ifdef ATLAS_TASKING_CUDA
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <cuda_gl_interop.h>
-#include <cuda_runtime.h>
-#else
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <atlas/atlas.h>
 #endif
 #endif

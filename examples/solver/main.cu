@@ -17,8 +17,8 @@ main() {
     advector.set_collider(collider);
 
     SpatialHashingSearcher<float> searcher;
-    DSMCSolver<float> solver;
-    auto solver_ptr   = atlas::make_host_shared<DSMCSolver<float>>(solver);
+    DsmcSolver<float> solver;
+    auto solver_ptr   = atlas::make_host_shared<DsmcSolver<float>>(solver);
 
     ParticleSystem<float> psystem { 2000000 };
     psystem.set_emitter(emitter);

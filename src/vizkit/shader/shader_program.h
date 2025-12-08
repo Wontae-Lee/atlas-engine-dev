@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef ATLAS_ENABLE_VIZKIT
-#include <atlas/core/macros.h>
+#include <vizkit/macros/macros.h>
 
 namespace atlas::vizkit {
 

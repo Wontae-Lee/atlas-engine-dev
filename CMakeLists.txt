@@ -3,9 +3,8 @@
 # =====================================================
 cmake_minimum_required(VERSION 3.20)
 
-# NOTE:
-# - LANGUAGES declares which languages this project may use.
-# - CUDA is enabled separately via enable_language(CUDA) below.
+# LANGUAGES: languages directly enabled by project()
+# CUDA is optionally enabled later via enable_language(CUDA)
 project(atlas-core-dev LANGUAGES CXX)
 
 # =====================================================
@@ -18,33 +17,36 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # =====================================================
 # User-configurable options (cache variables)
 # =====================================================
-# Visualization / vizkit-related code
+# ATLAS_USE_VIZKIT:
+#   Enables all vizkit-related visualization code under src/vizkit.
+#   If enabled:
+#     - ATLAS_ENABLE_VIZKIT compile definition becomes active.
+#     - OpenGL/GLFW/GLEW/GLUT dependencies must be available.
 option(ATLAS_USE_VIZKIT "Build vizkit-based visualization modules" ON)
 
-# CUDA acceleration (enabled if a CUDA toolkit is available)
+# ATLAS_USE_CUDA:
+#   Enables CUDA language support and optional CUDA kernels.
 option(ATLAS_USE_CUDA "Enable CUDA acceleration" ON)
 
-# Testing and benchmarking
+# Testing and benchmarking options
 option(ATLAS_ENABLE_TESTS "Enable GoogleTest-based tests" OFF)
 option(ATLAS_ENABLE_BENCH "Enable Google Benchmark-based benchmarks" OFF)
 
 # Logging
-option(ATLAS_LOGGING "Enable logging functionality" ON)
+option(ATLAS_LOGGING "Enable logging functionality" OFF)
 
 # =====================================================
 # Global compile-time definitions
 # =====================================================
 if (ATLAS_LOGGING)
-    # Enable logging in the codebase (guarded by ATLAS_ENABLE_LOGGING)
+    # Enables ATLAS_ENABLE_LOGGING inside the C++ source code.
     add_compile_definitions(ATLAS_ENABLE_LOGGING)
 endif ()
 
 # =====================================================
 # Global include directories
-# NOTE:
-# - These apply to all targets.
-# - For better isolation, prefer target_include_directories() on
-#   individual targets where possible.
+# These are applied to all targets; prefer target_include_directories()
+# on specific targets wherever practical.
 # =====================================================
 include_directories(
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
@@ -52,30 +54,27 @@ include_directories(
 )
 
 # =====================================================
-# Common compile options (warnings, sanitizers, etc.)
-# Implemented in: cmake/CompileOptions.cmake
+# Common compile options (clang-tidy, warnings, sanitizers, etc.)
 # =====================================================
 include(cmake/CompileOptions.cmake)
 
 # =====================================================
 # CUDA configuration (optional)
-# - Only enables the CUDA language.
-# - Actual CUDA sources / compile definitions should be configured
-#   per-target (e.g., under src/atlas or CUDA-specific libs).
+# - Only enables the CUDA language here.
+# - Individual CUDA source files or libraries should configure their own
+#   target properties under src/.
 # =====================================================
 if (ATLAS_USE_CUDA)
     message(STATUS "CUDA support is enabled.")
-
-    # Enable CUDA language for this project (after project())
     enable_language(CUDA)
 
-    # CUDA standard and target architectures
     set(CMAKE_CUDA_STANDARD 20)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-    # Example: compute capability 8.6 (e.g., RTX 30xx series)
+
+    # Common default arch (sm_86 = NVIDIA RTX 30xx)
     set(CMAKE_CUDA_ARCHITECTURES 86)
 
-    # If a specific CUDA toolkit installation is required, configure it here
+    # Optional explicit CUDA include path
     if (EXISTS "/usr/local/cuda-12.9/include")
         include_directories("/usr/local/cuda-12.9/include")
     endif ()
@@ -84,38 +83,34 @@ else ()
 endif ()
 
 # =====================================================
-# Third-party (in-tree) libraries
-# - tinyobjloader (mesh loading)
+# Third-party (in-tree) libs
 # =====================================================
 add_subdirectory(external/tinyobj)
 
 # =====================================================
-# atlas-core library
-# - Core engine + math + optional CUDA kernels
-# - May be extended with vizkit / GL in subdirectories
+# atlas-core main library
 # =====================================================
 message(STATUS "[ATLAS] Engine core: ENABLED")
 
-# Public include root (installed / exported headers)
 set(ATLAS_CORE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
-set(ATLAS_CORE_PUBLIC_DIR "${ATLAS_CORE_INCLUDE_DIR}/atlas")
+set(ATLAS_CORE_PUBLIC_DIR  "${ATLAS_CORE_INCLUDE_DIR}/atlas")
 
-# Public header set (library interface)
+# Collect all public headers
 file(GLOB_RECURSE atlas_core_headers
         CONFIGURE_DEPENDS
         "${ATLAS_CORE_PUBLIC_DIR}/*.h"
 )
 
-# Main core library target
 add_library(atlas-core ${atlas_core_headers})
 add_library(atlas::core ALIAS atlas-core)
 
-# C++ standard + public include path for consumers
+# Public include path for users of atlas::core
 target_compile_features(atlas-core PUBLIC cxx_std_20)
 target_include_directories(atlas-core PUBLIC "${ATLAS_CORE_INCLUDE_DIR}")
 
 # =====================================================
-# Core CPU-side dependencies (always required)
+# Core CPU-side dependencies
+# (TBB is always required)
 # =====================================================
 find_package(TBB REQUIRED)
 target_link_libraries(atlas-core
@@ -123,23 +118,34 @@ target_link_libraries(atlas-core
         TBB::tbb
         tinyobjloader
 )
+
 # =====================================================
 # Optional vizkit / OpenGL stack
-#   - Controlled by top-level option ATLAS_USE_VIZKIT
-#   - Exposes ATLAS_ENABLE_VIZKIT to the code when enabled
+#
+# - Enabled by ATLAS_USE_VIZKIT.
+# - Adds compile definition ATLAS_ENABLE_VIZKIT so C++ code can wrap
+#   vizkit-specific features using:
+#       #ifdef ATLAS_ENABLE_VIZKIT
+#           ...
+#       #endif
+#
+# - Includes src/ for vizkit headers (e.g., src/vizkit/*).
+# - Links OpenGL windowing stack (GLFW, GLEW, GL, glut).
 # =====================================================
 if (ATLAS_USE_VIZKIT)
-    # Add a compile definition that code can use:
-    # #ifdef ATLAS_ENABLE_VIZKIT ... #endif
+    message(STATUS "[ATLAS] Vizkit visualization: ENABLED")
+
+    # C++ code can branch on this flag:
+    #   #ifdef ATLAS_ENABLE_VIZKIT
     target_compile_definitions(atlas-core
             PUBLIC
             ATLAS_ENABLE_VIZKIT
     )
 
-    # include vizkit headers
+    # Add src/ so that atlas/vizkit/* headers become visible
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-    # GL / windowing stack
+    # GL + Windowing stack
     find_package(glfw3 REQUIRED)
     find_package(OpenGL REQUIRED)
     find_package(GLUT REQUIRED)
@@ -153,12 +159,13 @@ if (ATLAS_USE_VIZKIT)
             GLU
             glut
     )
+else ()
+    message(STATUS "[ATLAS] Vizkit visualization: DISABLED")
 endif ()
 
 # =====================================================
 # Optional CUDA runtime linkage
-# - Controlled by ATLAS_USE_CUDA
-# - Assumes that CUDA::cudart is provided by CUDAToolkit
+# (If CUDA::cudart is found from CUDAToolkit)
 # =====================================================
 if (ATLAS_USE_CUDA)
     find_package(CUDAToolkit QUIET)
@@ -167,19 +174,15 @@ if (ATLAS_USE_CUDA)
     endif ()
 endif ()
 
-
 # =====================================================
-# Tests (optional)
-# - All test targets / infrastructure live under tests/
+# Optional test modules
 # =====================================================
 if (ATLAS_ENABLE_TESTS)
     add_subdirectory(tests)
 endif ()
 
 # =====================================================
-# Examples (optional)
-# - Example executables live under examples/
-# - Individual example CMakeLists can check ATLAS_USE_VIZKIT / ATLAS_USE_CUDA.
+# Optional example executables
 # =====================================================
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples")
     message(STATUS "[ATLAS] Adding example modules.")
@@ -187,15 +190,14 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples")
 endif ()
 
 # =====================================================
-# Benchmarks (optional)
-# - Google Benchmark-based micro-benchmarks under benchmarks/
+# Optional benchmarks
 # =====================================================
 if (ATLAS_ENABLE_BENCH)
     add_subdirectory(benchmarks)
 endif ()
 
 # =====================================================
-# Build configuration summary
+# Summary
 # =====================================================
 message(STATUS "")
 message(STATUS "========== ATLAS CONFIG SUMMARY ==========")
@@ -203,8 +205,11 @@ message(STATUS "C++ Standard          : ${CMAKE_CXX_STANDARD}")
 message(STATUS "ATLAS_USE_CUDA        : ${ATLAS_USE_CUDA}")
 message(STATUS "ATLAS_ENABLE_TESTS    : ${ATLAS_ENABLE_TESTS}")
 message(STATUS "ATLAS_ENABLE_BENCH    : ${ATLAS_ENABLE_BENCH}")
+message(STATUS "ATLAS_USE_VIZKIT      : ${ATLAS_USE_VIZKIT}")
+
 if (ATLAS_USE_CUDA)
     message(STATUS "CUDA Archs            : ${CMAKE_CUDA_ARCHITECTURES}")
 endif ()
+
 message(STATUS "==========================================")
 message(STATUS "")

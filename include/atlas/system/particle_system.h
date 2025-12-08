@@ -53,7 +53,7 @@ namespace system {
         active() const;
 
     private:
-        T _dt { T(1) };
+        T _dt { T(0.000001f) };
         int _capacity { 0 };
         int _active { 0 };
         ParticleDataHostPtr<T> _particle_data = nullptr;

@@ -8,11 +8,12 @@ namespace solver {
         Basic,
         Advanced
     };
+
     template <typename T>
     struct DsmcDeviceProbe {
         T* g_ref_per_cell { nullptr };
         int* n_collisions { nullptr };
-        int* collision_offset { nullptr };
+
     };
     template <typename T>
     class DsmcData {
@@ -29,15 +30,11 @@ namespace solver {
         cell_volume() const;
         ATLAS_HOST ATLAS_FORCE_INLINE T
         number_weight() const;
-        ATLAS_HOST ATLAS_FORCE_INLINE int
-        total_collisions() const;
-        ATLAS_HOST ATLAS_FORCE_INLINE void
-        set_total_collisions(int v);
 
     private:
         DeviceBuffer<T> d_g_ref_per_cell;
         DeviceBuffer<int> d_n_collisions;
-        DeviceBuffer<int> d_collision_offset;
+
         T _number_weight      = T(1);
         T _d                  = T(1);
         T _sigma_t            = T(1);

@@ -40,3 +40,5 @@ def generate_header(header_path, include_root, project_name, header_name):
 
 if __name__ == "__main__":
     generate_header("include/atlas/atlas.h", "include/atlas/", "atlas", "")
+
+    generate_header("src/vizkit/vizkit.h", "src/vizkit/","vizkit", "")
