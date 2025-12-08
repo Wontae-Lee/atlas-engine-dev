@@ -1,9 +1,9 @@
-#ifndef INCLUDE_ATLAS_MATH_MATRIX_OPERATORS_H
-#define INCLUDE_ATLAS_MATH_MATRIX_OPERATORS_H
+#pragma once
 #include <atlas/math/detail/config.h>
 #include <atlas/math/detail/ops.h>
 #include <atlas/math/matrix/expression.h>
 #include <type_traits>
+
 namespace atlas::math {
 template <typename T, typename E>
 using MatrixNeg = MatrixUnaryOperator<T, E, detail::Negate<T>>;
@@ -34,87 +34,127 @@ using MatrixMulScalarL = MatrixScalarLeft<T, E, detail::Mul<T>>;
 template <typename T, typename E>
 using MatrixDivScalarL = MatrixScalarLeft<T, E, detail::Div<T>>;
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator-(const E& e) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator-(const E& e) noexcept {
     using T = expr_value_t<E>;
     return MatrixNeg<T, E>(e());
 }
+
 template <typename To, MatrixExpressionType From>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-cast_to(const From& e) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    cast_to(const From& e) noexcept {
     return MatrixTypeCast<To, From>(e());
 }
+
 template <MatrixExpressionType EL, MatrixExpressionType ER>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator+(const EL& l, const ER& r) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator+(const EL& l, const ER& r) noexcept {
     using T = std::common_type_t<expr_value_t<EL>, expr_value_t<ER>>;
     return MatrixAdd<T, EL, ER>(l(), r());
 }
+
 template <MatrixExpressionType EL, MatrixExpressionType ER>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator-(const EL& l, const ER& r) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator-(const EL& l, const ER& r) noexcept {
     using T = std::common_type_t<expr_value_t<EL>, expr_value_t<ER>>;
     return MatrixSub<T, EL, ER>(l(), r());
 }
+
 template <MatrixExpressionType EL, MatrixExpressionType ER>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator*(const EL& l, const ER& r) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator*(const EL& l, const ER& r) noexcept {
     using T = std::common_type_t<expr_value_t<EL>, expr_value_t<ER>>;
     return MatrixMul<T, EL, ER>(l(), r());
 }
+
 template <MatrixExpressionType EL, MatrixExpressionType ER>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator/(const EL& l, const ER& r) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator/(const EL& l, const ER& r) noexcept {
     using T = std::common_type_t<expr_value_t<EL>, expr_value_t<ER>>;
     return MatrixDiv<T, EL, ER>(l(), r());
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator+(const E& e, expr_value_t<E> s) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator+(const E& e, expr_value_t<E> s) noexcept {
     using T = expr_value_t<E>;
     return MatrixAddScalarR<T, E>(e(), s);
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator-(const E& e, expr_value_t<E> s) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator-(const E& e, expr_value_t<E> s) noexcept {
     using T = expr_value_t<E>;
     return MatrixSubScalarR<T, E>(e(), s);
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator*(const E& e, expr_value_t<E> s) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator*(const E& e, expr_value_t<E> s) noexcept {
     using T = expr_value_t<E>;
     return MatrixMulScalarR<T, E>(e(), s);
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator/(const E& e, expr_value_t<E> s) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator/(const E& e, expr_value_t<E> s) noexcept {
     using T = expr_value_t<E>;
     return MatrixDivScalarR<T, E>(e(), s);
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator+(expr_value_t<E> s, const E& e) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator+(expr_value_t<E> s, const E& e) noexcept {
     using T = expr_value_t<E>;
     return MatrixAddScalarL<T, E>(s, e());
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator-(expr_value_t<E> s, const E& e) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator-(expr_value_t<E> s, const E& e) noexcept {
     using T = expr_value_t<E>;
     return MatrixSubScalarL<T, E>(s, e());
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator*(expr_value_t<E> s, const E& e) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator*(expr_value_t<E> s, const E& e) noexcept {
     using T = expr_value_t<E>;
     return MatrixMulScalarL<T, E>(s, e());
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-operator/(expr_value_t<E> s, const E& e) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    operator/(expr_value_t<E> s, const E& e) noexcept {
     using T = expr_value_t<E>;
     return MatrixDivScalarL<T, E>(s, e());
 }
 }
-#endif

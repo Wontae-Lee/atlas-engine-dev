@@ -1,22 +1,22 @@
-#ifndef INCLUDE_ATLAS_MATH_VECTOR_VECTOR2_HPP
-#define INCLUDE_ATLAS_MATH_VECTOR_VECTOR2_HPP
-
+#pragma once
 namespace atlas::math {
-
 template <typename T>
 constexpr Vector<T, 2>::Vector() noexcept
     : x(T(0))
-    , y(T(0)) { }
+    , y(T(0)) {
+}
 
 template <typename T>
 constexpr Vector<T, 2>::Vector(T s) noexcept
     : x(s)
-    , y(s) { }
+    , y(s) {
+}
 
 template <typename T>
 constexpr Vector<T, 2>::Vector(T x_, T y_) noexcept
     : x(x_)
-    , y(y_) { }
+    , y(y_) {
+}
 
 template <typename T>
 Vector<T, 2>::Vector(std::initializer_list<T> list) noexcept {
@@ -269,14 +269,12 @@ Vector<T, 2>::length() const noexcept {
 template <typename T>
 std::size_t
 Vector<T, 2>::major_axis() const noexcept {
-
     return (std::abs(x) >= std::abs(y)) ? 0u : 1u;
 }
 
 template <typename T>
 std::size_t
 Vector<T, 2>::minor_axis() const noexcept {
-
     return (std::abs(x) <= std::abs(y)) ? 0u : 1u;
 }
 
@@ -318,7 +316,6 @@ Vector<T, 2>::projected(const Vector& n) const noexcept {
 template <typename T>
 Vector<T, 2>
 Vector<T, 2>::tangential() const noexcept {
-
     const T ls = length_squared();
     if (ls == T(0)) return Vector<T, 2>(T(0), T(0));
     Vector<T, 2> t(-y, x);
@@ -502,7 +499,4 @@ cmax(const Vector<T, 2>& a, const Vector<T, 2>& b) {
     return Vector<T, 2>((a.x > b.x) ? a.x : b.x,
                         (a.y > b.y) ? a.y : b.y);
 }
-
 }
-
-#endif

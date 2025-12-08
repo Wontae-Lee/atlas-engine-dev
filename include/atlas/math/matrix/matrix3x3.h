@@ -1,5 +1,4 @@
-#ifndef INCLUDE_ATLAS_MATH_MATRIX_MATRIX3X3_H
-#define INCLUDE_ATLAS_MATH_MATRIX_MATRIX3X3_H
+#pragma once
 #include <atlas/math/matrix/matrix.h>
 #include <atlas/math/vector/vector.h>
 #include <cmath>
@@ -7,6 +6,7 @@
 #include <initializer_list>
 #include <limits>
 #include <type_traits>
+
 namespace atlas {
 namespace math {
     template <typename T>
@@ -115,6 +115,7 @@ namespace math {
         solve(const Vector<T, 3>& b, Vector<T, 3>& x,
               T eps = std::numeric_limits<T>::epsilon()) const noexcept;
     };
+
     template <typename T>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Matrix<T, 3, 3>
     identity3x3() noexcept;
@@ -156,14 +157,16 @@ namespace math {
     solve(const Matrix<T, 3, 3>& A, const Vector<T, 3>& b, Vector<T, 3>& x,
           T eps = std::numeric_limits<T>::epsilon()) noexcept;
     template <typename T>
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-        Vector<T, 3>
-        solve(const Matrix<T, 3, 3>& A, const Vector<T, 3>& b) noexcept;
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE
+        ATLAS_FORCE_INLINE
+            Vector<T, 3>
+            solve(const Matrix<T, 3, 3>& A, const Vector<T, 3>& b) noexcept;
 }
+
 template <typename T>
 using Matrix3x3  = math::Matrix<T, 3, 3>;
 using Matrix3x3F = Matrix3x3<float>;
 using Matrix3x3D = Matrix3x3<double>;
 }
+
 #include <atlas/math/matrix/matrix3x3.hpp>
-#endif

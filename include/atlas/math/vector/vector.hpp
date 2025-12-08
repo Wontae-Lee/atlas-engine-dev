@@ -1,7 +1,7 @@
-#ifndef INCLUDE_ATLAS_MATH_VECTOR_VECTOR_HPP
-#define INCLUDE_ATLAS_MATH_VECTOR_VECTOR_HPP
+#pragma once
 #include <atlas/math/vector/reductions.h>
 #include <cmath>
+
 namespace atlas::math {
 template <typename T, std::size_t N>
 Vector<T, N>::Vector() noexcept {
@@ -18,9 +18,12 @@ Vector<T, N>::Vector(T s) noexcept {
 template <typename T, std::size_t N>
 template <typename... Args, typename>
 Vector<T, N>::Vector(Args... args) noexcept
-    : _data { static_cast<T>(args)... } { }
+    : _data { static_cast<T>(args)... } {
+}
+
 template <typename T, std::size_t N>
 ATLAS_HOST ATLAS_FORCE_INLINE
+
 Vector<T, N>::Vector(std::initializer_list<T> list) noexcept {
     std::size_t i = 0;
     for (auto it = list.begin(); it != list.end() && i < N; ++it, ++i) _data[i] = *it;
@@ -337,4 +340,3 @@ Vector<T, N>::minor_axis() const noexcept {
     return math::argmin(*this);
 }
 }
-#endif

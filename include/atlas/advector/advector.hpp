@@ -1,8 +1,7 @@
-#ifndef INCLUDE_ATLAS_COLLIDER_COLLIDER_HPP
-#define INCLUDE_ATLAS_COLLIDER_COLLIDER_HPP
+#pragma once
 #include <atlas/parallel/parallel_for.h>
-namespace atlas::system {
 
+namespace atlas::system {
 template <typename T>
 void
 Advector<T>::set_collider(const ColliderHostPtr<T>& collider) {
@@ -34,7 +33,6 @@ Advector<T>::time_integration(const ParticleDeviceProbe<T>& probe, T dt, int& ac
 template <typename T>
 void
 Advector<T>::operator()(const ParticleDeviceProbe<T>& probe, T dt, int& active) const {
-
     int n_surfaces = _collider->number_of_surfaces();
     if (n_surfaces == 0) {
         time_integration(probe, dt, active);
@@ -42,7 +40,4 @@ Advector<T>::operator()(const ParticleDeviceProbe<T>& probe, T dt, int& active) 
     }
     _collider->collide(probe, dt, active);
 }
-
 }
-
-#endif

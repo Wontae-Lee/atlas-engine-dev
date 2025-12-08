@@ -1,6 +1,4 @@
-#ifndef INCLUDE_ATLAS_CORE_MACROS_H
-#define INCLUDE_ATLAS_CORE_MACROS_H
-
+#pragma once
 #if !defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG)
 #define ATLAS_DEBUG_MODE
 #include <cassert>
@@ -8,18 +6,14 @@
 #else
 #define ATLAS_ASSERT(x) ((void)0)
 #endif
-
-#ifndef CUDA_CHECK
-#define CUDA_CHECK(x)                                                                                 \
-    do {                                                                                              \
-        cudaError_t err = (x);                                                                        \
-        if (err != cudaSuccess) {                                                                     \
-            fprintf(stderr, "CUDA Error %s at %s:%d\n", cudaGetErrorString(err), __FILE__, __LINE__); \
-            exit(1);                                                                                  \
-        }                                                                                             \
-    } while (0)
-#endif
-
+do {
+    cudaError_t err = (x);
+    if (err != cudaSuccess) {
+        fprintf(stderr, "CUDA Error %s at %s:%d\n", cudaGetErrorString(err), __FILE__, __LINE__);
+        exit(1);
+    }
+} while (
+    0)
 #if defined(__CUDACC__)
 #define ATLAS_HOST __host__
 #define ATLAS_DEVICE __device__
@@ -40,7 +34,13 @@
 #endif
 #endif
 #define ATLAS_NODISCARD [[nodiscard]]
-
+#if defined(__GNUC__) || defined(__clang__) || defined(__CUDACC__)
+#define RESTRICT __restrict__
+#elif defined(_MSC_VER)
+#define RESTRICT __restrict
+#else
+#define RESTRICT
+#endif
 #ifdef ATLAS_TASKING_CUDA
 #define PRINT_DEVICE_PROPERTIES(dev)             \
     do {                                         \
@@ -49,7 +49,6 @@
         cudaGetDeviceProperties(&prop, dev);     \
         printf("GPU[%d]: %s\n", dev, prop.name); \
     } while (0)
-
 #else
 #if defined(__linux__)
 #define PRINT_DEVICE_PROPERTIES()                                           \
@@ -67,7 +66,6 @@
             pclose(fp);                                                     \
         }                                                                   \
     } while (0)
-
 #elif defined(_WIN32)
 #include <intrin.h>
 #include <windows.h>
@@ -86,7 +84,6 @@
         GetSystemInfo(&si);                                             \
         printf("CPU: %s\nCores: %u\n", brand, si.dwNumberOfProcessors); \
     } while (0)
-
 #elif defined(__APPLE__)
 #define PRINT_DEVICE_PROPERTIES()                                      \
     do {                                                               \
@@ -107,21 +104,15 @@
 #define PRINT_DEVICE_PROPERTIES() printf("Unknown platform\n")
 #endif
 #endif
-
 #ifdef ATLAS_ENABLE_VIZKIT
 #ifdef ATLAS_TASKING_CUDA
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cuda_gl_interop.h>
 #include <cuda_runtime.h>
 #else
-
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <atlas/atlas.h>
-
-#endif
-
 #endif
 #endif

@@ -1,5 +1,4 @@
-#ifndef INCLUDE_ATLAS_MATH_MATRIX_MATRIX3X3_HPP
-#define INCLUDE_ATLAS_MATH_MATRIX_MATRIX3X3_HPP
+#pragma once
 namespace atlas::math {
 template <typename T>
 constexpr Matrix<T, 3, 3>::Matrix() noexcept
@@ -11,7 +10,9 @@ constexpr Matrix<T, 3, 3>::Matrix() noexcept
     , m12(T(0))
     , m20(T(0))
     , m21(T(0))
-    , m22(T(0)) { }
+    , m22(T(0)) {
+}
+
 template <typename T>
 constexpr Matrix<T, 3, 3>::Matrix(T s) noexcept
     : m00(s)
@@ -22,7 +23,9 @@ constexpr Matrix<T, 3, 3>::Matrix(T s) noexcept
     , m12(T(0))
     , m20(T(0))
     , m21(T(0))
-    , m22(s) { }
+    , m22(s) {
+}
+
 template <typename T>
 constexpr Matrix<T, 3, 3>::Matrix(
     T a00, T a01, T a02,
@@ -36,7 +39,9 @@ constexpr Matrix<T, 3, 3>::Matrix(
     , m12(a12)
     , m20(a20)
     , m21(a21)
-    , m22(a22) { }
+    , m22(a22) {
+}
+
 template <typename T>
 Matrix<T, 3, 3>::Matrix(std::initializer_list<T> list) noexcept {
     const T* it = list.begin();
@@ -50,6 +55,7 @@ Matrix<T, 3, 3>::Matrix(std::initializer_list<T> list) noexcept {
     m21         = (it != list.end()) ? *it++ : T(0);
     m22         = (it != list.end()) ? *it++ : T(0);
 }
+
 template <typename T>
 template <typename Expression>
 Matrix<T, 3, 3>::Matrix(const MatrixExpression<T, Expression>& expr) noexcept {
@@ -64,64 +70,79 @@ Matrix<T, 3, 3>::Matrix(const MatrixExpression<T, Expression>& expr) noexcept {
     m21                 = static_cast<T>(e(2, 1));
     m22                 = static_cast<T>(e(2, 2));
 }
+
 template <typename T>
 ATLAS_NODISCARD
     std::size_t
+
     Matrix<T, 3, 3>::rows() noexcept {
     return 3;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     std::size_t
+
     Matrix<T, 3, 3>::cols() noexcept {
     return 3;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     std::size_t
+
     Matrix<T, 3, 3>::size() noexcept {
     return 9;
 }
+
 template <typename T>
 ATLAS_NODISCARD const T*
 Matrix<T, 3, 3>::data() const noexcept {
     return &m00;
 }
+
 template <typename T>
 T*
 Matrix<T, 3, 3>::data() noexcept {
     return &m00;
 }
+
 template <typename T>
 ATLAS_NODISCARD const T&
 Matrix<T, 3, 3>::operator[](std::size_t i) const noexcept {
     return (&m00)[i];
 }
+
 template <typename T>
 T&
 Matrix<T, 3, 3>::operator[](std::size_t i) noexcept {
     return (&m00)[i];
 }
+
 template <typename T>
 ATLAS_NODISCARD const T&
 Matrix<T, 3, 3>::at(std::size_t r, std::size_t c) const noexcept {
     return (&m00)[r * 3 + c];
 }
+
 template <typename T>
 T&
 Matrix<T, 3, 3>::at(std::size_t r, std::size_t c) noexcept {
     return (&m00)[r * 3 + c];
 }
+
 template <typename T>
 ATLAS_NODISCARD const T&
 Matrix<T, 3, 3>::operator()(std::size_t r, std::size_t c) const noexcept {
     return (&m00)[r * 3 + c];
 }
+
 template <typename T>
 T&
 Matrix<T, 3, 3>::operator()(std::size_t r, std::size_t c) noexcept {
     return (&m00)[r * 3 + c];
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::set_zero() noexcept {
@@ -129,6 +150,7 @@ Matrix<T, 3, 3>::set_zero() noexcept {
     m10 = m11 = m12 = T(0);
     m20 = m21 = m22 = T(0);
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::set_identity() noexcept {
@@ -142,6 +164,7 @@ Matrix<T, 3, 3>::set_identity() noexcept {
     m21 = T(0);
     m22 = T(1);
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::set(
@@ -158,73 +181,86 @@ Matrix<T, 3, 3>::set(
     m21 = a21;
     m22 = a22;
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::add(T s) noexcept {
     for (int i = 0; i < 9; ++i) (&m00)[i] += s;
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::sub(T s) noexcept {
     for (int i = 0; i < 9; ++i) (&m00)[i] -= s;
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::mul(T s) noexcept {
     for (int i = 0; i < 9; ++i) (&m00)[i] *= s;
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::div(T s) noexcept {
     const T inv = T(1) / s;
     for (int i = 0; i < 9; ++i) (&m00)[i] *= inv;
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::add(const Matrix& m) noexcept {
     for (int i = 0; i < 9; ++i) (&m00)[i] += (&m.m00)[i];
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::sub(const Matrix& m) noexcept {
     for (int i = 0; i < 9; ++i) (&m00)[i] -= (&m.m00)[i];
 }
+
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator+=(T s) noexcept {
     add(s);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator-=(T s) noexcept {
     sub(s);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator*=(T s) noexcept {
     mul(s);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator/=(T s) noexcept {
     div(s);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator+=(const Matrix& m) noexcept {
     add(m);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator-=(const Matrix& m) noexcept {
     sub(m);
     return *this;
 }
+
 template <typename T>
 bool
 Matrix<T, 3, 3>::operator==(const Matrix& o) const noexcept {
@@ -232,14 +268,17 @@ Matrix<T, 3, 3>::operator==(const Matrix& o) const noexcept {
         if ((&m00)[i] != (&o.m00)[i]) return false;
     return true;
 }
+
 template <typename T>
 bool
 Matrix<T, 3, 3>::operator!=(const Matrix& o) const noexcept {
     return !(*this == o);
 }
+
 template <typename T>
 ATLAS_NODISCARD
     T
+
     Matrix<T, 3, 3>::determinant() const noexcept {
     const T a = m00, b = m01, c = m02;
     const T d = m10, e = m11, f = m12;
@@ -253,12 +292,15 @@ ATLAS_NODISCARD
         return a * ei_fh - b * di_fg + c * dh_eg;
     }
 }
+
 template <typename T>
 ATLAS_NODISCARD
     T
+
     Matrix<T, 3, 3>::trace() const noexcept {
     return m00 + m11 + m22;
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::transpose() noexcept {
@@ -266,9 +308,11 @@ Matrix<T, 3, 3>::transpose() noexcept {
     std::swap(m02, m20);
     std::swap(m12, m21);
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     Matrix<T, 3, 3>::transposed() const noexcept {
     return Matrix(
         m00,
@@ -281,6 +325,7 @@ ATLAS_NODISCARD
         m12,
         m22);
 }
+
 template <typename T>
 void
 Matrix<T, 3, 3>::inverse() noexcept {
@@ -308,14 +353,17 @@ Matrix<T, 3, 3>::inverse() noexcept {
     m21            = C12 * invDet;
     m22            = C22 * invDet;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     Matrix<T, 3, 3>::inversed() const noexcept {
     Matrix A = *this;
     A.inverse();
     return A;
 }
+
 template <typename T>
 bool
 Matrix<T, 3, 3>::try_inverse(Matrix& out, T eps) const noexcept {
@@ -345,14 +393,17 @@ Matrix<T, 3, 3>::try_inverse(Matrix& out, T eps) const noexcept {
     out.m22        = C22 * invDet;
     return true;
 }
+
 template <typename T>
 ATLAS_NODISCARD bool
 Matrix<T, 3, 3>::is_invertible(T eps) const noexcept {
     return std::abs(determinant()) > eps;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     Matrix<T, 3, 3>::mul(const Matrix& r) const noexcept {
     const Matrix& a = *this;
     Matrix out;
@@ -379,9 +430,11 @@ ATLAS_NODISCARD
     }
     return out;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Vector<T, 3>
+
     Matrix<T, 3, 3>::mul(const Vector<T, 3>& v) const noexcept {
     if constexpr (std::is_floating_point_v<T>) {
         return Vector<T, 3>(
@@ -395,13 +448,16 @@ ATLAS_NODISCARD
             m20 * v[0] + m21 * v[1] + m22 * v[2]);
     }
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Vector<T, 3>
+
     Matrix<T, 3, 3>::solved(const Vector<T, 3>& b) const noexcept {
     Matrix inv = inversed();
     return inv.mul(b);
 }
+
 template <typename T>
 bool
 Matrix<T, 3, 3>::solve(const Vector<T, 3>& b, Vector<T, 3>& x, T eps) const noexcept {
@@ -410,15 +466,19 @@ Matrix<T, 3, 3>::solve(const Vector<T, 3>& b, Vector<T, 3>& x, T eps) const noex
     x = inv.mul(b);
     return true;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     identity3x3() noexcept {
     return Matrix<T, 3, 3>(T(1));
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     zero3x3() noexcept {
     return Matrix<T, 3, 3>(T(0),
                            T(0),
@@ -430,83 +490,105 @@ ATLAS_NODISCARD
                            T(0),
                            T(0));
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     transpose(const Matrix<T, 3, 3>& m) noexcept {
     return m.transposed();
 }
+
 template <typename T>
 ATLAS_NODISCARD
     T
+
     determinant(const Matrix<T, 3, 3>& m) noexcept {
     return m.determinant();
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     inverse(const Matrix<T, 3, 3>& m) noexcept {
     return m.inversed();
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     operator+(const Matrix<T, 3, 3>& a, const Matrix<T, 3, 3>& b) {
     Matrix<T, 3, 3> out;
     for (int i = 0; i < 9; ++i) (&out.m00)[i] = (&a.m00)[i] + (&b.m00)[i];
     return out;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     operator-(const Matrix<T, 3, 3>& a, const Matrix<T, 3, 3>& b) {
     Matrix<T, 3, 3> out;
     for (int i = 0; i < 9; ++i) (&out.m00)[i] = (&a.m00)[i] - (&b.m00)[i];
     return out;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     operator*(const Matrix<T, 3, 3>& a, T s) {
     Matrix<T, 3, 3> out;
     for (int i = 0; i < 9; ++i) (&out.m00)[i] = (&a.m00)[i] * s;
     return out;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     operator*(T s, const Matrix<T, 3, 3>& a) {
     return a * s;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     operator/(const Matrix<T, 3, 3>& a, T s) {
     const T inv = T(1) / s;
     return a * inv;
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Matrix<T, 3, 3>
+
     operator*(const Matrix<T, 3, 3>& a, const Matrix<T, 3, 3>& b) {
     return a.mul(b);
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Vector<T, 3>
+
     operator*(const Matrix<T, 3, 3>& a, const Vector<T, 3>& v) {
     return a.mul(v);
 }
+
 template <typename T>
 ATLAS_NODISCARD bool
 solve(const Matrix<T, 3, 3>& A, const Vector<T, 3>& b, Vector<T, 3>& x, T eps) noexcept {
     return A.solve(b, x, eps);
 }
+
 template <typename T>
 ATLAS_NODISCARD
     Vector<T, 3>
+
     solve(const Matrix<T, 3, 3>& A, const Vector<T, 3>& b) noexcept {
     return A.solved(b);
 }
 }
-#endif

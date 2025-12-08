@@ -1,6 +1,4 @@
-#ifndef INCLUDE_ATLAS_MATH_MATH_H
-#define INCLUDE_ATLAS_MATH_MATH_H
-
+#pragma once
 #include <atlas/math/constants.h>
 #include <atlas/math/detail/config.h>
 #include <atlas/math/detail/ops.h>
@@ -23,5 +21,3 @@
 #include <atlas/math/vector/vector2.h>
 #include <atlas/math/vector/vector3.h>
 #include <atlas/math/vector/vector4.h>
-
-#endif

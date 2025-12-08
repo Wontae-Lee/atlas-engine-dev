@@ -1,11 +1,11 @@
-#ifndef INCLUDE_ATLAS_MATH_VECTOR_VECTOR_H
-#define INCLUDE_ATLAS_MATH_VECTOR_VECTOR_H
+#pragma once
 #include <atlas/math/vector/expression.h>
 #include <cmath>
 #include <cstddef>
 #include <initializer_list>
 #include <tuple>
 #include <type_traits>
+
 namespace atlas {
 namespace math {
     template <typename T, std::size_t N>
@@ -18,7 +18,9 @@ namespace math {
         Vector() noexcept;
         Vector(const Vector& other) noexcept = default;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Vector(T s) noexcept;
-        template <typename... Args, typename = std::enable_if_t<(sizeof...(Args) == N) && (std::conjunction_v<std::is_convertible<Args, T>...>)>>
+        template <typename... Args, typename = std::enable_if_t<(sizeof...(Args) == N) && (std::conjunction_v<std::is_convertible<Args, T>...>)>
+
+                  >
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Vector(Args... args) noexcept;
         ATLAS_HOST ATLAS_FORCE_INLINE
         Vector(std::initializer_list<T> list) noexcept;
@@ -39,7 +41,9 @@ namespace math {
         set(T s) noexcept;
         template <typename... Args,
                   typename = std::enable_if_t<(sizeof...(Args) == N)
-                                              && (std::conjunction_v<std::is_convertible<Args, T>...>)>>
+                                              && (std::conjunction_v<std::is_convertible<Args, T>...>)>
+
+                  >
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         set_values(Args... args) noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
@@ -116,8 +120,9 @@ namespace math {
         alignas(32) T _data[N];
     };
 }
+
 template <typename T, std::size_t N>
 using Vector = atlas::math::Vector<T, N>;
 }
+
 #include <atlas/math/vector/vector.hpp>
-#endif

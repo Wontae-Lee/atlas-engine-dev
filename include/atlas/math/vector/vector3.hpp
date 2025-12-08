@@ -1,5 +1,4 @@
-#ifndef INCLUDE_ATLAS_MATH_VECTOR_VECTOR3_HPP
-#define INCLUDE_ATLAS_MATH_VECTOR_VECTOR3_HPP
+#pragma once
 #include <algorithm>
 
 namespace atlas::math {
@@ -7,17 +6,23 @@ template <typename T>
 constexpr Vector<T, 3>::Vector() noexcept
     : x(T(0))
     , y(T(0))
-    , z(T(0)) { }
+    , z(T(0)) {
+}
+
 template <typename T>
 constexpr Vector<T, 3>::Vector(T s) noexcept
     : x(s)
     , y(s)
-    , z(s) { }
+    , z(s) {
+}
+
 template <typename T>
 constexpr Vector<T, 3>::Vector(T x_, T y_, T z_) noexcept
     : x(x_)
     , y(y_)
-    , z(z_) { }
+    , z(z_) {
+}
+
 template <typename T>
 Vector<T, 3>::Vector(std::initializer_list<T> list) noexcept {
     const T* it = list.begin();
@@ -561,6 +566,4 @@ cmax(const Vector3<T>& a, const Vector3<T>& b) {
         (a.y > b.y) ? a.y : b.y,
         (a.z > b.z) ? a.z : b.z);
 }
-
 }
-#endif

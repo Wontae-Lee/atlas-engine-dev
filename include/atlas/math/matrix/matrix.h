@@ -1,11 +1,11 @@
-#ifndef INCLUDE_ATLAS_MATH_MATRIX_MATRIX_H
-#define INCLUDE_ATLAS_MATH_MATRIX_MATRIX_H
+#pragma once
 #include <atlas/math/detail/config.h>
 #include <atlas/math/matrix/expression.h>
 #include <atlas/math/vector/vector.h>
 #include <cstddef>
 #include <initializer_list>
 #include <type_traits>
+
 namespace atlas {
 namespace math {
     template <typename T, std::size_t R, std::size_t C>
@@ -19,7 +19,9 @@ namespace math {
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(T s) noexcept;
         template <typename... Args,
                   typename = std::enable_if_t<(sizeof...(Args) == R * C)
-                                              && (std::conjunction_v<std::is_convertible<Args, T>...>)>>
+                                              && (std::conjunction_v<std::is_convertible<Args, T>...>)>
+
+                  >
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(Args... args) noexcept;
         ATLAS_HOST ATLAS_FORCE_INLINE explicit Matrix(std::initializer_list<T> list) noexcept;
         Matrix(const Matrix&) noexcept = default;
@@ -57,7 +59,9 @@ namespace math {
         set(T s) noexcept;
         template <typename... Args,
                   typename = std::enable_if_t<(sizeof...(Args) == R * C)
-                                              && (std::conjunction_v<std::is_convertible<Args, T>...>)>>
+                                              && (std::conjunction_v<std::is_convertible<Args, T>...>)>
+
+                  >
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         set_values(Args... args) noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
@@ -96,8 +100,10 @@ namespace math {
         operator/=(const Matrix& m) noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
         operator==(const Matrix& other) const noexcept;
+
         ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const T*
         data_ptr() const noexcept { return _data; }
+
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T*
         data_ptr() noexcept { return _data; }
 
@@ -108,6 +114,7 @@ namespace math {
     private:
         alignas(32) T _data[R * C];
     };
+
     template <typename T, std::size_t R, std::size_t C, std::size_t K>
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
         Matrix<T, R, K>
@@ -117,8 +124,9 @@ namespace math {
         Vector<T, R>
         matmul(const Matrix<T, R, C>& a, const Vector<T, C>& x) noexcept;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 using Matrix = math::Matrix<T, R, C>;
 }
+
 #include <atlas/math/matrix/matrix.hpp>
-#endif

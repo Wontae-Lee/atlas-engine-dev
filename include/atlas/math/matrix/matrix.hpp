@@ -1,20 +1,23 @@
-#ifndef INCLUDE_ATLAS_MATH_MATRIX_MATRIX_HPP
-#define INCLUDE_ATLAS_MATH_MATRIX_MATRIX_HPP
+#pragma once
 namespace atlas::math {
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>::Matrix() noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] = T(0);
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>::Matrix(T s) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] = s;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 template <typename... Args, typename>
 Matrix<T, R, C>::Matrix(Args... args) noexcept
-    : _data { static_cast<T>(args)... } { }
+    : _data { static_cast<T>(args)... } {
+}
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>::Matrix(std::initializer_list<T> list) noexcept {
     std::size_t i = 0;
@@ -24,38 +27,45 @@ Matrix<T, R, C>::Matrix(std::initializer_list<T> list) noexcept {
     }
     for (; i < R * C; ++i) _data[i] = T(0);
 }
+
 template <typename T, std::size_t R, std::size_t C>
 ATLAS_NODISCARD const T&
 Matrix<T, R, C>::operator[](std::size_t i) const noexcept {
     return _data[i];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 T&
 Matrix<T, R, C>::operator[](std::size_t i) noexcept {
     return _data[i];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 ATLAS_NODISCARD const T&
 Matrix<T, R, C>::operator()(std::size_t r, std::size_t c) const noexcept {
     return _data[index(r, c)];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 T&
 Matrix<T, R, C>::operator()(std::size_t r, std::size_t c) noexcept {
     return _data[index(r, c)];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 ATLAS_NODISCARD const T&
 Matrix<T, R, C>::at(std::size_t r, std::size_t c) const noexcept {
     ATLAS_ASSERT(r < R && c < C && "Matrix::at() index out of range");
     return _data[index(r, c)];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 T&
 Matrix<T, R, C>::at(std::size_t r, std::size_t c) noexcept {
     ATLAS_ASSERT(r < R && c < C && "Matrix::at() index out of range");
     return _data[index(r, c)];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 template <typename E>
 Matrix<T, R, C>&
@@ -66,12 +76,14 @@ Matrix<T, R, C>::operator=(const MatrixExpression<T, E>& expr) noexcept {
     for (std::size_t i = 0; i < R * C; ++i) _data[i] = e[i];
     return *this;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::set(T s) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] = s;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 template <typename... Args, typename>
 void
@@ -80,108 +92,126 @@ Matrix<T, R, C>::set_values(Args... args) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] = tmp[i];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::set_zero() noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] = T(0);
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::add(T v) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] += v;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::sub(T v) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] -= v;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::mul(T v) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] *= v;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::div(T v) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] /= v;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::add(const Matrix& m) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] += m._data[i];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::sub(const Matrix& m) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] -= m._data[i];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::mul(const Matrix& m) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] *= m._data[i];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::div(const Matrix& m) noexcept {
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] /= m._data[i];
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>&
 Matrix<T, R, C>::operator+=(T v) noexcept {
     add(v);
     return *this;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>&
 Matrix<T, R, C>::operator-=(T v) noexcept {
     sub(v);
     return *this;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>&
 Matrix<T, R, C>::operator*=(T v) noexcept {
     mul(v);
     return *this;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>&
 Matrix<T, R, C>::operator/=(T v) noexcept {
     div(v);
     return *this;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>&
 Matrix<T, R, C>::operator+=(const Matrix& m) noexcept {
     add(m);
     return *this;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>&
 Matrix<T, R, C>::operator-=(const Matrix& m) noexcept {
     sub(m);
     return *this;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>&
 Matrix<T, R, C>::operator*=(const Matrix& m) noexcept {
     mul(m);
     return *this;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>&
 Matrix<T, R, C>::operator/=(const Matrix& m) noexcept {
     div(m);
     return *this;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 bool
 Matrix<T, R, C>::operator==(const Matrix& other) const noexcept {
@@ -190,6 +220,7 @@ Matrix<T, R, C>::operator==(const Matrix& other) const noexcept {
         if (!(_data[i] == other._data[i])) return false;
     return true;
 }
+
 template <typename T, std::size_t R, std::size_t C, std::size_t K>
 Matrix<T, R, K>
 matmul(const Matrix<T, R, C>& a, const Matrix<T, C, K>& b) noexcept {
@@ -204,6 +235,7 @@ matmul(const Matrix<T, R, C>& a, const Matrix<T, C, K>& b) noexcept {
     }
     return out;
 }
+
 template <typename T, std::size_t R, std::size_t C>
 Vector<T, R>
 matmul(const Matrix<T, R, C>& a, const Vector<T, C>& x) noexcept {
@@ -217,4 +249,3 @@ matmul(const Matrix<T, R, C>& a, const Vector<T, C>& x) noexcept {
     return y;
 }
 }
-#endif

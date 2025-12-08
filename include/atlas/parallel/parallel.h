@@ -1,6 +1,4 @@
-#ifndef INCLUDE_ATLAS_PARALLEL_PARALLEL_H
-#define INCLUDE_ATLAS_PARALLEL_PARALLEL_H
-
+#pragma once
+#include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
-
-#endif
+#include <atlas/parallel/parallel_sort.h>

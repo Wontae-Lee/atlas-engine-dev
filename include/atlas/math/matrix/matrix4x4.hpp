@@ -1,5 +1,4 @@
-#ifndef INCLUDE_ATLAS_MATH_MATRIX_MATRIX4X4_HPP
-#define INCLUDE_ATLAS_MATH_MATRIX_MATRIX4X4_HPP
+#pragma once
 namespace atlas::math {
 template <typename T>
 constexpr Matrix<T, 4, 4>::Matrix() noexcept
@@ -18,7 +17,9 @@ constexpr Matrix<T, 4, 4>::Matrix() noexcept
     , m30(T(0))
     , m31(T(0))
     , m32(T(0))
-    , m33(T(0)) { }
+    , m33(T(0)) {
+}
+
 template <typename T>
 constexpr Matrix<T, 4, 4>::Matrix(T s) noexcept
     : m00(s)
@@ -36,7 +37,9 @@ constexpr Matrix<T, 4, 4>::Matrix(T s) noexcept
     , m30(T(0))
     , m31(T(0))
     , m32(T(0))
-    , m33(s) { }
+    , m33(s) {
+}
+
 template <typename T>
 constexpr Matrix<T, 4, 4>::Matrix(
     T a00, T a01, T a02, T a03,
@@ -58,7 +61,9 @@ constexpr Matrix<T, 4, 4>::Matrix(
     , m30(a30)
     , m31(a31)
     , m32(a32)
-    , m33(a33) { }
+    , m33(a33) {
+}
+
 template <typename T>
 Matrix<T, 4, 4>::Matrix(std::initializer_list<T> list) noexcept {
     const T* it = list.begin();
@@ -79,6 +84,7 @@ Matrix<T, 4, 4>::Matrix(std::initializer_list<T> list) noexcept {
     m32         = (it != list.end()) ? *it++ : T(0);
     m33         = (it != list.end()) ? *it++ : T(0);
 }
+
 template <typename T>
 template <typename Expression>
 Matrix<T, 4, 4>::Matrix(const MatrixExpression<T, Expression>& expr) noexcept {
@@ -100,72 +106,86 @@ Matrix<T, 4, 4>::Matrix(const MatrixExpression<T, Expression>& expr) noexcept {
     m32                 = static_cast<T>(e(3, 2));
     m33                 = static_cast<T>(e(3, 3));
 }
+
 template <typename T>
 std::size_t
 Matrix<T, 4, 4>::rows() noexcept {
     return 4;
 }
+
 template <typename T>
 std::size_t
 Matrix<T, 4, 4>::cols() noexcept {
     return 4;
 }
+
 template <typename T>
 std::size_t
 Matrix<T, 4, 4>::size() noexcept {
     return 16;
 }
+
 template <typename T>
 const T*
 Matrix<T, 4, 4>::data() const noexcept {
     return &m00;
 }
+
 template <typename T>
 T*
 Matrix<T, 4, 4>::data() noexcept {
     return &m00;
 }
+
 template <typename T>
 const T&
 Matrix<T, 4, 4>::operator[](std::size_t i) const noexcept {
     return (&m00)[i];
 }
+
 template <typename T>
 T&
 Matrix<T, 4, 4>::operator[](std::size_t i) noexcept {
     return (&m00)[i];
 }
+
 template <typename T>
 const T&
 Matrix<T, 4, 4>::at(std::size_t r, std::size_t c) const noexcept {
     return (&m00)[r * 4 + c];
 }
+
 template <typename T>
 T&
 Matrix<T, 4, 4>::at(std::size_t r, std::size_t c) noexcept {
     return (&m00)[r * 4 + c];
 }
+
 template <typename T>
 const T&
 Matrix<T, 4, 4>::operator()(std::size_t r, std::size_t c) const noexcept {
     return (&m00)[r * 4 + c];
 }
+
 template <typename T>
 T&
 Matrix<T, 4, 4>::operator()(std::size_t r, std::size_t c) noexcept {
     return (&m00)[r * 4 + c];
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::set_zero() noexcept {
     for (int i = 0; i < 16; ++i) (&m00)[i] = T(0);
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::set_identity() noexcept {
     set_zero();
     m00 = m11 = m22 = m33 = T(1);
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::set(
@@ -190,73 +210,86 @@ Matrix<T, 4, 4>::set(
     m32 = a32;
     m33 = a33;
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::add(T s) noexcept {
     for (int i = 0; i < 16; ++i) (&m00)[i] += s;
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::sub(T s) noexcept {
     for (int i = 0; i < 16; ++i) (&m00)[i] -= s;
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::mul(T s) noexcept {
     for (int i = 0; i < 16; ++i) (&m00)[i] *= s;
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::div(T s) noexcept {
     const T inv = T(1) / s;
     for (int i = 0; i < 16; ++i) (&m00)[i] *= inv;
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::add(const Matrix& m) noexcept {
     for (int i = 0; i < 16; ++i) (&m00)[i] += (&m.m00)[i];
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::sub(const Matrix& m) noexcept {
     for (int i = 0; i < 16; ++i) (&m00)[i] -= (&m.m00)[i];
 }
+
 template <typename T>
 Matrix<T, 4, 4>&
 Matrix<T, 4, 4>::operator+=(T s) noexcept {
     add(s);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 4, 4>&
 Matrix<T, 4, 4>::operator-=(T s) noexcept {
     sub(s);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 4, 4>&
 Matrix<T, 4, 4>::operator*=(T s) noexcept {
     mul(s);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 4, 4>&
 Matrix<T, 4, 4>::operator/=(T s) noexcept {
     div(s);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 4, 4>&
 Matrix<T, 4, 4>::operator+=(const Matrix& m) noexcept {
     add(m);
     return *this;
 }
+
 template <typename T>
 Matrix<T, 4, 4>&
 Matrix<T, 4, 4>::operator-=(const Matrix& m) noexcept {
     sub(m);
     return *this;
 }
+
 template <typename T>
 bool
 Matrix<T, 4, 4>::operator==(const Matrix& o) const noexcept {
@@ -264,16 +297,19 @@ Matrix<T, 4, 4>::operator==(const Matrix& o) const noexcept {
         if ((&m00)[i] != (&o.m00)[i]) return false;
     return true;
 }
+
 template <typename T>
 bool
 Matrix<T, 4, 4>::operator!=(const Matrix& o) const noexcept {
     return !(*this == o);
 }
+
 template <typename T>
 T
 Matrix<T, 4, 4>::trace() const noexcept {
     return m00 + m11 + m22 + m33;
 }
+
 template <typename T>
 T
 Matrix<T, 4, 4>::determinant() const noexcept {
@@ -301,6 +337,7 @@ Matrix<T, 4, 4>::determinant() const noexcept {
         return a00 * M0 - a01 * M1 + a02 * M2 - a03 * M3;
     }
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::transpose() noexcept {
@@ -311,6 +348,7 @@ Matrix<T, 4, 4>::transpose() noexcept {
     std::swap(m13, m31);
     std::swap(m23, m32);
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 Matrix<T, 4, 4>::transposed() const noexcept {
@@ -332,6 +370,7 @@ Matrix<T, 4, 4>::transposed() const noexcept {
         m23,
         m33);
 }
+
 template <typename T>
 void
 Matrix<T, 4, 4>::inverse() noexcept {
@@ -379,6 +418,7 @@ Matrix<T, 4, 4>::inverse() noexcept {
     m32            = C23 * invDet;
     m33            = C33 * invDet;
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 Matrix<T, 4, 4>::inversed() const noexcept {
@@ -386,6 +426,7 @@ Matrix<T, 4, 4>::inversed() const noexcept {
     A.inverse();
     return A;
 }
+
 template <typename T>
 bool
 Matrix<T, 4, 4>::try_inverse(Matrix& out, T eps) const noexcept {
@@ -435,11 +476,13 @@ Matrix<T, 4, 4>::try_inverse(Matrix& out, T eps) const noexcept {
     out.m33        = C33 * invDet;
     return true;
 }
+
 template <typename T>
 bool
 Matrix<T, 4, 4>::is_invertible(T eps) const noexcept {
     return std::abs(determinant()) > eps;
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 Matrix<T, 4, 4>::mul(const Matrix& r) const noexcept {
@@ -482,6 +525,7 @@ Matrix<T, 4, 4>::mul(const Matrix& r) const noexcept {
     }
     return out;
 }
+
 template <typename T>
 Vector<T, 4>
 Matrix<T, 4, 4>::mul(const Vector<T, 4>& v) const noexcept {
@@ -499,12 +543,14 @@ Matrix<T, 4, 4>::mul(const Vector<T, 4>& v) const noexcept {
             m30 * v[0] + m31 * v[1] + m32 * v[2] + m33 * v[3]);
     }
 }
+
 template <typename T>
 Vector<T, 4>
 Matrix<T, 4, 4>::solved(const Vector<T, 4>& b) const noexcept {
     Matrix inv = inversed();
     return inv.mul(b);
 }
+
 template <typename T>
 bool
 Matrix<T, 4, 4>::solve(const Vector<T, 4>& b, Vector<T, 4>& x, T eps) const noexcept {
@@ -513,11 +559,13 @@ Matrix<T, 4, 4>::solve(const Vector<T, 4>& b, Vector<T, 4>& x, T eps) const noex
     x = inv.mul(b);
     return true;
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 identity4x4() noexcept {
     return Matrix<T, 4, 4>(T(1));
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 zero4x4() noexcept {
@@ -539,21 +587,25 @@ zero4x4() noexcept {
         T(0),
         T(0));
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 transpose(const Matrix<T, 4, 4>& m) noexcept {
     return m.transposed();
 }
+
 template <typename T>
 T
 determinant(const Matrix<T, 4, 4>& m) noexcept {
     return m.determinant();
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 inverse(const Matrix<T, 4, 4>& m) noexcept {
     return m.inversed();
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 operator+(const Matrix<T, 4, 4>& a, const Matrix<T, 4, 4>& b) {
@@ -561,6 +613,7 @@ operator+(const Matrix<T, 4, 4>& a, const Matrix<T, 4, 4>& b) {
     for (int i = 0; i < 16; ++i) (&out.m00)[i] = (&a.m00)[i] + (&b.m00)[i];
     return out;
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 operator-(const Matrix<T, 4, 4>& a, const Matrix<T, 4, 4>& b) {
@@ -568,6 +621,7 @@ operator-(const Matrix<T, 4, 4>& a, const Matrix<T, 4, 4>& b) {
     for (int i = 0; i < 16; ++i) (&out.m00)[i] = (&a.m00)[i] - (&b.m00)[i];
     return out;
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 operator*(const Matrix<T, 4, 4>& a, T s) {
@@ -575,36 +629,41 @@ operator*(const Matrix<T, 4, 4>& a, T s) {
     for (int i = 0; i < 16; ++i) (&out.m00)[i] = (&a.m00)[i] * s;
     return out;
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 operator*(T s, const Matrix<T, 4, 4>& a) {
     return a * s;
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 operator/(const Matrix<T, 4, 4>& a, T s) {
     const T inv = T(1) / s;
     return a * inv;
 }
+
 template <typename T>
 Matrix<T, 4, 4>
 operator*(const Matrix<T, 4, 4>& a, const Matrix<T, 4, 4>& b) {
     return a.mul(b);
 }
+
 template <typename T>
 Vector<T, 4>
 operator*(const Matrix<T, 4, 4>& a, const Vector<T, 4>& v) {
     return a.mul(v);
 }
+
 template <typename T>
 bool
 solve(const Matrix<T, 4, 4>& A, const Vector<T, 4>& b, Vector<T, 4>& x, T eps) noexcept {
     return A.solve(b, x, eps);
 }
+
 template <typename T>
 Vector<T, 4>
 solve(const Matrix<T, 4, 4>& A, const Vector<T, 4>& b) noexcept {
     return A.solved(b);
 }
 }
-#endif

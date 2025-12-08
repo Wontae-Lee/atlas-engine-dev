@@ -1,12 +1,9 @@
-#ifndef INCLUDE_ATLAS_SYSTEM_PARTICLE_SYSTEM_HPP
-#define INCLUDE_ATLAS_SYSTEM_PARTICLE_SYSTEM_HPP
-
+#pragma once
 #include <atlas/logging/logging.h>
 #include <atlas/memory/memory.h>
 #include <atlas/system/particle_system.h>
 
 namespace atlas::system {
-
 template <typename T>
 ParticleSystem<T>::ParticleSystem()
     : ParticleSystem<T>(1000) {
@@ -97,15 +94,12 @@ ParticleSystem<T>::update() {
     this->emit(_device_probe, _active);
     ATLAS_INFO << "ParticleSystem emitted particles"
                << " Active: " << _active;
-
     this->advect(_device_probe, _dt, _active);
     ATLAS_INFO << "ParticleSystem collided particles"
                << " Active: " << _active;
-
     this->solve(_device_probe, _dt, _active);
     ATLAS_INFO << "ParticleSystem solved particles"
                << " Active: " << _active;
-
     this->remove(_device_probe, _active);
     ATLAS_INFO << "ParticleSystem removed particles"
                << " Active: " << _active;
@@ -154,7 +148,4 @@ int
 ParticleSystem<T>::active() const {
     return _active;
 }
-
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef INCLUDE_ATLAS_SPATIAL_RAY_HPP
-#define INCLUDE_ATLAS_SPATIAL_RAY_HPP
+#pragma once
 namespace atlas::spatial {
 template <typename T>
 Ray<T>::Ray() noexcept
@@ -16,8 +15,6 @@ Ray<T>::Ray(const Vector3<T>& origin, const Vector3<T>& direction) noexcept
 template <typename T>
 Vector3<T>
 Ray<T>::point_at(T t) const noexcept {
-
     return origin + t * direction;
 }
 }
-#endif

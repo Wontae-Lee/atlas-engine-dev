@@ -1,6 +1,4 @@
-#ifndef ATLAS_ENGINE_DEV_TRACE_OPERATOR_H
-#define ATLAS_ENGINE_DEV_TRACE_OPERATOR_H
-
+#pragma once
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/cylinder.h>
 #include <atlas/geometry/plane.h>
@@ -37,12 +35,14 @@ namespace geometry {
         ATLAS_HOST
         TraceOperator(const SphereTraceOperator<T>& op)
             : type(TraceOpType::Sphere)
-            , sphere(op) { }
+            , sphere(op) {
+        }
 
         ATLAS_HOST
         TraceOperator(const CylinderTraceOperator<T>& op)
             : type(TraceOpType::Cylinder)
-            , cylinder(op) { }
+            , cylinder(op) {
+        }
 
         ATLAS_HOST
         TraceOperator(const PlaneTraceOperator<T>& op)
@@ -53,11 +53,14 @@ namespace geometry {
         ATLAS_HOST
         TraceOperator(const BoxTraceOperator<T>& op)
             : type(TraceOpType::Box)
-            , box(op) { }
+            , box(op) {
+        }
+
         ATLAS_HOST
         TraceOperator(const TriangleTraceOperator<T>& op)
             : type(TraceOpType::Triangle)
-            , triangle(op) { }
+            , triangle(op) {
+        }
 
         ATLAS_HOST
         TraceOperator(const atlas::spatial::BvhTraceOperator<T>& op)
@@ -65,28 +68,22 @@ namespace geometry {
             , triangle_mesh(op) {
         }
 
-        ATLAS_DEVICE ATLAS_FORCE_INLINE
-            HitSurface<T>
-            trace(const Ray<T>& ray) const {
+        ATLAS_DEVICE ATLAS_FORCE_INLINE HitSurface<T>
+
+        trace(const Ray<T>& ray) const {
             switch (type) {
             case TraceOpType::Sphere:
                 return sphere(ray);
-
             case TraceOpType::Cylinder:
                 return cylinder(ray);
-
             case TraceOpType::Plane:
                 return plane(ray);
-
             case TraceOpType::Box:
                 return box(ray);
-
             case TraceOpType::Triangle:
                 return triangle(ray);
-
             case TraceOpType::TriangleMesh:
                 return triangle_mesh(ray);
-
             default:
                 ATLAS_ASSERT(false && "Unknown TraceOpType");
                 HitSurface<T> miss {};
@@ -95,18 +92,14 @@ namespace geometry {
             }
         }
 
-        ATLAS_DEVICE ATLAS_FORCE_INLINE
-            HitSurface<T>
-            operator()(const Ray<T>& ray) const {
+        ATLAS_DEVICE ATLAS_FORCE_INLINE HitSurface<T>
+
+        operator()(const Ray<T>& ray) const {
             return trace(ray);
         }
     };
-
 }
 
 template <typename T>
 using TraceOperator = geometry::TraceOperator<T>;
-
 }
-
-#endif

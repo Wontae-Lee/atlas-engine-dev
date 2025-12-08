@@ -1,28 +1,28 @@
-#ifndef INCLUDE_ATLAS_MATH_VECTOR_VECTOR4_HPP
-#define INCLUDE_ATLAS_MATH_VECTOR_VECTOR4_HPP
-
+#pragma once
 namespace atlas::math {
-
 template <typename T>
 constexpr Vector<T, 4>::Vector() noexcept
     : x(T(0))
     , y(T(0))
     , z(T(0))
-    , w(T(0)) { }
+    , w(T(0)) {
+}
 
 template <typename T>
 constexpr Vector<T, 4>::Vector(T s) noexcept
     : x(s)
     , y(s)
     , z(s)
-    , w(s) { }
+    , w(s) {
+}
 
 template <typename T>
 constexpr Vector<T, 4>::Vector(T x_, T y_, T z_, T w_) noexcept
     : x(x_)
     , y(y_)
     , z(z_)
-    , w(w_) { }
+    , w(w_) {
+}
 
 template <typename T>
 Vector<T, 4>::Vector(std::initializer_list<T> list) noexcept {
@@ -269,7 +269,6 @@ template <typename T>
 T
 Vector<T, 4>::dot(const Vector& v) const noexcept {
     if constexpr (std::is_floating_point_v<T>) {
-
         return std::fma(w, v.w, std::fma(z, v.z, std::fma(y, v.y, x * v.x)));
     } else {
         return x * v.x + y * v.y + z * v.z + w * v.w;
@@ -556,7 +555,4 @@ cmax(const Vector<T, 4>& a, const Vector<T, 4>& b) {
                         (a.z > b.z) ? a.z : b.z,
                         (a.w > b.w) ? a.w : b.w);
 }
-
 }
-
-#endif

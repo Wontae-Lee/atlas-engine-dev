@@ -1,12 +1,9 @@
-#ifndef INCLUDE_ATLAS_SPATIAL_BOUNDING_VOLUME_HIERARCHY_LBVH_HPP
-#define INCLUDE_ATLAS_SPATIAL_BOUNDING_VOLUME_HIERARCHY_LBVH_HPP
-
+#pragma once
 #include <algorithm>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel.h>
 
 namespace atlas::spatial {
-
 template <typename T>
 BvhTraceOperator<T>
 LinearBoundingVolumeHierachy<T>::make_trace_operator() const {
@@ -195,11 +192,9 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
     const int n = static_cast<int>(triangles.size());
     reset();
     if (n <= 0) return;
-
     h_prim_bounds.resize(n);
     h_centroids.resize(n);
     h_indices.resize(n);
-
     atlas::parallel_for<ExecutionPolicy::host>(
         0,
         n,
@@ -209,10 +204,8 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
             h_centroids[i]   = b.center();
             h_indices[i]     = i;
         });
-
     AABB<T> centroid_bounds;
     for (int i = 0; i < n; ++i) centroid_bounds.merge(h_centroids[i]);
-
     HostBuffer<uint32_t> morton(n);
     atlas::parallel_for<ExecutionPolicy::host>(
         0,
@@ -220,14 +213,12 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
         [this, &morton, &centroid_bounds](int i) {
             morton[i] = morton3(h_centroids[i], centroid_bounds, _morton_bits);
         });
-
     HostBuffer<int> order(n);
     for (int i = 0; i < n; ++i) order[i] = i;
     std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
         if (morton[a] != morton[b]) return morton[a] < morton[b];
         return a < b;
     });
-
     HostBuffer<uint32_t> morton_sorted(n);
     HostBuffer<uint64_t> keys_sorted(n);
     HostBuffer<int> indices_sorted(n);
@@ -238,9 +229,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
         indices_sorted[i] = h_indices[oi];
     }
     h_indices = indices_sorted;
-
     h_nodes.resize(std::max(1, 2 * n - 1), BVHNode<T>());
-
     for (int k = 0; k < n; ++k) {
         const int ni     = leaf_node_index(k, n);
         const int pid    = h_indices[k];
@@ -251,7 +240,6 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
         leaf.count             = 1;
         leaf.bounds            = h_prim_bounds[pid];
     }
-
     if (n == 1) {
         _root       = leaf_node_index(0, n);
         d_nodes     = h_nodes;
@@ -259,12 +247,10 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
         d_triangles = triangles;
         return;
     }
-
     for (int i = 0; i < n - 1; ++i) {
-        const int dl = delta_lcp(keys_sorted, n, i, i - 1);
-        const int dr = delta_lcp(keys_sorted, n, i, i + 1);
-        const int d  = (dr > dl) ? 1 : -1;
-
+        const int dl        = delta_lcp(keys_sorted, n, i, i - 1);
+        const int dr        = delta_lcp(keys_sorted, n, i, i + 1);
+        const int d         = (dr > dl) ? 1 : -1;
         const int delta_min = delta_lcp(keys_sorted, n, i, i - d);
         int lmax            = 2;
         while (delta_lcp(keys_sorted, n, i, i + lmax * d) > delta_min) { lmax <<= 1; }
@@ -274,26 +260,21 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
             step = (step + 1) >> 1;
             if (delta_lcp(keys_sorted, n, i, i + (t + step) * d) > delta_min) t += step;
         } while (step > 1);
-        const int j = i + t * d;
-
-        const int first = std::min(i, j);
-        const int last  = std::max(i, j);
-        const int split = find_split(morton_sorted, first, last);
-
+        const int j             = i + t * d;
+        const int first         = std::min(i, j);
+        const int last          = std::max(i, j);
+        const int split         = find_split(morton_sorted, first, last);
         const int left_is_leaf  = (split == first) ? 1 : 0;
         const int right_is_leaf = (split + 1 == last) ? 1 : 0;
-
-        const int left_child  = left_is_leaf ? leaf_node_index(split, n) : split;
-        const int right_child = right_is_leaf ? leaf_node_index(split + 1, n) : (split + 1);
-
-        BVHNode<T>& in = h_nodes[i];
-        in.is_leaf     = false;
-        in.left        = left_child;
-        in.right       = right_child;
-        in.start       = -1;
-        in.count       = 0;
+        const int left_child    = left_is_leaf ? leaf_node_index(split, n) : split;
+        const int right_child   = right_is_leaf ? leaf_node_index(split + 1, n) : (split + 1);
+        BVHNode<T>& in          = h_nodes[i];
+        in.is_leaf              = false;
+        in.left                 = left_child;
+        in.right                = right_child;
+        in.start                = -1;
+        in.count                = 0;
     }
-
     for (int i = n - 2; i >= 0; --i) {
         BVHNode<T>& in      = h_nodes[i];
         const BVHNode<T>& L = h_nodes[in.left];
@@ -301,9 +282,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
         in.bounds           = L.bounds;
         in.bounds.merge(R.bounds);
     }
-
-    _root = 0;
-
+    _root       = 0;
     d_nodes     = h_nodes;
     d_indices   = h_indices;
     d_triangles = triangles;
@@ -321,7 +300,4 @@ LinearBoundingVolumeHierachy<T>::reset() {
     d_triangles.clear();
     _root = -1;
 }
-
 }
-
-#endif

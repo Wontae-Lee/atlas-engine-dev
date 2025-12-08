@@ -1,15 +1,10 @@
-#ifndef INCLUDE_ATLAS_ATLAS_H
-#define INCLUDE_ATLAS_ATLAS_H
-
+#pragma once
 #include <atlas/advector/advector.h>
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/collider/collider.h>
 #include <atlas/collider/collider_surface_interaction.h>
 #include <atlas/core/macros.h>
-#include <atlas/detail/remove.h>
-#include <atlas/detail/tuple.h>
-#include <atlas/detail/zip_iterator.h>
 #include <atlas/emitter/emitter.h>
 #include <atlas/field/field.h>
 #include <atlas/generator/generator.h>
@@ -21,6 +16,8 @@
 #include <atlas/geometry/trace_operator.h>
 #include <atlas/geometry/triangle.h>
 #include <atlas/geometry/triangle_mesh.h>
+#include <atlas/iterator/counting_iterator.h>
+#include <atlas/iterator/zip_iterator.h>
 #include <atlas/logging/logging.h>
 #include <atlas/math/constants.h>
 #include <atlas/math/detail/config.h>
@@ -44,16 +41,41 @@
 #include <atlas/math/vector/vector2.h>
 #include <atlas/math/vector/vector3.h>
 #include <atlas/math/vector/vector4.h>
+#include <atlas/memory/copy.h>
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel.h>
+#include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
+#include <atlas/parallel/parallel_sort.h>
+#include <atlas/random/default_random_engine.h>
 #include <atlas/random/random.h>
 #include <atlas/random/sampling.h>
+#include <atlas/random/uniform_real_distribution.h>
+#include <atlas/remove/remove.h>
 #include <atlas/remover/remover.h>
+#include <atlas/scan/exclusive_scan.h>
 #include <atlas/searcher/searcher.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
-#include <atlas/solver/dsmc/dsmc.h>
+#include <atlas/solver/dsmc/dsmc_data.h>
+#include <atlas/solver/dsmc/dsmc_solver.h>
+#include <atlas/solver/dsmc/kernel/collide_operator.h>
+#include <atlas/solver/dsmc/kernel/collision_kernel.h>
+#include <atlas/solver/dsmc/kernel/hard_sphere.h>
+#include <atlas/solver/dsmc/kernel/larsen_borgnakke.h>
+#include <atlas/solver/dsmc/kernel/variable_hard_sphere.h>
+#include <atlas/solver/dsmc/kernel/variable_soft_sphere.h>
+#include <atlas/solver/dsmc/metrics/g_ref_adaptive_rms.h>
+#include <atlas/solver/dsmc/metrics/g_ref_constant.h>
+#include <atlas/solver/dsmc/metrics/g_ref_estimator.h>
+#include <atlas/solver/dsmc/metrics/g_ref_max_speed.h>
+#include <atlas/solver/dsmc/metrics/g_ref_operator.h>
+#include <atlas/solver/dsmc/metrics/g_ref_rms.h>
+#include <atlas/solver/dsmc/metrics/g_ref_thermal.h>
+#include <atlas/solver/dsmc/pair/majorant_frequency_scheme.h>
+#include <atlas/solver/dsmc/pair/no_time_counter.h>
+#include <atlas/solver/dsmc/pair/pair_operator.h>
+#include <atlas/solver/dsmc/pair/pairing_strategy.h>
 #include <atlas/solver/solver.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
@@ -63,18 +85,6 @@
 #include <atlas/system/particle_data.h>
 #include <atlas/system/particle_system.h>
 #include <atlas/time/timer.h>
-
-#ifdef ATLAS_ENABLE_VIZKIT
-#include <atlas/vizkit/camera/camera.h>
-#include <atlas/vizkit/layer/geometry/box_layer.h>
-#include <atlas/vizkit/layer/geometry/geometry_layer.h>
-#include <atlas/vizkit/layer/geometry/sphere_layer.h>
-#include <atlas/vizkit/layer/geometry/triangle_mesh_layer.h>
-#include <atlas/vizkit/layer/layer.h>
-#include <atlas/vizkit/layer/particle/particle_layer.h>
-#include <atlas/vizkit/shader/glsl.h>
-#include <atlas/vizkit/shader/shader_program.h>
-#include <atlas/vizkit/viewer/viewer.h>
-#endif
-
-#endif
+#include <atlas/transform/transform.h>
+#include <atlas/transform/transform_reduce.h>
+#include <atlas/tuple/tuple.h>

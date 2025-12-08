@@ -8,8 +8,5 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/googlebenchmark" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/googletest" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/external/tinyobj" vcs="Git" />
   </component>
 </project>

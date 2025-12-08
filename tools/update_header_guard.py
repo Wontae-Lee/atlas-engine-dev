@@ -1,85 +1,71 @@
 import os
 import re
 
-def path_to_guard(filepath, project_name, include_root="include"):
+
+def ensure_pragma_once(content):
     """
-    Generate a header guard string based on file path and project name.
-    Only the path relative to include_root is used.
+    Make sure the file begins with '#pragma once'.
+    Remove existing header guards if present.
     """
-    abspath = os.path.abspath(filepath)
-    include_root_abs = os.path.abspath(include_root)
-
-    if abspath.startswith(include_root_abs):
-        relpath = abspath[len(include_root_abs):].lstrip(os.sep)
-    else:
-        relpath = os.path.relpath(filepath)
-
-    guard = relpath.replace(os.sep, '_').replace('.', '_').upper()
-    guard = guard.replace('-', '_')
-
-    if guard.startswith(project_name.upper() + "_"):
-        full_guard = f"INCLUDE_{guard}"
-    else:
-        full_guard = f"INCLUDE_{project_name.upper()}_{guard}"
-
-    return full_guard
-
-def replace_header_guard(content, new_guard):
-    """
-    Replace the existing header guard (#ifndef/#define ... #endif).
-    Ensures the last #endif line is replaced with a clean '#endif'.
-    """
-    # Replace #ifndef and #define (only the first occurrence)
-    pattern = r"(?P<ifndef>#ifndef\s+[A-Za-z0-9_]+)\s+(?P<define>#define\s+[A-Za-z0-9_]+)"
-    new_guard_block = f"#ifndef {new_guard}\n#define {new_guard}"
-    content = re.sub(pattern, new_guard_block, content, count=1)
-
-    # Split into lines to handle the last #endif precisely
     lines = content.splitlines()
-    for i in range(len(lines) - 1, -1, -1):  # search from bottom
-        if re.match(r"^\s*#endif\b", lines[i]):
-            lines[i] = "#endif"  # replace with clean #endif
-            break
 
-    return "\n".join(lines) + "\n"
+    # Remove header guards (#ifndef / #define)
+    cleaned = []
+    skip = False
+    for line in lines:
+        if re.match(r"^\s*#ifndef\b", line):
+            skip = True
+            continue
+        if skip and re.match(r"^\s*#define\b", line):
+            continue
+        if skip and re.match(r"^\s*#endif\b", line):
+            skip = False
+            continue
+        cleaned.append(line)
 
-def update_header_guard(filepath, project_name, include_root="include"):
+    cleaned_text = "\n".join(cleaned).strip()
+
+    # Ensure pragma once at top
+    if not cleaned_text.startswith("#pragma once"):
+        cleaned_text = "#pragma once\n\n" + cleaned_text
+
+    return cleaned_text + "\n"
+
+
+def update_to_pragma_once(filepath):
     """
-    Update the header guard in the given file and print info.
+    Load a file, remove header guards, enforce '#pragma once', and save.
     """
-    directory = os.path.dirname(filepath)
-    filename = os.path.basename(filepath)
+    os.path.dirname(filepath)
+    os.path.basename(filepath)
 
     with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    new_guard = path_to_guard(filepath, project_name, include_root)
-    new_content = replace_header_guard(content, new_guard)
+    new_content = ensure_pragma_once(content)
 
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(new_content)
 
-    print(f"[Directory] {directory if directory else '.'}")
-    print(f"[Filename]  {filename}")
-    print(f"[Guard]     {new_guard}")
-    print()
+    print(f"[Updated] {filepath}")
 
-def batch_update_header_guards(root_dir, project_name, include_root="include"):
+
+def batch_update_to_pragma_once(root_dir):
     """
-    Recursively update header guards for all .h and .hpp files under root_dir.
+    Recursively update all .h, .hpp, .inl files under root_dir to use '#pragma once'.
     """
     for subdir, _, files in os.walk(root_dir):
         for file in files:
-
             if file.endswith(('.h', '.hpp', '.inl')):
                 filepath = os.path.join(subdir, file)
-                update_header_guard(filepath, project_name, include_root)
+                update_to_pragma_once(filepath)
+
 
 if __name__ == "__main__":
+    # ATLAS include headers
     PROJECT_ROOT = "../include"
-    PROJECT_NAME = "ATLAS"
-    batch_update_header_guards(PROJECT_ROOT, PROJECT_NAME, include_root=PROJECT_ROOT)
+    batch_update_to_pragma_once(PROJECT_ROOT)
 
-    PROJECT_ROOT = "../src/third-party"
-    PROJECT_NAME = "VIZKIT"
-    batch_update_header_guards(PROJECT_ROOT, PROJECT_NAME, include_root=PROJECT_ROOT)
+    # VIZKIT third-party headers
+    PROJECT_ROOT = "../src/vizkit"
+    batch_update_to_pragma_once(PROJECT_ROOT)

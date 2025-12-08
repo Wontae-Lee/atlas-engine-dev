@@ -1,0 +1,101 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+
+    {
+      "name": "dev-debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ATLAS_USE_CUDA": "OFF",
+        "ATLAS_ENABLE_TESTS": "ON",
+        "ATLAS_ENABLE_BENCH": "ON",
+        "BUILD_SHARED_LIBS": "ON"
+      }
+    },
+
+    {
+      "name": "dev-release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "ATLAS_USE_CUDA": "OFF",
+        "ATLAS_ENABLE_TESTS": "ON",
+        "ATLAS_ENABLE_BENCH": "ON",
+        "BUILD_SHARED_LIBS": "ON"
+      }
+    },
+
+    {
+      "name": "cuda-release",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/cuda-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ATLAS_USE_CUDA": "ON",
+        "ATLAS_ENABLE_TESTS": "OFF",
+        "ATLAS_ENABLE_BENCH": "OFF",
+        "BUILD_SHARED_LIBS": "ON"
+      }
+    },
+
+    {
+      "name": "cuda-static-release",
+      "inherits": "cuda-release",
+      "binaryDir": "${sourceDir}/build/cuda-static-release",
+      "cacheVariables": {
+        "BUILD_SHARED_LIBS": "OFF"
+      }
+    },
+
+    {
+      "name": "docker-release",
+      "inherits": "cuda-release",
+      "binaryDir": "${sourceDir}/build/docker-release",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "ATLAS_USE_VIZKIT": "OFF"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name": "dev-debug",
+      "configurePreset": "dev-debug"
+    },
+    {
+      "name": "dev-release",
+      "configurePreset": "dev-release"
+    },
+    {
+      "name": "cuda-release",
+      "configurePreset": "cuda-release"
+    },
+    {
+      "name": "cuda-static-release",
+      "configurePreset": "cuda-static-release"
+    },
+    {
+      "name": "docker-release",
+      "configurePreset": "docker-release"
+    }
+  ]
+}

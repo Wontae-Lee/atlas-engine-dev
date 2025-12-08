@@ -1,5 +1,4 @@
-#ifndef INCLUDE_ATLAS_MATH_MATRIX_MATRIX2X2_H
-#define INCLUDE_ATLAS_MATH_MATRIX_MATRIX2X2_H
+#pragma once
 #include <atlas/math/matrix/matrix.h>
 #include <atlas/math/vector/vector.h>
 #include <cmath>
@@ -7,6 +6,7 @@
 #include <initializer_list>
 #include <limits>
 #include <type_traits>
+
 namespace atlas {
 namespace math {
     template <typename T>
@@ -110,6 +110,7 @@ namespace math {
         solve(const Vector<T, 2>& b, Vector<T, 2>& x,
               T eps = std::numeric_limits<T>::epsilon()) const noexcept;
     };
+
     template <typename T>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Matrix<T, 2, 2>
     identity2x2() noexcept;
@@ -151,14 +152,16 @@ namespace math {
     solve(const Matrix<T, 2, 2>& A, const Vector<T, 2>& b, Vector<T, 2>& x,
           T eps = std::numeric_limits<T>::epsilon()) noexcept;
     template <typename T>
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-        Vector<T, 2>
-        solve(const Matrix<T, 2, 2>& A, const Vector<T, 2>& b) noexcept;
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE
+        ATLAS_FORCE_INLINE
+            Vector<T, 2>
+            solve(const Matrix<T, 2, 2>& A, const Vector<T, 2>& b) noexcept;
 }
+
 template <typename T>
 using Matrix2x2  = math::Matrix<T, 2, 2>;
 using Matrix2x2F = Matrix2x2<float>;
 using Matrix2x2D = Matrix2x2<double>;
 }
+
 #include <atlas/math/matrix/matrix2x2.hpp>
-#endif

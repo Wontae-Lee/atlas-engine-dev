@@ -1,14 +1,15 @@
-#ifndef INCLUDE_ATLAS_MATH_MATRIX_STATISTICS_H
-#define INCLUDE_ATLAS_MATH_MATRIX_STATISTICS_H
+#pragma once
 #include <atlas/math/detail/config.h>
 #include <atlas/math/matrix/expression.h>
 #include <atlas/math/matrix/reductions.h>
 #include <cmath>
 #include <cstddef>
 #include <type_traits>
+
 namespace atlas::math {
 template <MatrixExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
     expr_value_t<E>
     mean(const E& expr) noexcept {
     using T             = expr_value_t<E>;
@@ -16,8 +17,10 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     if (n == 0) return T(0);
     return sum(expr) / static_cast<T>(n);
 }
+
 template <MatrixExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
     expr_value_t<E>
     variance_population(const E& expr) noexcept {
     using T             = expr_value_t<E>;
@@ -33,8 +36,10 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     }
     return static_cast<T>(M2 / static_cast<double>(n));
 }
+
 template <MatrixExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
     expr_value_t<E>
     variance_sample(const E& expr) noexcept {
     using T             = expr_value_t<E>;
@@ -50,23 +55,30 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     }
     return static_cast<T>(M2 / static_cast<double>(n - 1));
 }
+
 template <MatrixExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
     expr_value_t<E>
     stddev_population(const E& expr) noexcept {
     using T = expr_value_t<E>;
     return static_cast<T>(std::sqrt(static_cast<double>(variance_population(expr))));
 }
+
 template <MatrixExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
     expr_value_t<E>
     stddev_sample(const E& expr) noexcept {
     using T = expr_value_t<E>;
     return static_cast<T>(std::sqrt(static_cast<double>(variance_sample(expr))));
 }
+
 template <MatrixExpressionType EX, MatrixExpressionType EY>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-covariance_population(const EX& x, const EY& y) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    covariance_population(const EX& x, const EY& y) noexcept {
     using T             = std::common_type_t<expr_value_t<EX>, expr_value_t<EY>>;
     const auto& a       = x();
     const auto& b       = y();
@@ -78,9 +90,12 @@ covariance_population(const EX& x, const EY& y) noexcept {
     for (std::size_t i = 0; i < n; ++i) acc += static_cast<double>((a[i] - mx) * (b[i] - my));
     return static_cast<T>(acc / static_cast<double>(n));
 }
+
 template <MatrixExpressionType EX, MatrixExpressionType EY>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-covariance_sample(const EX& x, const EY& y) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    covariance_sample(const EX& x, const EY& y) noexcept {
     using T             = std::common_type_t<expr_value_t<EX>, expr_value_t<EY>>;
     const auto& a       = x();
     const auto& b       = y();
@@ -92,17 +107,22 @@ covariance_sample(const EX& x, const EY& y) noexcept {
     for (std::size_t i = 0; i < n; ++i) acc += static_cast<double>((a[i] - mx) * (b[i] - my));
     return static_cast<T>(acc / static_cast<double>(n - 1));
 }
+
 template <MatrixExpressionType EX, MatrixExpressionType EY>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-correlation(const EX& x, const EY& y) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    correlation(const EX& x, const EY& y) noexcept {
     using T    = std::common_type_t<expr_value_t<EX>, expr_value_t<EY>>;
     const T sx = stddev_sample(x);
     const T sy = stddev_sample(y);
     if (sx == T(0) || sy == T(0)) return T(0);
     return covariance_sample(x, y) / (sx * sy);
 }
+
 template <MatrixExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
     expr_value_t<E>
     skewness(const E& expr) noexcept {
     using T             = expr_value_t<E>;
@@ -122,8 +142,10 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     const double mu3 = M3 / static_cast<double>(n);
     return static_cast<T>(mu3 / std::pow(mu2, 1.5));
 }
+
 template <MatrixExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
     expr_value_t<E>
     kurtosis_excess(const E& expr) noexcept {
     using T             = expr_value_t<E>;
@@ -144,8 +166,10 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     const double mu4 = M4 / static_cast<double>(n);
     return static_cast<T>(mu4 / (mu2 * mu2) - 3.0);
 }
+
 template <MatrixExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
     expr_value_t<E>
     logsumexp(const E& expr) noexcept {
     using T             = expr_value_t<E>;
@@ -161,28 +185,36 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     for (std::size_t i = 0; i < n; ++i) acc += std::exp(static_cast<double>(v[i] - mx));
     return static_cast<T>(std::log(acc) + static_cast<double>(mx));
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-softmax(const E& expr) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    softmax(const E& expr) noexcept {
     using T     = expr_value_t<E>;
     const T lse = logsumexp(expr);
     struct SoftmaxOp {
         T lse;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
             T
             operator()(T v) const noexcept { return static_cast<T>(std::exp(static_cast<double>(v - lse))); }
     };
     return MatrixUnaryOperator<T, E, SoftmaxOp>(expr(), SoftmaxOp { lse });
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-zscore(const E& expr) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    zscore(const E& expr) noexcept {
     using T   = expr_value_t<E>;
     const T m = mean(expr);
     const T s = stddev_sample(expr);
     if (s == T(0)) {
         struct ZeroOp {
             T mid;
+
             ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
             operator()(T) const noexcept { return T(0); }
         };
@@ -190,14 +222,18 @@ zscore(const E& expr) noexcept {
     }
     struct ZOp {
         T m, invs;
+
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
         operator()(T x) const noexcept { return (x - m) * invs; }
     };
     return MatrixUnaryOperator<T, E, ZOp>(expr(), ZOp { m, T(1) / s });
 }
+
 template <MatrixExpressionType E>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
-normalize_minmax(const E& expr, expr_value_t<E> a, expr_value_t<E> b) noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+
+    auto
+    normalize_minmax(const E& expr, expr_value_t<E> a, expr_value_t<E> b) noexcept {
     using T       = expr_value_t<E>;
     const T vmin  = min(expr);
     const T vmax  = max(expr);
@@ -205,6 +241,7 @@ normalize_minmax(const E& expr, expr_value_t<E> a, expr_value_t<E> b) noexcept {
     if (range == T(0)) {
         struct MidOp {
             T mid;
+
             ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
             operator()(T) const noexcept { return mid; }
         };
@@ -213,10 +250,10 @@ normalize_minmax(const E& expr, expr_value_t<E> a, expr_value_t<E> b) noexcept {
     }
     struct ScaleOp {
         T vmin, s, a;
+
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
         operator()(T x) const noexcept { return a + (x - vmin) * s; }
     };
     return MatrixUnaryOperator<T, E, ScaleOp>(expr(), ScaleOp { vmin, (b - a) / range, a });
 }
 }
-#endif
