@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # LANGUAGES: languages directly enabled by project()
 # CUDA is optionally enabled later via enable_language(CUDA)
-project(atlas-core-dev LANGUAGES CXX)
+project(atlas-engine-dev LANGUAGES CXX)
 
 # =====================================================
 # C++ standard configuration
