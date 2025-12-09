@@ -13,7 +13,6 @@ namespace solver {
     struct DsmcDeviceProbe {
         T* g_ref_per_cell { nullptr };
         int* n_collisions { nullptr };
-
     };
     template <typename T>
     class DsmcData {

@@ -23,14 +23,14 @@
   </component>
   <component name="CMakeRunConfigurationManager">
     <generated>
-      <config projectName="atlas-core-dev" targetName="atlas-core" />
-      <config projectName="atlas-core-dev" targetName="tinyobjloader" />
-      <config projectName="atlas-core-dev" targetName="solver" />
-      <config projectName="atlas-core-dev" targetName="cuda_smart_pointer" />
-      <config projectName="atlas-core-dev" targetName="visualization" />
-      <config projectName="atlas-core-dev" targetName="triangle_mesh" />
-      <config projectName="atlas-core-dev" targetName="sah_bvh" />
-      <config projectName="atlas-core-dev" targetName="uninstall" />
+      <config projectName="atlas-engine-dev" targetName="cuda_smart_pointer" />
+      <config projectName="atlas-engine-dev" targetName="tinyobjloader" />
+      <config projectName="atlas-engine-dev" targetName="visualization" />
+      <config projectName="atlas-engine-dev" targetName="atlas-core" />
+      <config projectName="atlas-engine-dev" targetName="uninstall" />
+      <config projectName="atlas-engine-dev" targetName="sah_bvh" />
+      <config projectName="atlas-engine-dev" targetName="solver" />
+      <config projectName="atlas-engine-dev" targetName="triangle_mesh" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -49,8 +49,15 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2db44106-251d-405a-9597-998fbb8b50ae" name="Changes" comment="bugfix for the dsmc solver.">
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+    <list default="true" id="2db44106-251d-405a-9597-998fbb8b50ae" name="Changes" comment="depecated work distribuiton for &quot;PerCell&quot;.">
+      <change beforePath="$PROJECT_DIR$/.idea/atlas-engine-dev.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/atlas-engine-dev.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/advector/advector.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/advector/advector.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/core/macros.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/core/macros.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -103,7 +110,6 @@
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/solver/dsmc/dsmc_solver.hpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_constant.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/vizkit/camera/camera.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/vizkit/camera/camera.hpp" root0="FORCE_HIGHLIGHTING" />
@@ -123,6 +129,9 @@
     <setting file="file://$PROJECT_DIR$/src/vizkit/shader/shader_program.hpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/vizkit/viewer/viewer.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/vizkit/viewer/viewer.hpp" root0="SKIP_HIGHLIGHTING" />
+  </component>
+  <component name="MacroExpansionManager">
+    <option name="directoryName" value="oUaVNtCI" />
   </component>
   <component name="ProjectApplicationVersion">
     <option name="ide" value="CLion" />
@@ -194,47 +203,47 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.visualization">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="atlas-core" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-core-dev" TARGET_NAME="atlas-core" CONFIG_NAME="Debug">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="cuda_smart_pointer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-core-dev" TARGET_NAME="cuda_smart_pointer" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-core-dev" RUN_TARGET_NAME="cuda_smart_pointer">
+    <configuration name="atlas-core" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-core" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="sah_bvh" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-core-dev" TARGET_NAME="sah_bvh" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-core-dev" RUN_TARGET_NAME="sah_bvh">
+    <configuration name="cuda_smart_pointer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="cuda_smart_pointer" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="cuda_smart_pointer">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="solver" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-core-dev" TARGET_NAME="solver" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-core-dev" RUN_TARGET_NAME="solver">
+    <configuration name="sah_bvh" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="sah_bvh" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="sah_bvh">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="tinyobjloader" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-core-dev" TARGET_NAME="tinyobjloader" CONFIG_NAME="Debug">
+    <configuration name="solver" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="solver" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="solver">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="triangle_mesh" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-core-dev" TARGET_NAME="triangle_mesh" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-core-dev" RUN_TARGET_NAME="triangle_mesh">
+    <configuration name="tinyobjloader" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="tinyobjloader" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="uninstall" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-core-dev" TARGET_NAME="uninstall" CONFIG_NAME="Debug">
+    <configuration name="triangle_mesh" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="triangle_mesh" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="triangle_mesh">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="visualization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-core-dev" TARGET_NAME="visualization" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-core-dev" RUN_TARGET_NAME="visualization">
+    <configuration name="uninstall" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="uninstall" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="visualization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="visualization" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="visualization">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -252,6 +261,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/generate_headers.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -274,6 +284,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/remove_comments.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -296,6 +307,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/remove_space.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -318,6 +330,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/update_header_guard.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -359,9 +372,9 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.remove_space" />
-        <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.update_header_guard" />
       </list>
     </recent_temporary>
@@ -455,14 +468,6 @@
       <workItem from="1765123784409" duration="72000" />
       <workItem from="1765184381156" duration="467000" />
       <workItem from="1765185002485" duration="6286000" />
-    </task>
-    <task id="LOCAL-00015" summary="set the check-point version(0.1.0)">
-      <option name="closed" value="true" />
-      <created>1763382944209</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1763382944209</updated>
     </task>
     <task id="LOCAL-00016" summary="set the check-point version(0.1.0)">
       <option name="closed" value="true" />
@@ -848,7 +853,15 @@
       <option name="project" value="LOCAL" />
       <updated>1765201758090</updated>
     </task>
-    <option name="localTasksCounter" value="64" />
+    <task id="LOCAL-00064" summary="depecated work distribuiton for &quot;PerCell&quot;.">
+      <option name="closed" value="true" />
+      <created>1765268980358</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1765268980359</updated>
+    </task>
+    <option name="localTasksCounter" value="65" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -926,7 +939,8 @@
     <MESSAGE value="restored git submodules." />
     <MESSAGE value="merged from atlas-core-dev" />
     <MESSAGE value="bugfix for the dsmc solver." />
-    <option name="LAST_COMMIT_MESSAGE" value="bugfix for the dsmc solver." />
+    <MESSAGE value="depecated work distribuiton for &quot;PerCell&quot;." />
+    <option name="LAST_COMMIT_MESSAGE" value="depecated work distribuiton for &quot;PerCell&quot;." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

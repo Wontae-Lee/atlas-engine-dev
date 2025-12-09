@@ -6,10 +6,7 @@
 #include <atlas/solver/solver.h>
 namespace atlas {
 namespace solver {
-    enum class DsmcWorkDistribution {
-        PerCell,
-        PerCollision
-    };
+
     template <typename T>
     class DsmcSolver final : public Solver<T> {
     public:
@@ -24,10 +21,7 @@ namespace solver {
         solve(const system::ParticleDeviceProbe<T>& data,
               T dt,
               int& active) override;
-        ATLAS_HOST ATLAS_FORCE_INLINE void
-        set_work_distribution(const DsmcWorkDistribution dist) {
-            _dsmc_work_distribution = dist;
-        }
+
         ATLAS_HOST ATLAS_FORCE_INLINE void
         compute_g_ref(const system::SpatialHashProbe<T>& neighbor_probe,
                       const DsmcDeviceProbe<T>& dsmc_probe,
@@ -41,22 +35,11 @@ namespace solver {
         count_collisions(const system::SpatialHashProbe<T>& neighbor_probe,
                          const DsmcDeviceProbe<T>& dsmc_probe,
                          T dt);
-        void
-        collide_per_cell(const system::SpatialHashProbe<T>& neighbor_probe,
-                         const DsmcDeviceProbe<T>& dsmc_probe,
-                         const system::ParticleDeviceProbe<T>& data,
-                         T dt);
-        void
-        collide_per_collision(const system::SpatialHashProbe<T>& neighbor_probe,
-                              const DsmcDeviceProbe<T>& dsmc_probe,
-                              const system::ParticleDeviceProbe<T>& data,
-                              T dt);
 
     private:
         SpatialHashingSearcherHostPtr<T> _searcher;
         DsmcDataHostPtr<T> _dsmc_data;
         dsmc::GRefEstimatorHostPtr<T> _g_ref_estimator;
-        DsmcWorkDistribution _dsmc_work_distribution = DsmcWorkDistribution::PerCollision;
     };
 }
 template <typename T>
