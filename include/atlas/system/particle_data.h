@@ -9,6 +9,7 @@ namespace system {
     struct ParticleDeviceProbe {
         Vector3<T>* pos { nullptr };
         Vector3<T>* vel { nullptr };
+        size_t* species { nullptr };
     };
 
     template <typename T>
@@ -21,10 +22,13 @@ namespace system {
         positions() noexcept;
         ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<Vector3<T>>&
         velocities() noexcept;
+        ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<size_t>&
+        species() noexcept;
 
     private:
         DeviceBuffer<Vector3<T>> d_pos;
         DeviceBuffer<Vector3<T>> d_vel;
+        DeviceBuffer<size_t> d_species;
     };
 }
 

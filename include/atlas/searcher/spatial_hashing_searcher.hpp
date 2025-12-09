@@ -123,8 +123,9 @@ SpatialHashingSearcher<T>::SpatialHashingSearcher(Vector3<T> lower_corner_,
     if (ny < 1) ny = 1;
     if (nz < 1) nz = 1;
     _grid_size = Vector3<int> { nx, ny, nz };
-    n_cells    = num_cells();
-    _mode      = NeighborSearchMode::passive;
+    _n_cells   = static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny)
+        * static_cast<std::size_t>(nz);
+    _mode = NeighborSearchMode::passive;
 }
 
 template <typename T>
@@ -157,8 +158,8 @@ SpatialHashingSearcher<T>::reset() noexcept {
     }
     d_keys.resize(0);
     d_indices.resize(0);
-    d_cell_start.resize(n_cells);
-    d_cell_end.resize(n_cells);
+    d_cell_start.resize(_n_cells);
+    d_cell_end.resize(_n_cells);
     d_keys_ptr       = atlas::raw_pointer_cast(d_keys.data());
     d_indices_ptr    = atlas::raw_pointer_cast(d_indices.data());
     d_cell_start_ptr = atlas::raw_pointer_cast(d_cell_start.data());
@@ -167,8 +168,8 @@ SpatialHashingSearcher<T>::reset() noexcept {
 
 template <typename T>
 std::size_t
-SpatialHashingSearcher<T>::num_cells() const noexcept {
-    return static_cast<std::size_t>(_grid_size.x) * static_cast<std::size_t>(_grid_size.y) * static_cast<std::size_t>(_grid_size.z);
+SpatialHashingSearcher<T>::n_cells() const noexcept {
+    return _n_cells;
 }
 
 template <typename T>
@@ -215,6 +216,8 @@ SpatialHashingSearcher<T>::readjust(const system::ParticleDeviceProbe<T>& data,
     if (ny < 1) ny = 1;
     if (nz < 1) nz = 1;
     _grid_size = Vector3<int> { nx, ny, nz };
+    _n_cells   = static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny)
+        * static_cast<std::size_t>(nz);
 }
 
 template <typename T>
@@ -231,6 +234,7 @@ SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& data,
     if (_mode == NeighborSearchMode::active) {
         this->readjust(data, n_active);
     }
+    const auto n_cells = static_cast<std::size_t>(_n_cells);
     d_keys.resize(static_cast<std::size_t>(n_active));
     d_indices.resize(static_cast<std::size_t>(n_active));
     d_cell_start.resize(n_cells);
@@ -272,16 +276,16 @@ SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& data,
             });
     }
     {
-        atlas::device_ptr<std::uint32_t> keys_begin(d_keys_ptr);
-        atlas::device_ptr<std::uint32_t> keys_end = keys_begin + n_active;
-        atlas::device_ptr<int> idx_begin(d_indices_ptr);
+        const atlas::device_ptr<std::uint32_t> keys_begin(d_keys_ptr);
+        const atlas::device_ptr<std::uint32_t> keys_end = keys_begin + n_active;
+        const atlas::device_ptr<int> idx_begin(d_indices_ptr);
         atlas::parallel_sort_by_key<ExecutionPolicy::device>(keys_begin, keys_end, idx_begin);
     }
     {
-        atlas::device_ptr<int> cs_begin(d_cell_start_ptr);
-        atlas::device_ptr<int> cs_end = cs_begin + static_cast<std::ptrdiff_t>(n_cells);
+        const atlas::device_ptr<int> cs_begin(d_cell_start_ptr);
+        const atlas::device_ptr<int> cs_end = cs_begin + static_cast<std::ptrdiff_t>(n_cells);
         atlas::device_ptr<int> ce_begin(d_cell_end_ptr);
-        atlas::device_ptr<int> ce_end = ce_begin + static_cast<std::ptrdiff_t>(n_cells);
+        const atlas::device_ptr<int> ce_end = ce_begin + static_cast<std::ptrdiff_t>(n_cells);
         atlas::parallel_fill<ExecutionPolicy::device>(cs_begin, cs_end, -1);
         atlas::parallel_fill<ExecutionPolicy::device>(ce_begin, ce_end, -1);
         const std::uint32_t* keys = atlas::raw_pointer_cast<std::uint32_t>(d_keys_ptr);

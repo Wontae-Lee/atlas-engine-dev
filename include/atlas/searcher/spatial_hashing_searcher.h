@@ -54,7 +54,7 @@ namespace system {
         readjust(const system::ParticleDeviceProbe<T>& data,
                  const int& active) noexcept;
         ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::size_t
-        num_cells() const noexcept;
+        n_cells() const noexcept;
         ATLAS_HOST ATLAS_FORCE_INLINE T
         cell_size() const noexcept;
         ATLAS_HOST ATLAS_FORCE_INLINE T
@@ -67,7 +67,7 @@ namespace system {
         T _cell_volume             = T(1);
         NeighborSearchRange _range = NeighborSearchRange::single;
         NeighborSearchMode _mode   = NeighborSearchMode::active;
-        size_t n_cells             = 1;
+        size_t _n_cells             = 1;
         Vector3<int> _grid_size { 0, 0, 0 };
         DeviceBuffer<std::uint32_t> d_keys;
         DeviceBuffer<int> d_indices;

@@ -50,14 +50,40 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2db44106-251d-405a-9597-998fbb8b50ae" name="Changes" comment="depecated work distribuiton for &quot;PerCell&quot;.">
-      <change beforePath="$PROJECT_DIR$/.idea/atlas-engine-dev.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/atlas-engine-dev.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/functor/device_pair_indexer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/editor.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/editor.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/advector/advector.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/advector/advector.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/core/macros.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/core/macros.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/emitter/emitter.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/emitter/emitter.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/remover/remover.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/remover/remover.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/collision_kernel.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/larsen_borgnakke.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/variable_hard_sphere.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/variable_soft_sphere.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_adaptive_rms.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_adaptive_rms.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_constant.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_constant.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_max_speed.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_max_speed.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_thermal.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_thermal.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/pair/majorant_frequency_scheme.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/pair/no_time_counter.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/pair/pair_operator.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/pair/pairing_strategy.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_data.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/particle_data.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/particle_data.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/vizkit.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/vizkit.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -98,6 +124,45 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/atlas.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/box.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/box.hpp" root0="FORCE_HIGHLIGHTING" />
@@ -107,10 +172,20 @@
     <setting file="file://$PROJECT_DIR$/include/atlas/memory/copy.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/parallel/parallel.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/parallel/parallel_fill.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/remover/remover.hpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/searcher/spatial_hashing_searcher.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/searcher/spatial_hashing_searcher.hpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_constant.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/solver/dsmc/metrics/g_ref_operator.hpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/solver/solver.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/system/particle_data.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/system/particle_data.hpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/vizkit/camera/camera.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/vizkit/camera/camera.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.h" root0="FORCE_HIGHLIGHTING" />
@@ -372,8 +447,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.generate_headers" />
+        <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.remove_space" />
         <item itemvalue="Python.update_header_guard" />
       </list>
@@ -468,14 +543,6 @@
       <workItem from="1765123784409" duration="72000" />
       <workItem from="1765184381156" duration="467000" />
       <workItem from="1765185002485" duration="6286000" />
-    </task>
-    <task id="LOCAL-00016" summary="set the check-point version(0.1.0)">
-      <option name="closed" value="true" />
-      <created>1763382976211</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1763382976211</updated>
     </task>
     <task id="LOCAL-00017" summary="changed the class name &quot;Collider&quot; to &quot;Advector&quot;. and fixed bugs.">
       <option name="closed" value="true" />
@@ -861,7 +928,15 @@
       <option name="project" value="LOCAL" />
       <updated>1765268980359</updated>
     </task>
-    <option name="localTasksCounter" value="65" />
+    <task id="LOCAL-00065" summary="depecated work distribuiton for &quot;PerCell&quot;.">
+      <option name="closed" value="true" />
+      <created>1765269037433</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1765269037433</updated>
+    </task>
+    <option name="localTasksCounter" value="66" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

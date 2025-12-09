@@ -7,6 +7,7 @@
 #include <vizkit/layer/geometry/triangle_mesh_layer.h>
 #include <vizkit/layer/layer.h>
 #include <vizkit/layer/particle/particle_layer.h>
+#include <vizkit/macros/macros.h>
 #include <vizkit/shader/glsl.h>
 #include <vizkit/shader/shader_program.h>
 #include <vizkit/viewer/viewer.h>

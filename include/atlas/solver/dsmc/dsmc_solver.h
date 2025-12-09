@@ -23,18 +23,19 @@ namespace solver {
               int& active) override;
 
         ATLAS_HOST ATLAS_FORCE_INLINE void
-        compute_g_ref(const system::SpatialHashProbe<T>& neighbor_probe,
+        count_species(const system::SpatialHashProbe<T>& neighbor_probe,
                       const DsmcDeviceProbe<T>& dsmc_probe,
-                      const system::ParticleDeviceProbe<T>& data,
-                      int n_cells) {
-            if (_g_ref_estimator) {
-                _g_ref_estimator->compute(neighbor_probe, dsmc_probe, data, n_cells);
-            }
-        }
+                      const system::ParticleDeviceProbe<T>& data);
+
         ATLAS_HOST ATLAS_FORCE_INLINE void
         count_collisions(const system::SpatialHashProbe<T>& neighbor_probe,
                          const DsmcDeviceProbe<T>& dsmc_probe,
                          T dt);
+
+        ATLAS_HOST ATLAS_FORCE_INLINE void
+        compute_g_ref(const system::SpatialHashProbe<T>& neighbor_probe,
+                      const DsmcDeviceProbe<T>& dsmc_probe,
+                      const system::ParticleDeviceProbe<T>& data);
 
     private:
         SpatialHashingSearcherHostPtr<T> _searcher;

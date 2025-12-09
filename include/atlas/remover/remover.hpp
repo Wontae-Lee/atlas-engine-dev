@@ -99,16 +99,19 @@ Remover<T>::operator()(const ParticleDeviceProbe<T>& data, int& active) const {
     T z_max        = z_max_;
     auto pos       = data.pos;
     auto vel       = data.vel;
+    auto species   = data.species;
     auto zip_begin = atlas::make_zip_iterator(
         atlas::make_tuple(
             pos,
-            vel));
+            vel,
+            species));
+
     auto zip_end = zip_begin + active;
     auto new_end = atlas::remove_if(
         atlas::device,
         zip_begin,
         zip_end,
-        [=] ATLAS_DEVICE(const atlas::tuple<Vector3F, Vector3F>& t) {
+        [=] ATLAS_DEVICE(const atlas::tuple<Vector3F, Vector3F, size_t>& t) {
             const Vector3F& p = atlas::get<0>(t);
             return (p.x < x_min) || (p.x > x_max) || (p.y < y_min) || (p.y > y_max) || (p.z < z_min) || (p.z > z_max);
         });
