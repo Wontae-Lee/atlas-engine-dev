@@ -2,6 +2,7 @@
 
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/solver/dsmc/dsmc_data.h>
+#include <atlas/solver/dsmc/kernel/collide_kernel.h>
 #include <atlas/solver/dsmc/metrics/g_ref_estimator.h>
 #include <atlas/solver/solver.h>
 namespace atlas {
@@ -13,10 +14,12 @@ namespace solver {
         ATLAS_HOST ATLAS_FORCE_INLINE
         DsmcSolver();
         ~DsmcSolver() override = default;
+
         ATLAS_HOST ATLAS_FORCE_INLINE void
         operator()(const system::ParticleDeviceProbe<T>& data,
                    T dt,
                    int& active) override;
+
         ATLAS_HOST ATLAS_FORCE_INLINE void
         solve(const system::ParticleDeviceProbe<T>& data,
               T dt,
@@ -37,10 +40,21 @@ namespace solver {
                       const DsmcDeviceProbe<T>& dsmc_probe,
                       const system::ParticleDeviceProbe<T>& data);
 
+        ATLAS_HOST ATLAS_FORCE_INLINE void
+        flatten_collision(const DsmcDeviceProbe<T>& dsmc_probe,
+                          DeviceBuffer<int>& d_flattened_collision);
+
+        ATLAS_HOST ATLAS_FORCE_INLINE void
+        collide_particles(const system::ParticleDeviceProbe<T>& data,
+                          const DsmcDeviceProbe<T>& dsmc_probe,
+                          const system::SpatialHashProbe<T>& neighbor_probe,
+                          DeviceBuffer<int>& d_flattened_collision);
+
     private:
         SpatialHashingSearcherHostPtr<T> _searcher;
         DsmcDataHostPtr<T> _dsmc_data;
         dsmc::GRefEstimatorHostPtr<T> _g_ref_estimator;
+        dsmc::CollideKernelHostPtr<T> _collide_kernel;
     };
 }
 template <typename T>

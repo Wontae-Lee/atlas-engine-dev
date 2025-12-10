@@ -61,9 +61,11 @@
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/solver/dsmc/dsmc_data.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
-#include <atlas/solver/dsmc/kernel/collide_operator.h>
+#include <atlas/solver/dsmc/kernel/collide_kernel.h>
 #include <atlas/solver/dsmc/kernel/hard_sphere.h>
+#include <atlas/solver/dsmc/metrics/g_ref_estimator.h>
 #include <atlas/solver/dsmc/metrics/g_ref_operator.h>
+#include <atlas/solver/dsmc/metrics/g_ref_rms.h>
 #include <atlas/solver/solver.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>

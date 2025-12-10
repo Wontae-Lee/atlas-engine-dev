@@ -67,7 +67,7 @@ namespace system {
         T _cell_volume             = T(1);
         NeighborSearchRange _range = NeighborSearchRange::single;
         NeighborSearchMode _mode   = NeighborSearchMode::active;
-        size_t _n_cells             = 1;
+        size_t _n_cells            = 1;
         Vector3<int> _grid_size { 0, 0, 0 };
         DeviceBuffer<std::uint32_t> d_keys;
         DeviceBuffer<int> d_indices;
