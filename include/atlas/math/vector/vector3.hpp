@@ -3,25 +3,25 @@
 
 namespace atlas::math {
 template <typename T>
-constexpr Vector<T, 3>::Vector() noexcept
+constexpr
+Vector<T, 3>::Vector() noexcept
     : x(T(0))
-    , y(T(0))
-    , z(T(0)) {
-}
+      , y(T(0))
+      , z(T(0)) {}
 
 template <typename T>
-constexpr Vector<T, 3>::Vector(T s) noexcept
+constexpr
+Vector<T, 3>::Vector(T s) noexcept
     : x(s)
-    , y(s)
-    , z(s) {
-}
+      , y(s)
+      , z(s) {}
 
 template <typename T>
-constexpr Vector<T, 3>::Vector(T x_, T y_, T z_) noexcept
+constexpr
+Vector<T, 3>::Vector(T x_, T y_, T z_) noexcept
     : x(x_)
-    , y(y_)
-    , z(z_) {
-}
+      , y(y_)
+      , z(z_) {}
 
 template <typename T>
 Vector<T, 3>::Vector(std::initializer_list<T> list) noexcept {
@@ -132,9 +132,9 @@ template <typename T>
 void
 Vector<T, 3>::div(T v) noexcept {
     const T inv = T(1) / v;
-    x *= inv;
-    y *= inv;
-    z *= inv;
+    x           *= inv;
+    y           *= inv;
+    z           *= inv;
 }
 
 template <typename T>
@@ -314,9 +314,9 @@ Vector<T, 3>::normalize() noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return;
     const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(ls)));
-    x *= inv;
-    y *= inv;
-    z *= inv;
+    x           *= inv;
+    y           *= inv;
+    z           *= inv;
 }
 
 template <typename T>
@@ -411,7 +411,7 @@ projected(const Vector<T, 3>& v, const Vector<T, 3>& normal) noexcept {
 template <typename T>
 std::tuple<Vector<T, 3>, Vector<T, 3>>
 tangential(const Vector<T, 3>& normal) noexcept {
-    const T nx = normal.x, ny = normal.y, nz = normal.z;
+    const T nx = normal.x, ny     = normal.y, nz     = normal.z;
     const T ax = std::abs(nx), ay = std::abs(ny), az = std::abs(nz);
     Vector<T, 3> t1;
     if (ax > ay) {

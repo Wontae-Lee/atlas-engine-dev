@@ -18,8 +18,7 @@ Vector<T, N>::Vector(T s) noexcept {
 template <typename T, std::size_t N>
 template <typename... Args, typename>
 Vector<T, N>::Vector(Args... args) noexcept
-    : _data { static_cast<T>(args)... } {
-}
+    : _data{ static_cast<T>(args)... } {}
 
 template <typename T, std::size_t N>
 ATLAS_HOST ATLAS_FORCE_INLINE
@@ -203,7 +202,6 @@ Vector<T, N>::operator/=(const Vector& v) noexcept {
 template <typename T, std::size_t N>
 bool
 Vector<T, N>::operator==(const Vector& other) const noexcept {
-    ATLAS_ASSERT(other.size() == N);
     ATLAS_UNROLL
     for (std::size_t i = 0; i < N; ++i) {
         if (_data[i] != other._data[i]) return false;
@@ -284,14 +282,12 @@ Vector<T, N>::data() noexcept {
 template <typename T, std::size_t N>
 const T&
 Vector<T, N>::at(std::size_t index) const noexcept {
-    ATLAS_ASSERT(index < N);
     return _data[index];
 }
 
 template <typename T, std::size_t N>
 T&
 Vector<T, N>::at(std::size_t index) noexcept {
-    ATLAS_ASSERT(index < N);
     return _data[index];
 }
 

@@ -9,7 +9,7 @@ TriangleTraceOperator<T>::operator()(const Ray<T>& r) const {
     HitSurface<T> result;
     const Vector3<T> ab = *b - *a;
     const Vector3<T> ac = *c - *a;
-    const Matrix3x3<T> M {
+    const Matrix3x3<T> M{
         -r.direction.x,
         ab.x,
         ac.x,
@@ -39,8 +39,8 @@ Triangle<T>::Triangle(const Vector3<T>& a_,
                       const Vector3<T>& b_,
                       const Vector3<T>& c_) noexcept
     : a(a_)
-    , b(b_)
-    , c(c_) {
+      , b(b_)
+      , c(c_) {
     const Vector3<T> ab = b - a;
     const Vector3<T> ac = c - a;
     normal              = math::normalize(math::cross(ab, ac));
@@ -89,13 +89,13 @@ Triangle<T>::closest_point(const Vector3<T>& p) const {
         const T w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
         return b + (c - b) * w;
     }
-    const Matrix2x2<T> G {
+    const Matrix2x2<T> G{
         math::dot(ab, ab),
         math::dot(ab, ac),
         math::dot(ab, ac),
         math::dot(ac, ac)
     };
-    const Vector2<T> r { math::dot(ab, ap), math::dot(ac, ap) };
+    const Vector2<T> r{ math::dot(ab, ap), math::dot(ac, ap) };
     const Vector2<T> vw = G.solved(r);
     const T v           = vw[0];
     const T w           = vw[1];
@@ -129,7 +129,7 @@ Triangle<T>::intersects(const Ray<T>& ray) const {
     const Vector3<T> ab  = b - a;
     const Vector3<T> ac  = c - a;
     const Vector3<T> rhs = ray.origin - a;
-    const Matrix3x3<T> M {
+    const Matrix3x3<T> M{
         -ray.direction.x,
         ab.x,
         ac.x,
@@ -170,18 +170,19 @@ Triangle<T>::is_inside(const Vector3<T>& p) const {
     const Vector3<T> ap = p - a;
     const T d           = dot(normal, ap);
     if (std::abs(d) > T(eps)) return false;
-    const Matrix2x2<T> G {
+    const Matrix2x2<T> G{
         dot(ab, ab),
         dot(ab, ac),
         dot(ab, ac),
         dot(ac, ac)
     };
-    const Vector2<T> r { dot(ab, ap), dot(ac, ap) };
+    const Vector2<T> r{ dot(ab, ap), dot(ac, ap) };
     const Vector2<T> uv = G.solved(r);
     const T u           = uv[0];
     const T v           = uv[1];
     const T w           = T(1) - u - v;
-    return (u >= -T(eps)) & (v >= -T(eps)) & (w >= -T(eps)) & (u <= T(1) + T(eps)) & (v <= T(1) + T(eps)) & (w <= T(1) + T(eps));
+    return (u >= -T(eps)) & (v >= -T(eps)) & (w >= -T(eps)) & (u <= T(1) + T(eps)) & (v <= T(1) + T(eps)) & (w <=
+        T(1) + T(eps));
 }
 
 template <typename T>

@@ -132,8 +132,8 @@ TriangleMesh<T>::intersects(const spatial::Ray<T>& ray) const {
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
 
-    bool
-    TriangleMesh<T>::load_from_obj(const std::string& filename, bool verbose) {
+bool
+TriangleMesh<T>::load_from_obj(const std::string& filename, bool verbose) {
     triangles.clear();
     tinyobj::ObjReaderConfig config;
     config.mtl_search_path = "";
@@ -163,7 +163,7 @@ ATLAS_HOST ATLAS_FORCE_INLINE
         const auto& mesh = shape.mesh;
         if (mesh.indices.size() % 3 != 0 && verbose) {
             std::cerr << "Warning: mesh.indices.size() is not multiple of 3 in shape \""
-                      << shape.name << "\"\n";
+                << shape.name << "\"\n";
         }
         for (size_t f = 0; f + 2 < mesh.indices.size(); f += 3) {
             const tinyobj::index_t idx0 = mesh.indices[f + 0];
@@ -178,7 +178,8 @@ ATLAS_HOST ATLAS_FORCE_INLINE
             const size_t v0_offset = static_cast<size_t>(3 * vi0);
             const size_t v1_offset = static_cast<size_t>(3 * vi1);
             const size_t v2_offset = static_cast<size_t>(3 * vi2);
-            if (v0_offset + 2 >= attrib.vertices.size() || v1_offset + 2 >= attrib.vertices.size() || v2_offset + 2 >= attrib.vertices.size()) {
+            if (v0_offset + 2 >= attrib.vertices.size() || v1_offset + 2 >= attrib.vertices.size() || v2_offset + 2
+                >= attrib.vertices.size()) {
                 if (verbose) {
                     std::cerr << "Invalid vertex offset in OBJ file\n";
                 }
@@ -201,7 +202,7 @@ ATLAS_HOST ATLAS_FORCE_INLINE
     }
     if (verbose) {
         std::cout << "Loaded " << triangles.size()
-                  << " triangles from OBJ: " << filename << "\n";
+            << " triangles from OBJ: " << filename << "\n";
     }
     const bool ok = !triangles.empty();
     if (ok) {
@@ -267,7 +268,7 @@ TriangleMesh<T>::fast_winding_number(const Vector3<T>& p) const {
         const T numer            = math::dot(cross01, r2);
         const T denom            = l0 * l1 * l2 + dot01 * l2 + dot12 * l0 + dot20 * l1;
         const T omega            = T(2) * std::atan2(numer, denom);
-        total_solid_angle += omega;
+        total_solid_angle        += omega;
     }
     return total_solid_angle / fourPi;
 }

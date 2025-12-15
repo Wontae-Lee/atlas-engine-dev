@@ -5,6 +5,7 @@
 #include <vector>
 #if defined(ATLAS_TASKING_CUDA)
 #include <thrust/sort.h>
+
 namespace atlas {
 namespace detail {
     template <typename RandomIt>
@@ -13,18 +14,21 @@ namespace detail {
         if (first == last) return;
         thrust::sort(thrust::host, first, last);
     }
+
     template <typename RandomIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_device_impl(RandomIt first, RandomIt last) {
         if (first == last) return;
         thrust::sort(thrust::device, first, last);
     }
+
     template <typename RandomIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_serial_impl(RandomIt first, RandomIt last) {
         if (first == last) return;
         std::sort(first, last);
     }
+
     template <typename KeyIt, typename ValueIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_by_key_serial_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
@@ -43,9 +47,11 @@ namespace detail {
                 val_tmp[static_cast<std::size_t>(i)] = *v_it;
             }
         }
-        std::sort(indices.begin(), indices.end(), [&key_tmp](diff_t a, diff_t b) {
-            return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
-        });
+        std::sort(indices.begin(),
+                  indices.end(),
+                  [&key_tmp](diff_t a, diff_t b) {
+                      return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
+                  });
         {
             KeyIt k_it   = keys_first;
             ValueIt v_it = values_first;
@@ -56,12 +62,14 @@ namespace detail {
             }
         }
     }
+
     template <typename KeyIt, typename ValueIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_by_key_host_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
         if (keys_first == keys_last) return;
         thrust::sort_by_key(thrust::host, keys_first, keys_last, values_first);
     }
+
     template <typename KeyIt, typename ValueIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_by_key_device_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
@@ -69,6 +77,7 @@ namespace detail {
         thrust::sort_by_key(thrust::device, keys_first, keys_last, values_first);
     }
 }
+
 template <ExecutionPolicy P, typename RandomIt>
 ATLAS_FORCE_INLINE void
 parallel_sort(RandomIt first, RandomIt last) {
@@ -80,6 +89,7 @@ parallel_sort(RandomIt first, RandomIt last) {
         detail::parallel_sort_serial_impl(first, last);
     }
 }
+
 template <ExecutionPolicy P, typename KeyIt, typename ValueIt>
 ATLAS_FORCE_INLINE void
 parallel_sort_by_key(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
@@ -94,6 +104,7 @@ parallel_sort_by_key(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
 }
 #else
 #include <tbb/tbb.h>
+
 namespace atlas {
 namespace detail {
     template <typename RandomIt>
@@ -102,17 +113,20 @@ namespace detail {
         if (first == last) return;
         tbb::parallel_sort(first, last);
     }
+
     template <typename RandomIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_device_impl(RandomIt first, RandomIt last) {
         parallel_sort_host_impl(first, last);
     }
+
     template <typename RandomIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_serial_impl(RandomIt first, RandomIt last) {
         if (first == last) return;
         std::sort(first, last);
     }
+
     template <typename KeyIt, typename ValueIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_by_key_serial_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
@@ -131,9 +145,11 @@ namespace detail {
                 val_tmp[static_cast<std::size_t>(i)] = *v_it;
             }
         }
-        std::sort(indices.begin(), indices.end(), [&key_tmp](diff_t a, diff_t b) {
-            return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
-        });
+        std::sort(indices.begin(),
+                  indices.end(),
+                  [&key_tmp](diff_t a, diff_t b) {
+                      return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
+                  });
         {
             KeyIt k_it   = keys_first;
             ValueIt v_it = values_first;
@@ -144,17 +160,20 @@ namespace detail {
             }
         }
     }
+
     template <typename KeyIt, typename ValueIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_by_key_host_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
         parallel_sort_by_key_serial_impl(keys_first, keys_last, values_first);
     }
+
     template <typename KeyIt, typename ValueIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_by_key_device_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
         parallel_sort_by_key_serial_impl(keys_first, keys_last, values_first);
     }
 }
+
 template <ExecutionPolicy P, typename RandomIt>
 ATLAS_FORCE_INLINE void
 parallel_sort(RandomIt first, RandomIt last) {
@@ -166,6 +185,7 @@ parallel_sort(RandomIt first, RandomIt last) {
         detail::parallel_sort_serial_impl(first, last);
     }
 }
+
 template <ExecutionPolicy P, typename KeyIt, typename ValueIt>
 ATLAS_FORCE_INLINE void
 parallel_sort_by_key(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {

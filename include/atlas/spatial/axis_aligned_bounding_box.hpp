@@ -18,8 +18,7 @@ AxisAlignedBoundingBox<T>::AxisAlignedBoundingBox(const Vector3<T>& point1, cons
 template <typename T>
 AxisAlignedBoundingBox<T>::AxisAlignedBoundingBox(const AxisAlignedBoundingBox& other) noexcept
     : lower_corner(other.lower_corner)
-    , upper_corner(other.upper_corner) {
-}
+      , upper_corner(other.upper_corner) {}
 
 template <typename T>
 T
@@ -94,7 +93,7 @@ AxisAlignedBoundingBox<T>::intersects(const Ray<T>& ray) const noexcept {
 template <typename T>
 AxisAlignedBoundingBoxRayIntersection<T>
 AxisAlignedBoundingBox<T>::trace(const Ray<T>& ray) const noexcept {
-    AxisAlignedBoundingBoxRayIntersection<T> isect {};
+    AxisAlignedBoundingBoxRayIntersection<T> isect{};
     T t_enter = T(0);
     T t_exit  = std::numeric_limits<T>::infinity();
     for (int i = 0; i < 3; ++i) {
@@ -148,8 +147,8 @@ template <typename T>
 void
 AxisAlignedBoundingBox<T>::reset() noexcept {
     const T M    = std::numeric_limits<T>::max();
-    lower_corner = Vector3<T> { M, M, M };
-    upper_corner = Vector3<T> { -M, -M, -M };
+    lower_corner = Vector3<T>{ M, M, M };
+    upper_corner = Vector3<T>{ -M, -M, -M };
 }
 
 template <typename T>
@@ -169,7 +168,7 @@ AxisAlignedBoundingBox<T>::merge(const AxisAlignedBoundingBox& other) noexcept {
 template <typename T>
 void
 AxisAlignedBoundingBox<T>::expand(T delta) noexcept {
-    const Vector3<T> d { delta, delta, delta };
+    const Vector3<T> d{ delta, delta, delta };
     lower_corner -= d;
     upper_corner += d;
 }

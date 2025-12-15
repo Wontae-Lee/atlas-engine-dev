@@ -3,13 +3,17 @@
 #ifdef ATLAS_TASKING_CUDA
 #include <thrust/execution_policy.h>
 #include <thrust/remove.h>
+
 namespace atlas {
-struct device_policy_t { };
-static constexpr device_policy_t device {};
+struct device_policy_t {};
+
+static constexpr device_policy_t device{};
+
 template <typename Policy, typename Iterator, typename Predicate>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Iterator
-    remove_if(Policy, Iterator first, Iterator last, Predicate pred) {
+
+Iterator
+remove_if(Policy, Iterator first, Iterator last, Predicate pred) {
     return thrust::remove_if(thrust::device, first, last, pred);
 }
 }
@@ -19,9 +23,12 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_scan.h>
 #include <vector>
+
 namespace atlas {
-struct device_policy_t { };
-static constexpr device_policy_t device {};
+struct device_policy_t {};
+
+static constexpr device_policy_t device{};
+
 template <typename Policy, typename Iterator, typename Predicate>
 inline Iterator
 remove_if(Policy, Iterator first, Iterator last, Predicate pred) {

@@ -9,8 +9,8 @@ namespace atlas::math {
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    expr_value_t<E>
-    sum(const E& expr) noexcept {
+expr_value_t<E>
+sum(const E& expr) noexcept {
     const auto& e         = expr();
     const std::size_t n   = e.size();
     expr_value_t<E> accum = e[0];
@@ -22,44 +22,42 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    expr_value_t<E>
-    min(const E& expr) noexcept {
+expr_value_t<E>
+min(const E& expr) noexcept {
     const auto& e       = expr();
     const std::size_t n = e.size();
     expr_value_t<E> m   = e[0];
     ATLAS_UNROLL
-    for (std::size_t i = 1; i < n; ++i)
-        if (e[i] < m) m = e[i];
+    for (std::size_t i = 1; i < n; ++i) if (e[i] < m) m = e[i];
     return m;
 }
 
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    expr_value_t<E>
-    max(const E& expr) noexcept {
+expr_value_t<E>
+max(const E& expr) noexcept {
     const auto& e       = expr();
     const std::size_t n = e.size();
     expr_value_t<E> m   = e[0];
     ATLAS_UNROLL
-    for (std::size_t i = 1; i < n; ++i)
-        if (m < e[i]) m = e[i];
+    for (std::size_t i = 1; i < n; ++i) if (m < e[i]) m = e[i];
     return m;
 }
 
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    expr_value_t<E>
-    mean(const E& expr) noexcept {
+expr_value_t<E>
+mean(const E& expr) noexcept {
     return sum(expr) / static_cast<expr_value_t<E>>(expr().size());
 }
 
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    expr_value_t<E>
-    length_squared(const E& expr) noexcept {
+expr_value_t<E>
+length_squared(const E& expr) noexcept {
     using T             = expr_value_t<E>;
     const auto& e       = expr();
     const std::size_t n = e.size();
@@ -72,8 +70,8 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    expr_value_t<E>
-    length(const E& expr) noexcept {
+expr_value_t<E>
+length(const E& expr) noexcept {
     using T = expr_value_t<E>;
     return static_cast<T>(std::sqrt(length_squared(expr)));
 }
@@ -81,9 +79,11 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 template <VectorExpressionType EA, VectorExpressionType EB>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    dot(const EA& a, const EB& b) noexcept {
-    using T             = std::common_type_t<expr_value_t<EA>, expr_value_t<EB>>;
+auto
+dot(const EA& a, const EB& b) noexcept {
+    using T = std::common_type_t<expr_value_t<EA>
+                                 ,
+                                 expr_value_t<EB>>;
     const auto& x       = a();
     const auto& y       = b();
     const std::size_t n = x.size();
@@ -96,17 +96,19 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 template <VectorExpressionType EA, VectorExpressionType EB>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    distance(const EA& a, const EB& b) noexcept {
-    using T = std::common_type_t<expr_value_t<EA>, expr_value_t<EB>>;
+auto
+distance(const EA& a, const EB& b) noexcept {
+    using T = std::common_type_t<expr_value_t<EA>
+                                 ,
+                                 expr_value_t<EB>>;
     return static_cast<T>(std::sqrt(length_squared(a - b)));
 }
 
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    std::size_t
-    argmin(const E& expr) noexcept {
+std::size_t
+argmin(const E& expr) noexcept {
     const auto& e       = expr();
     const std::size_t n = e.size();
     std::size_t idx     = 0;
@@ -123,8 +125,8 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    std::size_t
-    argmax(const E& expr) noexcept {
+std::size_t
+argmax(const E& expr) noexcept {
     const auto& e       = expr();
     const std::size_t n = e.size();
     std::size_t idx     = 0;
@@ -141,8 +143,8 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    std::size_t
-    argabsmin(const E& expr) noexcept {
+std::size_t
+argabsmin(const E& expr) noexcept {
     const auto& e       = expr();
     const std::size_t n = e.size();
     std::size_t idx     = 0;
@@ -161,8 +163,8 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    std::size_t
-    argabsmax(const E& expr) noexcept {
+std::size_t
+argabsmax(const E& expr) noexcept {
     const auto& e       = expr();
     const std::size_t n = e.size();
     std::size_t idx     = 0;

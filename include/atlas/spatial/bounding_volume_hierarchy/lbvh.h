@@ -58,8 +58,8 @@ namespace spatial {
         ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE unsigned
         expand_bits(unsigned v) noexcept;
         ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE
-            uint32_t
-            morton3(const Vector3<T>& p, const AABB<T>& cb, int bits) const noexcept;
+        uint32_t
+        morton3(const Vector3<T>& p, const AABB<T>& cb, int bits) const noexcept;
         ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE int
         clz32(uint32_t x) noexcept;
         ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE int

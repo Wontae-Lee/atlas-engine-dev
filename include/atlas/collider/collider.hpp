@@ -161,9 +161,9 @@ Collider<T>::collide(const ParticleDeviceProbe<T>& probe, T dt) const {
             }
             bool any_hit = false;
             float best_t = far;
-            Vector3F best_point {};
-            Vector3F best_normal {};
-            RayF ray { p0, direction };
+            Vector3F best_point{};
+            Vector3F best_normal{};
+            RayF ray{ p0, direction };
             int interaction_index = 0;
             for (int j = 0; j < n_surfaces; ++j) {
                 const auto& op              = ops_ptr[j];
@@ -184,6 +184,7 @@ Collider<T>::collide(const ParticleDeviceProbe<T>& probe, T dt) const {
                 probe.pos[i] = p0 + direction;
                 probe.vel[i] = velocity;
             }
-        });
+        }
+        );
 }
 }

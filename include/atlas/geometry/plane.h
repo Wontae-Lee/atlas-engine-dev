@@ -9,8 +9,8 @@ namespace geometry {
     template <typename T>
     class PlaneTraceOperator final {
     public:
-        PlaneTraceOperator()     = default;
-        ~PlaneTraceOperator()    = default;
+        PlaneTraceOperator()  = default;
+        ~PlaneTraceOperator() = default;
         const Vector3<T>* normal = nullptr;
         const T* offset          = nullptr;
         ATLAS_DEVICE ATLAS_FORCE_INLINE HitSurface<T>

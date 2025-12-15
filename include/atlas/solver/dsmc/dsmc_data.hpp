@@ -2,19 +2,17 @@
 #include <algorithm>
 
 namespace atlas::solver {
-
 template <typename T>
 DsmcData<T>::DsmcData()
     : d_g_ref_per_cell()
-    , d_n_collisions()
-    , d_n_particles_per_cell_species()
-    , d_sigma_t_pairs()
-    , d_number_weight_species()
-    , _cell_volume(T(1))
-    , _n_species(1)
-    , _n_pairs(1)
-    , _n_cells(0) {
-
+      , d_n_collisions()
+      , d_n_particles_per_cell_species()
+      , d_sigma_t_pairs()
+      , d_number_weight_species()
+      , _cell_volume(T(1))
+      , _n_species(1)
+      , _n_pairs(1)
+      , _n_cells(0) {
     set_n_species(1);
 }
 
@@ -101,8 +99,9 @@ DsmcData<T>::number_weight_ptr() {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE DsmcDeviceProbe<T>
+
 DsmcData<T>::make_device_probe() noexcept {
-    DsmcDeviceProbe<T> probe {};
+    DsmcDeviceProbe<T> probe{};
     probe.g_ref_per_cell               = atlas::raw_pointer_cast(d_g_ref_per_cell.data());
     probe.n_collisions                 = atlas::raw_pointer_cast(d_n_collisions.data());
     probe.n_particles_per_cell_species = atlas::raw_pointer_cast(d_n_particles_per_cell_species.data());
@@ -121,5 +120,4 @@ DsmcData<T>::reset(const int n_cells) {
     d_n_collisions.resize(total_cell_pair, 0);
     d_n_particles_per_cell_species.resize(total_cell_species, 0);
 }
-
 }

@@ -6,10 +6,10 @@ namespace atlas::random {
 template <typename T>
 ATLAS_DEVICE ATLAS_FORCE_INLINE
 
-    void
-    build_orthonormal_basis(const Vector3<T>& n,
-                            Vector3<T>& t,
-                            Vector3<T>& b) {
+void
+build_orthonormal_basis(const Vector3<T>& n,
+                        Vector3<T>& t,
+                        Vector3<T>& b) {
     if (std::abs(n.x) > std::abs(n.z)) {
         t = Vector3<T>(-n.y, n.x, T(0));
     } else {

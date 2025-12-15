@@ -16,6 +16,7 @@ using is_integral_index = std::enable_if_t<std::is_integral<T>::value, int>;
 #include <thrust/execution_policy.h>
 #include <thrust/for_each.h>
 #include <thrust/iterator/counting_iterator.h>
+
 namespace atlas {
 namespace detail {
     template <typename IndexType, typename Function, is_integral_index<IndexType> = 0>

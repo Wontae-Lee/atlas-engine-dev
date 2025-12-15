@@ -8,8 +8,8 @@ namespace geometry {
     template <typename T>
     class SphereTraceOperator final {
     public:
-        SphereTraceOperator()    = default;
-        ~SphereTraceOperator()   = default;
+        SphereTraceOperator()  = default;
+        ~SphereTraceOperator() = default;
         const Vector3<T>* center = nullptr;
         const T* radius          = nullptr;
         ATLAS_DEVICE ATLAS_FORCE_INLINE HitSurface<T>

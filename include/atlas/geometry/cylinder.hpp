@@ -15,9 +15,9 @@ CylinderTraceOperator<T>::operator()(const Ray<T>& ray) const {
     const T hz          = (*height) * T(0.5);
     const T zmin        = -hz;
     const T zmax        = hz;
-    const T ox = ro.x, oy = ro.y, oz = ro.z;
-    const T dx = rd.x, dy = rd.y, dz = rd.z;
-    T best_t = std::numeric_limits<T>::infinity();
+    const T ox          = ro.x, oy = ro.y, oz = ro.z;
+    const T dx          = rd.x, dy = rd.y, dz = rd.z;
+    T best_t            = std::numeric_limits<T>::infinity();
     Vector3<T> best_n(T(0), T(0), T(0));
     bool z_ok   = true;
     T t_z_enter = -std::numeric_limits<T>::infinity();
@@ -113,8 +113,8 @@ Cylinder<T>::Cylinder() noexcept {
 template <typename T>
 Cylinder<T>::Cylinder(const Vector3<T>& center_, T radius_, T height_) noexcept
     : center(center_)
-    , radius(radius_)
-    , height(height_) {
+      , radius(radius_)
+      , height(height_) {
     ATLAS_ASSERT(is_valid());
 }
 
@@ -146,10 +146,10 @@ Cylinder<T>::closest_point(const Vector3<T>& point) const {
     const T dy   = point.y - center.y;
     const T rho  = std::sqrt(dx * dx + dy * dy);
     T zc         = (point.z < zmin)
-                ? zmin
-                : (point.z > zmax)
-                ? zmax
-                : point.z;
+        ? zmin
+        : (point.z > zmax)
+        ? zmax
+        : point.z;
     T sx, sy;
     if (rho > radius) {
         const T inv = T(1) / rho;
@@ -200,7 +200,7 @@ Cylinder<T>::closest_normal(const Vector3<T>& point) const {
     const T rho              = std::sqrt(dx * dx + dy * dy);
     const bool inside_radial = (rho <= radius);
     const bool inside_z      = (point.z >= zmin) && (point.z <= zmax);
-    Vector3<T> n { T(0), T(0), T(0) };
+    Vector3<T> n{ T(0), T(0), T(0) };
     if (inside_radial && inside_z) {
         const T d_to_side = radius - rho;
         const T d_to_bot  = point.z - zmin;

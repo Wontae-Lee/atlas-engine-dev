@@ -6,24 +6,23 @@
 
 namespace atlas::math {
 template <typename T>
-class VectorExpressionBase {
-};
+class VectorExpressionBase {};
 
 template <typename T, typename E>
 class VectorExpression : public VectorExpressionBase<T> {
 public:
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            std::size_t
-            size() const noexcept { return static_cast<const E&>(*this).size(); }
+    ATLAS_FORCE_INLINE
+    std::size_t
+    size() const noexcept { return static_cast<const E&>(*this).size(); }
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const E&
     operator()() const noexcept { return static_cast<const E&>(*this); }
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            T
-            operator[](std::size_t i) const noexcept { return static_cast<const E&>(*this)[i]; }
+    ATLAS_FORCE_INLINE
+    T
+    operator[](std::size_t i) const noexcept { return static_cast<const E&>(*this)[i]; }
 };
 
 template <typename E>
@@ -36,19 +35,20 @@ class VectorUnaryOperator : public VectorExpression<T, VectorUnaryOperator<T, E,
 public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-        explicit VectorUnaryOperator(const E& operand, Operator op = Operator {}) noexcept
+    explicit
+    VectorUnaryOperator(const E& operand, Operator op = Operator{}) noexcept
         : _operand(operand)
-        , _op(op) {
-    }
+          , _op(op) {}
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            std::size_t
-            size() const noexcept { return _operand.size(); }
+    ATLAS_FORCE_INLINE
+    std::size_t
+    size() const noexcept { return _operand.size(); }
+
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            T
-            operator[](std::size_t i) const noexcept { return _op(_operand[i]); }
+    ATLAS_FORCE_INLINE
+    T
+    operator[](std::size_t i) const noexcept { return _op(_operand[i]); }
 
 private:
     const E& _operand;
@@ -60,20 +60,20 @@ class VectorBinaryOperator : public VectorExpression<T, VectorBinaryOperator<T, 
 public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    VectorBinaryOperator(const EL& l, const ER& r, Operator op = Operator {}) noexcept
+    VectorBinaryOperator(const EL& l, const ER& r, Operator op = Operator{}) noexcept
         : _l(l)
-        , _r(r)
-        , _op(op) {
-    }
+          , _r(r)
+          , _op(op) {}
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            std::size_t
-            size() const noexcept { return _l.size(); }
+    ATLAS_FORCE_INLINE
+    std::size_t
+    size() const noexcept { return _l.size(); }
+
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            T
-            operator[](std::size_t i) const noexcept { return _op(_l[i], _r[i]); }
+    ATLAS_FORCE_INLINE
+    T
+    operator[](std::size_t i) const noexcept { return _op(_l[i], _r[i]); }
 
 private:
     const EL& _l;
@@ -86,20 +86,20 @@ class VectorScalarBinaryOperator : public VectorExpression<T, VectorScalarBinary
 public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    VectorScalarBinaryOperator(const E& e, const T& v, Operator op = Operator {}) noexcept
+    VectorScalarBinaryOperator(const E& e, const T& v, Operator op = Operator{}) noexcept
         : _e(e)
-        , _v(v)
-        , _op(op) {
-    }
+          , _v(v)
+          , _op(op) {}
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            std::size_t
-            size() const noexcept { return _e.size(); }
+    ATLAS_FORCE_INLINE
+    std::size_t
+    size() const noexcept { return _e.size(); }
+
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            T
-            operator[](std::size_t i) const noexcept { return _op(_e[i], _v); }
+    ATLAS_FORCE_INLINE
+    T
+    operator[](std::size_t i) const noexcept { return _op(_e[i], _v); }
 
 private:
     const E& _e;
@@ -114,18 +114,18 @@ public:
 
     VectorSelect(const EM& m, const ET& t, const EF& f) noexcept
         : _m(m)
-        , _t(t)
-        , _f(f) {
-    }
+          , _t(t)
+          , _f(f) {}
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            std::size_t
-            size() const noexcept { return _t.size(); }
+    ATLAS_FORCE_INLINE
+    std::size_t
+    size() const noexcept { return _t.size(); }
+
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            T
-            operator[](std::size_t i) const noexcept { return _m[i] ? _t[i] : _f[i]; }
+    ATLAS_FORCE_INLINE
+    T
+    operator[](std::size_t i) const noexcept { return _m[i] ? _t[i] : _f[i]; }
 
 private:
     const EM& _m;

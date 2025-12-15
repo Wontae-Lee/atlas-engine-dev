@@ -1,22 +1,22 @@
 #pragma once
 namespace atlas::math {
 template <typename T>
-constexpr Vector<T, 2>::Vector() noexcept
+constexpr
+Vector<T, 2>::Vector() noexcept
     : x(T(0))
-    , y(T(0)) {
-}
+      , y(T(0)) {}
 
 template <typename T>
-constexpr Vector<T, 2>::Vector(T s) noexcept
+constexpr
+Vector<T, 2>::Vector(T s) noexcept
     : x(s)
-    , y(s) {
-}
+      , y(s) {}
 
 template <typename T>
-constexpr Vector<T, 2>::Vector(T x_, T y_) noexcept
+constexpr
+Vector<T, 2>::Vector(T x_, T y_) noexcept
     : x(x_)
-    , y(y_) {
-}
+      , y(y_) {}
 
 template <typename T>
 Vector<T, 2>::Vector(std::initializer_list<T> list) noexcept {
@@ -121,8 +121,8 @@ template <typename T>
 void
 Vector<T, 2>::div(T v) noexcept {
     const T inv = T(1) / v;
-    x *= inv;
-    y *= inv;
+    x           *= inv;
+    y           *= inv;
 }
 
 template <typename T>
@@ -284,8 +284,8 @@ Vector<T, 2>::normalize() noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return;
     const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(ls)));
-    x *= inv;
-    y *= inv;
+    x           *= inv;
+    y           *= inv;
 }
 
 template <typename T>

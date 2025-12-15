@@ -5,9 +5,9 @@
 #include <atlas/solver/dsmc/kernel/collide_kernel.h>
 #include <atlas/solver/dsmc/metrics/g_ref_estimator.h>
 #include <atlas/solver/solver.h>
+
 namespace atlas {
 namespace solver {
-
     template <typename T>
     class DsmcSolver final : public Solver<T> {
     public:
@@ -53,6 +53,7 @@ namespace solver {
         dsmc::CollideKernelHostPtr<T> _collide_kernel;
     };
 }
+
 template <typename T>
 using DsmcSolver = solver::DsmcSolver<T>;
 template <typename T>
@@ -60,4 +61,5 @@ using DsmcSolverHostPtr = atlas::host_shared_ptr<solver::DsmcSolver<T>>;
 template <typename T>
 using DsmcSolverDevicePtr = atlas::device_shared_ptr<solver::DsmcSolver<T>>;
 }
+
 #include <atlas/solver/dsmc/dsmc_solver.hpp>

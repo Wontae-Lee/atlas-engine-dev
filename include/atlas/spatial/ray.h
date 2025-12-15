@@ -8,8 +8,8 @@ namespace spatial {
     struct SurfaceRayIntersection {
         bool is_intersecting = false;
         T distance           = std::numeric_limits<T>::max();
-        Vector3<T> point { T(0), T(0), T(0) };
-        Vector3<T> normal { T(0), T(0), T(1) };
+        Vector3<T> point{ T(0), T(0), T(0) };
+        Vector3<T> normal{ T(0), T(0), T(1) };
     };
 
     template <typename T>

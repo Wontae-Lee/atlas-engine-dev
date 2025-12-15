@@ -2,6 +2,7 @@
 #include <atlas/iterator/counting_iterator.h>
 #include <atlas/solver/dsmc/metrics/g_ref_estimator.h>
 #include <atlas/transform/transform.h>
+
 namespace atlas::solver::dsmc {
 namespace metrics {
     template <typename T>
@@ -10,10 +11,12 @@ namespace metrics {
         GRefRmsEstimator()           = default;
         ~GRefRmsEstimator() override = default;
         ATLAS_HOST ATLAS_FORCE_INLINE GRefOperator<T>
+
         make_device_operator() const override {
             GRefRmsOperator<T> op;
             return GRefOperator<T>(op);
         }
+
         ATLAS_HOST ATLAS_FORCE_INLINE void
         compute(
             const system::SpatialHashProbe<T>& neighbor_probe,
@@ -30,13 +33,15 @@ namespace metrics {
                 g_ref_per_cell,
                 [neighbor_probe, pdata, g_ref_operator] ATLAS_ALL_DEVICE(int cell_id) {
                     return g_ref_operator(cell_id, neighbor_probe, pdata);
-                });
+                }
+                );
         }
 
     private:
         GRefRmsOperator<T> _g_ref_rms_operator;
     };
 }
+
 template <typename T>
 using GRefRmsEstimator = metrics::GRefRmsEstimator<T>;
 template <typename T>

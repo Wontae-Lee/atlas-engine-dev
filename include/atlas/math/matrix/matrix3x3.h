@@ -17,16 +17,32 @@ namespace math {
         T m00, m01, m02;
         T m10, m11, m12;
         T m20, m21, m22;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Matrix() noexcept;
-        constexpr Matrix(const Matrix&) noexcept = default;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit constexpr Matrix(T s) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Matrix(
-            T a00, T a01, T a02,
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Matrix()
+            noexcept;
+        constexpr
+        Matrix(const Matrix&) noexcept = default;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit constexpr
+        Matrix(T s)
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Matrix(
+            T a00
+            ,
+            T a01, T a02,
             T a10, T a11, T a12,
-            T a20, T a21, T a22) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(std::initializer_list<T> list) noexcept;
+            T a20, T a21, T a22
+            )
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Matrix(std::initializer_list<T> list)
+            noexcept;
         template <typename Expression>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(const MatrixExpression<T, Expression>& expr) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Matrix(
+            const MatrixExpression<T, Expression>& expr
+            )
+            noexcept;
         ~Matrix() noexcept = default;
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         rows() noexcept;
@@ -158,9 +174,9 @@ namespace math {
           T eps = std::numeric_limits<T>::epsilon()) noexcept;
     template <typename T>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            Vector<T, 3>
-            solve(const Matrix<T, 3, 3>& A, const Vector<T, 3>& b) noexcept;
+    ATLAS_FORCE_INLINE
+    Vector<T, 3>
+    solve(const Matrix<T, 3, 3>& A, const Vector<T, 3>& b) noexcept;
 }
 
 template <typename T>

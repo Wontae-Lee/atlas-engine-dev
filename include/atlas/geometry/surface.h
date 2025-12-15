@@ -9,8 +9,8 @@ class Surface {
 public:
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-        bool
-        intersects(const Ray<T>& r) const {
+    bool
+    intersects(const Ray<T>& r) const {
         return d().intersects(r);
     }
 
@@ -44,8 +44,8 @@ public:
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-        bool
-        is_inside(const Vector3<T>& p) const {
+    bool
+    is_inside(const Vector3<T>& p) const {
         return d().is_inside(p);
     }
 

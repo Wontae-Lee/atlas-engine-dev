@@ -2,6 +2,7 @@
 #include <atlas/memory/memory.h>
 #include <atlas/solver/dsmc/dsmc_data.h>
 #include <atlas/solver/dsmc/metrics/g_ref_operator.h>
+
 namespace atlas::solver::dsmc {
 namespace metrics {
     template <typename T>
@@ -18,6 +19,7 @@ namespace metrics {
                 int n_cells) const = 0;
     };
 }
+
 template <typename T>
 using GRefEstimator = metrics::GRefEstimator<T>;
 template <typename T>

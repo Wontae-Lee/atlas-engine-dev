@@ -35,38 +35,32 @@ namespace geometry {
         ATLAS_HOST
         TraceOperator(const SphereTraceOperator<T>& op)
             : type(TraceOpType::Sphere)
-            , sphere(op) {
-        }
+              , sphere(op) {}
 
         ATLAS_HOST
         TraceOperator(const CylinderTraceOperator<T>& op)
             : type(TraceOpType::Cylinder)
-            , cylinder(op) {
-        }
+              , cylinder(op) {}
 
         ATLAS_HOST
         TraceOperator(const PlaneTraceOperator<T>& op)
             : type(TraceOpType::Plane)
-            , plane(op) {
-        }
+              , plane(op) {}
 
         ATLAS_HOST
         TraceOperator(const BoxTraceOperator<T>& op)
             : type(TraceOpType::Box)
-            , box(op) {
-        }
+              , box(op) {}
 
         ATLAS_HOST
         TraceOperator(const TriangleTraceOperator<T>& op)
             : type(TraceOpType::Triangle)
-            , triangle(op) {
-        }
+              , triangle(op) {}
 
         ATLAS_HOST
         TraceOperator(const atlas::spatial::BvhTraceOperator<T>& op)
             : type(TraceOpType::TriangleMesh)
-            , triangle_mesh(op) {
-        }
+              , triangle_mesh(op) {}
 
         ATLAS_DEVICE ATLAS_FORCE_INLINE HitSurface<T>
 
@@ -85,8 +79,7 @@ namespace geometry {
             case TraceOpType::TriangleMesh:
                 return triangle_mesh(ray);
             default:
-                ATLAS_ASSERT(false && "Unknown TraceOpType");
-                HitSurface<T> miss {};
+                HitSurface<T> miss{};
                 miss.is_intersecting = false;
                 return miss;
             }

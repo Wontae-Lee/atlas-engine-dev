@@ -1,7 +1,6 @@
 #pragma once
 
 namespace atlas::solver::dsmc::metrics {
-
 template <typename T>
 T
 GRefRmsOperator<T>::operator()(
@@ -29,7 +28,7 @@ GRefRmsOperator<T>::operator()(
     for (int k = begin; k < end; ++k) {
         const int p        = neighbor_probe.indices[k];
         const Vector3<T> v = vel[p];
-        sum_v2 += v.x * v.x + v.y * v.y + v.z * v.z;
+        sum_v2             += v.x * v.x + v.y * v.y + v.z * v.z;
     }
 
     const T Nc_t    = static_cast<T>(Nc);
@@ -41,5 +40,4 @@ GRefRmsOperator<T>::operator()(
     const T c_rms = ::sqrt(mean_v2);
     return factor * c_rms;
 }
-
 }

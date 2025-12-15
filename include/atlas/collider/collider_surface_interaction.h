@@ -30,9 +30,9 @@ namespace system {
         operator()(const Vector3<T>& incident, const Vector3<T>& normal) const;
 
     private:
-        T _restitution_coeff { T(1) };
-        T _tmac { T(1) };
-        DiffuseSampling _diffuse_sampling { DiffuseSampling::Uniform };
+        T _restitution_coeff{ T(1) };
+        T _tmac{ T(1) };
+        DiffuseSampling _diffuse_sampling{ DiffuseSampling::Uniform };
     };
 }
 

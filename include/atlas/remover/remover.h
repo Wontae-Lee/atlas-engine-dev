@@ -40,12 +40,12 @@ namespace system {
         z_max() const;
 
     private:
-        T x_min_ { T(0) };
-        T x_max_ { T(0) };
-        T y_min_ { T(0) };
-        T y_max_ { T(0) };
-        T z_min_ { T(0) };
-        T z_max_ { T(0) };
+        T x_min_{ T(0) };
+        T x_max_{ T(0) };
+        T y_min_{ T(0) };
+        T y_max_{ T(0) };
+        T z_min_{ T(0) };
+        T z_max_{ T(0) };
     };
 }
 

@@ -13,14 +13,27 @@ namespace math {
 
     public:
         T w, x, y, z;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Quaternion() noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Quaternion(T w_, T x_, T y_, T z_) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Quaternion(std::initializer_list<T> list) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Quaternion()
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Quaternion(T w_
+                   ,
+                   T x_, T y_, T z_
+            )
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Quaternion(std::initializer_list<T> list)
+            noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
         Quaternion(const Vector3<T>& axis, T radians) noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
         Quaternion(T rx, T ry, T rz) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Quaternion(const Matrix<T, 3, 3>& m) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Quaternion(
+            const Matrix<T, 3, 3>& m
+            )
+            noexcept;
         Quaternion(const Quaternion&) noexcept = default;
         ~Quaternion() noexcept                 = default;
         Quaternion&

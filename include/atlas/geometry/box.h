@@ -8,8 +8,8 @@ namespace geometry {
     template <typename T>
     class BoxTraceOperator final {
     public:
-        BoxTraceOperator()      = default;
-        ~BoxTraceOperator()     = default;
+        BoxTraceOperator()  = default;
+        ~BoxTraceOperator() = default;
         const Vector3<T>* lower = nullptr;
         const Vector3<T>* upper = nullptr;
         ATLAS_DEVICE ATLAS_FORCE_INLINE HitSurface<T>
@@ -21,8 +21,8 @@ namespace geometry {
         static_assert(std::is_floating_point<T>::value, "Box requires a floating-point T");
 
     public:
-        Vector3<T> lower_corner { T(-1), T(-1), T(-1) };
-        Vector3<T> upper_corner { T(+1), T(+1), T(+1) };
+        Vector3<T> lower_corner{ T(-1), T(-1), T(-1) };
+        Vector3<T> upper_corner{ T(+1), T(+1), T(+1) };
         ATLAS_HOST ATLAS_FORCE_INLINE
         Box() noexcept;
         ATLAS_HOST ATLAS_FORCE_INLINE

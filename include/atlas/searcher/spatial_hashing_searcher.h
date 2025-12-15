@@ -14,9 +14,9 @@ namespace system {
         Vector3<int> grid_size;
         T inv_h;
         NeighborSearchRange range = NeighborSearchRange::single;
-        const int* indices {};
-        const int* cell_start {};
-        const int* cell_end {};
+        const int* indices{};
+        const int* cell_start{};
+        const int* cell_end{};
         ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
         is_valid_cell(int ix, int iy, int iz) const noexcept;
         ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE int
@@ -61,14 +61,14 @@ namespace system {
         cell_volume() const noexcept;
 
     private:
-        Vector3<T> _lower_corner {};
-        Vector3<T> _upper_corner {};
+        Vector3<T> _lower_corner{};
+        Vector3<T> _upper_corner{};
         T _cell_size               = T(1);
         T _cell_volume             = T(1);
         NeighborSearchRange _range = NeighborSearchRange::single;
         NeighborSearchMode _mode   = NeighborSearchMode::active;
         size_t _n_cells            = 1;
-        Vector3<int> _grid_size { 0, 0, 0 };
+        Vector3<int> _grid_size{ 0, 0, 0 };
         DeviceBuffer<std::uint32_t> d_keys;
         DeviceBuffer<int> d_indices;
         DeviceBuffer<int> d_cell_start;

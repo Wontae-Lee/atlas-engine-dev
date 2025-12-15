@@ -10,7 +10,7 @@ ParticleData<T>::ParticleData(const size_t buffer_size) {
 template <typename T>
 ParticleDeviceProbe<T>
 ParticleData<T>::make_device_probe() noexcept {
-    ParticleDeviceProbe<T> probe {};
+    ParticleDeviceProbe<T> probe{};
     probe.pos     = atlas::raw_pointer_cast(d_pos.data());
     probe.vel     = atlas::raw_pointer_cast(d_vel.data());
     probe.species = atlas::raw_pointer_cast(d_species.data());
@@ -28,6 +28,7 @@ DeviceBuffer<Vector3<T>>&
 ParticleData<T>::velocities() noexcept {
     return d_vel;
 }
+
 template <typename T>
 DeviceBuffer<size_t>&
 ParticleData<T>::species() noexcept {

@@ -1,11 +1,4 @@
 #pragma once
-#if !defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG)
-#define ATLAS_DEBUG_MODE
-#include <cassert>
-#define ATLAS_ASSERT(x) assert(x)
-#else
-#define ATLAS_ASSERT(x) ((void)0)
-#endif
 #if defined(__CUDACC__)
 #define ATLAS_HOST __host__
 #define ATLAS_DEVICE __device__

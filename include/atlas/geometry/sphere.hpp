@@ -41,14 +41,12 @@ SphereTraceOperator<T>::operator()(const Ray<T>& ray) const {
 template <typename T>
 Sphere<T>::Sphere() noexcept
     : center(T(0), T(0), T(0))
-    , radius(T(1)) {
-}
+      , radius(T(1)) {}
 
 template <typename T>
 Sphere<T>::Sphere(const Vector3<T>& center_, T radius_) noexcept
     : center(center_)
-    , radius(radius_) {
-}
+      , radius(radius_) {}
 
 template <typename T>
 T

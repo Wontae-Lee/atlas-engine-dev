@@ -30,4 +30,6 @@ def remove_comments_in_directory(directory):
 
 
 if __name__ == "__main__":
+    remove_comments_in_directory("../src")
+    remove_comments_in_directory("../include")
     remove_comments_in_directory("../examples")

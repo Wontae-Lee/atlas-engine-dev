@@ -14,7 +14,8 @@ namespace system {
         ATLAS_HOST ATLAS_FORCE_INLINE
         ParticleSystem();
 
-        explicit ParticleSystem(
+        explicit
+        ParticleSystem(
             T dt,
             const EmitterHostPtr<T>& emitter   = nullptr,
             const RemoverHostPtr<T>& remover   = nullptr,
@@ -32,10 +33,10 @@ namespace system {
         alive() const;
 
     private:
-        T _dt { 1.0f };
-        int _capacity { 0 };
+        T _dt{ 1.0f };
+        int _capacity{ 0 };
         ParticleDataHostPtr<T> _particle_data = nullptr;
-        ParticleDeviceProbe<T> _device_probe {};
+        ParticleDeviceProbe<T> _device_probe{};
         SolverHostPtr<T> _solver     = nullptr;
         EmitterHostPtr<T> _emitter   = nullptr;
         RemoverHostPtr<T> _remover   = nullptr;
@@ -47,7 +48,6 @@ template <typename T>
 using ParticleSystem = system::ParticleSystem<T>;
 template <typename T>
 using ParticleSystemHostPtr = host_shared_ptr<ParticleSystem<T>>;
-
 }
 
 #include <atlas/system/particle_system.hpp>

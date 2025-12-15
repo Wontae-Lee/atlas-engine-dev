@@ -13,7 +13,7 @@ BoxTraceOperator<T>::operator()(const Ray<T>& r) const {
     if (!lower || !upper) return result;
     const Vector3<T>& lo = *lower;
     const Vector3<T>& hi = *upper;
-    const Vector3<T> inv_dir { T(1) / r.direction.x, T(1) / r.direction.y, T(1) / r.direction.z };
+    const Vector3<T> inv_dir{ T(1) / r.direction.x, T(1) / r.direction.y, T(1) / r.direction.z };
     const T tx1    = (lo.x - r.origin.x) * inv_dir.x;
     const T tx2    = (hi.x - r.origin.x) * inv_dir.x;
     const T ty1    = (lo.y - r.origin.y) * inv_dir.y;
@@ -44,10 +44,8 @@ BoxTraceOperator<T>::operator()(const Ray<T>& r) const {
     Vector3<T> n(T(0), T(0), T(0));
     if (use_enter) {
         if (enter_axis == 0) n = Vector3<T>(-(r.direction.x >= T(0) ? T(1) : -T(1)), T(0), T(0));
-        else if (enter_axis == 1)
-            n = Vector3<T>(T(0), -(r.direction.y >= T(0) ? T(1) : -T(1)), T(0));
-        else
-            n = Vector3<T>(T(0), T(0), -(r.direction.z >= T(0) ? T(1) : -T(1)));
+        else if (enter_axis == 1) n = Vector3<T>(T(0), -(r.direction.y >= T(0) ? T(1) : -T(1)), T(0));
+        else n                      = Vector3<T>(T(0), T(0), -(r.direction.z >= T(0) ? T(1) : -T(1)));
     } else {
         int exit_axis = 0;
         T best        = tmaxx;
@@ -60,10 +58,8 @@ BoxTraceOperator<T>::operator()(const Ray<T>& r) const {
             exit_axis = 2;
         }
         if (exit_axis == 0) n = Vector3<T>((r.direction.x >= T(0) ? T(1) : -T(1)), T(0), T(0));
-        else if (exit_axis == 1)
-            n = Vector3<T>(T(0), (r.direction.y >= T(0) ? T(1) : -T(1)), T(0));
-        else
-            n = Vector3<T>(T(0), T(0), (r.direction.z >= T(0) ? T(1) : -T(1)));
+        else if (exit_axis == 1) n = Vector3<T>(T(0), (r.direction.y >= T(0) ? T(1) : -T(1)), T(0));
+        else n                     = Vector3<T>(T(0), T(0), (r.direction.z >= T(0) ? T(1) : -T(1)));
     }
     result.is_intersecting = true;
     result.distance        = t;
@@ -75,13 +71,12 @@ BoxTraceOperator<T>::operator()(const Ray<T>& r) const {
 template <typename T>
 Box<T>::Box() noexcept
     : lower_corner(T(-1), T(-1), T(-1))
-    , upper_corner(T(+1), T(+1), T(+1)) {
-}
+      , upper_corner(T(+1), T(+1), T(+1)) {}
 
 template <typename T>
 Box<T>::Box(const Vector3<T>& lower_corner_, const Vector3<T>& upper_corner_) noexcept
     : lower_corner(lower_corner_)
-    , upper_corner(upper_corner_) {
+      , upper_corner(upper_corner_) {
     ATLAS_ASSERT(is_valid());
 }
 
@@ -117,10 +112,8 @@ Box<T>::closest_point(const Vector3<T>& point) const {
             face = true;
         }
         if (axis == 0) cp.x = face ? upper_corner.x : lower_corner.x;
-        else if (axis == 1)
-            cp.y = face ? upper_corner.y : lower_corner.y;
-        else
-            cp.z = face ? upper_corner.z : lower_corner.z;
+        else if (axis == 1) cp.y = face ? upper_corner.y : lower_corner.y;
+        else cp.z                = face ? upper_corner.z : lower_corner.z;
     }
     return cp;
 }

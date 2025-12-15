@@ -5,20 +5,20 @@
 
 namespace atlas::math {
 template <typename T>
-constexpr Quaternion<T>::Quaternion() noexcept
+constexpr
+Quaternion<T>::Quaternion() noexcept
     : w(T(1))
-    , x(T(0))
-    , y(T(0))
-    , z(T(0)) {
-}
+      , x(T(0))
+      , y(T(0))
+      , z(T(0)) {}
 
 template <typename T>
-constexpr Quaternion<T>::Quaternion(T w_, T x_, T y_, T z_) noexcept
+constexpr
+Quaternion<T>::Quaternion(T w_, T x_, T y_, T z_) noexcept
     : w(w_)
-    , x(x_)
-    , y(y_)
-    , z(z_) {
-}
+      , x(x_)
+      , y(y_)
+      , z(z_) {}
 
 template <typename T>
 Quaternion<T>::Quaternion(std::initializer_list<T> list) noexcept {
@@ -147,10 +147,10 @@ Quaternion<T>::normalize() noexcept {
     const T len = length();
     if (len > std::numeric_limits<T>::epsilon()) {
         const T inv = T(1) / len;
-        w *= inv;
-        x *= inv;
-        y *= inv;
-        z *= inv;
+        w           *= inv;
+        x           *= inv;
+        y           *= inv;
+        z           *= inv;
     }
 }
 
@@ -352,10 +352,10 @@ template <typename T>
 Quaternion<T>&
 Quaternion<T>::operator/=(T s) noexcept {
     const T inv = T(1) / s;
-    w *= inv;
-    x *= inv;
-    y *= inv;
-    z *= inv;
+    w           *= inv;
+    x           *= inv;
+    y           *= inv;
+    z           *= inv;
     return *this;
 }
 

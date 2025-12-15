@@ -9,12 +9,11 @@ Remover<T>::Remover(T x_min, T x_max,
                     T y_min, T y_max,
                     T z_min, T z_max)
     : x_min_(x_min)
-    , x_max_(x_max)
-    , y_min_(y_min)
-    , y_max_(y_max)
-    , z_min_(z_min)
-    , z_max_(z_max) {
-}
+      , x_max_(x_max)
+      , y_min_(y_min)
+      , y_max_(y_max)
+      , z_min_(z_min)
+      , z_max_(z_max) {}
 
 template <typename T>
 void
@@ -114,7 +113,8 @@ Remover<T>::operator()(ParticleDeviceProbe<T>& data) const {
         [=] ATLAS_DEVICE(const atlas::tuple<Vector3F, Vector3F, size_t>& t) {
             const Vector3F& p = atlas::get<0>(t);
             return (p.x < x_min) || (p.x > x_max) || (p.y < y_min) || (p.y > y_max) || (p.z < z_min) || (p.z > z_max);
-        });
+        }
+        );
     data.alive = static_cast<int>(new_end - zip_begin);
 }
 }

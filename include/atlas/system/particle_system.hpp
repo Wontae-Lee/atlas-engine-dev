@@ -7,8 +7,7 @@ namespace atlas::system {
 
 template <typename T>
 ParticleSystem<T>::ParticleSystem()
-    : ParticleSystem<T>(1000) {
-}
+    : ParticleSystem<T>(1000) {}
 
 template <typename T>
 ParticleSystem<T>::ParticleSystem(
@@ -19,14 +18,15 @@ ParticleSystem<T>::ParticleSystem(
     const SolverHostPtr<T>& solver,
     int capacity)
     : _dt(dt)
-    , _capacity(capacity)
-    , _particle_data(atlas::make_host_shared<ParticleData<T>>(capacity))
-    , _device_probe(_particle_data->make_device_probe())
-    , _solver(solver)
-    , _emitter(emitter)
-    , _remover(remover)
-    , _advector(advector) {
-
+      , _capacity(capacity)
+      , _particle_data(atlas::make_host_shared<ParticleData<T>>(capacity))
+      , _device_probe(_particle_data->make_device_probe())
+      , _solver(solver)
+      , _emitter(emitter)
+      , _remover(remover)
+      , _advector(advector) {
+    ATLAS_ERROR_IF(capacity >0)
+        << "ParticleSystem capacity must be greater than 0.";
     ATLAS_INFO << "ParticleSystem created with capacity: " << capacity;
 }
 

@@ -4,7 +4,9 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
+
 namespace atlas {
+
 
 #ifdef __CUDA_ARCH__
 #define ATLAS_ATOMIC_ADD(addr, val) atomicAdd((addr), (val))
@@ -18,27 +20,26 @@ struct device_refcount {
     __host__ __device__
 
     device_refcount()
-        : count(nullptr) {
-    }
+        : count(nullptr) {}
 
     __host__ __device__
 
-        explicit device_refcount(int* c)
-        : count(c) {
-    }
+    explicit
+    device_refcount(int* c)
+        : count(c) {}
 
     __host__ __device__
 
-        void
-        add_ref() const {
+    void
+    add_ref() const {
         if (!count) return;
         ATLAS_ATOMIC_ADD(count, 1);
     }
 
     __host__ __device__
 
-        bool
-        release() const {
+    bool
+    release() const {
         if (!count) return false;
 #ifdef __CUDA_ARCH__
         int old = ATLAS_ATOMIC_SUB(count, 1);
@@ -49,11 +50,13 @@ struct device_refcount {
         return (old == 1);
 #endif
     }
+
     __host__ __device__ int
     use_count() const {
         return count ? *count : 0;
     }
 };
+
 template <typename T>
 class device_shared_ptr {
 private:
@@ -65,21 +68,19 @@ public:
 
     device_shared_ptr()
         : ptr(nullptr)
-        , ref(nullptr) {
-    }
+          , ref(nullptr) {}
 
     __host__ __device__
 
     device_shared_ptr(T* p, int* c)
         : ptr(p)
-        , ref(c) {
-    }
+          , ref(c) {}
 
     __host__ __device__
 
     device_shared_ptr(const device_shared_ptr& o)
         : ptr(o.ptr)
-        , ref(o.ref) {
+          , ref(o.ref) {
         if (ref.count) ref.add_ref();
     }
 
@@ -87,7 +88,7 @@ public:
 
     device_shared_ptr(device_shared_ptr&& o) noexcept
         : ptr(o.ptr)
-        , ref(o.ref) {
+          , ref(o.ref) {
         o.ptr       = nullptr;
         o.ref.count = nullptr;
     }
@@ -106,6 +107,7 @@ public:
         }
         return *this;
     }
+
     __host__ __device__ device_shared_ptr&
     operator=(device_shared_ptr&& o) noexcept {
         if (this != &o) {
@@ -121,7 +123,8 @@ public:
         }
         return *this;
     }
-    __host__ __device__ ~device_shared_ptr() {
+
+    __host__ __device__~device_shared_ptr() {
 
 #ifdef __CUDA_ARCH__
         if (ref.count) ATLAS_ATOMIC_SUB(ref.count, 1);
@@ -129,22 +132,27 @@ public:
         release_host_side();
 #endif
     }
+
     __host__ __device__ T*
     get() const {
         return ptr;
     }
+
     __host__ __device__ T&
     operator*() const {
         return *ptr;
     }
+
     __host__ __device__ T*
     operator->() const {
         return ptr;
     }
+
     __host__ __device__ int
     use_count() const {
         return ref.use_count();
     }
+
     __host__ __device__ explicit
     operator bool() const {
         return ptr != nullptr;
@@ -178,6 +186,7 @@ private:
         ref.count = nullptr;
     }
 };
+
 template <typename T, typename... Args>
 inline device_shared_ptr<std::decay_t<T>>
 make_device_shared(Args&&... args) {
@@ -193,16 +202,18 @@ make_device_shared(Args&&... args) {
         if (cnt) cudaFree(cnt);
         return device_shared_ptr<U>();
     }
-    new (obj) U(std::forward<Args>(args)...);
+    new(obj) U(std::forward<Args>(args)...);
     *cnt = 1;
     return device_shared_ptr<U>(obj, cnt);
 }
+
 template <typename T, typename... Args>
 inline std::shared_ptr<std::decay_t<T>>
 make_host_shared(Args&&... args) {
     using U = std::decay_t<T>;
     return std::make_shared<U>(std::forward<Args>(args)...);
 }
+
 template <typename T>
 using host_shared_ptr = std::shared_ptr<T>;
 }

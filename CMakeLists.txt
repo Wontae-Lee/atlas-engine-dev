@@ -33,7 +33,7 @@ option(ATLAS_ENABLE_TESTS "Enable GoogleTest-based tests" OFF)
 option(ATLAS_ENABLE_BENCH "Enable Google Benchmark-based benchmarks" OFF)
 
 # Logging
-option(ATLAS_LOGGING "Enable logging functionality" OFF)
+option(ATLAS_LOGGING "Enable logging functionality" ON)
 
 # =====================================================
 # Global compile-time definitions

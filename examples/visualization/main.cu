@@ -8,8 +8,8 @@ using namespace atlas::vizkit;
 int
 main() {
 
-    //  도메인 만들고, 파티클 데이타 유저 정의 해서 시뮬레이션 돌리고,
-    //  vizkit 으로 시각화 하기
+
+
     using T = float;
 
     Emitter<T> emitter {

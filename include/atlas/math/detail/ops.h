@@ -6,7 +6,7 @@
 
 namespace atlas::math::detail {
 template <typename E>
-using expr_value_t = std::decay_t<decltype(std::declval<const E&>()[std::size_t { 0 }])>;
+using expr_value_t = std::decay_t<decltype(std::declval<const E&>()[std::size_t{ 0 }])>;
 
 template <typename T>
 struct Add {

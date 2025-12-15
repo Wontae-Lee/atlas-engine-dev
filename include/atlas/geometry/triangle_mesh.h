@@ -17,13 +17,19 @@ namespace geometry {
         HostBuffer<Triangle<T>> triangles;
         ATLAS_HOST ATLAS_FORCE_INLINE
         TriangleMesh() noexcept = default;
-        ATLAS_HOST ATLAS_FORCE_INLINE explicit TriangleMesh(const HostBuffer<Triangle<T>>& triangles_) noexcept;
-        ATLAS_HOST ATLAS_FORCE_INLINE explicit TriangleMesh(HostBuffer<Triangle<T>>&& triangles_) noexcept;
+        ATLAS_HOST ATLAS_FORCE_INLINE explicit
+        TriangleMesh(
+            const HostBuffer<Triangle<T>>& triangles_
+            )
+            noexcept;
+        ATLAS_HOST ATLAS_FORCE_INLINE explicit
+        TriangleMesh(HostBuffer<Triangle<T>>&& triangles_)
+            noexcept;
         TriangleMesh(const TriangleMesh&)     = default;
         TriangleMesh(TriangleMesh&&) noexcept = default;
         TriangleMesh&
         operator=(const TriangleMesh&)
-            = default;
+        = default;
         TriangleMesh&
         operator=(TriangleMesh&&) noexcept = default;
         ~TriangleMesh()                    = default;

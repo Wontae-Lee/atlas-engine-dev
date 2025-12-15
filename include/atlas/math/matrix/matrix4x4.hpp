@@ -1,68 +1,68 @@
 #pragma once
 namespace atlas::math {
 template <typename T>
-constexpr Matrix<T, 4, 4>::Matrix() noexcept
+constexpr
+Matrix<T, 4, 4>::Matrix() noexcept
     : m00(T(0))
-    , m01(T(0))
-    , m02(T(0))
-    , m03(T(0))
-    , m10(T(0))
-    , m11(T(0))
-    , m12(T(0))
-    , m13(T(0))
-    , m20(T(0))
-    , m21(T(0))
-    , m22(T(0))
-    , m23(T(0))
-    , m30(T(0))
-    , m31(T(0))
-    , m32(T(0))
-    , m33(T(0)) {
-}
+      , m01(T(0))
+      , m02(T(0))
+      , m03(T(0))
+      , m10(T(0))
+      , m11(T(0))
+      , m12(T(0))
+      , m13(T(0))
+      , m20(T(0))
+      , m21(T(0))
+      , m22(T(0))
+      , m23(T(0))
+      , m30(T(0))
+      , m31(T(0))
+      , m32(T(0))
+      , m33(T(0)) {}
 
 template <typename T>
-constexpr Matrix<T, 4, 4>::Matrix(T s) noexcept
+constexpr
+Matrix<T, 4, 4>::Matrix(T s) noexcept
     : m00(s)
-    , m01(T(0))
-    , m02(T(0))
-    , m03(T(0))
-    , m10(T(0))
-    , m11(s)
-    , m12(T(0))
-    , m13(T(0))
-    , m20(T(0))
-    , m21(T(0))
-    , m22(s)
-    , m23(T(0))
-    , m30(T(0))
-    , m31(T(0))
-    , m32(T(0))
-    , m33(s) {
-}
+      , m01(T(0))
+      , m02(T(0))
+      , m03(T(0))
+      , m10(T(0))
+      , m11(s)
+      , m12(T(0))
+      , m13(T(0))
+      , m20(T(0))
+      , m21(T(0))
+      , m22(s)
+      , m23(T(0))
+      , m30(T(0))
+      , m31(T(0))
+      , m32(T(0))
+      , m33(s) {}
 
 template <typename T>
-constexpr Matrix<T, 4, 4>::Matrix(
+constexpr
+Matrix<T, 4, 4>::Matrix(
     T a00, T a01, T a02, T a03,
     T a10, T a11, T a12, T a13,
     T a20, T a21, T a22, T a23,
     T a30, T a31, T a32, T a33) noexcept
     : m00(a00)
-    , m01(a01)
-    , m02(a02)
-    , m03(a03)
-    , m10(a10)
-    , m11(a11)
-    , m12(a12)
-    , m13(a13)
-    , m20(a20)
-    , m21(a21)
-    , m22(a22)
-    , m23(a23)
-    , m30(a30)
-    , m31(a31)
-    , m32(a32)
-    , m33(a33) {
-}
+      , m01(a01)
+      , m02(a02)
+      , m03(a03)
+      , m10(a10)
+      , m11(a11)
+      , m12(a12)
+      , m13(a13)
+      , m20(a20)
+      , m21(a21)
+      , m22(a22)
+      , m23(a23)
+      , m30(a30)
+      , m31(a31)
+      , m32(a32)
+      , m33(a33) {}
 
 template <typename T>
 Matrix<T, 4, 4>::Matrix(std::initializer_list<T> list) noexcept {
@@ -293,8 +293,7 @@ Matrix<T, 4, 4>::operator-=(const Matrix& m) noexcept {
 template <typename T>
 bool
 Matrix<T, 4, 4>::operator==(const Matrix& o) const noexcept {
-    for (int i = 0; i < 16; ++i)
-        if ((&m00)[i] != (&o.m00)[i]) return false;
+    for (int i = 0; i < 16; ++i) if ((&m00)[i] != (&o.m00)[i]) return false;
     return true;
 }
 
@@ -327,10 +326,10 @@ Matrix<T, 4, 4>::determinant() const noexcept {
     const T a10 = m10, a11 = m11, a12 = m12, a13 = m13;
     const T a20 = m20, a21 = m21, a22 = m22, a23 = m23;
     const T a30 = m30, a31 = m31, a32 = m32, a33 = m33;
-    const T M0 = det3(a11, a12, a13, a21, a22, a23, a31, a32, a33);
-    const T M1 = det3(a10, a12, a13, a20, a22, a23, a30, a32, a33);
-    const T M2 = det3(a10, a11, a13, a20, a21, a23, a30, a31, a33);
-    const T M3 = det3(a10, a11, a12, a20, a21, a22, a30, a31, a32);
+    const T M0  = det3(a11, a12, a13, a21, a22, a23, a31, a32, a33);
+    const T M1  = det3(a10, a12, a13, a20, a22, a23, a30, a32, a33);
+    const T M2  = det3(a10, a11, a13, a20, a21, a23, a30, a31, a33);
+    const T M3  = det3(a10, a11, a12, a20, a21, a22, a30, a31, a32);
     if constexpr (std::is_floating_point_v<T>) {
         return std::fma(a00, M0, std::fma(-a01, M1, std::fma(a02, M2, -a03 * M3)));
     } else {
@@ -379,10 +378,10 @@ Matrix<T, 4, 4>::inverse() noexcept {
             - a01 * (a10 * a22 - a12 * a20)
             + a02 * (a10 * a21 - a11 * a20);
     };
-    const T a00 = m00, a01 = m01, a02 = m02, a03 = m03;
-    const T a10 = m10, a11 = m11, a12 = m12, a13 = m13;
-    const T a20 = m20, a21 = m21, a22 = m22, a23 = m23;
-    const T a30 = m30, a31 = m31, a32 = m32, a33 = m33;
+    const T a00    = m00, a01 = m01, a02 = m02, a03 = m03;
+    const T a10    = m10, a11 = m11, a12 = m12, a13 = m13;
+    const T a20    = m20, a21 = m21, a22 = m22, a23 = m23;
+    const T a30    = m30, a31 = m31, a32 = m32, a33 = m33;
     const T C00    = det3(a11, a12, a13, a21, a22, a23, a31, a32, a33);
     const T C01    = -det3(a10, a12, a13, a20, a22, a23, a30, a32, a33);
     const T C02    = det3(a10, a11, a13, a20, a21, a23, a30, a31, a33);

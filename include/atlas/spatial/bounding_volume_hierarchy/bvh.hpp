@@ -4,10 +4,10 @@ template <typename T>
 ATLAS_DEVICE HitSurface<T>
 
 BvhTraceOperator<T>::operator()(const Ray<T>& r) const {
-    HitSurface<T> out {};
+    HitSurface<T> out{};
     if (root < 0) return out;
     T best_t = std::numeric_limits<T>::max();
-    Vector3<T> best_p {}, best_n {};
+    Vector3<T> best_p{}, best_n{};
     bool found = false;
     int stack[64];
     int sp      = 0;
@@ -37,11 +37,9 @@ BvhTraceOperator<T>::operator()(const Ray<T>& r) const {
             }
         } else {
             if (sp < 63) stack[sp++] = nd.left;
-            else
-                stack[63] = nd.left;
+            else stack[63]           = nd.left;
             if (sp < 63) stack[sp++] = nd.right;
-            else
-                stack[63] = nd.right;
+            else stack[63]           = nd.right;
         }
     }
     if (found) {

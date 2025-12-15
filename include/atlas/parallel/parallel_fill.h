@@ -9,12 +9,14 @@ namespace detail {
         if (first == last) return;
         thrust::fill(thrust::host, first, last, value);
     }
+
     template <typename Iterator, typename T>
     ATLAS_FORCE_INLINE void
     parallel_fill_device_impl(Iterator first, Iterator last, const T& value) {
         if (first == last) return;
         thrust::fill(thrust::device, first, last, value);
     }
+
     template <typename Iterator, typename T>
     ATLAS_FORCE_INLINE void
     parallel_fill_serial_impl(Iterator first, Iterator last, const T& value) {
@@ -22,6 +24,7 @@ namespace detail {
         std::fill(first, last, value);
     }
 }
+
 template <ExecutionPolicy P, typename Iterator, typename T>
 ATLAS_FORCE_INLINE void
 parallel_fill(Iterator first, Iterator last, const T& value) {
@@ -50,11 +53,13 @@ namespace detail {
                 first[i] = value;
             });
     }
+
     template <typename Iterator, typename T>
     ATLAS_FORCE_INLINE void
     parallel_fill_device_impl(Iterator first, Iterator last, const T& value) {
         parallel_fill_host_impl(first, last, value);
     }
+
     template <typename Iterator, typename T>
     ATLAS_FORCE_INLINE void
     parallel_fill_serial_impl(Iterator first, Iterator last, const T& value) {
@@ -62,6 +67,7 @@ namespace detail {
         std::fill(first, last, value);
     }
 }
+
 template <ExecutionPolicy P, typename Iterator, typename T>
 ATLAS_FORCE_INLINE void
 parallel_fill(Iterator first, Iterator last, const T& value) {

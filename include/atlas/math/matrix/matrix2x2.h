@@ -16,13 +16,29 @@ namespace math {
     public:
         T m00, m01;
         T m10, m11;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Matrix() noexcept;
-        constexpr Matrix(const Matrix&) noexcept = default;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit constexpr Matrix(T s) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Matrix(T a00, T a01, T a10, T a11) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(std::initializer_list<T> list) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Matrix()
+            noexcept;
+        constexpr
+        Matrix(const Matrix&) noexcept = default;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit constexpr
+        Matrix(T s)
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Matrix(T a00
+               ,
+               T a01, T a10, T a11
+            )
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Matrix(std::initializer_list<T> list)
+            noexcept;
         template <typename Expression>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(const MatrixExpression<T, Expression>& expr) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Matrix(
+            const MatrixExpression<T, Expression>& expr
+            )
+            noexcept;
         ~Matrix() noexcept = default;
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         rows() noexcept;
@@ -153,9 +169,9 @@ namespace math {
           T eps = std::numeric_limits<T>::epsilon()) noexcept;
     template <typename T>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            Vector<T, 2>
-            solve(const Matrix<T, 2, 2>& A, const Vector<T, 2>& b) noexcept;
+    ATLAS_FORCE_INLINE
+    Vector<T, 2>
+    solve(const Matrix<T, 2, 2>& A, const Vector<T, 2>& b) noexcept;
 }
 
 template <typename T>

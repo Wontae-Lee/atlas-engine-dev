@@ -5,13 +5,11 @@
 
 namespace atlas {
 namespace solver {
-
     template <typename T>
     struct DsmcDeviceProbe {
-
-        T* g_ref_per_cell { nullptr };
-        int* n_collisions { nullptr };
-        int* n_particles_per_cell_species { nullptr };
+        T* g_ref_per_cell{ nullptr };
+        int* n_collisions{ nullptr };
+        int* n_particles_per_cell_species{ nullptr };
     };
 
     template <typename T>
@@ -78,7 +76,6 @@ namespace solver {
         int _n_pairs   = 1;
         int _n_cells   = 0;
     };
-
 }
 
 template <typename T>
@@ -87,7 +84,6 @@ template <typename T>
 using DsmcDataHostPtr = atlas::host_shared_ptr<solver::DsmcData<T>>;
 template <typename T>
 using DsmcDataDevicePtr = atlas::device_shared_ptr<solver::DsmcData<T>>;
-
 }
 
 #include <atlas/solver/dsmc/dsmc_data.hpp>

@@ -26,7 +26,7 @@ namespace geometry {
         Vector3<T> a;
         Vector3<T> b;
         Vector3<T> c;
-        Vector3<T> normal { T(0), T(0), T(1) };
+        Vector3<T> normal{ T(0), T(0), T(1) };
         Triangle() noexcept = default;
         ATLAS_HOST ATLAS_FORCE_INLINE
         Triangle(const Vector3<T>& a_, const Vector3<T>& b_, const Vector3<T>& c_) noexcept;

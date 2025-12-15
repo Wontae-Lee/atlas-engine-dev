@@ -69,111 +69,120 @@ template <typename EL, typename ER>
 using VectorAnd = VectorBinaryOperator<bool, EL, ER, detail::LogicalAnd<bool>>;
 template <typename EL, typename ER>
 using VectorOr = VectorBinaryOperator<bool, EL, ER, detail::LogicalOr<bool>>;
+
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator+(const EL& l, const ER& r) noexcept {
-    using T = std::common_type_t<expr_value_t<EL>, expr_value_t<ER>>;
+auto
+operator+(const EL& l, const ER& r) noexcept {
+    using T = std::common_type_t<expr_value_t<EL>
+                                 ,
+                                 expr_value_t<ER>>;
     return VectorAdd<T, EL, ER>(l(), r());
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator+(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator+(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarAdd<T, E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator+(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator+(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarAdd<T, E>(r(), s);
 }
 
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator-(const EL& l, const ER& r) noexcept {
-    using T = std::common_type_t<expr_value_t<EL>, expr_value_t<ER>>;
+auto
+operator-(const EL& l, const ER& r) noexcept {
+    using T = std::common_type_t<expr_value_t<EL>
+                                 ,
+                                 expr_value_t<ER>>;
     return VectorSub<T, EL, ER>(l(), r());
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator-(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator-(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarSub<T, E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator-(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator-(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarRSub<T, E>(r(), s);
 }
 
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator*(const EL& l, const ER& r) noexcept {
-    using T = std::common_type_t<expr_value_t<EL>, expr_value_t<ER>>;
+auto
+operator*(const EL& l, const ER& r) noexcept {
+    using T = std::common_type_t<expr_value_t<EL>
+                                 ,
+                                 expr_value_t<ER>>;
     return VectorMul<T, EL, ER>(l(), r());
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator*(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator*(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarMul<T, E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator*(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator*(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarMul<T, E>(r(), s);
 }
 
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator/(const EL& l, const ER& r) noexcept {
-    using T = std::common_type_t<expr_value_t<EL>, expr_value_t<ER>>;
+auto
+operator/(const EL& l, const ER& r) noexcept {
+    using T = std::common_type_t<expr_value_t<EL>
+                                 ,
+                                 expr_value_t<ER>>;
     return VectorDiv<T, EL, ER>(l(), r());
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator/(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator/(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarDiv<T, E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator/(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator/(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarRDiv<T, E>(r(), s);
 }
 
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator-(const E& e) noexcept {
+auto
+operator-(const E& e) noexcept {
     using T = expr_value_t<E>;
     return VectorNeg<T, E>(e());
 }
@@ -181,160 +190,160 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator<(const EL& l, const ER& r) noexcept {
+auto
+operator<(const EL& l, const ER& r) noexcept {
     return VectorLess<EL, ER>(l(), r());
 }
 
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator<=(const EL& l, const ER& r) noexcept {
+auto
+operator<=(const EL& l, const ER& r) noexcept {
     return VectorLessEqual<EL, ER>(l(), r());
 }
 
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator>(const EL& l, const ER& r) noexcept {
+auto
+operator>(const EL& l, const ER& r) noexcept {
     return VectorGreater<EL, ER>(l(), r());
 }
 
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator>=(const EL& l, const ER& r) noexcept {
+auto
+operator>=(const EL& l, const ER& r) noexcept {
     return VectorGreaterEqual<EL, ER>(l(), r());
 }
 
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator==(const EL& l, const ER& r) noexcept {
+auto
+operator==(const EL& l, const ER& r) noexcept {
     return VectorEqual<EL, ER>(l(), r());
 }
 
 template <VectorExpressionType EL, VectorExpressionType ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator!=(const EL& l, const ER& r) noexcept {
+auto
+operator!=(const EL& l, const ER& r) noexcept {
     return VectorNotEqual<EL, ER>(l(), r());
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator<(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator<(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarLess<E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator<(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator<(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarRLess<E>(r(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator<=(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator<=(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarLessEqual<E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator<=(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator<=(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarRLessEqual<E>(r(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator>(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator>(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarGreater<E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator>(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator>(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarRGreater<E>(r(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator>=(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator>=(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarGreaterEqual<E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator>=(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator>=(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarRGreaterEqual<E>(r(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator==(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator==(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarEqual<E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator==(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator==(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarREqual<E>(r(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator!=(const VectorExpression<T, E>& l, const T& s) noexcept {
+auto
+operator!=(const VectorExpression<T, E>& l, const T& s) noexcept {
     return VectorScalarNotEqual<E>(l(), s);
 }
 
 template <typename T, typename E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator!=(const T& s, const VectorExpression<T, E>& r) noexcept {
+auto
+operator!=(const T& s, const VectorExpression<T, E>& r) noexcept {
     return VectorScalarRNotEqual<E>(r(), s);
 }
 
 template <typename EL, typename ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator&(const VectorExpression<bool, EL>& l, const VectorExpression<bool, ER>& r) noexcept {
+auto
+operator&(const VectorExpression<bool, EL>& l, const VectorExpression<bool, ER>& r) noexcept {
     return VectorAnd<EL, ER>(l(), r());
 }
 
 template <typename EL, typename ER>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 
-    auto
-    operator|(const VectorExpression<bool, EL>& l, const VectorExpression<bool, ER>& r) noexcept {
+auto
+operator|(const VectorExpression<bool, EL>& l, const VectorExpression<bool, ER>& r) noexcept {
     return VectorOr<EL, ER>(l(), r());
 }
 }

@@ -3,8 +3,8 @@
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/random/default_random_engine.h>
 #include <atlas/random/uniform_real_distribution.h>
-namespace atlas::solver::dsmc::kernel {
 
+namespace atlas::solver::dsmc::kernel {
 template <typename T>
 void
 HardSphereKernel<T>::operator()(const system::ParticleDeviceProbe<T>& data,
@@ -21,9 +21,9 @@ HardSphereKernel<T>::operator()(const system::ParticleDeviceProbe<T>& data,
             0,
             total_collisions,
             [neighbor_probe,
-             d_flatten_ptr,
-             d_g_ref_per_cell,
-             vel] ATLAS_ALL_DEVICE(const int coll_id) {
+                d_flatten_ptr,
+                d_g_ref_per_cell,
+                vel] ATLAS_ALL_DEVICE(const int coll_id) {
                 const int cell_id = d_flatten_ptr[coll_id];
 
                 const int first = neighbor_probe.cell_start[cell_id];
@@ -45,8 +45,8 @@ HardSphereKernel<T>::operator()(const system::ParticleDeviceProbe<T>& data,
                 atlas::uniform_real_distribution<T> uni(T(0), T(1));
 
                 rng.seed(1234u
-                         + static_cast<unsigned int>(cell_id) * 73856093u
-                         + static_cast<unsigned int>(coll_id) * 19349663u);
+                    + static_cast<unsigned int>(cell_id) * 73856093u
+                    + static_cast<unsigned int>(coll_id) * 19349663u);
 
                 int i, j;
                 do {
@@ -86,12 +86,15 @@ HardSphereKernel<T>::operator()(const system::ParticleDeviceProbe<T>& data,
                 T sin_phi = std::sin(phi);
 
                 T g            = g_ij;
-                Vector3<T> g_r = Vector3<T> { g * sin_theta * cos_phi,
-                                              g * sin_theta * sin_phi,
-                                              g * cos_theta };
-                vel[i]         = v_c + T(0.5) * g_r;
-                vel[j]         = v_c - T(0.5) * g_r;
-            });
+                Vector3<T> g_r = Vector3<T>{
+                    g * sin_theta * cos_phi,
+                    g * sin_theta * sin_phi,
+                    g * cos_theta
+                };
+                vel[i] = v_c + T(0.5) * g_r;
+                vel[j] = v_c - T(0.5) * g_r;
+            }
+            );
     }
 }
 
@@ -103,5 +106,4 @@ HardSphereKernel<T>::collide(const system::ParticleDeviceProbe<T>& data,
                              DeviceBuffer<int>& d_flattened_collision) const {
     this->operator()(data, dsmc_probe, neighbor_probe, d_flattened_collision);
 }
-
 }

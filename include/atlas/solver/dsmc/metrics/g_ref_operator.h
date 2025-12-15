@@ -1,11 +1,12 @@
 #pragma once
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/system/particle_system.h>
+
 namespace atlas::solver::dsmc::metrics {
 enum class GRefOpType : int {
     RmsLocal,
-
 };
+
 template <typename T>
 struct GRefRmsOperator {
     T factor = T(1.5);
@@ -18,12 +19,17 @@ struct GRefRmsOperator {
 template <typename T>
 struct GRefOperator {
     GRefOpType type = GRefOpType::RmsLocal;
+
     union {
         GRefRmsOperator<T> rms;
     };
+
     GRefOperator() = default;
-    ATLAS_HOST explicit GRefOperator(const GRefRmsOperator<T>& op)
-        : rms(op) { }
+
+    ATLAS_HOST explicit
+    GRefOperator(const GRefRmsOperator<T>& op)
+        : rms(op) {}
+
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     compute(int cell_id,
             const system::SpatialHashProbe<T>& probe,
@@ -35,6 +41,7 @@ struct GRefOperator {
             return T(0);
         }
     }
+
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     operator()(const int cell_id,
                const system::SpatialHashProbe<T>& neighbor_probe,
@@ -43,4 +50,5 @@ struct GRefOperator {
     }
 };
 }
+
 #include <atlas/solver/dsmc/metrics/g_ref_operator.hpp>

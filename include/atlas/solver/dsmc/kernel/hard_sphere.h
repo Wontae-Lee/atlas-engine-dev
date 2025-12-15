@@ -31,7 +31,6 @@ template <typename T>
 using HardSphereKernelHostPtr = atlas::host_shared_ptr<kernel::HardSphereKernel<T>>;
 template <typename T>
 using HardSphereKernelDevicePtr = atlas::device_shared_ptr<kernel::HardSphereKernel<T>>;
-
 }
 
 #include <atlas/solver/dsmc/kernel/hard_sphere.hpp>

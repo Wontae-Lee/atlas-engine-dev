@@ -15,12 +15,14 @@ DsmcSolver<T>::DsmcSolver() {
     _g_ref_estimator = atlas::make_host_shared<dsmc::GRefRmsEstimator<T>>();
     _collide_kernel  = atlas::make_host_shared<dsmc::HardSphereKernel<T>>();
 }
+
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE void
 DsmcSolver<T>::solve(const system::ParticleDeviceProbe<T>& data, T dt) {
 
     (*this)(data, dt);
 }
+
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE void
 DsmcSolver<T>::operator()(const system::ParticleDeviceProbe<T>& data, T dt) {
@@ -112,8 +114,8 @@ DsmcSolver<T>::flatten_collision(const DsmcDeviceProbe<T>& dsmc_probe,
             cell_begin,
             cell_end,
             [d_n_collisions,
-             d_cell_offs_ptr,
-             d_flatten_ptr] ATLAS_ALL_DEVICE(int cell_id) {
+                d_cell_offs_ptr,
+                d_flatten_ptr] ATLAS_ALL_DEVICE(int cell_id) {
                 const int cnt = d_n_collisions[cell_id];
                 if (cnt <= 0) {
                     return;
@@ -160,16 +162,16 @@ DsmcSolver<T>::count_collisions(const system::SpatialHashProbe<T>& neighbor_prob
         0,
         n_cells,
         [neighbor_probe,
-         d_g_ref,
-         d_n_coll,
-         d_n_c_species,
-         sigma_pairs,
-         number_weight,
-         n_species,
-         n_pairs,
-         cell_volume,
-         dt,
-         pair_index_device] ATLAS_ALL_DEVICE(int cell_id) {
+            d_g_ref,
+            d_n_coll,
+            d_n_c_species,
+            sigma_pairs,
+            number_weight,
+            n_species,
+            n_pairs,
+            cell_volume,
+            dt,
+            pair_index_device] ATLAS_ALL_DEVICE(int cell_id) {
             if (!d_g_ref || !d_n_coll || !d_n_c_species) {
                 return;
             }
@@ -289,7 +291,6 @@ DsmcSolver<T>::compute_g_ref(const system::SpatialHashProbe<T>& neighbor_probe,
 
     auto d_g_ref = dsmc_probe.g_ref_per_cell;
     auto gref_op = _g_ref_estimator->make_device_operator();
-    ATLAS_ASSERT(d_g_ref != nullptr);
 
     if (n_species == 1 && n_pairs == 1) {
         atlas::parallel_for<ExecutionPolicy::device>(
@@ -297,9 +298,9 @@ DsmcSolver<T>::compute_g_ref(const system::SpatialHashProbe<T>& neighbor_probe,
             0,
             n_cells,
             [neighbor_probe,
-             data,
-             gref_op,
-             d_g_ref] ATLAS_ALL_DEVICE(int cell_id) {
+                data,
+                gref_op,
+                d_g_ref] ATLAS_ALL_DEVICE(int cell_id) {
                 const int begin = neighbor_probe.cell_start[cell_id];
                 if (begin < 0) {
                     d_g_ref[cell_id] = T(0);
@@ -316,10 +317,10 @@ DsmcSolver<T>::compute_g_ref(const system::SpatialHashProbe<T>& neighbor_probe,
         0,
         n_cells,
         [neighbor_probe,
-         data,
-         gref_op,
-         d_g_ref,
-         n_pairs] ATLAS_ALL_DEVICE(int cell_id) {
+            data,
+            gref_op,
+            d_g_ref,
+            n_pairs] ATLAS_ALL_DEVICE(int cell_id) {
             const int begin = neighbor_probe.cell_start[cell_id];
             if (begin < 0) {
                 const int base = cell_id * n_pairs;
@@ -349,14 +350,13 @@ DsmcSolver<T>::count_species(const system::SpatialHashProbe<T>& neighbor_probe,
     auto d_species      = data.species;
 
     auto d_n_c_spec = dsmc_probe.n_particles_per_cell_species;
-    ATLAS_ASSERT(d_n_c_spec != nullptr);
 
     if (n_species == 1) {
         atlas::parallel_for<ExecutionPolicy::device>(
             0,
             n_cells,
             [neighbor_probe,
-             d_n_c_spec] ATLAS_ALL_DEVICE(int cell_id) {
+                d_n_c_spec] ATLAS_ALL_DEVICE(int cell_id) {
                 const int cell_begin = neighbor_probe.cell_start[cell_id];
                 if (cell_begin < 0) {
                     d_n_c_spec[cell_id] = 0;
@@ -372,9 +372,9 @@ DsmcSolver<T>::count_species(const system::SpatialHashProbe<T>& neighbor_probe,
         0,
         n_cells,
         [neighbor_probe,
-         d_species,
-         d_n_c_spec,
-         n_species] ATLAS_ALL_DEVICE(int cell_id) {
+            d_species,
+            d_n_c_spec,
+            n_species] ATLAS_ALL_DEVICE(int cell_id) {
             const int cell_begin = neighbor_probe.cell_start[cell_id];
             const int base       = cell_id * n_species;
 

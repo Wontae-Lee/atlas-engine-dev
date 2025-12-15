@@ -25,7 +25,8 @@ Advector<T>::time_integration(const ParticleDeviceProbe<T>& probe, T dt) const {
             Vector3F p0       = probe.pos[i];
             Vector3F velocity = probe.vel[i];
             probe.pos[i]      = p0 + velocity * dt;
-        });
+        }
+        );
     return;
 }
 

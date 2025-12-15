@@ -35,14 +35,11 @@ SpatialHashProbe<T>::for_each_neighbor(int p,
         int iy = static_cast<int>(::floor(ry));
         int iz = static_cast<int>(::floor(rz));
         if (ix < 0) ix = 0;
-        else if (ix >= grid_size.x)
-            ix = grid_size.x - 1;
+        else if (ix >= grid_size.x) ix = grid_size.x - 1;
         if (iy < 0) iy = 0;
-        else if (iy >= grid_size.y)
-            iy = grid_size.y - 1;
+        else if (iy >= grid_size.y) iy = grid_size.y - 1;
         if (iz < 0) iz = 0;
-        else if (iz >= grid_size.z)
-            iz = grid_size.z - 1;
+        else if (iz >= grid_size.z) iz = grid_size.z - 1;
         const int cell  = cell_index(ix, iy, iz);
         const int begin = cell_start[cell];
         if (begin < 0) {
@@ -110,9 +107,9 @@ SpatialHashingSearcher<T>::SpatialHashingSearcher(Vector3<T> lower_corner_,
                                                   T cell_size_,
                                                   NeighborSearchRange range_)
     : _lower_corner(lower_corner_)
-    , _upper_corner(upper_corner_)
-    , _cell_size(cell_size_)
-    , _range(range_) {
+      , _upper_corner(upper_corner_)
+      , _cell_size(cell_size_)
+      , _range(range_) {
     _cell_volume            = _cell_size * _cell_size * _cell_size;
     const Vector3<T> extent = _upper_corner - _lower_corner;
     const T inv_h           = T(1) / _cell_size;
@@ -122,7 +119,7 @@ SpatialHashingSearcher<T>::SpatialHashingSearcher(Vector3<T> lower_corner_,
     if (nx < 1) nx = 1;
     if (ny < 1) ny = 1;
     if (nz < 1) nz = 1;
-    _grid_size = Vector3<int> { nx, ny, nz };
+    _grid_size = Vector3<int>{ nx, ny, nz };
     _n_cells   = static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny)
         * static_cast<std::size_t>(nz);
     _mode = NeighborSearchMode::passive;
@@ -135,8 +132,7 @@ SpatialHashingSearcher<T>::SpatialHashingSearcher(const Box<T>& box,
     : SpatialHashingSearcher(box.lower_corner,
                              box.upper_corner,
                              cell_size_,
-                             range_) {
-}
+                             range_) {}
 
 template <typename T>
 SpatialHashingSearcher<T>::SpatialHashingSearcher(const AABB<T>& aabb,
@@ -145,16 +141,15 @@ SpatialHashingSearcher<T>::SpatialHashingSearcher(const AABB<T>& aabb,
     : SpatialHashingSearcher(aabb.lower_corner,
                              aabb.upper_corner,
                              cell_size_,
-                             range_) {
-}
+                             range_) {}
 
 template <typename T>
 void
 SpatialHashingSearcher<T>::reset() noexcept {
     if (_mode == NeighborSearchMode::active) {
-        _grid_size    = Vector3<int> { 0, 0, 0 };
-        _lower_corner = Vector3<T> { T(inf), T(inf), T(inf) };
-        _upper_corner = Vector3<T> { -T(inf), -T(inf), -T(inf) };
+        _grid_size    = Vector3<int>{ 0, 0, 0 };
+        _lower_corner = Vector3<T>{ T(inf), T(inf), T(inf) };
+        _upper_corner = Vector3<T>{ -T(inf), -T(inf), -T(inf) };
     }
     d_keys.resize(0);
     d_indices.resize(0);
@@ -191,32 +186,35 @@ SpatialHashingSearcher<T>::readjust(const system::ParticleDeviceProbe<T>& data,
     const Vector3<T>* d_pos_raw = data.pos;
     int n_active                = active;
     ATLAS_INFO << "SpatialHashingSearcher: Readjusting spatial hash grid with "
-               << n_active << " active particles.";
+        << n_active << " active particles.";
     atlas::device_ptr<const Vector3<T>> pos_begin(d_pos_raw);
     atlas::device_ptr<const Vector3<T>> pos_end = pos_begin + n_active;
-    AABB<T> aabb=
-    atlas::transform_reduce<ExecutionPolicy::device>(
-        pos_begin,
-        pos_end,
-        aabb,
-        [] ATLAS_ALL_DEVICE(const Vector3<T>& p) {
-            return spatial::make_aabb<T>(p);
-        },
-        [] ATLAS_ALL_DEVICE(const spatial::AxisAlignedBoundingBox<T>& a,
+    AABB<T> aabb                                =
+        atlas::transform_reduce<ExecutionPolicy::device>(
+            pos_begin,
+            pos_end,
+            aabb,
+            [] ATLAS_ALL_DEVICE(const Vector3<T>& p) {
+                return spatial::make_aabb<T>(p);
+            },
+            []
+        ATLAS_ALL_DEVICE(const spatial::AxisAlignedBoundingBox<T>& a,
 
-                            const spatial::AxisAlignedBoundingBox<T>& b) {
-            return spatial::merge_aabb<T>(a, b);
-        });
+                         const spatial::AxisAlignedBoundingBox<T>& b
+            ) {
+                return spatial::merge_aabb<T>(a, b);
+            }
+            );
     const Vector3<T> extent = aabb.extents();
 
-    T inv_h                 = T(1) / T(_cell_size);
-    int nx                  = static_cast<int>(std::floor(extent.x * inv_h)) + 1;
-    int ny                  = static_cast<int>(std::floor(extent.y * inv_h)) + 1;
-    int nz                  = static_cast<int>(std::floor(extent.z * inv_h)) + 1;
+    T inv_h = T(1) / T(_cell_size);
+    int nx  = static_cast<int>(std::floor(extent.x * inv_h)) + 1;
+    int ny  = static_cast<int>(std::floor(extent.y * inv_h)) + 1;
+    int nz  = static_cast<int>(std::floor(extent.z * inv_h)) + 1;
     if (nx < 1) nx = 1;
     if (ny < 1) ny = 1;
     if (nz < 1) nz = 1;
-    _grid_size = Vector3<int> { nx, ny, nz };
+    _grid_size = Vector3<int>{ nx, ny, nz };
     _n_cells   = static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny)
         * static_cast<std::size_t>(nz);
 }
@@ -224,7 +222,6 @@ SpatialHashingSearcher<T>::readjust(const system::ParticleDeviceProbe<T>& data,
 template <typename T>
 void
 SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& data) {
-
     int n_active = data.alive;
     if (n_active <= 0) {
         this->reset();
@@ -262,17 +259,15 @@ SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& data) {
                 const int max_y     = grid_size.y - 1;
                 const int max_z     = grid_size.z - 1;
                 if (ix < 0) ix = 0;
-                else if (ix > max_x)
-                    ix = max_x;
+                else if (ix > max_x) ix = max_x;
                 if (iy < 0) iy = 0;
-                else if (iy > max_y)
-                    iy = max_y;
+                else if (iy > max_y) iy = max_y;
                 if (iz < 0) iz = 0;
-                else if (iz > max_z)
-                    iz = max_z;
+                else if (iz > max_z) iz = max_z;
                 keys_ptr[i] = static_cast<std::uint32_t>(
                     ix + iy * grid_size.x + iz * grid_size.x * grid_size.y);
-            });
+            }
+            );
     }
     {
         const atlas::device_ptr<std::uint32_t> keys_begin(d_keys_ptr);
@@ -302,7 +297,8 @@ SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& data) {
                 if (i == count - 1 || key != keys[i + 1]) {
                     cell_end[key] = i + 1;
                 }
-            });
+            }
+            );
     }
 }
 

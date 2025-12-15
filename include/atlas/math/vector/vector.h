@@ -17,11 +17,17 @@ namespace math {
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
         Vector() noexcept;
         Vector(const Vector& other) noexcept = default;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Vector(T s) noexcept;
-        template <typename... Args, typename = std::enable_if_t<(sizeof...(Args) == N) && (std::conjunction_v<std::is_convertible<Args, T>...>)>
-
-                  >
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Vector(Args... args) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Vector(T s)
+            noexcept;
+        template <typename... Args, typename = std::enable_if_t<(sizeof...(Args) == N) && (std::conjunction_v<
+                      std::is_convertible<Args, T>...>)>>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Vector(Args
+            ...
+            args
+            )
+            noexcept;
         ATLAS_HOST ATLAS_FORCE_INLINE
         Vector(std::initializer_list<T> list) noexcept;
         template <typename Expression>
@@ -29,8 +35,8 @@ namespace math {
         Vector(const VectorExpression<T, Expression>& expr) noexcept;
         ~Vector() noexcept = default;
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE
-            std::size_t
-            size() noexcept;
+        std::size_t
+        size() noexcept;
         ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const T&
         operator[](std::size_t index) const noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T&
@@ -41,9 +47,7 @@ namespace math {
         set(T s) noexcept;
         template <typename... Args,
                   typename = std::enable_if_t<(sizeof...(Args) == N)
-                                              && (std::conjunction_v<std::is_convertible<Args, T>...>)>
-
-                  >
+                      && (std::conjunction_v<std::is_convertible<Args, T>...>)>>
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         set_values(Args... args) noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void

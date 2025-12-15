@@ -126,8 +126,7 @@ int
 SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, int end, int& node_count) {
     constexpr T k_eps    = T(1e-8);
     const int node_index = node_count++;
-    if (node_index >= static_cast<int>(h_nodes.size()))
-        h_nodes.resize(node_index + 1);
+    if (node_index >= static_cast<int>(h_nodes.size())) h_nodes.resize(node_index + 1);
     AABB<T> node_bounds;
     AABB<T> centroid_bounds;
     for (int i = start; i < end; ++i) {
@@ -141,10 +140,10 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, int en
     if (count <= _leaf_size || degenerate) {
         BVHNode<T>& leaf = h_nodes[node_index];
         leaf.is_leaf     = true;
-        leaf.left = leaf.right = -1;
-        leaf.bounds            = node_bounds;
-        leaf.start             = start;
-        leaf.count             = count;
+        leaf.left        = leaf.right = -1;
+        leaf.bounds      = node_bounds;
+        leaf.start       = start;
+        leaf.count       = count;
         return node_index;
     }
     int axis     = ext.major_axis();
@@ -154,10 +153,10 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, int en
     if (den <= T(0)) {
         BVHNode<T>& leaf = h_nodes[node_index];
         leaf.is_leaf     = true;
-        leaf.left = leaf.right = -1;
-        leaf.bounds            = node_bounds;
-        leaf.start             = start;
-        leaf.count             = count;
+        leaf.left        = leaf.right = -1;
+        leaf.bounds      = node_bounds;
+        leaf.start       = start;
+        leaf.count       = count;
         return node_index;
     }
     HostBuffer<sah::Bin<T>> bins(_num_of_bins);
@@ -165,10 +164,8 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, int en
         const int pid = h_indices[i];
         const T t     = (h_centroids[pid].at(axis) - cmin) / den;
         const int b   = std::clamp(static_cast<int>(std::floor(t * _num_of_bins)), 0, _num_of_bins - 1);
-        if (bins[b].count == 0)
-            bins[b].bounds = h_prim_bounds[pid];
-        else
-            bins[b].bounds.merge(h_prim_bounds[pid]);
+        if (bins[b].count == 0) bins[b].bounds = h_prim_bounds[pid];
+        else bins[b].bounds.merge(h_prim_bounds[pid]);
         ++bins[b].count;
     }
     HostBuffer<AABB<T>> prefix_bounds(_num_of_bins), suffix_bounds(_num_of_bins);
@@ -176,18 +173,16 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, int en
     AABB<T> acc_bounds;
     int acc_count = 0;
     for (int i = 0; i < _num_of_bins; ++i) {
-        if (bins[i].count > 0)
-            acc_bounds.merge(bins[i].bounds);
-        acc_count += bins[i].count;
+        if (bins[i].count > 0) acc_bounds.merge(bins[i].bounds);
+        acc_count        += bins[i].count;
         prefix_bounds[i] = acc_bounds;
         prefix_counts[i] = acc_count;
     }
     acc_bounds = AABB<T>();
     acc_count  = 0;
     for (int i = _num_of_bins - 1; i >= 0; --i) {
-        if (bins[i].count > 0)
-            acc_bounds.merge(bins[i].bounds);
-        acc_count += bins[i].count;
+        if (bins[i].count > 0) acc_bounds.merge(bins[i].bounds);
+        acc_count        += bins[i].count;
         suffix_bounds[i] = acc_bounds;
         suffix_counts[i] = acc_count;
     }
@@ -207,27 +202,29 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, int en
     if (best_split < 0) {
         BVHNode<T>& leaf = h_nodes[node_index];
         leaf.is_leaf     = true;
-        leaf.left = leaf.right = -1;
-        leaf.bounds            = node_bounds;
-        leaf.start             = start;
-        leaf.count             = count;
+        leaf.left        = leaf.right = -1;
+        leaf.bounds      = node_bounds;
+        leaf.start       = start;
+        leaf.count       = count;
         return node_index;
     }
-    auto first           = h_indices.begin() + start;
-    auto last            = h_indices.begin() + end;
-    auto mid_it          = std::stable_partition(first, last, [&](int pid) {
-        const T t   = (h_centroids[pid].at(axis) - cmin) / den;
-        const int b = std::clamp(static_cast<int>(std::floor(t * _num_of_bins)), 0, _num_of_bins - 1);
-        return b <= best_split;
-    });
+    auto first  = h_indices.begin() + start;
+    auto last   = h_indices.begin() + end;
+    auto mid_it = std::stable_partition(first,
+                                        last,
+                                        [&](int pid) {
+                                            const T t   = (h_centroids[pid].at(axis) - cmin) / den;
+                                            const int b = std::clamp(static_cast<int>(std::floor(t * _num_of_bins)), 0, _num_of_bins - 1);
+                                            return b <= best_split;
+                                        });
     const int left_count = static_cast<int>(mid_it - first);
     if (left_count <= 0 || left_count >= count) {
         BVHNode<T>& leaf = h_nodes[node_index];
         leaf.is_leaf     = true;
-        leaf.left = leaf.right = -1;
-        leaf.bounds            = node_bounds;
-        leaf.start             = start;
-        leaf.count             = count;
+        leaf.left        = leaf.right = -1;
+        leaf.bounds      = node_bounds;
+        leaf.start       = start;
+        leaf.count       = count;
         return node_index;
     }
     const int left_child  = build_recursive(start, start + left_count, node_count);

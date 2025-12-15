@@ -18,17 +18,33 @@ namespace math {
         T m10, m11, m12, m13;
         T m20, m21, m22, m23;
         T m30, m31, m32, m33;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Matrix() noexcept;
-        constexpr Matrix(const Matrix&) noexcept = default;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit constexpr Matrix(T s) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Matrix(
-            T a00, T a01, T a02, T a03,
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Matrix()
+            noexcept;
+        constexpr
+        Matrix(const Matrix&) noexcept = default;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit constexpr
+        Matrix(T s)
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Matrix(
+            T a00
+            ,
+            T a01, T a02, T a03,
             T a10, T a11, T a12, T a13,
             T a20, T a21, T a22, T a23,
-            T a30, T a31, T a32, T a33) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(std::initializer_list<T> list) noexcept;
+            T a30, T a31, T a32, T a33
+            )
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Matrix(std::initializer_list<T> list)
+            noexcept;
         template <typename Expression>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(const MatrixExpression<T, Expression>& expr) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Matrix(
+            const MatrixExpression<T, Expression>& expr
+            )
+            noexcept;
         ~Matrix() noexcept = default;
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         rows() noexcept;
@@ -161,9 +177,9 @@ namespace math {
           T eps = std::numeric_limits<T>::epsilon()) noexcept;
     template <typename T>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE
-        ATLAS_FORCE_INLINE
-            Vector<T, 4>
-            solve(const Matrix<T, 4, 4>& A, const Vector<T, 4>& b) noexcept;
+    ATLAS_FORCE_INLINE
+    Vector<T, 4>
+    solve(const Matrix<T, 4, 4>& A, const Vector<T, 4>& b) noexcept;
 }
 
 template <typename T>

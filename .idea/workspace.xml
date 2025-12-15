@@ -48,7 +48,113 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="memory problems.">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/visualization/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/visualization/main.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/advector/advector.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/advector/advector.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/buffer/device_buffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/buffer/device_buffer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/buffer/host_buffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/buffer/host_buffer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/core/macros.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/core/macros.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/emitter/emitter.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/emitter/emitter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/emitter/emitter.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/emitter/emitter.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/field/field.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/field/field.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/functor/device_pair_indexer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/functor/device_pair_indexer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/plane.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/plane.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/sphere.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/sphere.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/surface.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/surface.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/trace_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/trace_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/iterator/counting_iterator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/iterator/counting_iterator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/iterator/zip_iterator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/iterator/zip_iterator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/logging/logging.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/logging/logging.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/constants.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/constants.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/detail/ops.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/detail/ops.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/elementwise.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/elementwise.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/expression.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/expression.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/operators.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/operators.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/reductions.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/reductions.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/statistics.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/statistics.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/quaternion.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/quaternion.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/quaternion.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/quaternion.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/elementwise.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/elementwise.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/expression.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/expression.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/operators.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/operators.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/reductions.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/reductions.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/statistics.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/statistics.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector2.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector2.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector2.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector2.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector3.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector3.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector3.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector4.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector4.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector4.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/memory/copy.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/memory/copy.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/memory/memory.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/memory/memory.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/memory/raw_pointer_cast.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/memory/raw_pointer_cast.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/parallel/parallel_fill.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/parallel/parallel_fill.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/parallel/parallel_for.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/parallel/parallel_for.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/parallel/parallel_sort.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/parallel/parallel_sort.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/random/default_random_engine.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/random/default_random_engine.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/random/random.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/random/random.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/random/sampling.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/random/sampling.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/random/uniform_real_distribution.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/random/uniform_real_distribution.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/remove/remove.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/remove/remove.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/remover/remover.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/remover/remover.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/remover/remover.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/remover/remover.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scan/exclusive_scan.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/scan/exclusive_scan.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/searcher.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/collide_kernel.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/collide_kernel.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/hard_sphere.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/hard_sphere.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/hard_sphere.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/hard_sphere.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_estimator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_estimator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_rms.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_rms.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/pair/no_time_counter.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/pair/no_time_counter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/bvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/bvh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/bvh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/bvh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/ray.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/ray.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/ray.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/ray.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_data.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/particle_data.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/particle_data.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_system.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/particle_system.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/particle_system.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/time/timer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/time/timer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/transform/transform.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/transform/transform.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/transform/transform_reduce.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/transform/transform_reduce.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/tuple/tuple.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/tuple/tuple.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/remove_comments.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/remove_comments.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,340 +173,24 @@
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/core/macros.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/domain/domain.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/emitter/emitter.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/flatten/flatten.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/box.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/surface.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/geometry/trace_operator.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/logging/logging.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/math/matrix/matrix.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/math/vector/vector.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/memory/copy.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/remove/remove.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/searcher.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/searcher/spatial_hashing_searcher.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/searcher/spatial_hashing_searcher.hpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" root0="FORCE_HIGHLIGHTING" />
@@ -417,6 +207,7 @@
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/pair/pair_strategy.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/solver.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/system/particle_data.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/system/particle_data.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/system/particle_system.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/system/particle_system.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/system/system.h" root0="FORCE_HIGHLIGHTING" />
@@ -446,7 +237,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "CMake Application.solver.executor": "Run",
-    "CMake Application.visualization.executor": "Debug",
+    "CMake Application.visualization.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.generate_headers.executor": "Run",
     "Python.remove_comments.executor": "Run",

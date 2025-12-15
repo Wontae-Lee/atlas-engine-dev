@@ -136,7 +136,7 @@ uint32_t
 LinearBoundingVolumeHierachy<T>::morton3(const Vector3<T>& p, const AABB<T>& cb, int bits) const noexcept {
     const Vector3<T>& minp = cb.lower_corner;
     const Vector3<T>& maxp = cb.upper_corner;
-    const Vector3<T> ext { maxp.x - minp.x, maxp.y - minp.y, maxp.z - minp.z };
+    const Vector3<T> ext{ maxp.x - minp.x, maxp.y - minp.y, maxp.z - minp.z };
     T nx = (ext.x > T(0)) ? (p.x - minp.x) / ext.x : T(0);
     T ny = (ext.y > T(0)) ? (p.y - minp.y) / ext.y : T(0);
     T nz = (ext.z > T(0)) ? (p.z - minp.z) / ext.z : T(0);
@@ -215,10 +215,12 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
         });
     HostBuffer<int> order(n);
     for (int i = 0; i < n; ++i) order[i] = i;
-    std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
-        if (morton[a] != morton[b]) return morton[a] < morton[b];
-        return a < b;
-    });
+    std::stable_sort(order.begin(),
+                     order.end(),
+                     [&](int a, int b) {
+                         if (morton[a] != morton[b]) return morton[a] < morton[b];
+                         return a < b;
+                     });
     HostBuffer<uint32_t> morton_sorted(n);
     HostBuffer<uint64_t> keys_sorted(n);
     HostBuffer<int> indices_sorted(n);
@@ -235,10 +237,10 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<Triangle<T>>& triangles)
         const int pid    = h_indices[k];
         BVHNode<T>& leaf = h_nodes[ni];
         leaf.is_leaf     = true;
-        leaf.left = leaf.right = -1;
-        leaf.start             = k;
-        leaf.count             = 1;
-        leaf.bounds            = h_prim_bounds[pid];
+        leaf.left        = leaf.right = -1;
+        leaf.start       = k;
+        leaf.count       = 1;
+        leaf.bounds      = h_prim_bounds[pid];
     }
     if (n == 1) {
         _root       = leaf_node_index(0, n);

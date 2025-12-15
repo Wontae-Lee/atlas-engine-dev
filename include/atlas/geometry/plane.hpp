@@ -32,20 +32,19 @@ PlaneTraceOperator<T>::operator()(const Ray<T>& ray) const {
 template <typename T>
 Plane<T>::Plane() noexcept
     : normal(T(0), T(0), T(1))
-    , offset(T(0)) {
-}
+      , offset(T(0)) {}
 
 template <typename T>
 Plane<T>::Plane(const Vector3<T>& normal_, T offset_) noexcept
     : normal(normal_)
-    , offset(offset_) {
+      , offset(offset_) {
     ATLAS_ASSERT(normal_.length() == T(1));
 }
 
 template <typename T>
 Plane<T>::Plane(const Vector3<T>& point, const Vector3<T>& normal_) noexcept
     : normal(normal_)
-    , offset(T(0)) {
+      , offset(T(0)) {
     ATLAS_ASSERT(normal_.length() == T(1));
     offset = -(normal.dot(point));
 }

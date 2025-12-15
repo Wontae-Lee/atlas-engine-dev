@@ -2,7 +2,6 @@
 #include <atlas/buffer/device_buffer.h>
 
 namespace atlas::system {
-
 template <typename T>
 class Field {
 public:

@@ -1,5 +1,6 @@
 #pragma once
 #include <atlas/core/macros.h>
+
 namespace atlas {
 template <typename Int>
 struct DevicePairIndexer {
@@ -14,5 +15,4 @@ struct DevicePairIndexer {
         return s * n_species - (s * (s - 1)) / 2 + (r - s);
     }
 };
-
 }

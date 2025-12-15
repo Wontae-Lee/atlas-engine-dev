@@ -9,16 +9,16 @@ namespace spatial {
     template <typename T>
     struct BVHNode {
         AABB<T> bounds;
-        int left = -1, right = -1;
-        int start = -1, count = 0;
+        int left     = -1, right = -1;
+        int start    = -1, count = 0;
         bool is_leaf = false;
     };
 
     template <typename T>
     class BvhTraceOperator final {
     public:
-        BvhTraceOperator()      = default;
-        ~BvhTraceOperator()     = default;
+        BvhTraceOperator()  = default;
+        ~BvhTraceOperator() = default;
         const BVHNode<T>* nodes = nullptr;
         const int* indices      = nullptr;
         const Triangle<T>* tris = nullptr;
@@ -34,7 +34,7 @@ namespace spatial {
         virtual ~BoundingVolumeHierachy() = default;
         ATLAS_HOST ATLAS_FORCE_INLINE virtual void
         build(const HostBuffer<Triangle<T>>& triangles)
-            = 0;
+        = 0;
         ATLAS_HOST virtual BvhTraceOperator<T>
         make_trace_operator() const = 0;
     };

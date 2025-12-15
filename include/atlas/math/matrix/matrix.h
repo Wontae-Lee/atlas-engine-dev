@@ -16,30 +16,43 @@ namespace math {
     public:
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
         Matrix() noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(T s) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Matrix(T s)
+            noexcept;
         template <typename... Args,
                   typename = std::enable_if_t<(sizeof...(Args) == R * C)
-                                              && (std::conjunction_v<std::is_convertible<Args, T>...>)>
-
-                  >
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Matrix(Args... args) noexcept;
-        ATLAS_HOST ATLAS_FORCE_INLINE explicit Matrix(std::initializer_list<T> list) noexcept;
+                      && (std::conjunction_v<std::is_convertible<Args, T>...>)>>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Matrix(Args
+            ...
+            args
+            )
+            noexcept;
+        ATLAS_HOST ATLAS_FORCE_INLINE explicit
+        Matrix(std::initializer_list<T> list)
+            noexcept;
         Matrix(const Matrix&) noexcept = default;
         Matrix&
         operator=(const Matrix&) noexcept = default;
         ~Matrix() noexcept                = default;
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         rows_static() noexcept { return R; }
+
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         cols_static() noexcept { return C; }
+
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         size_static() noexcept { return R * C; }
+
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         rows() noexcept { return R; }
+
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         cols() noexcept { return C; }
+
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         size() noexcept { return R * C; }
+
         ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const T&
         operator[](std::size_t i) const noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T&
@@ -59,9 +72,7 @@ namespace math {
         set(T s) noexcept;
         template <typename... Args,
                   typename = std::enable_if_t<(sizeof...(Args) == R * C)
-                                              && (std::conjunction_v<std::is_convertible<Args, T>...>)>
-
-                  >
+                      && (std::conjunction_v<std::is_convertible<Args, T>...>)>>
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         set_values(Args... args) noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
@@ -117,12 +128,12 @@ namespace math {
 
     template <typename T, std::size_t R, std::size_t C, std::size_t K>
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-        Matrix<T, R, K>
-        matmul(const Matrix<T, R, C>& a, const Matrix<T, C, K>& b) noexcept;
+    Matrix<T, R, K>
+    matmul(const Matrix<T, R, C>& a, const Matrix<T, C, K>& b) noexcept;
     template <typename T, std::size_t R, std::size_t C>
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-        Vector<T, R>
-        matmul(const Matrix<T, R, C>& a, const Vector<T, C>& x) noexcept;
+    Vector<T, R>
+    matmul(const Matrix<T, R, C>& a, const Vector<T, C>& x) noexcept;
 }
 
 template <typename T, std::size_t R, std::size_t C>

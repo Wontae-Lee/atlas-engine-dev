@@ -1,6 +1,7 @@
 #pragma once
 #include <atlas/core/macros.h>
 #include <cuda_runtime.h>
+
 namespace atlas {
 template <typename T>
 ATLAS_HOST void

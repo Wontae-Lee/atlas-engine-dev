@@ -9,16 +9,16 @@
 namespace atlas::random {
 ATLAS_DEVICE ATLAS_FORCE_INLINE
 
-    float
-    rng(std::uint32_t& s) {
+float
+rng(std::uint32_t& s) {
     s = RNG_MULT * s + RNG_ADD;
     return ((s >> 8) & 0x00FFFFFF) / 16777216.0f;
 }
 
 ATLAS_DEVICE ATLAS_FORCE_INLINE
 
-    uint32_t
-    hash_u32(uint32_t x) {
+uint32_t
+hash_u32(uint32_t x) {
     x ^= x >> 17;
     x *= RANDOM_CONST1;
     x ^= x >> 11;
@@ -31,12 +31,12 @@ ATLAS_DEVICE ATLAS_FORCE_INLINE
 
 ATLAS_DEVICE ATLAS_FORCE_INLINE
 
-    float
-    rand01(const Vector3<float>& p) {
+float
+rand01(const Vector3<float>& p) {
     uint32_t seed = 0;
     auto mix      = [&](float v) {
         uint32_t u = *reinterpret_cast<uint32_t const*>(&v);
-        seed ^= u + 0x9E3779B9u + (seed << 6) + (seed >> 2);
+        seed       ^= u + 0x9E3779B9u + (seed << 6) + (seed >> 2);
     };
     mix(p.x);
     mix(p.y);
@@ -49,7 +49,7 @@ ATLAS_DEVICE ATLAS_FORCE_INLINE
 template <typename T>
 ATLAS_DEVICE ATLAS_FORCE_INLINE T
 rand01(const Vector3<T>& p) {
-    float r = rand01(Vector3<float> { float(p.x), float(p.y), float(p.z) });
+    float r = rand01(Vector3<float>{ float(p.x), float(p.y), float(p.z) });
     return T(r);
 }
 }
@@ -59,16 +59,16 @@ rand01(const Vector3<T>& p) {
 namespace atlas::random {
 ATLAS_DEVICE ATLAS_FORCE_INLINE
 
-    float
-    rng(uint32_t& s) {
+float
+rng(uint32_t& s) {
     s = 1664525u * s + 1013904223u;
     return static_cast<float>((s >> 8) & 0x00FFFFFF) / 16777216.0f;
 }
 
 ATLAS_DEVICE ATLAS_FORCE_INLINE
 
-    uint32_t
-    hash_u32(uint32_t x) {
+uint32_t
+hash_u32(uint32_t x) {
     x ^= x >> 17;
     x *= 0xED5AD4BBu;
     x ^= x >> 11;

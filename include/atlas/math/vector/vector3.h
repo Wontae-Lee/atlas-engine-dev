@@ -15,13 +15,29 @@ namespace math {
 
     public:
         T x, y, z;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Vector() noexcept;
-        constexpr Vector(const Vector& v) noexcept = default;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit constexpr Vector(T s) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Vector(T x_, T y_, T z_) noexcept;
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Vector(std::initializer_list<T> list) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Vector()
+            noexcept;
+        constexpr
+        Vector(const Vector& v) noexcept = default;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit constexpr
+        Vector(T s)
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
+        Vector(T x_
+               ,
+               T y_, T z_
+            )
+            noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Vector(std::initializer_list<T> list)
+            noexcept;
         template <typename Expression>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Vector(const VectorExpression<T, Expression>& expr) noexcept;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
+        Vector(
+            const VectorExpression<T, Expression>& expr
+            )
+            noexcept;
         ~Vector() noexcept = default;
         ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
         size() noexcept;
@@ -41,9 +57,8 @@ namespace math {
         operator=(const Vector& rhs) noexcept = default;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         set(T s) noexcept;
-        template <typename... Args, typename = std::enable_if_t<(sizeof...(Args) == 3) && (std::conjunction_v<std::is_convertible<Args, T>...>)>
-
-                  >
+        template <typename... Args, typename = std::enable_if_t<(sizeof...(Args) == 3) && (std::conjunction_v<
+                      std::is_convertible<Args, T>...>)>>
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         set_values(Args... args) noexcept;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void

@@ -1,28 +1,28 @@
 #pragma once
 namespace atlas::math {
 template <typename T>
-constexpr Vector<T, 4>::Vector() noexcept
+constexpr
+Vector<T, 4>::Vector() noexcept
     : x(T(0))
-    , y(T(0))
-    , z(T(0))
-    , w(T(0)) {
-}
+      , y(T(0))
+      , z(T(0))
+      , w(T(0)) {}
 
 template <typename T>
-constexpr Vector<T, 4>::Vector(T s) noexcept
+constexpr
+Vector<T, 4>::Vector(T s) noexcept
     : x(s)
-    , y(s)
-    , z(s)
-    , w(s) {
-}
+      , y(s)
+      , z(s)
+      , w(s) {}
 
 template <typename T>
-constexpr Vector<T, 4>::Vector(T x_, T y_, T z_, T w_) noexcept
+constexpr
+Vector<T, 4>::Vector(T x_, T y_, T z_, T w_) noexcept
     : x(x_)
-    , y(y_)
-    , z(z_)
-    , w(w_) {
-}
+      , y(y_)
+      , z(z_)
+      , w(w_) {}
 
 template <typename T>
 Vector<T, 4>::Vector(std::initializer_list<T> list) noexcept {
@@ -139,10 +139,10 @@ template <typename T>
 void
 Vector<T, 4>::div(T v) noexcept {
     const T inv = T(1) / v;
-    x *= inv;
-    y *= inv;
-    z *= inv;
-    w *= inv;
+    x           *= inv;
+    y           *= inv;
+    z           *= inv;
+    w           *= inv;
 }
 
 template <typename T>
@@ -295,7 +295,7 @@ Vector<T, 4>::length() const noexcept {
 template <typename T>
 std::size_t
 Vector<T, 4>::major_axis() const noexcept {
-    const T ax = std::abs(x), ay = std::abs(y), az = std::abs(z), aw = std::abs(w);
+    const T ax      = std::abs(x), ay = std::abs(y), az = std::abs(z), aw = std::abs(w);
     std::size_t idx = 0;
     T best          = ax;
     if (ay >= best) {
@@ -313,7 +313,7 @@ Vector<T, 4>::major_axis() const noexcept {
 template <typename T>
 std::size_t
 Vector<T, 4>::minor_axis() const noexcept {
-    const T ax = std::abs(x), ay = std::abs(y), az = std::abs(z), aw = std::abs(w);
+    const T ax      = std::abs(x), ay = std::abs(y), az = std::abs(z), aw = std::abs(w);
     std::size_t idx = 0;
     T best          = ax;
     if (ay <= best) {
@@ -334,10 +334,10 @@ Vector<T, 4>::normalize() noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return;
     const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(ls)));
-    x *= inv;
-    y *= inv;
-    z *= inv;
-    w *= inv;
+    x           *= inv;
+    y           *= inv;
+    z           *= inv;
+    w           *= inv;
 }
 
 template <typename T>

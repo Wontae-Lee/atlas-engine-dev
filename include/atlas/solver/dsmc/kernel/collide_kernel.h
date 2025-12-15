@@ -33,5 +33,4 @@ template <typename T>
 using CollideKernelHostPtr = atlas::host_shared_ptr<kernel::CollideKernel<T>>;
 template <typename T>
 using CollideKernelDevicePtr = atlas::device_shared_ptr<kernel::CollideKernel<T>>;
-
 }

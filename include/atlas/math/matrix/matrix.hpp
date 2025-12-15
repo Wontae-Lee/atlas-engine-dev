@@ -15,8 +15,7 @@ Matrix<T, R, C>::Matrix(T s) noexcept {
 template <typename T, std::size_t R, std::size_t C>
 template <typename... Args, typename>
 Matrix<T, R, C>::Matrix(Args... args) noexcept
-    : _data { static_cast<T>(args)... } {
-}
+    : _data{ static_cast<T>(args)... } {}
 
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>::Matrix(std::initializer_list<T> list) noexcept {
@@ -55,14 +54,12 @@ Matrix<T, R, C>::operator()(std::size_t r, std::size_t c) noexcept {
 template <typename T, std::size_t R, std::size_t C>
 ATLAS_NODISCARD const T&
 Matrix<T, R, C>::at(std::size_t r, std::size_t c) const noexcept {
-    ATLAS_ASSERT(r < R && c < C && "Matrix::at() index out of range");
     return _data[index(r, c)];
 }
 
 template <typename T, std::size_t R, std::size_t C>
 T&
 Matrix<T, R, C>::at(std::size_t r, std::size_t c) noexcept {
-    ATLAS_ASSERT(r < R && c < C && "Matrix::at() index out of range");
     return _data[index(r, c)];
 }
 
@@ -71,7 +68,6 @@ template <typename E>
 Matrix<T, R, C>&
 Matrix<T, R, C>::operator=(const MatrixExpression<T, E>& expr) noexcept {
     const E& e = expr();
-    ATLAS_ASSERT(e.rows() == R && e.cols() == C && "Matrix::operator=: shape mismatch");
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] = e[i];
     return *this;
@@ -88,7 +84,7 @@ template <typename T, std::size_t R, std::size_t C>
 template <typename... Args, typename>
 void
 Matrix<T, R, C>::set_values(Args... args) noexcept {
-    const T tmp[R * C] { static_cast<T>(args)... };
+    const T tmp[R * C]{ static_cast<T>(args)... };
     ATLAS_UNROLL
     for (std::size_t i = 0; i < R * C; ++i) _data[i] = tmp[i];
 }
@@ -216,8 +212,7 @@ template <typename T, std::size_t R, std::size_t C>
 bool
 Matrix<T, R, C>::operator==(const Matrix& other) const noexcept {
     ATLAS_UNROLL
-    for (std::size_t i = 0; i < R * C; ++i)
-        if (!(_data[i] == other._data[i])) return false;
+    for (std::size_t i = 0; i < R * C; ++i) if (!(_data[i] == other._data[i])) return false;
     return true;
 }
 

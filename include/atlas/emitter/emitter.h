@@ -58,17 +58,17 @@ namespace system {
         inject_vt_jit() const;
 
     private:
-        int emit_per_step { 1000 };
-        int total_emitted { 0 };
-        T x_spawn_min_ { T(0) };
-        T x_spawn_max_ { T(0) };
-        T y_spawn_min_ { T(0) };
-        T y_spawn_max_ { T(0) };
-        T z_spawn_min_ { T(0) };
-        T z_spawn_max_ { T(0) };
-        T inject_vx_mean_ { T(0) };
-        T inject_vx_jit_ { T(0) };
-        T inject_vt_jit_ { T(0) };
+        int emit_per_step{ 1000 };
+        int total_emitted{ 0 };
+        T x_spawn_min_{ T(0) };
+        T x_spawn_max_{ T(0) };
+        T y_spawn_min_{ T(0) };
+        T y_spawn_max_{ T(0) };
+        T z_spawn_min_{ T(0) };
+        T z_spawn_max_{ T(0) };
+        T inject_vx_mean_{ T(0) };
+        T inject_vx_jit_{ T(0) };
+        T inject_vt_jit_{ T(0) };
     };
 }
 
