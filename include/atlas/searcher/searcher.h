@@ -20,7 +20,7 @@ namespace system {
         Searcher()          = default;
         virtual ~Searcher() = default;
         virtual void
-        build(const system::ParticleDeviceProbe<T>& data, int& active)
+        build(const system::ParticleDeviceProbe<T>& data)
             = 0;
     };
 }

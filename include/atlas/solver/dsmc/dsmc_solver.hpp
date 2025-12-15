@@ -17,22 +17,18 @@ DsmcSolver<T>::DsmcSolver() {
 }
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE void
-DsmcSolver<T>::solve(const system::ParticleDeviceProbe<T>& data,
-                     T dt,
-                     int& active) {
+DsmcSolver<T>::solve(const system::ParticleDeviceProbe<T>& data, T dt) {
 
-    (*this)(data, dt, active);
+    (*this)(data, dt);
 }
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE void
-DsmcSolver<T>::operator()(const system::ParticleDeviceProbe<T>& data,
-                          T dt,
-                          int& active) {
+DsmcSolver<T>::operator()(const system::ParticleDeviceProbe<T>& data, T dt) {
 
-    if (active <= 1) {
+    if (data.alive <= 0) {
         return;
     }
-    _searcher->build(data, active);
+    _searcher->build(data);
     auto neighbor_probe = _searcher->make_device_probe();
     auto n_cells        = static_cast<int>(_searcher->n_cells());
     if (n_cells <= 0) {
@@ -47,7 +43,7 @@ DsmcSolver<T>::operator()(const system::ParticleDeviceProbe<T>& data,
 
     atlas::DeviceBuffer<int> d_flattened_collision;
     flatten_collision(dsmc_probe, d_flattened_collision);
-    if (d_flattened_collision.size() <= 0) {
+    if (d_flattened_collision.empty()) {
         return;
     }
     collide_particles(data,
@@ -195,7 +191,6 @@ DsmcSolver<T>::count_collisions(const system::SpatialHashProbe<T>& neighbor_prob
                 return;
             }
 
-            // single-species fast path
             if (n_species == 1 && n_pairs == 1) {
                 constexpr int pair_idx = 0;
                 const int offset       = cell_id * n_pairs + pair_idx;
@@ -231,7 +226,6 @@ DsmcSolver<T>::count_collisions(const system::SpatialHashProbe<T>& neighbor_prob
                 return;
             }
 
-            // multi-species path
             for (int s = 0; s < n_species; ++s) {
                 const int ns = d_n_c_species[cell_id * n_species + s];
 
@@ -293,11 +287,10 @@ DsmcSolver<T>::compute_g_ref(const system::SpatialHashProbe<T>& neighbor_probe,
     const int n_species = _dsmc_data->n_species();
     const int n_pairs   = _dsmc_data->n_pairs();
 
-    auto d_g_ref = dsmc_probe.g_ref_per_cell; // size = n_cells * n_pairs
+    auto d_g_ref = dsmc_probe.g_ref_per_cell;
     auto gref_op = _g_ref_estimator->make_device_operator();
     ATLAS_ASSERT(d_g_ref != nullptr);
 
-    // single-species fast path (n_pairs == 1)
     if (n_species == 1 && n_pairs == 1) {
         atlas::parallel_for<ExecutionPolicy::device>(
 
@@ -313,14 +306,12 @@ DsmcSolver<T>::compute_g_ref(const system::SpatialHashProbe<T>& neighbor_probe,
                     return;
                 }
 
-                // g_ref는 셀 단위 스칼라
                 const T g_ref    = gref_op(cell_id, neighbor_probe, data);
                 d_g_ref[cell_id] = (g_ref > T(0)) ? g_ref : T(0);
             });
         return;
     }
 
-    // multi-species path
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         n_cells,

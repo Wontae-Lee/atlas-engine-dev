@@ -16,14 +16,10 @@ namespace solver {
         ~DsmcSolver() override = default;
 
         ATLAS_HOST ATLAS_FORCE_INLINE void
-        operator()(const system::ParticleDeviceProbe<T>& data,
-                   T dt,
-                   int& active) override;
+        operator()(const system::ParticleDeviceProbe<T>& data, T dt) override;
 
         ATLAS_HOST ATLAS_FORCE_INLINE void
-        solve(const system::ParticleDeviceProbe<T>& data,
-              T dt,
-              int& active) override;
+        solve(const system::ParticleDeviceProbe<T>& data, T dt) override;
 
         ATLAS_HOST ATLAS_FORCE_INLINE void
         count_species(const system::SpatialHashProbe<T>& neighbor_probe,

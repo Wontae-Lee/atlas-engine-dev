@@ -10,8 +10,7 @@ struct DevicePairIndexer {
             s     = r;
             r     = t;
         }
-        // upper-triangle compressed index
-        // 0 <= result < n_species*(n_species+1)/2
+
         return s * n_species - (s * (s - 1)) / 2 + (r - s);
     }
 };

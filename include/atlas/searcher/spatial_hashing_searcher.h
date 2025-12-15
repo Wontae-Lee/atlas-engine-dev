@@ -45,7 +45,7 @@ namespace system {
                                NeighborSearchRange range_ = NeighborSearchRange::single);
         ~SpatialHashingSearcher() override = default;
         ATLAS_HOST ATLAS_FORCE_INLINE void
-        build(const system::ParticleDeviceProbe<T>& data, int& active) override;
+        build(const system::ParticleDeviceProbe<T>& data) override;
         ATLAS_HOST ATLAS_FORCE_INLINE SpatialHashProbe<T>
         make_device_probe() const noexcept;
         ATLAS_HOST ATLAS_FORCE_INLINE void

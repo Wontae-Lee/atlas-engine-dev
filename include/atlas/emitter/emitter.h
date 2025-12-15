@@ -19,7 +19,7 @@ namespace system {
                 T inject_vx_mean, T inject_vx_jit,
                 T inject_vt_jit);
         ATLAS_HOST ATLAS_FORCE_INLINE void
-        operator()(const ParticleDeviceProbe<T>& data, int& active);
+        operator()(ParticleDeviceProbe<T>& data);
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         set_x_spawn_min(T v);
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void

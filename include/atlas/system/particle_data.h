@@ -10,12 +10,14 @@ namespace system {
         Vector3<T>* pos { nullptr };
         Vector3<T>* vel { nullptr };
         size_t* species { nullptr };
+        int alive { 0 };
     };
 
     template <typename T>
     class ParticleData {
     public:
-        ATLAS_HOST ATLAS_FORCE_INLINE explicit ParticleData(int capacity);
+        ATLAS_HOST ATLAS_FORCE_INLINE explicit ParticleData(size_t buffer_size);
+        ~ParticleData() = default;
         ATLAS_HOST ATLAS_FORCE_INLINE ParticleDeviceProbe<T>
         make_device_probe() noexcept;
         ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<Vector3<T>>&

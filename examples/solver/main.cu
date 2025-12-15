@@ -4,30 +4,53 @@ using namespace atlas;
 
 int
 main() {
+    using T = float;
 
-    Emitter<float> emitter { -8.0f, -7.0f, -1.0f, 1.0f, -7.0f, 8.0f, 0.05f, 0.5f, 0.0f };
-    emitter.set_emit_per_step(10000);
+    Emitter<T> emitter {
+        -8.0f,
+        -7.0f,
+        -1.0f,
+        1.0f,
+        -7.0f,
+        8.0f,
+        1000000.5f,
+        0.5f,
+        0.0f
+    };
+    emitter.set_emit_per_step(1000);
 
-    Remover<float> remover { -10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 10.0f };
-    Sphere<float> sphere { Vector3<float> { 0, 0, 0 }, 3.f };
-    Collider<float> collider;
+    Remover<T> remover {
+        -10.0f,
+        10.0f,
+        -10.0f,
+        10.0f,
+        -10.0f,
+        10.0f
+    };
+
+    Sphere<T> sphere { Vector3<T> { 0, 0, 0 }, 3.0f };
+    Collider<T> collider;
     collider.add_geometry(sphere);
 
-    Advector<float> advector;
+    Advector<T> advector;
     advector.set_collider(collider);
 
-    SpatialHashingSearcher<float> searcher;
-    DsmcSolver<float> solver;
-    auto solver_ptr   = atlas::make_host_shared<DsmcSolver<float>>(solver);
+    DsmcSolver<T> solver;
 
-    ParticleSystem<float> psystem { 2000000 };
-    psystem.set_emitter(emitter);
-    psystem.set_remover(remover);
-    psystem.set_advector(advector);
-    psystem.set_solver(solver_ptr);
+    auto emitter_ptr  = atlas::make_host_shared<Emitter<T>>(emitter);
+    auto remover_ptr  = atlas::make_host_shared<Remover<T>>(remover);
+    auto advector_ptr = atlas::make_host_shared<Advector<T>>(advector);
+    auto solver_ptr   = atlas::make_host_shared<DsmcSolver<T>>(solver);
 
-    for (int i = 0; i < 100; ++i) {
-        psystem.update();
+    ParticleSystem<T> system {
+        2000000,
+        emitter_ptr,
+        remover_ptr,
+        advector_ptr,
+        solver_ptr
+    };
+
+    for (int step = 0; step < 1000; ++step) {
+        system.update();
     }
-    return 0;
 }

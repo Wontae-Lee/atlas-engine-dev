@@ -13,7 +13,7 @@ namespace system {
                 T y_min, T y_max,
                 T z_min, T z_max);
         ATLAS_HOST ATLAS_FORCE_INLINE void
-        operator()(const ParticleDeviceProbe<T>& data, int& active) const;
+        operator()(ParticleDeviceProbe<T>& data) const;
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         set_x_min(T v);
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void

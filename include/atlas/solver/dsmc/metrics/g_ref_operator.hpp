@@ -42,4 +42,4 @@ GRefRmsOperator<T>::operator()(
     return factor * c_rms;
 }
 
-} // namespace atlas::solver::dsmc::metrics
+}

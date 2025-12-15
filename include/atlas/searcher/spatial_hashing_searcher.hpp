@@ -194,7 +194,7 @@ SpatialHashingSearcher<T>::readjust(const system::ParticleDeviceProbe<T>& data,
                << n_active << " active particles.";
     atlas::device_ptr<const Vector3<T>> pos_begin(d_pos_raw);
     atlas::device_ptr<const Vector3<T>> pos_end = pos_begin + n_active;
-    AABB<T> aabb;
+    AABB<T> aabb=
     atlas::transform_reduce<ExecutionPolicy::device>(
         pos_begin,
         pos_end,
@@ -208,6 +208,7 @@ SpatialHashingSearcher<T>::readjust(const system::ParticleDeviceProbe<T>& data,
             return spatial::merge_aabb<T>(a, b);
         });
     const Vector3<T> extent = aabb.extents();
+
     T inv_h                 = T(1) / T(_cell_size);
     int nx                  = static_cast<int>(std::floor(extent.x * inv_h)) + 1;
     int ny                  = static_cast<int>(std::floor(extent.y * inv_h)) + 1;
@@ -222,11 +223,9 @@ SpatialHashingSearcher<T>::readjust(const system::ParticleDeviceProbe<T>& data,
 
 template <typename T>
 void
-SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& data,
-                                 int& active) {
-    ATLAS_INFO << "SpatialHashingSearcher: Building spatial hash grid with "
-               << active << " active particles.";
-    int n_active = active;
+SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& data) {
+
+    int n_active = data.alive;
     if (n_active <= 0) {
         this->reset();
         return;

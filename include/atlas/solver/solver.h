@@ -10,12 +10,12 @@ namespace solver {
         Solver()          = default;
         virtual ~Solver() = default;
         ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-        operator()(const system::ParticleDeviceProbe<T>& data, T dt, int& active)
+        operator()(const system::ParticleDeviceProbe<T>& data, T dt)
             = 0;
 
     protected:
         ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-        solve(const system::ParticleDeviceProbe<T>& data, T dt, int& active)
+        solve(const system::ParticleDeviceProbe<T>& data, T dt)
             = 0;
     };
 }

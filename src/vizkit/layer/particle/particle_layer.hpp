@@ -32,7 +32,7 @@ ParticleLayer<T>::update(GLFWwindow* window, Camera& camera) {
 
     auto particles = _psystem->particles();
     auto probe     = particles->make_device_probe();
-    auto count     = _psystem->active();
+    auto count     = _psystem->alive();
 
     if (count <= 0) {
         return;

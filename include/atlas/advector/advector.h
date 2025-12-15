@@ -15,9 +15,9 @@ namespace system {
         ATLAS_HOST ATLAS_FORCE_INLINE void
         set_collider(const Collider<T>& collider);
         ATLAS_HOST ATLAS_FORCE_INLINE void
-        operator()(const ParticleDeviceProbe<T>& probe, T dt, int& active) const;
+        operator()(const ParticleDeviceProbe<T>& probe, T dt) const;
         ATLAS_HOST ATLAS_FORCE_INLINE void
-        time_integration(const ParticleDeviceProbe<T>& probe, T dt, int& active) const;
+        time_integration(const ParticleDeviceProbe<T>& probe, T dt) const;
 
     private:
         ColliderHostPtr<T> _collider;

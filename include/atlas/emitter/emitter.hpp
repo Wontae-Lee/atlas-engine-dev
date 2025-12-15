@@ -131,44 +131,42 @@ Emitter<T>::inject_vt_jit() const {
 
 template <typename T>
 void
-Emitter<T>::operator()(const ParticleDeviceProbe<T>& data, int& active) {
-    auto device_pos     = data.pos;
-    auto device_vel     = data.vel;
-    auto device_species = data.species;
-    T x_spawn_min       = x_spawn_min_;
-    T x_spawn_max       = x_spawn_max_;
-    T y_spawn_min       = y_spawn_min_;
-    T y_spawn_max       = y_spawn_max_;
-    T z_spawn_min       = z_spawn_min_;
-    T z_spawn_max       = z_spawn_max_;
-    T inject_vx_mean    = inject_vx_mean_;
-    T inject_vx_jit     = inject_vx_jit_;
-    T inject_vt_jit     = inject_vt_jit_;
+Emitter<T>::operator()( ParticleDeviceProbe<T>& data) {
+
+    T x_spawn_min    = x_spawn_min_;
+    T x_spawn_max    = x_spawn_max_;
+    T y_spawn_min    = y_spawn_min_;
+    T y_spawn_max    = y_spawn_max_;
+    T z_spawn_min    = z_spawn_min_;
+    T z_spawn_max    = z_spawn_max_;
+    T inject_vx_mean = inject_vx_mean_;
+    T inject_vx_jit  = inject_vx_jit_;
+    T inject_vt_jit  = inject_vt_jit_;
     total_emitted += emit_per_step;
     const auto current_total = total_emitted;
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         emit_per_step,
         [=] ATLAS_DEVICE(const int k) {
-            int i         = active + k;
+            int i         = data.alive + k;
             uint32_t seed = atlas::random::hash_u32(
                 0x9E3779B9u ^ static_cast<uint32_t>(current_total + k + 1));
-            T ry              = atlas::random::rng(seed);
-            T rz              = atlas::random::rng(seed);
-            T r0              = atlas::random::rng(seed);
-            T r1              = atlas::random::rng(seed);
-            T r2              = atlas::random::rng(seed);
-            T rx              = atlas::random::rng(seed);
-            T x               = x_spawn_min + (x_spawn_max - x_spawn_min) * rx;
-            T y               = y_spawn_min + (y_spawn_max - y_spawn_min) * ry;
-            T z               = z_spawn_min + (z_spawn_max - z_spawn_min) * rz;
-            T vx              = inject_vx_mean + inject_vx_jit * (r0 - T(0.5)) * T(2.0);
-            T vy              = inject_vt_jit * (r1 - T(0.5)) * T(2.0);
-            T vz              = inject_vt_jit * (r2 - T(0.5)) * T(2.0);
-            device_pos[i]     = Vector3<T> { x, y, z };
-            device_vel[i]     = Vector3<T> { vx, vy, vz };
-            device_species[i] = 0;
+            T ry            = atlas::random::rng(seed);
+            T rz            = atlas::random::rng(seed);
+            T r0            = atlas::random::rng(seed);
+            T r1            = atlas::random::rng(seed);
+            T r2            = atlas::random::rng(seed);
+            T rx            = atlas::random::rng(seed);
+            T x             = x_spawn_min + (x_spawn_max - x_spawn_min) * rx;
+            T y             = y_spawn_min + (y_spawn_max - y_spawn_min) * ry;
+            T z             = z_spawn_min + (z_spawn_max - z_spawn_min) * rz;
+            T vx            = inject_vx_mean + inject_vx_jit * (r0 - T(0.5)) * T(2.0);
+            T vy            = inject_vt_jit * (r1 - T(0.5)) * T(2.0);
+            T vz            = inject_vt_jit * (r2 - T(0.5)) * T(2.0);
+            data.pos[i]     = Vector3<T> { x, y, z };
+            data.vel[i]     = Vector3<T> { vx, vy, vz };
+            data.species[i] = 0;
         });
-    active += emit_per_step;
+    data.alive += emit_per_step;
 }
 }

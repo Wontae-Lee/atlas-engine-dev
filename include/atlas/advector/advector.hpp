@@ -16,28 +16,27 @@ Advector<T>::set_collider(const Collider<T>& collider) {
 
 template <typename T>
 void
-Advector<T>::time_integration(const ParticleDeviceProbe<T>& probe, T dt, int& active) const {
-    auto device_position = probe.pos;
-    auto device_velocity = probe.vel;
+Advector<T>::time_integration(const ParticleDeviceProbe<T>& probe, T dt) const {
+    auto alive = probe.alive;
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
-        active,
-        [=] ATLAS_DEVICE(int i) {
-            Vector3F p0        = device_position[i];
-            Vector3F velocity  = device_velocity[i];
-            device_position[i] = p0 + velocity * dt;
+        alive,
+        [probe, dt] ATLAS_DEVICE(int i) {
+            Vector3F p0       = probe.pos[i];
+            Vector3F velocity = probe.vel[i];
+            probe.pos[i]      = p0 + velocity * dt;
         });
     return;
 }
 
 template <typename T>
 void
-Advector<T>::operator()(const ParticleDeviceProbe<T>& probe, T dt, int& active) const {
+Advector<T>::operator()(const ParticleDeviceProbe<T>& probe, T dt) const {
     int n_surfaces = _collider->number_of_surfaces();
     if (n_surfaces == 0) {
-        time_integration(probe, dt, active);
+        time_integration(probe, dt);
         return;
     }
-    _collider->collide(probe, dt, active);
+    _collider->collide(probe, dt);
 }
 }

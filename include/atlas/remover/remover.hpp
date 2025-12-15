@@ -90,7 +90,7 @@ Remover<T>::z_max() const {
 
 template <typename T>
 void
-Remover<T>::operator()(const ParticleDeviceProbe<T>& data, int& active) const {
+Remover<T>::operator()(ParticleDeviceProbe<T>& data) const {
     T x_min        = x_min_;
     T x_max        = x_max_;
     T y_min        = y_min_;
@@ -106,7 +106,7 @@ Remover<T>::operator()(const ParticleDeviceProbe<T>& data, int& active) const {
             vel,
             species));
 
-    auto zip_end = zip_begin + active;
+    auto zip_end = zip_begin + data.alive;
     auto new_end = atlas::remove_if(
         atlas::device,
         zip_begin,
@@ -115,6 +115,6 @@ Remover<T>::operator()(const ParticleDeviceProbe<T>& data, int& active) const {
             const Vector3F& p = atlas::get<0>(t);
             return (p.x < x_min) || (p.x > x_max) || (p.y < y_min) || (p.y > y_max) || (p.z < z_min) || (p.z > z_max);
         });
-    active = static_cast<int>(new_end - zip_begin);
+    data.alive = static_cast<int>(new_end - zip_begin);
 }
 }

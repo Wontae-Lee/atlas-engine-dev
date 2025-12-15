@@ -53,7 +53,7 @@ namespace system {
         ATLAS_HOST ATLAS_FORCE_INLINE void
         remove_surface(std::size_t index);
         ATLAS_HOST ATLAS_FORCE_INLINE void
-        collide(const ParticleDeviceProbe<T>& probe, T dt, int& active) const;
+        collide(const ParticleDeviceProbe<T>& probe, T dt) const;
 
     private:
         DeviceBuffer<atlas::geometry::TraceOperator<T>> d_trace_operators;

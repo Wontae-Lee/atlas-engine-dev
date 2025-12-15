@@ -1,10 +1,10 @@
 #pragma once
 namespace atlas::system {
 template <typename T>
-ParticleData<T>::ParticleData(const int capacity) {
-    d_pos.resize(capacity);
-    d_vel.resize(capacity);
-    d_species.resize(capacity);
+ParticleData<T>::ParticleData(const size_t buffer_size) {
+    d_pos.resize(buffer_size);
+    d_vel.resize(buffer_size);
+    d_species.resize(buffer_size);
 }
 
 template <typename T>
