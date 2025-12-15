@@ -27,13 +27,12 @@ Advector<T>::time_integration(const ParticleDeviceProbe<T>& probe, T dt) const {
             probe.pos[i]      = p0 + velocity * dt;
         }
         );
-    return;
 }
 
 template <typename T>
 void
 Advector<T>::operator()(const ParticleDeviceProbe<T>& probe, T dt) const {
-    int n_surfaces = _collider->number_of_surfaces();
+    const int n_surfaces = _collider->number_of_surfaces();
     if (n_surfaces == 0) {
         time_integration(probe, dt);
         return;

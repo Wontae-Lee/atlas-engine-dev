@@ -51,6 +51,7 @@ endif ()
 include_directories(
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobj"
+        "${CMAKE_CURRENT_SOURCE_DIR}/external/lyra/include"
 )
 
 # =====================================================

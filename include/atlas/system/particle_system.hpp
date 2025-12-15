@@ -25,8 +25,7 @@ ParticleSystem<T>::ParticleSystem(
       , _emitter(emitter)
       , _remover(remover)
       , _advector(advector) {
-    ATLAS_ERROR_IF(capacity >0)
-        << "ParticleSystem capacity must be greater than 0.";
+
     ATLAS_INFO << "ParticleSystem created with capacity: " << capacity;
 }
 
