@@ -19,7 +19,7 @@ namespace geometry {
 
     template <typename T>
     struct TraceOperator {
-        TraceOpType type;
+        TraceOpType type = TraceOpType::Sphere;
 
         union {
             SphereTraceOperator<T> sphere;

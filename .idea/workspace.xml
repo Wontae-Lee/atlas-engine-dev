@@ -48,13 +48,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="tmp">
-      <change afterPath="$PROJECT_DIR$/.clang-tidy" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/external/lyra" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitmodules" beforeDir="false" afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/visualization/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/visualization/main.cu" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/advector/advector.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/advector/advector.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/trace_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/trace_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/task/tasking_scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/task/task_scheduler.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,9 +66,6 @@
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/core/macros.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/domain/domain.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/emitter/emitter.h" root0="FORCE_HIGHLIGHTING" />
@@ -91,9 +84,11 @@
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/searcher.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/solver/dsmc/dsmc_data.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock:///home/wontae/CLionProjects/atlas-engine-dev/include/atlas/solver/dsmc/dsmc_solver.hpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/collide_kernel.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/hard_sphere.h" root0="FORCE_HIGHLIGHTING" />
@@ -137,7 +132,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "CMake Application.solver.executor": "Run",
-    "CMake Application.visualization.executor": "Debug",
+    "CMake Application.visualization.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.generate_headers.executor": "Run",
     "Python.remove_comments.executor": "Run",
@@ -153,6 +148,7 @@
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "git-widget-placeholder": "main",
+    "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/examples",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -168,12 +164,12 @@
       <force-push-target remote-path="origin" branch="main" />
     </force-push-targets>
   </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/examples" />
+    </key>
+  </component>
   <component name="RunManager" selected="CMake Application.visualization">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="atlas-core" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-core" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -294,6 +290,11 @@
       <workItem from="1765809733966" duration="1160000" />
       <workItem from="1765811278213" duration="658000" />
       <workItem from="1765812202938" duration="1432000" />
+      <workItem from="1765896165175" duration="115000" />
+      <workItem from="1765896644599" duration="313000" />
+      <workItem from="1765898699212" duration="388000" />
+      <workItem from="1766131656373" duration="422000" />
+      <workItem from="1766132244874" duration="1634000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
