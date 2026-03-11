@@ -4,7 +4,6 @@
 #include <atlas/matter/fluidic_particle.h>
 #include <atlas/memory/memory.h>
 
-
 namespace atlas::system {
 
 /**

@@ -413,11 +413,10 @@ Vector<T, 4>::projected(const Vector& n) const noexcept {
     const T nn = n.dot(n);
     if (nn == T(0)) return *this;
 
-    const T s = this->dot(n) / nn;
+    const T s         = this->dot(n) / nn;
     const Vector proj = n * s;
     return (*this) - proj;
 }
-
 
 template <typename T>
 template <typename To>
@@ -456,7 +455,7 @@ projected(const Vector<T, 4>& v, const Vector<T, 4>& normal) noexcept {
     const T nn = dot(normal, normal);
     if (nn == T(0)) return v;
 
-    const T s = dot(v, normal) / nn;
+    const T s               = dot(v, normal) / nn;
     const Vector<T, 4> proj = normal * s;
     return v - proj;
 }

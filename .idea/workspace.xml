@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="18" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="26" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/OptionsDialog/SelectedPageId/@EntryValue" value="CppFormatterOtherPage" type="string" />
@@ -110,23 +110,11 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="updated submodules.">
-      <change afterPath="$PROJECT_DIR$/external/googlebenchmark" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/external/googletest" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/external/tinyobj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitmodules" beforeDir="false" afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/buffer/device_buffer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/buffer/device_buffer_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/buffer/host_buffer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/buffer/host_buffer_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/container/container_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/container/container_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/unit/unit_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/unit/unit_tests.cpp" afterDir="false" />
-    </list>
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="fixed errors from the detached head of submodules and updated tests." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="ClangdSettings">
-    <option name="formatViaClangd" value="false" />
   </component>
   <component name="CopilotPersistence">
     <persistenceIdMap>
@@ -146,6 +134,8 @@
       <map>
         <entry key="$PROJECT_DIR$" value="6ef9263b85d752bca213681cfc0183576a318de6" />
         <entry key="$PROJECT_DIR$/external/googlebenchmark" value="5c76a26e4e80c5809fd26e5b9f7bc02e704cd793" />
+        <entry key="$PROJECT_DIR$/external/googletest" value="94be250af7e14c58dcbf476972d2d7141551ff67" />
+        <entry key="$PROJECT_DIR$/external/tinyobj" value="966edceaf8cdca7996c4e9a1c5ced2938de63366" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -214,38 +204,38 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;CMake Application.dynamic.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.solver.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.visualization.executor&quot;: &quot;Run&quot;,
-    &quot;Google Test.All in atlas_tests.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.generate_headers.executor&quot;: &quot;Run&quot;,
-    &quot;Python.remove_comments.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.west.config.association.type.startup.service&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;cf.advertisement.text.overridden&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/wontae/CLionProjects/atlas-engine-dev/src/vizkit/layer/geometry&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "CMake Application.dynamic.executor": "Run",
+    "CMake Application.solver.executor": "Run",
+    "CMake Application.visualization.executor": "Run",
+    "Google Test.All in atlas_tests.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.generate_headers.executor": "Run",
+    "Python.remove_comments.executor": "Run",
+    "RunOnceActivity.RadMigrateCodeStyle": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "RunOnceActivity.west.config.association.type.startup.service": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cf.advertisement.text.overridden": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/bin/clang-format",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.first.attach.projects": "true",
+    "settings.editor.selected.configurable": "preferences.sourceCode.C++",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="main" />
@@ -466,6 +456,8 @@
       <list>
         <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.remove_comments" />
+        <item itemvalue="Python.generate_headers" />
+        <item itemvalue="Python.remove_comments" />
       </list>
     </recent_temporary>
   </component>
@@ -491,7 +483,7 @@
       <workItem from="1766132244874" duration="8117000" />
       <workItem from="1766140372152" duration="1220000" />
       <workItem from="1773244291835" duration="10000" />
-      <workItem from="1773244337334" duration="2652000" />
+      <workItem from="1773244337334" duration="2995000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
@@ -581,7 +573,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773246146045</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="fixed errors from the detached head of submodules and updated tests.">
+      <option name="closed" value="true" />
+      <created>1773247170788</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1773247170788</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -627,7 +627,6 @@
                       <list>
                         <option value="$PROJECT_DIR$/external/tinyobj" />
                         <option value="$PROJECT_DIR$/external/googlebenchmark" />
-                        <option value="$PROJECT_DIR$/external/lyra" />
                         <option value="$PROJECT_DIR$/external/googletest" />
                         <option value="$PROJECT_DIR$" />
                       </list>
@@ -650,7 +649,8 @@
     <MESSAGE value="added task." />
     <MESSAGE value="refactor(unit): remove rotational_axis and simplify angular motion model&#10;&#10;- remove rotational_axis from Unit and Builder&#10;- represent rotation solely with angular_velocity vector&#10;- derive rotation axis from angular_velocity direction&#10;- update update() integration logic accordingly&#10;- simplify builder validation rules&#10;- update all Unit tests and examples to match new API" />
     <MESSAGE value="updated submodules." />
-    <option name="LAST_COMMIT_MESSAGE" value="updated submodules." />
+    <MESSAGE value="fixed errors from the detached head of submodules and updated tests." />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed errors from the detached head of submodules and updated tests." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

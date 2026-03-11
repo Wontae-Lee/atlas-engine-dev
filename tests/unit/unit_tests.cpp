@@ -335,8 +335,7 @@ TEST(Unit, UpdateWithAngularVelocityAndAngularAccelerationUpdatesAngularVelocity
     ASSERT_TRUE(u.angular_velocity().has_value());
     EXPECT_TRUE(test::vec_near(*u.angular_velocity(), Vector3<double>(0.0, 0.0, 2.0), eps));
 
-    const auto expected =
-        math::Quaternion<double>(Vector3<double>(0.0, 0.0, 1.0), 2.0).to_matrix3x3()
+    const auto expected = math::Quaternion<double>(Vector3<double>(0.0, 0.0, 1.0), 2.0).to_matrix3x3()
         * Vector3<double>(1.0, 0.0, 0.0);
 
     const auto got = u.sync_operator().sync_dir_to_world(Vector3<double>(1.0, 0.0, 0.0));
@@ -363,8 +362,7 @@ TEST(Unit, UpdateWithAngularVelocityVectorUsesItsDirectionAsRotationAxis) {
     const Vector3<double> expected_b(-1.0, 0.0, 0.0);
 
     EXPECT_TRUE(
-        test::vec_near(world_dir, expected_a, eps) ||
-        test::vec_near(world_dir, expected_b, eps));
+        test::vec_near(world_dir, expected_a, eps) || test::vec_near(world_dir, expected_b, eps));
 }
 
 TEST(Unit, UpdateWithLinearAndAngularStateAppliesBoth) {

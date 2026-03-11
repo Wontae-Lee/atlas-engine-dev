@@ -197,9 +197,9 @@ SpatialHashingSearcher<T>::compute_keys(int alive, const Vector3<T>* pos) {
     // Compute per-particle cell key from position.
     const atlas::device_ptr<std::uint32_t> keys_ptr(d_keys_ptr);
 
-    const Vector3<T> lc    = _domain->lower_corner();
-    const T inv_h = _domain->inverse_cell_size();
-    const Vector3<int> gs  = _domain->grid_size();
+    const Vector3<T> lc   = _domain->lower_corner();
+    const T inv_h         = _domain->inverse_cell_size();
+    const Vector3<int> gs = _domain->grid_size();
 
     const Vector3<int> lo { 0, 0, 0 };
     const Vector3<int> hi = gs - Vector3<int> { 1, 1, 1 };
@@ -299,7 +299,7 @@ SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& particle_
     // Early out: if no particles are particle_count, keep data structures consistent
     // by clearing buffers and leaving cell ranges empty.
     if (alive <= 0) {
-        reset();   // Clears keys/indices and sizes cell arrays to domain cell count.
+        reset(); // Clears keys/indices and sizes cell arrays to domain cell count.
         return;
     }
 
@@ -378,7 +378,6 @@ SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& particle_
     // ------------------------------------------------------------
     build_cell_ranges(alive);
 }
-
 
 template <typename T>
 SpatialHashingProbe<T>
@@ -459,7 +458,6 @@ SpatialHashingSearcher<T>::make_device_probe() noexcept {
 
     return probe;
 }
-
 
 // ============================================================
 // Builder

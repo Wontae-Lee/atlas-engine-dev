@@ -166,7 +166,8 @@ namespace math {
 
         /// @brief Copy assignment.
         Vector&
-        operator=(const Vector& rhs) noexcept = default;
+        operator=(const Vector& rhs) noexcept
+            = default;
 
         /**
          * @brief Sets all components to the same scalar.

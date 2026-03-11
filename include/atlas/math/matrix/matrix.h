@@ -92,8 +92,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE explicit Matrix(std::initializer_list<T> list) noexcept;
     Matrix(const Matrix&) noexcept = default;
     Matrix&
-    operator=(const Matrix&) noexcept = default;
-    ~Matrix() noexcept                = default;
+    operator=(const Matrix&) noexcept
+        = default;
+    ~Matrix() noexcept = default;
     /// @brief Compile-time number of rows.
     ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE std::size_t
     rows_static() noexcept { return R; }

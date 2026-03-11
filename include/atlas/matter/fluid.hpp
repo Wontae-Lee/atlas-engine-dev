@@ -1,8 +1,8 @@
 // <atlas/matter/fluid.hpp>
 #pragma once
 
-#include <utility>      // std::move
-#include <stdexcept>    // std::runtime_error
+#include <stdexcept> // std::runtime_error
+#include <utility>   // std::move
 
 namespace atlas::system {
 
@@ -12,8 +12,8 @@ namespace atlas::system {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder
-Fluid<T>::builder() noexcept {
+    typename Fluid<T>::Builder
+    Fluid<T>::builder() noexcept {
     // Entry point for constructing a Fluid<T> via the Builder pattern.
     //
     // Design rationale:
@@ -23,12 +23,12 @@ Fluid<T>::builder() noexcept {
     //
     // noexcept:
     // - Returning a default-constructed Builder is guaranteed not to throw.
-    return Builder{};
+    return Builder {};
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE
-int Fluid<T>::size() const noexcept {
+ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE int
+Fluid<T>::size() const noexcept {
     // Number of particle entries stored in this fluid.
     //
     // Important:
@@ -43,8 +43,8 @@ int Fluid<T>::size() const noexcept {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE
-bool Fluid<T>::empty() const noexcept {
+ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+Fluid<T>::empty() const noexcept {
     // Convenience wrapper.
     //
     // Semantically equivalent to:
@@ -55,8 +55,7 @@ bool Fluid<T>::empty() const noexcept {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE
-const HostBuffer<FluidicParticleHostPtr<T>>&
+ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<FluidicParticleHostPtr<T>>&
 Fluid<T>::particles() const noexcept {
     // Read-only access to particle definitions.
     //
@@ -71,8 +70,8 @@ Fluid<T>::particles() const noexcept {
 
 template <typename T>
 ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE
-HostBuffer<FluidicParticleHostPtr<T>>&
-Fluid<T>::particles() noexcept {
+    HostBuffer<FluidicParticleHostPtr<T>>&
+    Fluid<T>::particles() noexcept {
     // Mutable access to particle definitions.
     //
     // Caution:
@@ -83,8 +82,7 @@ Fluid<T>::particles() noexcept {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE
-const HostBuffer<T>&
+ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<T>&
 Fluid<T>::amounts() const noexcept {
     // Read-only access to per-particle amounts.
     //
@@ -97,8 +95,8 @@ Fluid<T>::amounts() const noexcept {
 
 template <typename T>
 ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE
-HostBuffer<T>&
-Fluid<T>::amounts() noexcept {
+    HostBuffer<T>&
+    Fluid<T>::amounts() noexcept {
     // Mutable access to per-particle amounts.
     //
     // Same caution as particles():
@@ -112,8 +110,8 @@ Fluid<T>::amounts() noexcept {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p) {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p) {
     // Add a particle definition with a default amount of 1.
     //
     // Delegates to the (particle, amount) overload to keep logic unified.
@@ -122,8 +120,8 @@ Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p) {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p, T amount) {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p, T amount) {
     // Add a particle by value, with an explicit amount.
     //
     // Semantics:
@@ -141,8 +139,8 @@ Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p, T amount) {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p) {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p) {
     // Add a particle via shared pointer with default amount = 1.
     //
     // Delegates to pointer+amount overload.
@@ -151,8 +149,8 @@ Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p) {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p, T amount) {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p, T amount) {
     // Add a particle via shared pointer with an explicit amount.
     //
     // Semantics:
@@ -169,8 +167,8 @@ Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p, T amount) {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_particles(const HostBuffer<FluidicParticle<T>>& ps) {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(const HostBuffer<FluidicParticle<T>>& ps) {
     // Bulk-add particles by value with default amount = 1.
     //
     // Complexity:
@@ -184,10 +182,10 @@ Fluid<T>::Builder::add_particles(const HostBuffer<FluidicParticle<T>>& ps) {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_particles(
-    const HostBuffer<FluidicParticle<T>>& ps,
-    const HostBuffer<T>& amounts) {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(
+        const HostBuffer<FluidicParticle<T>>& ps,
+        const HostBuffer<T>& amounts) {
     // Bulk-add particles by value with explicit amounts.
     //
     // Strong requirement:
@@ -206,9 +204,9 @@ Fluid<T>::Builder::add_particles(
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_particles(
-    const HostBuffer<FluidicParticleHostPtr<T>>& ps) {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(
+        const HostBuffer<FluidicParticleHostPtr<T>>& ps) {
     // Bulk-add particles via shared pointers with default amount = 1.
     //
     // Complexity:
@@ -222,10 +220,10 @@ Fluid<T>::Builder::add_particles(
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_particles(
-    const HostBuffer<FluidicParticleHostPtr<T>>& ps,
-    const HostBuffer<T>& amounts) {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(
+        const HostBuffer<FluidicParticleHostPtr<T>>& ps,
+        const HostBuffer<T>& amounts) {
     // Bulk-add shared particles with explicit amounts.
     //
     // Size consistency is mandatory.
@@ -243,8 +241,8 @@ Fluid<T>::Builder::add_particles(
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::require_non_empty(bool on) noexcept {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::require_non_empty(bool on) noexcept {
     // Configure whether the built Fluid<T> must be non-empty.
     //
     // Typical use:
@@ -255,8 +253,8 @@ Fluid<T>::Builder::require_non_empty(bool on) noexcept {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::reject_null_particles(bool on) noexcept {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::reject_null_particles(bool on) noexcept {
     // Configure whether null particle pointers are rejected at build time.
     //
     // When enabled:
@@ -268,8 +266,8 @@ Fluid<T>::Builder::reject_null_particles(bool on) noexcept {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::reject_negative_amounts(bool on) noexcept {
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::reject_negative_amounts(bool on) noexcept {
     // Configure whether negative amounts are rejected at build time.
     //
     // Physical rationale:
@@ -279,8 +277,8 @@ Fluid<T>::Builder::reject_negative_amounts(bool on) noexcept {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-void Fluid<T>::Builder::validate_or_throw() const {
+ATLAS_HOST ATLAS_FORCE_INLINE void
+Fluid<T>::Builder::validate_or_throw() const {
     // Centralized validation of builder invariants.
     //
     // This function enforces:
@@ -325,14 +323,15 @@ void Fluid<T>::Builder::validate_or_throw() const {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-Fluid<T> Fluid<T>::Builder::build() const {
+    Fluid<T>
+    Fluid<T>::Builder::build() const {
     // Construct a Fluid<T> after validation.
     //
     // Strong exception guarantee:
     // - If validation fails, no Fluid is produced.
     validate_or_throw();
 
-    Fluid<T> f{};
+    Fluid<T> f {};
 
     // Shallow copies:
     // - Shared pointers are copied (cheap).
@@ -345,8 +344,8 @@ Fluid<T> Fluid<T>::Builder::build() const {
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
-atlas::host_shared_ptr<Fluid<T>>
-Fluid<T>::Builder::make_host_shared() const {
+    atlas::host_shared_ptr<Fluid<T>>
+    Fluid<T>::Builder::make_host_shared() const {
     // Convenience helper:
     // - Build a Fluid<T>
     // - Move it into a shared, heap-allocated object.

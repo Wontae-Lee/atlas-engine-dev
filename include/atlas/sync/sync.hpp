@@ -132,8 +132,8 @@ template <typename T>
 typename Sync<T>::Builder&
 Sync<T>::Builder::with_rigid_pose(const Vector3<T>& translation_,
                                   const Quaternion<T>& orientation_) noexcept {
-    _translation = translation_;
-    _orientation = orientation_;
+    _translation       = translation_;
+    _orientation       = orientation_;
     _has_sync_operator = false;
     return *this;
 }
@@ -141,7 +141,7 @@ Sync<T>::Builder::with_rigid_pose(const Vector3<T>& translation_,
 template <typename T>
 typename Sync<T>::Builder&
 Sync<T>::Builder::with_sync_operator(const atlas::system::SyncOperator<T>& op) noexcept {
-    _op_storage = op;
+    _op_storage        = op;
     _has_sync_operator = true;
     return *this;
 }
@@ -149,11 +149,9 @@ Sync<T>::Builder::with_sync_operator(const atlas::system::SyncOperator<T>& op) n
 template <typename T>
 void
 Sync<T>::Builder::validate() const {
-    const Vector3<T>& translation =
-        _has_sync_operator ? _op_storage.translation : _translation;
+    const Vector3<T>& translation = _has_sync_operator ? _op_storage.translation : _translation;
 
-    const Quaternion<T>& orientation =
-        _has_sync_operator ? _op_storage.orientation : _orientation;
+    const Quaternion<T>& orientation = _has_sync_operator ? _op_storage.orientation : _orientation;
 
     if (!std::isfinite(translation.x)
         || !std::isfinite(translation.y)

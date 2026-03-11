@@ -55,8 +55,8 @@ using tuple = thrust::tuple<Ts...>;
  */
 template <typename... Ts>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-tuple<Ts...>
-make_tuple(Ts... args) {
+    tuple<Ts...>
+    make_tuple(Ts... args) {
     return thrust::make_tuple(args...);
 }
 
@@ -73,8 +73,7 @@ make_tuple(Ts... args) {
  * - Callable from both host and device code.
  */
 template <std::size_t I, typename Tuple>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-auto
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
 get(const Tuple& t) {
     return thrust::get<I>(t);
 }
@@ -105,8 +104,7 @@ using tuple = std::tuple<Ts...>;
  * @return `std::tuple<Ts...>` containing the given values.
  */
 template <typename... Ts>
-inline
-tuple<Ts...>
+inline tuple<Ts...>
 make_tuple(Ts... args) {
     return std::make_tuple(args...);
 }
@@ -123,8 +121,7 @@ make_tuple(Ts... args) {
  * - Equivalent to "std::get<I>(t)".
  */
 template <std::size_t I, typename Tuple>
-inline
-auto
+inline auto
 get(const Tuple& t) {
     return std::get<I>(t);
 }

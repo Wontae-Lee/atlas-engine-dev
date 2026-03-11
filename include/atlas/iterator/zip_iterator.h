@@ -1,11 +1,10 @@
 #pragma once
 
-
 #ifdef ATLAS_TASKING_CUDA
+#include <atlas/core/macros.h>
 #include <iterator>
 #include <thrust/iterator/zip_iterator.h>
 #include <tuple>
-#include <atlas/core/macros.h>
 namespace atlas {
 
 /**

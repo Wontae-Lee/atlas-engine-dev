@@ -86,16 +86,15 @@ struct device_refcount {
     /// @brief Constructs an empty refcount (null counter).
     __host__ __device__
     device_refcount()
-        : count(nullptr) {}
+        : count(nullptr) { }
 
     /// @brief Constructs from an existing counter pointer.
-    __host__ __device__
-    explicit device_refcount(int* c)
-        : count(c) {}
+    __host__ __device__ explicit device_refcount(int* c)
+        : count(c) { }
 
     /// @brief Increments the reference count if valid.
-    __host__ __device__
-    void add_ref() const {
+    __host__ __device__ void
+    add_ref() const {
         if (!count) return;
         ATLAS_ATOMIC_ADD(count, 1);
     }
@@ -108,8 +107,8 @@ struct device_refcount {
      * @note
      * On device, the return value is computed using the value returned by `atomicSub`.
      */
-    __host__ __device__
-    bool release() const {
+    __host__ __device__ bool
+    release() const {
         if (!count) return false;
 #ifdef __CUDA_ARCH__
         // atomicSub returns the old value
@@ -124,8 +123,8 @@ struct device_refcount {
     }
 
     /// @brief Returns the current reference count, or 0 for null.
-    __host__ __device__
-    int use_count() const {
+    __host__ __device__ int
+    use_count() const {
         return count ? *count : 0;
     }
 };
@@ -154,38 +153,42 @@ struct device_refcount {
 template <typename T>
 class device_shared_ptr {
 private:
-    T* ptr;            ///< Managed pointer to object storage.
+    T* ptr;              ///< Managed pointer to object storage.
     device_refcount ref; ///< Reference-count wrapper.
 
 public:
     /// @brief Constructs an empty pointer.
     __host__ __device__
     device_shared_ptr()
-        : ptr(nullptr), ref(nullptr) {}
+        : ptr(nullptr)
+        , ref(nullptr) { }
 
     /// @brief Constructs from raw object pointer and raw counter pointer.
     __host__ __device__
     device_shared_ptr(T* p, int* c)
-        : ptr(p), ref(c) {}
+        : ptr(p)
+        , ref(c) { }
 
     /// @brief Copy constructor increments the reference count.
     __host__ __device__
     device_shared_ptr(const device_shared_ptr& o)
-        : ptr(o.ptr), ref(o.ref) {
+        : ptr(o.ptr)
+        , ref(o.ref) {
         if (ref.count) ref.add_ref();
     }
 
     /// @brief Move constructor transfers ownership without changing refcount.
     __host__ __device__
     device_shared_ptr(device_shared_ptr&& o) noexcept
-        : ptr(o.ptr), ref(o.ref) {
+        : ptr(o.ptr)
+        , ref(o.ref) {
         o.ptr       = nullptr;
         o.ref.count = nullptr;
     }
 
     /// @brief Copy assignment releases current and then shares ownership of `o`.
-    __host__ __device__
-    device_shared_ptr& operator=(const device_shared_ptr& o) {
+    __host__ __device__ device_shared_ptr&
+    operator=(const device_shared_ptr& o) {
         if (this != &o) {
 #ifdef __CUDA_ARCH__
             // Device side: just decrement current refcount; no deletion on device.
@@ -202,8 +205,8 @@ public:
     }
 
     /// @brief Move assignment releases current and then takes ownership from `o`.
-    __host__ __device__
-    device_shared_ptr& operator=(device_shared_ptr&& o) noexcept {
+    __host__ __device__ device_shared_ptr&
+    operator=(device_shared_ptr&& o) noexcept {
         if (this != &o) {
 #ifdef __CUDA_ARCH__
             if (ref.count) ATLAS_ATOMIC_SUB(ref.count, 1);
@@ -219,8 +222,7 @@ public:
     }
 
     /// @brief Destructor decrements refcount; host side may destroy/free the allocation.
-    __host__ __device__
-    ~device_shared_ptr() {
+    __host__ __device__ ~device_shared_ptr() {
 #ifdef __CUDA_ARCH__
         if (ref.count) ATLAS_ATOMIC_SUB(ref.count, 1);
 #else
@@ -229,24 +231,24 @@ public:
     }
 
     /// @brief Returns the raw pointer (may be null).
-    __host__ __device__
-    T* get() const { return ptr; }
+    __host__ __device__ T*
+    get() const { return ptr; }
 
     /// @brief Dereferences the stored pointer (undefined behavior if null).
-    __host__ __device__
-    T& operator*() const { return *ptr; }
+    __host__ __device__ T&
+    operator*() const { return *ptr; }
 
     /// @brief Member access (undefined behavior if null).
-    __host__ __device__
-    T* operator->() const { return ptr; }
+    __host__ __device__ T*
+    operator->() const { return ptr; }
 
     /// @brief Returns current reference count.
-    __host__ __device__
-    int use_count() const { return ref.use_count(); }
+    __host__ __device__ int
+    use_count() const { return ref.use_count(); }
 
     /// @brief Checks whether this pointer is non-null.
-    __host__ __device__
-    explicit operator bool() const { return ptr != nullptr; }
+    __host__ __device__ explicit
+    operator bool() const { return ptr != nullptr; }
 
 private:
     /**
@@ -261,7 +263,8 @@ private:
      * The `current == 0` early branch handles edge cases where the counter was
      * externally manipulated or already zero; it attempts to clean up to avoid leaks.
      */
-    void release_host_side() {
+    void
+    release_host_side() {
         if (!ref.count) return;
 
         // Snapshot the current count. If it's already 0, attempt cleanup defensively.

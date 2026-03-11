@@ -72,8 +72,7 @@ public:
      *
      * @throws std::invalid_argument If `domain` is null (thrown by the base class).
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE
-    explicit SingleCodec(const DomainHostPtr<T>& domain);
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit SingleCodec(const DomainHostPtr<T>& domain);
 
     /// @brief Virtual destructor.
     ~SingleCodec() override = default;
@@ -203,7 +202,7 @@ private:
 
 private:
     /// Domain required by the base `Codec<T>` sizing/initialization.
-    DomainHostPtr<T> _domain{};
+    DomainHostPtr<T> _domain {};
 };
 
 } // namespace atlas::system

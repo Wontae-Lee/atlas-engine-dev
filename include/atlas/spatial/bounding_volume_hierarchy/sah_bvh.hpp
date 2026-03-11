@@ -130,7 +130,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleCo
             tri_op.a             = &triangles[i].a();
             tri_op.b             = &triangles[i].b();
             tri_op.c             = &triangles[i].c();
-            tri_op.n        = &triangles[i].d();
+            tri_op.n             = &triangles[i].d();
             const AABB<T> bounds = tri_op.bound();
             h_prim_bounds[i]     = bounds;
             h_centroids[i]       = tri_op.centroid();
@@ -157,7 +157,6 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleCo
 template <typename T>
 int
 SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const int end, int& node_count) {
-
 
     const int node_index = node_count++;
 

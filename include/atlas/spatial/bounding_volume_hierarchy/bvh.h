@@ -1,10 +1,9 @@
 #pragma once
-#include <atlas/spatial/trace_operator.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/memory/memory.h>
+#include <atlas/spatial/trace_operator.h>
 
 namespace atlas::spatial {
-
 
 template <typename T>
 class BoundingVolumeHierachy {
@@ -34,4 +33,3 @@ template <typename T>
 using BVHDevicePtr = atlas::device_shared_ptr<BVH<T>>;
 
 }
-

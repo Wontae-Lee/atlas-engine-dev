@@ -44,7 +44,7 @@ public:
     T mass = T(1);
 
     /// @brief Default constructor. Initializes @ref mass to `T(1)`.
-    Matter()          = default;
+    Matter() = default;
 
     /// @brief Virtual destructor for safe polymorphic usage.
     virtual ~Matter() = default;

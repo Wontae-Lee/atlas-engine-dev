@@ -16,8 +16,7 @@ struct SyncOperator final {
 
     Matrix<T, 3, 3> inverse_orientation_matrix {};
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
-    SyncOperator() noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr SyncOperator() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
     SyncOperator(const Vector3<T>& translation_,

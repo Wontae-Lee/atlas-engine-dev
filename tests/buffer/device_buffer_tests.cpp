@@ -137,6 +137,7 @@ TEST(DeviceBuffer, SelfAssignmentIsNoOp) {
     //  - free memory prematurely
     //  - corrupt the buffer
     //  - produce undefined behavior
+    // ReSharper disable once CppIdenticalOperandsInBinaryExpression
     a = a;
 
     ASSERT_EQ(a.size(), static_cast<std::size_t>(3));

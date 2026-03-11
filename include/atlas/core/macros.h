@@ -20,8 +20,8 @@
  * minimal and carefully documented to avoid surprising behavior across toolchains.
  */
 
-#include <cstdio>   // std::fprintf
-#include <cstdlib>  // std::abort
+#include <cstdio>  // std::fprintf
+#include <cstdlib> // std::abort
 
 // =========================================================
 // CUDA / compiler attributes
@@ -85,7 +85,7 @@
  */
 #define ATLAS_UNROLL _Pragma("unroll")
 
-#else  // !__CUDACC__
+#else // !__CUDACC__
 
 /**
  * @def ATLAS_HOST
@@ -171,7 +171,6 @@
 #else
 #define ATLAS_MAYBE_UNUSED
 #endif
-
 
 /**
  * @def RESTRICT
@@ -283,26 +282,27 @@
  */
 #if defined(ATLAS_TASKING_CUDA) && !defined(__CUDA_ARCH__)
 
-    // Host-side CUDA build path: CUDA runtime API is available here.
-    #include <cuda_runtime.h>
+// Host-side CUDA build path: CUDA runtime API is available here.
+#include <cuda_runtime.h>
 
-    #define ATLAS_DEVICE_CHECK(call)                                         \
-        do {                                                                 \
-            cudaError_t err__ = (call);                                      \
-            if (err__ != cudaSuccess) {                                      \
-                std::fprintf(stderr,                                         \
-                    "[CUDA ERROR] %s:%d\n  %s\n",                            \
-                    __FILE__, __LINE__,                                      \
-                    cudaGetErrorString(err__));                              \
-                std::abort();                                                \
-            }                                                                \
-        } while (0)
+#define ATLAS_DEVICE_CHECK(call)                       \
+    do {                                               \
+        cudaError_t err__ = (call);                    \
+        if (err__ != cudaSuccess) {                    \
+            std::fprintf(stderr,                       \
+                         "[CUDA ERROR] %s:%d\n  %s\n", \
+                         __FILE__,                     \
+                         __LINE__,                     \
+                         cudaGetErrorString(err__));   \
+            std::abort();                              \
+        }                                              \
+    } while (0)
 
 #else
 
-    // Non-CUDA build or device compilation path: swallow expression in a way that
-    // does not require CUDA headers and avoids "unused" warnings.
-    #define ATLAS_DEVICE_CHECK(call) \
-        do { (void)sizeof(call); } while (0)
+// Non-CUDA build or device compilation path: swallow expression in a way that
+// does not require CUDA headers and avoids "unused" warnings.
+#define ATLAS_DEVICE_CHECK(call) \
+    do { (void)sizeof(call); } while (0)
 
 #endif

@@ -355,7 +355,8 @@ Vector<T, 2>::reflected(const Vector& n) const noexcept {
 }
 
 template <typename T>
-Vector<T, 2> Vector<T, 2>::projected(const Vector& n) const noexcept {
+Vector<T, 2>
+Vector<T, 2>::projected(const Vector& n) const noexcept {
     // NOTE: In this codebase, "projected" returns the component orthogonal to n (rejection).
     // rejection_n(v) = v - proj_n(v), where proj_n(v) = (dot(v,n)/dot(n,n)) * n
     const T nn = n.dot(n);
@@ -363,7 +364,7 @@ Vector<T, 2> Vector<T, 2>::projected(const Vector& n) const noexcept {
         // If direction is zero, treat as "no constraint": return v (already orthogonal to nothing).
         return *this;
     }
-    const T s = this->dot(n) / nn;
+    const T s         = this->dot(n) / nn;
     const Vector proj = n * s;
     return (*this) - proj;
 }
@@ -413,17 +414,15 @@ reflected(const Vector<T, 2>& v, const Vector<T, 2>& normal) noexcept {
                         v.y - T(2) * d * normal.y);
 }
 
-
-
-
 template <typename T>
 ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-Vector<T, 2> projected(const Vector<T, 2>& v, const Vector<T, 2>& n) noexcept {
+    Vector<T, 2>
+    projected(const Vector<T, 2>& v, const Vector<T, 2>& n) noexcept {
     const T nn = dot(n, n);
     if (nn == T(0)) {
         return v;
     }
-    const T s = dot(v, n) / nn;
+    const T s               = dot(v, n) / nn;
     const Vector<T, 2> proj = n * s;
     return v - proj;
 }

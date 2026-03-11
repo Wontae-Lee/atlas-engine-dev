@@ -4,7 +4,7 @@ namespace atlas::spatial {
 template <typename T>
 Ray<T>::Ray() noexcept
     : origin(Vector3<T>(T(0), T(0), T(0)))
-      , direction(Vector3<T>(T(1), T(0), T(0))) {
+    , direction(Vector3<T>(T(1), T(0), T(0))) {
     // Default ray:
     // - Origin at the world origin.
     // - Direction along +X axis.
@@ -16,7 +16,7 @@ Ray<T>::Ray() noexcept
 template <typename T>
 Ray<T>::Ray(const Vector3<T>& origin_, const Vector3<T>& direction_) noexcept
     : origin(origin_)
-      , direction(direction_.normalized()) {
+    , direction(direction_.normalized()) {
     // Construct a ray from an origin and a direction.
     //
     // Important: the direction is normalized so that:

@@ -319,7 +319,6 @@ public:
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE GeometryType
     type() const noexcept override;
 
-
 private:
     /// @brief Allow builder to configure internals.
     friend class Builder;

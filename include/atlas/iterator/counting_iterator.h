@@ -43,7 +43,6 @@ using counting_iterator = thrust::counting_iterator<T>;
 #include <cstddef>
 #include <iterator>
 
-
 namespace atlas {
 
 /**
@@ -101,7 +100,7 @@ public:
      * @param start Initial counter value.
      */
     constexpr explicit counting_iterator(T start) noexcept
-        : _value(start) {}
+        : _value(start) { }
 
     // ------------------------------------------------------------
     // Dereference / indexing
@@ -272,7 +271,7 @@ public:
 
 private:
     /// @brief Current counter value.
-    T _value = T{};
+    T _value = T {};
 };
 
 } // namespace atlas

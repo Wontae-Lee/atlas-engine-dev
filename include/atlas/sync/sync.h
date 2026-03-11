@@ -11,15 +11,12 @@ class Sync final {
 public:
     class Builder;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE constexpr
-    Sync() noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE constexpr Sync() noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE constexpr
-    Sync(const Vector3<T>& translation_,
-         const Quaternion<T>& orientation_) noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE constexpr Sync(const Vector3<T>& translation_,
+                                                 const Quaternion<T>& orientation_) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit
-    Sync(const atlas::system::SyncOperator<T>& op) noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit Sync(const atlas::system::SyncOperator<T>& op) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;

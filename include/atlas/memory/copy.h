@@ -9,8 +9,8 @@
 #include <cuda_runtime.h>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
-#include <thrust/system_error.h>
 #include <thrust/system/cuda/error.h>
+#include <thrust/system_error.h>
 #elif defined(ATLAS_TASKING_TBB)
 #include <cstring>
 #else
@@ -70,11 +70,10 @@ ATLAS_HOST ATLAS_FORCE_INLINE void
 copy_host_to_device(const T* src, thrust::device_ptr<T> dst, const std::size_t count) {
     if (count == 0) return;
 
-    const cudaError_t err =
-        cudaMemcpy(thrust::raw_pointer_cast(dst),
-                   src,
-                   sizeof(T) * count,
-                   cudaMemcpyHostToDevice);
+    const cudaError_t err = cudaMemcpy(thrust::raw_pointer_cast(dst),
+                                       src,
+                                       sizeof(T) * count,
+                                       cudaMemcpyHostToDevice);
 
     if (err != cudaSuccess) {
         std::fprintf(stderr,
@@ -95,11 +94,10 @@ ATLAS_HOST ATLAS_FORCE_INLINE void
 copy_device_to_host(thrust::device_ptr<const T> src, T* dst, const std::size_t count) {
     if (count == 0) return;
 
-    const cudaError_t err =
-        cudaMemcpy(dst,
-                   thrust::raw_pointer_cast(src),
-                   sizeof(T) * count,
-                   cudaMemcpyDeviceToHost);
+    const cudaError_t err = cudaMemcpy(dst,
+                                       thrust::raw_pointer_cast(src),
+                                       sizeof(T) * count,
+                                       cudaMemcpyDeviceToHost);
 
     if (err != cudaSuccess) {
         std::fprintf(stderr,

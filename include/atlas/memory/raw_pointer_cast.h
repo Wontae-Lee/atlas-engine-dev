@@ -127,8 +127,6 @@ raw_pointer_cast(const T* p) noexcept {
     return p;
 }
 
-
-
 #endif // ATLAS_TASKING_CUDA
 
 } // namespace atlas

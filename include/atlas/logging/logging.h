@@ -110,7 +110,8 @@ public:
 
     Logger(Logger&&) noexcept = default;
     Logger&
-    operator=(Logger&&) noexcept = default;
+    operator=(Logger&&) noexcept
+        = default;
 
     /**
      * @brief Stream arbitrary values into the log message.

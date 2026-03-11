@@ -112,12 +112,12 @@ TEST(Unit, RotateChangesWorldPointButPreservesDistanceFromTranslationOrigin) {
 
     const Vector3<double> local_point(1.0, 0.0, 0.0);
 
-    const auto before_world = u.sync_operator().sync_to_world(local_point);
+    const auto before_world    = u.sync_operator().sync_to_world(local_point);
     const double before_offset = (before_world - u.sync_operator().translation).length();
 
     u.rotate(Vector3<double>(0.0, 0.0, 1.0), M_PI / 2.0);
 
-    const auto after_world = u.sync_operator().sync_to_world(local_point);
+    const auto after_world    = u.sync_operator().sync_to_world(local_point);
     const double after_offset = (after_world - u.sync_operator().translation).length();
 
     EXPECT_TRUE(test::vec_near(after_world, Vector3<double>(2.0, 0.0, 0.5), eps));
@@ -227,7 +227,7 @@ TEST(Unit, RotateKeepsDirectionLengthInvariant) {
 
     u.rotate(Vector3<double>(0.0, 1.0, 0.0), M_PI / 4.0);
 
-    const auto world_dir = u.sync_operator().sync_dir_to_world(local_dir);
+    const auto world_dir   = u.sync_operator().sync_dir_to_world(local_dir);
     const double len_after = world_dir.length();
 
     EXPECT_NEAR(len_after, len_before, eps);
@@ -244,12 +244,12 @@ TEST(Unit, RotateKeepsPointOffsetLengthInvariantWhenTranslationIsFixed) {
 
     const Vector3<double> local_point(1.0, 2.0, -2.0);
 
-    const auto before_world = u.sync_operator().sync_to_world(local_point);
+    const auto before_world    = u.sync_operator().sync_to_world(local_point);
     const double offset_before = (before_world - u.sync_operator().translation).length();
 
     u.rotate(Vector3<double>(0.0, 0.0, 1.0), M_PI / 5.0);
 
-    const auto after_world = u.sync_operator().sync_to_world(local_point);
+    const auto after_world    = u.sync_operator().sync_to_world(local_point);
     const double offset_after = (after_world - u.sync_operator().translation).length();
 
     EXPECT_NEAR(offset_after, offset_before, eps);
