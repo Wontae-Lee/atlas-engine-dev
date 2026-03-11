@@ -7,74 +7,62 @@ using namespace atlas;
 
 TEST(DeviceBuffer, DefaultConstructedIsEmpty) {
 
-    // Default-constructed DeviceBuffer must represent an empty container:
-    // - size() must be 0
-    // - underlying device allocation is expected to be null/empty (implementation detail)
+    // A default-constructed DeviceBuffer must represent an empty container.
+    //
+    // Contract we verify here:
+    //  - size() must return 0
+    //  - no elements are logically stored
+    //
+    // The actual device allocation state (null pointer vs reserved memory)
+    // is an implementation detail and therefore not checked in this test.
     const DeviceBuffer<int> buf;
 
-    // Use explicit std::size_t to avoid signed/unsigned warnings.
+    // Explicit cast avoids signed/unsigned comparison warnings.
     EXPECT_EQ(buf.size(), static_cast<std::size_t>(0));
-
-    // Log the size for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Default-constructed DeviceBuffer has size: "
-                   << buf.size()
-                   << " (expected 0)";
 }
 
 TEST(DeviceBuffer, ResizeChangesSize) {
 
-    // Start from an empty buffer and verify resize updates the logical element count.
+    // Start from an empty buffer.
     DeviceBuffer<int> buf;
 
-    // Growing resize must set size() to the requested number of elements.
+    // Growing the buffer must update the logical element count.
+    // This mirrors std::vector semantics.
     buf.resize(5);
-
-    // Log the size after resizing for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "After resizing to 5, DeviceBuffer size is: "
-                   << buf.size()
-                   << " (expected 5)";
 
     EXPECT_EQ(buf.size(), static_cast<std::size_t>(5));
 
-    // Shrinking resize must reduce size() accordingly.
+    // Shrinking the buffer must also update the logical element count.
+    // The prefix elements may remain in memory internally,
+    // but logically only the first `size()` elements are valid.
     buf.resize(2);
 
-    // Log the size after shrinking for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "After resizing to 2, DeviceBuffer size is: "
-                   << buf.size()
-                   << " (expected 2)";
     EXPECT_EQ(buf.size(), static_cast<std::size_t>(2));
 }
 
 TEST(DeviceBuffer, WriteAndReadElements) {
 
-    // Allocate a small device buffer and verify operator[] can write/read elements.
+    // Allocate a small buffer and verify indexing access works.
     //
-    // Note:
-    // - This assumes DeviceBuffer<T>::operator[] is host-accessible in this project
-    //   (e.g., via unified memory, mapped memory, or a debug host mirror).
-    // - If operator[] is device-only in some configurations, this test will need
-    //   to be adapted to use explicit copy APIs or kernels.
+    // Assumption:
+    // DeviceBuffer<T>::operator[] is host-accessible in this build.
+    // This may be implemented through:
+    //  - unified memory
+    //  - mapped memory
+    //  - a debug mirror buffer
+    //
+    // If operator[] becomes device-only in the future,
+    // this test must instead use explicit copy APIs or kernels.
     DeviceBuffer<int> buf;
     buf.resize(4);
 
-    // Write a known pattern to validate indexing and storage semantics.
+    // Write a deterministic pattern into the buffer.
+    // This verifies both indexing correctness and storage semantics.
     for (std::size_t i = 0; i < buf.size(); ++i) {
         buf[i] = static_cast<int>(i * 10);
     }
 
-    // Log the buffer contents for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Buffer contents after writing:\n"
-                   << "buf[0] = " << buf[0] << "\n"
-                   << "buf[1] = " << buf[1] << "\n"
-                   << "buf[2] = " << buf[2] << "\n"
-                   << "buf[3] = " << buf[3] << "\n";
-
-    // Read back and verify values were stored correctly.
+    // Validate values were written correctly.
     EXPECT_EQ(buf[0], 0);
     EXPECT_EQ(buf[1], 10);
     EXPECT_EQ(buf[2], 20);
@@ -83,29 +71,24 @@ TEST(DeviceBuffer, WriteAndReadElements) {
 
 TEST(DeviceBuffer, CopyConstructorPreservesData) {
 
-    // Prepare an input buffer with known contents.
+    // Create a source buffer with known values.
     DeviceBuffer<int> a;
     a.resize(3);
+
     a[0] = 1;
     a[1] = 2;
     a[2] = 3;
 
-    // Copy-construct a new buffer.
+    // Copy construct a new buffer.
+    //
     // Expected semantics:
-    // - `b` has the same size as `a`
-    // - element values are preserved
-    // - storage is independent (deep copy) in device memory (implementation detail)
+    //  - size is preserved
+    //  - element values are preserved
+    //  - device memory must be independent (deep copy)
     const DeviceBuffer<int> b(a);
 
-    // Log the copied buffer contents for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Copied buffer contents:\n"
-                   << "b[0] = " << b[0] << "\n"
-                   << "b[1] = " << b[1] << "\n"
-                   << "b[2] = " << b[2] << "\n";
-
-    // Validate size and values were copied.
     ASSERT_EQ(b.size(), static_cast<std::size_t>(3));
+
     EXPECT_EQ(b[0], 1);
     EXPECT_EQ(b[1], 2);
     EXPECT_EQ(b[2], 3);
@@ -113,27 +96,23 @@ TEST(DeviceBuffer, CopyConstructorPreservesData) {
 
 TEST(DeviceBuffer, CopyAssignmentPreservesData) {
 
-    // Prepare an input buffer with known contents.
+    // Create a source buffer with known values.
     DeviceBuffer<int> a;
     a.resize(3);
+
     a[0] = 1;
     a[1] = 2;
     a[2] = 3;
 
-    // Copy-initialize/assign a second buffer from `a`.
-    // This exercises copy construction or copy assignment depending on the API,
-    // but in either case the resulting buffer must contain the same data.
+    // Copy initialization / assignment.
+    //
+    // Regardless of whether the implementation uses copy constructor
+    // or copy assignment internally, the resulting buffer must contain
+    // the same logical contents as the source.
     const DeviceBuffer<int> b = a;
 
-    // Log the copied buffer contents for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Copy-assigned buffer contents:\n"
-                   << "b[0] = " << b[0] << "\n"
-                   << "b[1] = " << b[1] << "\n"
-                   << "b[2] = " << b[2] << "\n";
-
-    // Validate size and values were copied.
     ASSERT_EQ(b.size(), static_cast<std::size_t>(3));
+
     EXPECT_EQ(b[0], 1);
     EXPECT_EQ(b[1], 2);
     EXPECT_EQ(b[2], 3);
@@ -141,26 +120,27 @@ TEST(DeviceBuffer, CopyAssignmentPreservesData) {
 
 TEST(DeviceBuffer, SelfAssignmentIsNoOp) {
 
-    // Prepare a buffer with known content.
+    // Prepare a buffer with known values.
     DeviceBuffer<int> a;
     a.resize(3);
+
     a[0] = 4;
     a[1] = 5;
     a[2] = 6;
 
-    // Self-assignment should be safe and should not corrupt or free the buffer.
-    // This is a common edge case for move/copy assignment implementations.
-    // ReSharper disable once CppIdenticalOperandsInBinaryExpression
+    // Self-assignment must be safe.
+    //
+    // A robust copy/move assignment operator must detect or tolerate
+    // the case where the source and destination are identical.
+    //
+    // Incorrect implementations may:
+    //  - free memory prematurely
+    //  - corrupt the buffer
+    //  - produce undefined behavior
     a = a;
-    // Log the buffer contents after self-assignment for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Buffer contents after self-assignment:\n"
-                   << "a[0] = " << a[0] << "\n"
-                   << "a[1] = " << a[1] << "\n"
-                   << "a[2] = " << a[2] << "\n";
 
-    // Validate size and values are unchanged.
     ASSERT_EQ(a.size(), static_cast<std::size_t>(3));
+
     EXPECT_EQ(a[0], 4);
     EXPECT_EQ(a[1], 5);
     EXPECT_EQ(a[2], 6);
@@ -168,40 +148,37 @@ TEST(DeviceBuffer, SelfAssignmentIsNoOp) {
 
 TEST(DeviceBuffer, ResizeKeepsPrefixValuesWhenGrowing) {
 
-    // Start with a small buffer and initialize a known prefix.
+    // Initialize a buffer with a known prefix.
     DeviceBuffer<int> buf;
     buf.resize(3);
+
     buf[0] = 7;
     buf[1] = 8;
     buf[2] = 9;
 
     // Grow the buffer.
-    // Expected semantics (vector-like):
-    // - old elements [0..old_size-1] are preserved
-    // - new elements [old_size..new_size-1] are unspecified unless documented otherwise
+    //
+    // Expected semantics (vector-like behavior):
+    //  - existing elements [0..old_size-1] must remain unchanged
+    //  - newly created elements [old_size..new_size-1] are unspecified
     buf.resize(5);
 
-    // Log the buffer contents after resizing for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Buffer contents after resizing to larger size:\n"
-                   << "buf[0] = " << buf[0] << "\n"
-                   << "buf[1] = " << buf[1] << "\n"
-                   << "buf[2] = " << buf[2] << "\n"
-                   << "buf[3] = " << buf[3] << " (unspecified)\n"
-                   << "buf[4] = " << buf[4] << " (unspecified)\n";
-
-    // Validate size and preserved prefix.
     ASSERT_EQ(buf.size(), static_cast<std::size_t>(5));
+
     EXPECT_EQ(buf[0], 7);
     EXPECT_EQ(buf[1], 8);
     EXPECT_EQ(buf[2], 9);
+
+    // buf[3] and buf[4] are intentionally not checked because
+    // their initialization behavior is not specified.
 }
 
 TEST(DeviceBuffer, ResizeKeepsPrefixValuesWhenShrinking) {
 
-    // Start with a larger buffer and initialize all elements.
+    // Initialize a larger buffer.
     DeviceBuffer<int> buf;
     buf.resize(5);
+
     buf[0] = 10;
     buf[1] = 11;
     buf[2] = 12;
@@ -209,119 +186,102 @@ TEST(DeviceBuffer, ResizeKeepsPrefixValuesWhenShrinking) {
     buf[4] = 14;
 
     // Shrink the buffer.
+    //
     // Expected semantics:
-    // - size is reduced
-    // - elements in the surviving prefix remain unchanged
+    //  - logical size becomes smaller
+    //  - prefix elements remain unchanged
     buf.resize(3);
 
-    // Log the buffer contents after shrinking for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Buffer contents after resizing to smaller size:\n"
-                   << "buf[0] = " << buf[0] << "\n"
-                   << "buf[1] = " << buf[1] << "\n"
-                   << "buf[2] = " << buf[2] << "\n"
-                   << "buf[3] = (out of bounds)\n"
-                   << "buf[4] = (out of bounds)\n";
-
-    // Validate size and preserved prefix.
     ASSERT_EQ(buf.size(), static_cast<std::size_t>(3));
+
     EXPECT_EQ(buf[0], 10);
     EXPECT_EQ(buf[1], 11);
     EXPECT_EQ(buf[2], 12);
+
+    // Access beyond index 2 would now be undefined behavior
+    // and therefore is intentionally not tested.
 }
 
 TEST(DeviceBuffer, MoveConstructorTransfersOwnership) {
 
-    // Prepare a source buffer with known content.
+    // Prepare a source buffer.
     DeviceBuffer<int> a;
     a.resize(3);
+
     a[0] = 21;
     a[1] = 22;
     a[2] = 23;
 
-    // Move-construct a new buffer from `a`.
+    // Move construction transfers ownership of device memory.
+    //
     // Expected semantics:
-    // - `b` takes ownership of `a`'s device allocation
-    // - `a` becomes empty/valid (project convention: size() == 0)
+    //  - b receives the device allocation
+    //  - a becomes a valid but empty container
     const DeviceBuffer<int> b(std::move(a));
 
-    // Log the moved buffer contents for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Moved buffer contents:\n"
-                   << "b[0] = " << b[0] << "\n"
-                   << "b[1] = " << b[1] << "\n"
-                   << "b[2] = " << b[2] << "\n"
-                   << "a.size() = " << a.size() << " (expected 0)\n";
-
-    // Validate destination has the moved data.
     ASSERT_EQ(b.size(), static_cast<std::size_t>(3));
+
     EXPECT_EQ(b[0], 21);
     EXPECT_EQ(b[1], 22);
     EXPECT_EQ(b[2], 23);
 
-    // Validate moved-from state.
+    // Project convention: moved-from buffer reports size 0.
     EXPECT_EQ(a.size(), static_cast<std::size_t>(0));
 }
 
 TEST(DeviceBuffer, MoveAssignmentTransfersOwnership) {
 
-    // Prepare a source buffer with known content.
+    // Prepare a source buffer.
     DeviceBuffer<int> a;
     a.resize(3);
+
     a[0] = 31;
     a[1] = 32;
     a[2] = 33;
 
-    // Prepare a destination buffer with different content to ensure it gets replaced.
+    // Prepare a destination buffer with different content.
     DeviceBuffer<int> b;
     b.resize(2);
+
     b[0] = -1;
     b[1] = -2;
 
-    // Move-assign `a` into `b`.
+    // Move assignment.
+    //
     // Expected semantics:
-    // - `b` releases its previous allocation (if any)
-    // - `b` takes ownership of `a`'s allocation
-    // - `a` becomes empty/valid (project convention)
+    //  - destination releases its previous allocation
+    //  - destination takes ownership of source allocation
+    //  - source becomes empty but valid
     b = std::move(a);
 
-    // Log the moved buffer contents for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Moved buffer contents after move assignment:\n"
-                   << "b[0] = " << b[0] << "\n"
-                   << "b[1] = " << b[1] << "\n"
-                   << "b[2] = " << b[2] << "\n"
-                   << "a.size() = " << a.size() << " (expected 0)\n";
-
-    // Validate destination now holds the moved data.
     ASSERT_EQ(b.size(), static_cast<std::size_t>(3));
+
     EXPECT_EQ(b[0], 31);
     EXPECT_EQ(b[1], 32);
     EXPECT_EQ(b[2], 33);
 
-    // Validate moved-from state.
     EXPECT_EQ(a.size(), static_cast<std::size_t>(0));
 }
 
 TEST(DeviceBuffer, ResizeToZeroClearsSize) {
 
-    // Prepare a buffer with some content.
+    // Create a buffer with several elements.
     DeviceBuffer<int> buf;
     buf.resize(4);
+
     buf[0] = 1;
     buf[1] = 2;
     buf[2] = 3;
     buf[3] = 4;
 
-    // Resize to zero should clear the logical size.
-    // Whether the underlying device memory is freed is an implementation detail.
+    // Resize to zero.
+    //
+    // Expected semantics:
+    //  - logical size becomes 0
+    //
+    // Whether device memory is freed or kept for reuse
+    // is an implementation detail and therefore not verified here.
     buf.resize(0);
-
-    // Log the buffer size after resizing to zero for debugging purposes (optional).
-    logger::info() << "\n"
-                   << "Buffer size after resizing to zero: "
-                   << buf.size()
-                   << " (expected 0)";
 
     EXPECT_EQ(buf.size(), static_cast<std::size_t>(0));
 }

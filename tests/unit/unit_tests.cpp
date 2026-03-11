@@ -21,7 +21,6 @@ TEST(Unit, ConstructorStoresOperatorsAndLeavesKinematicsEmpty) {
     EXPECT_FALSE(u.acceleration().has_value());
     EXPECT_FALSE(u.angular_velocity().has_value());
     EXPECT_FALSE(u.angular_acceleration().has_value());
-    EXPECT_FALSE(u.rotational_axis().has_value());
     EXPECT_FALSE(u.dynamic());
 
     EXPECT_TRUE(test::vec_near(
@@ -40,7 +39,6 @@ TEST(Unit, ConstructorWithKinematicsStoresAllValues) {
     const Vector3<double> a(-1.0, 0.5, 4.0);
     const Vector3<double> w(0.0, 0.0, 2.0);
     const Vector3<double> alpha(0.0, 0.0, -0.25);
-    const Vector3<double> axis(0.0, 0.0, 1.0);
 
     system::Unit<double> u(
         qop,
@@ -49,20 +47,17 @@ TEST(Unit, ConstructorWithKinematicsStoresAllValues) {
         v,
         a,
         w,
-        alpha,
-        axis);
+        alpha);
 
     ASSERT_TRUE(u.velocity().has_value());
     ASSERT_TRUE(u.acceleration().has_value());
     ASSERT_TRUE(u.angular_velocity().has_value());
     ASSERT_TRUE(u.angular_acceleration().has_value());
-    ASSERT_TRUE(u.rotational_axis().has_value());
 
     EXPECT_TRUE(test::vec_near(*u.velocity(), v, eps));
     EXPECT_TRUE(test::vec_near(*u.acceleration(), a, eps));
     EXPECT_TRUE(test::vec_near(*u.angular_velocity(), w, eps));
     EXPECT_TRUE(test::vec_near(*u.angular_acceleration(), alpha, eps));
-    EXPECT_TRUE(test::vec_near(*u.rotational_axis(), axis, eps));
     EXPECT_TRUE(u.dynamic());
 }
 
@@ -151,17 +146,14 @@ TEST(Unit, DynamicIsTrueWhenVelocityExists) {
         Vector3<double>(1.0, 0.0, 0.0),
         std::nullopt,
         std::nullopt,
-        std::nullopt,
         std::nullopt);
 
     EXPECT_TRUE(u.dynamic());
 }
 
-TEST(Unit, DynamicIsTrueWhenAccelerationExists) {
+TEST(Unit, DynamicIsFalseWhenOnlyAccelerationExists) {
     const auto sphere = test::make_sphere();
 
-    // This object is technically "dynamic" by the current implementation
-    // because dynamic() checks whether any kinematic optional is present.
     system::Unit<double> u(
         sphere.make_query_operator(),
         sphere.make_trace_operator(),
@@ -169,10 +161,9 @@ TEST(Unit, DynamicIsTrueWhenAccelerationExists) {
         std::nullopt,
         Vector3<double>(1.0, 0.0, 0.0),
         std::nullopt,
-        std::nullopt,
         std::nullopt);
 
-    EXPECT_TRUE(u.dynamic());
+    EXPECT_FALSE(u.dynamic());
 }
 
 TEST(Unit, DynamicIsTrueWhenAngularVelocityExists) {
@@ -185,13 +176,12 @@ TEST(Unit, DynamicIsTrueWhenAngularVelocityExists) {
         std::nullopt,
         std::nullopt,
         Vector3<double>(0.0, 0.0, 1.0),
-        std::nullopt,
-        Vector3<double>(0.0, 0.0, 1.0));
+        std::nullopt);
 
     EXPECT_TRUE(u.dynamic());
 }
 
-TEST(Unit, DynamicIsTrueWhenAngularAccelerationExists) {
+TEST(Unit, DynamicIsFalseWhenOnlyAngularAccelerationExists) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
@@ -201,10 +191,9 @@ TEST(Unit, DynamicIsTrueWhenAngularAccelerationExists) {
         std::nullopt,
         std::nullopt,
         std::nullopt,
-        Vector3<double>(0.0, 0.0, 1.0),
         Vector3<double>(0.0, 0.0, 1.0));
 
-    EXPECT_TRUE(u.dynamic());
+    EXPECT_FALSE(u.dynamic());
 }
 
 TEST(Unit, UpdateDoesNothingWhenDtIsZero) {
@@ -216,7 +205,6 @@ TEST(Unit, UpdateDoesNothingWhenDtIsZero) {
         system::SyncOperator<double> {},
         Vector3<double>(1.0, 2.0, 3.0),
         Vector3<double>(4.0, 5.0, 6.0),
-        std::nullopt,
         std::nullopt,
         std::nullopt);
 
@@ -238,7 +226,6 @@ TEST(Unit, UpdateDoesNothingWhenDtIsNegative) {
         system::SyncOperator<double> {},
         Vector3<double>(1.0, 2.0, 3.0),
         Vector3<double>(4.0, 5.0, 6.0),
-        std::nullopt,
         std::nullopt,
         std::nullopt);
 
@@ -281,7 +268,6 @@ TEST(Unit, UpdateWithVelocityOnlyMovesByVelocityTimesDt) {
         Vector3<double>(1.0, -2.0, 3.0),
         std::nullopt,
         std::nullopt,
-        std::nullopt,
         std::nullopt);
 
     u.update(0.5);
@@ -305,11 +291,8 @@ TEST(Unit, UpdateWithVelocityAndAccelerationUpdatesVelocityThenMoves) {
         Vector3<double>(1.0, 0.0, 0.0),
         Vector3<double>(2.0, 0.0, 0.0),
         std::nullopt,
-        std::nullopt,
         std::nullopt);
 
-    // velocity += acceleration * dt = 1 + 2*0.5 = 2
-    // move by velocity * dt = 2 * 0.5 = 1
     u.update(0.5);
 
     ASSERT_TRUE(u.velocity().has_value());
@@ -327,8 +310,7 @@ TEST(Unit, UpdateWithAngularVelocityOnlyRotates) {
         std::nullopt,
         std::nullopt,
         Vector3<double>(0.0, 0.0, 1.0),
-        std::nullopt,
-        Vector3<double>(0.0, 0.0, 1.0));
+        std::nullopt);
 
     u.update(M_PI / 2.0);
 
@@ -346,12 +328,8 @@ TEST(Unit, UpdateWithAngularVelocityAndAngularAccelerationUpdatesAngularVelocity
         std::nullopt,
         std::nullopt,
         Vector3<double>(0.0, 0.0, 1.0),
-        Vector3<double>(0.0, 0.0, 1.0),
         Vector3<double>(0.0, 0.0, 1.0));
 
-    // angular_velocity += angular_acceleration * dt
-    // magnitude = 1 + 1*1 = 2
-    // rotate axis by 2 rad
     u.update(1.0);
 
     ASSERT_TRUE(u.angular_velocity().has_value());
@@ -365,6 +343,30 @@ TEST(Unit, UpdateWithAngularVelocityAndAngularAccelerationUpdatesAngularVelocity
     EXPECT_TRUE(test::vec_near(got, expected, eps));
 }
 
+TEST(Unit, UpdateWithAngularVelocityVectorUsesItsDirectionAsRotationAxis) {
+    const auto sphere = test::make_sphere();
+
+    system::Unit<double> u(
+        sphere.make_query_operator(),
+        sphere.make_trace_operator(),
+        system::SyncOperator<double> {},
+        std::nullopt,
+        std::nullopt,
+        Vector3<double>(0.0, 2.0, 0.0),
+        std::nullopt);
+
+    u.update(M_PI / 4.0);
+
+    const auto world_dir = u.sync_operator().sync_dir_to_world(Vector3<double>(0.0, 0.0, 1.0));
+
+    const Vector3<double> expected_a(1.0, 0.0, 0.0);
+    const Vector3<double> expected_b(-1.0, 0.0, 0.0);
+
+    EXPECT_TRUE(
+        test::vec_near(world_dir, expected_a, eps) ||
+        test::vec_near(world_dir, expected_b, eps));
+}
+
 TEST(Unit, UpdateWithLinearAndAngularStateAppliesBoth) {
     const auto sphere = test::make_sphere();
 
@@ -375,8 +377,7 @@ TEST(Unit, UpdateWithLinearAndAngularStateAppliesBoth) {
         Vector3<double>(1.0, 0.0, 0.0),
         std::nullopt,
         Vector3<double>(0.0, 0.0, 1.0),
-        std::nullopt,
-        Vector3<double>(0.0, 0.0, 1.0));
+        std::nullopt);
 
     u.update(M_PI / 2.0);
 
@@ -402,7 +403,6 @@ TEST(Unit, BuilderBuildCreatesValidStaticUnit) {
     EXPECT_FALSE(u.acceleration().has_value());
     EXPECT_FALSE(u.angular_velocity().has_value());
     EXPECT_FALSE(u.angular_acceleration().has_value());
-    EXPECT_FALSE(u.rotational_axis().has_value());
     EXPECT_FALSE(u.dynamic());
 }
 
@@ -431,7 +431,6 @@ TEST(Unit, BuilderAddsZeroAngularAccelerationWhenAngularVelocityExistsWithoutAng
                  .with_geometry(geometry)
                  .with_sync(sync)
                  .with_angular_velocity(Vector3<double>(0.0, 0.0, 2.0))
-                 .with_rotational_axis(Vector3<double>(0.0, 0.0, 1.0))
                  .build();
 
     ASSERT_TRUE(u.angular_velocity().has_value());
@@ -485,8 +484,8 @@ TEST(Unit, BuilderThrowsWhenBuildWithoutSync) {
 }
 
 TEST(Unit, BuilderThrowsWhenAccelerationExistsWithoutVelocity) {
-    auto geometry = atlas::make_host_shared<geometry::Sphere<double>>(test::make_sphere());
-    auto sync     = atlas::make_host_shared<system::Sync<double>>();
+    auto geometry   = atlas::make_host_shared<geometry::Sphere<double>>(test::make_sphere());
+    const auto sync = atlas::make_host_shared<system::Sync<double>>();
 
     EXPECT_THROW(
         (void)system::Unit<double>::builder()
@@ -506,27 +505,13 @@ TEST(Unit, BuilderThrowsWhenAngularAccelerationExistsWithoutAngularVelocity) {
             .with_geometry(geometry)
             .with_sync(sync)
             .with_angular_acceleration(Vector3<double>(0.0, 0.0, 1.0))
-            .with_rotational_axis(Vector3<double>(0.0, 0.0, 1.0))
-            .build(),
-        std::runtime_error);
-}
-
-TEST(Unit, BuilderThrowsWhenAngularMotionExistsWithoutRotationalAxis) {
-    auto geometry = atlas::make_host_shared<geometry::Sphere<double>>(test::make_sphere());
-    auto sync     = atlas::make_host_shared<system::Sync<double>>();
-
-    EXPECT_THROW(
-        (void)system::Unit<double>::builder()
-            .with_geometry(geometry)
-            .with_sync(sync)
-            .with_angular_velocity(Vector3<double>(0.0, 0.0, 1.0))
             .build(),
         std::runtime_error);
 }
 
 TEST(Unit, BuilderCanBeReusedAfterBuildBecauseStateIsReset) {
-    auto geometry = atlas::make_host_shared<geometry::Sphere<double>>(test::make_sphere());
-    auto sync     = atlas::make_host_shared<system::Sync<double>>();
+    auto geometry   = atlas::make_host_shared<geometry::Sphere<double>>(test::make_sphere());
+    const auto sync = atlas::make_host_shared<system::Sync<double>>();
 
     auto builder = system::Unit<double>::builder();
     builder.with_geometry(geometry)

@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="4" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="18" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/OptionsDialog/SelectedPageId/@EntryValue" value="CppFormatterOtherPage" type="string" />
@@ -110,281 +110,15 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="refactor(unit): remove rotational_axis and simplify angular motion model&#10;&#10;- remove rotational_axis from Unit and Builder&#10;- represent rotation solely with angular_velocity vector&#10;- derive rotation axis from angular_velocity direction&#10;- update update() integration logic accordingly&#10;- simplify builder validation rules&#10;- update all Unit tests and examples to match new API">
-      <change afterPath="$PROJECT_DIR$/examples/dynamic/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/dynamic/main.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/dynamic/main.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/codec/codec.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/codec/single_codec.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/codec/single_codec.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/container/container.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/container/container.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/data/particle_data.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/data/particle_data.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/domain/domain.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry_type.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/geometry/query_operator.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/geometry/query_operator.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/indexer/device_pair_indexer.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_elementwise.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_expression.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_operators.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_reductions.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_statistics.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector_elementwise.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector_expression.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector_operators.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector_reductions.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector_statistics.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/matter/fluid.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/matter/fluid.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/matter/fluidic_particle.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/matter/fluidic_particle.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/matter/matter.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/matter/matter.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/sampling/sampling.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/scan/exclusive_scan.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/sink/despawn/despawn.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/sink/sink.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/source/source.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/source/spawn/spawn.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/source/spawn/spawn.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/source/spawn/spawn_operator.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/source/spawn/spawn_operator.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/node.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/spatial/trace_operator.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/spatial/trace_operator.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/sync/sync.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/sync/sync.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/sync/sync_operator.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/sync/sync_operator.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/unit/unit.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/unit/unit.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/logging/logging.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/buffer/device_buffer_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/buffer/host_buffer_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/codec/single_codec_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/container/container_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/domain/domain_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/box_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/cylinder_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/plane_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/query_operator_tests/box_query_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/query_operator_tests/cylinder_query_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/query_operator_tests/plane_query_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/query_operator_tests/sphere_query_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/query_operator_tests/triangle_mesh_query_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/query_operator_tests/triangle_query_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/triangle_mesh_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/geometry/triangle_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/indexer/device_pair_indexer_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/iterator/counting_iterator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/iterator/zip_iterator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/math/matrix/matrix2x2_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/math/matrix/matrix3x3_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/math/matrix/matrix4x4_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/math/matrix/matrix_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/math/quaternion_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/math/vector/vector2_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/math/vector/vector3_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/math/vector/vector4_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/math/vector/vector_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/memory/copy_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/memory/memory_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/memory/raw_pointer_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/sampling/sampling_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/spatial/axis_aligned_bounding_box_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/lbvh_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/sah_bvh_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/spatial/ray_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/spatial/trace_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/sync/sync_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/sync/sync_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/transform/transform_reduce_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/transform/transform_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/tuple/tuple_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/unit/unit_move_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/unit/unit_rotate_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/unit/unit_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/utilities/tests_utils.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/atlas-engine-dev.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/atlas-engine-dev.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/editor.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/editor.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakePresets.json" beforeDir="false" afterPath="$PROJECT_DIR$/CMakePresets.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/benchmarks/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake/CompileOptions.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/geometry/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/geometry/main.cu" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/memory/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/memory/main.cu" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/main.cu" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/spatial/bounding_volume_hierarchy/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/spatial/bounding_volume_hierarchy/main.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/spatial/bounding_volume_hierarchy/main.cu" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/visualization/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/visualization/main.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/visualization/main.cu" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/external/tinyobj" beforeDir="false" afterPath="$PROJECT_DIR$/external/tinyobj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/advector/advector.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/advector/advector.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/buffer/device_buffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/buffer/device_buffer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/buffer/host_buffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/buffer/host_buffer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/core/macros.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/core/macros.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/domain/domain.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/domain/domain.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/emitter/emitter.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/emitter/emitter.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/field/field.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/functor/device_pair_indexer.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/generator.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/cylinder.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/cylinder.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/plane.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/plane.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/sphere.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/sphere.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/surface.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/trace_operator.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/iterator/counting_iterator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/iterator/counting_iterator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/iterator/zip_iterator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/iterator/zip_iterator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/logging/logging.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/logging/logging.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/constants.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/constants.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/detail/ops.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/detail/ops.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/math.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/math.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/elementwise.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/expression.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/operators.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/reductions.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/statistics.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/quaternion.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/quaternion.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/quaternion.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/quaternion.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/elementwise.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/expression.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/operators.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/reductions.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/statistics.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector2.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector2.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector2.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector2.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector3.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector3.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector3.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector4.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector4.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector4.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/memory/copy.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/memory/copy.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/memory/memory.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/memory/memory.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/memory/raw_pointer_cast.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/memory/raw_pointer_cast.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/parallel/parallel_fill.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/parallel/parallel_fill.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/parallel/parallel_for.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/parallel/parallel_for.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/parallel/parallel_sort.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/parallel/parallel_sort.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/random/default_random_engine.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/random/default_random_engine.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/random/random.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/random/sampling.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/random/uniform_real_distribution.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/random/uniform_real_distribution.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/remove/remove.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/remove/remove.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/remover/remover.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/remover/remover.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/scan/exclusive_scan.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/scan/exclusive_scan.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/searcher.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_data.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/collide_kernel.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/hard_sphere.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel/hard_sphere.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_estimator.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_operator.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_rms.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/metrics/g_ref_rms.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/pair/no_time_counter.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/pair/pair_strategy.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/solver.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/bvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/bvh.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/bvh.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/ray.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/ray.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/ray.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/ray.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_data.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_data.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_system.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/system/particle_system.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/task/task_scheduler.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/time/timer.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/transform/transform.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/transform/transform.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/transform/transform_reduce.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/transform/transform_reduce.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/tuple/tuple.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/tuple/tuple.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/particle/particle_layer.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/particle/particle_layer.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/macros/macros.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/macros/macros.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/shader/shader_program.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/shader/shader_program.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/viewer/viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/viewer/viewer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/viewer/viewer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/vizkit.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/vizkit.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/object_tests/math/quaternion_tests.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/remove_comments.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/remove_comments.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/remove_space.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/remove_space.py" afterDir="false" />
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="updated submodules.">
+      <change afterPath="$PROJECT_DIR$/external/googlebenchmark" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/external/googletest" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/external/tinyobj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitmodules" beforeDir="false" afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/buffer/device_buffer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/buffer/device_buffer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/buffer/host_buffer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/buffer/host_buffer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/container/container_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/container/container_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/unit/unit_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/unit/unit_tests.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -408,6 +142,12 @@
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="6ef9263b85d752bca213681cfc0183576a318de6" />
+        <entry key="$PROJECT_DIR$/external/googlebenchmark" value="5c76a26e4e80c5809fd26e5b9f7bc02e704cd793" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="RESET_MODE" value="HARD" />
     <option name="ROOT_SYNC" value="DONT_SYNC" />
@@ -691,6 +431,22 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration default="true" type="UvRunConfigurationType" factoryName="UvRunConfigurationType">
+      <option name="args">
+        <list />
+      </option>
+      <option name="checkSync" value="true" />
+      <option name="env">
+        <map />
+      </option>
+      <option name="runType" value="SCRIPT" />
+      <option name="scriptOrModule" value="" />
+      <option name="uvArgs">
+        <list />
+      </option>
+      <option name="uvSdkKey" value="Python 3.12 (atlas-engine-dev) (2)" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="CMake Application.cuda_smart_pointer" />
       <item itemvalue="CMake Application.sah_bvh" />
@@ -735,7 +491,7 @@
       <workItem from="1766132244874" duration="8117000" />
       <workItem from="1766140372152" duration="1220000" />
       <workItem from="1773244291835" duration="10000" />
-      <workItem from="1773244337334" duration="1527000" />
+      <workItem from="1773244337334" duration="2652000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
@@ -809,7 +565,23 @@
       <option name="project" value="LOCAL" />
       <updated>1766133923881</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="refactor(unit): remove rotational_axis and simplify angular motion model&#10;&#10;- remove rotational_axis from Unit and Builder&#10;- represent rotation solely with angular_velocity vector&#10;- derive rotation axis from angular_velocity direction&#10;- update update() integration logic accordingly&#10;- simplify builder validation rules&#10;- update all Unit tests and examples to match new API">
+      <option name="closed" value="true" />
+      <created>1773245883872</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1773245883872</updated>
+    </task>
+    <task id="LOCAL-00011" summary="updated submodules.">
+      <option name="closed" value="true" />
+      <created>1773246146045</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1773246146045</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -840,20 +612,45 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="main" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$/external/tinyobj" />
+                        <option value="$PROJECT_DIR$/external/googlebenchmark" />
+                        <option value="$PROJECT_DIR$/external/lyra" />
+                        <option value="$PROJECT_DIR$/external/googletest" />
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
     </option>
   </component>
   <component name="VcsManagerConfiguration">
+    <option name="CHECK_NEW_TODO" value="false" />
     <MESSAGE value="refactoring for simple solver structures." />
     <MESSAGE value="memory problems." />
     <MESSAGE value="changed the logging function." />
     <MESSAGE value="tmp" />
     <MESSAGE value="added task." />
     <MESSAGE value="refactor(unit): remove rotational_axis and simplify angular motion model&#10;&#10;- remove rotational_axis from Unit and Builder&#10;- represent rotation solely with angular_velocity vector&#10;- derive rotation axis from angular_velocity direction&#10;- update update() integration logic accordingly&#10;- simplify builder validation rules&#10;- update all Unit tests and examples to match new API" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(unit): remove rotational_axis and simplify angular motion model&#10;&#10;- remove rotational_axis from Unit and Builder&#10;- represent rotation solely with angular_velocity vector&#10;- derive rotation axis from angular_velocity direction&#10;- update update() integration logic accordingly&#10;- simplify builder validation rules&#10;- update all Unit tests and examples to match new API" />
+    <MESSAGE value="updated submodules." />
+    <option name="LAST_COMMIT_MESSAGE" value="updated submodules." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
