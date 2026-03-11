@@ -15,7 +15,7 @@ public:
         = 0;
 
     virtual void
-    update(GLFWwindow* window, Camera& camera)
+    update(GLFWwindow* window, Camera& camera, T dt)
         = 0;
 
     virtual void

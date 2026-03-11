@@ -1,15 +1,51 @@
 #pragma once
+#include <cmath>
+#include <limits>
+
 namespace atlas {
+
+// ------------------------------------------------------------
+// Numerical constants (math)
+// ------------------------------------------------------------
 namespace math {
-    constexpr double k_epsilon_d  = 1e-12;
-    constexpr float k_epsilon_f   = 1e-6f;
+    // Double-precision epsilon used as a small tolerance in comparisons.
+    // Typical use: avoid treating near-zero as non-zero in robust predicates.
+    constexpr double k_epsilon_d = 1e-12;
+
+    // Single-precision epsilon used as a small tolerance in comparisons.
+    // Typical use: intersection tests, normalization guards, etc.
+    constexpr float k_epsilon_f = 1e-6f;
+
+    // "Very far" sentinel distance in double precision.
+    // Used as a large finite placeholder instead of infinity when algorithms
+    // prefer finite arithmetic (e.g., iterative minimization / BVH traversal).
     constexpr double k_farthest_d = 1e30;
-    constexpr float k_farthest_f  = 1e30f;
+
+    // "Very far" sentinel distance in single precision.
+    constexpr float k_farthest_f = 1e30f;
 }
 
-constexpr double pi  = M_PI;
-constexpr float eps  = math::k_epsilon_f;
-constexpr float far  = math::k_farthest_f;
-constexpr float inf  = std::numeric_limits<float>::infinity();
-constexpr double tol = 1e-8;
-}
+// ------------------------------------------------------------
+// Global convenience aliases
+// ------------------------------------------------------------
+
+// Mathematical constant π.
+// Uses the C math macro M_PI (platform/defines dependent).
+constexpr double pi = M_PI;
+
+// Default floating epsilon used across the codebase (single-precision).
+// Handy for "nearly zero" checks without spelling out the namespace.
+constexpr double eps = math::k_epsilon_d;
+
+// Default "far distance" sentinel (single-precision).
+// Often used as an initial "best t" for ray hits, etc.
+constexpr double far = math::k_farthest_d;
+
+// IEEE +infinity for float (useful as an unbounded sentinel).
+constexpr double inf = std::numeric_limits<double>::infinity();
+
+// Generic double-precision tolerance used for tighter comparisons.
+// Often used in query_operator predicates where float epsilon is too loose.
+constexpr double tol = eps;
+
+} // namespace atlas

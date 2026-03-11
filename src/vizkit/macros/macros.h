@@ -1,3 +1,4 @@
+#pragma once
 #ifdef ATLAS_ENABLE_VIZKIT
 #ifdef ATLAS_TASKING_CUDA
 #include <GL/glew.h>
@@ -10,4 +11,3 @@
 #include <atlas/atlas.h>
 #endif
 #endif
-#pragma once

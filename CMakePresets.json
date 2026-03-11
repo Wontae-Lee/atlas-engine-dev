@@ -1,101 +1,222 @@
 {
-  "version": 3,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 20,
-    "patch": 0
-  },
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
 
   "configurePresets": [
     {
-      "name": "base",
+      "name": "base-ninja",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_CXX_STANDARD": "20",
-        "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "base-make",
+      "hidden": true,
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
 
+    // =========================================================
+    // TBB (CPU) presets
+    // =========================================================
     {
-      "name": "dev-debug",
-      "inherits": "base",
+      "name": "tbb-debug",
+      "displayName": "Atlas TBB Debug (Vizkit+Logging+Tests+Benchmarks)",
+      "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "ATLAS_USE_CUDA": "OFF",
-        "ATLAS_ENABLE_TESTS": "ON",
-        "ATLAS_ENABLE_BENCH": "ON",
-        "BUILD_SHARED_LIBS": "ON"
+        "ATLAS_USE_TBB": "ON",
+        "ATLAS_USE_VIZKIT": "ON",
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_TESTS": "ON",
+        "ATLAS_BENCHMARKS": "ON"
       }
     },
-
     {
-      "name": "dev-release",
-      "inherits": "base",
+      "name": "tbb-release",
+      "displayName": "Atlas TBB Release (Vizkit+Logging+Tests+Benchmarks)",
+      "inherits": "base-ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ATLAS_USE_CUDA": "OFF",
+        "ATLAS_USE_TBB": "ON",
+        "ATLAS_USE_VIZKIT": "ON",
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_TESTS": "ON",
+        "ATLAS_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "tbb-relwithdebinfo",
+      "displayName": "Atlas TBB RelWithDebInfo (Vizkit+Logging+Tests+Benchmarks)",
+      "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "ATLAS_USE_CUDA": "OFF",
-        "ATLAS_ENABLE_TESTS": "ON",
-        "ATLAS_ENABLE_BENCH": "ON",
-        "BUILD_SHARED_LIBS": "ON"
+        "ATLAS_USE_TBB": "ON",
+        "ATLAS_USE_VIZKIT": "ON",
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_TESTS": "ON",
+        "ATLAS_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "tbb-debug-make",
+      "displayName": "Atlas TBB Debug (Unix Makefiles)",
+      "inherits": "base-make",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ATLAS_USE_CUDA": "OFF",
+        "ATLAS_USE_TBB": "ON",
+        "ATLAS_USE_VIZKIT": "ON",
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_TESTS": "ON",
+        "ATLAS_BENCHMARKS": "ON"
       }
     },
 
+    // =========================================================
+    // CUDA (GPU) presets
+    //
+    // Notes:
+    // - Your CMakeLists sets:
+    //   THRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_TBB
+    //   THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA
+    // - Ensure your CUDA branch also links: target_link_libraries(atlas-core INTERFACE TBB::tbb)
+    // =========================================================
+    {
+      "name": "cuda-debug",
+      "displayName": "Atlas CUDA Debug (Thrust host=TBB, TBB linked)",
+      "inherits": "base-ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ATLAS_USE_CUDA": "ON",
+        "ATLAS_USE_TBB": "OFF",
+
+        "ATLAS_USE_VIZKIT": "ON",
+        "ATLAS_LOGGING": "ON",
+
+        "ATLAS_TESTS": "OFF",
+        "ATLAS_BENCHMARKS": "OFF",
+
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
+        "CMAKE_CUDA_ARCHITECTURES": "86"
+      }
+    },
     {
       "name": "cuda-release",
-      "inherits": "base",
-      "binaryDir": "${sourceDir}/build/cuda-release",
+      "displayName": "Atlas CUDA Release (Thrust host=TBB, TBB linked)",
+      "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "ATLAS_USE_CUDA": "ON",
-        "ATLAS_ENABLE_TESTS": "OFF",
-        "ATLAS_ENABLE_BENCH": "OFF",
-        "BUILD_SHARED_LIBS": "ON"
+        "ATLAS_USE_TBB": "OFF",
+
+        "ATLAS_USE_VIZKIT": "ON",
+        "ATLAS_LOGGING": "ON",
+
+        "ATLAS_TESTS": "OFF",
+        "ATLAS_BENCHMARKS": "OFF",
+
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
+        "CMAKE_CUDA_ARCHITECTURES": "86"
+      }
+    },
+    {
+      "name": "cuda-relwithdebinfo",
+      "displayName": "Atlas CUDA RelWithDebInfo (Thrust host=TBB, TBB linked)",
+      "inherits": "base-ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "ATLAS_USE_CUDA": "ON",
+        "ATLAS_USE_TBB": "OFF",
+
+        "ATLAS_USE_VIZKIT": "ON",
+        "ATLAS_LOGGING": "ON",
+
+        "ATLAS_TESTS": "OFF",
+        "ATLAS_BENCHMARKS": "OFF",
+
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
+        "CMAKE_CUDA_ARCHITECTURES": "86"
       }
     },
 
+    // ---- CUDA headless variants (often useful on servers) ----
     {
-      "name": "cuda-static-release",
-      "inherits": "cuda-release",
-      "binaryDir": "${sourceDir}/build/cuda-static-release",
+      "name": "cuda-debug-headless",
+      "displayName": "Atlas CUDA Debug Headless (No Vizkit)",
+      "inherits": "base-ninja",
       "cacheVariables": {
-        "BUILD_SHARED_LIBS": "OFF"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ATLAS_USE_CUDA": "ON",
+        "ATLAS_USE_TBB": "OFF",
+
+        "ATLAS_USE_VIZKIT": "OFF",
+        "ATLAS_LOGGING": "ON",
+
+        "ATLAS_TESTS": "OFF",
+        "ATLAS_BENCHMARKS": "OFF",
+
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
+        "CMAKE_CUDA_ARCHITECTURES": "86"
       }
     },
-
     {
-      "name": "docker-release",
-      "inherits": "cuda-release",
-      "binaryDir": "${sourceDir}/build/docker-release",
+      "name": "cuda-release-headless",
+      "displayName": "Atlas CUDA Release Headless (No Vizkit)",
+      "inherits": "base-ninja",
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "/usr/local",
-        "ATLAS_USE_VIZKIT": "OFF"
+        "CMAKE_BUILD_TYPE": "Release",
+        "ATLAS_USE_CUDA": "ON",
+        "ATLAS_USE_TBB": "OFF",
+
+        "ATLAS_USE_VIZKIT": "OFF",
+        "ATLAS_LOGGING": "ON",
+
+        "ATLAS_TESTS": "OFF",
+        "ATLAS_BENCHMARKS": "OFF",
+
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
+        "CMAKE_CUDA_ARCHITECTURES": "86"
       }
     }
   ],
 
   "buildPresets": [
+    { "name": "build-tbb-debug", "displayName": "Build TBB Debug", "configurePreset": "tbb-debug", "jobs": 0 },
+    { "name": "build-tbb-release", "displayName": "Build TBB Release", "configurePreset": "tbb-release", "jobs": 0 },
+    { "name": "build-tbb-relwithdebinfo", "displayName": "Build TBB RelWithDebInfo", "configurePreset": "tbb-relwithdebinfo", "jobs": 0 },
+
+    { "name": "build-cuda-debug", "displayName": "Build CUDA Debug", "configurePreset": "cuda-debug", "jobs": 0 },
+    { "name": "build-cuda-release", "displayName": "Build CUDA Release", "configurePreset": "cuda-release", "jobs": 0 },
+    { "name": "build-cuda-relwithdebinfo", "displayName": "Build CUDA RelWithDebInfo", "configurePreset": "cuda-relwithdebinfo", "jobs": 0 },
+
+    { "name": "build-cuda-debug-headless", "displayName": "Build CUDA Debug Headless", "configurePreset": "cuda-debug-headless", "jobs": 0 },
+    { "name": "build-cuda-release-headless", "displayName": "Build CUDA Release Headless", "configurePreset": "cuda-release-headless", "jobs": 0 }
+  ],
+
+  "testPresets": [
     {
-      "name": "dev-debug",
-      "configurePreset": "dev-debug"
+      "name": "ctest-tbb-debug",
+      "displayName": "CTest (TBB Debug)",
+      "configurePreset": "tbb-debug",
+      "execution": { "noTestsAction": "error" },
+      "output": { "outputOnFailure": true }
     },
     {
-      "name": "dev-release",
-      "configurePreset": "dev-release"
-    },
-    {
-      "name": "cuda-release",
-      "configurePreset": "cuda-release"
-    },
-    {
-      "name": "cuda-static-release",
-      "configurePreset": "cuda-static-release"
-    },
-    {
-      "name": "docker-release",
-      "configurePreset": "docker-release"
+      "name": "ctest-tbb-release",
+      "displayName": "CTest (TBB Release)",
+      "configurePreset": "tbb-release",
+      "execution": { "noTestsAction": "error" },
+      "output": { "outputOnFailure": true }
     }
   ]
 }

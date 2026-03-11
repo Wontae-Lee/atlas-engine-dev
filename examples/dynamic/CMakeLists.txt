@@ -1,0 +1,7 @@
+if (ATLAS_USE_CUDA)
+    add_executable(dynamic main.cu)
+    target_link_libraries(dynamic PRIVATE atlas-core)
+else ()
+    add_executable(dynamic main.cpp)
+    target_link_libraries(dynamic PRIVATE atlas-core)
+endif ()

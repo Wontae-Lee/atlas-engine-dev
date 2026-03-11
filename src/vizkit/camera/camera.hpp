@@ -1,7 +1,9 @@
 #pragma once
 
+#ifdef ATLAS_ENABLE_VIZKIT
+
 namespace atlas::vizkit {
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Camera::handle(GLFWwindow* w) {
 
     if (glfwGetKey(w, GLFW_KEY_A) == GLFW_PRESS) yaw -= 0.02f;
@@ -14,7 +16,7 @@ Camera::handle(GLFWwindow* w) {
     dist  = fminf(fmaxf(dist, 2.0f), 100.0f);
 }
 
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Camera::build_mvp(int w, int h, float out_mvp[16]) const {
     {
         float aspect   = (h > 0) ? static_cast<float>(w) / static_cast<float>(h) : 1.0f;
@@ -55,3 +57,5 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
     }
 }
 }
+
+#endif

@@ -1,85 +1,95 @@
 #pragma once
 
-#include <algorithm>
+#ifdef ATLAS_ENABLE_VIZKIT
+
 #include <cmath>
 
 namespace atlas::vizkit {
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-SphereLayer<T>::SphereLayer(const Vector3<T>& center,
-                            T radius,
-                            int slices,
-                            int stacks)
-    : GeometryLayer<T>(GL_TRIANGLES)
-    , _center(center)
-    , _radius(radius)
-    , _slices(std::max(3, slices))
-    , _stacks(std::max(2, stacks)) {
-    static_assert(std::is_same_v<T, float>,
-                  "SphereLayer<T> currently supports only T = float.");
+SphereLayer<T>::SphereLayer(const atlas::UnitHostPtr<T>& unit,int slices,int stacks)
+:GeometryLayer<T>(GL_TRIANGLES,unit),_slices(slices),_stacks(stacks){}
+
+template <typename T>
+typename SphereLayer<T>::Builder
+SphereLayer<T>::builder() noexcept {
+    return Builder{};
 }
 
 template <typename T>
 void
 SphereLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
+
     positions.clear();
+    if(!this->_unit) return;
 
-    if (_radius <= T(0)) {
-        return;
-    }
+    const auto& q=this->_unit->query_operator();
+    if(q.type!=atlas::geometry::GeometryType::Sphere) return;
 
+    const auto& s=q.sphere;
+    if(!s.center||!s.radius) return;
 
-    const T pi     = static_cast<T>(3.14159265358979323846);
-    const T two_pi = static_cast<T>(2.0) * pi;
+    Vector3<T> c=*s.center;
+    T r=*s.radius;
 
-    auto sample = [&](int stack_idx, int slice_idx) -> Vector3<T> {
-        const T v   = static_cast<T>(stack_idx) / static_cast<T>(_stacks);
-        const T u   = static_cast<T>(slice_idx) / static_cast<T>(_slices);
-        const T phi = v * pi;
-        const T th  = u * two_pi;
+    const T pi=3.14159265358979323846;
 
-        const T sin_phi = std::sin(phi);
-        const T cos_phi = std::cos(phi);
-        const T sin_th  = std::sin(th);
-        const T cos_th  = std::cos(th);
+    for(int i=0;i<_stacks;i++)
+    {
+        for(int j=0;j<_slices;j++)
+        {
+            T u=j/(T)_slices;
+            T v=i/(T)_stacks;
 
-        const T x = _center.x + _radius * sin_phi * cos_th;
-        const T y = _center.y + _radius * cos_phi;
-        const T z = _center.z + _radius * sin_phi * sin_th;
+            T th=u*2*pi;
+            T ph=v*pi;
 
-        return Vector3<T> { x, y, z };
-    };
-
-    positions.reserve(static_cast<std::size_t>(_stacks) * static_cast<std::size_t>(_slices) * 6);
-
-
-    for (int i = 0; i < _stacks; ++i) {
-        const int i_next = i + 1;
-        if (i_next > _stacks) continue;
-
-        for (int j = 0; j < _slices; ++j) {
-            const int j_next = (j + 1) % _slices;
-
-            Vector3<T> v00 = sample(i, j);
-            Vector3<T> v01 = sample(i, j_next);
-            Vector3<T> v10 = sample(i_next, j);
-            Vector3<T> v11 = sample(i_next, j_next);
-
-
-
-
-
-            positions.push_back(v00);
-            positions.push_back(v10);
-            positions.push_back(v11);
-
-
-            positions.push_back(v00);
-            positions.push_back(v11);
-            positions.push_back(v01);
+            positions.emplace_back(
+                c.x+r*sin(ph)*cos(th),
+                c.y+r*cos(ph),
+                c.z+r*sin(ph)*sin(th));
         }
     }
 }
 
+template <typename T>
+typename SphereLayer<T>::Builder&
+SphereLayer<T>::Builder::with_unit(const atlas::UnitHostPtr<T>& unit) noexcept {
+    _unit=unit; return *this;
 }
+
+template <typename T>
+typename SphereLayer<T>::Builder&
+SphereLayer<T>::Builder::with_slices(int s) noexcept {
+    _slices=s; return *this;
+}
+
+template <typename T>
+typename SphereLayer<T>::Builder&
+SphereLayer<T>::Builder::with_stacks(int s) noexcept {
+    _stacks=s; return *this;
+}
+
+template <typename T>
+void
+SphereLayer<T>::Builder::validate() const {
+    if(!_unit) throw std::runtime_error("SphereLayer: unit null");
+}
+
+template <typename T>
+SphereLayer<T>
+SphereLayer<T>::Builder::build() const {
+    validate();
+    return SphereLayer(_unit,_slices,_stacks);
+}
+
+template <typename T>
+std::shared_ptr<SphereLayer<T>>
+SphereLayer<T>::Builder::make_shared() const {
+    validate();
+    return std::make_shared<SphereLayer<T>>(_unit,_slices,_stacks);
+}
+
+}
+
+#endif

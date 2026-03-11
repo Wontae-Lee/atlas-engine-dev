@@ -33,5 +33,5 @@ def remove_leading_spaces_in_dir(root_dir: str, extensions=None):
 
 
 if __name__ == "__main__":
-    target_dir = "../include/atlas"
+    target_dir = "../include/atlas/math/matrix"
     remove_leading_spaces_in_dir(target_dir, extensions=[".cpp", ".h", ".hpp", ".cu"])

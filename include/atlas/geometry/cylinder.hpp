@@ -1,316 +1,288 @@
 #pragma once
+
 #include <atlas/memory/raw_pointer_cast.h>
-#include <cmath>
-#include <limits>
+
+#include <stdexcept> // std::runtime_error
+#include <utility>   // std::move
 
 namespace atlas::geometry {
-template <typename T>
-ATLAS_DEVICE HitSurface<T>
 
-CylinderTraceOperator<T>::operator()(const Ray<T>& ray) const {
-    HitSurface<T> out;
-    if (!center || !radius || !height) return out;
-    const Vector3<T> ro = ray.origin - *center;
-    const Vector3<T> rd = ray.direction;
-    const T hz          = (*height) * T(0.5);
-    const T zmin        = -hz;
-    const T zmax        = hz;
-    const T ox          = ro.x, oy = ro.y, oz = ro.z;
-    const T dx          = rd.x, dy = rd.y, dz = rd.z;
-    T best_t            = std::numeric_limits<T>::infinity();
-    Vector3<T> best_n(T(0), T(0), T(0));
-    bool z_ok   = true;
-    T t_z_enter = -std::numeric_limits<T>::infinity();
-    T t_z_exit  = std::numeric_limits<T>::infinity();
-    if (dz == T(0)) {
-        if (oz < zmin || oz > zmax) z_ok = false;
-    } else {
-        const T inv_dz = T(1) / dz;
-        t_z_enter      = (zmin - oz) * inv_dz;
-        t_z_exit       = (zmax - oz) * inv_dz;
-        if (t_z_enter > t_z_exit) {
-            const T tmp = t_z_enter;
-            t_z_enter   = t_z_exit;
-            t_z_exit    = tmp;
-        }
-    }
-    if (z_ok) {
-        const T a = dx * dx + dy * dy;
-        const T b = T(2) * (ox * dx + oy * dy);
-        const T c = ox * ox + oy * oy - (*radius) * (*radius);
-        if (a > T(0)) {
-            const T disc = b * b - T(4) * a * c;
-            if (disc >= T(0)) {
-                const T sqrt_disc = static_cast<T>(std::sqrt(disc));
-                const T sign_b    = (b >= T(0)) ? T(1) : T(-1);
-                const T q         = -T(0.5) * (b + sign_b * sqrt_disc);
-                T t0              = (q == T(0)) ? std::numeric_limits<T>::infinity() : (c / q);
-                T t1              = (a == T(0)) ? std::numeric_limits<T>::infinity() : (q / a);
-                if (t0 > t1) {
-                    const T tmp = t0;
-                    t0          = t1;
-                    t1          = tmp;
-                }
-                auto accept_side = [&](T t) -> bool {
-                    if (!(t >= T(0))) return false;
-                    if (dz != T(0)) {
-                        if (t < t_z_enter || t > t_z_exit) return false;
-                    }
-                    return true;
-                };
-                if (accept_side(t0)) {
-                    best_t              = t0;
-                    const Vector3<T> ph = ro + rd * best_t;
-                    const T rr          = static_cast<T>(std::sqrt(ph.x * ph.x + ph.y * ph.y));
-                    best_n              = (rr > T(0)) ? Vector3<T>(ph.x / rr, ph.y / rr, T(0)) : Vector3<T>(T(1), T(0), T(0));
-                }
-                if (!std::isfinite(best_t) && accept_side(t1)) {
-                    best_t              = t1;
-                    const Vector3<T> ph = ro + rd * best_t;
-                    const T rr          = static_cast<T>(std::sqrt(ph.x * ph.x + ph.y * ph.y));
-                    best_n              = (rr > T(0)) ? Vector3<T>(ph.x / rr, ph.y / rr, T(0)) : Vector3<T>(T(1), T(0), T(0));
-                }
-            }
-        }
-    }
-    if (dz != T(0)) {
-        auto try_cap = [&](T zplane, T nz) {
-            const T t = (zplane - oz) / dz;
-            if (!(t >= T(0))) return;
-            if (t >= best_t) return;
-            const T xh = ox + t * dx;
-            const T yh = oy + t * dy;
-            if (xh * xh + yh * yh <= (*radius) * (*radius)) {
-                best_t = t;
-                best_n = Vector3<T>(T(0), T(0), nz);
-            }
-        };
-        const T t_cap_min = (zmin - oz) / dz;
-        const T t_cap_max = (zmax - oz) / dz;
-        if (t_cap_min < t_cap_max) {
-            try_cap(zmin, -T(1));
-            try_cap(zmax, T(1));
-        } else {
-            try_cap(zmax, T(1));
-            try_cap(zmin, -T(1));
-        }
-    }
-    if (!std::isfinite(best_t)) return out;
-    out.is_intersecting = true;
-    out.distance        = best_t;
-    out.point           = ray.point_at(best_t);
-    out.normal          = best_n;
-    return out;
-}
+/* ====================================================================== */
+/* Cylinder<T>                                                             */
+/* ====================================================================== */
 
 template <typename T>
-Cylinder<T>::Cylinder() noexcept {
-    center = Vector3<T>(T(0), T(0), T(0));
-    radius = T(1);
-    height = T(1);
+Cylinder<T>::Cylinder() noexcept
+    : center(T(0), T(0), T(0))
+    , radius(T(1))
+    , height(T(1)) {
+    // Default constructor creates a canonical cylinder:
+    // - center at origin
+    // - radius = 1
+    // - height = 1
+    //
+    // Coordinate convention (as used by the trace/query operators):
+    // - Cylinder is axis-aligned along Z in its local space.
+    // - Its caps lie at z = center.z ± height/2.
+    //
+    // Rationale:
+    // - Provides a non-degenerate, immediately usable primitive.
 }
 
 template <typename T>
 Cylinder<T>::Cylinder(const Vector3<T>& center_, T radius_, T height_) noexcept
     : center(center_)
-      , radius(radius_)
-      , height(height_) {
-    ATLAS_ASSERT(is_valid());
+    , radius(radius_)
+    , height(height_) {
+    // Construct cylinder directly from parameters.
+    //
+    // Caller responsibility:
+    // - This constructor does NOT validate radius/height.
+    // - If radius <= 0 or height <= 0, the cylinder becomes degenerate/invalid.
+    //
+    // If you want enforced validity, use:
+    //   Cylinder<T>::builder().with_center(...).with_radius(...).with_height(...).build()
 }
 
 template <typename T>
-T
-Cylinder<T>::signed_distance(const Vector3<T>& point) const {
-    const T hz      = height * T(0.5);
-    const T dx      = point.x - center.x;
-    const T dy      = point.y - center.y;
-    const T rho     = std::sqrt(dx * dx + dy * dy);
-    const T qx      = rho - radius;
-    const T qy      = std::fabs(point.z - center.z) - hz;
-    const T ax      = (qx > T(0)) ? qx : T(0);
-    const T ay      = (qy > T(0)) ? qy : T(0);
-    const T outside = std::sqrt(ax * ax + ay * ay);
-    const T mxy     = (qx > qy) ? qx : qy;
-    const T inside  = (mxy < T(0)) ? mxy : T(0);
-    T sd            = outside + inside;
-    return sd;
+typename Cylinder<T>::Builder
+Cylinder<T>::builder() noexcept {
+    // Builder entry point.
+    //
+    // Why a builder?
+    // - Enables validation (radius/height > 0, finite values, etc.) before constructing.
+    // - Keeps call sites readable when parameters are set in multiple steps.
+    return Builder {};
 }
 
 template <typename T>
-Vector3<T>
-Cylinder<T>::closest_point(const Vector3<T>& point) const {
-    const T hz   = height * T(0.5);
-    const T zmin = center.z - hz;
-    const T zmax = center.z + hz;
-    const T dx   = point.x - center.x;
-    const T dy   = point.y - center.y;
-    const T rho  = std::sqrt(dx * dx + dy * dy);
-    T zc         = (point.z < zmin)
-        ? zmin
-        : (point.z > zmax)
-        ? zmax
-        : point.z;
-    T sx, sy;
-    if (rho > radius) {
-        const T inv = T(1) / rho;
-        sx          = center.x + dx * (radius * inv);
-        sy          = center.y + dy * (radius * inv);
-    } else {
-        sx = point.x;
-        sy = point.y;
-    }
-    Vector3<T> cp(sx, sy, zc);
-    const bool inside_radial = (rho <= radius);
-    const bool inside_z      = (point.z >= zmin) && (point.z <= zmax);
-    if (inside_radial && inside_z) {
-        const T d_to_side = radius - rho;
-        const T d_to_bot  = point.z - zmin;
-        const T d_to_top  = zmax - point.z;
-        if (d_to_side <= d_to_bot && d_to_side <= d_to_top) {
-            if (rho > T(0)) {
-                const T inv = T(1) / rho;
-                cp.x        = center.x + dx * (radius * inv);
-                cp.y        = center.y + dy * (radius * inv);
-            } else {
-                cp.x = center.x + radius;
-                cp.y = center.y;
-            }
-            cp.z = point.z;
-        } else if (d_to_bot <= d_to_top) {
-            cp.x = point.x;
-            cp.y = point.y;
-            cp.z = zmin;
-        } else {
-            cp.x = point.x;
-            cp.y = point.y;
-            cp.z = zmax;
-        }
-    }
-    return cp;
-}
-
-template <typename T>
-Vector3<T>
-Cylinder<T>::closest_normal(const Vector3<T>& point) const {
-    const T hz               = height * T(0.5);
-    const T zmin             = center.z - hz;
-    const T zmax             = center.z + hz;
-    const T dx               = point.x - center.x;
-    const T dy               = point.y - center.y;
-    const T rho              = std::sqrt(dx * dx + dy * dy);
-    const bool inside_radial = (rho <= radius);
-    const bool inside_z      = (point.z >= zmin) && (point.z <= zmax);
-    Vector3<T> n{ T(0), T(0), T(0) };
-    if (inside_radial && inside_z) {
-        const T d_to_side = radius - rho;
-        const T d_to_bot  = point.z - zmin;
-        const T d_to_top  = zmax - point.z;
-        if (d_to_side <= d_to_bot && d_to_side <= d_to_top) {
-            if (rho > T(0)) {
-                const T inv = T(1) / rho;
-                n           = Vector3<T>(dx * inv, dy * inv, T(0));
-            } else {
-                n = Vector3<T>(T(1), T(0), T(0));
-            }
-        } else if (d_to_bot <= d_to_top) {
-            n = Vector3<T>(T(0), T(0), -T(1));
-        } else {
-            n = Vector3<T>(T(0), T(0), T(1));
-        }
-    } else {
-        const Vector3<T> cp = closest_point(point);
-        const T eps         = std::numeric_limits<T>::epsilon();
-        if (std::fabs(cp.z - zmin) <= eps) {
-            n = Vector3<T>(T(0), T(0), -T(1));
-        } else if (std::fabs(cp.z - zmax) <= eps) {
-            n = Vector3<T>(T(0), T(0), T(1));
-        } else {
-            const T cdx = cp.x - center.x;
-            const T cdy = cp.y - center.y;
-            const T cr  = std::sqrt(cdx * cdx + cdy * cdy);
-            if (cr > T(0)) {
-                const T inv = T(1) / cr;
-                n           = Vector3<T>(cdx * inv, cdy * inv, T(0));
-            } else {
-                n = Vector3<T>(T(1), T(0), T(0));
-            }
-        }
-    }
-    return n;
-}
-
-template <typename T>
-T
-Cylinder<T>::closest_distance(const Vector3<T>& point) const {
-    T sd = signed_distance(point);
-    return (sd >= T(0)) ? sd : -sd;
-}
-
-template <typename T>
-AABB<T>
-Cylinder<T>::bound() const {
-    const T hz = height * T(0.5);
-    const Vector3<T> lower(
-        center.x - radius,
-        center.y - radius,
-        center.z - hz);
-    const Vector3<T> upper(
-        center.x + radius,
-        center.y + radius,
-        center.z + hz);
-    return AABB<T>(lower, upper);
-}
-
-template <typename T>
-bool
-Cylinder<T>::intersects(const Ray<T>& ray) const {
-    return trace(ray).is_intersecting;
-}
-
-template <typename T>
-CylinderTraceOperator<T>
+TraceOperator<T>
 Cylinder<T>::make_trace_operator() const {
-    CylinderTraceOperator<T> op;
+    // Construct a TraceOperator for ray-cylinder intersection tests.
+    //
+    // Implementation approach:
+    // - Create a POD-like CylinderTraceOperator<T>.
+    // - Provide it raw pointers to this cylinder's parameters.
+    //
+    // Why raw pointers?
+    // - Operators are commonly copied into kernels; keeping them small matters.
+    // - Storing pointers lets the operator read the latest parameters without
+    //   duplicating state.
+    //
+    // Lifetime requirement:
+    // - The returned operator contains pointers to members of *this*.
+    // - Therefore, the Cylinder<T> object must outlive all uses of the operator.
+    atlas::spatial::CylinderTraceOperator<T> op;
     op.center = atlas::raw_pointer_cast(&center);
     op.radius = atlas::raw_pointer_cast(&radius);
     op.height = atlas::raw_pointer_cast(&height);
-    return op;
+    return TraceOperator<T>(op);
 }
 
 template <typename T>
-bool
-Cylinder<T>::is_inside(const Vector3<T>& point) const {
-    const T hz               = height * T(0.5);
-    const T zmin             = center.z - hz;
-    const T zmax             = center.z + hz;
-    const T dx               = point.x - center.x;
-    const T dy               = point.y - center.y;
-    const T rho2             = dx * dx + dy * dy;
-    const bool inside_radial = (rho2 <= radius * radius);
-    const bool inside_z      = (point.z >= zmin) && (point.z <= zmax);
-    return inside_radial && inside_z;
+QueryOperator<T>
+Cylinder<T>::make_query_operator() const {
+    // Construct a QueryOperator for closest-point/normal/distance queries.
+    //
+    // Same pointer/lifetime considerations as make_trace_operator().
+    atlas::geometry::CylinderQueryOperator<T> op;
+    op.center = atlas::raw_pointer_cast(&center);
+    op.radius = atlas::raw_pointer_cast(&radius);
+    op.height = atlas::raw_pointer_cast(&height);
+    return QueryOperator<T>(op);
 }
 
 template <typename T>
-void
-Cylinder<T>::set_params(const Vector3<T>& center_, T radius_, T height_) noexcept {
-    center = center_;
-    radius = radius_;
-    height = height_;
-    ATLAS_ASSERT(is_valid());
+atlas::math::Vector<T, 3>
+Cylinder<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
+    // Compute closest point on (or inside) the cylinder to query point p.
+    //
+    // Delegation pattern:
+    // - Create a temporary query operator wired to this cylinder's parameters.
+    // - Reuse the operator's implementation to keep behavior consistent across APIs.
+    //
+    // Cost:
+    // - The operator is tiny (just pointers), so this is cheap.
+    atlas::geometry::CylinderQueryOperator<T> op;
+    op.center = atlas::raw_pointer_cast(&center);
+    op.radius = atlas::raw_pointer_cast(&radius);
+    op.height = atlas::raw_pointer_cast(&height);
+    return op.closest_point(p);
 }
 
 template <typename T>
-Vector3<T>
-Cylinder<T>::extents() const noexcept {
-    return Vector3<T>(T(2) * radius,
-                      T(2) * radius,
-                      height);
+atlas::math::Vector<T, 3>
+Cylinder<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
+    // Compute outward normal of the closest surface feature to p.
+    //
+    // Expected behavior (typical):
+    // - Outside near side wall: normal points radially outward (x,y,0) normalized.
+    // - Outside near cap: normal is (0,0,±1).
+    // - Inside: usually normal of nearest surface (tie-breaks on edges).
+    atlas::geometry::CylinderQueryOperator<T> op;
+    op.center = atlas::raw_pointer_cast(&center);
+    op.radius = atlas::raw_pointer_cast(&radius);
+    op.height = atlas::raw_pointer_cast(&height);
+    return op.closest_normal(p);
+}
+
+template <typename T>
+T
+Cylinder<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
+    // Signed distance to the cylinder (SDF).
+    //
+    // Typical convention:
+    // - negative inside
+    // - zero on the surface
+    // - positive outside
+    //
+    // Delegates to CylinderQueryOperator<T> for a single source of truth.
+    atlas::geometry::CylinderQueryOperator<T> op;
+    op.center = atlas::raw_pointer_cast(&center);
+    op.radius = atlas::raw_pointer_cast(&radius);
+    op.height = atlas::raw_pointer_cast(&height);
+    return op.signed_distance(p);
+}
+
+template <typename T>
+atlas::math::Vector<T, 3>
+Cylinder<T>::centroid() const noexcept {
+    // Cylinder centroid in this representation is its center.
+    //
+    // Delegation ensures consistent definition with query operator.
+    atlas::geometry::CylinderQueryOperator<T> op;
+    op.center = atlas::raw_pointer_cast(&center);
+    op.radius = atlas::raw_pointer_cast(&radius);
+    op.height = atlas::raw_pointer_cast(&height);
+    return op.centroid();
+}
+
+template <typename T>
+atlas::spatial::AxisAlignedBoundingBox<T>
+Cylinder<T>::bound() const noexcept {
+    // Axis-aligned bounding box of this cylinder.
+    //
+    // Since the cylinder is axis-aligned along Z:
+    // - x,y extents are center ± radius
+    // - z extent is center.z ± height/2
+    //
+    // Delegation keeps bounding behavior consistent with other primitives.
+    atlas::geometry::CylinderQueryOperator<T> op;
+    op.center = atlas::raw_pointer_cast(&center);
+    op.radius = atlas::raw_pointer_cast(&radius);
+    op.height = atlas::raw_pointer_cast(&height);
+    return op.bound();
 }
 
 template <typename T>
 bool
 Cylinder<T>::is_valid() const noexcept {
-    return radius >= T(0) && height >= T(0);
+    // Validate cylinder parameters.
+    //
+    // Typical validity rules:
+    // - radius > 0
+    // - height > 0
+    // - values are finite
+    //
+    // Exact rules are defined in CylinderQueryOperator<T>::is_valid().
+    atlas::geometry::CylinderQueryOperator<T> op;
+    op.center = atlas::raw_pointer_cast(&center);
+    op.radius = atlas::raw_pointer_cast(&radius);
+    op.height = atlas::raw_pointer_cast(&height);
+    return op.is_valid();
 }
+
+template <typename T>
+GeometryType
+Cylinder<T>::type() const noexcept {
+    // Return the geometry type tag for this class.
+    return GeometryType::Cylinder;
 }
+
+/* ====================================================================== */
+/* Cylinder<T>::Builder                                                    */
+/* ====================================================================== */
+
+template <typename T>
+typename Cylinder<T>::Builder&
+Cylinder<T>::Builder::with_center(const Vector3<T>& center_) noexcept {
+    // Set center of the cylinder.
+    //
+    // The cylinder axis is assumed Z-aligned; center defines mid-point along Z.
+    _center = center_;
+    return *this;
+}
+
+template <typename T>
+typename Cylinder<T>::Builder&
+Cylinder<T>::Builder::with_radius(T radius_) noexcept {
+    // Set cylinder radius in XY plane.
+    //
+    // Valid cylinders require radius > 0 (enforced in validate()).
+    _radius = radius_;
+    return *this;
+}
+
+template <typename T>
+typename Cylinder<T>::Builder&
+Cylinder<T>::Builder::with_height(T height_) noexcept {
+    // Set cylinder height along Z.
+    //
+    // Valid cylinders require height > 0 (enforced in validate()).
+    _height = height_;
+    return *this;
+}
+
+template <typename T>
+void
+Cylinder<T>::Builder::validate() const {
+    // Validate builder parameters prior to building Cylinder<T>.
+    //
+    // Rule set is delegated to CylinderQueryOperator<T>::is_valid():
+    // - This keeps validity rules consistent across the codebase.
+    //
+    // Implementation:
+    // - Create a temporary query operator pointing to builder-owned fields.
+    // - Safe because validate() uses them immediately.
+    atlas::geometry::CylinderQueryOperator<T> op;
+    op.center = atlas::raw_pointer_cast(&_center);
+    op.radius = atlas::raw_pointer_cast(&_radius);
+    op.height = atlas::raw_pointer_cast(&_height);
+
+    if (!op.is_valid()) {
+        atlas::logger::error()
+            << "Cylinder::Builder validation failed: radius and height must be > 0, and values must be finite.";
+        throw std::runtime_error("Cylinder::Builder: invalid parameters.");
+    }
+}
+
+template <typename T>
+Cylinder<T>
+Cylinder<T>::Builder::build() const {
+    // Build a Cylinder<T> after validation.
+    //
+    // Strong exception guarantee:
+    // - If validate() throws, no Cylinder is produced.
+    validate();
+
+    Cylinder<T> c {};
+
+    // Copy validated parameters into the final cylinder object.
+    c.center = _center;
+    c.radius = _radius;
+    c.height = _height;
+
+    return c;
+}
+
+template <typename T>
+atlas::host_shared_ptr<Cylinder<T>>
+Cylinder<T>::Builder::make_host_shared() const {
+    // Convenience helper:
+    // - Build by value
+    // - Move into a shared, heap-allocated cylinder object
+    auto c = build();
+    return atlas::make_host_shared<Cylinder<T>>(std::move(c));
+}
+
+} // namespace atlas::geometry

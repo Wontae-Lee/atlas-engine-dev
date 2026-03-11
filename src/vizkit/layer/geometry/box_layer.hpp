@@ -1,62 +1,98 @@
 #pragma once
 
+#ifdef ATLAS_ENABLE_VIZKIT
+
 namespace atlas::vizkit {
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-BoxLayer<T>::BoxLayer(const Vector3<T>& min_corner, const Vector3<T>& max_corner)
-    : GeometryLayer<T>(GL_LINES)
-    , _min_corner(min_corner)
-    , _max_corner(max_corner) { }
+BoxLayer<T>::BoxLayer(const atlas::UnitHostPtr<T>& unit)
+    : GeometryLayer<T>(GL_LINES, unit) {}
+
+template <typename T>
+typename BoxLayer<T>::Builder
+BoxLayer<T>::builder() noexcept {
+    return Builder{};
+}
+
+template <typename T>
+void
+BoxLayer<T>::append_local_box_lines(
+    const Vector3<T>& min_corner,
+    const Vector3<T>& max_corner,
+    std::vector<Vector3<T>>& positions) const {
+
+    positions.clear();
+    positions.reserve(24);
+
+    Vector3<T> v000(min_corner.x,min_corner.y,min_corner.z);
+    Vector3<T> v100(max_corner.x,min_corner.y,min_corner.z);
+    Vector3<T> v110(max_corner.x,max_corner.y,min_corner.z);
+    Vector3<T> v010(min_corner.x,max_corner.y,min_corner.z);
+
+    Vector3<T> v001(min_corner.x,min_corner.y,max_corner.z);
+    Vector3<T> v101(max_corner.x,min_corner.y,max_corner.z);
+    Vector3<T> v111(max_corner.x,max_corner.y,max_corner.z);
+    Vector3<T> v011(min_corner.x,max_corner.y,max_corner.z);
+
+    positions.push_back(v000); positions.push_back(v100);
+    positions.push_back(v100); positions.push_back(v110);
+    positions.push_back(v110); positions.push_back(v010);
+    positions.push_back(v010); positions.push_back(v000);
+
+    positions.push_back(v001); positions.push_back(v101);
+    positions.push_back(v101); positions.push_back(v111);
+    positions.push_back(v111); positions.push_back(v011);
+    positions.push_back(v011); positions.push_back(v001);
+
+    positions.push_back(v000); positions.push_back(v001);
+    positions.push_back(v100); positions.push_back(v101);
+    positions.push_back(v110); positions.push_back(v111);
+    positions.push_back(v010); positions.push_back(v011);
+}
 
 template <typename T>
 void
 BoxLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 
-    const auto& mn = _min_corner;
-    const auto& mx = _max_corner;
+    positions.clear();
+    if (!this->_unit) return;
 
-    Vector3<T> v0 { mn.x, mn.y, mn.z };
-    Vector3<T> v1 { mx.x, mn.y, mn.z };
-    Vector3<T> v2 { mn.x, mx.y, mn.z };
-    Vector3<T> v3 { mx.x, mx.y, mn.z };
+    const auto& query = this->_unit->query_operator();
+    if (query.type != atlas::geometry::GeometryType::Box) return;
 
-    Vector3<T> v4 { mn.x, mn.y, mx.z };
-    Vector3<T> v5 { mx.x, mn.y, mx.z };
-    Vector3<T> v6 { mn.x, mx.y, mx.z };
-    Vector3<T> v7 { mx.x, mx.y, mx.z };
+    const auto& box = query.box;
+    if (!box.lower_corner || !box.upper_corner) return;
 
-    positions.reserve(24);
+    append_local_box_lines(*box.lower_corner,*box.upper_corner,positions);
+}
 
+template <typename T>
+typename BoxLayer<T>::Builder&
+BoxLayer<T>::Builder::with_unit(const atlas::UnitHostPtr<T>& unit) noexcept {
+    _unit = unit;
+    return *this;
+}
 
-    positions.push_back(v0);
-    positions.push_back(v1);
-    positions.push_back(v1);
-    positions.push_back(v3);
-    positions.push_back(v3);
-    positions.push_back(v2);
-    positions.push_back(v2);
-    positions.push_back(v0);
+template <typename T>
+void
+BoxLayer<T>::Builder::validate() const {
+    if(!_unit) throw std::runtime_error("BoxLayer: unit null");
+}
 
+template <typename T>
+BoxLayer<T>
+BoxLayer<T>::Builder::build() const {
+    validate();
+    return BoxLayer(_unit);
+}
 
-    positions.push_back(v4);
-    positions.push_back(v5);
-    positions.push_back(v5);
-    positions.push_back(v7);
-    positions.push_back(v7);
-    positions.push_back(v6);
-    positions.push_back(v6);
-    positions.push_back(v4);
-
-
-    positions.push_back(v0);
-    positions.push_back(v4);
-    positions.push_back(v1);
-    positions.push_back(v5);
-    positions.push_back(v2);
-    positions.push_back(v6);
-    positions.push_back(v3);
-    positions.push_back(v7);
+template <typename T>
+std::shared_ptr<BoxLayer<T>>
+BoxLayer<T>::Builder::make_shared() const {
+    validate();
+    return std::make_shared<BoxLayer>(_unit);
 }
 
 }
+
+#endif

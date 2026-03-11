@@ -1,7 +1,0 @@
-if (ATLAS_USE_CUDA)
-    add_executable(sah_bvh main.cu)
-    target_link_libraries(sah_bvh PRIVATE atlas-core)
-else ()
-    add_executable(sah_bvh main.cpp)
-    target_link_libraries(sah_bvh PRIVATE atlas-core)
-endif ()
