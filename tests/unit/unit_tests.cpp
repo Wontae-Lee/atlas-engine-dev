@@ -151,7 +151,7 @@ TEST(Unit, DynamicIsTrueWhenVelocityExists) {
     EXPECT_TRUE(u.dynamic());
 }
 
-TEST(Unit, DynamicIsFalseWhenOnlyAccelerationExists) {
+TEST(Unit, ConstructorAddsZeroVelocityWhenOnlyAccelerationExists) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
@@ -163,7 +163,11 @@ TEST(Unit, DynamicIsFalseWhenOnlyAccelerationExists) {
         std::nullopt,
         std::nullopt);
 
-    EXPECT_FALSE(u.dynamic());
+    ASSERT_TRUE(u.velocity().has_value());
+    ASSERT_TRUE(u.acceleration().has_value());
+    EXPECT_TRUE(test::vec_near(*u.velocity(), Vector3<double>(0.0, 0.0, 0.0), eps));
+    EXPECT_TRUE(test::vec_near(*u.acceleration(), Vector3<double>(1.0, 0.0, 0.0), eps));
+    EXPECT_TRUE(u.dynamic());
 }
 
 TEST(Unit, DynamicIsTrueWhenAngularVelocityExists) {
@@ -181,7 +185,7 @@ TEST(Unit, DynamicIsTrueWhenAngularVelocityExists) {
     EXPECT_TRUE(u.dynamic());
 }
 
-TEST(Unit, DynamicIsFalseWhenOnlyAngularAccelerationExists) {
+TEST(Unit, ConstructorAddsZeroAngularVelocityWhenOnlyAngularAccelerationExists) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
@@ -193,7 +197,11 @@ TEST(Unit, DynamicIsFalseWhenOnlyAngularAccelerationExists) {
         std::nullopt,
         Vector3<double>(0.0, 0.0, 1.0));
 
-    EXPECT_FALSE(u.dynamic());
+    ASSERT_TRUE(u.angular_velocity().has_value());
+    ASSERT_TRUE(u.angular_acceleration().has_value());
+    EXPECT_TRUE(test::vec_near(*u.angular_velocity(), Vector3<double>(0.0, 0.0, 0.0), eps));
+    EXPECT_TRUE(test::vec_near(*u.angular_acceleration(), Vector3<double>(0.0, 0.0, 1.0), eps));
+    EXPECT_TRUE(u.dynamic());
 }
 
 TEST(Unit, UpdateDoesNothingWhenDtIsZero) {
@@ -402,6 +410,22 @@ TEST(Unit, BuilderBuildCreatesValidStaticUnit) {
     EXPECT_FALSE(u.angular_velocity().has_value());
     EXPECT_FALSE(u.angular_acceleration().has_value());
     EXPECT_FALSE(u.dynamic());
+}
+
+TEST(Unit, BuilderRetainsGeometryOwnerAfterSourcePointerIsReleased) {
+    auto geometry = atlas::make_host_shared<geometry::Sphere<double>>(
+        geometry::Sphere<double>(Vector3<double>(0.0, 0.0, 0.0), 2.0));
+    auto sync = atlas::make_host_shared<system::Sync<double>>();
+
+    auto u = system::Unit<double>::builder()
+                 .with_geometry(geometry)
+                 .with_sync(sync)
+                 .build();
+
+    geometry.reset();
+
+    const auto cp = u.query_operator().closest_point(Vector3<double>(3.0, 0.0, 0.0));
+    EXPECT_TRUE(test::vec_near(cp, Vector3<double>(2.0, 0.0, 0.0), eps));
 }
 
 TEST(Unit, BuilderAddsZeroAccelerationWhenVelocityExistsWithoutAcceleration) {
