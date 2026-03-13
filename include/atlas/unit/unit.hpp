@@ -36,7 +36,7 @@ Unit<T>::Unit(
     // Constructors are intentionally permissive about partially specified kinematics.
     // Rather than leaving the object in an inert "acceleration only" state, normalize
     // the values so first-order terms always exist when second-order terms do.
-    canonicalize_kinematics(
+    Unit<T>::canonicalize_kinematics(
         velocity,
         acceleration,
         angular_velocity,
@@ -265,7 +265,7 @@ Unit<T>::Builder::with_geometry(const atlas::GeometryHostPtr<T>& geometry) {
     }
 
     // Retain the owner so the built Unit can keep non-owning operators valid.
-    _geometry       = geometry;
+    _geometry = geometry;
 
     // Cache the operator views immediately. build() then becomes simple assembly.
     _query_operator = geometry->make_query_operator();

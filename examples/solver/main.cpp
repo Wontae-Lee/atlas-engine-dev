@@ -1,15 +1,6 @@
 #include <atlas/atlas.h>
 using namespace atlas;
 
-auto box_layer    = std::make_shared<BoxLayer<float>>(Vector3F { -10.0f, -10.0f, -10.0f }, Vector3F { 10.0f, 10.0f, 10.0f });
-auto sphere_layer = std::make_shared<SphereLayer<float>>(Vector3<float> { 0, 0, 0 }, 3.f);
-
-Viewer<float> viewer(1280, 720, "Atlas CUDA Particles");
-viewer.add_layer(box_layer);
-viewer.add_layer(sphere_layer);
-viewer.run();
-
-
 int
 main() {
     using sim_t = float;
