@@ -112,35 +112,11 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="updated submodules.">
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/copilotDiffState.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/sync/sync.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sync/sync.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/sync/sync.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sync/sync.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/sync/sync_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sync/sync_operator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/sync/sync_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sync/sync_operator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/unit/unit.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/unit/unit.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/shader/shader_program.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/shader/shader_program.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/shader/shader_program.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/shader/shader_program.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/viewer/viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/viewer/viewer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/viewer/viewer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -152,11 +128,14 @@
       <entry key="_/home/wontae/CLionProjects/atlas-engine-dev" value="36e6M06eNydunzRbc9zhNCi2Ppk" />
     </persistenceIdMap>
   </component>
+  <component name="CopilotUserSelectedChatMode">
+    <option name="chatModeId" value="Agent" />
+  </component>
   <component name="CopilotUserSelectedModel">
     <selectedModels>
       <entry key="edit-panel" value="GPT-5 mini" />
-      <entry key="chat-panel" value="GPT-5 mini" />
-      <entry key="agent-panel" value="GPT-5 mini" />
+      <entry key="chat-panel" value="Claude Opus 4.6" />
+      <entry key="agent-panel" value="Claude Opus 4.6" />
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
@@ -263,11 +242,6 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.dynamic">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -362,8 +336,14 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="CMake Application.atlas-logging" />
       <item itemvalue="CMake Application.dynamic" />
+      <item itemvalue="CMake Application.solver" />
+      <item itemvalue="CMake Application.tinyobjloader" />
+      <item itemvalue="CMake Application.uninstall" />
       <item itemvalue="Google Test.All in atlas_tests" />
+      <item itemvalue="Python.generate_headers" />
+      <item itemvalue="Python.remove_comments" />
     </list>
     <recent_temporary>
       <list>
@@ -401,6 +381,9 @@
       <workItem from="1773318332999" duration="59000" />
       <workItem from="1773328809675" duration="228000" />
       <workItem from="1773393153355" duration="4916000" />
+      <workItem from="1773414418862" duration="157000" />
+      <workItem from="1773414680095" duration="193000" />
+      <workItem from="1773414891472" duration="1630000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
