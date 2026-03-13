@@ -310,8 +310,11 @@ public:
      * @return True if the box represents an empty interval.
      *
      * @details
-     * A typical empty test checks if any component satisfies:
-     * `lower_corner[i] > upper_corner[i]`.
+     * This implementation treats any non-positive extent as empty, i.e.
+     * it reports true when at least one axis satisfies
+     * `upper_corner[i] <= lower_corner[i]`.
+     * That convention classifies both inverted boxes and zero-thickness boxes
+     * as empty for volume-based acceleration structure logic.
      */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     is_empty() const noexcept;

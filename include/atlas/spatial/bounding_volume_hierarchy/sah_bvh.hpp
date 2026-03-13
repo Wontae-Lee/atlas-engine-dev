@@ -10,7 +10,7 @@ namespace atlas::spatial {
 template <typename T>
 BvhTraceOperator<T>
 SurfaceAreaHeuristicBoundingVolumeHierachy<T>::make_trace_operator() const {
-
+    // Like the LBVH version, this returns a non-owning view over BVH storage.
     BvhTraceOperator<T> op;
 
     op.nodes   = atlas::raw_pointer_cast(d_nodes.data());
@@ -25,14 +25,15 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::make_trace_operator() const {
 template <typename T>
 void
 SurfaceAreaHeuristicBoundingVolumeHierachy<T>::set_leaf_size(const int leaf_size) noexcept {
-
+    // Leaves must contain at least one primitive.
     _leaf_size = (leaf_size < 1) ? 1 : leaf_size;
 }
 
 template <typename T>
 void
 SurfaceAreaHeuristicBoundingVolumeHierachy<T>::set_num_of_bins(int num_bins) noexcept {
-
+    // Very small histograms give unstable SAH estimates; very large histograms
+    // increase build cost with diminishing returns.
     if (num_bins < 4) num_bins = 4;
     if (num_bins > 256) num_bins = 256;
     _num_of_bins = num_bins;
@@ -111,7 +112,8 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::device_triangles() const noexcept
 template <typename T>
 void
 SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& triangles) {
-
+    // Build primitive metadata once; recursive partitioning reorders indices
+    // rather than copying triangle geometry.
     const int n = static_cast<int>(triangles.size());
 
     reset();
@@ -137,6 +139,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleCo
             h_indices[i]         = i;
         });
 
+    // Preallocate the worst-case full binary tree size.
     h_nodes.resize(std::max(1, 2 * n - 1), BVHNode<T>());
 
     int next_node = 0;
@@ -145,6 +148,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleCo
 
     h_nodes.resize(next_node);
 
+    // Device buffers mirror the compacted host arrays after construction.
     d_nodes.resize(n);
     d_indices.resize(n);
     d_triangles.resize(n);
@@ -157,11 +161,13 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleCo
 template <typename T>
 int
 SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const int end, int& node_count) {
-
+    // Allocate one node for the current range [start, end).
     const int node_index = node_count++;
 
     if (node_index >= static_cast<int>(h_nodes.size())) h_nodes.resize(node_index + 1);
 
+    // node_bounds is the geometric union used for traversal.
+    // centroid_bounds is only used to decide the split axis and bin positions.
     AABB<T> node_bounds;
     AABB<T> centroid_bounds;
     for (int i = start; i < end; ++i) {
@@ -172,6 +178,8 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
 
     const Vector3<T> ext = centroid_bounds.extents();
 
+    // If all centroids collapse to nearly one point, any spatial split becomes
+    // numerically meaningless, so the builder emits a leaf.
     const bool degenerate = (ext.x <= eps) && (ext.y <= eps) && (ext.z <= eps);
 
     const int count = end - start;
@@ -186,12 +194,15 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
         return node_index;
     }
 
+    // The longest centroid axis tends to maximize separation power.
     int axis = ext.major_axis();
 
     const T cmin = centroid_bounds.lower_corner.at(axis);
     const T cmax = centroid_bounds.upper_corner.at(axis);
     const T den  = cmax - cmin;
 
+    // Zero denominator means all centroids share the same coordinate on the
+    // chosen axis, leaving no valid partition.
     if (den <= T(0)) {
         BVHNode<T>& leaf = h_nodes[node_index];
         leaf.is_leaf     = true;
@@ -202,11 +213,14 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
         return node_index;
     }
 
+    // Histogram binning approximates SAH evaluation in O(n + B) instead of
+    // O(n^2) over all candidate primitive split positions.
     HostBuffer<sah::Bin<T>> bins(_num_of_bins);
 
     for (int i = start; i < end; ++i) {
         const int pid = h_indices[i];
 
+        // Normalize the centroid coordinate into [0, 1] before binning.
         const T t = (h_centroids[pid].at(axis) - cmin) / den;
 
         const int b = std::clamp(static_cast<int>(std::floor(t * _num_of_bins)), 0, _num_of_bins - 1);
@@ -221,6 +235,8 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
     HostBuffer<AABB<T>> prefix_bounds(_num_of_bins), suffix_bounds(_num_of_bins);
     HostBuffer<int> prefix_counts(_num_of_bins, 0), suffix_counts(_num_of_bins, 0);
 
+    // Prefix scan: for each split s, prefix_bounds[s] is the union of bins
+    // [0, s]. Suffix scan does the symmetric computation for [s, B-1].
     AABB<T> acc_bounds;
     int acc_count = 0;
     for (int i = 0; i < _num_of_bins; ++i) {
@@ -249,6 +265,9 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
 
         if (lc == 0 || rc == 0) continue;
 
+        // SAH estimate:
+        //   C = C_traversal + P(left) * N_left + P(right) * N_right
+        // with P(child) approximated by area(child) / area(parent).
         const T cost = T(1) + (prefix_bounds[s].area() * T(lc) + suffix_bounds[s + 1].area() * T(rc)) / parent_area;
 
         if (cost < best_cost) {
@@ -270,6 +289,8 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
     auto first = h_indices.begin() + start;
     auto last  = h_indices.begin() + end;
 
+    // Partition indices according to the chosen bin threshold. Stable partition
+    // preserves relative order inside each side, which keeps builds deterministic.
     auto mid_it = std::stable_partition(
         first,
         last,
@@ -292,6 +313,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
         return node_index;
     }
 
+    // Recurse on the two primitive subsets induced by the partition.
     const int left_child  = build_recursive(start, start + left_count, node_count);
     const int right_child = build_recursive(start + left_count, end, node_count);
 
@@ -302,6 +324,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
     node.start       = -1;
     node.count       = 0;
 
+    // Internal node bounds are the union of the child subtree bounds.
     node.bounds = h_nodes[left_child].bounds;
     node.bounds.merge(h_nodes[right_child].bounds);
 
@@ -311,7 +334,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
 template <typename T>
 void
 SurfaceAreaHeuristicBoundingVolumeHierachy<T>::reset() {
-
+    // Drop all cached build products on both host and device.
     h_nodes.clear();
     h_indices.clear();
     h_centroids.clear();

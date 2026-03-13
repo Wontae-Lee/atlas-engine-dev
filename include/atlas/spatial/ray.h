@@ -52,9 +52,9 @@ struct SurfaceRayIntersection {
  * - \f$t\f$ is a scalar parameter (often \f$t \ge 0\f$ for forward rays)
  *
  * Usage notes:
- * - Many intersection routines assume `direction` is normalized; this class does
- *   not enforce normalization. If `direction` is not unit-length, returned hit
- *   distances are still valid in parametric units of that direction vector.
+ * - The out-of-line constructor normalizes `direction_`, so the stored direction
+ *   is intended to satisfy \f$\|D\| = 1\f$ whenever the input is non-zero.
+ *   Under that convention the ray parameter \f$t\f$ matches Euclidean distance.
  * - `point_at(t)` is a convenience helper to evaluate the parametric position.
  *
  * @tparam T Floating-point scalar type (e.g., float, double).
@@ -87,7 +87,8 @@ public:
      * @param origin_ Ray origin.
      * @param direction_ Ray direction.
      *
-     * @note This constructor does not normalize `direction_`.
+     * @note The implementation normalizes `direction_` so that hit distances are
+     *       measured in world-space units rather than arbitrary parametric units.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     Ray(const Vector3<T>& origin_, const Vector3<T>& direction_) noexcept;
