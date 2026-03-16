@@ -238,39 +238,112 @@ LinearBoundingVolumeHierachy<T>::find_split(const HostBuffer<uint32_t>& codes, c
 template <typename T>
 void
 LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& triangles) {
-    // n primitives yield n leaves and n - 1 internal nodes in a full binary BVH.
+    // A full binary BVH built over n primitives has:
+    // - n leaf nodes   (one leaf per primitive)
+    // - n - 1 internal nodes
+    //
+    // Therefore the total node count is:
+    //   2 * n - 1
+    //
+    // We keep `n` as int because the build logic below uses signed neighbor/range
+    // arithmetic (i-1, i+1, direction = ±1, etc.), which is much easier and safer
+    // to express with signed integers than with std::size_t.
     const int n = static_cast<int>(triangles.size());
 
+    // Clear any previous BVH state before starting a fresh build.
+    //
+    // This ensures:
+    // - stale host/device buffers do not survive between builds
+    // - root index is reset consistently
+    // - partial old topology cannot leak into the new structure
     reset();
+
+    // Empty input => empty BVH.
+    //
+    // There is nothing to build, so leave the object in the reset state.
     if (n <= 0) return;
 
+    // Allocate per-primitive temporary arrays on the host:
+    //
+    // h_prim_bounds[i]:
+    //   AABB of primitive i in the ORIGINAL input order
+    //
+    // h_centroids[i]:
+    //   centroid of primitive i in the ORIGINAL input order
+    //
+    // h_indices[i]:
+    //   primitive id mapping. Initially identity (i -> i), later replaced by a
+    //   Morton-sorted permutation back to the original primitive array.
     h_prim_bounds.resize(n);
     h_centroids.resize(n);
     h_indices.resize(n);
 
-    // Precompute primitive bounds and centroids. The centroid acts as the point
-    // representative used by the Morton mapping.
+    // ------------------------------------------------------------------
+    // Step 1: Precompute primitive bounds and centroids
+    // ------------------------------------------------------------------
+    //
+    // Each TriangleContainer4 stores:
+    // - a(), b(), c() : triangle vertices
+    // - d()           : stored normal
+    //
+    // We wrap each primitive in TriangleQueryOperator so we can reuse:
+    // - bound()    for primitive AABB
+    // - centroid() for Morton mapping
+    //
+    // Important:
+    // - At this stage, everything is still in the ORIGINAL input order.
+    // - h_indices[i] = i records that identity mapping explicitly.
     atlas::parallel_for<ExecutionPolicy::host>(
         0,
         n,
         [this, &triangles](int i) {
             geometry::TriangleQueryOperator<T> tri_op;
-            tri_op.a         = &triangles[i].a();
-            tri_op.b         = &triangles[i].b();
-            tri_op.c         = &triangles[i].c();
-            tri_op.n         = &triangles[i].d();
-            const AABB<T> b  = tri_op.bound();
+
+            // TriangleQueryOperator expects raw addresses to triangle data.
+            // TriangleContainer4 exposes those as references through a()/b()/c()/d().
+            tri_op.a = &triangles[i].a();
+            tri_op.b = &triangles[i].b();
+            tri_op.c = &triangles[i].c();
+            tri_op.n = &triangles[i].d();
+
+            // Compute a tight AABB for this single triangle.
+            const AABB<T> b = tri_op.bound();
+
+            // Store all primitive-local information in original order.
             h_prim_bounds[i] = b;
             h_centroids[i]   = tri_op.centroid();
-            h_indices[i]     = i;
+
+            // Initially the primitive id is just the original array index.
+            h_indices[i] = i;
         });
 
-    // The global centroid bounds define the affine map from world space into the
-    // Morton unit cube.
+    // ------------------------------------------------------------------
+    // Step 2: Compute global centroid bounds
+    // ------------------------------------------------------------------
+    //
+    // Morton encoding needs a scene-wide coordinate frame so that all primitive
+    // centroids can be mapped into the same normalized unit cube.
+    //
+    // centroid_bounds encloses all primitive centroids and defines that affine map.
     AABB<T> centroid_bounds;
-    for (int i = 0; i < n; ++i) centroid_bounds.merge(h_centroids[i]);
+    for (int i = 0; i < n; ++i) {
+        centroid_bounds.merge(h_centroids[i]);
+    }
 
+    // One Morton code per primitive.
     HostBuffer<uint32_t> morton(n);
+
+    // ------------------------------------------------------------------
+    // Step 3: Encode centroids into Morton codes
+    // ------------------------------------------------------------------
+    //
+    // morton3():
+    // - normalizes centroid against centroid_bounds
+    // - quantizes coordinates
+    // - interleaves x/y/z bits into a 3D Morton code
+    //
+    // Nearby centroids in space tend to get nearby Morton keys, which is the
+    // core approximation used by LBVH to cluster spatially close primitives.
     atlas::parallel_for<ExecutionPolicy::host>(
         0,
         n,
@@ -278,87 +351,210 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
             morton[i] = morton3(h_centroids[i], centroid_bounds, _morton_bits);
         });
 
-    // Sort by Morton code so nearby centroids in space become nearby keys in the
-    // linear array, which approximates a depth-first spatial clustering.
+    // ------------------------------------------------------------------
+    // Step 4: Sort primitive references by Morton code
+    // ------------------------------------------------------------------
+    //
+    // We do not sort the primitive data buffers directly here.
+    // Instead we sort an auxiliary `order` array containing original indices.
+    //
+    // order[k] = original primitive index occupying sorted position k.
     HostBuffer<int> order(n);
-    for (int i = 0; i < n; ++i) order[i] = i;
+    for (int i = 0; i < n; ++i) {
+        order[i] = i;
+    }
 
     std::stable_sort(order.begin(),
                      order.end(),
                      [&](const int a, const int b) {
+                         // Primary key: Morton code
+                         //
+                         // This is the spatial ordering criterion.
                          if (morton[a] != morton[b]) return morton[a] < morton[b];
 
+                         // Secondary key: original primitive order
+                         //
+                         // Stable, deterministic tie-breaking matters because many
+                         // primitives can quantize to the same Morton code.
+                         // Without this, equal-code ordering could vary across
+                         // platforms / standard library implementations.
                          return a < b;
                      });
 
+    // These arrays are the sorted views used by the radix-tree construction.
     HostBuffer<uint32_t> morton_sorted(n);
     HostBuffer<uint64_t> keys_sorted(n);
     HostBuffer<int> indices_sorted(n);
 
-    // Attach the stable sorted index to each Morton code. This breaks ties while
-    // preserving deterministic ordering for duplicate codes.
+    // ------------------------------------------------------------------
+    // Step 5: Materialize sorted Morton stream and strict-order keys
+    // ------------------------------------------------------------------
+    //
+    // morton_sorted[k]:
+    //   Morton code at sorted position k
+    //
+    // keys_sorted[k]:
+    //   64-bit key used for LCP/radix logic
+    //   high 32 bits = Morton code
+    //   low  32 bits = sorted position k
+    //
+    // Why add the sorted position?
+    // - Duplicate Morton codes are common after quantization.
+    // - The low bits inject a unique tie-breaker, giving a strict total order.
+    // - This is crucial for well-defined longest-common-prefix comparisons.
+    //
+    // indices_sorted[k]:
+    //   original primitive id for sorted slot k
     for (int i = 0; i < n; ++i) {
-        const int oi      = order[i];
-        morton_sorted[i]  = morton[oi];
-        keys_sorted[i]    = (static_cast<uint64_t>(morton_sorted[i]) << 32) | static_cast<uint32_t>(i);
+        const int oi = order[i];
+
+        // Store contiguous sorted Morton stream.
+        morton_sorted[i] = morton[oi];
+
+        // Build strict-order radix key:
+        // - spatial locality lives in upper bits
+        // - uniqueness / determinism lives in lower bits
+        keys_sorted[i] = (static_cast<uint64_t>(morton_sorted[i]) << 32)
+            | static_cast<uint32_t>(i);
+
+        // Map sorted slot i back to original primitive id.
         indices_sorted[i] = h_indices[oi];
     }
 
+    // Replace h_indices with the Morton-sorted primitive permutation.
+    //
+    // From this point on:
+    // - sorted slot k corresponds to original primitive id h_indices[k]
     h_indices = indices_sorted;
 
+    // ------------------------------------------------------------------
+    // Step 6: Allocate node array
+    // ------------------------------------------------------------------
+    //
+    // Node layout convention:
+    // - internal nodes occupy indices [0, n - 2]
+    // - leaf nodes occupy     indices [n - 1, 2n - 2]
+    //
+    // For safety, std::max(1, 2*n - 1) keeps at least one slot allocated even
+    // if some edge case slips through, though n > 0 here already.
     h_nodes.resize(std::max(1, 2 * n - 1), BVHNode<T>());
 
-    // Initialize all leaves first; internal nodes are filled afterwards.
+    // ------------------------------------------------------------------
+    // Step 7: Initialize leaves
+    // ------------------------------------------------------------------
+    //
+    // There is exactly one leaf per primitive in Morton-sorted order.
+    //
+    // Leaf k represents sorted primitive slot k, which maps back to original
+    // primitive id `pid = h_indices[k]`.
     for (int k = 0; k < n; ++k) {
-        const int ni     = leaf_node_index(k, n);
-        const int pid    = h_indices[k];
+        const int ni  = leaf_node_index(k, n);
+        const int pid = h_indices[k];
+
         BVHNode<T>& leaf = h_nodes[ni];
 
         leaf.is_leaf = true;
+
+        // Leaves do not have children.
         leaf.left = leaf.right = -1;
-        leaf.start             = k;
-        leaf.count             = 1;
-        leaf.bounds            = h_prim_bounds[pid];
+
+        // A leaf covers exactly one sorted primitive slot.
+        leaf.start = k;
+        leaf.count = 1;
+
+        // Its bounds come from the ORIGINAL primitive selected by pid.
+        //
+        // This distinction matters:
+        // - leaf position in the array is Morton-sorted
+        // - primitive geometry is still stored in original primitive buffers
+        leaf.bounds = h_prim_bounds[pid];
     }
 
+    // ------------------------------------------------------------------
+    // Step 8: Handle single-primitive special case
+    // ------------------------------------------------------------------
+    //
+    // With one primitive:
+    // - there are no internal nodes
+    // - the root is that one leaf
     if (n == 1) {
         _root = leaf_node_index(0, n);
 
+        // Mirror host-side state to device buffers used by traversal.
         d_nodes     = h_nodes;
         d_indices   = h_indices;
         d_triangles = triangles;
         return;
     }
 
-    // Karras-style radix tree construction:
-    // choose the build direction by comparing LCP with neighbors, determine the
-    // maximal range sharing that prefix, then split inside that range.
+    // ------------------------------------------------------------------
+    // Step 9: Build internal node topology (Karras LBVH radix tree)
+    // ------------------------------------------------------------------
+    //
+    // Each internal node i in [0, n-2] owns one maximal interval [first, last]
+    // of the Morton-sorted primitive stream.
+    //
+    // Construction idea:
+    // 1) Compare LCP (longest common prefix) with left and right neighbors
+    // 2) Decide growth direction d = ±1
+    // 3) Find maximal range sharing a longer prefix than delta_min
+    // 4) Split that range into left/right child subranges
     for (int i = 0; i < n - 1; ++i) {
+        // LCP of node i with left neighbor.
         const int dl = delta_lcp(keys_sorted, n, i, i - 1);
-        const int dr = delta_lcp(keys_sorted, n, i, i + 1);
-        const int d  = (dr > dl) ? 1 : -1;
 
+        // LCP of node i with right neighbor.
+        const int dr = delta_lcp(keys_sorted, n, i, i + 1);
+
+        // Choose the direction toward the neighbor with the larger LCP.
+        //
+        // Intuition:
+        // - That side shares more Morton-prefix bits with i
+        // - Therefore it belongs to the same radix-tree branch
+        const int d = (dr > dl) ? 1 : -1;
+
+        // Minimum prefix length that defines the boundary of i's owned range.
+        //
+        // Anything inside the range must share MORE than this prefix length.
         const int delta_min = delta_lcp(keys_sorted, n, i, i - d);
 
         int lmax = 2;
-        // Exponential search brackets the range length, then binary refinement
-        // locates the exact interval endpoint.
-        while (delta_lcp(keys_sorted, n, i, i + lmax * d) > delta_min) { lmax <<= 1; }
+
+        // Exponential search:
+        // Grow outward along direction d until the prefix condition fails.
+        //
+        // This cheaply brackets the maximal interval size.
+        while (delta_lcp(keys_sorted, n, i, i + lmax * d) > delta_min) {
+            lmax <<= 1;
+        }
 
         int t    = 0;
         int step = lmax;
+
+        // Binary refinement:
+        // Shrink the bracket to find the exact endpoint of the maximal interval.
         do {
             step = (step + 1) >> 1;
-            if (delta_lcp(keys_sorted, n, i, i + (t + step) * d) > delta_min) t += step;
+            if (delta_lcp(keys_sorted, n, i, i + (t + step) * d) > delta_min) {
+                t += step;
+            }
         } while (step > 1);
 
-        const int j     = i + t * d;
+        // j is the other endpoint of the maximal interval owned by internal node i.
+        const int j = i + t * d;
+
+        // Normalize interval ordering so first <= last regardless of direction.
         const int first = std::min(i, j);
         const int last  = std::max(i, j);
 
+        // Choose where to split [first, last] into left and right child ranges.
+        //
+        // find_split() typically finds the highest position where the common prefix
+        // changes in a way that best matches the radix-tree subdivision.
         const int split = find_split(morton_sorted, first, last);
 
-        // Child ranges of length one correspond directly to leaves.
+        // Child interval length 1 => child is a leaf.
+        // Otherwise child is another internal node.
         const int left_is_leaf  = (split == first) ? 1 : 0;
         const int right_is_leaf = (split + 1 == last) ? 1 : 0;
 
@@ -367,24 +563,57 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
 
         BVHNode<T>& in = h_nodes[i];
         in.is_leaf     = false;
-        in.left        = left_child;
-        in.right       = right_child;
-        in.start       = -1;
-        in.count       = 0;
+
+        // Children are stored by direct node indices into h_nodes.
+        //
+        // Depending on interval length:
+        // - left/right may point to internal nodes [0, n-2]
+        // - or to leaves                     [n-1, 2n-2]
+        in.left  = left_child;
+        in.right = right_child;
+
+        // Internal nodes do not directly own primitive ranges in leaf terms here.
+        in.start = -1;
+        in.count = 0;
     }
 
-    // Bottom-up union of child boxes computes conservative bounds for each
-    // internal node after the topology is fixed.
+    // ------------------------------------------------------------------
+    // Step 10: Bottom-up bound propagation
+    // ------------------------------------------------------------------
+    //
+    // Internal node topology is now fixed.
+    // Next, compute each internal node's AABB as the union of its two children.
+    //
+    // Because of the chosen node layout, iterating internal nodes backwards from
+    // n-2 down to 0 guarantees child bounds are already initialized.
     for (int i = n - 2; i >= 0; --i) {
         BVHNode<T>& in      = h_nodes[i];
         const BVHNode<T>& L = h_nodes[in.left];
         const BVHNode<T>& R = h_nodes[in.right];
-        in.bounds           = L.bounds;
+
+        // Start from left child box and merge right child box into it.
+        in.bounds = L.bounds;
         in.bounds.merge(R.bounds);
     }
 
+    // ------------------------------------------------------------------
+    // Step 11: Finalize root and mirror to device
+    // ------------------------------------------------------------------
+    //
+    // In this LBVH layout, internal node 0 spans the full sorted primitive range
+    // and therefore acts as the root.
     _root = 0;
 
+    // Copy finalized host-side BVH data to device buffers used during traversal.
+    //
+    // d_nodes:
+    //   final BVH topology + bounds
+    //
+    // d_indices:
+    //   Morton-sorted mapping from leaf slot -> original primitive id
+    //
+    // d_triangles:
+    //   original primitive storage, still in original order
     d_nodes     = h_nodes;
     d_indices   = h_indices;
     d_triangles = triangles;
