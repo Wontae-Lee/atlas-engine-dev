@@ -133,7 +133,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE CodecType
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE CodecType
     type() const noexcept override;
 };
 

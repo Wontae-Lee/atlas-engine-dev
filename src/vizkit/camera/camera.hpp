@@ -64,11 +64,11 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
         // In a perspective projection, horizontal scaling depends on width /
         // height so that a unit square in normalized device coordinates maps
         // correctly onto a non-square window.
-        float aspect = (h > 0) ? static_cast<float>(w) / static_cast<float>(h) : 1.0f;
+        const float aspect = (h > 0) ? static_cast<float>(w) / static_cast<float>(h) : 1.0f;
 
         // Convert a 45-degree vertical field of view to radians because the
         // trigonometric functions below operate in radians.
-        float fov = 45.0f * static_cast<float>(M_PI) / 180.0f;
+        const float fov = 45.0f * static_cast<float>(M_PI) / 180.0f;
 
         // Standard perspective scale factor:
         //   f = 1 / tan(fov / 2) = cot(fov / 2)
@@ -78,7 +78,7 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
         // If that half-height is tan(fov/2), then dividing by it normalizes the
         // vertical extent so points on the frustum boundary map to clip-space
         // limits after projection.
-        float f = 1.0f / tanf(fov * 0.5f);
+        const float f = 1.0f / tanf(fov * 0.5f);
 
         // Perspective projection matrix in column-major storage.
         //
@@ -100,7 +100,7 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
         //
         // The matrix is intentionally stored as a flat array in column-major
         // order, matching common OpenGL-style upload conventions.
-        float proj[16] = { f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, -1, -1, 0, 0, -0.2f, 0 };
+        const float proj[16] = { f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, -1, -1, 0, 0, -0.2f, 0 };
 
         // Convert orbit parameters to a Cartesian eye position.
         //
@@ -114,9 +114,9 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
         // - multiplying by cos(yaw), sin(yaw) splits that planar radius into X
         //   and Y components
         // - sin(pitch) gives the vertical Z component
-        float ex = dist * cosf(pitch) * cosf(yaw);
-        float ey = dist * cosf(pitch) * sinf(yaw);
-        float ez = dist * sinf(pitch);
+        const float ex = dist * cosf(pitch) * cosf(yaw);
+        const float ey = dist * cosf(pitch) * sinf(yaw);
+        const float ez = dist * sinf(pitch);
 
         // The eye uses (-ex, -ey, ez), not (ex, ey, ez).
         //
@@ -127,7 +127,7 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
         // center = (0, 0, 0.6) means the view is biased upward a bit instead of
         // focusing exactly on the ground-plane origin. This is often useful in
         // visualization because objects of interest tend to occupy positive Z.
-        Vector3F eye { -ex, -ey, ez }, center { 0, 0, 0.6f }, up { 0, 0, 1 };
+        const Vector3F eye { -ex, -ey, ez }, center { 0, 0, 0.6f }, up { 0, 0, 1 };
 
         // Build a right-handed orthonormal camera frame.
         //
@@ -148,9 +148,9 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
         // This is the standard "look-at" construction. The normalization steps
         // make the basis vectors unit length, which prevents unintended scaling
         // in the view transform.
-        Vector3F fwd = normalize(center - eye);
-        Vector3F s   = normalize(cross(fwd, up));
-        Vector3F u   = cross(s, fwd);
+        const Vector3F fwd = normalize(center - eye);
+        const Vector3F s   = normalize(cross(fwd, up));
+        const Vector3F u   = cross(s, fwd);
 
         // View matrix in column-major storage.
         //
@@ -171,7 +171,7 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
         // The translation terms are not arbitrary constants. They come from
         // projecting the eye point onto the camera basis so that the camera
         // itself becomes the origin after transformation.
-        float view[16] = { s.x, u.x, -fwd.x, 0, s.y, u.y, -fwd.y, 0, s.z, u.z, -fwd.z, 0, -dot(s, eye), -dot(u, eye), dot(fwd, eye), 1 };
+        const float view[16] = { s.x, u.x, -fwd.x, 0, s.y, u.y, -fwd.y, 0, s.z, u.z, -fwd.z, 0, -dot(s, eye), -dot(u, eye), dot(fwd, eye), 1 };
 
         // Compute the combined matrix:
         //   MVP = Projection * View
