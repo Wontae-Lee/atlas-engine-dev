@@ -231,6 +231,21 @@ public:
     diagonal_length_squared() const noexcept;
 
     /**
+     * @brief Returns whether the AABB stores finite, ordered corners.
+     *
+     * @details
+     * A valid box requires:
+     * - all corner components are finite
+     * - `lower_corner <= upper_corner` component-wise
+     *
+     * This excludes the inverted "empty" state produced by @ref reset().
+     *
+     * @return `true` if the bounds can be safely used for spatial queries or sampling.
+     */
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    is_valid() const noexcept;
+
+    /**
      * @brief Reset the AABB to an empty state.
      *
      * @details

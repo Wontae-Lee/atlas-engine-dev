@@ -204,6 +204,36 @@ TEST(TriangleQueryOperator, SignedDistanceSignMatchesNormalSide) {
     EXPECT_NEAR(std::abs(d_neg), 2.0, eps);
 }
 
+TEST(TriangleQueryOperator, IsInsideUsesSignedSideAndTolerance) {
+    constexpr Vector3<double> a(0.0, 0.0, 0.0);
+    constexpr Vector3<double> b(1.0, 0.0, 0.0);
+    constexpr Vector3<double> c(0.0, 1.0, 0.0);
+
+    geometry::TriangleQueryOperator<double> op;
+    op.a = atlas::raw_pointer_cast(&a);
+    op.b = atlas::raw_pointer_cast(&b);
+    op.c = atlas::raw_pointer_cast(&c);
+
+    EXPECT_TRUE(op.is_inside(Vector3<double>(0.25, 0.25, -0.1), 0.0));
+    EXPECT_FALSE(op.is_inside(Vector3<double>(0.25, 0.25, 0.1), 0.0));
+    EXPECT_TRUE(op.is_inside(Vector3<double>(0.25, 0.25, 0.1), 0.15));
+}
+
+TEST(TriangleQueryOperator, IsOnSurfaceDetectsSurfaceBand) {
+    constexpr Vector3<double> a(0.0, 0.0, 0.0);
+    constexpr Vector3<double> b(1.0, 0.0, 0.0);
+    constexpr Vector3<double> c(0.0, 1.0, 0.0);
+
+    geometry::TriangleQueryOperator<double> op;
+    op.a = atlas::raw_pointer_cast(&a);
+    op.b = atlas::raw_pointer_cast(&b);
+    op.c = atlas::raw_pointer_cast(&c);
+
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(0.25, 0.25, 0.0), 0.0));
+    EXPECT_FALSE(op.is_on_surface(Vector3<double>(0.25, 0.25, 0.3), 0.0));
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(0.25, 0.25, 0.1), 0.15));
+}
+
 TEST(TriangleQueryOperator, CentroidReturnsZeroWhenVerticesNull) {
     constexpr geometry::TriangleQueryOperator<double> op;
 

@@ -95,6 +95,32 @@ TEST(SphereQueryOperator, SignedDistanceMatchesDefinition) {
     EXPECT_NEAR(op.signed_distance(Vector3<double>(5.0, 0.0, 0.0)), 3.0, eps);
 }
 
+TEST(SphereQueryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
+    const Vector3<double> c(0.0, 0.0, 0.0);
+    constexpr double r = 2.0;
+
+    geometry::SphereQueryOperator<double> op;
+    op.center = atlas::raw_pointer_cast(&c);
+    op.radius = atlas::raw_pointer_cast(&r);
+
+    EXPECT_TRUE(op.is_inside(Vector3<double>(0.0, 0.0, 0.0)));
+    EXPECT_FALSE(op.is_inside(Vector3<double>(2.2, 0.0, 0.0)));
+    EXPECT_TRUE(op.is_inside(Vector3<double>(2.2, 0.0, 0.0), 0.25));
+}
+
+TEST(SphereQueryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
+    const Vector3<double> c(0.0, 0.0, 0.0);
+    constexpr double r = 2.0;
+
+    geometry::SphereQueryOperator<double> op;
+    op.center = atlas::raw_pointer_cast(&c);
+    op.radius = atlas::raw_pointer_cast(&r);
+
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(2.0, 0.0, 0.0)));
+    EXPECT_FALSE(op.is_on_surface(Vector3<double>(0.0, 0.0, 0.0)));
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(2.1, 0.0, 0.0), 0.15));
+}
+
 TEST(SphereQueryOperator, CentroidReturnsZeroWhenCenterNull) {
     constexpr geometry::SphereQueryOperator<double> op;
     EXPECT_TRUE(test::vec_near(op.centroid(), Vector3<double>(0.0, 0.0, 0.0), eps));

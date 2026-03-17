@@ -171,7 +171,62 @@ TEST(TriangleMeshQueryOperator, ClosestNormalMatchesTriangleNormalOfNearestTrian
     EXPECT_NEAR(n.length(), 1.0, 1e-12);
 }
 
-TEST(TriangleMeshQueryOperator, SignedDistanceSignUsesNormalAtClosestPoint) {
+TEST(TriangleMeshQueryOperator, SignedDistanceUsesWindingForClosedMeshSign) {
+    geometry::TriangleMeshQueryOperator<double> op;
+
+    const std::vector<Vector3<double>> v = {
+        Vector3<double>(0.0, 0.0, 0.0),
+        Vector3<double>(1.0, 0.0, 0.0),
+        Vector3<double>(0.0, 1.0, 0.0),
+        Vector3<double>(0.0, 0.0, 1.0),
+    };
+    const std::vector<int> idx = {
+        0, 2, 1,
+        0, 1, 3,
+        0, 3, 2,
+        1, 2, 3,
+    };
+
+    op.vertices       = v.data();
+    op.indices        = idx.data();
+    op.triangle_count = 4;
+
+    constexpr Vector3<double> p_in(0.1, 0.1, 0.1);
+    constexpr Vector3<double> p_out(2.0, 2.0, 2.0);
+
+    const double d_in  = op.signed_distance(p_in);
+    const double d_out = op.signed_distance(p_out);
+
+    EXPECT_LT(d_in, 0.0);
+    EXPECT_GT(d_out, 0.0);
+}
+
+TEST(TriangleMeshQueryOperator, IsInsideUsesWindingForClosedMeshContainment) {
+    geometry::TriangleMeshQueryOperator<double> op;
+
+    const std::vector<Vector3<double>> v = {
+        Vector3<double>(0.0, 0.0, 0.0),
+        Vector3<double>(1.0, 0.0, 0.0),
+        Vector3<double>(0.0, 1.0, 0.0),
+        Vector3<double>(0.0, 0.0, 1.0),
+    };
+    const std::vector<int> idx = {
+        0, 2, 1,
+        0, 1, 3,
+        0, 3, 2,
+        1, 2, 3,
+    };
+
+    op.vertices       = v.data();
+    op.indices        = idx.data();
+    op.triangle_count = 4;
+
+    EXPECT_TRUE(op.is_inside(Vector3<double>(0.1, 0.1, 0.1), 0.0));
+    EXPECT_FALSE(op.is_inside(Vector3<double>(2.0, 2.0, 2.0), 0.0));
+    EXPECT_TRUE(op.is_inside(Vector3<double>(0.6, 0.6, 0.1), 0.5));
+}
+
+TEST(TriangleMeshQueryOperator, IsOnSurfaceDetectsSurfaceBand) {
     geometry::TriangleMeshQueryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
@@ -185,16 +240,9 @@ TEST(TriangleMeshQueryOperator, SignedDistanceSignUsesNormalAtClosestPoint) {
     op.indices        = idx.data();
     op.triangle_count = 1;
 
-    constexpr Vector3<double> p_pos(0.25, 0.25, 2.0);
-    constexpr Vector3<double> p_neg(0.25, 0.25, -2.0);
-
-    const double d_pos = op.signed_distance(p_pos);
-    const double d_neg = op.signed_distance(p_neg);
-
-    EXPECT_GT(d_pos, 0.0);
-    EXPECT_LT(d_neg, 0.0);
-    EXPECT_NEAR(std::abs(d_pos), 2.0, 1e-12);
-    EXPECT_NEAR(std::abs(d_neg), 2.0, 1e-12);
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(0.25, 0.25, 0.0), 0.0));
+    EXPECT_FALSE(op.is_on_surface(Vector3<double>(0.25, 0.25, 0.3), 0.0));
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(0.25, 0.25, 0.1), 0.15));
 }
 
 TEST(TriangleMeshQueryOperator, CentroidIsAverageOfTriangleCentroidsUniformWeight) {

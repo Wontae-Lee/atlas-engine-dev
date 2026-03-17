@@ -55,6 +55,7 @@
  */
 
 #include <atlas/container/container.h>
+#include <atlas/buffer/device_buffer.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/geometry/query_operator.h>
 #include <atlas/math/math.h>
@@ -283,6 +284,30 @@ public:
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
 
     /**
+     * @brief Test whether a point lies inside the mesh according to the nearest-triangle sign rule.
+     *
+     * @param p Query point.
+     * @param tolerance Allowed positive slack relative to the local surface.
+     * @return `true` if the point is classified as inside.
+     *
+     * @note
+     * For open or non-watertight meshes, this is a local nearest-surface classification rather
+     * than a globally robust winding-based inside test.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+
+    /**
+     * @brief Test whether a point lies on the mesh surface within a tolerance band.
+     *
+     * @param p Query point.
+     * @param tolerance Allowed absolute deviation from the nearest triangle surface.
+     * @return `true` if the point is classified as on the surface.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+
+    /**
      * @brief Return a representative centroid for the mesh.
      *
      * @details
@@ -348,9 +373,27 @@ private:
     BVHHostPtr<T> _bvh = nullptr;
 
     /**
+     * @brief Cached contiguous vertex array for TriangleMeshQueryOperator construction.
+     *
+     * @details
+     * Each triangle contributes its three vertices in sequence.
+     */
+    mutable DeviceBuffer<Vector3<T>> _query_vertices;
+
+    /**
+     * @brief Cached contiguous triangle index array for TriangleMeshQueryOperator construction.
+     */
+    mutable DeviceBuffer<int> _query_indices;
+
+    /**
      * @brief Whether the BVH has been constructed for the current triangle data.
      */
     bool bvh_built = false;
+
+    /**
+     * @brief Whether the query-operator cache matches @ref triangles.
+     */
+    mutable bool query_cache_built = false;
 
     /**
      * @brief Ensure the BVH exists and is built for current triangles.
@@ -378,6 +421,18 @@ private:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build_bvh();
+
+    /**
+     * @brief Ensure the query-operator cache matches the current triangle soup.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    ensure_query_cache() const;
+
+    /**
+     * @brief Rebuild the contiguous vertex/index cache used by TriangleMeshQueryOperator.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    rebuild_query_cache() const;
 };
 
 /* ====================================================================== */

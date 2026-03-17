@@ -178,6 +178,26 @@ public:
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
 
     /**
+     * @brief Test whether a point lies inside the sphere within a tolerance.
+     *
+     * @param p Query point p ∈ ℝ³.
+     * @param tolerance Allowed positive slack beyond the radius.
+     * @return `true` if the point is classified as inside the sphere.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+
+    /**
+     * @brief Test whether a point lies on the sphere surface within a tolerance band.
+     *
+     * @param p Query point p ∈ ℝ³.
+     * @param tolerance Allowed absolute deviation from the radius.
+     * @return `true` if the point is classified as on the sphere surface.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+
+    /**
      * @brief Geometric centroid of the sphere.
      *
      * @return The center of the sphere.

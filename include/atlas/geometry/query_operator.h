@@ -111,6 +111,12 @@ struct BoxQueryOperator {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
 
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
     /**
      * @brief Centroid of the box.
      *
@@ -177,6 +183,12 @@ struct SphereQueryOperator {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
 
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     centroid() const noexcept;
 
@@ -220,6 +232,12 @@ struct PlaneQueryOperator {
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     centroid() const noexcept;
@@ -269,6 +287,12 @@ struct CylinderQueryOperator {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
 
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     centroid() const noexcept;
 
@@ -313,6 +337,12 @@ struct TriangleQueryOperator {
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     centroid() const noexcept;
@@ -365,6 +395,12 @@ struct TriangleMeshQueryOperator {
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     centroid() const noexcept;
@@ -503,6 +539,12 @@ struct QueryOperator {
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Centroid query (runtime dispatch).

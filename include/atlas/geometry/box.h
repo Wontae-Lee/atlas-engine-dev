@@ -238,6 +238,30 @@ public:
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
 
     /**
+     * @brief Test whether a point lies inside this box within a tolerance.
+     *
+     * @param p Query point.
+     * @param tolerance Allowed positive slack from the box boundary.
+     * @return `true` if the point is classified as inside.
+     *
+     * @note
+     * This host-side convenience forwards to the corresponding @ref QueryOperator logic
+     * so the classification rule stays consistent with other query paths.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+
+    /**
+     * @brief Test whether a point lies on the box surface within a tolerance band.
+     *
+     * @param p Query point.
+     * @param tolerance Allowed absolute deviation from the surface.
+     * @return `true` if the point is classified as being on the surface.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+
+    /**
      * @brief Return the centroid of the box.
      *
      * @details

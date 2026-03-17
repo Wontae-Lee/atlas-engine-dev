@@ -229,6 +229,29 @@ public:
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
 
     /**
+     * @brief Test whether a point lies on the triangle's negative signed side within a tolerance.
+     *
+     * @param p Query point.
+     * @param tolerance Allowed positive slack relative to the oriented triangle surface.
+     * @return `true` if the point is classified as inside by the triangle query rule.
+     *
+     * @note
+     * Because a triangle is an open surface, this classification is local and orientation-dependent.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+
+    /**
+     * @brief Test whether a point lies on the triangle surface within a tolerance band.
+     *
+     * @param p Query point.
+     * @param tolerance Allowed absolute deviation from the triangle surface.
+     * @return `true` if the point is classified as on the surface.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+
+    /**
      * @brief Centroid of the triangle.
      *
      * @details

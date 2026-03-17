@@ -134,6 +134,56 @@ make_sphere() {
     return { Vector3<double>(0.0, 0.0, 0.0), 1.0 };
 }
 
+ATLAS_FORCE_INLINE geometry::Box<double>
+make_box() {
+    return {
+        Vector3<double>(-1.0, -1.0, -1.0),
+        Vector3<double>(1.0, 1.0, 1.0)
+    };
+}
+
+ATLAS_FORCE_INLINE geometry::Cylinder<double>
+make_cylinder() {
+    return {
+        Vector3<double>(0.0, 0.0, 0.0),
+        1.0,
+        2.0
+    };
+}
+
+ATLAS_FORCE_INLINE geometry::Triangle<double>
+make_triangle() {
+    return {
+        Vector3<double>(0.0, 0.0, 0.0),
+        Vector3<double>(1.0, 0.0, 0.0),
+        Vector3<double>(0.0, 1.0, 0.0)
+    };
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE geometry::QueryOperator<T>
+make_box_query_operator(const geometry::Box<T>& box) {
+    return box.make_query_operator();
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE geometry::QueryOperator<T>
+make_sphere_query_operator(const geometry::Sphere<T>& sphere) {
+    return sphere.make_query_operator();
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE geometry::QueryOperator<T>
+make_cylinder_query_operator(const geometry::Cylinder<T>& cylinder) {
+    return cylinder.make_query_operator();
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE geometry::QueryOperator<T>
+make_triangle_query_operator(const geometry::Triangle<T>& triangle) {
+    return triangle.make_query_operator();
+}
+
 ATLAS_FORCE_INLINE host_shared_ptr<geometry::Sphere<double>>
 make_host_shared_sphere() {
     return atlas::make_host_shared<geometry::Sphere<double>>(make_sphere());

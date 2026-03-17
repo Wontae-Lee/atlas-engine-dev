@@ -157,6 +157,28 @@ TEST(Cylinder, SignedDistanceIsPositiveOutsideAndNegativeInside) {
     EXPECT_LT(c.signed_distance(p_in), 0.0);
 }
 
+TEST(Cylinder, IsInsideClassifiesInteriorAndToleranceBand) {
+    const geometry::Cylinder<double> c(
+        Vector3<double>(0.0, 0.0, 0.0),
+        1.0,
+        2.0);
+
+    EXPECT_TRUE(c.is_inside(Vector3<double>(0.0, 0.0, 0.0), 0.0));
+    EXPECT_FALSE(c.is_inside(Vector3<double>(1.2, 0.0, 0.0), 0.0));
+    EXPECT_TRUE(c.is_inside(Vector3<double>(1.2, 0.0, 0.0), 0.25));
+}
+
+TEST(Cylinder, IsOnSurfaceDetectsSideWallAndCapTolerance) {
+    const geometry::Cylinder<double> c(
+        Vector3<double>(0.0, 0.0, 0.0),
+        1.0,
+        2.0);
+
+    EXPECT_TRUE(c.is_on_surface(Vector3<double>(1.0, 0.0, 0.0), 0.0));
+    EXPECT_FALSE(c.is_on_surface(Vector3<double>(0.0, 0.0, 0.0), 0.0));
+    EXPECT_TRUE(c.is_on_surface(Vector3<double>(0.0, 0.0, 1.1), 0.15));
+}
+
 TEST(Cylinder, CentroidEqualsCenter) {
 
     // For an axis-aligned cylinder parameterized by its center, the centroid

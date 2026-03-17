@@ -2,6 +2,7 @@
 
 #include <atlas/spatial/bounding_volume_hierarchy/sah_bvh.h>
 #include <atlas/spatial/trace_operator.h>
+#include <atlas/memory/raw_pointer_cast.h>
 
 #include <cmath>     // std::sqrt
 #include <limits>    // std::numeric_limits
@@ -61,6 +62,7 @@ TriangleMesh<T>::set_triangles(const HostBuffer<TriangleContainer4<T>>& triangle
     // We do the full rebuild because:
     // - Triangles are the BVH primitives; any change invalidates the tree.
     triangles = triangles_;
+    query_cache_built = false;
     ensure_bvh();
     build_bvh();
 }
@@ -105,6 +107,36 @@ TriangleMesh<T>::build_bvh() {
     bvh_built = true;
 }
 
+template <typename T>
+void
+TriangleMesh<T>::ensure_query_cache() const {
+    if (query_cache_built) return;
+    rebuild_query_cache();
+}
+
+template <typename T>
+void
+TriangleMesh<T>::rebuild_query_cache() const {
+    const std::size_t count = triangles.size();
+    _query_vertices.resize(count * 3);
+    _query_indices.resize(count * 3);
+
+    for (std::size_t t = 0; t < count; ++t) {
+        const auto& tri         = triangles[t];
+        const std::size_t base  = t * 3;
+
+        _query_vertices[base + 0] = tri.a();
+        _query_vertices[base + 1] = tri.b();
+        _query_vertices[base + 2] = tri.c();
+
+        _query_indices[base + 0] = static_cast<int>(base + 0);
+        _query_indices[base + 1] = static_cast<int>(base + 1);
+        _query_indices[base + 2] = static_cast<int>(base + 2);
+    }
+
+    query_cache_built = true;
+}
+
 /* ---------------------------------------------------------------------- */
 /* Operators: Trace / Query                                                */
 /* ---------------------------------------------------------------------- */
@@ -127,20 +159,13 @@ TriangleMesh<T>::make_trace_operator() const {
 template <typename T>
 QueryOperator<T>
 TriangleMesh<T>::make_query_operator() const {
-    // Produce a type-erased QueryOperator<T> for closest-point / SDF queries.
-    //
-    // NOTE:
-    // - In this implementation, we return an "empty" TriangleMeshQueryOperator.
-    // - Your mesh-level convenience methods (closest_point/normal/signed_distance)
-    //   below operate directly on 'triangles' on the host and do not rely on this.
-    //
-    // If you want fully functional QueryOperator for meshes:
-    // - store a separate vertex/index buffer representation
-    // - set pointers and triangle_count appropriately
+    // Build a QueryOperator view over a cached contiguous vertex/index representation.
+    ensure_query_cache();
+
     TriangleMeshQueryOperator<T> op {};
-    op.vertices       = nullptr;
-    op.indices        = nullptr;
-    op.triangle_count = 0;
+    op.vertices       = _query_vertices.empty() ? nullptr : atlas::raw_pointer_cast(_query_vertices.data());
+    op.indices        = _query_indices.empty() ? nullptr : atlas::raw_pointer_cast(_query_indices.data());
+    op.triangle_count = static_cast<int>(triangles.size());
     return QueryOperator<T>(op);
 }
 
@@ -239,15 +264,17 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
                 n = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
             }
 
-            // Store normal in the 4th slot.
-            tc.d() = n;
+    // Store normal in the 4th slot.
+    tc.d() = n;
 
-            triangles.push_back(tc);
+    triangles.push_back(tc);
         }
     }
 
     // If we loaded nothing, treat as failure.
     if (triangles.empty()) return false;
+
+    query_cache_built = false;
 
     // Build acceleration structure for tracing.
     ensure_bvh();
@@ -266,6 +293,12 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
+#if !defined(__CUDA_ARCH__)
+    if (triangles.empty()) return p;
+
+    // Host path delegates to TriangleMeshQueryOperator for consistent mesh semantics.
+    return make_query_operator().closest_point(p);
+#else
     // Find the closest point on the mesh to p by scanning all triangles.
     //
     // Complexity:
@@ -297,11 +330,18 @@ TriangleMesh<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcep
     }
 
     return best_cp;
+#endif
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
+#if !defined(__CUDA_ARCH__)
+    if (triangles.empty()) return atlas::math::Vector<T, 3>(T(0), T(0), T(1));
+
+    // Host path delegates to TriangleMeshQueryOperator for consistent mesh semantics.
+    return make_query_operator().closest_normal(p);
+#else
     // Return the normal of the triangle (or feature) that is closest to p.
     //
     // Strategy:
@@ -330,11 +370,18 @@ TriangleMesh<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexce
     }
 
     return best_n;
+#endif
 }
 
 template <typename T>
 T
 TriangleMesh<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
+#if !defined(__CUDA_ARCH__)
+    if (triangles.empty()) return std::numeric_limits<T>::infinity();
+
+    // Host path uses the mesh query operator, including winding-based sign.
+    return make_query_operator().signed_distance(p);
+#else
     // Signed distance to the mesh (triangle soup) using nearest triangle.
     //
     // Steps:
@@ -380,6 +427,23 @@ TriangleMesh<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexc
     const T s = (best_n.dot(v) >= T(0)) ? T(1) : T(-1);
 
     return s * dist;
+#endif
+}
+
+template <typename T>
+bool
+TriangleMesh<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    if (triangles.empty()) return false;
+    // Use the mesh query operator so inside classification matches winding-based semantics.
+    return make_query_operator().is_inside(p, tolerance);
+}
+
+template <typename T>
+bool
+TriangleMesh<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    if (triangles.empty()) return false;
+    // Surface classification follows the mesh query-operator distance convention.
+    return make_query_operator().is_on_surface(p, tolerance);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -389,6 +453,12 @@ TriangleMesh<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexc
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::centroid() const noexcept {
+#if !defined(__CUDA_ARCH__)
+    if (triangles.empty()) return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
+
+    // Reuse the query-operator centroid to keep mesh query behavior centralized.
+    return make_query_operator().centroid();
+#else
     // Compute an average of triangle centroids (uniform per-triangle weighting).
     //
     // Note:
@@ -405,11 +475,18 @@ TriangleMesh<T>::centroid() const noexcept {
     }
 
     return acc * inv;
+#endif
 }
 
 template <typename T>
 atlas::spatial::AxisAlignedBoundingBox<T>
 TriangleMesh<T>::bound() const noexcept {
+#if !defined(__CUDA_ARCH__)
+    if (triangles.empty()) return atlas::spatial::AxisAlignedBoundingBox<T>();
+
+    // Reuse the query-operator bound to keep mesh query behavior centralized.
+    return make_query_operator().bound();
+#else
     // Compute the axis-aligned bounding box over all vertices.
     //
     // Implementation:
@@ -430,6 +507,7 @@ TriangleMesh<T>::bound() const noexcept {
     }
 
     return atlas::spatial::AxisAlignedBoundingBox<T>(lo, hi);
+#endif
 }
 
 template <typename T>

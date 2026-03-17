@@ -57,6 +57,36 @@ TEST(CylinderQueryOperator, SignedDistanceIsPositiveOutsideAboveCap) {
     EXPECT_NEAR(op.signed_distance(p), 3.0, eps);
 }
 
+TEST(CylinderQueryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
+    const Vector3<double> c(0.0, 0.0, 0.0);
+    constexpr double r = 1.0;
+    constexpr double h = 2.0;
+
+    geometry::CylinderQueryOperator<double> op;
+    op.center = atlas::raw_pointer_cast(&c);
+    op.radius = atlas::raw_pointer_cast(&r);
+    op.height = atlas::raw_pointer_cast(&h);
+
+    EXPECT_TRUE(op.is_inside(Vector3<double>(0.0, 0.0, 0.0)));
+    EXPECT_FALSE(op.is_inside(Vector3<double>(1.2, 0.0, 0.0)));
+    EXPECT_TRUE(op.is_inside(Vector3<double>(1.2, 0.0, 0.0), 0.25));
+}
+
+TEST(CylinderQueryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
+    const Vector3<double> c(0.0, 0.0, 0.0);
+    constexpr double r = 1.0;
+    constexpr double h = 2.0;
+
+    geometry::CylinderQueryOperator<double> op;
+    op.center = atlas::raw_pointer_cast(&c);
+    op.radius = atlas::raw_pointer_cast(&r);
+    op.height = atlas::raw_pointer_cast(&h);
+
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(1.0, 0.0, 0.0)));
+    EXPECT_FALSE(op.is_on_surface(Vector3<double>(0.0, 0.0, 0.0)));
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(0.0, 0.0, 1.1), 0.15));
+}
+
 TEST(CylinderQueryOperator, ClosestPointReturnsInputWhenPointersNull) {
     constexpr geometry::CylinderQueryOperator<double> op;
 

@@ -120,6 +120,22 @@ Sphere<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
 }
 
 template <typename T>
+bool
+Sphere<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Reuse the sphere query operator so host-side classification and raw
+    // operator classification remain exactly aligned.
+    return make_query_operator().is_inside(p, tolerance);
+}
+
+template <typename T>
+bool
+Sphere<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Delegate the tolerance-band test to the query operator rather than
+    // duplicating sphere boundary logic here.
+    return make_query_operator().is_on_surface(p, tolerance);
+}
+
+template <typename T>
 atlas::math::Vector<T, 3>
 Sphere<T>::centroid() const noexcept {
     // For a sphere, the centroid is its center.

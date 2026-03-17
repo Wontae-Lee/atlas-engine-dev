@@ -168,6 +168,83 @@ BoxQueryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const n
 }
 
 template <typename T>
+bool
+BoxQueryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p is inside the box, allowing a configurable tolerance.
+    //
+    // Geometric meaning:
+    // - Without tolerance, the test is the standard inclusive AABB containment test:
+    //     lo.x <= p.x <= hi.x, etc.
+    //
+    // - With tolerance > 0, the box is effectively expanded outward by `tolerance`
+    //   in every direction before testing containment.
+    //   This is useful for:
+    //   * numerical robustness near boundaries,
+    //   * treating near-surface points as still "inside",
+    //   * avoiding false negatives caused by floating-point roundoff.
+    //
+    // - With tolerance < 0, the valid interior region shrinks, making the test stricter.
+    //   In practice, callers usually pass a non-negative tolerance.
+    //
+    // Fallback policy:
+    // - If the operator is not bound to valid box corners, there is no meaningful
+    //   containment test, so return false.
+    if (!lower_corner || !upper_corner) return false;
+
+    // Access the stored box corners by reference for readability and to avoid repeated dereference.
+    const atlas::math::Vector<T, 3>& lo = *lower_corner;
+    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+
+    // Inclusive per-axis containment test with tolerance padding:
+    //
+    // X axis:
+    //   p.x must lie in [lo.x - tolerance, hi.x + tolerance]
+    //
+    // Y axis:
+    //   p.y must lie in [lo.y - tolerance, hi.y + tolerance]
+    //
+    // Z axis:
+    //   p.z must lie in [lo.z - tolerance, hi.z + tolerance]
+    //
+    // Because the checks are combined with logical AND, p is considered inside
+    // only if it lies within the tolerated interval on all three axes.
+    return (p.x >= lo.x - tolerance) && (p.x <= hi.x + tolerance)
+        && (p.y >= lo.y - tolerance) && (p.y <= hi.y + tolerance)
+        && (p.z >= lo.z - tolerance) && (p.z <= hi.z + tolerance);
+}
+
+template <typename T>
+bool
+BoxQueryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies on the box surface within the given tolerance.
+    //
+    // Strategy:
+    // - Reuse signed_distance(p), which already encodes the distance to the box surface:
+    //     * negative inside
+    //     * zero on the surface
+    //     * positive outside
+    //
+    // - A point is considered "on the surface" if the magnitude of that signed distance
+    //   is no larger than `tolerance`.
+    //
+    // In other words:
+    //   |signed_distance(p)| <= tolerance
+    //
+    // Interpretation:
+    // - Exact arithmetic / tolerance = 0:
+    //     only points exactly on the surface return true.
+    //
+    // - Positive tolerance:
+    //     points slightly inside or slightly outside the surface are also accepted,
+    //     which is often desirable for robust geometric classification.
+    //
+    // Design benefit:
+    // - This keeps the surface test consistent with the operator's signed-distance definition,
+    //   rather than duplicating face-by-face boundary logic here.
+    return std::abs(signed_distance(p)) <= tolerance;
+}
+
+template <typename T>
 atlas::math::Vector<T, 3>
 BoxQueryOperator<T>::centroid() const noexcept {
     // Centroid of an axis-aligned box:
@@ -271,6 +348,95 @@ SphereQueryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) cons
 }
 
 template <typename T>
+bool
+SphereQueryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies inside the sphere, allowing a configurable tolerance.
+    //
+    // Sphere model:
+    // - center : c
+    // - radius : r
+    //
+    // Exact containment test (no tolerance):
+    //   |p - c| <= r
+    //
+    // Tolerance handling:
+    // - We interpret tolerance by expanding the radius:
+    //     expanded_radius = r + tolerance
+    //
+    //   Then the test becomes:
+    //     |p - c| <= expanded_radius
+    //
+    // Meaning:
+    // - tolerance > 0:
+    //     sphere grows outward, so near-outside points can still count as inside
+    //
+    // - tolerance = 0:
+    //     exact inclusive sphere containment
+    //
+    // - tolerance < 0:
+    //     sphere shrinks inward, making the test stricter
+    //
+    // This is useful for:
+    // - robust geometric classification near the boundary
+    // - compensating for floating-point error
+    // - intentionally shrinking/expanding the accepted region
+    //
+    // Fallback policy:
+    // - If the operator is not bound to a valid center/radius, return false.
+    if (!center || !radius) return false;
+
+    // Adjust radius by tolerance.
+    const T expanded_radius = *radius + tolerance;
+
+    // If the effective radius becomes negative, the accepted interior is empty.
+    // In that case no point can be considered inside.
+    if (expanded_radius < T(0)) return false;
+
+    // Use squared-distance comparison to avoid an unnecessary sqrt:
+    //
+    //   |p - c| <= expanded_radius
+    // is equivalent to
+    //   |p - c|^2 <= expanded_radius^2
+    //
+    // This is both cheaper and numerically common for containment tests.
+    return (p - *center).length_squared() <= expanded_radius * expanded_radius;
+}
+
+template <typename T>
+bool
+SphereQueryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies on the sphere surface within the given tolerance.
+    //
+    // Strategy:
+    // - Reuse signed_distance(p), which for a sphere is:
+    //
+    //     sd = |p - center| - radius
+    //
+    //   so:
+    //   - sd < 0 : inside
+    //   - sd = 0 : exactly on the surface
+    //   - sd > 0 : outside
+    //
+    // - A point is treated as "on the surface" if the magnitude of that signed
+    //   distance is at most `tolerance`:
+    //
+    //     |sd| <= tolerance
+    //
+    // Interpretation:
+    // - tolerance = 0:
+    //     exact surface membership
+    //
+    // - tolerance > 0:
+    //     accept a thin shell around the sphere surface, both slightly inside
+    //     and slightly outside
+    //
+    // Design benefit:
+    // - This keeps surface classification fully consistent with the signed-distance
+    //   convention already used elsewhere in the operator.
+    return std::abs(signed_distance(p)) <= tolerance;
+}
+
+template <typename T>
 atlas::math::Vector<T, 3>
 SphereQueryOperator<T>::centroid() const noexcept {
     // Centroid of sphere is its center.
@@ -346,6 +512,81 @@ PlaneQueryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const
 }
 
 template <typename T>
+bool
+PlaneQueryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies on the "inside" side of the plane, allowing tolerance.
+    //
+    // Plane implicit form:
+    //   n · x + d = 0
+    //
+    // The scalar
+    //   s = n · p + d
+    // classifies the point relative to the plane:
+    //
+    // - s < 0 : point is on the negative side of the plane
+    // - s = 0 : point lies exactly on the plane
+    // - s > 0 : point is on the positive side of the plane
+    //
+    // This operator defines "inside" as:
+    //   s <= tolerance
+    //
+    // Interpretation:
+    // - tolerance = 0:
+    //     inside includes the plane itself and the entire negative half-space
+    //
+    // - tolerance > 0:
+    //     the accepted half-space is expanded slightly into the positive side,
+    //     which is useful for numerical robustness near the plane
+    //
+    // - tolerance < 0:
+    //     the accepted region shrinks and becomes stricter
+    //
+    // Important note:
+    // - This is a half-space test, not a bounded-volume test.
+    // - For a plane, "inside" always means one side of the infinite plane.
+    //
+    // Fallback policy:
+    // - If either normal or offset is missing, there is no valid plane equation,
+    //   so return false.
+    if (!normal || !offset) return false;
+
+    // Evaluate the plane equation at p and compare against tolerance.
+    return (*normal).dot(p) + (*offset) <= tolerance;
+}
+
+template <typename T>
+bool
+PlaneQueryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies on the plane surface within the given tolerance.
+    //
+    // Strategy:
+    // - Reuse signed_distance(p), which for this operator is:
+    //
+    //     sd = n · p + d
+    //
+    //   Note:
+    //   - This is the signed plane equation value.
+    //   - It is the true geometric signed distance only if the normal is unit length.
+    //   - If the normal is not normalized, this is still a consistent signed
+    //     classification value, just scaled by |n|.
+    //
+    // Surface test:
+    //   |sd| <= tolerance
+    //
+    // Meaning:
+    // - tolerance = 0:
+    //     only points exactly satisfying the plane equation count as on-surface
+    //
+    // - tolerance > 0:
+    //     accept a thin slab around the plane, which helps with floating-point
+    //     robustness and near-surface classification
+    //
+    // Design benefit:
+    // - This keeps the surface test fully consistent with the same signed-distance
+    //   convention used elsewhere by the operator.
+    return std::abs(signed_distance(p)) <= tolerance;
+}
+template <typename T>
 atlas::math::Vector<T, 3>
 PlaneQueryOperator<T>::centroid() const noexcept {
     // Infinite plane has no unique centroid.
@@ -420,6 +661,152 @@ CylinderQueryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) co
     const T inside  = (mxy < T(0)) ? mxy : T(0);
 
     return outside + inside;
+}
+
+template <typename T>
+bool
+CylinderQueryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies inside or on a finite cylinder,
+    // allowing a tolerance.
+    //
+    // Cylinder definition:
+    // - center : cylinder center
+    // - radius : radius in the x-y plane
+    // - height : total extent along the z-axis
+    //
+    // Geometry:
+    // - The cylinder is centered at *center
+    // - Its axis is aligned with the z-axis
+    // - Its axial half-height is:
+    //
+    //     hz = height / 2
+    //
+    // - A point is inside the exact cylinder if both hold:
+    //
+    //     rho <= radius
+    //     |dz| <= hz
+    //
+    //   where:
+    //
+    //     d   = p - center
+    //     rho = sqrt(dx^2 + dy^2)
+    //     dz  = d.z
+    //
+    // Signed-distance-style reduction:
+    // - Define the radial and axial offsets from the ideal cylinder bounds:
+    //
+    //     qx = rho - radius
+    //     qy = |dz| - hz
+    //
+    // Interpretation:
+    // - qx <= 0 : point is within the radial bound
+    // - qx >  0 : point is outside radially
+    // - qy <= 0 : point is within the axial bound
+    // - qy >  0 : point is outside axially
+    //
+    // Cases:
+    //
+    // 1) Point projects inside both bounds:
+    //
+    //      qx <= 0 and qy <= 0
+    //
+    //    Then the point is inside the cylinder.
+    //    In this case, the signed-distance-style inside value is:
+    //
+    //      inside = max(qx, qy)
+    //
+    //    which is:
+    //    - negative inside the volume
+    //    - zero on the side wall or top/bottom caps
+    //
+    //    The acceptance test is:
+    //
+    //      inside <= tolerance
+    //
+    // 2) Point is outside in at least one direction:
+    //
+    //      qx > 0 or qy > 0
+    //
+    //    Then the shortest outside distance to the cylinder is obtained from
+    //    the positive excesses only:
+    //
+    //      ax = max(qx, 0)
+    //      ay = max(qy, 0)
+    //
+    //    and the outside-distance test becomes:
+    //
+    //      ax^2 + ay^2 <= tolerance^2
+    //
+    // Tolerance interpretation:
+    // - tolerance = 0:
+    //     accept only points exactly inside or on the cylinder
+    //
+    // - tolerance > 0:
+    //     expand the accepted region slightly outside the cylinder,
+    //     which improves robustness near edges and corners
+    //
+    // - tolerance < 0:
+    //     for outside points, this operator rejects immediately
+    //     because a negative outside allowance is not meaningful here
+    //     in the distance-squared test
+    //
+    // Important note:
+    // - This is a bounded-volume test for a finite cylinder,
+    //   not an infinite-cylinder test.
+    //
+    // Fallback policy:
+    // - If center, radius, or height is missing, the cylinder is not
+    //   properly defined, so return false.
+    if (!center || !radius || !height) return false;
+
+    const T hz                        = (*height) * T(0.5);
+    const atlas::math::Vector<T, 3> d = p - *center;
+    const T rho                       = static_cast<T>(std::sqrt(d.x * d.x + d.y * d.y));
+    const T qx                        = rho - *radius;
+    const T qy                        = static_cast<T>(std::fabs(d.z)) - hz;
+
+    if (qx <= T(0) && qy <= T(0)) {
+        const T inside = (qx > qy) ? qx : qy;
+        return inside <= tolerance;
+    }
+
+    if (tolerance < T(0)) return false;
+
+    const T ax = (qx > T(0)) ? qx : T(0);
+    const T ay = (qy > T(0)) ? qy : T(0);
+    return (ax * ax + ay * ay) <= (tolerance * tolerance);
+}
+
+template <typename T>
+bool
+CylinderQueryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies on the cylinder surface within tolerance.
+    //
+    // Strategy:
+    // - Reuse signed_distance(p), which for this operator is interpreted as a
+    //   signed-distance-style value for a finite z-aligned cylinder.
+    //
+    // Sign convention:
+    // - signed_distance(p) < 0 : point is inside
+    // - signed_distance(p) = 0 : point is on the surface
+    // - signed_distance(p) > 0 : point is outside
+    //
+    // Surface test:
+    //   |signed_distance(p)| <= tolerance
+    //
+    // Interpretation:
+    // - tolerance = 0:
+    //     only points exactly on the cylinder surface are accepted
+    //
+    // - tolerance > 0:
+    //     accept a thin shell around the surface, which helps with
+    //     floating-point robustness near the side wall, top cap,
+    //     bottom cap, and edge rim
+    //
+    // Important note:
+    // - This surface includes all boundary parts of the finite cylinder:
+    //   the curved side wall, the top and bottom caps, and their circular rims.
+    return std::abs(signed_distance(p)) <= tolerance;
 }
 
 template <typename T>
@@ -726,6 +1113,158 @@ TriangleQueryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) co
 }
 
 template <typename T>
+bool
+TriangleQueryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p is considered "inside" relative to the triangle,
+    // allowing a tolerance.
+    //
+    // Important note:
+    // - A triangle is a 2D surface element in 3D space, not a volumetric region.
+    // - Therefore, "inside" here does not mean inside a bounded 3D volume.
+    // - Instead, this operator uses:
+    //   1) the oriented supporting plane of the triangle, and
+    //   2) the closest-point distance to the triangle itself.
+    //
+    // Triangle definition:
+    // - Vertices: a, b, c
+    // - Optional stored normal: n
+    //
+    // If no normal is provided, use the geometric triangle normal:
+    //
+    //   nn = (b - a) × (c - a)
+    //
+    // This normal defines the oriented supporting plane of the triangle.
+    //
+    // Degeneracy:
+    // - If the triangle normal has zero length, the triangle is degenerate
+    //   (zero area), so classification is undefined and this function returns false.
+    //
+    // Closest-point strategy:
+    // - Compute the closest point cp on the triangle to p.
+    //
+    //     cp = closest_point(p)
+    //
+    // - Then compute the squared Euclidean distance:
+    //
+    //     d2 = |p - cp|^2
+    //
+    // This gives the shortest distance from p to the finite triangle
+    // (including its interior, edges, and vertices).
+    //
+    // Oriented side test:
+    // - Compute:
+    //
+    //     side = (p - a) · nn
+    //
+    // Interpretation:
+    // - side < 0 : p lies on the negative side of the triangle plane
+    // - side = 0 : p lies on the supporting plane
+    // - side > 0 : p lies on the positive side of the triangle plane
+    //
+    // Inside convention:
+    // - This operator treats the negative side of the oriented triangle plane
+    //   as the "inside" side.
+    //
+    // Cases:
+    //
+    // 1) side <= 0
+    //
+    //    The point is on the plane or on the negative side.
+    //
+    //    - If tolerance >= 0:
+    //        accept immediately
+    //
+    //      This means the entire negative half-space is considered inside,
+    //      independent of the finite-triangle distance.
+    //
+    //    - If tolerance < 0:
+    //        require:
+    //
+    //            d2 >= tolerance^2
+    //
+    //      Since tolerance^2 is positive, this excludes points that are too
+    //      close to the triangle surface while still remaining on the inside side.
+    //
+    // 2) side > 0
+    //
+    //    The point is on the positive side of the plane.
+    //
+    //    - If tolerance < 0:
+    //        reject immediately
+    //
+    //    - If tolerance >= 0:
+    //        accept only if the point lies within tolerance distance of the
+    //        finite triangle:
+    //
+    //            d2 <= tolerance^2
+    //
+    // Tolerance interpretation:
+    // - tolerance = 0:
+    //     accept the full negative half-space and the triangle surface itself;
+    //     on the positive side, only exact surface points are accepted
+    //
+    // - tolerance > 0:
+    //     expand acceptance slightly into the positive side, but only near the
+    //     finite triangle surface
+    //
+    // - tolerance < 0:
+    //     shrink acceptance on the inside side by excluding points too close
+    //     to the triangle surface, and reject all points on the positive side
+    //
+    // Important note:
+    // - This is not a pure point-to-triangle inclusion test.
+    // - It is an oriented half-space classification combined with a finite-triangle
+    //   proximity test near the positive side of the surface.
+    //
+    // Fallback policy:
+    // - If any vertex is missing, or if the triangle is degenerate,
+    //   return false.
+    if (!a || !b || !c) return false;
+
+    const atlas::math::Vector<T, 3> cp = closest_point(p);
+    const T d2                         = (p - cp).length_squared();
+
+    atlas::math::Vector<T, 3> nn = n ? *n : atlas::math::cross((*b) - (*a), (*c) - (*a));
+    const T nn_len2              = nn.length_squared();
+    if (nn_len2 <= T(0)) return false;
+
+    const T side = (p - (*a)).dot(nn);
+
+    if (side <= T(0)) {
+        if (tolerance >= T(0)) return true;
+        return d2 >= (tolerance * tolerance);
+    }
+
+    if (tolerance < T(0)) return false;
+    return d2 <= (tolerance * tolerance);
+}
+
+template <typename T>
+bool
+TriangleQueryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies on the triangle surface within tolerance.
+    //
+    // Strategy:
+    // - Reuse signed_distance(p), which for this operator is expected to provide
+    //   a signed-distance-style value consistent with the triangle surface.
+    //
+    // Surface test:
+    //   |signed_distance(p)| <= tolerance
+    //
+    // Interpretation:
+    // - tolerance = 0:
+    //     only points exactly on the triangle surface are accepted
+    //
+    // - tolerance > 0:
+    //     accept a thin neighborhood around the triangle, including regions
+    //     near its interior, edges, and vertices
+    //
+    // Important note:
+    // - For full consistency, signed_distance(p) should follow the same surface
+    //   convention as closest_point(p) and the finite triangle geometry.
+    return std::abs(signed_distance(p)) <= tolerance;
+}
+template <typename T>
 atlas::math::Vector<T, 3>
 TriangleQueryOperator<T>::centroid() const noexcept {
     // Centroid of triangle:
@@ -760,6 +1299,55 @@ TriangleQueryOperator<T>::is_valid() const noexcept {
 /* ====================================================================== */
 /* TriangleMeshQueryOperator<T>                                            */
 /* ====================================================================== */
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+triangle_mesh_query_solid_angle(const atlas::math::Vector<T, 3>& p,
+                                const atlas::math::Vector<T, 3>& a,
+                                const atlas::math::Vector<T, 3>& b,
+                                const atlas::math::Vector<T, 3>& c) noexcept {
+    const atlas::math::Vector<T, 3> va = a - p;
+    const atlas::math::Vector<T, 3> vb = b - p;
+    const atlas::math::Vector<T, 3> vc = c - p;
+
+    const T la = va.length();
+    const T lb = vb.length();
+    const T lc = vc.length();
+
+    if (la <= std::numeric_limits<T>::epsilon() || lb <= std::numeric_limits<T>::epsilon()
+        || lc <= std::numeric_limits<T>::epsilon()) {
+        return T(0);
+    }
+
+    const T numerator   = va.dot(atlas::math::cross(vb, vc));
+    const T denominator = la * lb * lc + va.dot(vb) * lc + vb.dot(vc) * la + vc.dot(va) * lb;
+
+    return T(2) * std::atan2(numerator, denominator);
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+triangle_mesh_query_winding_number(const TriangleMeshQueryOperator<T>& mesh,
+                                   const atlas::math::Vector<T, 3>& p) noexcept {
+    if (!mesh.is_valid()) return T(0);
+
+    T solid_angle_sum = T(0);
+
+    for (int t = 0; t < mesh.triangle_count; ++t) {
+        const int i0 = mesh.indices[3 * t + 0];
+        const int i1 = mesh.indices[3 * t + 1];
+        const int i2 = mesh.indices[3 * t + 2];
+
+        const atlas::math::Vector<T, 3>& a = mesh.vertices[i0];
+        const atlas::math::Vector<T, 3>& b = mesh.vertices[i1];
+        const atlas::math::Vector<T, 3>& c = mesh.vertices[i2];
+
+        solid_angle_sum += triangle_mesh_query_solid_angle(p, a, b, c);
+    }
+
+    const T four_pi = T(4) * std::acos(T(-1));
+    return solid_angle_sum / four_pi;
+}
 
 template <typename T>
 atlas::math::Vector<T, 3>
@@ -866,19 +1454,15 @@ TriangleMeshQueryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p)
 template <typename T>
 T
 TriangleMeshQueryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Brute-force signed distance to a triangle mesh.
+    // Brute-force mesh distance magnitude with winding-number sign.
     //
-    // Method:
-    // - Find the closest point on the mesh (min distance).
-    // - Determine sign by dot((p - cp), normal_at_cp).
-    //
-    // Caveat:
-    // - For open / non-watertight meshes, "inside/outside" is not globally well-defined.
+    // Sign policy:
+    // - Use the generalized winding number induced by the triangle winding.
+    // - Closed consistently wound meshes classify points with |w| > 0.5 as inside.
+    // - Open meshes typically produce winding numbers near zero, so the distance remains positive.
     if (!is_valid()) return std::numeric_limits<T>::infinity();
 
-    T best_d2                         = std::numeric_limits<T>::max();
-    atlas::math::Vector<T, 3> best_cp = p;
-    atlas::math::Vector<T, 3> best_n(T(0), T(0), T(1));
+    T best_d2 = std::numeric_limits<T>::max();
 
     TriangleQueryOperator<T> tri {};
 
@@ -907,25 +1491,170 @@ TriangleMeshQueryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p
 
         if (d2 < best_d2) {
             best_d2 = d2;
-            best_cp = cp;
-            best_n  = tri.closest_normal(p);
         }
     }
 
     const T dist = static_cast<T>(std::sqrt(best_d2));
-    const T s    = (p - best_cp).dot(best_n);
-    return (s >= T(0)) ? dist : -dist;
+    if (dist <= std::numeric_limits<T>::epsilon()) return T(0);
+
+    const T winding = triangle_mesh_query_winding_number(*this, p);
+    return (std::abs(winding) > T(0.5)) ? -dist : dist;
+}
+
+template <typename T>
+bool
+TriangleMeshQueryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p is considered inside the triangle mesh,
+    // allowing a tolerance around the surface.
+    //
+    // Classification strategy:
+    // - Use the mesh winding number at p:
+    //
+    //     winding = triangle_mesh_query_winding_number(*this, p)
+    //
+    // - For a closed, consistently wound mesh:
+    //     |winding| > 0.5  => inside
+    //     |winding| <= 0.5 => outside
+    //
+    // Interpretation:
+    // - The winding number provides a global inside/outside classification
+    //   for properly oriented closed triangle meshes.
+    // - In practice, values near ±1 indicate interior points and values near 0
+    //   indicate exterior points.
+    //
+    // Surface-distance handling:
+    // - In addition to winding classification, compute the shortest distance
+    //   from p to the mesh surface by scanning all triangles and taking the
+    //   minimum point-to-triangle distance.
+    //
+    //     dist = min distance from p to the mesh
+    //
+    // - This distance is then used only to apply tolerance around the surface.
+    //
+    // Tolerance interpretation:
+    // - tolerance = 0:
+    //     accept exactly the winding-defined interior and the surface itself
+    //
+    // - tolerance > 0:
+    //     expand acceptance slightly outside the mesh by 'tolerance'
+    //
+    // - tolerance < 0:
+    //     shrink the accepted interior by excluding points whose distance
+    //     to the mesh surface is smaller than |tolerance|
+    //
+    // Cases:
+    // - If p is winding-classified as inside:
+    //     * tolerance >= 0 : accept
+    //     * tolerance <  0 : accept only if dist >= -tolerance
+    //
+    // - If p is winding-classified as outside:
+    //     * tolerance <  0 : reject
+    //     * tolerance >= 0 : accept only if dist <= tolerance
+    //
+    // Important limitations:
+    // - The winding-number test is meaningful primarily for closed meshes
+    //   with consistent triangle orientation.
+    // - For open meshes, self-intersecting meshes, or inconsistent winding,
+    //   the result may not match a well-defined volumetric interior.
+    //
+    // Fallback policy:
+    // - If the mesh is invalid, return false.
+    if (!is_valid()) return false;
+
+    T best_d2 = std::numeric_limits<T>::max();
+
+    TriangleQueryOperator<T> tri {};
+
+    for (int t = 0; t < triangle_count; ++t) {
+        const int i0 = indices[3 * t + 0];
+        const int i1 = indices[3 * t + 1];
+        const int i2 = indices[3 * t + 2];
+
+        const atlas::math::Vector<T, 3>& a = vertices[i0];
+        const atlas::math::Vector<T, 3>& b = vertices[i1];
+        const atlas::math::Vector<T, 3>& c = vertices[i2];
+
+        atlas::math::Vector<T, 3> n = atlas::math::cross(b - a, c - a);
+        const T n2                  = n.length_squared();
+        if (n2 > T(0)) n *= (T(1) / static_cast<T>(std::sqrt(n2)));
+        else
+            n = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
+
+        tri.a = &a;
+        tri.b = &b;
+        tri.c = &c;
+        tri.n = &n;
+
+        const atlas::math::Vector<T, 3> cp = tri.closest_point(p);
+        const T d2                         = (cp - p).length_squared();
+
+        if (d2 < best_d2) {
+            best_d2 = d2;
+        }
+    }
+
+    const T dist      = static_cast<T>(std::sqrt(best_d2));
+    const T winding   = triangle_mesh_query_winding_number(*this, p);
+    const bool inside = std::abs(winding) > T(0.5);
+
+    if (inside) {
+        if (tolerance >= T(0)) return true;
+        return dist >= -tolerance;
+    }
+
+    if (tolerance < T(0)) return false;
+    return dist <= tolerance;
+}
+
+template <typename T>
+bool
+TriangleMeshQueryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies on the mesh surface within tolerance.
+    //
+    // Strategy:
+    // - Reuse signed_distance(p), which is expected to provide a signed-distance-style
+    //   value consistent with the mesh surface.
+    //
+    // Surface test:
+    //   |signed_distance(p)| <= tolerance
+    //
+    // Interpretation:
+    // - tolerance = 0:
+    //     only points exactly on the mesh surface are accepted
+    //
+    // - tolerance > 0:
+    //     accept a thin neighborhood around the mesh surface, including regions
+    //     near triangle interiors, edges, and vertices
+    //
+    // Important note:
+    // - For full consistency, signed_distance(p) should use the same surface-distance
+    //   convention as the nearest-point distance used in is_inside().
+    return std::abs(signed_distance(p)) <= tolerance;
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMeshQueryOperator<T>::centroid() const noexcept {
-    // Simple centroid estimate:
-    // - average of triangle centroids (uniform weighting per triangle)
+    // Return a simple centroid estimate for the triangle mesh.
     //
-    // Note:
-    // - This is NOT area-weighted. For non-uniform triangles, area-weighted
-    //   centroid may be preferable.
+    // Strategy:
+    // - Compute the centroid of each triangle:
+    //
+    //     (a + b + c) / 3
+    //
+    // - Then average those triangle centroids uniformly over all triangles.
+    //
+    // Interpretation:
+    // - Each triangle contributes equally, regardless of area.
+    // - Therefore, this is a simple per-triangle average, not an area-weighted
+    //   surface centroid and not a volume centroid.
+    //
+    // Consequence:
+    // - For meshes with strongly non-uniform triangle areas, this estimate may
+    //   differ noticeably from the geometric surface centroid.
+    //
+    // Fallback policy:
+    // - If the mesh is invalid, return the zero vector.
     if (!is_valid()) return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
 
     atlas::math::Vector<T, 3> sum(T(0), T(0), T(0));
@@ -1193,6 +1922,48 @@ QueryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noex
         return triangle_mesh.signed_distance(p);
     default:
         return std::numeric_limits<T>::infinity();
+    }
+}
+
+template <typename T>
+bool
+QueryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    switch (type) {
+    case GeometryType::Box:
+        return box.is_inside(p, tolerance);
+    case GeometryType::Cylinder:
+        return cylinder.is_inside(p, tolerance);
+    case GeometryType::Plane:
+        return plane.is_inside(p, tolerance);
+    case GeometryType::Sphere:
+        return sphere.is_inside(p, tolerance);
+    case GeometryType::Triangle:
+        return triangle.is_inside(p, tolerance);
+    case GeometryType::TriangleMesh:
+        return triangle_mesh.is_inside(p, tolerance);
+    default:
+        return false;
+    }
+}
+
+template <typename T>
+bool
+QueryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    switch (type) {
+    case GeometryType::Box:
+        return box.is_on_surface(p, tolerance);
+    case GeometryType::Cylinder:
+        return cylinder.is_on_surface(p, tolerance);
+    case GeometryType::Plane:
+        return plane.is_on_surface(p, tolerance);
+    case GeometryType::Sphere:
+        return sphere.is_on_surface(p, tolerance);
+    case GeometryType::Triangle:
+        return triangle.is_on_surface(p, tolerance);
+    case GeometryType::TriangleMesh:
+        return triangle_mesh.is_on_surface(p, tolerance);
+    default:
+        return false;
     }
 }
 

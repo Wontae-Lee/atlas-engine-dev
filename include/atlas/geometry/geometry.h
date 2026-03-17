@@ -180,6 +180,40 @@ public:
         = 0;
 
     /**
+     * @brief Test whether a point lies inside the geometry within a tolerance.
+     *
+     * @details
+     * The interpretation follows the geometry's signed-distance convention.
+     * For closed solids this typically means negative distance is inside.
+     *
+     * @param p Query point in world coordinates.
+     * @param tolerance Allowed positive slack around the interior boundary.
+     * @return `true` if the point is classified as inside.
+     *
+     * @note
+     * Host-only in the current design because implementations forward through
+     * @ref make_query_operator(), which is also host-only.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance ) const noexcept
+        = 0;
+
+    /**
+     * @brief Test whether a point lies on the surface within a tolerance.
+     *
+     * @param p Query point in world coordinates.
+     * @param tolerance Allowed absolute deviation from the surface.
+     * @return `true` if the point is within the surface band.
+     *
+     * @note
+     * Host-only in the current design because implementations forward through
+     * @ref make_query_operator(), which is also host-only.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance ) const noexcept
+        = 0;
+
+    /**
      * @brief Compute a representative centroid of the geometry.
      *
      * @details

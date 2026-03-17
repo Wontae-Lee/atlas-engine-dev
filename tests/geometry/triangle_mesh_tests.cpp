@@ -8,6 +8,8 @@
 #include <string>    // std::string (implicit via APIs / file names)
 #include <utility>   // std::move
 
+using namespace atlas;
+
 TEST(GeometryTriangleMesh, ConstructFromCopyBuildsBvhAndIsValid) {
 
     // Build a small set of non-degenerate triangles on the host.
@@ -147,7 +149,7 @@ TEST(GeometryTriangleMesh, MakeTraceOperatorReturnsDefaultWhenNotBuilt) {
     (void)tr; // suppress unused warning
 }
 
-TEST(GeometryTriangleMesh, MakeQueryOperatorIsTriangleMeshTypeButNotValidByDesign) {
+TEST(GeometryTriangleMesh, MakeQueryOperatorReturnsValidTriangleMeshQueryOperator) {
 
     // Build a simple mesh with one triangle.
     atlas::HostBuffer<atlas::TriangleContainer4<double>> tris;
@@ -164,17 +166,65 @@ TEST(GeometryTriangleMesh, MakeQueryOperatorIsTriangleMeshTypeButNotValidByDesig
 
     const atlas::geometry::TriangleMesh<double> mesh(tris);
 
-    // make_query_operator() may return a query operator wrapper tagged as TriangleMesh,
-    // but some designs intentionally mark mesh query operators as "not valid" to signal
-    // that certain generic query paths are unsupported or require BVH-only access.
     const auto q = mesh.make_query_operator();
-    EXPECT_FALSE(q.is_valid());
+    EXPECT_EQ(q.type, geometry::GeometryType::TriangleMesh);
+    EXPECT_TRUE(q.is_valid());
+}
+
+TEST(GeometryTriangleMesh, IsInsideUsesWindingBasedClosedMeshContainment) {
+    atlas::HostBuffer<atlas::TriangleContainer4<double>> tris;
+    tris.push_back(atlas::TriangleContainer4<double> {
+        atlas::Vector3D(0.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 1.0, 0.0),
+        atlas::Vector3D(1.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 0.0, -1.0)
+    });
+    tris.push_back(atlas::TriangleContainer4<double> {
+        atlas::Vector3D(0.0, 0.0, 0.0),
+        atlas::Vector3D(1.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 0.0, 1.0),
+        atlas::Vector3D(0.0, -1.0, 0.0)
+    });
+    tris.push_back(atlas::TriangleContainer4<double> {
+        atlas::Vector3D(0.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 0.0, 1.0),
+        atlas::Vector3D(0.0, 1.0, 0.0),
+        atlas::Vector3D(-1.0, 0.0, 0.0)
+    });
+    tris.push_back(atlas::TriangleContainer4<double> {
+        atlas::Vector3D(1.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 1.0, 0.0),
+        atlas::Vector3D(0.0, 0.0, 1.0),
+        atlas::Vector3D(1.0, 1.0, 1.0)
+    });
+
+    const atlas::geometry::TriangleMesh<double> mesh(tris);
+
+    EXPECT_TRUE(mesh.is_inside(atlas::Vector3D(0.1, 0.1, 0.1), 0.0));
+    EXPECT_FALSE(mesh.is_inside(atlas::Vector3D(2.0, 2.0, 2.0), 0.0));
+    EXPECT_TRUE(mesh.is_inside(atlas::Vector3D(0.6, 0.6, 0.1), 0.5));
+}
+
+TEST(GeometryTriangleMesh, IsOnSurfaceDetectsSurfaceBand) {
+    atlas::HostBuffer<atlas::TriangleContainer4<double>> tris;
+    tris.push_back(atlas::TriangleContainer4<double> {
+        atlas::Vector3D(0.0, 0.0, 0.0),
+        atlas::Vector3D(1.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 1.0, 0.0),
+        atlas::Vector3D(0.0, 0.0, 1.0)
+    });
+
+    const atlas::geometry::TriangleMesh<double> mesh(tris);
+
+    EXPECT_TRUE(mesh.is_on_surface(atlas::Vector3D(0.25, 0.25, 0.0), 0.0));
+    EXPECT_FALSE(mesh.is_on_surface(atlas::Vector3D(0.25, 0.25, 0.3), 0.0));
+    EXPECT_TRUE(mesh.is_on_surface(atlas::Vector3D(0.25, 0.25, 0.1), 0.15));
 }
 
 TEST(GeometryTriangleMesh, ClosestPointChoosesNearestTriangleAmongMany) {
 
     // Use atlas::eps in double precision for geometric comparisons.
-    constexpr auto eps = static_cast<double>(atlas::eps);
+    
 
     // Construct two triangles far apart so nearest-triangle selection is obvious.
     atlas::HostBuffer<atlas::TriangleContainer4<double>> tris;
@@ -214,8 +264,7 @@ TEST(GeometryTriangleMesh, ClosestPointChoosesNearestTriangleAmongMany) {
 
 TEST(GeometryTriangleMesh, ClosestNormalReturnsTriangleNormalOfNearestTriangle) {
 
-    // Use atlas::eps in double precision for geometric comparisons.
-    constexpr auto eps = static_cast<double>(atlas::eps);
+
 
     // Two triangles with explicit stored normal (+Z) so nearest selection is testable.
     atlas::HostBuffer<atlas::TriangleContainer4<double>> tris;
@@ -250,40 +299,49 @@ TEST(GeometryTriangleMesh, ClosestNormalReturnsTriangleNormalOfNearestTriangle) 
     EXPECT_TRUE(atlas::test::vec_near(n1, atlas::Vector3D(0.0, 0.0, 1.0), eps));
 }
 
-TEST(GeometryTriangleMesh, SignedDistanceUsesNearestTriangleNormalForSign) {
+TEST(GeometryTriangleMesh, SignedDistanceUsesWindingSignForClosedMesh) {
 
-    // Use atlas::eps in double precision for signed-distance comparisons.
-    constexpr auto eps = static_cast<double>(atlas::eps);
-
-    // Single triangle on z=0 with +Z normal.
-    // Signed distance sign should follow the stored/derived normal:
-    // - positive above (z > 0)
-    // - negative below (z < 0)
+    // Closed tetrahedron with outward winding.
+    // Signed distance sign should follow winding-based containment:
+    // - negative inside
+    // - positive outside
     atlas::HostBuffer<atlas::TriangleContainer4<double>> tris;
 
-    {
-        constexpr atlas::TriangleContainer4<double> tc {
-            atlas::Vector3D(0.0, 0.0, 0.0),
-            atlas::Vector3D(1.0, 0.0, 0.0),
-            atlas::Vector3D(0.0, 1.0, 0.0),
-            atlas::Vector3D(0.0, 0.0, 1.0)
-        };
-        tris.push_back(tc);
-    }
+    tris.push_back(atlas::TriangleContainer4<double> {
+        atlas::Vector3D(0.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 1.0, 0.0),
+        atlas::Vector3D(1.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 0.0, -1.0)
+    });
+    tris.push_back(atlas::TriangleContainer4<double> {
+        atlas::Vector3D(0.0, 0.0, 0.0),
+        atlas::Vector3D(1.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 0.0, 1.0),
+        atlas::Vector3D(0.0, -1.0, 0.0)
+    });
+    tris.push_back(atlas::TriangleContainer4<double> {
+        atlas::Vector3D(0.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 0.0, 1.0),
+        atlas::Vector3D(0.0, 1.0, 0.0),
+        atlas::Vector3D(-1.0, 0.0, 0.0)
+    });
+    tris.push_back(atlas::TriangleContainer4<double> {
+        atlas::Vector3D(1.0, 0.0, 0.0),
+        atlas::Vector3D(0.0, 1.0, 0.0),
+        atlas::Vector3D(0.0, 0.0, 1.0),
+        atlas::Vector3D(1.0, 1.0, 1.0)
+    });
 
     const atlas::geometry::TriangleMesh<double> mesh(tris);
 
-    // Above the triangle plane (z=+1.5) => positive distance magnitude ~ 1.5.
-    EXPECT_TRUE(atlas::test::near(mesh.signed_distance(atlas::Vector3D(0.2, 0.2, 1.5)), 1.5, eps));
-
-    // Below the triangle plane (z=-2.0) => negative distance magnitude ~ -2.0.
-    EXPECT_TRUE(atlas::test::near(mesh.signed_distance(atlas::Vector3D(0.2, 0.2, -2.0)), -2.0, eps));
+    EXPECT_LT(mesh.signed_distance(atlas::Vector3D(0.1, 0.1, 0.1)), 0.0);
+    EXPECT_GT(mesh.signed_distance(atlas::Vector3D(2.0, 2.0, 2.0)), 0.0);
 }
 
 TEST(GeometryTriangleMesh, CentroidIsAverageOfTriangleCentroidsUniformWeight) {
 
     // Use atlas::eps for centroid comparison.
-    constexpr auto eps = static_cast<double>(atlas::eps);
+    
 
     // Build two triangles and verify mesh centroid is the uniform average of
     // per-triangle centroids (not area-weighted) as suggested by this API contract.

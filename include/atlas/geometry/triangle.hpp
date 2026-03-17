@@ -147,6 +147,22 @@ Triangle<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept 
 }
 
 template <typename T>
+bool
+Triangle<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Orientation-dependent triangle "inside" classification is defined in
+    // TriangleQueryOperator<T>; forward to it to avoid divergent rules.
+    return make_query_operator().is_inside(p, tolerance);
+}
+
+template <typename T>
+bool
+Triangle<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Delegate surface-band classification to the query operator so the
+    // wrapper does not reimplement point-to-triangle distance logic.
+    return make_query_operator().is_on_surface(p, tolerance);
+}
+
+template <typename T>
 atlas::math::Vector<T, 3>
 Triangle<T>::centroid() const noexcept {
     // Centroid:

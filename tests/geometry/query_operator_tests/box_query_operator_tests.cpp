@@ -112,6 +112,32 @@ TEST(BoxQueryOperator, SignedDistanceIsPositiveOutside) {
     EXPECT_NEAR(d, 3.0, eps);
 }
 
+TEST(BoxQueryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
+    const Vector3<double> lo(-1.0, -1.0, -1.0);
+    const Vector3<double> hi(1.0, 1.0, 1.0);
+
+    geometry::BoxQueryOperator<double> op;
+    op.lower_corner = atlas::raw_pointer_cast(&lo);
+    op.upper_corner = atlas::raw_pointer_cast(&hi);
+
+    EXPECT_TRUE(op.is_inside(Vector3<double>(0.0, 0.0, 0.0)));
+    EXPECT_FALSE(op.is_inside(Vector3<double>(1.2, 0.0, 0.0)));
+    EXPECT_TRUE(op.is_inside(Vector3<double>(1.2, 0.0, 0.0), 0.25));
+}
+
+TEST(BoxQueryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
+    const Vector3<double> lo(-1.0, -1.0, -1.0);
+    const Vector3<double> hi(1.0, 1.0, 1.0);
+
+    geometry::BoxQueryOperator<double> op;
+    op.lower_corner = atlas::raw_pointer_cast(&lo);
+    op.upper_corner = atlas::raw_pointer_cast(&hi);
+
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(1.0, 0.25, 0.0)));
+    EXPECT_FALSE(op.is_on_surface(Vector3<double>(0.0, 0.0, 0.0)));
+    EXPECT_TRUE(op.is_on_surface(Vector3<double>(1.1, 0.0, 0.0), 0.15));
+}
+
 TEST(BoxQueryOperator, CentroidReturnsZeroWhenPointersNull) {
     constexpr geometry::BoxQueryOperator<double> op;
     EXPECT_TRUE(test::vec_near(op.centroid(), Vector3<double>(0.0, 0.0, 0.0), eps));

@@ -143,6 +143,22 @@ TEST(Plane, SignedDistanceHasCorrectSignForZPlane) {
     EXPECT_LT(p.signed_distance(below), 0.0);
 }
 
+TEST(Plane, IsInsideUsesHalfSpaceAndTolerance) {
+    const geometry::Plane<double> p(Vector3<double>(0.0, 0.0, 1.0), 0.0);
+
+    EXPECT_TRUE(p.is_inside(Vector3<double>(0.0, 0.0, -1.0), 0.0));
+    EXPECT_FALSE(p.is_inside(Vector3<double>(0.0, 0.0, 0.2), 0.0));
+    EXPECT_TRUE(p.is_inside(Vector3<double>(0.0, 0.0, 0.2), 0.25));
+}
+
+TEST(Plane, IsOnSurfaceDetectsPlaneBand) {
+    const geometry::Plane<double> p(Vector3<double>(0.0, 0.0, 1.0), 0.0);
+
+    EXPECT_TRUE(p.is_on_surface(Vector3<double>(1.0, 2.0, 0.0), 0.0));
+    EXPECT_FALSE(p.is_on_surface(Vector3<double>(1.0, 2.0, 0.5), 0.0));
+    EXPECT_TRUE(p.is_on_surface(Vector3<double>(1.0, 2.0, 0.1), 0.15));
+}
+
 TEST(Plane, CentroidLiesOnPlaneForZPlane) {
 
     // Planes are infinite primitives, so "centroid" is convention-based.

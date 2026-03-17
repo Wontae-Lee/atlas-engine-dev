@@ -267,6 +267,26 @@ public:
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
 
     /**
+     * @brief Test whether a point lies in the plane's negative half-space within a tolerance.
+     *
+     * @param p Query point.
+     * @param tolerance Allowed positive slack relative to the plane equation.
+     * @return `true` if the point satisfies the plane-side classification.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+
+    /**
+     * @brief Test whether a point lies on the plane within a tolerance band.
+     *
+     * @param p Query point.
+     * @param tolerance Allowed absolute deviation from the plane equation.
+     * @return `true` if the point is classified as on the plane surface.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance ) const noexcept override;
+
+    /**
      * @brief Return a representative "centroid" for the plane.
      *
      * @details

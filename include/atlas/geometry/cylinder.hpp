@@ -145,6 +145,22 @@ Cylinder<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept 
 }
 
 template <typename T>
+bool
+Cylinder<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Keep finite-cylinder interior classification centralized in the query
+    // operator so tolerance handling is shared across all call paths.
+    return make_query_operator().is_inside(p, tolerance);
+}
+
+template <typename T>
+bool
+Cylinder<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Delegate surface-band checks to the query operator to avoid duplicating
+    // cap/side-wall boundary logic in the geometry wrapper.
+    return make_query_operator().is_on_surface(p, tolerance);
+}
+
+template <typename T>
 atlas::math::Vector<T, 3>
 Cylinder<T>::centroid() const noexcept {
     // Cylinder centroid in this representation is its center.

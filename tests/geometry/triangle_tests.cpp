@@ -167,6 +167,34 @@ TEST(Triangle, SignedDistanceMatchesTriangleQueryOperator) {
     EXPECT_NEAR(got, expected, eps);
 }
 
+TEST(Triangle, IsInsideMatchesQueryOperatorClassification) {
+    const geometry::Triangle<double> t(
+        Vector3<double>(0.0, 0.0, 0.0),
+        Vector3<double>(1.0, 0.0, 0.0),
+        Vector3<double>(0.0, 1.0, 0.0));
+
+    const auto qop = t.make_query_operator();
+
+    EXPECT_EQ(t.is_inside(Vector3<double>(0.25, 0.25, -0.1), 0.0),
+              qop.is_inside(Vector3<double>(0.25, 0.25, -0.1), 0.0));
+    EXPECT_EQ(t.is_inside(Vector3<double>(0.25, 0.25, 0.1), 0.15),
+              qop.is_inside(Vector3<double>(0.25, 0.25, 0.1), 0.15));
+}
+
+TEST(Triangle, IsOnSurfaceMatchesQueryOperatorClassification) {
+    const geometry::Triangle<double> t(
+        Vector3<double>(0.0, 0.0, 0.0),
+        Vector3<double>(1.0, 0.0, 0.0),
+        Vector3<double>(0.0, 1.0, 0.0));
+
+    const auto qop = t.make_query_operator();
+
+    EXPECT_EQ(t.is_on_surface(Vector3<double>(0.25, 0.25, 0.0), 0.0),
+              qop.is_on_surface(Vector3<double>(0.25, 0.25, 0.0), 0.0));
+    EXPECT_EQ(t.is_on_surface(Vector3<double>(0.25, 0.25, 0.1), 0.15),
+              qop.is_on_surface(Vector3<double>(0.25, 0.25, 0.1), 0.15));
+}
+
 TEST(Triangle, CentroidMatchesTriangleQueryOperator) {
 
     // Use a non-unit triangle to ensure centroid computation isn't accidentally

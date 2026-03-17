@@ -136,6 +136,26 @@ TEST(Box, SignedDistanceIsPositiveOutsideAndNegativeInside) {
     EXPECT_LT(b.signed_distance(p_in), 0.0);
 }
 
+TEST(Box, IsInsideClassifiesInteriorAndToleranceBand) {
+    const geometry::Box<double> b(
+        Vector3<double>(-1.0, -1.0, -1.0),
+        Vector3<double>(1.0, 1.0, 1.0));
+
+    EXPECT_TRUE(b.is_inside(Vector3<double>(0.0, 0.0, 0.0), 0.0));
+    EXPECT_FALSE(b.is_inside(Vector3<double>(1.2, 0.0, 0.0), 0.0));
+    EXPECT_TRUE(b.is_inside(Vector3<double>(1.2, 0.0, 0.0), 0.25));
+}
+
+TEST(Box, IsOnSurfaceDetectsBoundaryWithTolerance) {
+    const geometry::Box<double> b(
+        Vector3<double>(-1.0, -1.0, -1.0),
+        Vector3<double>(1.0, 1.0, 1.0));
+
+    EXPECT_TRUE(b.is_on_surface(Vector3<double>(1.0, 0.25, 0.0), 0.0));
+    EXPECT_FALSE(b.is_on_surface(Vector3<double>(0.0, 0.0, 0.0), 0.0));
+    EXPECT_TRUE(b.is_on_surface(Vector3<double>(1.1, 0.0, 0.0), 0.15));
+}
+
 TEST(Box, CentroidIsMidpointOfBounds) {
 
     // The centroid of an axis-aligned box is the midpoint of its lower/upper corners:

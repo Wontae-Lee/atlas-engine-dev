@@ -148,6 +148,22 @@ Box<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
 }
 
 template <typename T>
+bool
+Box<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Forward host-side inside classification through the query operator so
+    // Box<T> and BoxQueryOperator<T> keep identical tolerance semantics.
+    return make_query_operator().is_inside(p, tolerance);
+}
+
+template <typename T>
+bool
+Box<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Surface-band classification is delegated to the query operator for
+    // consistency with all other box query entry points.
+    return make_query_operator().is_on_surface(p, tolerance);
+}
+
+template <typename T>
 atlas::math::Vector<T, 3>
 Box<T>::centroid() const noexcept {
     // Return the box centroid:

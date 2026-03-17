@@ -63,11 +63,10 @@
 #include <atlas/scan/exclusive_scan.h>
 #include <atlas/searcher/searcher.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
-#include <atlas/sink/despawn/despawn.h>
+#include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
 #include <atlas/source/source.h>
-#include <atlas/source/spawn/spawn.h>
-#include <atlas/source/spawn/spawn_operator.h>
+#include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
 #include <atlas/spatial/bounding_volume_hierarchy/lbvh.h>

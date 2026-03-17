@@ -151,6 +151,22 @@ Plane<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
 }
 
 template <typename T>
+bool
+Plane<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Plane half-space classification is forwarded to PlaneQueryOperator<T>
+    // to keep the plane equation convention centralized.
+    return make_query_operator().is_inside(p, tolerance);
+}
+
+template <typename T>
+bool
+Plane<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // The query operator owns the tolerance-band interpretation for plane
+    // membership, so the wrapper simply forwards the request.
+    return make_query_operator().is_on_surface(p, tolerance);
+}
+
+template <typename T>
 atlas::math::Vector<T, 3>
 Plane<T>::centroid() const noexcept {
     // "Centroid" of an infinite plane is not uniquely defined.

@@ -1,7 +1,6 @@
 #pragma once
 #include <algorithm>
 #include <cmath>
-#include <limits>
 
 namespace atlas::spatial {
 
@@ -221,6 +220,15 @@ T
 AxisAlignedBoundingBox<T>::diagonal_length_squared() const noexcept {
     // Squared diagonal length (avoids sqrt, useful for comparisons).
     return (upper_corner - lower_corner).length_squared();
+}
+
+template <typename T>
+bool
+AxisAlignedBoundingBox<T>::is_valid() const noexcept {
+    // A valid sampling/traversal AABB must be finite and non-inverted on every axis.
+    return std::isfinite(lower_corner.x) && std::isfinite(lower_corner.y) && std::isfinite(lower_corner.z)
+        && std::isfinite(upper_corner.x) && std::isfinite(upper_corner.y) && std::isfinite(upper_corner.z)
+        && lower_corner.x <= upper_corner.x && lower_corner.y <= upper_corner.y && lower_corner.z <= upper_corner.z;
 }
 
 template <typename T>
