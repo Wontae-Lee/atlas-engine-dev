@@ -4,7 +4,6 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/scan/exclusive_scan.h>
-#include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <cmath>
 
 /**
@@ -35,7 +34,7 @@
  *   if needed for portability.
  */
 
-namespace atlas::random {
+namespace atlas::sampling {
 
 /**
  * @brief Builds an orthonormal tangent frame from a normal vector.
@@ -132,7 +131,7 @@ sample_uniform_hemisphere(const Vector3<T>& n, T u1, T u2) {
 
     // Build local frame around n and rotate local direction into world space.
     Vector3<T> t, b;
-    atlas::random::build_orthonormal_basis(n, t, b);
+    atlas::sampling::build_orthonormal_basis(n, t, b);
     return x * t + y * b + z * n;
 }
 
@@ -185,13 +184,9 @@ sample_cosine_hemisphere(const Vector3<T>& n, T u1, T u2) {
     const T z = cos_theta;
 
     Vector3<T> t, b;
-    atlas::random::build_orthonormal_basis(n, t, b);
+    atlas::sampling::build_orthonormal_basis(n, t, b);
     return x * t + y * b + z * n;
 }
-
-} // namespace atlas::random
-
-namespace atlas::sampling {
 
 /**
  * @brief Computes the number of regular grid samples on one axis.
@@ -254,8 +249,7 @@ sample_spawn_grid(DeviceBuffer<Vector3<T>>& particles,
 
     if (nx <= 0 || ny <= 0 || nz <= 0) return;
 
-    const std::size_t total_candidates =
-        static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny) * static_cast<std::size_t>(nz);
+    const std::size_t total_candidates = static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny) * static_cast<std::size_t>(nz);
 
     if (total_candidates == 0) return;
 

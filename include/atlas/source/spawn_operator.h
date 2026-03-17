@@ -68,6 +68,10 @@ template <typename T>
 struct SpawnOperator final {
     SpawnType type = SpawnType::Surface;
 
+    ATLAS_ALL_DEVICE
+    SpawnOperator(SpawnType type)
+        : type(type) { }
+
     ATLAS_ALL_DEVICE void
     spawn(DeviceBuffer<Vector3<T>>& particles,
           const atlas::geometry::QueryOperator<T>& query,
