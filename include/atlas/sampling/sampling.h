@@ -198,7 +198,7 @@ sample_cosine_hemisphere(const Vector3<T>& n, T u1, T u2) {
  * @return Number of samples including both interval endpoints when reachable by stepping.
  */
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE int
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
 sample_axis_count(T lower, T upper, T spacing) noexcept {
     if (!std::isfinite(lower) || !std::isfinite(upper) || !std::isfinite(spacing) || spacing <= T(0))
         return 0;
@@ -227,7 +227,7 @@ sample_axis_count(T lower, T upper, T spacing) noexcept {
  * @param predicate Point acceptance predicate.
  */
 template <typename T, typename QueryOperator, typename Predicate>
-ATLAS_HOST void
+ATLAS_ALL_DEVICE void
 sample_spawn_grid(DeviceBuffer<Vector3<T>>& particles,
                   const QueryOperator& query,
                   T spacing,
@@ -235,10 +235,9 @@ sample_spawn_grid(DeviceBuffer<Vector3<T>>& particles,
                   Predicate predicate) {
     particles.clear();
 
-    if (!query.is_valid() || !std::isfinite(spacing) || spacing <= T(0)) return;
+    if (!std::isfinite(spacing) || spacing <= T(0)) return;
 
     const auto bounds = query.bound();
-    if (!bounds.is_valid()) return;
 
     const auto& lower = bounds.lower_corner;
     const auto& upper = bounds.upper_corner;

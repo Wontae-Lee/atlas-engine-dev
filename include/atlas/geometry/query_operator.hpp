@@ -1301,11 +1301,11 @@ TriangleQueryOperator<T>::is_valid() const noexcept {
 /* ====================================================================== */
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-triangle_mesh_query_solid_angle(const atlas::math::Vector<T, 3>& p,
-                                const atlas::math::Vector<T, 3>& a,
-                                const atlas::math::Vector<T, 3>& b,
-                                const atlas::math::Vector<T, 3>& c) noexcept {
+T
+TriangleMeshQueryOperator<T>::solid_angle(const atlas::math::Vector<T, 3>& p,
+                                          const atlas::math::Vector<T, 3>& a,
+                                          const atlas::math::Vector<T, 3>& b,
+                                          const atlas::math::Vector<T, 3>& c) const noexcept {
     const atlas::math::Vector<T, 3> va = a - p;
     const atlas::math::Vector<T, 3> vb = b - p;
     const atlas::math::Vector<T, 3> vc = c - p;
@@ -1326,23 +1326,20 @@ triangle_mesh_query_solid_angle(const atlas::math::Vector<T, 3>& p,
 }
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-triangle_mesh_query_winding_number(const TriangleMeshQueryOperator<T>& mesh,
-                                   const atlas::math::Vector<T, 3>& p) noexcept {
-    if (!mesh.is_valid()) return T(0);
-
+T
+TriangleMeshQueryOperator<T>::winding_number(const atlas::math::Vector<T, 3>& p) const noexcept {
     T solid_angle_sum = T(0);
 
-    for (int t = 0; t < mesh.triangle_count; ++t) {
-        const int i0 = mesh.indices[3 * t + 0];
-        const int i1 = mesh.indices[3 * t + 1];
-        const int i2 = mesh.indices[3 * t + 2];
+    for (int t = 0; t < triangle_count; ++t) {
+        const int i0 = indices[3 * t + 0];
+        const int i1 = indices[3 * t + 1];
+        const int i2 = indices[3 * t + 2];
 
-        const atlas::math::Vector<T, 3>& a = mesh.vertices[i0];
-        const atlas::math::Vector<T, 3>& b = mesh.vertices[i1];
-        const atlas::math::Vector<T, 3>& c = mesh.vertices[i2];
+        const atlas::math::Vector<T, 3>& a = vertices[i0];
+        const atlas::math::Vector<T, 3>& b = vertices[i1];
+        const atlas::math::Vector<T, 3>& c = vertices[i2];
 
-        solid_angle_sum += triangle_mesh_query_solid_angle(p, a, b, c);
+        solid_angle_sum += solid_angle(p, a, b, c);
     }
 
     const T four_pi = T(4) * std::acos(T(-1));
@@ -1497,7 +1494,7 @@ TriangleMeshQueryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p
     const T dist = static_cast<T>(std::sqrt(best_d2));
     if (dist <= std::numeric_limits<T>::epsilon()) return T(0);
 
-    const T winding = triangle_mesh_query_winding_number(*this, p);
+    const T winding = winding_number(p);
     return (std::abs(winding) > T(0.5)) ? -dist : dist;
 }
 
@@ -1510,7 +1507,7 @@ TriangleMeshQueryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, cons
     // Classification strategy:
     // - Use the mesh winding number at p:
     //
-    //     winding = triangle_mesh_query_winding_number(*this, p)
+    //     winding = winding_number(p)
     //
     // - For a closed, consistently wound mesh:
     //     |winding| > 0.5  => inside
@@ -1594,7 +1591,7 @@ TriangleMeshQueryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, cons
     }
 
     const T dist      = static_cast<T>(std::sqrt(best_d2));
-    const T winding   = triangle_mesh_query_winding_number(*this, p);
+    const T winding   = winding_number(p);
     const bool inside = std::abs(winding) > T(0.5);
 
     if (inside) {

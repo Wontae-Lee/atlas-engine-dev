@@ -387,6 +387,15 @@ struct TriangleMeshQueryOperator {
     /// @brief Number of triangles in the mesh.
     int triangle_count = 0;
 
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    solid_angle(const atlas::math::Vector<T, 3>& p,
+                const atlas::math::Vector<T, 3>& a,
+                const atlas::math::Vector<T, 3>& b,
+                const atlas::math::Vector<T, 3>& c) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    winding_number(const atlas::math::Vector<T, 3>& p) const noexcept;
+
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
 

@@ -17,7 +17,6 @@ collect_despawn_indices(DeviceBuffer<int>& despawn_indices,
                         Predicate predicate) {
     despawn_indices.clear();
 
-    if (!query.is_valid()) return;
     if (!std::isfinite(tolerance) || tolerance < T(0)) tolerance = T(0);
 
     const std::size_t particle_count = particles.size();
