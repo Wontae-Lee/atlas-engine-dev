@@ -2,6 +2,7 @@
 
 #include <atlas/atlas.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <type_traits>
@@ -51,6 +52,16 @@ vec_near(const atlas::Vector<T, 3>& a,
         if (!near<T>(a[i], b[i], eps)) return false;
     }
     return true;
+}
+
+template <typename Container, typename T, std::size_t N>
+static ATLAS_FORCE_INLINE bool
+contains_point(const Container& points,
+               const atlas::Vector<T, N>& expected,
+               T eps) {
+    return std::any_of(points.begin(), points.end(), [&](const auto& point) {
+        return vec_near(point, expected, eps);
+    });
 }
 
 struct Foo {
