@@ -6,6 +6,7 @@
 #include <atlas/codec/deep_learning_codec.h>
 #include <atlas/codec/knudsen_codec.h>
 #include <atlas/codec/single_codec.h>
+#include <atlas/collect/collect.h>
 #include <atlas/container/container.h>
 #include <atlas/core/macros.h>
 #include <atlas/data/particle_data.h>
@@ -57,6 +58,7 @@
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/parallel/parallel_sort.h>
 #include <atlas/random/default_random_engine.h>
+#include <atlas/random/random.h>
 #include <atlas/random/uniform_real_distribution.h>
 #include <atlas/remove/remove.h>
 #include <atlas/sampling/sampling.h>
