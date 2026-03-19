@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="8" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="5" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
@@ -27,66 +27,94 @@
     <generated>
       <config projectName="atlas-engine-dev" targetName="benchmark" />
       <config projectName="atlas-engine-dev" targetName="gtest_main" />
-      <config projectName="atlas-engine-dev" targetName="min_time_parse_gtest" />
       <config projectName="atlas-engine-dev" targetName="benchmark_min_time_flag_iters_test" />
-      <config projectName="atlas-engine-dev" targetName="memory_results_gtest" />
       <config projectName="atlas-engine-dev" targetName="repetitions_test" />
       <config projectName="atlas-engine-dev" targetName="benchmark_gtest" />
-      <config projectName="atlas-engine-dev" targetName="dynamic" />
-      <config projectName="atlas-engine-dev" targetName="gmock_main" />
-      <config projectName="atlas-engine-dev" targetName="filter_test" />
+      <config projectName="atlas-engine-dev" targetName="NightlyMemoryCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="locale_impermeability_test" />
-      <config projectName="atlas-engine-dev" targetName="perf_counters_gtest" />
-      <config projectName="atlas-engine-dev" targetName="benchmark_random_interleaving_gtest" />
       <config projectName="atlas-engine-dev" targetName="benchmark_name_gtest" />
-      <config projectName="atlas-engine-dev" targetName="display_aggregates_only_test" />
       <config projectName="atlas-engine-dev" targetName="benchmark_test" />
-      <config projectName="atlas-engine-dev" targetName="cxx11_test" />
-      <config projectName="atlas-engine-dev" targetName="perf_counters_test" />
+      <config projectName="atlas-engine-dev" targetName="ExperimentalMemCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="benchmark_setup_teardown_cb_types_gtest" />
-      <config projectName="atlas-engine-dev" targetName="user_counters_tabular_test" />
       <config projectName="atlas-engine-dev" targetName="atlas-logging" />
       <config projectName="atlas-engine-dev" targetName="benchmark_min_time_flag_time_test" />
-      <config projectName="atlas-engine-dev" targetName="statistics_gtest" />
-      <config projectName="atlas-engine-dev" targetName="complexity_test" />
       <config projectName="atlas-engine-dev" targetName="profiler_manager_iterations_test" />
       <config projectName="atlas-engine-dev" targetName="internal_threading_test" />
-      <config projectName="atlas-engine-dev" targetName="tinyobjloader" />
       <config projectName="atlas-engine-dev" targetName="diagnostics_test" />
-      <config projectName="atlas-engine-dev" targetName="spec_arg_verbosity_test" />
+      <config projectName="atlas-engine-dev" targetName="ContinuousMemCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="link_main_test" />
       <config projectName="atlas-engine-dev" targetName="options_test" />
-      <config projectName="atlas-engine-dev" targetName="register_benchmark_test" />
       <config projectName="atlas-engine-dev" targetName="user_counters_threads_test" />
       <config projectName="atlas-engine-dev" targetName="manual_threading_test" />
       <config projectName="atlas-engine-dev" targetName="report_aggregates_only_test" />
-      <config projectName="atlas-engine-dev" targetName="gmock" />
+      <config projectName="atlas-engine-dev" targetName="NightlyConfigure" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="memory_manager_test" />
       <config projectName="atlas-engine-dev" targetName="profiler_manager_gtest" />
       <config projectName="atlas-engine-dev" targetName="benchmark_main" />
-      <config projectName="atlas-engine-dev" targetName="args_product_test" />
       <config projectName="atlas-engine-dev" targetName="templated_fixture_test" />
       <config projectName="atlas-engine-dev" targetName="basic_test" />
-      <config projectName="atlas-engine-dev" targetName="fixture_test" />
       <config projectName="atlas-engine-dev" targetName="benchmark_setup_teardown_test" />
       <config projectName="atlas-engine-dev" targetName="templated_fixture_method_test" />
-      <config projectName="atlas-engine-dev" targetName="output_test_helper" />
+      <config projectName="atlas-engine-dev" targetName="ExperimentalBuild" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="NightlyCoverage" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="uninstall" />
-      <config projectName="atlas-engine-dev" targetName="user_counters_test" />
-      <config projectName="atlas-engine-dev" targetName="gtest" />
       <config projectName="atlas-engine-dev" targetName="string_util_gtest" />
-      <config projectName="atlas-engine-dev" targetName="donotoptimize_test" />
       <config projectName="atlas-engine-dev" targetName="user_counters_thousands_test" />
-      <config projectName="atlas-engine-dev" targetName="multiple_ranges_test" />
       <config projectName="atlas-engine-dev" targetName="commandlineflags_gtest" />
-      <config projectName="atlas-engine-dev" targetName="reporter_output_test" />
+      <config projectName="atlas-engine-dev" targetName="ExperimentalTest" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="time_unit_gtest" />
       <config projectName="atlas-engine-dev" targetName="skip_with_error_test" />
-      <config projectName="atlas-engine-dev" targetName="map_test" />
+      <config projectName="atlas-engine-dev" targetName="NightlyStart" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="spec_arg_test" />
+      <config projectName="atlas-engine-dev" targetName="NightlyMemCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="profiler_manager_test" />
+      <config projectName="atlas-engine-dev" targetName="ExperimentalCoverage" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="ContinuousBuild" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests" />
       <config projectName="atlas-engine-dev" targetName="solver" />
+      <config projectName="atlas-engine-dev" targetName="min_time_parse_gtest" />
+      <config projectName="atlas-engine-dev" targetName="memory_results_gtest" />
+      <config projectName="atlas-engine-dev" targetName="dynamic" />
+      <config projectName="atlas-engine-dev" targetName="gmock_main" />
+      <config projectName="atlas-engine-dev" targetName="filter_test" />
+      <config projectName="atlas-engine-dev" targetName="perf_counters_gtest" />
+      <config projectName="atlas-engine-dev" targetName="benchmark_random_interleaving_gtest" />
+      <config projectName="atlas-engine-dev" targetName="display_aggregates_only_test" />
+      <config projectName="atlas-engine-dev" targetName="cxx11_test" />
+      <config projectName="atlas-engine-dev" targetName="perf_counters_test" />
+      <config projectName="atlas-engine-dev" targetName="user_counters_tabular_test" />
+      <config projectName="atlas-engine-dev" targetName="statistics_gtest" />
+      <config projectName="atlas-engine-dev" targetName="complexity_test" />
+      <config projectName="atlas-engine-dev" targetName="tinyobjloader" />
+      <config projectName="atlas-engine-dev" targetName="spec_arg_verbosity_test" />
+      <config projectName="atlas-engine-dev" targetName="register_benchmark_test" />
+      <config projectName="atlas-engine-dev" targetName="gmock" />
+      <config projectName="atlas-engine-dev" targetName="Experimental" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="ContinuousTest" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="args_product_test" />
+      <config projectName="atlas-engine-dev" targetName="fixture_test" />
+      <config projectName="atlas-engine-dev" targetName="NightlyUpdate" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="Continuous" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="ExperimentalUpdate" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="output_test_helper" />
+      <config projectName="atlas-engine-dev" targetName="user_counters_test" />
+      <config projectName="atlas-engine-dev" targetName="gtest" />
+      <config projectName="atlas-engine-dev" targetName="ContinuousSubmit" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="ContinuousStart" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="donotoptimize_test" />
+      <config projectName="atlas-engine-dev" targetName="multiple_ranges_test" />
+      <config projectName="atlas-engine-dev" targetName="NightlyBuild" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="NightlySubmit" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="ContinuousCoverage" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="ContinuousUpdate" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="ExperimentalConfigure" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="reporter_output_test" />
+      <config projectName="atlas-engine-dev" targetName="ContinuousConfigure" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="Nightly" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="ExperimentalSubmit" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="map_test" />
+      <config projectName="atlas-engine-dev" targetName="ExperimentalStart" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="NightlyTest" folderName="CTestDashboardTargets" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -112,19 +140,14 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Developing spawn_operator.h">
-      <change afterPath="$PROJECT_DIR$/include/atlas/collect/collect.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/sink/despawn_operator_tests/surface_despawn_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/sink/despawn_operator_tests/volume_despawn_operator_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/sink/sink.cpp" afterDir="false" />
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakePresets.json" beforeDir="false" afterPath="$PROJECT_DIR$/CMakePresets.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/sink/despawn_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/despawn_operator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/sink/despawn_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/despawn_operator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,7 +170,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="246" />
+    <option name="cachedIndexableFilesCount" value="506" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="Git.Settings">
@@ -226,6 +249,7 @@
     "cf.advertisement.text.overridden": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
+    "ctest.advertisement.all.test.configuration.is.created": "true",
     "git-widget-placeholder": "main",
     "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/tests/sink/despawn_operator_tests",
     "node.js.detected.package.eslint": "true",
@@ -234,7 +258,7 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "org.rust.first.attach.projects": "true",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -251,15 +275,155 @@
     </key>
   </component>
   <component name="RunManager" selected="Google Test.All in atlas_tests">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
         <option name="BeforeTestRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Continuous" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="Continuous" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ContinuousBuild" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ContinuousBuild" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ContinuousConfigure" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ContinuousConfigure" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ContinuousCoverage" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ContinuousCoverage" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ContinuousMemCheck" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ContinuousMemCheck" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ContinuousStart" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ContinuousStart" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ContinuousSubmit" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ContinuousSubmit" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ContinuousTest" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ContinuousTest" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ContinuousUpdate" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ContinuousUpdate" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Experimental" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="Experimental" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExperimentalBuild" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ExperimentalBuild" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExperimentalConfigure" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ExperimentalConfigure" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExperimentalCoverage" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ExperimentalCoverage" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExperimentalMemCheck" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ExperimentalMemCheck" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExperimentalStart" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ExperimentalStart" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExperimentalSubmit" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ExperimentalSubmit" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExperimentalTest" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ExperimentalTest" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ExperimentalUpdate" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="ExperimentalUpdate" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Nightly" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="Nightly" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NightlyBuild" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlyBuild" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NightlyConfigure" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlyConfigure" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NightlyCoverage" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlyCoverage" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NightlyMemCheck" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlyMemCheck" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NightlyMemoryCheck" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlyMemoryCheck" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NightlyStart" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlyStart" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NightlySubmit" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlySubmit" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NightlyTest" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlyTest" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="NightlyUpdate" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlyUpdate" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
     <configuration name="atlas-logging" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-logging" CONFIG_NAME="Debug">
@@ -285,6 +449,12 @@
     <configuration name="uninstall" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="uninstall" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="All CTest" type="CTestRunConfiguration" factoryName="CTestRun" PROGRAM_PARAMS="--extra-verbose" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$CMakeCurrentLocalGenerationDir$" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_PATH="$CTestCurrentExecutableName$" EXPLICIT_BUILD_TARGET_NAME="all" TEST_MODE="SUITE_TEST">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="BeforeTestRunTask" enabled="true" />
       </method>
     </configuration>
     <configuration name="generate_headers" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
@@ -350,11 +520,40 @@
       <method v="2" />
     </configuration>
     <list>
+      <item itemvalue="CMake Application.Continuous" />
+      <item itemvalue="CMake Application.ContinuousBuild" />
+      <item itemvalue="CMake Application.ContinuousConfigure" />
+      <item itemvalue="CMake Application.ContinuousCoverage" />
+      <item itemvalue="CMake Application.ContinuousMemCheck" />
+      <item itemvalue="CMake Application.ContinuousStart" />
+      <item itemvalue="CMake Application.ContinuousSubmit" />
+      <item itemvalue="CMake Application.ContinuousTest" />
+      <item itemvalue="CMake Application.ContinuousUpdate" />
+      <item itemvalue="CMake Application.Experimental" />
+      <item itemvalue="CMake Application.ExperimentalBuild" />
+      <item itemvalue="CMake Application.ExperimentalConfigure" />
+      <item itemvalue="CMake Application.ExperimentalCoverage" />
+      <item itemvalue="CMake Application.ExperimentalMemCheck" />
+      <item itemvalue="CMake Application.ExperimentalStart" />
+      <item itemvalue="CMake Application.ExperimentalSubmit" />
+      <item itemvalue="CMake Application.ExperimentalTest" />
+      <item itemvalue="CMake Application.ExperimentalUpdate" />
+      <item itemvalue="CMake Application.Nightly" />
+      <item itemvalue="CMake Application.NightlyBuild" />
+      <item itemvalue="CMake Application.NightlyConfigure" />
+      <item itemvalue="CMake Application.NightlyCoverage" />
+      <item itemvalue="CMake Application.NightlyMemCheck" />
+      <item itemvalue="CMake Application.NightlyMemoryCheck" />
+      <item itemvalue="CMake Application.NightlyStart" />
+      <item itemvalue="CMake Application.NightlySubmit" />
+      <item itemvalue="CMake Application.NightlyTest" />
+      <item itemvalue="CMake Application.NightlyUpdate" />
       <item itemvalue="CMake Application.atlas-logging" />
       <item itemvalue="CMake Application.dynamic" />
       <item itemvalue="CMake Application.solver" />
       <item itemvalue="CMake Application.tinyobjloader" />
       <item itemvalue="CMake Application.uninstall" />
+      <item itemvalue="CTest Application.All CTest" />
       <item itemvalue="Google Test.All in atlas_tests" />
       <item itemvalue="Python.generate_headers" />
       <item itemvalue="Python.remove_comments" />
@@ -404,6 +603,16 @@
       <workItem from="1773661883084" duration="3794000" />
       <workItem from="1773736521126" duration="8000" />
       <workItem from="1773757691720" duration="3873000" />
+      <workItem from="1773763632542" duration="689000" />
+      <workItem from="1773820931965" duration="93000" />
+      <workItem from="1773823977287" duration="277000" />
+      <workItem from="1773824597044" duration="914000" />
+      <workItem from="1773835961401" duration="63000" />
+      <workItem from="1773842481081" duration="94000" />
+      <workItem from="1773909490496" duration="15000" />
+      <workItem from="1773915530142" duration="27000" />
+      <workItem from="1773925487923" duration="1837000" />
+      <workItem from="1773927336803" duration="3008000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

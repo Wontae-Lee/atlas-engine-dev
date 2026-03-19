@@ -4,7 +4,30 @@
 
 namespace atlas::vizkit {
 void
+Camera::init_mouse_controls(GLFWwindow* w) {
+    if (mouse_initialized || w == nullptr) return;
+
+    glfwSetWindowUserPointer(w, this);
+    glfwSetScrollCallback(w, &Camera::scroll_callback);
+    glfwGetCursorPos(w, &last_cursor_x, &last_cursor_y);
+    mouse_initialized = true;
+}
+
+void
+Camera::scroll_callback(GLFWwindow* w, double xoffset, double yoffset) {
+    (void)xoffset;
+
+    if (w == nullptr) return;
+
+    auto* camera = static_cast<Camera*>(glfwGetWindowUserPointer(w));
+    if (camera == nullptr) return;
+
+    camera->pending_scroll_zoom -= static_cast<float>(yoffset) * 0.8f;
+}
+
+void
 Camera::handle(GLFWwindow* w) {
+    init_mouse_controls(w);
 
     // Orbit camera state is represented with three scalars:
     // - yaw   : rotation around the global Z axis (azimuth)
@@ -13,6 +36,36 @@ Camera::handle(GLFWwindow* w) {
     //
     // This is effectively a spherical-coordinate parameterization of the eye
     // position relative to a fixed look-at center.
+    double cursor_x = last_cursor_x;
+    double cursor_y = last_cursor_y;
+    glfwGetCursorPos(w, &cursor_x, &cursor_y);
+
+    const float delta_x = static_cast<float>(cursor_x - last_cursor_x);
+    const float delta_y = static_cast<float>(cursor_y - last_cursor_y);
+
+    const bool left_pressed = glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    if (left_pressed) {
+        if (left_drag_active) {
+            yaw -= delta_x * 0.008f;
+            pitch -= delta_y * 0.008f;
+        }
+        left_drag_active = true;
+    } else {
+        left_drag_active = false;
+    }
+
+    const bool right_pressed = glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    if (right_pressed) {
+        if (right_drag_active) {
+            dist += delta_y * 0.05f;
+        }
+        right_drag_active = true;
+    } else {
+        right_drag_active = false;
+    }
+
+    last_cursor_x = cursor_x;
+    last_cursor_y = cursor_y;
 
     // Horizontal orbit:
     // pressing A/D changes the azimuth angle, so the camera moves on a circle
@@ -31,6 +84,8 @@ Camera::handle(GLFWwindow* w) {
     // points at the same target, but the eye moves farther away or closer.
     if (glfwGetKey(w, GLFW_KEY_Q) == GLFW_PRESS) dist += 0.05f;
     if (glfwGetKey(w, GLFW_KEY_E) == GLFW_PRESS) dist -= 0.05f;
+    dist += pending_scroll_zoom;
+    pending_scroll_zoom = 0.0f;
 
     // Clamp pitch so the forward vector does not become nearly parallel to the
     // world up vector.

@@ -2,6 +2,7 @@
 
 #ifdef ATLAS_ENABLE_VIZKIT
 #include <atlas/math/math.h>
+
 #include <vizkit/macros/macros.h>
 
 namespace atlas::vizkit {
@@ -23,6 +24,18 @@ namespace atlas::vizkit {
 struct Camera {
     /** @brief Azimuth angle in radians used for horizontal orbiting. */
     float yaw = 0.0f, pitch = 0.5f, dist = 20.0f;
+    /** @brief Whether mouse interaction has initialized GLFW callbacks/state. */
+    bool mouse_initialized = false;
+    /** @brief Whether the primary orbit drag button was down on the previous frame. */
+    bool left_drag_active = false;
+    /** @brief Whether the secondary zoom drag button was down on the previous frame. */
+    bool right_drag_active = false;
+    /** @brief Last sampled cursor X position in window coordinates. */
+    double last_cursor_x = 0.0;
+    /** @brief Last sampled cursor Y position in window coordinates. */
+    double last_cursor_y = 0.0;
+    /** @brief Pending scroll-wheel zoom delta accumulated from GLFW callbacks. */
+    float pending_scroll_zoom = 0.0f;
 
     /**
      * @brief Updates the camera state from keyboard input.
@@ -36,14 +49,18 @@ struct Camera {
      * - `S`: decrease pitch
      * - `Q`: increase distance
      * - `E`: decrease distance
+     * - left mouse drag: orbit yaw/pitch
+     * - right mouse drag: zoom in/out
+     * - mouse wheel: zoom in/out
      *
      * After applying input, the camera state is clamped to stable operating
      * ranges:
      * - `pitch` is limited to `[-1.2, 1.2]` radians
      * - `dist` is limited to `[2.0, 100.0]`
      *
-     * @note This function does not perform event handling; it only samples the
-     * current key state from GLFW.
+     * @note This function samples current key/button state from GLFW. Mouse
+     * wheel zoom is received through a GLFW callback that is installed lazily
+     * on the first call.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     handle(GLFWwindow* w);
@@ -72,6 +89,25 @@ struct Camera {
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build_mvp(int w, int h, float out_mvp[16]) const;
+
+private:
+    /**
+     * @brief Installs the GLFW state needed for mouse wheel zoom once per window.
+     *
+     * @param w Active GLFW window.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    init_mouse_controls(GLFWwindow* w);
+
+    /**
+     * @brief GLFW scroll callback that forwards wheel zoom into the active camera.
+     *
+     * @param w Window that received the scroll event.
+     * @param xoffset Horizontal wheel delta (unused).
+     * @param yoffset Vertical wheel delta used for dolly zoom.
+     */
+    ATLAS_HOST static void
+    scroll_callback(GLFWwindow* w, double xoffset, double yoffset);
 };
 
 }

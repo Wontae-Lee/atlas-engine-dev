@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 3,
   "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
 
   "configurePresets": [
@@ -22,9 +22,6 @@
       }
     },
 
-    // =========================================================
-    // TBB (CPU) presets
-    // =========================================================
     {
       "name": "tbb-debug",
       "displayName": "Atlas TBB Debug (Vizkit+Logging+Tests+Benchmarks)",
@@ -82,15 +79,6 @@
       }
     },
 
-    // =========================================================
-    // CUDA (GPU) presets
-    //
-    // Notes:
-    // - Your CMakeLists sets:
-    //   THRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_TBB
-    //   THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA
-    // - Ensure your CUDA branch also links: target_link_libraries(atlas-core INTERFACE TBB::tbb)
-    // =========================================================
     {
       "name": "cuda-debug",
       "displayName": "Atlas CUDA Debug (Thrust host=TBB, TBB linked)",
@@ -149,7 +137,7 @@
       }
     },
 
-    // ---- CUDA headless variants (often useful on servers) ----
+
     {
       "name": "cuda-debug-headless",
       "displayName": "Atlas CUDA Debug Headless (No Vizkit)",

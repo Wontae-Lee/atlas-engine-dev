@@ -78,6 +78,7 @@
 #include <atlas/spatial/trace_operator.h>
 #include <atlas/sync/sync.h>
 #include <atlas/sync/sync_operator.h>
+#include <atlas/system/system.h>
 #include <atlas/transform/transform.h>
 #include <atlas/transform/transform_reduce.h>
 #include <atlas/tuple/tuple.h>
