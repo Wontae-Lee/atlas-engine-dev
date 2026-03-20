@@ -21,6 +21,8 @@ Most of the engine lives under [`include/atlas/`](/home/wontae/CLionProjects/atl
 - Header-only simulation core with a consistent API across CPU and GPU builds
 - Geometry primitives such as box, sphere, cylinder, plane, triangle, and triangle mesh
 - Spatial data structures including axis-aligned bounding boxes, spatial hashing, LBVH, and SAH BVH
+- Runtime particle emission/removal systems through `Source<T>` and `Sink<T>`
+- Per-species velocity generation through `Generator<T>` plus uniform and Maxwell-family generators
 - Builder-based construction for most public types
 - Portable host/device abstractions such as `DeviceBuffer<T>`, `HostBuffer<T>`, and `device_shared_ptr<T>`
 - Optional visualization through Vizkit
@@ -47,6 +49,13 @@ The top-level CMake config rejects:
 - both disabled
 
 This keeps backend-dependent aliases stable throughout the codebase.
+
+The runtime particle APIs rely on a simple storage contract:
+
+- `ParticleData<T>` owns the backing buffers
+- `ParticleDeviceProbe<T>` exposes raw pointers into those buffers
+- `particle_count` is the active prefix length
+- `buffer_size` is total allocated capacity
 
 ### Backend abstraction
 
@@ -75,6 +84,20 @@ Typical builder endpoints are:
 
 This pattern is used heavily across geometry, simulation systems, fluids, units, codecs, and search structures.
 
+Recent runtime systems follow the same builder style:
+
+```cpp
+const auto generator = UniformGenerator<float>::builder()
+    .with_min_value(-1.0f)
+    .with_max_value(1.0f)
+    .with_seed(7u)
+    .make_host_shared();
+
+const auto fluid = system::Fluid<float>::builder()
+    .add_particle(species_ptr, 1.0f, generator)
+    .make_host_shared();
+```
+
 ## Repository Layout
 
 ```text
@@ -87,6 +110,7 @@ atlas-engine-dev/
 │   ├── core/                          # Portability macros and core helpers
 │   ├── data/                          # Particle data/probes
 │   ├── domain/                        # Simulation domain
+│   ├── generator/                     # Velocity generator interfaces and implementations
 │   ├── geometry/                      # Box, Sphere, Plane, Cylinder, Triangle, TriangleMesh
 │   ├── logging/                       # Logging public headers
 │   ├── math/                          # Vector, matrix, quaternion, reductions
@@ -287,7 +311,14 @@ int main() {
         .make_host_shared();
 
     const auto fluid = system::Fluid<sim_t>::builder()
-        .add_particle(nitrogen)
+        .add_particle(
+            nitrogen,
+            1.0f,
+            UniformGenerator<sim_t>::builder()
+                .with_min_value(-10.0f)
+                .with_max_value(10.0f)
+                .with_seed(7u)
+                .make_host_shared())
         .make_host_shared();
 
     const auto obstacle_geometry = geometry::Box<sim_t>::builder()
@@ -303,10 +334,25 @@ int main() {
         .with_sync(sync)
         .make_host_shared();
 
+    auto source = system::Source<sim_t>::builder()
+        .with_unit(*unit)
+        .with_spawn_type(system::SpawnType::Volume)
+        .with_spacing(0.05f)
+        .with_tolerance(0.0f)
+        .with_fluid(fluid)
+        .build();
+
+    auto sink = system::Sink<sim_t>::builder()
+        .with_unit(*unit)
+        .with_despawn_type(system::DespawnType::Surface)
+        .with_tolerance(1e-4f)
+        .build();
+
     (void)searcher;
     (void)codec;
     (void)fluid;
-    (void)unit;
+    (void)source;
+    (void)sink;
 
     return 0;
 }
@@ -320,9 +366,27 @@ In practice, a common Atlas setup sequence is:
 2. Build a `Domain<T>` with geometry and cell size.
 3. Attach a search structure such as `SpatialHashingSearcher<T>`.
 4. Choose a codec for particle representation.
-5. Define particle species and assemble fluids.
+5. Define particle species and assemble fluids, including per-species velocity generators when needed.
 6. Create units with geometry plus sync policies.
-7. Run host/device simulation steps using the backend selected at configure time.
+7. Build `Source<T>` emitters and `Sink<T>` removers around those units.
+8. Run host/device simulation steps using the backend selected at configure time.
+
+## Sources, Sinks, and Generators
+
+Atlas includes a runtime pipeline for populating and removing particles from `ParticleDeviceProbe<T>`.
+
+- `Generator<T>` is the abstract interface for velocity generation.
+- `UniformGenerator<T>`, `MaxwellSigmaGenerator<T>`, and `MaxwellBoltzmannGenerator<T>` provide concrete policies.
+- `Fluid<T>` stores a generator per particle-species entry.
+- `Source<T>` uses unit geometry plus a `Fluid<T>` to fill inactive probe slots and initialize species/velocity data.
+- `Sink<T>` removes particles matching a geometric despawn condition and compacts the active prefix.
+
+This works best when the probe is treated as an active prefix plus spare capacity:
+
+- initialize `particle_count` to the number of active particles already present
+- keep inactive capacity available behind that prefix
+- let `Source<T>` reuse inactive slots
+- let `Sink<T>` rewrite the active prefix and update `particle_count`
 
 ## Geometry and Spatial Features
 
@@ -374,6 +438,7 @@ Tests are currently CPU/TBB-oriented and live under [`tests/`](/home/wontae/CLio
 Examples of covered areas:
 
 - buffer abstractions
+- generators, sources, and sinks
 - geometry queries
 - axis-aligned bounding boxes and trace operators
 - sync operators and transforms
@@ -437,6 +502,8 @@ Public headers use:
 - `.hpp` for inline/template definitions
 
 Typically the `.h` includes the matching `.hpp` at the bottom.
+
+Generated umbrella headers such as [`include/atlas/atlas.h`](/home/wontae/CLionProjects/atlas-engine-dev/include/atlas/atlas.h) should not be edited manually.
 
 ### Portability macros
 
