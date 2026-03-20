@@ -225,4 +225,5 @@ remove_if(Policy, Iterator first, Iterator last, Predicate pred) {
 }
 
 } // namespace atlas
+
 #endif // ATLAS_TASKING_CUDA

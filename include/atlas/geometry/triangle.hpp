@@ -303,6 +303,51 @@ Triangle<T>::barycentric(const Vector3<T>& p, T& u, T& v, T& w) const noexcept {
 /* ====================================================================== */
 
 template <typename T>
+Triangle<T>
+Triangle<T>::Builder::build() const {
+    // Build a Triangle<T> value object from builder state.
+    //
+    // Notes:
+    // - We validate first to avoid creating degenerate triangles silently.
+    // - We also ensure the cached normal is consistent.
+    validate();
+
+    Triangle<T> t {};
+
+    // Store vertices.
+    t.a = _a;
+    t.b = _b;
+    t.c = _c;
+
+    // Decide normal:
+    // - If a custom normal was provided, use it.
+    // - Otherwise compute geometric normal from vertices.
+    //
+    // This keeps the builder flexible:
+    // - geometric normal for physics/contact
+    // - custom normal for shading/artist-authored surfaces
+    if (_normal.has_value()) {
+        t.normal = *_normal;
+    } else {
+        t.normal = math::cross(t.b - t.a, t.c - t.a).normalized();
+    }
+
+    return t;
+}
+
+template <typename T>
+atlas::host_shared_ptr<Triangle<T>>
+Triangle<T>::Builder::make_host_shared() const {
+    // Allocate a shared-owned Triangle<T> on the host.
+    //
+    // Pattern:
+    // - build value object
+    // - move into shared wrapper to avoid extra copy when possible
+    auto t = build();
+    return atlas::make_host_shared<Triangle<T>>(std::move(t));
+}
+
+template <typename T>
 typename Triangle<T>::Builder&
 Triangle<T>::Builder::with_a(const Vector3<T>& a_) noexcept {
     // Set vertex A (by value).
@@ -369,51 +414,6 @@ Triangle<T>::Builder::validate() const {
             << "Triangle::Builder validation failed: vertices must not be collinear or duplicated.";
         throw std::runtime_error("Triangle::Builder: invalid triangle.");
     }
-}
-
-template <typename T>
-Triangle<T>
-Triangle<T>::Builder::build() const {
-    // Build a Triangle<T> value object from builder state.
-    //
-    // Notes:
-    // - We validate first to avoid creating degenerate triangles silently.
-    // - We also ensure the cached normal is consistent.
-    validate();
-
-    Triangle<T> t {};
-
-    // Store vertices.
-    t.a = _a;
-    t.b = _b;
-    t.c = _c;
-
-    // Decide normal:
-    // - If a custom normal was provided, use it.
-    // - Otherwise compute geometric normal from vertices.
-    //
-    // This keeps the builder flexible:
-    // - geometric normal for physics/contact
-    // - custom normal for shading/artist-authored surfaces
-    if (_normal.has_value()) {
-        t.normal = *_normal;
-    } else {
-        t.normal = math::cross(t.b - t.a, t.c - t.a).normalized();
-    }
-
-    return t;
-}
-
-template <typename T>
-atlas::host_shared_ptr<Triangle<T>>
-Triangle<T>::Builder::make_host_shared() const {
-    // Allocate a shared-owned Triangle<T> on the host.
-    //
-    // Pattern:
-    // - build value object
-    // - move into shared wrapper to avoid extra copy when possible
-    auto t = build();
-    return atlas::make_host_shared<Triangle<T>>(std::move(t));
 }
 
 } // namespace atlas::geometry

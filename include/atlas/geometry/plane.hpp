@@ -226,6 +226,34 @@ Plane<T>::type() const noexcept {
 /* ====================================================================== */
 
 template <typename T>
+Plane<T>
+Plane<T>::Builder::build() const {
+    // Build a Plane<T> after validation.
+    //
+    // Strong exception guarantee:
+    // - If validate() throws, no Plane is returned.
+    validate();
+
+    Plane<T> p {};
+
+    // Copy validated configuration into the final plane instance.
+    p.normal = _normal;
+    p.offset = _offset;
+
+    return p;
+}
+
+template <typename T>
+atlas::host_shared_ptr<Plane<T>>
+Plane<T>::Builder::make_host_shared() const {
+    // Convenience helper:
+    // - Build by value
+    // - Move into a shared, heap-allocated plane
+    auto p = build();
+    return atlas::make_host_shared<Plane<T>>(std::move(p));
+}
+
+template <typename T>
 typename Plane<T>::Builder&
 Plane<T>::Builder::with_normal(const Vector3<T>& normal_) noexcept {
     // Set plane normal.
@@ -284,34 +312,6 @@ Plane<T>::Builder::validate() const {
             << "Plane::Builder validation failed: normal must be finite and non-zero; offset must be finite.";
         throw std::runtime_error("Plane::Builder: invalid parameters.");
     }
-}
-
-template <typename T>
-Plane<T>
-Plane<T>::Builder::build() const {
-    // Build a Plane<T> after validation.
-    //
-    // Strong exception guarantee:
-    // - If validate() throws, no Plane is returned.
-    validate();
-
-    Plane<T> p {};
-
-    // Copy validated configuration into the final plane instance.
-    p.normal = _normal;
-    p.offset = _offset;
-
-    return p;
-}
-
-template <typename T>
-atlas::host_shared_ptr<Plane<T>>
-Plane<T>::Builder::make_host_shared() const {
-    // Convenience helper:
-    // - Build by value
-    // - Move into a shared, heap-allocated plane
-    auto p = build();
-    return atlas::make_host_shared<Plane<T>>(std::move(p));
 }
 
 } // namespace atlas::geometry

@@ -186,6 +186,35 @@ Sphere<T>::type() const noexcept {
  * ========================= */
 
 template <typename T>
+Sphere<T>
+Sphere<T>::Builder::build() const {
+    // Build a validated Sphere<T>.
+    //
+    // Steps:
+    // 1) validate (throws on failure)
+    // 2) default-construct a Sphere<T>
+    // 3) assign validated parameters
+    validate();
+
+    Sphere<T> s {};
+    s.center = _center;
+    s.radius = _radius;
+    return s;
+}
+
+template <typename T>
+atlas::host_shared_ptr<Sphere<T>>
+Sphere<T>::Builder::make_host_shared() const {
+    // Convenience helper:
+    // - build Sphere<T> by value
+    // - move it into a host shared pointer allocation
+    //
+    // std::move avoids an extra copy when placing the object on the heap.
+    auto s = build();
+    return atlas::make_host_shared<Sphere<T>>(std::move(s));
+}
+
+template <typename T>
 typename Sphere<T>::Builder&
 Sphere<T>::Builder::with_center(const Vector3<T>& c) noexcept {
     // Set candidate center for the sphere being built.
@@ -221,35 +250,6 @@ Sphere<T>::Builder::validate() const {
             << "Sphere::Builder validation failed: radius must be > 0; center must be finite.";
         throw std::runtime_error("Sphere::Builder: invalid parameters.");
     }
-}
-
-template <typename T>
-Sphere<T>
-Sphere<T>::Builder::build() const {
-    // Build a validated Sphere<T>.
-    //
-    // Steps:
-    // 1) validate (throws on failure)
-    // 2) default-construct a Sphere<T>
-    // 3) assign validated parameters
-    validate();
-
-    Sphere<T> s {};
-    s.center = _center;
-    s.radius = _radius;
-    return s;
-}
-
-template <typename T>
-atlas::host_shared_ptr<Sphere<T>>
-Sphere<T>::Builder::make_host_shared() const {
-    // Convenience helper:
-    // - build Sphere<T> by value
-    // - move it into a host shared pointer allocation
-    //
-    // std::move avoids an extra copy when placing the object on the heap.
-    auto s = build();
-    return atlas::make_host_shared<Sphere<T>>(std::move(s));
 }
 
 } // namespace atlas::geometry

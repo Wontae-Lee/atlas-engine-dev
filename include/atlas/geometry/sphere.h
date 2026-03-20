@@ -265,24 +265,6 @@ public:
     Builder() = default;
 
     /**
-     * @brief Set the sphere center.
-     *
-     * @param c Center point.
-     * @return Reference to this builder.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_center(const Vector3<T>& c) noexcept;
-
-    /**
-     * @brief Set the sphere radius.
-     *
-     * @param r Radius value (must be positive for a valid sphere).
-     * @return Reference to this builder.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_radius(T r) noexcept;
-
-    /**
      * @brief Build a Sphere<T> value.
      *
      * @return Constructed Sphere<T>.
@@ -303,6 +285,24 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Sphere<T>>
     make_host_shared() const;
+
+    /**
+     * @brief Set the sphere center.
+     *
+     * @param c Center point.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_center(const Vector3<T>& c) noexcept;
+
+    /**
+     * @brief Set the sphere radius.
+     *
+     * @param r Radius value (must be positive for a valid sphere).
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_radius(T r) noexcept;
 
 private:
     /**

@@ -3,6 +3,8 @@
 #include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
+#include <atlas/random/default_random_engine.h>
+#include <atlas/random/uniform_real_distribution.h>
 #include <atlas/scan/exclusive_scan.h>
 #include <cmath>
 
@@ -35,6 +37,33 @@
  */
 
 namespace atlas::sampling {
+
+/**
+ * @brief Generates one standard normal random value using the Box-Muller transform.
+ *
+ * @details
+ * The function consumes two independent uniform random values in `[0,1)` from the
+ * supplied engine and returns one sample from `N(0, 1)`.
+ *
+ * A small lower clamp is applied to the first uniform sample so that `log(u1)`
+ * remains well-defined even when the backend RNG can produce zero.
+ *
+ * @tparam T Floating-point scalar type.
+ * @param engine Pseudo-random number engine advanced in-place.
+ * @return One sample from the standard normal distribution.
+ */
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE T
+generate_standard_normal(atlas::default_random_engine<T>& engine) {
+    atlas::uniform_real_distribution<T> dist(T(0), T(1));
+
+    const T u1 = std::max(dist(engine), static_cast<T>(eps));
+    const T u2 = dist(engine);
+
+    const T r     = std::sqrt(T(-2) * std::log(u1));
+    const T theta = T(2) * static_cast<T>(atlas::pi) * u2;
+    return r * std::cos(theta);
+}
 
 /**
  * @brief Builds an orthonormal tangent frame from a normal vector.

@@ -12,6 +12,11 @@
 #include <atlas/data/particle_data.h>
 #include <atlas/domain/domain.h>
 #include <atlas/flatten/flatten.h>
+#include <atlas/generator/generate_operator.h>
+#include <atlas/generator/generator.h>
+#include <atlas/generator/maxwell_boltzmann_generator.h>
+#include <atlas/generator/maxwell_sigma_generator.h>
+#include <atlas/generator/uniform_generator.h>
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/cylinder.h>
 #include <atlas/geometry/geometry.h>

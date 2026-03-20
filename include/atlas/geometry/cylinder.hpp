@@ -220,6 +220,35 @@ Cylinder<T>::type() const noexcept {
 /* ====================================================================== */
 
 template <typename T>
+Cylinder<T>
+Cylinder<T>::Builder::build() const {
+    // Build a Cylinder<T> after validation.
+    //
+    // Strong exception guarantee:
+    // - If validate() throws, no Cylinder is produced.
+    validate();
+
+    Cylinder<T> c {};
+
+    // Copy validated parameters into the final cylinder object.
+    c.center = _center;
+    c.radius = _radius;
+    c.height = _height;
+
+    return c;
+}
+
+template <typename T>
+atlas::host_shared_ptr<Cylinder<T>>
+Cylinder<T>::Builder::make_host_shared() const {
+    // Convenience helper:
+    // - Build by value
+    // - Move into a shared, heap-allocated cylinder object
+    auto c = build();
+    return atlas::make_host_shared<Cylinder<T>>(std::move(c));
+}
+
+template <typename T>
 typename Cylinder<T>::Builder&
 Cylinder<T>::Builder::with_center(const Vector3<T>& center_) noexcept {
     // Set center of the cylinder.
@@ -270,35 +299,6 @@ Cylinder<T>::Builder::validate() const {
             << "Cylinder::Builder validation failed: radius and height must be > 0, and values must be finite.";
         throw std::runtime_error("Cylinder::Builder: invalid parameters.");
     }
-}
-
-template <typename T>
-Cylinder<T>
-Cylinder<T>::Builder::build() const {
-    // Build a Cylinder<T> after validation.
-    //
-    // Strong exception guarantee:
-    // - If validate() throws, no Cylinder is produced.
-    validate();
-
-    Cylinder<T> c {};
-
-    // Copy validated parameters into the final cylinder object.
-    c.center = _center;
-    c.radius = _radius;
-    c.height = _height;
-
-    return c;
-}
-
-template <typename T>
-atlas::host_shared_ptr<Cylinder<T>>
-Cylinder<T>::Builder::make_host_shared() const {
-    // Convenience helper:
-    // - Build by value
-    // - Move into a shared, heap-allocated cylinder object
-    auto c = build();
-    return atlas::make_host_shared<Cylinder<T>>(std::move(c));
 }
 
 } // namespace atlas::geometry

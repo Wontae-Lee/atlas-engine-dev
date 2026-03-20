@@ -355,24 +355,6 @@ public:
     Builder() = default;
 
     /**
-     * @brief Set the lower (minimum) corner.
-     *
-     * @param lower_corner_ Lower bound corner.
-     * @return `*this` for chaining.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_lower_corner(const Vector3<T>& lower_corner_) noexcept;
-
-    /**
-     * @brief Set the upper (maximum) corner.
-     *
-     * @param upper_corner_ Upper bound corner.
-     * @return `*this` for chaining.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_upper_corner(const Vector3<T>& upper_corner_) noexcept;
-
-    /**
      * @brief Build a configured @ref Box (by value).
      *
      * @details
@@ -396,6 +378,24 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Box<T>>
     make_host_shared() const;
+
+    /**
+     * @brief Set the lower (minimum) corner.
+     *
+     * @param lower_corner_ Lower bound corner.
+     * @return `*this` for chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_lower_corner(const Vector3<T>& lower_corner_) noexcept;
+
+    /**
+     * @brief Set the upper (maximum) corner.
+     *
+     * @param upper_corner_ Upper bound corner.
+     * @return `*this` for chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_upper_corner(const Vector3<T>& upper_corner_) noexcept;
 
 private:
     /**

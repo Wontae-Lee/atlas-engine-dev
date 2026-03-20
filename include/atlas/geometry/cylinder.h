@@ -373,6 +373,25 @@ public:
     Builder() = default;
 
     /**
+     * @brief Build a configured @ref Cylinder (by value).
+     *
+     * @details
+     * Validates parameters and constructs a @ref Cylinder.
+     *
+     * @return Constructed cylinder by value.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Cylinder<T>
+    build() const;
+
+    /**
+     * @brief Build a configured @ref Cylinder in a host_shared_ptr.
+     *
+     * @return `atlas::host_shared_ptr<Cylinder<T>>` owning the constructed cylinder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Cylinder<T>>
+    make_host_shared() const;
+
+    /**
      * @brief Set cylinder center.
      *
      * @param center_ Center position.
@@ -398,25 +417,6 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_height(T height_) noexcept;
-
-    /**
-     * @brief Build a configured @ref Cylinder (by value).
-     *
-     * @details
-     * Validates parameters and constructs a @ref Cylinder.
-     *
-     * @return Constructed cylinder by value.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Cylinder<T>
-    build() const;
-
-    /**
-     * @brief Build a configured @ref Cylinder in a host_shared_ptr.
-     *
-     * @return `atlas::host_shared_ptr<Cylinder<T>>` owning the constructed cylinder.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Cylinder<T>>
-    make_host_shared() const;
 
 private:
     /**

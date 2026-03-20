@@ -544,6 +544,37 @@ TriangleMesh<T>::type() const noexcept {
 /* ====================================================================== */
 
 template <typename T>
+TriangleMesh<T>
+TriangleMesh<T>::Builder::build() const {
+    // Build a TriangleMesh<T> from the staged triangles.
+    //
+    // Policy:
+    // - Reject empty meshes (caller must supply geometry).
+    validate();
+
+    TriangleMesh<T> m {};
+
+    // Copy triangles into the mesh instance.
+    // If you want to avoid a copy, add a rvalue-qualified build() overload
+    // that moves _triangles.
+    m.triangles = _triangles;
+
+    // Build acceleration structure for tracing.
+    m.ensure_bvh();
+    m.build_bvh();
+
+    return m;
+}
+
+template <typename T>
+atlas::host_shared_ptr<TriangleMesh<T>>
+TriangleMesh<T>::Builder::make_host_shared() const {
+    // Allocate a shared-owned mesh on the host, moving the built value object.
+    auto m = build();
+    return atlas::make_host_shared<TriangleMesh<T>>(std::move(m));
+}
+
+template <typename T>
 typename TriangleMesh<T>::Builder&
 TriangleMesh<T>::Builder::with_triangles(const HostBuffer<TriangleContainer4<T>>& ts) {
     // Copy triangles into builder staging storage.
@@ -588,37 +619,6 @@ TriangleMesh<T>::Builder::validate() const {
             << "TriangleMesh::Builder validation failed: no triangles provided.";
         throw std::runtime_error("TriangleMesh::Builder validation failed: no triangles provided.");
     }
-}
-
-template <typename T>
-TriangleMesh<T>
-TriangleMesh<T>::Builder::build() const {
-    // Build a TriangleMesh<T> from the staged triangles.
-    //
-    // Policy:
-    // - Reject empty meshes (caller must supply geometry).
-    validate();
-
-    TriangleMesh<T> m {};
-
-    // Copy triangles into the mesh instance.
-    // If you want to avoid a copy, add a rvalue-qualified build() overload
-    // that moves _triangles.
-    m.triangles = _triangles;
-
-    // Build acceleration structure for tracing.
-    m.ensure_bvh();
-    m.build_bvh();
-
-    return m;
-}
-
-template <typename T>
-atlas::host_shared_ptr<TriangleMesh<T>>
-TriangleMesh<T>::Builder::make_host_shared() const {
-    // Allocate a shared-owned mesh on the host, moving the built value object.
-    auto m = build();
-    return atlas::make_host_shared<TriangleMesh<T>>(std::move(m));
 }
 
 } // namespace atlas::geometry

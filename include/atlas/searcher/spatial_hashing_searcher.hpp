@@ -488,7 +488,7 @@ SpatialHashingSearcher<T>::Builder::with_range(const NeighborSearchRange range) 
 
 template <typename T>
 void
-SpatialHashingSearcher<T>::Builder::validate_or_throw() const {
+SpatialHashingSearcher<T>::Builder::validate() const {
     // Validate builder state before constructing an instance.
     // We fail early with a clear message instead of letting a null domain
     // crash later when building buffers or computing hash keys.
@@ -504,7 +504,7 @@ SpatialHashingSearcher<T>::Builder::build() const {
     // - Passes the configured domain and range into the searcher constructor.
     // NOTE: This returns by value (stack object). If you want shared ownership,
     // use make_host_shared().
-    validate_or_throw();
+    validate();
     return SpatialHashingSearcher<T>(_domain, _range);
 }
 
@@ -516,7 +516,7 @@ SpatialHashingSearcher<T>::Builder::make_host_shared() const {
     //  - the searcher is shared across multiple systems/components
     //  - lifetime should be managed via reference counting
     // Validation is performed to keep error behavior consistent with build().
-    validate_or_throw();
+    validate();
     return atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain, _range);
 }
 

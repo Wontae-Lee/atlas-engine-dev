@@ -466,6 +466,22 @@ public:
     Builder() = default;
 
     /**
+     * @brief Build a configured @ref TriangleMesh (by value).
+     *
+     * @return Constructed mesh.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE TriangleMesh<T>
+    build() const;
+
+    /**
+     * @brief Build a configured @ref TriangleMesh in a host_shared_ptr.
+     *
+     * @return Shared pointer owning the constructed mesh.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<TriangleMesh<T>>
+    make_host_shared() const;
+
+    /**
      * @brief Provide triangles by copy.
      *
      * @param ts Triangle buffer to copy.
@@ -495,22 +511,6 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     load_from_obj(const std::string& filename, bool verbose = false);
-
-    /**
-     * @brief Build a configured @ref TriangleMesh (by value).
-     *
-     * @return Constructed mesh.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE TriangleMesh<T>
-    build() const;
-
-    /**
-     * @brief Build a configured @ref TriangleMesh in a host_shared_ptr.
-     *
-     * @return Shared pointer owning the constructed mesh.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<TriangleMesh<T>>
-    make_host_shared() const;
 
 private:
     /// @brief Validate staged parameters.

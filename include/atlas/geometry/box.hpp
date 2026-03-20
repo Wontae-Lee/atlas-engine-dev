@@ -214,6 +214,34 @@ Box<T>::type() const noexcept {
 /* ====================================================================== */
 
 template <typename T>
+Box<T>
+Box<T>::Builder::build() const {
+    // Build a Box<T> after validation.
+    //
+    // Strong exception guarantee:
+    // - If validate() throws, no Box is returned.
+    validate();
+
+    Box<T> b {};
+
+    // Copy builder state into the final object.
+    b.lower_corner = _lower_corner;
+    b.upper_corner = _upper_corner;
+
+    return b;
+}
+
+template <typename T>
+atlas::host_shared_ptr<Box<T>>
+Box<T>::Builder::make_host_shared() const {
+    // Convenience helper:
+    // - Build the Box<T> by value
+    // - Move it into a shared, heap-allocated object
+    auto b = build();
+    return atlas::make_host_shared<Box<T>>(std::move(b));
+}
+
+template <typename T>
 typename Box<T>::Builder&
 Box<T>::Builder::with_lower_corner(const Vector3<T>& lower_corner_) noexcept {
     // Set lower corner (min corner) of the box.
@@ -253,34 +281,6 @@ Box<T>::Builder::validate() const {
             << "Box::Builder validation failed: lower_corner must be <= upper_corner.";
         throw std::runtime_error("Box::Builder: invalid parameters.");
     }
-}
-
-template <typename T>
-Box<T>
-Box<T>::Builder::build() const {
-    // Build a Box<T> after validation.
-    //
-    // Strong exception guarantee:
-    // - If validate() throws, no Box is returned.
-    validate();
-
-    Box<T> b {};
-
-    // Copy builder state into the final object.
-    b.lower_corner = _lower_corner;
-    b.upper_corner = _upper_corner;
-
-    return b;
-}
-
-template <typename T>
-atlas::host_shared_ptr<Box<T>>
-Box<T>::Builder::make_host_shared() const {
-    // Convenience helper:
-    // - Build the Box<T> by value
-    // - Move it into a shared, heap-allocated object
-    auto b = build();
-    return atlas::make_host_shared<Box<T>>(std::move(b));
 }
 
 } // namespace atlas::geometry

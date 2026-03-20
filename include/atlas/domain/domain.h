@@ -345,7 +345,7 @@ private:
  * @tparam T Floating-point scalar type (e.g., float, double).
  *
  * @note
- * - `validate_or_throw()` is expected to enforce:
+ * - `validate()` is expected to enforce:
  *   - `cell_size > 0`
  *   - `upper_corner >= lower_corner` component-wise (and potentially non-degenerate policy)
  *
@@ -356,6 +356,32 @@ class Domain<T>::Builder final {
 public:
     /// @brief Default constructor.
     Builder() = default;
+
+    /**
+     * @brief Builds a `Domain<T>` from the current builder state.
+     *
+     * @details
+     * Validates parameters and returns a fully constructed `Domain<T>`.
+     *
+     * @return Constructed `Domain<T>` instance.
+     *
+     * @throws std::runtime_error (or project-specific exception) if validation fails.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Domain<T>
+    build() const;
+
+    /**
+     * @brief Builds a `Domain<T>` and returns it as a host shared pointer.
+     *
+     * @details
+     * Convenience helper for owning the domain via `atlas::host_shared_ptr`.
+     *
+     * @return `atlas::host_shared_ptr<Domain<T>>` owning the constructed domain.
+     *
+     * @throws std::runtime_error (or project-specific exception) if validation fails.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Domain<T>>
+    make_host_shared() const;
 
     /** @brief Configures the builder's bounds from a geometry object.
      *
@@ -391,32 +417,6 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_cell_size(T h) noexcept;
-
-    /**
-     * @brief Builds a `Domain<T>` from the current builder state.
-     *
-     * @details
-     * Validates parameters and returns a fully constructed `Domain<T>`.
-     *
-     * @return Constructed `Domain<T>` instance.
-     *
-     * @throws std::runtime_error (or project-specific exception) if validation fails.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Domain<T>
-    build() const;
-
-    /**
-     * @brief Builds a `Domain<T>` and returns it as a host shared pointer.
-     *
-     * @details
-     * Convenience helper for owning the domain via `atlas::host_shared_ptr`.
-     *
-     * @return `atlas::host_shared_ptr<Domain<T>>` owning the constructed domain.
-     *
-     * @throws std::runtime_error (or project-specific exception) if validation fails.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Domain<T>>
-    make_host_shared() const;
 
 private:
     /**

@@ -40,6 +40,41 @@ Matter<T>::builder() noexcept {
 // ============================================================
 
 template <typename T>
+Matter<T>
+Matter<T>::Builder::build() const {
+    // Construct a Matter<T> instance by value.
+    //
+    // Steps:
+    //  1) Validate parameters (throws if invalid).
+    //  2) Forward the validated mass into the Matter constructor.
+    //
+    // Returning by value enables NRVO/move elision and keeps usage simple.
+    validate();
+    return Matter<T>(_mass);
+}
+
+template <typename T>
+atlas::host_shared_ptr<Matter<T>>
+Matter<T>::Builder::make_host_shared() const {
+    // Construct a heap-allocated Matter<T> wrapped in a host_shared_ptr.
+    //
+    // This is useful when:
+    // - the object is shared across multiple owners (systems/components),
+    // - polymorphic usage requires dynamic lifetime management,
+    // - you want to pass around an owning handle rather than a value type.
+    //
+    // Validation is performed before allocation to fail fast and avoid
+    // allocating objects that would immediately be invalid.
+    validate();
+
+    // Note:
+    // This uses atlas::make_host_shared to construct the object efficiently
+    // (typically a single allocation for control block + object, depending on
+    // implementation), and ensures consistent ownership semantics on the host.
+    return atlas::make_host_shared<Matter<T>>(_mass);
+}
+
+template <typename T>
 typename Matter<T>::Builder&
 Matter<T>::Builder::with_mass(T mass) noexcept {
     // Set the mass to be used when constructing Matter<T>.
@@ -56,7 +91,7 @@ Matter<T>::Builder::with_mass(T mass) noexcept {
 
 template <typename T>
 void
-Matter<T>::Builder::validate_or_throw() const {
+Matter<T>::Builder::validate() const {
     // Validate builder state before constructing the object.
     //
     // Ensures the same invariant enforced by the Matter constructor:
@@ -67,41 +102,6 @@ Matter<T>::Builder::validate_or_throw() const {
     // - the ability to extend validation later without touching call sites.
     atlas::check<std::invalid_argument>(_mass > T(0))
         << "Matter::Builder: mass must be positive.";
-}
-
-template <typename T>
-Matter<T>
-Matter<T>::Builder::build() const {
-    // Construct a Matter<T> instance by value.
-    //
-    // Steps:
-    //  1) Validate parameters (throws if invalid).
-    //  2) Forward the validated mass into the Matter constructor.
-    //
-    // Returning by value enables NRVO/move elision and keeps usage simple.
-    validate_or_throw();
-    return Matter<T>(_mass);
-}
-
-template <typename T>
-atlas::host_shared_ptr<Matter<T>>
-Matter<T>::Builder::make_host_shared() const {
-    // Construct a heap-allocated Matter<T> wrapped in a host_shared_ptr.
-    //
-    // This is useful when:
-    // - the object is shared across multiple owners (systems/components),
-    // - polymorphic usage requires dynamic lifetime management,
-    // - you want to pass around an owning handle rather than a value type.
-    //
-    // Validation is performed before allocation to fail fast and avoid
-    // allocating objects that would immediately be invalid.
-    validate_or_throw();
-
-    // Note:
-    // This uses atlas::make_host_shared to construct the object efficiently
-    // (typically a single allocation for control block + object, depending on
-    // implementation), and ensures consistent ownership semantics on the host.
-    return atlas::make_host_shared<Matter<T>>(_mass);
 }
 
 } // namespace atlas::system

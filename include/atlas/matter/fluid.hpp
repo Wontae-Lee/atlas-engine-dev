@@ -104,222 +104,35 @@ ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE
     return _amounts;
 }
 
+template <typename T>
+ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<GeneratorHostPtr<T>>&
+Fluid<T>::generators() const noexcept {
+    return _generators;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<GeneratorHostPtr<T>>&
+Fluid<T>::generators() noexcept {
+    return _generators;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+Fluid<T>::normalized(const T eps) const noexcept {
+    if (_amounts.empty()) return false;
+
+    T sum = T(0);
+    for (const T amount : _amounts) {
+        if (!std::isfinite(amount) || amount < T(0)) return false;
+        sum += amount;
+    }
+
+    return std::abs(sum - T(1)) <= eps;
+}
+
 /* =========================
  * Fluid<T>::Builder
  * ========================= */
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p) {
-    // Add a particle definition with a default amount of 1.
-    //
-    // Delegates to the (particle, amount) overload to keep logic unified.
-    return add_particle(p, T(1));
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p, T amount) {
-    // Add a particle by value, with an explicit amount.
-    //
-    // Semantics:
-    // - The particle is copied into a heap-allocated FluidicParticle<T>
-    //   managed by a host_shared_ptr.
-    // - The amount is stored in a parallel buffer.
-    //
-    // Design invariant:
-    // - `_particles.size()` must always match `_amounts.size()`.
-    _particles.push_back(
-        atlas::make_host_shared<FluidicParticle<T>>(p));
-    _amounts.push_back(amount);
-    return *this;
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p) {
-    // Add a particle via shared pointer with default amount = 1.
-    //
-    // Delegates to pointer+amount overload.
-    return add_particle(std::move(p), T(1));
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p, T amount) {
-    // Add a particle via shared pointer with an explicit amount.
-    //
-    // Semantics:
-    // - Shared ownership of the particle is transferred/copied into the fluid.
-    // - No deep copy of the particle occurs.
-    //
-    // Note:
-    // - Null pointer handling is deferred to validate(),
-    //   depending on builder policy flags.
-    _particles.push_back(std::move(p));
-    _amounts.push_back(amount);
-    return *this;
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_particles(const HostBuffer<FluidicParticle<T>>& ps) {
-    // Bulk-add particles by value with default amount = 1.
-    //
-    // Complexity:
-    // - O(n) allocations, where n = ps.size().
-    const int n = static_cast<int>(ps.size());
-    for (int i = 0; i < n; ++i) {
-        add_particle(ps[i], T(1));
-    }
-    return *this;
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_particles(
-        const HostBuffer<FluidicParticle<T>>& ps,
-        const HostBuffer<T>& amounts) {
-    // Bulk-add particles by value with explicit amounts.
-    //
-    // Strong requirement:
-    // - Particle buffer and amount buffer must have identical sizes.
-    const int n = static_cast<int>(ps.size());
-    if (static_cast<int>(amounts.size()) != n) {
-        throw std::runtime_error(
-            "Fluid::Builder::add_particles(values, amounts): size mismatch.");
-    }
-
-    for (int i = 0; i < n; ++i) {
-        add_particle(ps[i], amounts[i]);
-    }
-    return *this;
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_particles(
-        const HostBuffer<FluidicParticleHostPtr<T>>& ps) {
-    // Bulk-add particles via shared pointers with default amount = 1.
-    //
-    // Complexity:
-    // - O(n) pointer copies, no allocations.
-    const int n = static_cast<int>(ps.size());
-    for (int i = 0; i < n; ++i) {
-        add_particle(ps[i], T(1));
-    }
-    return *this;
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_particles(
-        const HostBuffer<FluidicParticleHostPtr<T>>& ps,
-        const HostBuffer<T>& amounts) {
-    // Bulk-add shared particles with explicit amounts.
-    //
-    // Size consistency is mandatory.
-    const int n = static_cast<int>(ps.size());
-    if (static_cast<int>(amounts.size()) != n) {
-        throw std::runtime_error(
-            "Fluid::Builder::add_particles(ptrs, amounts): size mismatch.");
-    }
-
-    for (int i = 0; i < n; ++i) {
-        add_particle(ps[i], amounts[i]);
-    }
-    return *this;
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::require_non_empty(bool on) noexcept {
-    // Configure whether the built Fluid<T> must be non-empty.
-    //
-    // Typical use:
-    // - Solvers that assume at least one species/particle.
-    _require_non_empty = on;
-    return *this;
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::reject_null_particles(bool on) noexcept {
-    // Configure whether null particle pointers are rejected at build time.
-    //
-    // When enabled:
-    // - validate() will scan the particle buffer
-    //   and reject any null shared_ptr.
-    _reject_null_particles = on;
-    return *this;
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::reject_negative_amounts(bool on) noexcept {
-    // Configure whether negative amounts are rejected at build time.
-    //
-    // Physical rationale:
-    // - Negative particle amounts are almost always nonsensical.
-    _reject_negative_amounts = on;
-    return *this;
-}
-
-template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE void
-Fluid<T>::Builder::validate_or_throw() const {
-    // Centralized validation of builder invariants.
-    //
-    // This function enforces:
-    // - Structural consistency (buffer sizes)
-    // - Optional semantic constraints controlled by flags.
-
-    // 1) Structural invariant:
-    //    - Particles and amounts must be 1:1 aligned.
-    if (_particles.size() != _amounts.size()) {
-        throw std::runtime_error(
-            "Fluid::Builder: particles/amounts size mismatch.");
-    }
-
-    // 2) Non-empty requirement.
-    if (_require_non_empty && _particles.size() == 0) {
-        throw std::runtime_error(
-            "Fluid::Builder: fluid must contain at least one particle.");
-    }
-
-    // 3) Null particle rejection (optional).
-    if (_reject_null_particles) {
-        const int n = static_cast<int>(_particles.size());
-        for (int i = 0; i < n; ++i) {
-            if (!_particles[i]) {
-                throw std::runtime_error(
-                    "Fluid::Builder: null particle pointer encountered.");
-            }
-        }
-    }
-
-    // 4) Negative amount rejection (optional).
-    if (_reject_negative_amounts) {
-        const int n = static_cast<int>(_amounts.size());
-        for (int i = 0; i < n; ++i) {
-            if (_amounts[i] < T(0)) {
-                throw std::runtime_error(
-                    "Fluid::Builder: negative amount encountered.");
-            }
-        }
-    }
-}
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE
@@ -329,7 +142,7 @@ ATLAS_HOST ATLAS_FORCE_INLINE
     //
     // Strong exception guarantee:
     // - If validation fails, no Fluid is produced.
-    validate_or_throw();
+    validate();
 
     Fluid<T> f {};
 
@@ -338,6 +151,7 @@ ATLAS_HOST ATLAS_FORCE_INLINE
     // - Amount buffer is copied by value.
     f._particles = _particles;
     f._amounts   = _amounts;
+    f._generators = _generators;
 
     return f;
 }
@@ -351,6 +165,227 @@ ATLAS_HOST ATLAS_FORCE_INLINE
     // - Move it into a shared, heap-allocated object.
     auto f = build();
     return atlas::make_host_shared<Fluid<T>>(std::move(f));
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p) {
+    return add_particle(p, T(1));
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p, T amount) {
+    return add_particle(p, amount, nullptr);
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(const FluidicParticle<T>& p,
+                                    T amount,
+                                    GeneratorHostPtr<T> generator) {
+    _particles.push_back(atlas::make_host_shared<FluidicParticle<T>>(p));
+    _amounts.push_back(amount);
+    _generators.push_back(std::move(generator));
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p) {
+    return add_particle(std::move(p), T(1));
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p, T amount) {
+    return add_particle(std::move(p), amount, nullptr);
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particle(FluidicParticleHostPtr<T> p,
+                                    T amount,
+                                    GeneratorHostPtr<T> generator) {
+    _particles.push_back(std::move(p));
+    _amounts.push_back(amount);
+    _generators.push_back(std::move(generator));
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(const HostBuffer<FluidicParticle<T>>& ps) {
+    const int n = static_cast<int>(ps.size());
+    for (int i = 0; i < n; ++i) {
+        add_particle(ps[i], T(1));
+    }
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(
+        const HostBuffer<FluidicParticle<T>>& ps,
+        const HostBuffer<T>& amounts) {
+    const HostBuffer<GeneratorHostPtr<T>> generators(ps.size(), nullptr);
+    return add_particles(ps, amounts, generators);
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(
+        const HostBuffer<FluidicParticle<T>>& ps,
+        const HostBuffer<T>& amounts,
+        const HostBuffer<GeneratorHostPtr<T>>& generators) {
+    const int n = static_cast<int>(ps.size());
+    if (static_cast<int>(amounts.size()) != n || static_cast<int>(generators.size()) != n) {
+        throw std::runtime_error(
+            "Fluid::Builder::add_particles(values, amounts, generators): size mismatch.");
+    }
+
+    for (int i = 0; i < n; ++i) {
+        add_particle(ps[i], amounts[i], generators[i]);
+    }
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(
+        const HostBuffer<FluidicParticleHostPtr<T>>& ps) {
+    const int n = static_cast<int>(ps.size());
+    for (int i = 0; i < n; ++i) {
+        add_particle(ps[i], T(1));
+    }
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(
+        const HostBuffer<FluidicParticleHostPtr<T>>& ps,
+        const HostBuffer<T>& amounts) {
+    const HostBuffer<GeneratorHostPtr<T>> generators(ps.size(), nullptr);
+    return add_particles(ps, amounts, generators);
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::add_particles(
+        const HostBuffer<FluidicParticleHostPtr<T>>& ps,
+        const HostBuffer<T>& amounts,
+        const HostBuffer<GeneratorHostPtr<T>>& generators) {
+    const int n = static_cast<int>(ps.size());
+    if (static_cast<int>(amounts.size()) != n || static_cast<int>(generators.size()) != n) {
+        throw std::runtime_error(
+            "Fluid::Builder::add_particles(ptrs, amounts, generators): size mismatch.");
+    }
+
+    for (int i = 0; i < n; ++i) {
+        add_particle(ps[i], amounts[i], generators[i]);
+    }
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::require_non_empty(bool on) noexcept {
+    _require_non_empty = on;
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::reject_null_particles(bool on) noexcept {
+    _reject_null_particles = on;
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::reject_negative_amounts(bool on) noexcept {
+    _reject_negative_amounts = on;
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+    typename Fluid<T>::Builder&
+    Fluid<T>::Builder::require_normalized_amounts(bool on) noexcept {
+    _require_normalized_amounts = on;
+    return *this;
+}
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE void
+Fluid<T>::Builder::validate() const {
+    if (_particles.size() != _amounts.size() || _particles.size() != _generators.size()) {
+        throw std::runtime_error(
+            "Fluid::Builder: particles/amounts/generators size mismatch.");
+    }
+
+    if (_require_non_empty && _particles.size() == 0) {
+        throw std::runtime_error(
+            "Fluid::Builder: fluid must contain at least one particle.");
+    }
+
+    if (_reject_null_particles) {
+        const int n = static_cast<int>(_particles.size());
+        for (int i = 0; i < n; ++i) {
+            if (!_particles[i]) {
+                throw std::runtime_error(
+                    "Fluid::Builder: null particle pointer encountered.");
+            }
+        }
+    }
+
+    if (_reject_negative_amounts) {
+        const int n = static_cast<int>(_amounts.size());
+        for (int i = 0; i < n; ++i) {
+            if (_amounts[i] < T(0)) {
+                throw std::runtime_error(
+                    "Fluid::Builder: negative amount encountered.");
+            }
+        }
+    }
+
+    if (_require_normalized_amounts) {
+        if (_amounts.empty()) {
+            throw std::runtime_error(
+                "Fluid::Builder: normalized amounts require a non-empty fluid.");
+        }
+
+        T sum = T(0);
+        const int n = static_cast<int>(_amounts.size());
+        for (int i = 0; i < n; ++i) {
+            if (!std::isfinite(_amounts[i]) || _amounts[i] < T(0)) {
+                throw std::runtime_error(
+                    "Fluid::Builder: normalized amounts must be finite and non-negative.");
+            }
+            sum += _amounts[i];
+        }
+
+        if (std::abs(sum - T(1)) > static_cast<T>(1e-4)) {
+            throw std::runtime_error(
+                "Fluid::Builder: normalized amounts must sum to 1.");
+        }
+    }
 }
 
 } // namespace atlas::system

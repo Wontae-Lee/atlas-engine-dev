@@ -381,6 +381,22 @@ public:
     Builder() = default;
 
     /**
+     * @brief Build a configured @ref Plane (by value).
+     *
+     * @return Constructed plane by value.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Plane<T>
+    build() const;
+
+    /**
+     * @brief Build a configured @ref Plane in a host_shared_ptr.
+     *
+     * @return `atlas::host_shared_ptr<Plane<T>>` owning the constructed plane.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Plane<T>>
+    make_host_shared() const;
+
+    /**
      * @brief Set plane normal.
      *
      * @param normal_ Plane normal.
@@ -423,22 +439,6 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_point_normal(const Vector3<T>& point, const Vector3<T>& normal_) noexcept;
-
-    /**
-     * @brief Build a configured @ref Plane (by value).
-     *
-     * @return Constructed plane by value.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Plane<T>
-    build() const;
-
-    /**
-     * @brief Build a configured @ref Plane in a host_shared_ptr.
-     *
-     * @return `atlas::host_shared_ptr<Plane<T>>` owning the constructed plane.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Plane<T>>
-    make_host_shared() const;
 
 private:
     /**

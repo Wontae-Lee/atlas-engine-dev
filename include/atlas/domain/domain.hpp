@@ -8,21 +8,6 @@ namespace atlas::system {
 // ---------------------------------
 
 template <typename T>
-typename Domain<T>::Builder
-Domain<T>::builder() noexcept {
-    // ------------------------------------------------------------
-    // Returns a default-initialized Builder for Domain<T>.
-    //
-    // Notes:
-    //   - The builder collects parameters (bounds, cell size) and
-    //     validates them before constructing a Domain instance.
-    //   - This function is noexcept because it only returns a value
-    //     with no allocations or validation.
-    // ------------------------------------------------------------
-    return Builder {};
-}
-
-template <typename T>
 Domain<T>::Domain(const Vector3<T>& lower_corner,
                   const Vector3<T>& upper_corner,
                   T cell_size)
@@ -91,6 +76,21 @@ Domain<T>::Domain(const Vector3<T>& lower_corner,
 }
 
 template <typename T>
+typename Domain<T>::Builder
+Domain<T>::builder() noexcept {
+    // ------------------------------------------------------------
+    // Returns a default-initialized Builder for Domain<T>.
+    //
+    // Notes:
+    //   - The builder collects parameters (bounds, cell size) and
+    //     validates them before constructing a Domain instance.
+    //   - This function is noexcept because it only returns a value
+    //     with no allocations or validation.
+    // ------------------------------------------------------------
+    return Builder {};
+}
+
+template <typename T>
 DomainDeviceProbe<T>
 Domain<T>::make_device_probe() noexcept {
     // ------------------------------------------------------------
@@ -148,6 +148,7 @@ Domain<T>::make_device_probe() noexcept {
 
     return probe;
 }
+
 template <typename T>
 int
 Domain<T>::number_of_cells() const noexcept {
@@ -176,21 +177,21 @@ Domain<T>::upper_corner() const noexcept {
 }
 
 template <typename T>
-T
-Domain<T>::cell_size() const noexcept {
-    // ------------------------------------------------------------
-    // Returns the uniform cell size (grid spacing) of the domain.
-    // ------------------------------------------------------------
-    return _cell_size;
-}
-
-template <typename T>
 Vector3<int>
 Domain<T>::grid_size() const noexcept {
     // ------------------------------------------------------------
     // Returns the integer grid resolution (cells per axis).
     // ------------------------------------------------------------
     return _grid_size;
+}
+
+template <typename T>
+T
+Domain<T>::cell_size() const noexcept {
+    // ------------------------------------------------------------
+    // Returns the uniform cell size (grid spacing) of the domain.
+    // ------------------------------------------------------------
+    return _cell_size;
 }
 
 template <typename T>
@@ -214,6 +215,27 @@ Domain<T>::inverse_cell_size() const noexcept {
 // ---------------------------------
 // Builder
 // ---------------------------------
+template <typename T>
+Domain<T>
+Domain<T>::Builder::build() const {
+    // ------------------------------------------------------------
+    // Validates inputs and returns a fully constructed Domain<T>.
+    // ------------------------------------------------------------
+    validate();
+    return Domain<T>(_lower_corner, _upper_corner, _cell_size);
+}
+
+template <typename T>
+atlas::host_shared_ptr<Domain<T>>
+Domain<T>::Builder::make_host_shared() const {
+    // ------------------------------------------------------------
+    // Validates inputs and returns a host_shared_ptr owning the
+    // constructed Domain<T>.
+    // ------------------------------------------------------------
+    validate();
+    return atlas::make_host_shared<Domain<T>>(_lower_corner, _upper_corner, _cell_size);
+}
+
 template <typename T>
 typename Domain<T>::Builder&
 Domain<T>::Builder::with_geometry(const GeometryHostPtr<T>& geometry) noexcept {
@@ -319,27 +341,6 @@ Domain<T>::Builder::validate() const {
         << "Domain::Builder validation failed: number_of_cells overflow/invalid. "
         << "number_of_cells=" << cells64 << ", "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
-}
-
-template <typename T>
-Domain<T>
-Domain<T>::Builder::build() const {
-    // ------------------------------------------------------------
-    // Validates inputs and returns a fully constructed Domain<T>.
-    // ------------------------------------------------------------
-    validate();
-    return Domain<T>(_lower_corner, _upper_corner, _cell_size);
-}
-
-template <typename T>
-atlas::host_shared_ptr<Domain<T>>
-Domain<T>::Builder::make_host_shared() const {
-    // ------------------------------------------------------------
-    // Validates inputs and returns a host_shared_ptr owning the
-    // constructed Domain<T>.
-    // ------------------------------------------------------------
-    validate();
-    return atlas::make_host_shared<Domain<T>>(_lower_corner, _upper_corner, _cell_size);
 }
 
 } // namespace atlas::system

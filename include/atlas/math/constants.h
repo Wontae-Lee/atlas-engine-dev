@@ -33,6 +33,10 @@ namespace math {
 // Uses the C math macro M_PI (platform/defines dependent).
 constexpr double pi = M_PI;
 
+// Boltzmann constant in SI units (J/K = kg m^2 s^-2 K^-1).
+// Useful for Maxwell-Boltzmann thermal velocity and kinetic theory formulas.
+constexpr double boltzmann_constant = 1.380649e-23;
+
 // Default floating epsilon used across the codebase (single-precision).
 // Handy for "nearly zero" checks without spelling out the namespace.
 constexpr double eps = math::k_epsilon_d;

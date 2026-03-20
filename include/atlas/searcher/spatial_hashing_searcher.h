@@ -527,7 +527,7 @@ private:
      * Additional checks may be added (e.g., domain grid size validity).
      */
     void
-    validate_or_throw() const;
+    validate() const;
 
 private:
     /// @brief Domain handle to be passed into the constructed searcher.

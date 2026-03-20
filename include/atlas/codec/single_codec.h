@@ -151,7 +151,7 @@ public:
  * - `make_host_shared()` returns `host_shared_ptr<SingleCodec<T>>`.
  *
  * Validation:
- * - `validate_or_throw()` enforces required configuration and is called by
+ * - `validate()` enforces required configuration and is called by
  *   `build()` and `make_host_shared()`.
  *
  * @tparam T Floating-point scalar type.

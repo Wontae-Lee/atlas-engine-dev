@@ -1,8 +1,21 @@
 #pragma once
 
+#include <atlas/memory/copy.h>
 #include <atlas/memory/raw_pointer_cast.h>
 
 namespace atlas::system {
+template <typename T>
+bool
+ParticleDeviceProbe<T>::empty() const noexcept {
+    return particle_count <= 0;
+}
+
+template <typename T>
+bool
+ParticleDeviceProbe<T>::valid() const noexcept {
+    return pos != nullptr && particle_count > 0;
+}
+
 template <typename T>
 ParticleData<T>::ParticleData(const size_t buffer_size) {
     _buffer_size = buffer_size;
@@ -29,6 +42,7 @@ ParticleData<T>::make_device_probe() noexcept {
     probe.species        = atlas::raw_pointer_cast(d_species.data());
     probe.acitve         = atlas::raw_pointer_cast(d_active.data());
     probe.particle_count = static_cast<int>(_buffer_size);
+    probe.buffer_size    = _buffer_size;
     return probe;
 }
 
@@ -51,9 +65,31 @@ ParticleData<T>::species() noexcept {
 }
 
 template <typename T>
+DeviceBuffer<int>&
+ParticleData<T>::active() noexcept {
+    return d_active;
+}
+
+template <typename T>
 size_t
 ParticleData<T>::buffer_size() const noexcept {
     return _buffer_size;
+}
+
+inline int
+count_selected_particles(const DeviceBuffer<int>& selection_mask,
+                         const DeviceBuffer<int>& selection_offsets,
+                         const int particle_count) {
+    if (particle_count <= 0) return 0;
+
+    const int* selection_mask_ptr    = atlas::raw_pointer_cast(selection_mask.data());
+    const int* selection_offsets_ptr = atlas::raw_pointer_cast(selection_offsets.data());
+    int last_mask                    = 0;
+    int last_offset                  = 0;
+
+    atlas::copy_device_to_host(selection_mask_ptr + (particle_count - 1), &last_mask, 1);
+    atlas::copy_device_to_host(selection_offsets_ptr + (particle_count - 1), &last_offset, 1);
+    return last_mask + last_offset;
 }
 
 } // namespace atlas::system

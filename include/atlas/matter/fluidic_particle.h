@@ -265,7 +265,7 @@ public:
  * ## Responsibilities
  * - Enforce presence of required parameters (currently @ref with_molecular_mass).
  * - Offer a fluent interface for setting optional DSMC parameters.
- * - Validate the configuration at build time via @ref validate_or_throw.
+ * - Validate the configuration at build time via @ref validate.
  *
  * ## Error handling
  * - If required fields are missing, @ref build and @ref make_host_shared throw `std::runtime_error`.
@@ -293,6 +293,43 @@ public:
      */
     Builder() = default;
 
+    /**
+     * @brief Build a configured @ref FluidicParticle (by value).
+     *
+     * @details
+     * Validates the builder state and returns a particle populated with all configured
+     * parameters. Required parameters are copied into the resulting particle; unset
+     * optionals remain unset.
+     *
+     * @return Fully constructed particle instance.
+     *
+     * @throws std::runtime_error
+     * If required fields (e.g., molecular mass) are missing or validation fails.
+     *
+     * @note
+     * This is a host-only routine.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE FluidicParticle<T>
+    build() const;
+
+    /**
+     * @brief Build a configured @ref FluidicParticle in a @ref atlas::host_shared_ptr.
+     *
+     * @details
+     * Equivalent to `host_shared_ptr<FluidicParticle<T>>(new FluidicParticle<T>(build()))`
+     * (exact allocation strategy depends on `atlas::host_shared_ptr` implementation).
+     *
+     * @return Shared pointer owning the constructed particle.
+     *
+     * @throws std::runtime_error
+     * If required fields are missing or validation fails.
+     *
+     * @note
+     * Host-only routine; not intended for device code.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<FluidicParticle<T>>
+    make_host_shared() const;
+
     /* ------------------------------------------------------------------
      * Required
      * ------------------------------------------------------------------ */
@@ -308,7 +345,7 @@ public:
      *
      * @note
      * This function does not validate sign or unit; validation policy is left to
-     * @ref validate_or_throw (and/or your calling conventions).
+     * @ref validate (and/or your calling conventions).
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_molecular_mass(T mass);
@@ -407,47 +444,6 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_charge(int q);
 
-    /* ------------------------------------------------------------------
-     * Build
-     * ------------------------------------------------------------------ */
-
-    /**
-     * @brief Build a configured @ref FluidicParticle (by value).
-     *
-     * @details
-     * Validates the builder state and returns a particle populated with all configured
-     * parameters. Required parameters are copied into the resulting particle; unset
-     * optionals remain unset.
-     *
-     * @return Fully constructed particle instance.
-     *
-     * @throws std::runtime_error
-     * If required fields (e.g., molecular mass) are missing or validation fails.
-     *
-     * @note
-     * This is a host-only routine.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE FluidicParticle<T>
-    build() const;
-
-    /**
-     * @brief Build a configured @ref FluidicParticle in a @ref atlas::host_shared_ptr.
-     *
-     * @details
-     * Equivalent to `host_shared_ptr<FluidicParticle<T>>(new FluidicParticle<T>(build()))`
-     * (exact allocation strategy depends on `atlas::host_shared_ptr` implementation).
-     *
-     * @return Shared pointer owning the constructed particle.
-     *
-     * @throws std::runtime_error
-     * If required fields are missing or validation fails.
-     *
-     * @note
-     * Host-only routine; not intended for device code.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<FluidicParticle<T>>
-    make_host_shared() const;
-
 private:
     /**
      * @brief Validate builder state or throw an exception.
@@ -463,7 +459,7 @@ private:
      * @throws std::runtime_error if validation fails.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    validate_or_throw() const;
+    validate() const;
 
 private:
     // ------------------------------------------------------------------
@@ -505,6 +501,7 @@ private:
 
     /// @brief Optional: particle charge.
     std::optional<int> _charge;
+
 };
 
 } // namespace atlas::system

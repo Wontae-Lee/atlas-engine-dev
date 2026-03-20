@@ -6,7 +6,6 @@
 #include <atlas/logging/logging.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
-
 namespace atlas {
 namespace system {
     template <typename T>
@@ -16,8 +15,14 @@ namespace system {
         size_t* species { nullptr };
         int* acitve { nullptr };
         int particle_count { 0 };
-    };
+        size_t buffer_size { 0 };
 
+        ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+        empty() const noexcept;
+
+        ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+        valid() const noexcept;
+    };
 
     template <typename T>
     class ParticleData {
@@ -35,12 +40,15 @@ namespace system {
         ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE size_t
         buffer_size() const noexcept;
 
+        ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<int>&
+        active() noexcept;
+
     private:
         DeviceBuffer<Vector3<T>> d_pos;
         DeviceBuffer<Vector3<T>> d_vel;
         DeviceBuffer<size_t> d_species;
         DeviceBuffer<int> d_active;
-        size_t _buffer_size = 0;
+        size_t _buffer_size        = 0;
         std::uint64_t _probe_count = 0;
     };
 }

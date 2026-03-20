@@ -1,0 +1,72 @@
+#pragma once
+
+#include <atlas/generator/generator.h>
+
+#include <optional>
+
+namespace atlas::system {
+
+/**
+ * @brief Gaussian velocity-component generator with precomputed sigma.
+ *
+ * @tparam T Floating-point scalar type.
+ */
+template <typename T>
+class MaxwellSigmaGenerator final : public Generator<T> {
+public:
+    class Builder;
+
+public:
+    ATLAS_HOST ATLAS_FORCE_INLINE static Builder
+    builder() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    MaxwellSigmaGenerator(T sigma, unsigned int seed = 0u) noexcept;
+
+    ATLAS_HOST void
+    generate(DeviceBuffer<Vector3<T>>& values) const override;
+
+    ATLAS_HOST ATLAS_NODISCARD GenerateType
+    type() const noexcept override;
+
+private:
+    T _sigma;
+    unsigned int _seed;
+};
+
+template <typename T>
+class MaxwellSigmaGenerator<T>::Builder final {
+public:
+    Builder() = default;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE MaxwellSigmaGenerator<T>
+    build() const;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<MaxwellSigmaGenerator<T>>
+    make_host_shared() const;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_sigma(T sigma) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_seed(unsigned int seed) noexcept;
+
+private:
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    validate() const;
+
+private:
+    std::optional<T> _sigma;
+    unsigned int _seed = 0u;
+};
+
+} // namespace atlas::system
+
+namespace atlas {
+
+template <typename T>
+using MaxwellSigmaGenerator = atlas::system::MaxwellSigmaGenerator<T>;
+
+} // namespace atlas
+
+#include <atlas/generator/maxwell_sigma_generator.hpp>

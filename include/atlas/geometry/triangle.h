@@ -377,6 +377,22 @@ public:
     /// @brief Default constructor.
     Builder() = default;
 
+    /**
+     * @brief Build a configured @ref Triangle (by value).
+     *
+     * @return Constructed triangle.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Triangle<T>
+    build() const;
+
+    /**
+     * @brief Build a configured @ref Triangle in a host_shared_ptr.
+     *
+     * @return Shared pointer owning the constructed triangle.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Triangle<T>>
+    make_host_shared() const;
+
     /// @brief Set vertex A.
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_a(const Vector3<T>& a_) noexcept;
@@ -405,22 +421,6 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_normal(const Vector3<T>& normal_) noexcept;
-
-    /**
-     * @brief Build a configured @ref Triangle (by value).
-     *
-     * @return Constructed triangle.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Triangle<T>
-    build() const;
-
-    /**
-     * @brief Build a configured @ref Triangle in a host_shared_ptr.
-     *
-     * @return Shared pointer owning the constructed triangle.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Triangle<T>>
-    make_host_shared() const;
 
 private:
     /// @brief Validate staged parameters.

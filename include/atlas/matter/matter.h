@@ -96,19 +96,6 @@ public:
     Builder() = default;
 
     /**
-     * @brief Set the solver mass.
-     *
-     * @param mass New mass value to store.
-     * @return `*this` for fluent chaining.
-     *
-     * @note
-     * The mass should generally be finite and non-negative. The builder may
-     * enforce this in @ref validate_or_throw().
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_mass(T mass) noexcept;
-
-    /**
      * @brief Build a @ref Matter object by value.
      *
      * @return Constructed @ref Matter instance.
@@ -128,6 +115,19 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Matter<T>>
     make_host_shared() const;
 
+    /**
+     * @brief Set the solver mass.
+     *
+     * @param mass New mass value to store.
+     * @return `*this` for fluent chaining.
+     *
+     * @note
+     * The mass should generally be finite and non-negative. The builder may
+     * enforce this in @ref validate().
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_mass(T mass) noexcept;
+
 private:
     /**
      * @brief Validate builder state and throw if invalid.
@@ -140,7 +140,7 @@ private:
      * The specific rules are determined by the project’s conventions.
      */
     void
-    validate_or_throw() const;
+    validate() const;
 
 private:
     /// @brief Pending mass value to be used during construction.
