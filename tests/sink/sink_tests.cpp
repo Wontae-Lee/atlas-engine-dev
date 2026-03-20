@@ -8,6 +8,7 @@ using namespace atlas;
 TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
     atlas::system::System<double> sim_system(5);
     auto& particle_probe = sim_system.particle_probe();
+    particle_probe.particle_count = 3;
 
     particle_probe.pos[0]    = Vector3<double>(0.0, 0.0, 0.0);
     particle_probe.pos[1]    = Vector3<double>(2.0, 0.0, 0.0);
@@ -48,15 +49,9 @@ TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
 
     sink.sink(particle_probe);
 
+    EXPECT_EQ(particle_probe.particle_count, 1);
     EXPECT_TRUE(test::vec_near(particle_probe.pos[0], Vector3<double>(2.0, 0.0, 0.0), 1e-12));
     EXPECT_TRUE(test::vec_near(particle_probe.vel[0], Vector3<double>(2.0, 0.0, 0.0), 1e-12));
     EXPECT_EQ(particle_probe.species[0], std::size_t(11));
     EXPECT_EQ(particle_probe.acitve[0], 1);
-
-    for (int i = 1; i < particle_probe.particle_count; ++i) {
-        EXPECT_TRUE(test::vec_near(particle_probe.pos[i], Vector3<double>(0.0, 0.0, 0.0), 1e-12));
-        EXPECT_TRUE(test::vec_near(particle_probe.vel[i], Vector3<double>(0.0, 0.0, 0.0), 1e-12));
-        EXPECT_EQ(particle_probe.species[i], std::size_t(0));
-        EXPECT_EQ(particle_probe.acitve[i], 0);
-    }
 }
