@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="5" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="10" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
@@ -141,13 +141,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakePresets.json" beforeDir="false" afterPath="$PROJECT_DIR$/CMakePresets.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/data/particle_data.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/data/particle_data.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/data/particle_data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/data/particle_data.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -170,13 +170,14 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="506" />
+    <option name="cachedIndexableFilesCount" value="269" />
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="6ef9263b85d752bca213681cfc0183576a318de6" />
+        <entry key="$PROJECT_DIR$" value="17d49db394b13bc5b07d9e4939b6f25b8e557cf0" />
         <entry key="$PROJECT_DIR$/external/googlebenchmark" value="5c76a26e4e80c5809fd26e5b9f7bc02e704cd793" />
         <entry key="$PROJECT_DIR$/external/googletest" value="94be250af7e14c58dcbf476972d2d7141551ff67" />
         <entry key="$PROJECT_DIR$/external/tinyobj" value="966edceaf8cdca7996c4e9a1c5ced2938de63366" />
@@ -202,6 +203,7 @@
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/searcher.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/system/system.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MacroExpansionManager">
     <option name="directoryName" value="n7IEJrI8" />
@@ -249,16 +251,19 @@
     "cf.advertisement.text.overridden": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "ctest.advertisement.all.test.configuration.is.created": "true",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/tests/sink/despawn_operator_tests",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/tests/generator",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "org.rust.first.attach.projects": "true",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "settings.editor.selected.configurable": "ml.llm.LLMThirdPartyAiProvidersConfigurable",
+    "to.speed.mode.migration.done": "true",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -269,12 +274,14 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/tests/generator" />
+      <recent name="$PROJECT_DIR$/tests/generator/generate_operator" />
+      <recent name="$PROJECT_DIR$/include/atlas/generator" />
       <recent name="$PROJECT_DIR$/tests/sink/despawn_operator_tests" />
       <recent name="$PROJECT_DIR$/src/vizkit/layer/geometry" />
-      <recent name="$PROJECT_DIR$/examples" />
     </key>
   </component>
-  <component name="RunManager" selected="Google Test.All in atlas_tests">
+  <component name="RunManager" selected="Python.generate_headers">
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -520,7 +527,6 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="CMake Application.Continuous" />
       <item itemvalue="CMake Application.ContinuousBuild" />
       <item itemvalue="CMake Application.ContinuousConfigure" />
       <item itemvalue="CMake Application.ContinuousCoverage" />
@@ -529,7 +535,7 @@
       <item itemvalue="CMake Application.ContinuousSubmit" />
       <item itemvalue="CMake Application.ContinuousTest" />
       <item itemvalue="CMake Application.ContinuousUpdate" />
-      <item itemvalue="CMake Application.Experimental" />
+      <item itemvalue="CMake Application.Continuous" />
       <item itemvalue="CMake Application.ExperimentalBuild" />
       <item itemvalue="CMake Application.ExperimentalConfigure" />
       <item itemvalue="CMake Application.ExperimentalCoverage" />
@@ -538,7 +544,7 @@
       <item itemvalue="CMake Application.ExperimentalSubmit" />
       <item itemvalue="CMake Application.ExperimentalTest" />
       <item itemvalue="CMake Application.ExperimentalUpdate" />
-      <item itemvalue="CMake Application.Nightly" />
+      <item itemvalue="CMake Application.Experimental" />
       <item itemvalue="CMake Application.NightlyBuild" />
       <item itemvalue="CMake Application.NightlyConfigure" />
       <item itemvalue="CMake Application.NightlyCoverage" />
@@ -548,6 +554,7 @@
       <item itemvalue="CMake Application.NightlySubmit" />
       <item itemvalue="CMake Application.NightlyTest" />
       <item itemvalue="CMake Application.NightlyUpdate" />
+      <item itemvalue="CMake Application.Nightly" />
       <item itemvalue="CMake Application.atlas-logging" />
       <item itemvalue="CMake Application.dynamic" />
       <item itemvalue="CMake Application.solver" />
@@ -560,8 +567,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.remove_comments" />
+        <item itemvalue="Python.generate_headers" />
+        <item itemvalue="Python.generate_headers" />
       </list>
     </recent_temporary>
   </component>
@@ -613,6 +623,8 @@
       <workItem from="1773915530142" duration="27000" />
       <workItem from="1773925487923" duration="1837000" />
       <workItem from="1773927336803" duration="3008000" />
+      <workItem from="1773994907018" duration="14925000" />
+      <workItem from="1774010111211" duration="3299000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

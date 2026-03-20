@@ -15,6 +15,7 @@
     </sourceRoots>
     <excludeRoots>
       <file path="$PROJECT_DIR$/.venv" />
+      <file path="$PROJECT_DIR$/build" />
       <file path="$PROJECT_DIR$/external" />
     </excludeRoots>
   </component>

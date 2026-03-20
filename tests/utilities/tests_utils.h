@@ -64,6 +64,36 @@ contains_point(const Container& points,
     });
 }
 
+template <typename Container>
+static ATLAS_FORCE_INLINE bool
+all_finite_points(const Container& points) {
+    return std::all_of(points.begin(), points.end(), [](const auto& point) {
+        return is_finite_vec(point);
+    });
+}
+
+template <typename Container, typename T>
+static ATLAS_FORCE_INLINE bool
+points_in_range(const Container& points, T min_value, T max_value) {
+    return std::all_of(points.begin(), points.end(), [&](const auto& point) {
+        for (std::size_t i = 0; i < 3; ++i) {
+            if (point[i] < min_value || point[i] > max_value) return false;
+        }
+        return true;
+    });
+}
+
+template <typename ContainerA, typename ContainerB, typename T>
+static ATLAS_FORCE_INLINE bool
+point_buffers_near(const ContainerA& a, const ContainerB& b, T eps) {
+    if (a.size() != b.size()) return false;
+
+    for (std::size_t i = 0; i < a.size(); ++i) {
+        if (!vec_near(a[i], b[i], eps)) return false;
+    }
+    return true;
+}
+
 struct Foo {
     int x    = 0;
     double y = 0.0;
