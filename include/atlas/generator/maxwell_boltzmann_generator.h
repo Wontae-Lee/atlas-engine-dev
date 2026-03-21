@@ -26,8 +26,8 @@ public:
                               const Vector3<T>& bulk_velocity = Vector3<T>(T(0), T(0), T(0)),
                               unsigned int seed               = 0u) noexcept;
 
-    ATLAS_HOST void
-    generate(DeviceBuffer<Vector3<T>>& values) const override;
+    ATLAS_HOST ATLAS_NODISCARD Vector3<T>
+    generate() const override;
 
     ATLAS_HOST ATLAS_NODISCARD GenerateType
     type() const noexcept override;
@@ -37,6 +37,7 @@ private:
     T _molecular_mass;
     Vector3<T> _bulk_velocity;
     unsigned int _seed;
+    MaxwellBoltzmannGenerateOperator<T> _operator;
 };
 
 template <typename T>

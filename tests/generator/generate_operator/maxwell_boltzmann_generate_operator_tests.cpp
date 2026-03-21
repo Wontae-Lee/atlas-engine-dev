@@ -7,17 +7,14 @@
 
 using namespace atlas;
 
-TEST(MaxwellBoltzmannGenerateOperator, InvalidParametersClearTheBuffer) {
-    DeviceBuffer<Vector3<double>> values(8, Vector3<double>(1.0, 2.0, 3.0));
-
-    MaxwellBoltzmannGenerateOperator<double> {}.generate(
-        values,
+TEST(MaxwellBoltzmannGenerateOperator, InvalidParametersReturnZeroVelocity) {
+    MaxwellBoltzmannGenerateOperator<double> op(1u);
+    const auto value = op.generate(
         0.0,
         1.0,
-        Vector3<double>(0.0, 0.0, 0.0),
-        1u);
+        Vector3<double>(0.0, 0.0, 0.0));
 
-    EXPECT_TRUE(values.empty());
+    EXPECT_TRUE(test::vec_near(value, Vector3<double>(0.0, 0.0, 0.0), eps));
 }
 
 TEST(MaxwellBoltzmannGenerateOperator, GenerateMatchesSigmaOperatorPlusBulkVelocityForSameSeed) {
@@ -25,34 +22,23 @@ TEST(MaxwellBoltzmannGenerateOperator, GenerateMatchesSigmaOperatorPlusBulkVeloc
     constexpr double molecular_mass = 4.65e-26;
     const Vector3<double> bulk_velocity(2.0, -1.0, 0.5);
     const double sigma = std::sqrt(static_cast<double>(boltzmann_constant) * temperature / molecular_mass);
-
-    DeviceBuffer<Vector3<double>> expected(24);
-    DeviceBuffer<Vector3<double>> actual(24);
-
-    MaxwellSigmaGenerateOperator<double> {}.generate(expected, sigma, 17u);
-    for (auto& value : expected) {
-        value += bulk_velocity;
-    }
-
-    MaxwellBoltzmannGenerateOperator<double> {}.generate(
-        actual,
+    MaxwellSigmaGenerateOperator<double> sigma_op(17u);
+    MaxwellBoltzmannGenerateOperator<double> mb_op(17u);
+    const auto expected = sigma_op.generate(sigma) + bulk_velocity;
+    const auto actual = mb_op.generate(
         temperature,
         molecular_mass,
-        bulk_velocity,
-        17u);
+        bulk_velocity);
 
-    EXPECT_TRUE(test::point_buffers_near(expected, actual, eps));
+    EXPECT_TRUE(test::vec_near(expected, actual, eps));
 }
 
 TEST(MaxwellBoltzmannGenerateOperator, GenerateProducesFiniteVelocities) {
-    DeviceBuffer<Vector3<double>> values(64);
-
-    MaxwellBoltzmannGenerateOperator<double> {}.generate(
-        values,
+    MaxwellBoltzmannGenerateOperator<double> op(9u);
+    const auto value = op.generate(
         300.0,
         4.65e-26,
-        Vector3<double>(0.0, 0.0, 0.0),
-        9u);
+        Vector3<double>(0.0, 0.0, 0.0));
 
-    EXPECT_TRUE(test::all_finite_points(values));
+    EXPECT_TRUE(test::is_finite_vec(value));
 }

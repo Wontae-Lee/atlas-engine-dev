@@ -239,7 +239,7 @@ sample_axis_count(T lower, T upper, T spacing) noexcept {
 }
 
 /**
- * @brief Builds particles from a regular grid clipped by a query predicate.
+ * @brief Builds accepted sample points from a regular grid clipped by a query predicate.
  *
  * @details
  * The routine:
@@ -249,7 +249,7 @@ sample_axis_count(T lower, T upper, T spacing) noexcept {
  *
  * @tparam T Floating-point scalar type.
  * @tparam Predicate Callable returning `bool` for `(query, sample, tolerance)`.
- * @param particles Output particle buffer.
+ * @param particles Output buffer for accepted sample points.
  * @param query Query operator providing bounds and point classification.
  * @param spacing Uniform grid spacing.
  * @param tolerance Classification tolerance forwarded to `predicate`.

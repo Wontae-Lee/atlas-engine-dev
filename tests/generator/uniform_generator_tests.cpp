@@ -8,14 +8,11 @@
 using namespace atlas;
 
 TEST(UniformGenerator, GenerateUsesStoredParameters) {
-    DeviceBuffer<Vector3<double>> expected(24);
-    DeviceBuffer<Vector3<double>> actual(24);
-
-    UniformGenerateOperator<double> {}.generate(expected, -3.0, 4.0, 21u);
+    const auto expected = UniformGenerateOperator<double>(21u).generate(-3.0, 4.0);
     UniformGenerator<double> generator(-3.0, 4.0, 21u);
-    generator.generate(actual);
+    const auto actual = generator.generate();
 
-    EXPECT_TRUE(test::point_buffers_near(expected, actual, eps));
+    EXPECT_TRUE(test::vec_near(expected, actual, eps));
 }
 
 TEST(UniformGenerator, TypeReturnsUniform) {

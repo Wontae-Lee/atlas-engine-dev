@@ -16,12 +16,13 @@ template <typename T>
 MaxwellSigmaGenerator<T>::MaxwellSigmaGenerator(const T sigma,
                                                 const unsigned int seed) noexcept
     : _sigma(sigma)
-    , _seed(seed) { }
+    , _seed(seed)
+    , _operator(seed) { }
 
 template <typename T>
-void
-MaxwellSigmaGenerator<T>::generate(DeviceBuffer<Vector3<T>>& values) const {
-    MaxwellSigmaGenerateOperator<T> {}.generate(values, _sigma, _seed);
+Vector3<T>
+MaxwellSigmaGenerator<T>::generate() const {
+    return _operator.generate(_sigma);
 }
 
 template <typename T>

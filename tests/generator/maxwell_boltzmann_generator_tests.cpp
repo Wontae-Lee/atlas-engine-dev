@@ -8,25 +8,20 @@
 using namespace atlas;
 
 TEST(MaxwellBoltzmannGenerator, GenerateUsesStoredThermalParameters) {
-    DeviceBuffer<Vector3<double>> expected(24);
-    DeviceBuffer<Vector3<double>> actual(24);
     const Vector3<double> bulk_velocity(0.25, -0.5, 1.0);
-
-    MaxwellBoltzmannGenerateOperator<double> {}.generate(
-        expected,
+    const auto expected = MaxwellBoltzmannGenerateOperator<double>(14u).generate(
         325.0,
         4.65e-26,
-        bulk_velocity,
-        14u);
+        bulk_velocity);
 
     MaxwellBoltzmannGenerator<double> generator(
         325.0,
         4.65e-26,
         bulk_velocity,
         14u);
-    generator.generate(actual);
+    const auto actual = generator.generate();
 
-    EXPECT_TRUE(test::point_buffers_near(expected, actual, eps));
+    EXPECT_TRUE(test::vec_near(expected, actual, eps));
 }
 
 TEST(MaxwellBoltzmannGenerator, TypeReturnsMaxwellBoltzmann) {

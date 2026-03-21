@@ -8,14 +8,18 @@ using namespace atlas;
 TEST(VolumeSpawnOperator, SpawnCreatesVolumeGridPointsFromBoxQueryOperator) {
     const geometry::Box<double> box = test::make_box();
     const auto query                = test::make_box_query_operator(box);
+    const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
 
-    system::VolumeSpawnOperator<double> {}.spawn(
+    atlas::sampling::sample_spawn_grid(
         particles,
         query,
         1.0,
-        0.0);
+        0.0,
+        [=] ATLAS_ALL_DEVICE(const auto& query_op, const auto& sample, const double tol) {
+            return spawn_operator.spawn(query_op, sample, tol);
+        });
 
     ASSERT_EQ(particles.size(), 27u);
 
@@ -32,17 +36,21 @@ TEST(VolumeSpawnOperator, SpawnCreatesVolumeGridPointsFromBoxQueryOperator) {
     EXPECT_TRUE(found_center);
 }
 
-TEST(VolumeSpawnOperator, SpawnClampsNegativeToleranceToZero) {
+TEST(VolumeSpawnOperator, SpawnAcceptsInteriorSamplesUsingExplicitTolerance) {
     const geometry::Sphere<double> sphere = test::make_sphere();
     const auto query                      = test::make_sphere_query_operator(sphere);
+    const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
 
-    system::VolumeSpawnOperator<double> {}.spawn(
+    atlas::sampling::sample_spawn_grid(
         particles,
         query,
         1.0,
-        -1.0);
+        0.0,
+        [=] ATLAS_ALL_DEVICE(const auto& query_op, const auto& sample, const double tol) {
+            return spawn_operator.spawn(query_op, sample, tol);
+        });
 
     ASSERT_FALSE(particles.empty());
 
@@ -55,14 +63,18 @@ TEST(VolumeSpawnOperator, SpawnClampsNegativeToleranceToZero) {
 TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromSphereQueryOperator) {
     const geometry::Sphere<double> sphere = test::make_sphere();
     const auto query                      = test::make_sphere_query_operator(sphere);
+    const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
 
-    system::VolumeSpawnOperator<double> {}.spawn(
+    atlas::sampling::sample_spawn_grid(
         particles,
         query,
         0.5,
-        0.0);
+        0.0,
+        [=] ATLAS_ALL_DEVICE(const auto& query_op, const auto& sample, const double tol) {
+            return spawn_operator.spawn(query_op, sample, tol);
+        });
 
     ASSERT_FALSE(particles.empty());
 
@@ -75,14 +87,18 @@ TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromSphereQueryOperator) {
 TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromCylinderQueryOperator) {
     const geometry::Cylinder<double> cylinder = test::make_cylinder();
     const auto query                          = test::make_cylinder_query_operator(cylinder);
+    const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
 
-    system::VolumeSpawnOperator<double> {}.spawn(
+    atlas::sampling::sample_spawn_grid(
         particles,
         query,
         1.0,
-        0.0);
+        0.0,
+        [=] ATLAS_ALL_DEVICE(const auto& query_op, const auto& sample, const double tol) {
+            return spawn_operator.spawn(query_op, sample, tol);
+        });
 
     ASSERT_FALSE(particles.empty());
 
@@ -94,14 +110,18 @@ TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromCylinderQueryOperator) {
 
 TEST(VolumeSpawnOperator, SpawnReturnsEmptyBufferForInvalidQueryOperator) {
     const geometry::QueryOperator<double> query;
+    const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles(4, Vector3<double>(1.0, 2.0, 3.0));
 
-    system::VolumeSpawnOperator<double> {}.spawn(
+    atlas::sampling::sample_spawn_grid(
         particles,
         query,
         1.0,
-        0.0);
+        0.0,
+        [=] ATLAS_ALL_DEVICE(const auto& query_op, const auto& sample, const double tol) {
+            return spawn_operator.spawn(query_op, sample, tol);
+        });
 
     EXPECT_TRUE(particles.empty());
 }

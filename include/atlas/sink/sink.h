@@ -73,6 +73,9 @@ public:
     set_despawn_type(DespawnType despawn_type) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_despawn_operator(DespawnOperator<T> despawn_operator) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
     set_tolerance(T tolerance) noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const Unit<T>&
@@ -80,6 +83,9 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DespawnType
     despawn_type() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DespawnOperator<T>&
+    despawn_operator() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     tolerance() const noexcept;

@@ -8,14 +8,11 @@
 using namespace atlas;
 
 TEST(MaxwellSigmaGenerator, GenerateUsesStoredSigmaAndSeed) {
-    DeviceBuffer<Vector3<double>> expected(24);
-    DeviceBuffer<Vector3<double>> actual(24);
-
-    MaxwellSigmaGenerateOperator<double> {}.generate(expected, 2.25, 12u);
+    const auto expected = MaxwellSigmaGenerateOperator<double>(12u).generate(2.25);
     MaxwellSigmaGenerator<double> generator(2.25, 12u);
-    generator.generate(actual);
+    const auto actual = generator.generate();
 
-    EXPECT_TRUE(test::point_buffers_near(expected, actual, eps));
+    EXPECT_TRUE(test::vec_near(expected, actual, eps));
 }
 
 TEST(MaxwellSigmaGenerator, TypeReturnsMaxwellSigma) {

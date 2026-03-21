@@ -23,8 +23,8 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     MaxwellSigmaGenerator(T sigma, unsigned int seed = 0u) noexcept;
 
-    ATLAS_HOST void
-    generate(DeviceBuffer<Vector3<T>>& values) const override;
+    ATLAS_HOST ATLAS_NODISCARD Vector3<T>
+    generate() const override;
 
     ATLAS_HOST ATLAS_NODISCARD GenerateType
     type() const noexcept override;
@@ -32,6 +32,7 @@ public:
 private:
     T _sigma;
     unsigned int _seed;
+    MaxwellSigmaGenerateOperator<T> _operator;
 };
 
 template <typename T>

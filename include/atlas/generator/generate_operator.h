@@ -1,7 +1,7 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
 #include <atlas/math/math.h>
+#include <atlas/random/default_random_engine.h>
 
 #include <type_traits>
 
@@ -29,11 +29,14 @@ enum class GenerateType : int {
  */
 template <typename T>
 struct UniformGenerateOperator final {
-    ATLAS_HOST void
-    generate(DeviceBuffer<Vector3<T>>& values,
-             T min_value,
-             T max_value,
-             unsigned int seed = 0u) const;
+    unsigned int seed = 0u;
+    mutable atlas::default_random_engine<T> engine;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit UniformGenerateOperator(unsigned int seed = 0u) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(T min_value,
+             T max_value) const;
 };
 
 /**
@@ -48,10 +51,13 @@ struct UniformGenerateOperator final {
  */
 template <typename T>
 struct MaxwellSigmaGenerateOperator final {
-    ATLAS_HOST void
-    generate(DeviceBuffer<Vector3<T>>& values,
-             T sigma,
-             unsigned int seed = 0u) const;
+    unsigned int seed = 0u;
+    mutable atlas::default_random_engine<T> engine;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit MaxwellSigmaGenerateOperator(unsigned int seed = 0u) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(T sigma) const;
 };
 
 /**
@@ -76,12 +82,15 @@ struct MaxwellSigmaGenerateOperator final {
  */
 template <typename T>
 struct MaxwellBoltzmannGenerateOperator final {
-    ATLAS_HOST void
-    generate(DeviceBuffer<Vector3<T>>& values,
-             T temperature,
+    unsigned int seed = 0u;
+    mutable atlas::default_random_engine<T> engine;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit MaxwellBoltzmannGenerateOperator(unsigned int seed = 0u) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(T temperature,
              T molecular_mass,
-             const Vector3<T>& bulk_velocity,
-             unsigned int seed = 0u) const;
+             const Vector3<T>& bulk_velocity) const;
 };
 
 /**
@@ -94,10 +103,34 @@ struct GenerateOperator final {
     static_assert(std::is_floating_point_v<T>, "GenerateOperator requires a floating-point T");
 
     GenerateType type = GenerateType::uniform;
+    union {
+        UniformGenerateOperator<T> uniform;
+        MaxwellSigmaGenerateOperator<T> maxwell_sigma;
+        MaxwellBoltzmannGenerateOperator<T> maxwell_boltzmann;
+    };
 
-    ATLAS_ALL_DEVICE
-    explicit GenerateOperator(GenerateType type = GenerateType::uniform) noexcept
-        : type(type) { }
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    GenerateOperator() noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    GenerateOperator(GenerateType type, unsigned int seed = 0u) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    GenerateOperator(const GenerateOperator& other) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE GenerateOperator&
+    operator=(const GenerateOperator& other) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~GenerateOperator() noexcept;
+
+    ATLAS_HOST
+    GenerateOperator(const UniformGenerateOperator<T>& op);
+
+    ATLAS_HOST
+    GenerateOperator(const MaxwellSigmaGenerateOperator<T>& op);
+
+    ATLAS_HOST
+    GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>& op);
 
     /**
      * @brief Generate vectors using the configured mode.
@@ -108,16 +141,12 @@ struct GenerateOperator final {
      * - `GenerateType::maxwell_sigma`: `param0 = sigma`, `param1` is ignored
      * - `GenerateType::maxwell_boltzmann`: `param0 = temperature`, `param1 = molecular_mass`
      *
-     * @param values Output buffer to overwrite.
      * @param param0 Mode-specific first parameter.
      * @param param1 Mode-specific second parameter.
-     * @param seed Seed forwarded to the random engine.
      */
-    ATLAS_HOST void
-    generate(DeviceBuffer<Vector3<T>>& values,
-             T param0,
-             T param1 = T(1),
-             unsigned int seed = 0u) const;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(T param0,
+             T param1 = T(1)) const;
 
     /**
      * @brief Generate vectors using the configured mode with an explicit drift velocity.
@@ -129,18 +158,21 @@ struct GenerateOperator final {
      * For `GenerateType::uniform` and `GenerateType::maxwell_sigma`,
      * `bulk_velocity` is ignored.
      *
-     * @param values Output buffer to overwrite.
      * @param param0 Mode-specific first parameter.
      * @param param1 Mode-specific second parameter.
      * @param bulk_velocity Explicit drift velocity for Maxwell generation.
-     * @param seed Seed forwarded to the random engine.
      */
-    ATLAS_HOST void
-    generate(DeviceBuffer<Vector3<T>>& values,
-             T param0,
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(T param0,
              T param1,
-             const Vector3<T>& bulk_velocity,
-             unsigned int seed = 0u) const;
+             const Vector3<T>& bulk_velocity) const;
+
+private:
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    destroy_active() noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    copy_from(const GenerateOperator& other) noexcept;
 };
 
 } // namespace atlas::system

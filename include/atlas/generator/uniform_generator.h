@@ -23,8 +23,8 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     UniformGenerator(T min_value, T max_value, unsigned int seed = 0u) noexcept;
 
-    ATLAS_HOST void
-    generate(DeviceBuffer<Vector3<T>>& values) const override;
+    ATLAS_HOST ATLAS_NODISCARD Vector3<T>
+    generate() const override;
 
     ATLAS_HOST ATLAS_NODISCARD GenerateType
     type() const noexcept override;
@@ -33,6 +33,7 @@ private:
     T _min_value;
     T _max_value;
     unsigned int _seed;
+    UniformGenerateOperator<T> _operator;
 };
 
 template <typename T>

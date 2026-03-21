@@ -18,12 +18,13 @@ UniformGenerator<T>::UniformGenerator(const T min_value,
                                       const unsigned int seed) noexcept
     : _min_value(min_value)
     , _max_value(max_value)
-    , _seed(seed) { }
+    , _seed(seed)
+    , _operator(seed) { }
 
 template <typename T>
-void
-UniformGenerator<T>::generate(DeviceBuffer<Vector3<T>>& values) const {
-    UniformGenerateOperator<T> {}.generate(values, _min_value, _max_value, _seed);
+Vector3<T>
+UniformGenerator<T>::generate() const {
+    return _operator.generate(_min_value, _max_value);
 }
 
 template <typename T>

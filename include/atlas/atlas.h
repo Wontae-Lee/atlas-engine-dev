@@ -6,7 +6,6 @@
 #include <atlas/codec/deep_learning_codec.h>
 #include <atlas/codec/knudsen_codec.h>
 #include <atlas/codec/single_codec.h>
-#include <atlas/collect/collect.h>
 #include <atlas/container/container.h>
 #include <atlas/core/macros.h>
 #include <atlas/data/particle_data.h>
@@ -72,7 +71,6 @@
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
-#include <atlas/source/source.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>

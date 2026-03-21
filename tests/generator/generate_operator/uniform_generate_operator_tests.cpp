@@ -6,28 +6,31 @@
 using namespace atlas;
 
 TEST(UniformGenerateOperator, GenerateProducesValuesInsideConfiguredRange) {
-    DeviceBuffer<Vector3<double>> values(64);
+    UniformGenerateOperator<double> op(7u);
+    const auto value = op.generate(-2.0, 3.0);
 
-    UniformGenerateOperator<double> {}.generate(values, -2.0, 3.0, 7u);
-
-    EXPECT_TRUE(test::all_finite_points(values));
-    EXPECT_TRUE(test::points_in_range(values, -2.0, 3.0));
+    EXPECT_TRUE(test::is_finite_vec(value));
+    EXPECT_GE(value.x, -2.0);
+    EXPECT_LT(value.x, 3.0);
+    EXPECT_GE(value.y, -2.0);
+    EXPECT_LT(value.y, 3.0);
+    EXPECT_GE(value.z, -2.0);
+    EXPECT_LT(value.z, 3.0);
 }
 
 TEST(UniformGenerateOperator, GenerateWithSameSeedProducesSameSequence) {
-    DeviceBuffer<Vector3<double>> lhs(32);
-    DeviceBuffer<Vector3<double>> rhs(32);
+    UniformGenerateOperator<double> lhs_op(11u);
+    UniformGenerateOperator<double> rhs_op(11u);
+    const auto lhs = lhs_op.generate(-1.0, 1.0);
+    const auto rhs = rhs_op.generate(-1.0, 1.0);
 
-    UniformGenerateOperator<double> {}.generate(lhs, -1.0, 1.0, 11u);
-    UniformGenerateOperator<double> {}.generate(rhs, -1.0, 1.0, 11u);
-
-    EXPECT_TRUE(test::point_buffers_near(lhs, rhs, eps));
+    EXPECT_TRUE(test::vec_near(lhs, rhs, eps));
 }
 
-TEST(UniformGenerateOperator, GenerateLeavesEmptyBufferEmpty) {
-    DeviceBuffer<Vector3<double>> values;
+TEST(UniformGenerateOperator, ConsecutiveGenerateCallsAdvanceSequence) {
+    UniformGenerateOperator<double> op(3u);
+    const auto lhs = op.generate(-1.0, 1.0);
+    const auto rhs = op.generate(-1.0, 1.0);
 
-    UniformGenerateOperator<double> {}.generate(values, -1.0, 1.0, 3u);
-
-    EXPECT_TRUE(values.empty());
+    EXPECT_FALSE(test::vec_near(lhs, rhs, eps));
 }

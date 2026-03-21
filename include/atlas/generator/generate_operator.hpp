@@ -9,102 +9,227 @@
 namespace atlas::system {
 
 template <typename T>
-void
-UniformGenerateOperator<T>::generate(DeviceBuffer<Vector3<T>>& values,
-                                     const T min_value,
-                                     const T max_value,
-                                     const unsigned int seed) const {
-    if (values.empty()) return;
+ATLAS_HOST ATLAS_FORCE_INLINE
+UniformGenerateOperator<T>::UniformGenerateOperator(const unsigned int seed) noexcept
+    : seed(seed)
+    , engine(seed) { }
 
-    atlas::default_random_engine<T> engine(seed);
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+Vector3<T>
+UniformGenerateOperator<T>::generate(const T min_value,
+                                     const T max_value) const {
     atlas::uniform_real_distribution<T> dist(min_value, max_value);
 
-    for (auto& value : values) {
-        value = Vector3<T>(
-            dist(engine),
-            dist(engine),
-            dist(engine));
-    }
+    return Vector3<T>(
+        dist(engine),
+        dist(engine),
+        dist(engine));
 }
 
 template <typename T>
-void
-MaxwellSigmaGenerateOperator<T>::generate(DeviceBuffer<Vector3<T>>& values,
-                                          const T sigma,
-                                          const unsigned int seed) const {
-    if (values.empty()) return;
+ATLAS_HOST ATLAS_FORCE_INLINE
+MaxwellSigmaGenerateOperator<T>::MaxwellSigmaGenerateOperator(const unsigned int seed) noexcept
+    : seed(seed)
+    , engine(seed) { }
 
-    atlas::default_random_engine<T> engine(seed);
-
-    for (auto& value : values) {
-        value = Vector3<T>(
-            sigma * atlas::sampling::generate_standard_normal<T>(engine),
-            sigma * atlas::sampling::generate_standard_normal<T>(engine),
-            sigma * atlas::sampling::generate_standard_normal<T>(engine));
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+Vector3<T>
+MaxwellSigmaGenerateOperator<T>::generate(const T sigma) const {
+    if (!(sigma > T(0))) {
+        return Vector3<T>(T(0), T(0), T(0));
     }
+
+    return Vector3<T>(
+        sigma * atlas::sampling::generate_standard_normal<T>(engine),
+        sigma * atlas::sampling::generate_standard_normal<T>(engine),
+        sigma * atlas::sampling::generate_standard_normal<T>(engine));
 }
 
 template <typename T>
-void
-MaxwellBoltzmannGenerateOperator<T>::generate(DeviceBuffer<Vector3<T>>& values,
-                                              const T temperature,
+ATLAS_HOST ATLAS_FORCE_INLINE
+MaxwellBoltzmannGenerateOperator<T>::MaxwellBoltzmannGenerateOperator(const unsigned int seed) noexcept
+    : seed(seed)
+    , engine(seed) { }
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+Vector3<T>
+MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
                                               const T molecular_mass,
-                                              const Vector3<T>& bulk_velocity,
-                                              const unsigned int seed) const {
+                                              const Vector3<T>& bulk_velocity) const {
     if (!(temperature > T(0)) || !(molecular_mass > T(0))) {
-        values.clear();
-        return;
+        return Vector3<T>(T(0), T(0), T(0));
     }
 
     const T sigma = std::sqrt(static_cast<T>(atlas::boltzmann_constant) * temperature / molecular_mass);
-    MaxwellSigmaGenerateOperator<T> {}.generate(values, sigma, seed);
+    return Vector3<T>(
+               sigma * atlas::sampling::generate_standard_normal<T>(engine),
+               sigma * atlas::sampling::generate_standard_normal<T>(engine),
+               sigma * atlas::sampling::generate_standard_normal<T>(engine))
+           + bulk_velocity;
+}
 
-    for (auto& value : values) {
-        value += bulk_velocity;
+/* ====================================================================== */
+/* GenerateOperator special members                                        */
+/* ====================================================================== */
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+GenerateOperator<T>::GenerateOperator() noexcept
+    : type(GenerateType::uniform) {
+    new (&uniform) UniformGenerateOperator<T> {};
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+GenerateOperator<T>::GenerateOperator(const GenerateType type,
+                                      const unsigned int seed) noexcept
+    : type(type) {
+    switch (type) {
+    case GenerateType::uniform:
+        new (&uniform) UniformGenerateOperator<T>(seed);
+        return;
+    case GenerateType::maxwell_sigma:
+        new (&maxwell_sigma) MaxwellSigmaGenerateOperator<T>(seed);
+        return;
+    case GenerateType::maxwell_boltzmann:
+        new (&maxwell_boltzmann) MaxwellBoltzmannGenerateOperator<T>(seed);
+        return;
+    default:
+        this->type = GenerateType::uniform;
+        new (&uniform) UniformGenerateOperator<T>(seed);
+        return;
     }
 }
 
 template <typename T>
-void
-GenerateOperator<T>::generate(DeviceBuffer<Vector3<T>>& values,
-                              const T param0,
-                              const T param1,
-                              const unsigned int seed) const {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+GenerateOperator<T>::GenerateOperator(const GenerateOperator& other) noexcept
+    : type(other.type) {
+    copy_from(other);
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE GenerateOperator<T>&
+GenerateOperator<T>::operator=(const GenerateOperator& other) noexcept {
+    if (this == &other) return *this;
+    destroy_active();
+    type = other.type;
+    copy_from(other);
+    return *this;
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+GenerateOperator<T>::~GenerateOperator() noexcept {
+    destroy_active();
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+GenerateOperator<T>::destroy_active() noexcept {
     switch (type) {
+    case GenerateType::uniform:
+        uniform.~UniformGenerateOperator<T>();
+        return;
     case GenerateType::maxwell_sigma:
-        MaxwellSigmaGenerateOperator<T> {}.generate(values, param0, seed);
+        maxwell_sigma.~MaxwellSigmaGenerateOperator<T>();
         return;
     case GenerateType::maxwell_boltzmann:
-        MaxwellBoltzmannGenerateOperator<T> {}.generate(
-            values,
+        maxwell_boltzmann.~MaxwellBoltzmannGenerateOperator<T>();
+        return;
+    default:
+        uniform.~UniformGenerateOperator<T>();
+        return;
+    }
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
+    switch (type) {
+    case GenerateType::uniform:
+        new (&uniform) UniformGenerateOperator<T>(other.uniform);
+        return;
+    case GenerateType::maxwell_sigma:
+        new (&maxwell_sigma) MaxwellSigmaGenerateOperator<T>(other.maxwell_sigma);
+        return;
+    case GenerateType::maxwell_boltzmann:
+        new (&maxwell_boltzmann) MaxwellBoltzmannGenerateOperator<T>(other.maxwell_boltzmann);
+        return;
+    default:
+        type = GenerateType::uniform;
+        new (&uniform) UniformGenerateOperator<T>(other.uniform);
+        return;
+    }
+}
+
+/* ====================================================================== */
+/* GenerateOperator tagged constructors                                    */
+/* ====================================================================== */
+
+template <typename T>
+ATLAS_HOST
+GenerateOperator<T>::GenerateOperator(const UniformGenerateOperator<T>& op)
+    : type(GenerateType::uniform) {
+    new (&uniform) UniformGenerateOperator<T>(op);
+}
+
+template <typename T>
+ATLAS_HOST
+GenerateOperator<T>::GenerateOperator(const MaxwellSigmaGenerateOperator<T>& op)
+    : type(GenerateType::maxwell_sigma) {
+    new (&maxwell_sigma) MaxwellSigmaGenerateOperator<T>(op);
+}
+
+template <typename T>
+ATLAS_HOST
+GenerateOperator<T>::GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>& op)
+    : type(GenerateType::maxwell_boltzmann) {
+    new (&maxwell_boltzmann) MaxwellBoltzmannGenerateOperator<T>(op);
+}
+
+/* ====================================================================== */
+/* Generate dispatch                                                       */
+/* ====================================================================== */
+
+template <typename T>
+ATLAS_HOST ATLAS_FORCE_INLINE
+Vector3<T>
+GenerateOperator<T>::generate(const T param0,
+                              const T param1) const {
+    switch (type) {
+    case GenerateType::uniform:
+        return uniform.generate(param0, param1);
+    case GenerateType::maxwell_sigma:
+        return maxwell_sigma.generate(param0);
+    case GenerateType::maxwell_boltzmann:
+        return maxwell_boltzmann.generate(
             param0,
             param1,
-            Vector3<T>(T(0), T(0), T(0)),
-            seed);
-        return;
-    case GenerateType::uniform:
-        UniformGenerateOperator<T> {}.generate(values, param0, param1, seed);
-        return;
+            Vector3<T>(T(0), T(0), T(0)));
+    default:
+        return Vector3<T>(T(0), T(0), T(0));
     }
 }
 
 template <typename T>
-void
-GenerateOperator<T>::generate(DeviceBuffer<Vector3<T>>& values,
-                              const T param0,
+ATLAS_HOST ATLAS_FORCE_INLINE
+Vector3<T>
+GenerateOperator<T>::generate(const T param0,
                               const T param1,
-                              const Vector3<T>& bulk_velocity,
-                              const unsigned int seed) const {
+                              const Vector3<T>& bulk_velocity) const {
     switch (type) {
-    case GenerateType::maxwell_sigma:
-        MaxwellSigmaGenerateOperator<T> {}.generate(values, param0, seed);
-        return;
-    case GenerateType::maxwell_boltzmann:
-        MaxwellBoltzmannGenerateOperator<T> {}.generate(values, param0, param1, bulk_velocity, seed);
-        return;
     case GenerateType::uniform:
-        UniformGenerateOperator<T> {}.generate(values, param0, param1, seed);
-        return;
+        return uniform.generate(param0, param1);
+    case GenerateType::maxwell_sigma:
+        return maxwell_sigma.generate(param0);
+    case GenerateType::maxwell_boltzmann:
+        return maxwell_boltzmann.generate(param0, param1, bulk_velocity);
+    default:
+        return Vector3<T>(T(0), T(0), T(0));
     }
 }
 

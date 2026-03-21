@@ -1,61 +1,146 @@
 #pragma once
 
-#include <atlas/collect/collect.h>
-
 namespace atlas::system {
 
 template <typename T>
-void
-SurfaceDespawnOperator<T>::despawn(DeviceBuffer<int>& despawn_indices,
-                                   const DeviceBuffer<Vector3<T>>& particles,
-                                   const atlas::geometry::QueryOperator<T>& query,
-                                   T tolerance) const {
-    collect::collect_despawn_indices(
-        despawn_indices,
-        particles,
-        query,
-        tolerance,
-        [] ATLAS_ALL_DEVICE(const atlas::geometry::QueryOperator<T>& query_op,
-                            const Vector3<T>& particle,
-                            const T tol) {
-            return query_op.is_on_surface(particle, tol);
-        });
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+bool
+SurfaceDespawnOperator<T>::despawn(const atlas::geometry::QueryOperator<T>& query,
+                                   const Vector3<T>& particle,
+                                   const T tolerance) noexcept {
+    return query.is_on_surface(particle, tolerance);
 }
 
 template <typename T>
-void
-VolumeDespawnOperator<T>::despawn(DeviceBuffer<int>& despawn_indices,
-                                  const DeviceBuffer<Vector3<T>>& particles,
-                                  const atlas::geometry::QueryOperator<T>& query,
-                                  T tolerance) const {
-    collect::collect_despawn_indices(
-        despawn_indices,
-        particles,
-        query,
-        tolerance,
-        [] ATLAS_ALL_DEVICE(const atlas::geometry::QueryOperator<T>& query_op,
-                            const Vector3<T>& particle,
-                            const T tol) {
-            return query_op.is_inside(particle, tol);
-        });
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+bool
+VolumeDespawnOperator<T>::despawn(const atlas::geometry::QueryOperator<T>& query,
+                                  const Vector3<T>& particle,
+                                  const T tolerance) noexcept {
+    return query.is_inside(particle, tolerance);
+}
+
+/* ====================================================================== */
+/* DespawnOperator special members                                         */
+/* ====================================================================== */
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+DespawnOperator<T>::DespawnOperator() noexcept
+    : type(DespawnType::Surface) {
+    new (&surface) SurfaceDespawnOperator<T> {};
 }
 
 template <typename T>
-void
-DespawnOperator<T>::despawn(DeviceBuffer<int>& despawn_indices,
-                            const DeviceBuffer<Vector3<T>>& particles,
-                            const atlas::geometry::QueryOperator<T>& query,
-                            const T tolerance) const {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+DespawnOperator<T>::DespawnOperator(const DespawnType type) noexcept
+    : type(type) {
     switch (type) {
     case DespawnType::Surface:
-        SurfaceDespawnOperator<T> {}.despawn(despawn_indices, particles, query, tolerance);
+        new (&surface) SurfaceDespawnOperator<T> {};
         return;
     case DespawnType::Volume:
-        VolumeDespawnOperator<T> {}.despawn(despawn_indices, particles, query, tolerance);
+        new (&volume) VolumeDespawnOperator<T> {};
+        return;
+    default:
+        this->type = DespawnType::Surface;
+        new (&surface) SurfaceDespawnOperator<T> {};
         return;
     }
+}
 
-    despawn_indices.clear();
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+DespawnOperator<T>::DespawnOperator(const DespawnOperator& other) noexcept
+    : type(other.type) {
+    copy_from(other);
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE DespawnOperator<T>&
+DespawnOperator<T>::operator=(const DespawnOperator& other) noexcept {
+    if (this == &other) return *this;
+    destroy_active();
+    type = other.type;
+    copy_from(other);
+    return *this;
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+DespawnOperator<T>::~DespawnOperator() noexcept {
+    destroy_active();
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+DespawnOperator<T>::destroy_active() noexcept {
+    switch (type) {
+    case DespawnType::Surface:
+        surface.~SurfaceDespawnOperator<T>();
+        return;
+    case DespawnType::Volume:
+        volume.~VolumeDespawnOperator<T>();
+        return;
+    default:
+        surface.~SurfaceDespawnOperator<T>();
+        return;
+    }
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+DespawnOperator<T>::copy_from(const DespawnOperator& other) noexcept {
+    switch (type) {
+    case DespawnType::Surface:
+        new (&surface) SurfaceDespawnOperator<T>(other.surface);
+        return;
+    case DespawnType::Volume:
+        new (&volume) VolumeDespawnOperator<T>(other.volume);
+        return;
+    default:
+        type = DespawnType::Surface;
+        new (&surface) SurfaceDespawnOperator<T>(other.surface);
+        return;
+    }
+}
+
+/* ====================================================================== */
+/* DespawnOperator tagged constructors                                     */
+/* ====================================================================== */
+
+template <typename T>
+ATLAS_HOST
+DespawnOperator<T>::DespawnOperator(const SurfaceDespawnOperator<T>& op)
+    : type(DespawnType::Surface) {
+    new (&surface) SurfaceDespawnOperator<T>(op);
+}
+
+template <typename T>
+ATLAS_HOST
+DespawnOperator<T>::DespawnOperator(const VolumeDespawnOperator<T>& op)
+    : type(DespawnType::Volume) {
+    new (&volume) VolumeDespawnOperator<T>(op);
+}
+
+/* ====================================================================== */
+/* Despawn dispatch                                                        */
+/* ====================================================================== */
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+bool
+DespawnOperator<T>::despawn(const atlas::geometry::QueryOperator<T>& query,
+                            const Vector3<T>& particle,
+                            const T tolerance) const noexcept {
+    switch (type) {
+    case DespawnType::Surface:
+        return surface.despawn(query, particle, tolerance);
+    case DespawnType::Volume:
+        return volume.despawn(query, particle, tolerance);
+    default:
+        return false;
+    }
 }
 
 } // namespace atlas::system

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
 #include <atlas/geometry/query_operator.h>
 #include <atlas/math/math.h>
 
@@ -17,66 +16,81 @@ enum class SpawnType : int {
 };
 
 /**
- * @brief Builds particles on a regular grid around a query operator surface.
+ * @brief Surface spawn predicate for a single sample position.
  *
  * @details
- * The operator samples the finite AABB returned by `query.bound()` using `spacing` as the
- * Cartesian grid interval. Each grid point is tested with `query.is_on_surface(...)`.
- * Points that pass the predicate are written to `particles`.
- *
- * The optional `tolerance` defaults to `spacing * 0.5`, which forms a surface band wide enough
- * to catch the surface on a regular grid.
+ * Returns `true` when the sample should be accepted by surface classification.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
 struct SurfaceSpawnOperator final {
-    ATLAS_ALL_DEVICE void
-    spawn(DeviceBuffer<Vector3<T>>& particles,
-          const atlas::geometry::QueryOperator<T>& query,
-          T spacing,
-          T tolerance = T(-1)) const;
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    spawn(const atlas::geometry::QueryOperator<T>& query,
+          const Vector3<T>& particle,
+          T tolerance = T(0)) noexcept;
 };
 
 /**
- * @brief Builds particles on a regular grid inside a query operator volume.
+ * @brief Volume spawn predicate for a single sample position.
  *
  * @details
- * The operator samples the finite AABB returned by `query.bound()` using `spacing` as the
- * Cartesian grid interval. Each grid point is tested with `query.is_inside(...)`.
- * Points that pass the predicate are written to `particles`.
- *
- * The optional `tolerance` defaults to zero.
+ * Returns `true` when the sample should be accepted by volume classification.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
 struct VolumeSpawnOperator final {
-    ATLAS_ALL_DEVICE void
-    spawn(DeviceBuffer<Vector3<T>>& particles,
-          const atlas::geometry::QueryOperator<T>& query,
-          T spacing,
-          T tolerance = T(0)) const;
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    spawn(const atlas::geometry::QueryOperator<T>& query,
+          const Vector3<T>& particle,
+          T tolerance = T(0)) noexcept;
 };
 
 /**
- * @brief Runtime-dispatched spawn operator for surface or volume sampling.
+ * @brief Runtime-dispatched spawn predicate for surface or volume classification.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
 struct SpawnOperator final {
     SpawnType type = SpawnType::Surface;
+    union {
+        SurfaceSpawnOperator<T> surface;
+        VolumeSpawnOperator<T> volume;
+    };
 
-    ATLAS_ALL_DEVICE
-    SpawnOperator(SpawnType type)
-        : type(type) { }
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    SpawnOperator() noexcept;
 
-    ATLAS_ALL_DEVICE void
-    spawn(DeviceBuffer<Vector3<T>>& particles,
-          const atlas::geometry::QueryOperator<T>& query,
-          T spacing,
-          T tolerance = T(-1)) const;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    explicit SpawnOperator(SpawnType type) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    SpawnOperator(const SpawnOperator& other) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE SpawnOperator&
+    operator=(const SpawnOperator& other) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~SpawnOperator() noexcept;
+
+    ATLAS_HOST
+    SpawnOperator(const SurfaceSpawnOperator<T>& op);
+
+    ATLAS_HOST
+    SpawnOperator(const VolumeSpawnOperator<T>& op);
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    spawn(const atlas::geometry::QueryOperator<T>& query,
+          const Vector3<T>& particle,
+          T tolerance = T(0)) const noexcept;
+
+private:
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    destroy_active() noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    copy_from(const SpawnOperator& other) noexcept;
 };
 
 } // namespace atlas::system

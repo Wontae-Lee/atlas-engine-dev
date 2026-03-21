@@ -12,9 +12,8 @@ namespace atlas::system {
  * @brief Abstract velocity generator interface.
  *
  * @details
- * A `Generator<T>` stores the parameters required to populate a
- * `DeviceBuffer<Vector3<T>>` with generated values and exposes a uniform
- * polymorphic API through @ref generate.
+ * A `Generator<T>` stores the parameters required to generate one vector sample
+ * at a time and exposes a uniform polymorphic API through @ref generate.
  *
  * @tparam T Floating-point scalar type.
  */
@@ -36,12 +35,11 @@ public:
         = default;
 
     /**
-     * @brief Fills `values` according to the concrete generator policy.
+     * @brief Generates one vector sample according to the concrete policy.
      *
-     * @param values Output buffer to overwrite.
      */
-    ATLAS_HOST virtual void
-    generate(DeviceBuffer<Vector3<T>>& values) const = 0;
+    ATLAS_HOST ATLAS_NODISCARD virtual Vector3<T>
+    generate() const = 0;
 
     /**
      * @brief Returns the runtime generation kind represented by this object.

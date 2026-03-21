@@ -20,17 +20,16 @@ MaxwellBoltzmannGenerator<T>::MaxwellBoltzmannGenerator(const T temperature,
     : _temperature(temperature)
     , _molecular_mass(molecular_mass)
     , _bulk_velocity(bulk_velocity)
-    , _seed(seed) { }
+    , _seed(seed)
+    , _operator(seed) { }
 
 template <typename T>
-void
-MaxwellBoltzmannGenerator<T>::generate(DeviceBuffer<Vector3<T>>& values) const {
-    MaxwellBoltzmannGenerateOperator<T> {}.generate(
-        values,
+Vector3<T>
+MaxwellBoltzmannGenerator<T>::generate() const {
+    return _operator.generate(
         _temperature,
         _molecular_mass,
-        _bulk_velocity,
-        _seed);
+        _bulk_velocity);
 }
 
 template <typename T>

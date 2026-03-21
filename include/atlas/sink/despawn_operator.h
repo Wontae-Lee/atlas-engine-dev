@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
 #include <atlas/geometry/query_operator.h>
 #include <atlas/math/math.h>
 
@@ -17,47 +16,35 @@ enum class DespawnType : int {
 };
 
 /**
- * @brief Collects indices of particles lying on a query operator surface.
+ * @brief Surface despawn predicate for a single particle position.
  *
  * @details
- * Each particle position is tested with `query.is_on_surface(...)`. Matching particle
- * indices are compacted into `despawn_indices`.
- *
- * @note
- * The output buffer is always a `DeviceBuffer<int>` so the result remains directly usable
- * by CUDA/TBB backends without changing the public API shape.
+ * Returns `true` when the particle should be despawned by surface classification.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
 struct SurfaceDespawnOperator final {
-    ATLAS_ALL_DEVICE void
-    despawn(DeviceBuffer<int>& despawn_indices,
-            const DeviceBuffer<Vector3<T>>& particles,
-            const atlas::geometry::QueryOperator<T>& query,
-            T tolerance = T(0)) const;
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    despawn(const atlas::geometry::QueryOperator<T>& query,
+            const Vector3<T>& particle,
+            T tolerance = T(0)) noexcept;
 };
 
 /**
- * @brief Collects indices of particles lying inside a query operator volume.
+ * @brief Volume despawn predicate for a single particle position.
  *
  * @details
- * Each particle position is tested with `query.is_inside(...)`. Matching particle
- * indices are compacted into `despawn_indices`.
- *
- * @note
- * The output buffer is always a `DeviceBuffer<int>` so the result remains directly usable
- * by CUDA/TBB backends without changing the public API shape.
+ * Returns `true` when the particle should be despawned by volume classification.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
 struct VolumeDespawnOperator final {
-    ATLAS_ALL_DEVICE void
-    despawn(DeviceBuffer<int>& despawn_indices,
-            const DeviceBuffer<Vector3<T>>& particles,
-            const atlas::geometry::QueryOperator<T>& query,
-            T tolerance = T(0)) const;
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    despawn(const atlas::geometry::QueryOperator<T>& query,
+            const Vector3<T>& particle,
+            T tolerance = T(0)) noexcept;
 };
 
 /**
@@ -68,16 +55,42 @@ struct VolumeDespawnOperator final {
 template <typename T>
 struct DespawnOperator final {
     DespawnType type = DespawnType::Surface;
+    union {
+        SurfaceDespawnOperator<T> surface;
+        VolumeDespawnOperator<T> volume;
+    };
 
-    ATLAS_ALL_DEVICE
-    DespawnOperator(DespawnType type)
-        : type(type) { }
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    DespawnOperator() noexcept;
 
-    ATLAS_ALL_DEVICE void
-    despawn(DeviceBuffer<int>& despawn_indices,
-            const DeviceBuffer<Vector3<T>>& particles,
-            const atlas::geometry::QueryOperator<T>& query,
-            T tolerance = T(0)) const;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    explicit DespawnOperator(DespawnType type) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    DespawnOperator(const DespawnOperator& other) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE DespawnOperator&
+    operator=(const DespawnOperator& other) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~DespawnOperator() noexcept;
+
+    ATLAS_HOST
+    DespawnOperator(const SurfaceDespawnOperator<T>& op);
+
+    ATLAS_HOST
+    DespawnOperator(const VolumeDespawnOperator<T>& op);
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    despawn(const atlas::geometry::QueryOperator<T>& query,
+            const Vector3<T>& particle,
+            T tolerance = T(0)) const noexcept;
+
+private:
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    destroy_active() noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    copy_from(const DespawnOperator& other) noexcept;
 };
 
 } // namespace atlas::system

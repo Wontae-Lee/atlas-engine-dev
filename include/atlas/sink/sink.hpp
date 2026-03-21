@@ -31,10 +31,10 @@ Sink<T>::builder() noexcept {
 template <typename T>
 void
 Sink<T>::sink(ParticleDeviceProbe<T>& particle_probe) {
-    const auto sync_op = _unit.sync_operator();
-    const auto query   = _unit.query_operator();
-    const T tol        = _tolerance;
-    const bool is_vol  = (_despawn_operator.type == DespawnType::Volume);
+    const auto sync_op          = _unit.sync_operator();
+    const auto query            = _unit.query_operator();
+    const auto despawn_operator = _despawn_operator;
+    const T tol                 = _tolerance;
 
     auto pos       = particle_probe.pos;
     auto vel       = particle_probe.vel;
@@ -50,7 +50,7 @@ Sink<T>::sink(ParticleDeviceProbe<T>& particle_probe) {
         [=] ATLAS_DEVICE(const atlas::tuple<Vector3<T>, Vector3<T>, size_t>& t) {
             const Vector3<T>& p      = atlas::get<0>(t);
             const Vector3<T> local_p = sync_op.sync_to_local(p);
-            return is_vol ? query.is_inside(local_p, tol) : query.is_on_surface(local_p, tol);
+            return despawn_operator.despawn(query, local_p, tol);
         });
 
     particle_probe.particle_count = static_cast<int>(new_end - zip_begin);
@@ -65,7 +65,13 @@ Sink<T>::set_unit(Unit<T> unit) noexcept {
 template <typename T>
 void
 Sink<T>::set_despawn_type(const DespawnType despawn_type) noexcept {
-    _despawn_operator.type = despawn_type;
+    _despawn_operator = DespawnOperator<T>(despawn_type);
+}
+
+template <typename T>
+void
+Sink<T>::set_despawn_operator(const DespawnOperator<T> despawn_operator) noexcept {
+    _despawn_operator = despawn_operator;
 }
 
 template <typename T>
@@ -84,6 +90,12 @@ template <typename T>
 DespawnType
 Sink<T>::despawn_type() const noexcept {
     return _despawn_operator.type;
+}
+
+template <typename T>
+const DespawnOperator<T>&
+Sink<T>::despawn_operator() const noexcept {
+    return _despawn_operator;
 }
 
 template <typename T>
