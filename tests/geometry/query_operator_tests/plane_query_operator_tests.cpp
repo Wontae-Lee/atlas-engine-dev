@@ -5,11 +5,11 @@
 
 using namespace atlas;
 
-TEST(PlaneQueryOperator, IsInsideUsesHalfSpaceAndTolerance) {
+TEST(PlaneGeometryOperator, IsInsideUsesHalfSpaceAndTolerance) {
     const Vector3<double> n(0.0, 0.0, 1.0);
     constexpr double d = 0.0;
 
-    geometry::PlaneQueryOperator<double> op;
+    geometry::PlaneGeometryOperator<double> op;
     op.normal = atlas::raw_pointer_cast(&n);
     op.offset = atlas::raw_pointer_cast(&d);
 
@@ -18,11 +18,11 @@ TEST(PlaneQueryOperator, IsInsideUsesHalfSpaceAndTolerance) {
     EXPECT_TRUE(op.is_inside(Vector3<double>(0.0, 0.0, 0.2), 0.25));
 }
 
-TEST(PlaneQueryOperator, IsOnSurfaceDetectsPlaneBand) {
+TEST(PlaneGeometryOperator, IsOnSurfaceDetectsPlaneBand) {
     const Vector3<double> n(0.0, 0.0, 1.0);
     constexpr double d = 0.0;
 
-    geometry::PlaneQueryOperator<double> op;
+    geometry::PlaneGeometryOperator<double> op;
     op.normal = atlas::raw_pointer_cast(&n);
     op.offset = atlas::raw_pointer_cast(&d);
 

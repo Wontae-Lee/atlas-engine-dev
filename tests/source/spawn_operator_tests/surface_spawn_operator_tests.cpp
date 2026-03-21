@@ -5,9 +5,9 @@
 
 using namespace atlas;
 
-TEST(SurfaceSpawnOperator, SpawnCreatesSurfaceGridPointsFromBoxQueryOperator) {
+TEST(SurfaceSpawnOperator, SpawnCreatesSurfaceGridPointsFromBoxGeometryOperator) {
     const geometry::Box<double> box = test::make_box();
-    const auto query                = test::make_box_query_operator(box);
+    const auto query                = test::make_box_geometry_operator(box);
     const system::SurfaceSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
@@ -32,7 +32,7 @@ TEST(SurfaceSpawnOperator, SpawnCreatesSurfaceGridPointsFromBoxQueryOperator) {
 
 TEST(SurfaceSpawnOperator, SpawnAcceptsSurfaceSamplesUsingExplicitToleranceBand) {
     const geometry::Sphere<double> sphere = test::make_sphere();
-    const auto query                      = test::make_sphere_query_operator(sphere);
+    const auto query                      = test::make_sphere_geometry_operator(sphere);
     const system::SurfaceSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
@@ -54,9 +54,9 @@ TEST(SurfaceSpawnOperator, SpawnAcceptsSurfaceSamplesUsingExplicitToleranceBand)
     }
 }
 
-TEST(SurfaceSpawnOperator, SpawnCreatesSurfacePointsFromCylinderQueryOperator) {
+TEST(SurfaceSpawnOperator, SpawnCreatesSurfacePointsFromCylinderGeometryOperator) {
     const geometry::Cylinder<double> cylinder = test::make_cylinder();
-    const auto query                          = test::make_cylinder_query_operator(cylinder);
+    const auto query                          = test::make_cylinder_geometry_operator(cylinder);
     const system::SurfaceSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
@@ -78,9 +78,9 @@ TEST(SurfaceSpawnOperator, SpawnCreatesSurfacePointsFromCylinderQueryOperator) {
     }
 }
 
-TEST(SurfaceSpawnOperator, SpawnCreatesSurfacePointsFromTriangleQueryOperator) {
+TEST(SurfaceSpawnOperator, SpawnCreatesSurfacePointsFromTriangleGeometryOperator) {
     const geometry::Triangle<double> triangle = test::make_triangle();
-    const auto query                          = test::make_triangle_query_operator(triangle);
+    const auto query                          = test::make_triangle_geometry_operator(triangle);
     const system::SurfaceSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
@@ -102,8 +102,8 @@ TEST(SurfaceSpawnOperator, SpawnCreatesSurfacePointsFromTriangleQueryOperator) {
     }
 }
 
-TEST(SurfaceSpawnOperator, SpawnReturnsEmptyBufferForInvalidQueryOperator) {
-    const geometry::QueryOperator<double> query;
+TEST(SurfaceSpawnOperator, SpawnReturnsEmptyBufferForInvalidGeometryOperator) {
+    const geometry::GeometryOperator<double> query;
     const system::SurfaceSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles(4, Vector3<double>(1.0, 2.0, 3.0));

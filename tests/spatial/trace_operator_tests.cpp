@@ -5,24 +5,24 @@
 
 #include <gtest/gtest.h>
 
-TEST(TraceOperator_Box, MissingParamsReturnsMiss) {
+TEST(GeometryOperator_Box, MissingParamsReturnsMiss) {
     const atlas::math::Vector<double, 3> o(0.0, 0.0, 0.0);
     const atlas::math::Vector<double, 3> d(1.0, 0.0, 0.0);
     const atlas::Ray<double> r(o, d);
 
-    constexpr atlas::spatial::BoxTraceOperator<double> op;
+    constexpr atlas::geometry::BoxGeometryOperator<double> op;
     const auto h = op(r);
 
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Box, HitFromOutsideReturnsEnterDistancePointAndNormal) {
+TEST(GeometryOperator_Box, HitFromOutsideReturnsEnterDistancePointAndNormal) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     const atlas::math::Vector<double, 3> lo(-1.0, -1.0, -1.0);
     const atlas::math::Vector<double, 3> hi(1.0, 1.0, 1.0);
 
-    atlas::spatial::BoxTraceOperator<double> op;
+    atlas::geometry::BoxGeometryOperator<double> op;
     op.lower_corner = &lo;
     op.upper_corner = &hi;
 
@@ -43,13 +43,13 @@ TEST(TraceOperator_Box, HitFromOutsideReturnsEnterDistancePointAndNormal) {
                                       eps));
 }
 
-TEST(TraceOperator_Box, FromInsideReturnsExitDistanceAndOutwardNormal) {
+TEST(GeometryOperator_Box, FromInsideReturnsExitDistanceAndOutwardNormal) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     const atlas::math::Vector<double, 3> lo(-1.0, -1.0, -1.0);
     const atlas::math::Vector<double, 3> hi(1.0, 1.0, 1.0);
 
-    atlas::spatial::BoxTraceOperator<double> op;
+    atlas::geometry::BoxGeometryOperator<double> op;
     op.lower_corner = &lo;
     op.upper_corner = &hi;
 
@@ -70,11 +70,11 @@ TEST(TraceOperator_Box, FromInsideReturnsExitDistanceAndOutwardNormal) {
                                       eps));
 }
 
-TEST(TraceOperator_Box, MissWhenIntervalsDoNotOverlap) {
+TEST(GeometryOperator_Box, MissWhenIntervalsDoNotOverlap) {
     const atlas::math::Vector<double, 3> lo(-1.0, -1.0, -1.0);
     const atlas::math::Vector<double, 3> hi(1.0, 1.0, 1.0);
 
-    atlas::spatial::BoxTraceOperator<double> op;
+    atlas::geometry::BoxGeometryOperator<double> op;
     op.lower_corner = &lo;
     op.upper_corner = &hi;
 
@@ -85,24 +85,24 @@ TEST(TraceOperator_Box, MissWhenIntervalsDoNotOverlap) {
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Cylinder, MissingParamsReturnsMiss) {
+TEST(GeometryOperator_Cylinder, MissingParamsReturnsMiss) {
     const atlas::Ray<double> r(atlas::math::Vector<double, 3>(0.0, 0.0, 0.0),
                                atlas::math::Vector<double, 3>(1.0, 0.0, 0.0));
 
-    constexpr atlas::spatial::CylinderTraceOperator<double> op;
+    constexpr atlas::geometry::CylinderGeometryOperator<double> op;
     const auto h = op(r);
 
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Cylinder, SideHitReturnsCorrectDistancePointAndNormal) {
+TEST(GeometryOperator_Cylinder, SideHitReturnsCorrectDistancePointAndNormal) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     const atlas::math::Vector<double, 3> c(0.0, 0.0, 0.0);
     constexpr double radius = 1.0;
     constexpr double height = 2.0;
 
-    atlas::spatial::CylinderTraceOperator<double> op;
+    atlas::geometry::CylinderGeometryOperator<double> op;
     op.center = &c;
     op.radius = &radius;
     op.height = &height;
@@ -123,14 +123,14 @@ TEST(TraceOperator_Cylinder, SideHitReturnsCorrectDistancePointAndNormal) {
                                       eps));
 }
 
-TEST(TraceOperator_Cylinder, CapHitReturnsNormalAlongZ) {
+TEST(GeometryOperator_Cylinder, CapHitReturnsNormalAlongZ) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     const atlas::math::Vector<double, 3> c(0.0, 0.0, 0.0);
     constexpr double radius = 1.0;
     constexpr double height = 2.0;
 
-    atlas::spatial::CylinderTraceOperator<double> op;
+    atlas::geometry::CylinderGeometryOperator<double> op;
     op.center = &c;
     op.radius = &radius;
     op.height = &height;
@@ -147,8 +147,8 @@ TEST(TraceOperator_Cylinder, CapHitReturnsNormalAlongZ) {
                                       eps));
 }
 
-TEST(TraceOperator_Plane, MissingParamsReturnsMiss) {
-    constexpr atlas::spatial::PlaneTraceOperator<double> op;
+TEST(GeometryOperator_Plane, MissingParamsReturnsMiss) {
+    constexpr atlas::geometry::PlaneGeometryOperator<double> op;
 
     const atlas::Ray<double> r(atlas::math::Vector<double, 3>(0.0, 0.0, 0.0),
                                atlas::math::Vector<double, 3>(0.0, 1.0, 0.0));
@@ -157,11 +157,11 @@ TEST(TraceOperator_Plane, MissingParamsReturnsMiss) {
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Plane, ParallelNoHitWhenNotOnPlane) {
+TEST(GeometryOperator_Plane, ParallelNoHitWhenNotOnPlane) {
     const atlas::math::Vector<double, 3> n(0.0, 1.0, 0.0);
     constexpr double d = -1.0;
 
-    atlas::spatial::PlaneTraceOperator<double> op;
+    atlas::geometry::PlaneGeometryOperator<double> op;
     op.normal = &n;
     op.offset = &d;
 
@@ -172,13 +172,13 @@ TEST(TraceOperator_Plane, ParallelNoHitWhenNotOnPlane) {
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Plane, ParallelOnPlaneReturnsTZero) {
+TEST(GeometryOperator_Plane, ParallelOnPlaneReturnsTZero) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     const atlas::math::Vector<double, 3> n(0.0, 1.0, 0.0);
     constexpr double d = -1.0;
 
-    atlas::spatial::PlaneTraceOperator<double> op;
+    atlas::geometry::PlaneGeometryOperator<double> op;
     op.normal = &n;
     op.offset = &d;
 
@@ -192,13 +192,13 @@ TEST(TraceOperator_Plane, ParallelOnPlaneReturnsTZero) {
     EXPECT_TRUE(atlas::test::vec_near(normal, n, eps));
 }
 
-TEST(TraceOperator_Plane, HitComputesCorrectTPointAndNormal) {
+TEST(GeometryOperator_Plane, HitComputesCorrectTPointAndNormal) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     const atlas::math::Vector<double, 3> n(0.0, 1.0, 0.0);
     constexpr double d = -1.0;
 
-    atlas::spatial::PlaneTraceOperator<double> op;
+    atlas::geometry::PlaneGeometryOperator<double> op;
     op.normal = &n;
     op.offset = &d;
 
@@ -215,8 +215,8 @@ TEST(TraceOperator_Plane, HitComputesCorrectTPointAndNormal) {
     EXPECT_TRUE(atlas::test::vec_near(normal, n, eps));
 }
 
-TEST(TraceOperator_Sphere, MissingParamsReturnsMiss) {
-    constexpr atlas::spatial::SphereTraceOperator<double> op;
+TEST(GeometryOperator_Sphere, MissingParamsReturnsMiss) {
+    constexpr atlas::geometry::SphereGeometryOperator<double> op;
 
     const atlas::Ray<double> r(atlas::math::Vector<double, 3>(0.0, 0.0, 0.0),
                                atlas::math::Vector<double, 3>(1.0, 0.0, 0.0));
@@ -225,13 +225,13 @@ TEST(TraceOperator_Sphere, MissingParamsReturnsMiss) {
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Sphere, HitReturnsNearestPositiveRootAndUnitNormal) {
+TEST(GeometryOperator_Sphere, HitReturnsNearestPositiveRootAndUnitNormal) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     const atlas::math::Vector<double, 3> c(0.0, 0.0, 0.0);
     constexpr double radius = 1.0;
 
-    atlas::spatial::SphereTraceOperator<double> op;
+    atlas::geometry::SphereGeometryOperator<double> op;
     op.center = &c;
     op.radius = &radius;
 
@@ -251,11 +251,11 @@ TEST(TraceOperator_Sphere, HitReturnsNearestPositiveRootAndUnitNormal) {
     EXPECT_TRUE(atlas::test::near(normal.length(), 1.0, eps));
 }
 
-TEST(TraceOperator_Sphere, MissWhenDiscriminantNegative) {
+TEST(GeometryOperator_Sphere, MissWhenDiscriminantNegative) {
     const atlas::math::Vector<double, 3> c(0.0, 0.0, 0.0);
     constexpr double radius = 1.0;
 
-    atlas::spatial::SphereTraceOperator<double> op;
+    atlas::geometry::SphereGeometryOperator<double> op;
     op.center = &c;
     op.radius = &radius;
 
@@ -266,8 +266,8 @@ TEST(TraceOperator_Sphere, MissWhenDiscriminantNegative) {
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Triangle, MissingParamsReturnsMiss) {
-    constexpr atlas::spatial::TriangleTraceOperator<double> op;
+TEST(GeometryOperator_Triangle, MissingParamsReturnsMiss) {
+    constexpr atlas::geometry::TriangleGeometryOperator<double> op;
 
     const atlas::Ray<double> r(atlas::math::Vector<double, 3>(0.0, 0.0, 0.0),
                                atlas::math::Vector<double, 3>(0.0, 0.0, 1.0));
@@ -276,14 +276,14 @@ TEST(TraceOperator_Triangle, MissingParamsReturnsMiss) {
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Triangle, HitReturnsTPointAndUnitNormal) {
+TEST(GeometryOperator_Triangle, HitReturnsTPointAndUnitNormal) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     const atlas::math::Vector<double, 3> a(0.0, 0.0, 0.0);
     const atlas::math::Vector<double, 3> b(1.0, 0.0, 0.0);
     const atlas::math::Vector<double, 3> c(0.0, 1.0, 0.0);
 
-    atlas::spatial::TriangleTraceOperator<double> op;
+    atlas::geometry::TriangleGeometryOperator<double> op;
     op.a = &a;
     op.b = &b;
     op.c = &c;
@@ -305,12 +305,12 @@ TEST(TraceOperator_Triangle, HitReturnsTPointAndUnitNormal) {
                                       eps));
 }
 
-TEST(TraceOperator_Triangle, MissWhenRayHitsPlaneOutsideTriangle) {
+TEST(GeometryOperator_Triangle, MissWhenRayHitsPlaneOutsideTriangle) {
     const atlas::math::Vector<double, 3> a(0.0, 0.0, 0.0);
     const atlas::math::Vector<double, 3> b(1.0, 0.0, 0.0);
     const atlas::math::Vector<double, 3> c(0.0, 1.0, 0.0);
 
-    atlas::spatial::TriangleTraceOperator<double> op;
+    atlas::geometry::TriangleGeometryOperator<double> op;
     op.a = &a;
     op.b = &b;
     op.c = &c;
@@ -322,8 +322,8 @@ TEST(TraceOperator_Triangle, MissWhenRayHitsPlaneOutsideTriangle) {
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Dispatch, DefaultIsSphereAndReturnsMissWithNoParams) {
-    const atlas::spatial::TraceOperator<double> op;
+TEST(GeometryOperator_Dispatch, DefaultIsSphereAndReturnsMissWithNoParams) {
+    const atlas::GeometryOperator<double> op;
 
     const atlas::Ray<double> r(atlas::math::Vector<double, 3>(0.0, 0.0, 0.0),
                                atlas::math::Vector<double, 3>(1.0, 0.0, 0.0));
@@ -332,17 +332,17 @@ TEST(TraceOperator_Dispatch, DefaultIsSphereAndReturnsMissWithNoParams) {
     EXPECT_FALSE(h.is_intersecting);
 }
 
-TEST(TraceOperator_Dispatch, TaggedConstructorsSelectCorrectVariant) {
+TEST(GeometryOperator_Dispatch, TaggedConstructorsSelectCorrectVariant) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     const atlas::math::Vector<double, 3> c(0.0, 0.0, 0.0);
     constexpr double radius = 1.0;
 
-    atlas::spatial::SphereTraceOperator<double> sphere;
+    atlas::geometry::SphereGeometryOperator<double> sphere;
     sphere.center = &c;
     sphere.radius = &radius;
 
-    const atlas::spatial::TraceOperator<double> op_s(sphere);
+    const atlas::GeometryOperator<double> op_s(sphere);
 
     const atlas::Ray<double> r(atlas::math::Vector<double, 3>(-3.0, 0.0, 0.0),
                                atlas::math::Vector<double, 3>(1.0, 0.0, 0.0));

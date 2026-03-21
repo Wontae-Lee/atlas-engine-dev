@@ -202,27 +202,27 @@ make_triangle() {
 }
 
 template <typename T>
-ATLAS_FORCE_INLINE geometry::QueryOperator<T>
-make_box_query_operator(const geometry::Box<T>& box) {
-    return box.make_query_operator();
+ATLAS_FORCE_INLINE geometry::GeometryOperator<T>
+make_box_geometry_operator(const geometry::Box<T>& box) {
+    return box.make_geometry_operator();
 }
 
 template <typename T>
-ATLAS_FORCE_INLINE geometry::QueryOperator<T>
-make_sphere_query_operator(const geometry::Sphere<T>& sphere) {
-    return sphere.make_query_operator();
+ATLAS_FORCE_INLINE geometry::GeometryOperator<T>
+make_sphere_geometry_operator(const geometry::Sphere<T>& sphere) {
+    return sphere.make_geometry_operator();
 }
 
 template <typename T>
-ATLAS_FORCE_INLINE geometry::QueryOperator<T>
-make_cylinder_query_operator(const geometry::Cylinder<T>& cylinder) {
-    return cylinder.make_query_operator();
+ATLAS_FORCE_INLINE geometry::GeometryOperator<T>
+make_cylinder_geometry_operator(const geometry::Cylinder<T>& cylinder) {
+    return cylinder.make_geometry_operator();
 }
 
 template <typename T>
-ATLAS_FORCE_INLINE geometry::QueryOperator<T>
-make_triangle_query_operator(const geometry::Triangle<T>& triangle) {
-    return triangle.make_query_operator();
+ATLAS_FORCE_INLINE geometry::GeometryOperator<T>
+make_triangle_geometry_operator(const geometry::Triangle<T>& triangle) {
+    return triangle.make_geometry_operator();
 }
 
 ATLAS_FORCE_INLINE host_shared_ptr<geometry::Sphere<double>>

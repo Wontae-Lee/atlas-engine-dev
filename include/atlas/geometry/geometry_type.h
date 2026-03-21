@@ -7,13 +7,13 @@ namespace atlas::geometry {
 /* ====================================================================== */
 
 /**
- * @brief Runtime type tag for @ref QueryOperator.
+ * @brief Runtime type tag for @ref GeometryOperator.
  *
  * @details
  * Identifies which concrete operator inside the union is currently active.
  *
  * @note
- * Keep this enum in sync with the union members in @ref QueryOperator.
+ * Keep this enum in sync with the union members in @ref GeometryOperator.
  */
 enum class GeometryType : int {
     /// @brief Axis-aligned box operator.

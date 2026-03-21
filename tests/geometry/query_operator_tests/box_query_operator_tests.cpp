@@ -5,18 +5,18 @@
 
 using namespace atlas;
 
-TEST(BoxQueryOperator, ClosestPointReturnsInputWhenPointersNull) {
-    constexpr geometry::BoxQueryOperator<double> op;
+TEST(BoxGeometryOperator, ClosestPointReturnsInputWhenPointersNull) {
+    constexpr geometry::BoxGeometryOperator<double> op;
 
     const Vector3<double> p(1.25, -2.5, 3.75);
     EXPECT_TRUE(test::vec_near(op.closest_point(p), p, eps));
 }
 
-TEST(BoxQueryOperator, ClosestPointOutsideClampsToBounds) {
+TEST(BoxGeometryOperator, ClosestPointOutsideClampsToBounds) {
     const Vector3<double> lo(-1.0, -2.0, -3.0);
     const Vector3<double> hi(1.0, 2.0, 3.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -26,11 +26,11 @@ TEST(BoxQueryOperator, ClosestPointOutsideClampsToBounds) {
     EXPECT_TRUE(test::vec_near(op.closest_point(p), expected, eps));
 }
 
-TEST(BoxQueryOperator, ClosestPointInsidePushesToNearestFace) {
+TEST(BoxGeometryOperator, ClosestPointInsidePushesToNearestFace) {
     const Vector3<double> lo(-1.0, -1.0, -1.0);
     const Vector3<double> hi(1.0, 1.0, 1.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -40,18 +40,18 @@ TEST(BoxQueryOperator, ClosestPointInsidePushesToNearestFace) {
     EXPECT_TRUE(test::vec_near(op.closest_point(p), expected, eps));
 }
 
-TEST(BoxQueryOperator, ClosestNormalReturnsZeroWhenPointersNull) {
-    constexpr geometry::BoxQueryOperator<double> op;
+TEST(BoxGeometryOperator, ClosestNormalReturnsZeroWhenPointersNull) {
+    constexpr geometry::BoxGeometryOperator<double> op;
 
     const Vector3<double> p(1.0, 2.0, 3.0);
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), Vector3<double>(0.0, 0.0, 0.0), eps));
 }
 
-TEST(BoxQueryOperator, ClosestNormalInsideReturnsAxisUnitVectorOutward) {
+TEST(BoxGeometryOperator, ClosestNormalInsideReturnsAxisUnitVectorOutward) {
     const Vector3<double> lo(-1.0, -1.0, -1.0);
     const Vector3<double> hi(1.0, 1.0, 1.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -61,11 +61,11 @@ TEST(BoxQueryOperator, ClosestNormalInsideReturnsAxisUnitVectorOutward) {
     EXPECT_TRUE(test::vec_near(n, Vector3<double>(-1.0, 0.0, 0.0), eps));
 }
 
-TEST(BoxQueryOperator, ClosestNormalOutsideUsesMajorAxisOfDisplacement) {
+TEST(BoxGeometryOperator, ClosestNormalOutsideUsesMajorAxisOfDisplacement) {
     const Vector3<double> lo(-1.0, -1.0, -1.0);
     const Vector3<double> hi(1.0, 1.0, 1.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -75,18 +75,18 @@ TEST(BoxQueryOperator, ClosestNormalOutsideUsesMajorAxisOfDisplacement) {
     EXPECT_TRUE(test::vec_near(n, Vector3<double>(1.0, 0.0, 0.0), eps));
 }
 
-TEST(BoxQueryOperator, SignedDistanceReturnsInfWhenPointersNull) {
-    constexpr geometry::BoxQueryOperator<double> op;
+TEST(BoxGeometryOperator, SignedDistanceReturnsInfWhenPointersNull) {
+    constexpr geometry::BoxGeometryOperator<double> op;
 
     const Vector3<double> p(0.0, 0.0, 0.0);
     EXPECT_TRUE(std::isinf(op.signed_distance(p)));
 }
 
-TEST(BoxQueryOperator, SignedDistanceIsNegativeInside) {
+TEST(BoxGeometryOperator, SignedDistanceIsNegativeInside) {
     const Vector3<double> lo(-1.0, -2.0, -3.0);
     const Vector3<double> hi(1.0, 2.0, 3.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -97,11 +97,11 @@ TEST(BoxQueryOperator, SignedDistanceIsNegativeInside) {
     EXPECT_NEAR(d, -1.0, eps);
 }
 
-TEST(BoxQueryOperator, SignedDistanceIsPositiveOutside) {
+TEST(BoxGeometryOperator, SignedDistanceIsPositiveOutside) {
     const Vector3<double> lo(-1.0, -1.0, -1.0);
     const Vector3<double> hi(1.0, 1.0, 1.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -112,11 +112,11 @@ TEST(BoxQueryOperator, SignedDistanceIsPositiveOutside) {
     EXPECT_NEAR(d, 3.0, eps);
 }
 
-TEST(BoxQueryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
+TEST(BoxGeometryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
     const Vector3<double> lo(-1.0, -1.0, -1.0);
     const Vector3<double> hi(1.0, 1.0, 1.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -125,11 +125,11 @@ TEST(BoxQueryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
     EXPECT_TRUE(op.is_inside(Vector3<double>(1.2, 0.0, 0.0), 0.25));
 }
 
-TEST(BoxQueryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
+TEST(BoxGeometryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
     const Vector3<double> lo(-1.0, -1.0, -1.0);
     const Vector3<double> hi(1.0, 1.0, 1.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -138,16 +138,16 @@ TEST(BoxQueryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
     EXPECT_TRUE(op.is_on_surface(Vector3<double>(1.1, 0.0, 0.0), 0.15));
 }
 
-TEST(BoxQueryOperator, CentroidReturnsZeroWhenPointersNull) {
-    constexpr geometry::BoxQueryOperator<double> op;
+TEST(BoxGeometryOperator, CentroidReturnsZeroWhenPointersNull) {
+    constexpr geometry::BoxGeometryOperator<double> op;
     EXPECT_TRUE(test::vec_near(op.centroid(), Vector3<double>(0.0, 0.0, 0.0), eps));
 }
 
-TEST(BoxQueryOperator, CentroidIsMidpointOfBounds) {
+TEST(BoxGeometryOperator, CentroidIsMidpointOfBounds) {
     const Vector3<double> lo(-2.0, -4.0, -6.0);
     const Vector3<double> hi(6.0, 2.0, 4.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -156,8 +156,8 @@ TEST(BoxQueryOperator, CentroidIsMidpointOfBounds) {
     EXPECT_TRUE(test::vec_near(op.centroid(), expected, eps));
 }
 
-TEST(BoxQueryOperator, BoundReturnsDefaultWhenPointersNull) {
-    constexpr geometry::BoxQueryOperator<double> op;
+TEST(BoxGeometryOperator, BoundReturnsDefaultWhenPointersNull) {
+    constexpr geometry::BoxGeometryOperator<double> op;
 
     const auto aabb = op.bound();
 
@@ -165,11 +165,11 @@ TEST(BoxQueryOperator, BoundReturnsDefaultWhenPointersNull) {
     EXPECT_TRUE(test::is_finite_vec(aabb.upper_corner));
 }
 
-TEST(BoxQueryOperator, BoundReturnsSameBoundsWhenValid) {
+TEST(BoxGeometryOperator, BoundReturnsSameBoundsWhenValid) {
     const Vector3<double> lo(-2.0, -3.0, -4.0);
     const Vector3<double> hi(5.0, 6.0, 7.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
@@ -179,27 +179,27 @@ TEST(BoxQueryOperator, BoundReturnsSameBoundsWhenValid) {
     EXPECT_TRUE(test::vec_near(aabb.upper_corner, hi, eps));
 }
 
-TEST(BoxQueryOperator, IsValidFalseWhenPointersNull) {
-    constexpr geometry::BoxQueryOperator<double> op;
+TEST(BoxGeometryOperator, IsValidFalseWhenPointersNull) {
+    constexpr geometry::BoxGeometryOperator<double> op;
     EXPECT_FALSE(op.is_valid());
 }
 
-TEST(BoxQueryOperator, IsValidTrueForOrderedBounds) {
+TEST(BoxGeometryOperator, IsValidTrueForOrderedBounds) {
     const Vector3<double> lo(-1.0, -2.0, -3.0);
     const Vector3<double> hi(1.0, 2.0, 3.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 
     EXPECT_TRUE(op.is_valid());
 }
 
-TEST(BoxQueryOperator, IsValidFalseForInvertedBounds) {
+TEST(BoxGeometryOperator, IsValidFalseForInvertedBounds) {
     const Vector3<double> lo(1.0, 0.0, 0.0);
     const Vector3<double> hi(-1.0, 0.0, 0.0);
 
-    geometry::BoxQueryOperator<double> op;
+    geometry::BoxGeometryOperator<double> op;
     op.lower_corner = atlas::raw_pointer_cast(&lo);
     op.upper_corner = atlas::raw_pointer_cast(&hi);
 

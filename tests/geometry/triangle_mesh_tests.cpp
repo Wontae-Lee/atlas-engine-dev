@@ -134,9 +134,9 @@ TEST(GeometryTriangleMesh, BuildBvhWithEmptyTrianglesMarksNotBuilt) {
     EXPECT_TRUE(mesh.triangles.empty());
 }
 
-TEST(GeometryTriangleMesh, MakeTraceOperatorReturnsDefaultWhenNotBuilt) {
+TEST(GeometryTriangleMesh, MakeGeometryOperatorReturnsDefaultWhenNotBuilt) {
 
-    // If BVH is not built (e.g., empty triangle list), make_trace_operator()
+    // If BVH is not built (e.g., empty triangle list), make_geometry_operator()
     // should still be safe to call and return some default/sentinel operator.
     //
     // This test is intentionally "no-assert": it verifies the call does not crash
@@ -145,11 +145,11 @@ TEST(GeometryTriangleMesh, MakeTraceOperatorReturnsDefaultWhenNotBuilt) {
 
     const atlas::geometry::TriangleMesh<double> mesh(empty);
 
-    const auto tr = mesh.make_trace_operator();
+    const auto tr = mesh.make_geometry_operator();
     (void)tr; // suppress unused warning
 }
 
-TEST(GeometryTriangleMesh, MakeQueryOperatorReturnsValidTriangleMeshQueryOperator) {
+TEST(GeometryTriangleMesh, MakeGeometryOperatorReturnsValidTriangleMeshGeometryOperator) {
 
     // Build a simple mesh with one triangle.
     atlas::HostBuffer<atlas::TriangleContainer4<double>> tris;
@@ -166,7 +166,7 @@ TEST(GeometryTriangleMesh, MakeQueryOperatorReturnsValidTriangleMeshQueryOperato
 
     const atlas::geometry::TriangleMesh<double> mesh(tris);
 
-    const auto q = mesh.make_query_operator();
+    const auto q = mesh.make_geometry_operator();
     EXPECT_EQ(q.type, geometry::GeometryType::TriangleMesh);
     EXPECT_TRUE(q.is_valid());
 }

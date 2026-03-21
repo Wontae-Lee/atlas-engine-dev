@@ -32,7 +32,7 @@ template <typename T>
 void
 Sink<T>::sink(ParticleDeviceProbe<T>& particle_probe) {
     const auto sync_op          = _unit.sync_operator();
-    const auto query            = _unit.query_operator();
+    const auto geometry_op      = _unit.geometry_operator();
     const auto despawn_operator = _despawn_operator;
     const T tol                 = _tolerance;
 
@@ -50,7 +50,7 @@ Sink<T>::sink(ParticleDeviceProbe<T>& particle_probe) {
         [=] ATLAS_DEVICE(const atlas::tuple<Vector3<T>, Vector3<T>, size_t>& t) {
             const Vector3<T>& p      = atlas::get<0>(t);
             const Vector3<T> local_p = sync_op.sync_to_local(p);
-            return despawn_operator.despawn(query, local_p, tol);
+            return despawn_operator.despawn(geometry_op, local_p, tol);
         });
 
     particle_probe.particle_count = static_cast<int>(new_end - zip_begin);

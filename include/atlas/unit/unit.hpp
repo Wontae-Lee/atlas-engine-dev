@@ -8,21 +8,18 @@ namespace atlas::system {
 
 template <typename T>
 Unit<T>::Unit(
-    QueryOperator<T> query_operator,
-    TraceOperator<T> trace_operator,
+    atlas::GeometryOperator<T> geometry_operator,
     SyncOperator<T> sync_operator) noexcept
     // This constructor takes already-materialized operators.
     // Because those operators are typically non-owning views, we deliberately do not
     // invent or infer a geometry owner here. The caller remains responsible for the
     // lifetime behind the supplied operator storage.
-    : _query_operator(std::move(query_operator))
-    , _trace_operator(std::move(trace_operator))
+    : _geometry_operator(std::move(geometry_operator))
     , _sync_operator(std::move(sync_operator)) { }
 
 template <typename T>
 Unit<T>::Unit(
-    QueryOperator<T> query_operator,
-    TraceOperator<T> trace_operator,
+    atlas::GeometryOperator<T> geometry_operator,
     SyncOperator<T> sync_operator,
     std::optional<Vector<T, 3>> velocity,
     std::optional<Vector<T, 3>> acceleration,
@@ -30,8 +27,7 @@ Unit<T>::Unit(
     std::optional<Vector<T, 3>> angular_acceleration) noexcept
     // Store the operator/pose state first, then normalize the optional motion terms
     // into a representation that update() can interpret consistently.
-    : _query_operator(std::move(query_operator))
-    , _trace_operator(std::move(trace_operator))
+    : _geometry_operator(std::move(geometry_operator))
     , _sync_operator(std::move(sync_operator)) {
     // Constructors are intentionally permissive about partially specified kinematics.
     // Rather than leaving the object in an inert "acceleration only" state, normalize
@@ -51,18 +47,11 @@ Unit<T>::Unit(
 
 template <typename T>
 void
-Unit<T>::set_query_operator(QueryOperator<T> query_operator) noexcept {
+Unit<T>::set_geometry_operator(atlas::GeometryOperator<T> geometry_operator) noexcept {
     // Only the operator view is replaced here.
     // _geometry_owner is left untouched because the new operator may refer to
     // unrelated storage managed externally by the caller.
-    _query_operator = std::move(query_operator);
-}
-
-template <typename T>
-void
-Unit<T>::set_trace_operator(TraceOperator<T> trace_operator) noexcept {
-    // Same lifetime contract as set_query_operator().
-    _trace_operator = std::move(trace_operator);
+    _geometry_operator = std::move(geometry_operator);
 }
 
 template <typename T>
@@ -73,17 +62,6 @@ Unit<T>::set_sync_operator(SyncOperator<T> sync_operator) noexcept {
 }
 
 template <typename T>
-void
-Unit<T>::set_operators(QueryOperator<T> query_operator,
-                       TraceOperator<T> trace_operator,
-                       SyncOperator<T> sync_operator) noexcept {
-    // Bulk replacement is equivalent to calling the three individual setters.
-    _query_operator = std::move(query_operator);
-    _trace_operator = std::move(trace_operator);
-    _sync_operator  = std::move(sync_operator);
-}
-
-template <typename T>
 typename Unit<T>::Builder
 Unit<T>::builder() noexcept {
     // Centralized entry point for validated fluent construction.
@@ -91,17 +69,9 @@ Unit<T>::builder() noexcept {
 }
 
 template <typename T>
-const atlas::QueryOperator<T>&
-Unit<T>::query_operator() const noexcept {
-    // Return the exact stored query view.
-    return _query_operator;
-}
-
-template <typename T>
-const atlas::TraceOperator<T>&
-Unit<T>::trace_operator() const noexcept {
-    // Return the exact stored trace view.
-    return _trace_operator;
+const atlas::GeometryOperator<T>&
+Unit<T>::geometry_operator() const noexcept {
+    return _geometry_operator;
 }
 
 template <typename T>
@@ -268,8 +238,7 @@ Unit<T>::Builder::with_geometry(const atlas::GeometryHostPtr<T>& geometry) {
     _geometry = geometry;
 
     // Cache the operator views immediately. build() then becomes simple assembly.
-    _query_operator = geometry->make_query_operator();
-    _trace_operator = geometry->make_trace_operator();
+    _geometry_operator = geometry->make_geometry_operator();
     return *this;
 }
 
@@ -349,8 +318,7 @@ Unit<T>::Builder::build() {
     // Store the geometry owner first so the operator views assigned below will continue
     // to reference live geometry storage after the builder goes away.
     u._geometry_owner = std::move(*geometry);
-    u._query_operator = std::move(*_query_operator);
-    u._trace_operator = std::move(*_trace_operator);
+    u._geometry_operator = std::move(*_geometry_operator);
     u._sync_operator  = std::move(*_sync_operator);
 
     // Persist the normalized motion state.
@@ -361,8 +329,7 @@ Unit<T>::Builder::build() {
 
     // Reset the builder so reuse starts from a clean slate.
     _geometry.reset();
-    _query_operator.reset();
-    _trace_operator.reset();
+    _geometry_operator.reset();
     _sync_operator.reset();
 
     _velocity.reset();
@@ -392,11 +359,10 @@ Unit<T>::Builder::validate() const {
         throw std::runtime_error("Unit::Builder: geometry owner is not initialized.");
     }
 
-    // with_geometry() is expected to populate both operator views together.
-    if (!_query_operator.has_value() || !_trace_operator.has_value()) {
+    if (!_geometry_operator.has_value()) {
         atlas::logger::error()
-            << "Unit::Builder validation failed: geometry operators are not initialized.";
-        throw std::runtime_error("Unit::Builder: geometry operators are not initialized.");
+            << "Unit::Builder validation failed: geometry operator is not initialized.";
+        throw std::runtime_error("Unit::Builder: geometry operator is not initialized.");
     }
 
     // A complete unit always needs an initial pose.

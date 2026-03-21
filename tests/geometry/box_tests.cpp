@@ -57,29 +57,18 @@ TEST(Box, UpperCornerMemberIsWritable) {
     EXPECT_TRUE(test::vec_near(b.upper_corner, hi, eps));
 }
 
-TEST(Box, MakeTraceOperatorReturnsBoxTraceOperatorVariant) {
+TEST(Box, MakeGeometryOperatorReturnsBoxGeometryOperatorVariant) {
 
-    // make_trace_operator() must return a TraceOperator variant tagged as Box.
+    // make_geometry_operator() must return a GeometryOperator variant tagged as Box.
     // This tag is used for runtime dispatch across geometry types.
     const geometry::Box<double> b;
 
-    const auto op = b.make_trace_operator();
+    const auto op = b.make_geometry_operator();
 
     EXPECT_EQ(op.type, geometry::GeometryType::Box);
 }
 
-TEST(Box, MakeQueryOperatorReturnsBoxQueryOperatorVariant) {
-
-    // make_query_operator() must return a QueryOperator variant tagged as Box.
-    // This tag is used for runtime dispatch across query operator implementations.
-    const geometry::Box<double> b;
-
-    const auto op = b.make_query_operator();
-
-    EXPECT_EQ(op.type, geometry::GeometryType::Box);
-}
-
-TEST(Box, ClosestPointDelegatesToQueryOperator) {
+TEST(Box, ClosestPointDelegatesToGeometryOperator) {
 
     // Use a symmetric box centered at origin with bounds [-1, +1] on each axis.
     const geometry::Box<double> b(

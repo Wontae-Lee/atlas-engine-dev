@@ -5,8 +5,8 @@
 
 using namespace atlas;
 
-TEST(TriangleMeshQueryOperator, IsValidFalseWhenVerticesNull) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, IsValidFalseWhenVerticesNull) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<int> idx = { 0, 1, 2 };
     op.indices                 = idx.data();
@@ -15,8 +15,8 @@ TEST(TriangleMeshQueryOperator, IsValidFalseWhenVerticesNull) {
     EXPECT_FALSE(op.is_valid());
 }
 
-TEST(TriangleMeshQueryOperator, IsValidFalseWhenIndicesNull) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, IsValidFalseWhenIndicesNull) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(0.0, 0.0, 0.0),
@@ -29,8 +29,8 @@ TEST(TriangleMeshQueryOperator, IsValidFalseWhenIndicesNull) {
     EXPECT_FALSE(op.is_valid());
 }
 
-TEST(TriangleMeshQueryOperator, IsValidFalseWhenTriangleCountNonPositive) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, IsValidFalseWhenTriangleCountNonPositive) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(0.0, 0.0, 0.0),
@@ -49,8 +49,8 @@ TEST(TriangleMeshQueryOperator, IsValidFalseWhenTriangleCountNonPositive) {
     EXPECT_FALSE(op.is_valid());
 }
 
-TEST(TriangleMeshQueryOperator, IsValidTrueForNonEmptyBuffersAndPositiveCount) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, IsValidTrueForNonEmptyBuffersAndPositiveCount) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(0.0, 0.0, 0.0),
@@ -66,8 +66,8 @@ TEST(TriangleMeshQueryOperator, IsValidTrueForNonEmptyBuffersAndPositiveCount) {
     EXPECT_TRUE(op.is_valid());
 }
 
-TEST(TriangleMeshQueryOperator, ClosestPointReturnsInputWhenInvalid) {
-    constexpr geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, ClosestPointReturnsInputWhenInvalid) {
+    constexpr geometry::TriangleMeshGeometryOperator<double> op;
 
     constexpr Vector3<double> p(1.0, 2.0, 3.0);
     const auto cp = op.closest_point(p);
@@ -75,8 +75,8 @@ TEST(TriangleMeshQueryOperator, ClosestPointReturnsInputWhenInvalid) {
     EXPECT_TRUE(test::vec_near(cp, p, eps));
 }
 
-TEST(TriangleMeshQueryOperator, ClosestNormalReturnsUpWhenInvalid) {
-    constexpr geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, ClosestNormalReturnsUpWhenInvalid) {
+    constexpr geometry::TriangleMeshGeometryOperator<double> op;
 
     constexpr Vector3<double> p(1.0, 2.0, 3.0);
     const auto n = op.closest_normal(p);
@@ -84,30 +84,30 @@ TEST(TriangleMeshQueryOperator, ClosestNormalReturnsUpWhenInvalid) {
     EXPECT_TRUE(test::vec_near(n, Vector3<double>(0.0, 0.0, 1.0), eps));
 }
 
-TEST(TriangleMeshQueryOperator, SignedDistanceReturnsInfWhenInvalid) {
-    constexpr geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, SignedDistanceReturnsInfWhenInvalid) {
+    constexpr geometry::TriangleMeshGeometryOperator<double> op;
 
     constexpr Vector3<double> p(1.0, 2.0, 3.0);
     EXPECT_TRUE(std::isinf(op.signed_distance(p)));
 }
 
-TEST(TriangleMeshQueryOperator, CentroidReturnsZeroWhenInvalid) {
-    constexpr geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, CentroidReturnsZeroWhenInvalid) {
+    constexpr geometry::TriangleMeshGeometryOperator<double> op;
 
     const auto c = op.centroid();
     EXPECT_TRUE(test::vec_near(c, Vector3<double>(0.0, 0.0, 0.0), eps));
 }
 
-TEST(TriangleMeshQueryOperator, BoundReturnsDefaultWhenInvalid) {
-    constexpr geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, BoundReturnsDefaultWhenInvalid) {
+    constexpr geometry::TriangleMeshGeometryOperator<double> op;
 
     const auto aabb = op.bound();
     EXPECT_TRUE(test::is_finite_vec(aabb.lower_corner));
     EXPECT_TRUE(test::is_finite_vec(aabb.upper_corner));
 }
 
-TEST(TriangleMeshQueryOperator, ClosestPointSelectsNearestTriangleAmongTwo) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, ClosestPointSelectsNearestTriangleAmongTwo) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(0.0, 0.0, 0.0),
@@ -138,8 +138,8 @@ TEST(TriangleMeshQueryOperator, ClosestPointSelectsNearestTriangleAmongTwo) {
     EXPECT_TRUE(test::vec_near(cp, Vector3<double>(0.2, 0.2, 0.0), eps));
 }
 
-TEST(TriangleMeshQueryOperator, ClosestNormalMatchesTriangleNormalOfNearestTriangle) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, ClosestNormalMatchesTriangleNormalOfNearestTriangle) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(0.0, 0.0, 0.0),
@@ -171,8 +171,8 @@ TEST(TriangleMeshQueryOperator, ClosestNormalMatchesTriangleNormalOfNearestTrian
     EXPECT_NEAR(n.length(), 1.0, 1e-12);
 }
 
-TEST(TriangleMeshQueryOperator, SignedDistanceUsesWindingForClosedMeshSign) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, SignedDistanceUsesWindingForClosedMeshSign) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(0.0, 0.0, 0.0),
@@ -201,8 +201,8 @@ TEST(TriangleMeshQueryOperator, SignedDistanceUsesWindingForClosedMeshSign) {
     EXPECT_GT(d_out, 0.0);
 }
 
-TEST(TriangleMeshQueryOperator, IsInsideUsesWindingForClosedMeshContainment) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, IsInsideUsesWindingForClosedMeshContainment) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(0.0, 0.0, 0.0),
@@ -226,8 +226,8 @@ TEST(TriangleMeshQueryOperator, IsInsideUsesWindingForClosedMeshContainment) {
     EXPECT_TRUE(op.is_inside(Vector3<double>(0.6, 0.6, 0.1), 0.5));
 }
 
-TEST(TriangleMeshQueryOperator, IsOnSurfaceDetectsSurfaceBand) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, IsOnSurfaceDetectsSurfaceBand) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(0.0, 0.0, 0.0),
@@ -245,8 +245,8 @@ TEST(TriangleMeshQueryOperator, IsOnSurfaceDetectsSurfaceBand) {
     EXPECT_TRUE(op.is_on_surface(Vector3<double>(0.25, 0.25, 0.1), 0.15));
 }
 
-TEST(TriangleMeshQueryOperator, CentroidIsAverageOfTriangleCentroidsUniformWeight) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, CentroidIsAverageOfTriangleCentroidsUniformWeight) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(0.0, 0.0, 0.0),
@@ -279,8 +279,8 @@ TEST(TriangleMeshQueryOperator, CentroidIsAverageOfTriangleCentroidsUniformWeigh
     EXPECT_TRUE(test::vec_near(c, expected, eps));
 }
 
-TEST(TriangleMeshQueryOperator, BoundScansAllReferencedVertices) {
-    geometry::TriangleMeshQueryOperator<double> op;
+TEST(TriangleMeshGeometryOperator, BoundScansAllReferencedVertices) {
+    geometry::TriangleMeshGeometryOperator<double> op;
 
     const std::vector<Vector3<double>> v = {
         Vector3<double>(-2.0, 3.0, 1.0),

@@ -59,9 +59,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build(const HostBuffer<TriangleContainer4<T>>& triangles) override;
 
-    /// Create a traversal operator referencing the built buffers.
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE BvhTraceOperator<T>
-    make_trace_operator() const override;
+    /// Create a traversal geometry operator referencing the built buffers.
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE BvhGeometryOperator<T>
+    make_geometry_operator() const override;
 
     /// Reset the hierarchy to an empty state.
     ATLAS_HOST ATLAS_FORCE_INLINE void

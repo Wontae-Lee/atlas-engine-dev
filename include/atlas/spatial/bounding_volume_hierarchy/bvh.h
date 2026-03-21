@@ -1,9 +1,20 @@
 #pragma once
 #include <atlas/buffer/host_buffer.h>
+#include <atlas/container/container.h>
 #include <atlas/memory/memory.h>
-#include <atlas/spatial/trace_operator.h>
+#include <atlas/spatial/bounding_volume_hierarchy/node.h>
+
+namespace atlas::geometry {
+
+template <typename T>
+struct TriangleMeshGeometryOperator;
+
+} // namespace atlas::geometry
 
 namespace atlas::spatial {
+
+template <typename T>
+using BvhGeometryOperator = atlas::geometry::TriangleMeshGeometryOperator<T>;
 
 /**
  * @brief Abstract interface for triangle BVH builders.
@@ -16,7 +27,7 @@ namespace atlas::spatial {
  *   \f$C = C_t + \sum_i P_i C_i\f$, where \f$P_i\f$ is approximated by
  *   surface-area ratios.
  *
- * Regardless of the build strategy, the output must support the same trace
+ * Regardless of the build strategy, the output must support the same geometry
  * operator contract: ray traversal returns the closest triangle intersection.
  *
  * @tparam T Floating-point scalar type used in geometry and bounds.
@@ -41,16 +52,16 @@ public:
         = 0;
 
     /**
-     * @brief Create a lightweight traversal functor.
+     * @brief Create a lightweight traversal geometry operator.
      *
-     * @return Trace operator referencing the BVH storage.
+     * @return Geometry operator referencing the BVH storage.
      *
      * @details
      * The returned object is a compact view over the built hierarchy. It does
      * not own memory; callers must keep the source BVH alive.
      */
-    ATLAS_HOST virtual BvhTraceOperator<T>
-    make_trace_operator() const = 0;
+    ATLAS_HOST virtual BvhGeometryOperator<T>
+    make_geometry_operator() const = 0;
 };
 
 } // namespace atlas::spatial

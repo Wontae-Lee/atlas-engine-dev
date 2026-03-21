@@ -11,11 +11,10 @@ using namespace atlas;
 
 TEST(Unit, ConstructorStoresOperatorsAndLeavesKinematicsEmpty) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
-    const auto sop    = system::SyncOperator<double> {};
+    const auto geometry_op = sphere.make_geometry_operator();
+    const auto sop         = system::SyncOperator<double> {};
 
-    system::Unit<double> u(qop, top, sop);
+    system::Unit<double> u(geometry_op, sop);
 
     EXPECT_FALSE(u.velocity().has_value());
     EXPECT_FALSE(u.acceleration().has_value());
@@ -31,9 +30,8 @@ TEST(Unit, ConstructorStoresOperatorsAndLeavesKinematicsEmpty) {
 
 TEST(Unit, ConstructorWithKinematicsStoresAllValues) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
-    const auto sop    = system::SyncOperator<double> {};
+    const auto geometry_op = sphere.make_geometry_operator();
+    const auto sop         = system::SyncOperator<double> {};
 
     const Vector3<double> v(1.0, 2.0, 3.0);
     const Vector3<double> a(-1.0, 0.5, 4.0);
@@ -41,8 +39,7 @@ TEST(Unit, ConstructorWithKinematicsStoresAllValues) {
     const Vector3<double> alpha(0.0, 0.0, -0.25);
 
     system::Unit<double> u(
-        qop,
-        top,
+        geometry_op,
         sop,
         v,
         a,
@@ -61,21 +58,20 @@ TEST(Unit, ConstructorWithKinematicsStoresAllValues) {
     EXPECT_TRUE(u.dynamic());
 }
 
-TEST(Unit, SetQueryOperatorReplacesStoredQueryOperator) {
+TEST(Unit, SetGeometryOperatorReplacesStoredGeometryOperator) {
     const geometry::Sphere<double> sphere1(Vector3<double>(0.0, 0.0, 0.0), 1.0);
     const geometry::Sphere<double> sphere2(Vector3<double>(0.0, 0.0, 0.0), 2.0);
 
-    const auto qop1 = sphere1.make_query_operator();
-    const auto qop2 = sphere2.make_query_operator();
-    const auto top  = sphere1.make_trace_operator();
+    const auto geometry_op1 = sphere1.make_geometry_operator();
+    const auto geometry_op2 = sphere2.make_geometry_operator();
 
-    system::Unit<double> u(qop1, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op1, system::SyncOperator<double> {});
 
     const Vector3<double> p(3.0, 0.0, 0.0);
 
-    const auto cp_before = u.query_operator().closest_point(p);
-    u.set_query_operator(qop2);
-    const auto cp_after = u.query_operator().closest_point(p);
+    const auto cp_before = u.geometry_operator().closest_point(p);
+    u.set_geometry_operator(geometry_op2);
+    const auto cp_after = u.geometry_operator().closest_point(p);
 
     EXPECT_FALSE(test::vec_near(cp_before, cp_after, eps));
     EXPECT_TRUE(test::vec_near(cp_before, Vector3<double>(1.0, 0.0, 0.0), eps));
@@ -84,10 +80,9 @@ TEST(Unit, SetQueryOperatorReplacesStoredQueryOperator) {
 
 TEST(Unit, SetSyncOperatorReplacesStoredPose) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
 
     const Vector3<double> t(1.0, 2.0, 3.0);
     const math::Quaternion<double> q(Vector3<double>(0.0, 0.0, 1.0), M_PI / 2.0);
@@ -101,25 +96,24 @@ TEST(Unit, SetSyncOperatorReplacesStoredPose) {
     EXPECT_TRUE(test::vec_near(dir, Vector3<double>(0.0, 1.0, 0.0), eps));
 }
 
-TEST(Unit, SetOperatorsReplacesAllStoredOperators) {
+TEST(Unit, SetGeometryOperatorAndSyncOperatorReplaceStoredState) {
     const geometry::Sphere<double> sphere1(Vector3<double>(0.0, 0.0, 0.0), 1.0);
     const geometry::Sphere<double> sphere2(Vector3<double>(0.0, 0.0, 0.0), 2.0);
 
-    const auto qop1 = sphere1.make_query_operator();
-    const auto top1 = sphere1.make_trace_operator();
-    const auto qop2 = sphere2.make_query_operator();
-    const auto top2 = sphere2.make_trace_operator();
+    const auto geometry_op1 = sphere1.make_geometry_operator();
+    const auto geometry_op2 = sphere2.make_geometry_operator();
 
-    system::Unit<double> u(qop1, top1, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op1, system::SyncOperator<double> {});
 
     const Vector3<double> t(0.0, 1.0, 0.0);
     const math::Quaternion<double> q;
     const system::SyncOperator<double> sop2(t, q);
 
-    u.set_operators(qop2, top2, sop2);
+    u.set_geometry_operator(geometry_op2);
+    u.set_sync_operator(sop2);
 
     const Vector3<double> p(3.0, 0.0, 0.0);
-    const auto cp = u.query_operator().closest_point(p);
+    const auto cp = u.geometry_operator().closest_point(p);
 
     EXPECT_TRUE(test::vec_near(cp, Vector3<double>(2.0, 0.0, 0.0), eps));
     EXPECT_TRUE(test::vec_near(u.sync_operator().translation, t, eps));
@@ -129,8 +123,7 @@ TEST(Unit, DynamicIsFalseWhenNoKinematicStateExists) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {});
 
     EXPECT_FALSE(u.dynamic());
@@ -140,8 +133,7 @@ TEST(Unit, DynamicIsTrueWhenVelocityExists) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         Vector3<double>(1.0, 0.0, 0.0),
         std::nullopt,
@@ -155,8 +147,7 @@ TEST(Unit, ConstructorAddsZeroVelocityWhenOnlyAccelerationExists) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         std::nullopt,
         Vector3<double>(1.0, 0.0, 0.0),
@@ -174,8 +165,7 @@ TEST(Unit, DynamicIsTrueWhenAngularVelocityExists) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         std::nullopt,
         std::nullopt,
@@ -189,8 +179,7 @@ TEST(Unit, ConstructorAddsZeroAngularVelocityWhenOnlyAngularAccelerationExists) 
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         std::nullopt,
         std::nullopt,
@@ -208,8 +197,7 @@ TEST(Unit, UpdateDoesNothingWhenDtIsZero) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         Vector3<double>(1.0, 2.0, 3.0),
         Vector3<double>(4.0, 5.0, 6.0),
@@ -229,8 +217,7 @@ TEST(Unit, UpdateDoesNothingWhenDtIsNegative) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         Vector3<double>(1.0, 2.0, 3.0),
         Vector3<double>(4.0, 5.0, 6.0),
@@ -250,8 +237,7 @@ TEST(Unit, UpdateDoesNothingWhenUnitIsNotDynamic) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {});
 
     const auto before_translation = u.sync_operator().translation;
@@ -270,8 +256,7 @@ TEST(Unit, UpdateWithVelocityOnlyMovesByVelocityTimesDt) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         Vector3<double>(1.0, -2.0, 3.0),
         std::nullopt,
@@ -293,8 +278,7 @@ TEST(Unit, UpdateWithVelocityAndAccelerationUpdatesVelocityThenMoves) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         Vector3<double>(1.0, 0.0, 0.0),
         Vector3<double>(2.0, 0.0, 0.0),
@@ -312,8 +296,7 @@ TEST(Unit, UpdateWithAngularVelocityOnlyRotates) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         std::nullopt,
         std::nullopt,
@@ -330,8 +313,7 @@ TEST(Unit, UpdateWithAngularVelocityAndAngularAccelerationUpdatesAngularVelocity
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         std::nullopt,
         std::nullopt,
@@ -354,8 +336,7 @@ TEST(Unit, UpdateWithAngularVelocityVectorUsesItsDirectionAsRotationAxis) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         std::nullopt,
         std::nullopt,
@@ -377,8 +358,7 @@ TEST(Unit, UpdateWithLinearAndAngularStateAppliesBoth) {
     const auto sphere = test::make_sphere();
 
     system::Unit<double> u(
-        sphere.make_query_operator(),
-        sphere.make_trace_operator(),
+        sphere.make_geometry_operator(),
         system::SyncOperator<double> {},
         Vector3<double>(1.0, 0.0, 0.0),
         std::nullopt,
@@ -424,7 +404,7 @@ TEST(Unit, BuilderRetainsGeometryOwnerAfterSourcePointerIsReleased) {
 
     geometry.reset();
 
-    const auto cp = u.query_operator().closest_point(Vector3<double>(3.0, 0.0, 0.0));
+    const auto cp = u.geometry_operator().closest_point(Vector3<double>(3.0, 0.0, 0.0));
     EXPECT_TRUE(test::vec_near(cp, Vector3<double>(2.0, 0.0, 0.0), eps));
 }
 

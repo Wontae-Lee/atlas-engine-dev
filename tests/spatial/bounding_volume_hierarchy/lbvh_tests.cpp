@@ -37,7 +37,7 @@ TEST(LBVH, BuildSingleTriangleCreatesSingleLeafRoot) {
     EXPECT_EQ(bvh.indices()[0], 0);
 }
 
-TEST(LBVH, TraceOperatorFromBVHHitsTriangleMesh) {
+TEST(LBVH, GeometryOperatorFromBVHHitsTriangleMesh) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     atlas::spatial::LinearBoundingVolumeHierachy<double> bvh;
@@ -59,7 +59,7 @@ TEST(LBVH, TraceOperatorFromBVHHitsTriangleMesh) {
 
     bvh.build(tris);
 
-    const auto op = bvh.make_trace_operator();
+    const auto op = bvh.make_geometry_operator();
 
     const atlas::Ray<double> r(
         atlas::math::Vector<double, 3>(0.25, 0.25, 1.0),

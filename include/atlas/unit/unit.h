@@ -2,7 +2,7 @@
 
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
-#include <atlas/spatial/trace_operator.h>
+#include <atlas/geometry/geometry_operator.h>
 
 #include <optional>
 #include <type_traits>
@@ -16,8 +16,7 @@ namespace atlas::system {
  * `Unit<T>` represents a single simulation/renderable object in world space.
  * It combines three orthogonal concerns:
  *
- * - a non-owning @ref QueryOperator for distance / closest-point style queries,
- * - a non-owning @ref TraceOperator for ray-style intersection queries,
+ * - a non-owning @ref GeometryOperator for distance and ray-style queries,
  * - an owning/value @ref SyncOperator describing translation + orientation.
  *
  * In addition, the type may carry simple first- and second-order linear/angular
@@ -27,7 +26,7 @@ namespace atlas::system {
  * - angular velocity / angular acceleration
  *
  * ## Lifetime model
- * The query/trace operators used by Atlas geometry types are typically **non-owning**
+ * The geometry operators used by Atlas geometry types are typically **non-owning**
  * wrappers around raw pointers into geometry storage. For builder-created units,
  * this class therefore retains the original @ref GeometryHostPtr internally so that
  * those operators remain valid for the lifetime of the `Unit`.
@@ -68,20 +67,18 @@ public:
     ~Unit() = default;
 
     /**
-     * @brief Construct a unit from prebuilt operators and a spatial transform.
+     * @brief Construct a unit from a prebuilt geometry operator and a spatial transform.
      *
      * @details
      * This constructor stores the supplied operators as-is. No geometry owner is retained.
      * Use this only when the referenced geometry storage is guaranteed to outlive the unit.
      *
-     * @param query_operator Query operator bound to geometry data.
-     * @param trace_operator Trace operator bound to geometry data.
+     * @param geometry_operator Geometry operator bound to geometry data.
      * @param sync_operator Initial rigid transform in world space.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Unit(
-        QueryOperator<T> query_operator,
-        TraceOperator<T> trace_operator,
+        atlas::GeometryOperator<T> geometry_operator,
         SyncOperator<T> sync_operator) noexcept;
 
     /**
@@ -92,8 +89,7 @@ public:
      * For example, providing acceleration without velocity creates a zero velocity state
      * so that @ref update(T) can integrate the object forward consistently.
      *
-     * @param query_operator Query operator bound to geometry data.
-     * @param trace_operator Trace operator bound to geometry data.
+     * @param geometry_operator Geometry operator bound to geometry data.
      * @param sync_operator Initial rigid transform in world space.
      * @param velocity Optional linear velocity.
      * @param acceleration Optional linear acceleration.
@@ -102,8 +98,7 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Unit(
-        QueryOperator<T> query_operator,
-        TraceOperator<T> trace_operator,
+        atlas::GeometryOperator<T> geometry_operator,
         SyncOperator<T> sync_operator,
         std::optional<Vector<T, 3>> velocity,
         std::optional<Vector<T, 3>> acceleration,
@@ -119,28 +114,16 @@ public:
     builder() noexcept;
 
     /**
-     * @brief Replace the stored query operator.
+     * @brief Replace the stored geometry operator.
      *
      * @details
      * This does not update the internally retained geometry owner. If the new operator
      * references different geometry storage, the caller must manage that lifetime.
      *
-     * @param query_operator New query operator.
+     * @param geometry_operator New geometry operator.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_query_operator(QueryOperator<T> query_operator) noexcept;
-
-    /**
-     * @brief Replace the stored trace operator.
-     *
-     * @details
-     * This does not update the internally retained geometry owner. The caller remains
-     * responsible for the lifetime behind the new operator.
-     *
-     * @param trace_operator New trace operator.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_trace_operator(TraceOperator<T> trace_operator) noexcept;
+    set_geometry_operator(atlas::GeometryOperator<T> geometry_operator) noexcept;
 
     /**
      * @brief Replace the stored rigid transform.
@@ -149,23 +132,6 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_sync_operator(SyncOperator<T> sync_operator) noexcept;
-
-    /**
-     * @brief Replace query, trace, and sync operators together.
-     *
-     * @details
-     * This is a convenience mutator equivalent to calling the three individual setters.
-     * It preserves the same lifetime caveat as @ref set_query_operator and
-     * @ref set_trace_operator.
-     *
-     * @param query_operator New query operator.
-     * @param trace_operator New trace operator.
-     * @param sync_operator New rigid transform state.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_operators(QueryOperator<T> query_operator,
-                  TraceOperator<T> trace_operator,
-                  SyncOperator<T> sync_operator) noexcept;
 
     /**
      * @brief Advance the unit's stored kinematics by a time step.
@@ -206,13 +172,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     rotate(const Vector<T, 3>& axis_world, T angle_rad) noexcept;
 
-    /// @brief Read-only access to the stored query operator.
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::QueryOperator<T>&
-    query_operator() const noexcept;
-
-    /// @brief Read-only access to the stored trace operator.
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::TraceOperator<T>&
-    trace_operator() const noexcept;
+    /// @brief Read-only access to the stored geometry operator.
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::GeometryOperator<T>&
+    geometry_operator() const noexcept;
 
     /// @brief Read-only access to the stored rigid transform.
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::SyncOperator<T>&
@@ -274,10 +236,8 @@ private:
     friend class Builder;
 
 private:
-    /// @brief Non-owning closest-point / signed-distance operator.
-    QueryOperator<T> _query_operator;
-    /// @brief Non-owning ray intersection operator.
-    TraceOperator<T> _trace_operator;
+    /// @brief Non-owning geometry operator.
+    atlas::GeometryOperator<T> _geometry_operator;
     /// @brief Owning value-type rigid transform state.
     SyncOperator<T> _sync_operator;
     /// @brief Geometry owner retained only for builder-created units to keep operators alive.
@@ -312,7 +272,7 @@ public:
     Builder() = default;
 
     /**
-     * @brief Bind geometry and cache the corresponding query/trace operators.
+     * @brief Bind geometry and cache the corresponding geometry operator.
      *
      * @param geometry Host-owned geometry object.
      * @return `*this` for fluent chaining.
@@ -382,10 +342,8 @@ private:
 private:
     /// @brief Geometry owner to be retained by the resulting unit.
     std::optional<GeometryHostPtr<T>> _geometry;
-    /// @brief Cached query operator derived from @ref _geometry.
-    std::optional<QueryOperator<T>> _query_operator;
-    /// @brief Cached trace operator derived from @ref _geometry.
-    std::optional<TraceOperator<T>> _trace_operator;
+    /// @brief Cached geometry operator derived from @ref _geometry.
+    std::optional<atlas::GeometryOperator<T>> _geometry_operator;
     /// @brief Sync operator copied from the provided sync object.
     std::optional<SyncOperator<T>> _sync_operator;
 

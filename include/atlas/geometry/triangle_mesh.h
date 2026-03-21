@@ -25,9 +25,9 @@
  * - preparation for upload to device-side structures (depending on how operators/pointers are handled).
  *
  * @warning
- * A @ref TriangleMeshQueryOperator (see `query_operator.h`) that stores raw pointers to contiguous
+ * A @ref TriangleMeshGeometryOperator (see `geometry_operator.h`) that stores raw pointers to contiguous
  * vertex/index arrays is a different representation than the `TriangleContainer4<T>` storage here.
- * Ensure that your `make_query_operator()` implementation matches the expected memory layout for the
+ * Ensure that your `make_geometry_operator()` implementation matches the expected memory layout for the
  * operator it returns.
  *
  * ## BVH behavior
@@ -57,15 +57,67 @@
 #include <atlas/container/container.h>
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/geometry/geometry.h>
-#include <atlas/geometry/query_operator.h>
 #include <atlas/math/math.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
+#include <atlas/spatial/bounding_volume_hierarchy/node.h>
+#include <atlas/spatial/ray.h>
 
 #include <string>
 #include <type_traits>
 
 namespace atlas ::geometry {
+
+template <typename T>
+struct TriangleMeshGeometryOperator {
+    const atlas::math::Vector<T, 3>* vertices = nullptr;
+    const int* indices = nullptr;
+    int triangle_count = 0;
+
+    const atlas::spatial::BVHNode<T>* bvh_nodes = nullptr;
+    const int* bvh_indices = nullptr;
+    const TriangleContainer4<T>* bvh_tris = nullptr;
+    int bvh_root = -1;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    solid_angle(const atlas::math::Vector<T, 3>& p,
+                const atlas::math::Vector<T, 3>& a,
+                const atlas::math::Vector<T, 3>& b,
+                const atlas::math::Vector<T, 3>& c) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    winding_number(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    centroid() const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    bound() const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_valid() const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
+    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
+    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+};
 
 /**
  * @brief Triangle mesh geometry composed of many triangles with optional BVH acceleration.
@@ -188,21 +240,19 @@ public:
      * @brief Create a trace operator bound to this mesh.
      *
      * @details
-     * Returns a @ref TraceOperator for ray/primitive intersection queries.
+     * Returns a @ref GeometryOperator for ray/primitive intersection queries.
      * For performance, this may require a BVH; implementations often call @ref ensure_bvh().
      *
      * @return Trace operator referencing this mesh (implementation-defined contents).
      *
      * @note Host-only: operator construction typically binds pointers to host memory.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE TraceOperator<T>
-    make_trace_operator() const override;
 
     /**
      * @brief Create a query operator bound to this mesh.
      *
      * @details
-     * Returns a @ref QueryOperator for closest point/normal and distance queries.
+     * Returns a @ref GeometryOperator for closest point/normal and distance queries.
      * Implementations may return:
      * - a mesh query operator with pointers to contiguous geometry data, or
      * - a fallback that performs O(N) scanning using `triangles` depending on your operator design.
@@ -211,8 +261,8 @@ public:
      *
      * @note Host-only: operator construction typically binds pointers to host memory.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE QueryOperator<T>
-    make_query_operator() const override;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE GeometryOperator<T>
+    make_geometry_operator() const override;
 
     /**
      * @brief Load mesh triangles from a Wavefront OBJ file.
@@ -373,7 +423,7 @@ private:
     BVHHostPtr<T> _bvh = nullptr;
 
     /**
-     * @brief Cached contiguous vertex array for TriangleMeshQueryOperator construction.
+     * @brief Cached contiguous vertex array for TriangleMeshGeometryOperator construction.
      *
      * @details
      * Each triangle contributes its three vertices in sequence.
@@ -381,7 +431,7 @@ private:
     mutable DeviceBuffer<Vector3<T>> _query_vertices;
 
     /**
-     * @brief Cached contiguous triangle index array for TriangleMeshQueryOperator construction.
+     * @brief Cached contiguous triangle index array for TriangleMeshGeometryOperator construction.
      */
     mutable DeviceBuffer<int> _query_indices;
 
@@ -429,7 +479,7 @@ private:
     ensure_query_cache() const;
 
     /**
-     * @brief Rebuild the contiguous vertex/index cache used by TriangleMeshQueryOperator.
+     * @brief Rebuild the contiguous vertex/index cache used by TriangleMeshGeometryOperator.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     rebuild_query_cache() const;

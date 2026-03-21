@@ -1,6 +1,6 @@
 #pragma once
 
-#include <atlas/geometry/query_operator.h>
+#include <atlas/geometry/geometry_operator.h>
 #include <atlas/math/math.h>
 
 namespace atlas::system {
@@ -26,9 +26,9 @@ enum class DespawnType : int {
 template <typename T>
 struct SurfaceDespawnOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    despawn(const atlas::geometry::QueryOperator<T>& query,
+    despawn(const atlas::geometry::GeometryOperator<T>& query,
             const Vector3<T>& particle,
-            T tolerance = T(0)) noexcept;
+            T tolerance = T(0)) const noexcept;
 };
 
 /**
@@ -42,9 +42,9 @@ struct SurfaceDespawnOperator final {
 template <typename T>
 struct VolumeDespawnOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    despawn(const atlas::geometry::QueryOperator<T>& query,
+    despawn(const atlas::geometry::GeometryOperator<T>& query,
             const Vector3<T>& particle,
-            T tolerance = T(0)) noexcept;
+            T tolerance = T(0)) const noexcept;
 };
 
 /**
@@ -81,7 +81,7 @@ struct DespawnOperator final {
     DespawnOperator(const VolumeDespawnOperator<T>& op);
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    despawn(const atlas::geometry::QueryOperator<T>& query,
+    despawn(const atlas::geometry::GeometryOperator<T>& query,
             const Vector3<T>& particle,
             T tolerance = T(0)) const noexcept;
 

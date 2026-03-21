@@ -51,13 +51,51 @@
  */
 
 #include <atlas/geometry/geometry.h>
-#include <atlas/geometry/query_operator.h>
-#include <atlas/spatial/trace_operator.h>
+#include <atlas/spatial/ray.h>
 
 #include <optional>
 #include <type_traits>
 
 namespace atlas::geometry {
+
+template <typename T>
+struct TriangleGeometryOperator {
+    const atlas::math::Vector<T, 3>* a = nullptr;
+    const atlas::math::Vector<T, 3>* b = nullptr;
+    const atlas::math::Vector<T, 3>* c = nullptr;
+    const atlas::math::Vector<T, 3>* n = nullptr;
+    const atlas::math::Vector<T, 3>* normal = nullptr;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    centroid() const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    bound() const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_valid() const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
+    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
+    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+};
 
 /**
  * @brief Single triangle geometry primitive.
@@ -166,28 +204,26 @@ public:
      * @brief Create a trace operator bound to this triangle.
      *
      * @details
-     * Returns a @ref TraceOperator usable by tracing systems to intersect rays with the triangle.
+     * Returns a @ref GeometryOperator usable by tracing systems to intersect rays with the triangle.
      * Implementations commonly store non-owning pointers to vertices and/or precomputed normal.
      *
      * @return Trace operator referencing this triangle.
      *
      * @note Host-only: operator construction typically binds pointers to host memory.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE TraceOperator<T>
-    make_trace_operator() const override;
 
     /**
      * @brief Create a query operator bound to this triangle.
      *
      * @details
-     * Returns a @ref QueryOperator usable by query systems for closest point/normal and distance.
+     * Returns a @ref GeometryOperator usable by query systems for closest point/normal and distance.
      *
      * @return Query operator referencing this triangle.
      *
      * @note Host-only: operator construction typically binds pointers to host memory.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE QueryOperator<T>
-    make_query_operator() const override;
+    ATLAS_HOST ATLAS_FORCE_INLINE GeometryOperator<T>
+    make_geometry_operator() const override;
 
     /**
      * @brief Compute the closest point on the triangle to a query point.

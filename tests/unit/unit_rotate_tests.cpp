@@ -9,12 +9,11 @@ using namespace atlas;
 
 TEST(Unit, RotateWithZeroAxisIsNoOp) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(1.0, 2.0, 3.0);
     const math::Quaternion<double> q0;
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const auto before = u.sync_operator();
 
@@ -31,12 +30,11 @@ TEST(Unit, RotateWithZeroAxisIsNoOp) {
 
 TEST(Unit, RotateWithZeroAngleKeepsOrientationUnchanged) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(-1.0, 4.0, 2.0);
     const math::Quaternion<double> q0;
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const auto before = u.sync_operator();
 
@@ -53,10 +51,9 @@ TEST(Unit, RotateWithZeroAngleKeepsOrientationUnchanged) {
 
 TEST(Unit, RotateFromIdentityPoseUpdatesDirectionAsExpected) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
 
     const Vector3<double> local_dir(1.0, 0.0, 0.0);
 
@@ -69,12 +66,11 @@ TEST(Unit, RotateFromIdentityPoseUpdatesDirectionAsExpected) {
 
 TEST(Unit, RotateDoesNotModifyTranslation) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(3.0, -2.0, 7.0);
     const math::Quaternion<double> q0;
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     u.rotate(Vector3<double>(0.0, 0.0, 1.0), M_PI / 2.0);
 
@@ -83,11 +79,10 @@ TEST(Unit, RotateDoesNotModifyTranslation) {
 
 TEST(Unit, RotateNormalizesAxisBeforeApplyingRotation) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u1(qop, top, system::SyncOperator<double> {});
-    system::Unit<double> u2(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u1(geometry_op, system::SyncOperator<double> {});
+    system::Unit<double> u2(geometry_op, system::SyncOperator<double> {});
 
     const Vector3<double> local_dir(1.0, 0.0, 0.0);
 
@@ -103,12 +98,11 @@ TEST(Unit, RotateNormalizesAxisBeforeApplyingRotation) {
 
 TEST(Unit, RotateChangesWorldPointButPreservesDistanceFromTranslationOrigin) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(2.0, -1.0, 0.5);
     const math::Quaternion<double> q0;
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const Vector3<double> local_point(1.0, 0.0, 0.0);
 
@@ -126,12 +120,11 @@ TEST(Unit, RotateChangesWorldPointButPreservesDistanceFromTranslationOrigin) {
 
 TEST(Unit, RotateAndInverseSyncRemainConsistentForPoints) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(2.0, -1.0, 0.5);
     const math::Quaternion<double> q0;
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const Vector3<double> local_point(2.0, -3.0, 4.0);
 
@@ -145,10 +138,9 @@ TEST(Unit, RotateAndInverseSyncRemainConsistentForPoints) {
 
 TEST(Unit, RotateAndInverseSyncRemainConsistentForDirections) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
 
     const Vector3<double> local_dir(1.0, 2.0, -3.0);
 
@@ -162,10 +154,9 @@ TEST(Unit, RotateAndInverseSyncRemainConsistentForDirections) {
 
 TEST(Unit, ConsecutiveRotationsAccumulateInOrder) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
 
     const Vector3<double> local_dir(1.0, 0.0, 0.0);
 
@@ -180,10 +171,9 @@ TEST(Unit, ConsecutiveRotationsAccumulateInOrder) {
 
 TEST(Unit, RotateByAngleAndThenNegativeAngleRestoresOriginalOrientationEffect) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
 
     const Vector3<double> local_dir(0.25, 1.5, -2.0);
     const auto before = u.sync_operator().sync_dir_to_world(local_dir);
@@ -198,10 +188,9 @@ TEST(Unit, RotateByAngleAndThenNegativeAngleRestoresOriginalOrientationEffect) {
 
 TEST(Unit, RotateAffectsRayOriginAndDirectionThroughSyncOperator) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
 
     const Ray<double> local_ray(
         Vector3<double>(1.0, 0.0, 0.0),
@@ -217,10 +206,9 @@ TEST(Unit, RotateAffectsRayOriginAndDirectionThroughSyncOperator) {
 
 TEST(Unit, RotateKeepsDirectionLengthInvariant) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
 
     const Vector3<double> local_dir(1.0, -2.0, 3.0);
     const double len_before = local_dir.length();
@@ -235,12 +223,11 @@ TEST(Unit, RotateKeepsDirectionLengthInvariant) {
 
 TEST(Unit, RotateKeepsPointOffsetLengthInvariantWhenTranslationIsFixed) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(4.0, -1.0, 2.0);
     const math::Quaternion<double> q0;
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const Vector3<double> local_point(1.0, 2.0, -2.0);
 

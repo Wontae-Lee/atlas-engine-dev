@@ -14,20 +14,19 @@
  * - bounding volume queries (AABB),
  * - centroid computation,
  * - validity checking,
- * - construction of lightweight *operator objects* for tracing and querying.
+ * - construction of lightweight geometry operator objects.
  *
  * ## Design goals
  * - **Polymorphic on the host**: Geometry objects are typically managed via
  *   `host_shared_ptr<Geometry<T>>`.
  * - **GPU-friendly execution model**: expensive virtual dispatch is avoided on device
- *   code by converting geometry into plain POD-style operators
- *   (see @ref QueryOperator and @ref TraceOperator).
+ *   code by converting geometry into plain POD-style geometry operators.
  * - **Clear separation of responsibilities**:
  *   - Geometry objects own parameters and validate consistency.
  *   - Operators perform raw math and are suitable for kernels.
  *
  * ## Host vs Device semantics
- * - Operator construction (`make_query_operator`, `make_trace_operator`) is **host-only**.
+ * - Operator construction (`make_geometry_operator`) is **host-only**.
  * - Query evaluation functions are marked `ATLAS_ALL_DEVICE` and may be called from
  *   host or device code.
  *
@@ -37,7 +36,7 @@
  *     .with_bounds({0,0,0}, {1,1,1})
  *     .make_host_shared();
  *
- * auto qop = geom->make_query_operator(); // host
+ * auto qop = geom->make_geometry_operator(); // host
  *
  * Vector3f p = qop.closest_point(x);      // host or device
  * @endcode
@@ -48,12 +47,15 @@
  */
 
 #include <atlas/geometry/geometry_type.h>
-#include <atlas/geometry/query_operator.h>
+#include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
-#include <atlas/spatial/trace_operator.h>
+#include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <type_traits>
 
 namespace atlas::geometry {
+
+template <typename T>
+struct GeometryOperator;
 
 /**
  * @brief Abstract base class for all geometry types.
@@ -64,8 +66,7 @@ namespace atlas::geometry {
  *
  * ### Key responsibilities
  * Each derived geometry must provide:
- * - Construction of a @ref TraceOperator for ray–geometry intersection.
- * - Construction of a @ref QueryOperator for closest-point and distance queries.
+ * - Construction of a @ref GeometryOperator for geometric queries and ray intersection.
  * - Direct evaluation routines for closest point, normal, signed distance, centroid,
  *   and axis-aligned bounding box.
  * - A validity predicate.
@@ -104,38 +105,19 @@ public:
      * ------------------------------------------------------------------ */
 
     /**
-     * @brief Construct a trace operator for this geometry.
+     * @brief Construct a geometry operator for this geometry.
      *
      * @details
-     * The returned @ref TraceOperator is a lightweight, non-owning object suitable
-     * for ray tracing and intersection tests.
+     * The returned @ref GeometryOperator is used for closest-point queries,
+     * signed distance evaluation, and ray intersection.
      *
-     * Implementations typically:
-     * - store pointers to geometry parameters,
-     * - or copy small POD parameters directly.
-     *
-     * @return A trace operator bound to this geometry.
+     * @return A geometry operator bound to this geometry.
      *
      * @note
      * Host-only: this function may bind host memory addresses.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE virtual atlas::spatial::TraceOperator<T>
-    make_trace_operator() const = 0;
-
-    /**
-     * @brief Construct a query operator for this geometry.
-     *
-     * @details
-     * The returned @ref QueryOperator is used for closest-point queries,
-     * signed distance evaluation, and related operations.
-     *
-     * @return A query operator bound to this geometry.
-     *
-     * @note
-     * Host-only: this function may bind host memory addresses.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE virtual atlas::geometry::QueryOperator<T>
-    make_query_operator() const = 0;
+    ATLAS_HOST ATLAS_FORCE_INLINE virtual atlas::geometry::GeometryOperator<T>
+    make_geometry_operator() const = 0;
 
     /* ------------------------------------------------------------------
      * Geometric queries (host + device)
@@ -192,7 +174,7 @@ public:
      *
      * @note
      * Host-only in the current design because implementations forward through
-     * @ref make_query_operator(), which is also host-only.
+     * @ref make_geometry_operator(), which is also host-only.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
     is_inside(const atlas::math::Vector<T, 3>& p, T tolerance ) const noexcept
@@ -207,7 +189,7 @@ public:
      *
      * @note
      * Host-only in the current design because implementations forward through
-     * @ref make_query_operator(), which is also host-only.
+     * @ref make_geometry_operator(), which is also host-only.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
     is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance ) const noexcept
@@ -277,6 +259,9 @@ public:
 namespace atlas {
 
 template <typename T>
+using GeometryOperator = geometry::GeometryOperator<T>;
+
+template <typename T>
 using Geometry = geometry::Geometry<T>;
 
 template <typename T>
@@ -286,3 +271,7 @@ template <typename T>
 using GeometryDevicePtr = atlas::device_shared_ptr<geometry::Geometry<T>>;
 
 } // namespace atlas
+
+namespace atlas::spatial {
+
+} // namespace atlas::spatial

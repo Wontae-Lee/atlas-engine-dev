@@ -64,7 +64,7 @@ TEST(Triangle, ConstructorComputesCachedNormal) {
     EXPECT_NEAR(t.normal.length(), 1.0, 1e-12);
 }
 
-TEST(Triangle, MakeTraceOperatorProducesValidTraceOperator) {
+TEST(Triangle, MakeGeometryOperatorProducesValidGeometryOperator) {
 
     // Trace operator is used for ray intersection / tracing.
     // This test mainly checks the call is safe and that the geometry type is Triangle.
@@ -73,7 +73,7 @@ TEST(Triangle, MakeTraceOperatorProducesValidTraceOperator) {
         Vector3<double>(1.0, 0.0, 0.0),
         Vector3<double>(0.0, 1.0, 0.0));
 
-    const auto op = t.make_trace_operator();
+    const auto op = t.make_geometry_operator();
 
     // type() must return Triangle for runtime dispatch.
     EXPECT_EQ(t.type(), geometry::GeometryType::Triangle);
@@ -82,24 +82,9 @@ TEST(Triangle, MakeTraceOperatorProducesValidTraceOperator) {
     (void)op;
 }
 
-TEST(Triangle, MakeQueryOperatorProducesValidQueryOperator) {
+TEST(Triangle, ClosestPointMatchesTriangleGeometryOperator) {
 
-    // Query operator is used for closest point / distance / bounds queries.
-    // Similar to trace operator test: ensure type is Triangle and the call is safe.
-    const geometry::Triangle<double> t(
-        Vector3<double>(0.0, 0.0, 0.0),
-        Vector3<double>(1.0, 0.0, 0.0),
-        Vector3<double>(0.0, 1.0, 0.0));
-
-    const auto op = t.make_query_operator();
-
-    EXPECT_EQ(t.type(), geometry::GeometryType::Triangle);
-    (void)op;
-}
-
-TEST(Triangle, ClosestPointMatchesTriangleQueryOperator) {
-
-    // Ensure Triangle::closest_point() delegates to TriangleQueryOperator consistently.
+    // Ensure Triangle::closest_point() delegates to TriangleGeometryOperator consistently.
     const geometry::Triangle<double> t(
         Vector3<double>(0.0, 0.0, 0.0),
         Vector3<double>(1.0, 0.0, 0.0),
@@ -110,7 +95,7 @@ TEST(Triangle, ClosestPointMatchesTriangleQueryOperator) {
 
     // Build a query operator that points at the triangle's internal storage.
     // raw_pointer_cast is used to provide device/host-safe pointer representations.
-    geometry::TriangleQueryOperator<double> qop;
+    geometry::TriangleGeometryOperator<double> qop;
     qop.a = atlas::raw_pointer_cast(&t.a);
     qop.b = atlas::raw_pointer_cast(&t.b);
     qop.c = atlas::raw_pointer_cast(&t.c);
@@ -123,7 +108,7 @@ TEST(Triangle, ClosestPointMatchesTriangleQueryOperator) {
     EXPECT_TRUE(test::vec_near(got, expected, eps));
 }
 
-TEST(Triangle, ClosestNormalMatchesTriangleQueryOperator) {
+TEST(Triangle, ClosestNormalMatchesTriangleGeometryOperator) {
 
     // Ensure closest_normal() matches the query operator implementation.
     const geometry::Triangle<double> t(
@@ -133,7 +118,7 @@ TEST(Triangle, ClosestNormalMatchesTriangleQueryOperator) {
 
     const Vector3<double> p(0.25, 0.25, 2.0);
 
-    geometry::TriangleQueryOperator<double> qop;
+    geometry::TriangleGeometryOperator<double> qop;
     qop.a = atlas::raw_pointer_cast(&t.a);
     qop.b = atlas::raw_pointer_cast(&t.b);
     qop.c = atlas::raw_pointer_cast(&t.c);
@@ -145,7 +130,7 @@ TEST(Triangle, ClosestNormalMatchesTriangleQueryOperator) {
     EXPECT_TRUE(test::vec_near(got, expected, eps));
 }
 
-TEST(Triangle, SignedDistanceMatchesTriangleQueryOperator) {
+TEST(Triangle, SignedDistanceMatchesTriangleGeometryOperator) {
 
     // Ensure signed_distance() matches the query operator implementation.
     const geometry::Triangle<double> t(
@@ -155,7 +140,7 @@ TEST(Triangle, SignedDistanceMatchesTriangleQueryOperator) {
 
     const Vector3<double> p(0.25, 0.25, 2.0);
 
-    geometry::TriangleQueryOperator<double> qop;
+    geometry::TriangleGeometryOperator<double> qop;
     qop.a = atlas::raw_pointer_cast(&t.a);
     qop.b = atlas::raw_pointer_cast(&t.b);
     qop.c = atlas::raw_pointer_cast(&t.c);
@@ -167,13 +152,13 @@ TEST(Triangle, SignedDistanceMatchesTriangleQueryOperator) {
     EXPECT_NEAR(got, expected, eps);
 }
 
-TEST(Triangle, IsInsideMatchesQueryOperatorClassification) {
+TEST(Triangle, IsInsideMatchesGeometryOperatorClassification) {
     const geometry::Triangle<double> t(
         Vector3<double>(0.0, 0.0, 0.0),
         Vector3<double>(1.0, 0.0, 0.0),
         Vector3<double>(0.0, 1.0, 0.0));
 
-    const auto qop = t.make_query_operator();
+    const auto qop = t.make_geometry_operator();
 
     EXPECT_EQ(t.is_inside(Vector3<double>(0.25, 0.25, -0.1), 0.0),
               qop.is_inside(Vector3<double>(0.25, 0.25, -0.1), 0.0));
@@ -181,13 +166,13 @@ TEST(Triangle, IsInsideMatchesQueryOperatorClassification) {
               qop.is_inside(Vector3<double>(0.25, 0.25, 0.1), 0.15));
 }
 
-TEST(Triangle, IsOnSurfaceMatchesQueryOperatorClassification) {
+TEST(Triangle, IsOnSurfaceMatchesGeometryOperatorClassification) {
     const geometry::Triangle<double> t(
         Vector3<double>(0.0, 0.0, 0.0),
         Vector3<double>(1.0, 0.0, 0.0),
         Vector3<double>(0.0, 1.0, 0.0));
 
-    const auto qop = t.make_query_operator();
+    const auto qop = t.make_geometry_operator();
 
     EXPECT_EQ(t.is_on_surface(Vector3<double>(0.25, 0.25, 0.0), 0.0),
               qop.is_on_surface(Vector3<double>(0.25, 0.25, 0.0), 0.0));
@@ -195,7 +180,7 @@ TEST(Triangle, IsOnSurfaceMatchesQueryOperatorClassification) {
               qop.is_on_surface(Vector3<double>(0.25, 0.25, 0.1), 0.15));
 }
 
-TEST(Triangle, CentroidMatchesTriangleQueryOperator) {
+TEST(Triangle, CentroidMatchesTriangleGeometryOperator) {
 
     // Use a non-unit triangle to ensure centroid computation isn't accidentally
     // hardcoded to specific positions.
@@ -204,7 +189,7 @@ TEST(Triangle, CentroidMatchesTriangleQueryOperator) {
         Vector3<double>(3.0, 0.0, 0.0),
         Vector3<double>(0.0, 6.0, 0.0));
 
-    geometry::TriangleQueryOperator<double> qop;
+    geometry::TriangleGeometryOperator<double> qop;
     qop.a = atlas::raw_pointer_cast(&t.a);
     qop.b = atlas::raw_pointer_cast(&t.b);
     qop.c = atlas::raw_pointer_cast(&t.c);
@@ -217,7 +202,7 @@ TEST(Triangle, CentroidMatchesTriangleQueryOperator) {
     EXPECT_TRUE(test::vec_near(got, expected, eps));
 }
 
-TEST(Triangle, BoundMatchesTriangleQueryOperator) {
+TEST(Triangle, BoundMatchesTriangleGeometryOperator) {
 
     // Use coordinates with mixed signs to ensure min/max logic on each axis is exercised.
     const geometry::Triangle<double> t(
@@ -225,7 +210,7 @@ TEST(Triangle, BoundMatchesTriangleQueryOperator) {
         Vector3<double>(5.0, -4.0, 2.0),
         Vector3<double>(1.0, 2.0, -6.0));
 
-    geometry::TriangleQueryOperator<double> qop;
+    geometry::TriangleGeometryOperator<double> qop;
     qop.a = atlas::raw_pointer_cast(&t.a);
     qop.b = atlas::raw_pointer_cast(&t.b);
     qop.c = atlas::raw_pointer_cast(&t.c);
@@ -239,7 +224,7 @@ TEST(Triangle, BoundMatchesTriangleQueryOperator) {
     EXPECT_TRUE(test::vec_near(got.upper_corner, expected.upper_corner, eps));
 }
 
-TEST(Triangle, IsValidMatchesTriangleQueryOperator) {
+TEST(Triangle, IsValidMatchesTriangleGeometryOperator) {
 
     // Validity checks should be consistent between Triangle wrapper and query operator.
     const geometry::Triangle<double> t(
@@ -247,7 +232,7 @@ TEST(Triangle, IsValidMatchesTriangleQueryOperator) {
         Vector3<double>(1.0, 0.0, 0.0),
         Vector3<double>(0.0, 1.0, 0.0));
 
-    geometry::TriangleQueryOperator<double> qop;
+    geometry::TriangleGeometryOperator<double> qop;
     qop.a = atlas::raw_pointer_cast(&t.a);
     qop.b = atlas::raw_pointer_cast(&t.b);
     qop.c = atlas::raw_pointer_cast(&t.c);

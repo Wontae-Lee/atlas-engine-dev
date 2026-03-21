@@ -5,19 +5,19 @@
 
 using namespace atlas;
 
-TEST(CylinderQueryOperator, SignedDistanceReturnsInfWhenPointersNull) {
-    constexpr geometry::CylinderQueryOperator<double> op;
+TEST(CylinderGeometryOperator, SignedDistanceReturnsInfWhenPointersNull) {
+    constexpr geometry::CylinderGeometryOperator<double> op;
 
     const Vector3<double> p(0.0, 0.0, 0.0);
     EXPECT_TRUE(std::isinf(op.signed_distance(p)));
 }
 
-TEST(CylinderQueryOperator, SignedDistanceIsNegativeInside) {
+TEST(CylinderGeometryOperator, SignedDistanceIsNegativeInside) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -27,12 +27,12 @@ TEST(CylinderQueryOperator, SignedDistanceIsNegativeInside) {
     EXPECT_NEAR(op.signed_distance(p), -2.0, eps);
 }
 
-TEST(CylinderQueryOperator, SignedDistanceIsPositiveOutsideRadially) {
+TEST(CylinderGeometryOperator, SignedDistanceIsPositiveOutsideRadially) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -42,12 +42,12 @@ TEST(CylinderQueryOperator, SignedDistanceIsPositiveOutsideRadially) {
     EXPECT_NEAR(op.signed_distance(p), 3.0, eps);
 }
 
-TEST(CylinderQueryOperator, SignedDistanceIsPositiveOutsideAboveCap) {
+TEST(CylinderGeometryOperator, SignedDistanceIsPositiveOutsideAboveCap) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -57,12 +57,12 @@ TEST(CylinderQueryOperator, SignedDistanceIsPositiveOutsideAboveCap) {
     EXPECT_NEAR(op.signed_distance(p), 3.0, eps);
 }
 
-TEST(CylinderQueryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
+TEST(CylinderGeometryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 1.0;
     constexpr double h = 2.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -72,12 +72,12 @@ TEST(CylinderQueryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
     EXPECT_TRUE(op.is_inside(Vector3<double>(1.2, 0.0, 0.0), 0.25));
 }
 
-TEST(CylinderQueryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
+TEST(CylinderGeometryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 1.0;
     constexpr double h = 2.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -87,19 +87,19 @@ TEST(CylinderQueryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
     EXPECT_TRUE(op.is_on_surface(Vector3<double>(0.0, 0.0, 1.1), 0.15));
 }
 
-TEST(CylinderQueryOperator, ClosestPointReturnsInputWhenPointersNull) {
-    constexpr geometry::CylinderQueryOperator<double> op;
+TEST(CylinderGeometryOperator, ClosestPointReturnsInputWhenPointersNull) {
+    constexpr geometry::CylinderGeometryOperator<double> op;
 
     const Vector3<double> p(1.25, -2.5, 3.75);
     EXPECT_TRUE(test::vec_near(op.closest_point(p), p, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestPointOutsideProjectsToSideAndClampsZ) {
+TEST(CylinderGeometryOperator, ClosestPointOutsideProjectsToSideAndClampsZ) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -110,12 +110,12 @@ TEST(CylinderQueryOperator, ClosestPointOutsideProjectsToSideAndClampsZ) {
     EXPECT_TRUE(test::vec_near(op.closest_point(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestPointInsidePushesToNearestSideWall) {
+TEST(CylinderGeometryOperator, ClosestPointInsidePushesToNearestSideWall) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
     constexpr double h = 10.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -126,12 +126,12 @@ TEST(CylinderQueryOperator, ClosestPointInsidePushesToNearestSideWall) {
     EXPECT_TRUE(test::vec_near(op.closest_point(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestPointInsideOnAxisChoosesPlusXSideWall) {
+TEST(CylinderGeometryOperator, ClosestPointInsideOnAxisChoosesPlusXSideWall) {
     const Vector3<double> c(1.0, 2.0, 3.0);
     constexpr double r = 2.0;
     constexpr double h = 10.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -142,12 +142,12 @@ TEST(CylinderQueryOperator, ClosestPointInsideOnAxisChoosesPlusXSideWall) {
     EXPECT_TRUE(test::vec_near(op.closest_point(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestPointInsidePushesToNearestBottomCap) {
+TEST(CylinderGeometryOperator, ClosestPointInsidePushesToNearestBottomCap) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 5.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -158,12 +158,12 @@ TEST(CylinderQueryOperator, ClosestPointInsidePushesToNearestBottomCap) {
     EXPECT_TRUE(test::vec_near(op.closest_point(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestPointInsidePushesToNearestTopCap) {
+TEST(CylinderGeometryOperator, ClosestPointInsidePushesToNearestTopCap) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 5.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -174,19 +174,19 @@ TEST(CylinderQueryOperator, ClosestPointInsidePushesToNearestTopCap) {
     EXPECT_TRUE(test::vec_near(op.closest_point(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestNormalReturnsZeroWhenPointersNull) {
-    constexpr geometry::CylinderQueryOperator<double> op;
+TEST(CylinderGeometryOperator, ClosestNormalReturnsZeroWhenPointersNull) {
+    constexpr geometry::CylinderGeometryOperator<double> op;
 
     const Vector3<double> p(1.0, 2.0, 3.0);
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), Vector3<double>(0.0, 0.0, 0.0), eps));
 }
 
-TEST(CylinderQueryOperator, ClosestNormalInsideSideWallIsRadialUnit) {
+TEST(CylinderGeometryOperator, ClosestNormalInsideSideWallIsRadialUnit) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
     constexpr double h = 10.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -197,12 +197,12 @@ TEST(CylinderQueryOperator, ClosestNormalInsideSideWallIsRadialUnit) {
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestNormalInsideOnAxisReturnsPlusX) {
+TEST(CylinderGeometryOperator, ClosestNormalInsideOnAxisReturnsPlusX) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
     constexpr double h = 10.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -213,12 +213,12 @@ TEST(CylinderQueryOperator, ClosestNormalInsideOnAxisReturnsPlusX) {
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestNormalInsideBottomCapIsMinusZ) {
+TEST(CylinderGeometryOperator, ClosestNormalInsideBottomCapIsMinusZ) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 5.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -229,12 +229,12 @@ TEST(CylinderQueryOperator, ClosestNormalInsideBottomCapIsMinusZ) {
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestNormalInsideTopCapIsPlusZ) {
+TEST(CylinderGeometryOperator, ClosestNormalInsideTopCapIsPlusZ) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 5.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -245,12 +245,12 @@ TEST(CylinderQueryOperator, ClosestNormalInsideTopCapIsPlusZ) {
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestNormalOutsideAboveCapIsPlusZ) {
+TEST(CylinderGeometryOperator, ClosestNormalOutsideAboveCapIsPlusZ) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -261,12 +261,12 @@ TEST(CylinderQueryOperator, ClosestNormalOutsideAboveCapIsPlusZ) {
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, ClosestNormalOutsideSideWallIsRadialFromCenterToClosestPoint) {
+TEST(CylinderGeometryOperator, ClosestNormalOutsideSideWallIsRadialFromCenterToClosestPoint) {
     const Vector3<double> c(1.0, 2.0, 3.0);
     constexpr double r = 2.0;
     constexpr double h = 6.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -277,17 +277,17 @@ TEST(CylinderQueryOperator, ClosestNormalOutsideSideWallIsRadialFromCenterToClos
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), expected, eps));
 }
 
-TEST(CylinderQueryOperator, CentroidReturnsZeroWhenCenterNull) {
-    constexpr geometry::CylinderQueryOperator<double> op;
+TEST(CylinderGeometryOperator, CentroidReturnsZeroWhenCenterNull) {
+    constexpr geometry::CylinderGeometryOperator<double> op;
     EXPECT_TRUE(test::vec_near(op.centroid(), Vector3<double>(0.0, 0.0, 0.0), eps));
 }
 
-TEST(CylinderQueryOperator, CentroidReturnsCenterWhenValid) {
+TEST(CylinderGeometryOperator, CentroidReturnsCenterWhenValid) {
     const Vector3<double> c(1.0, -2.0, 3.0);
     constexpr double r = 2.0;
     constexpr double h = 4.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -295,8 +295,8 @@ TEST(CylinderQueryOperator, CentroidReturnsCenterWhenValid) {
     EXPECT_TRUE(test::vec_near(op.centroid(), c, eps));
 }
 
-TEST(CylinderQueryOperator, BoundReturnsDefaultWhenPointersNull) {
-    constexpr geometry::CylinderQueryOperator<double> op;
+TEST(CylinderGeometryOperator, BoundReturnsDefaultWhenPointersNull) {
+    constexpr geometry::CylinderGeometryOperator<double> op;
 
     const auto aabb = op.bound();
 
@@ -304,12 +304,12 @@ TEST(CylinderQueryOperator, BoundReturnsDefaultWhenPointersNull) {
     EXPECT_TRUE(test::is_finite_vec(aabb.upper_corner));
 }
 
-TEST(CylinderQueryOperator, BoundMatchesAxisAlignedExtents) {
+TEST(CylinderGeometryOperator, BoundMatchesAxisAlignedExtents) {
     const Vector3<double> c(1.0, -2.0, 3.0);
     constexpr double r = 2.0;
     constexpr double h = 6.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -323,28 +323,28 @@ TEST(CylinderQueryOperator, BoundMatchesAxisAlignedExtents) {
     EXPECT_TRUE(test::vec_near(aabb.upper_corner, hi, eps));
 }
 
-TEST(CylinderQueryOperator, IsValidFalseWhenRadiusOrHeightNull) {
+TEST(CylinderGeometryOperator, IsValidFalseWhenRadiusOrHeightNull) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 1.0;
     constexpr double h = 2.0;
 
-    geometry::CylinderQueryOperator<double> op_rnull;
+    geometry::CylinderGeometryOperator<double> op_rnull;
     op_rnull.center = atlas::raw_pointer_cast(&c);
     op_rnull.height = atlas::raw_pointer_cast(&h);
     EXPECT_FALSE(op_rnull.is_valid());
 
-    geometry::CylinderQueryOperator<double> op_hnull;
+    geometry::CylinderGeometryOperator<double> op_hnull;
     op_hnull.center = atlas::raw_pointer_cast(&c);
     op_hnull.radius = atlas::raw_pointer_cast(&r);
     EXPECT_FALSE(op_hnull.is_valid());
 }
 
-TEST(CylinderQueryOperator, IsValidTrueForPositiveRadiusAndHeight) {
+TEST(CylinderGeometryOperator, IsValidTrueForPositiveRadiusAndHeight) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 1.0;
     constexpr double h = 2.0;
 
-    geometry::CylinderQueryOperator<double> op;
+    geometry::CylinderGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
     op.height = atlas::raw_pointer_cast(&h);
@@ -352,7 +352,7 @@ TEST(CylinderQueryOperator, IsValidTrueForPositiveRadiusAndHeight) {
     EXPECT_TRUE(op.is_valid());
 }
 
-TEST(CylinderQueryOperator, IsValidFalseForNonPositiveRadiusOrHeight) {
+TEST(CylinderGeometryOperator, IsValidFalseForNonPositiveRadiusOrHeight) {
     const Vector3<double> c(0.0, 0.0, 0.0);
 
     constexpr double r0 = 0.0;
@@ -363,25 +363,25 @@ TEST(CylinderQueryOperator, IsValidFalseForNonPositiveRadiusOrHeight) {
     constexpr double r_ok = 1.0;
     constexpr double h_ok = 2.0;
 
-    geometry::CylinderQueryOperator<double> op_r0;
+    geometry::CylinderGeometryOperator<double> op_r0;
     op_r0.center = atlas::raw_pointer_cast(&c);
     op_r0.radius = atlas::raw_pointer_cast(&r0);
     op_r0.height = atlas::raw_pointer_cast(&h_ok);
     EXPECT_FALSE(op_r0.is_valid());
 
-    geometry::CylinderQueryOperator<double> op_rn;
+    geometry::CylinderGeometryOperator<double> op_rn;
     op_rn.center = atlas::raw_pointer_cast(&c);
     op_rn.radius = atlas::raw_pointer_cast(&rn);
     op_rn.height = atlas::raw_pointer_cast(&h_ok);
     EXPECT_FALSE(op_rn.is_valid());
 
-    geometry::CylinderQueryOperator<double> op_h0;
+    geometry::CylinderGeometryOperator<double> op_h0;
     op_h0.center = atlas::raw_pointer_cast(&c);
     op_h0.radius = atlas::raw_pointer_cast(&r_ok);
     op_h0.height = atlas::raw_pointer_cast(&h0);
     EXPECT_FALSE(op_h0.is_valid());
 
-    geometry::CylinderQueryOperator<double> op_hn;
+    geometry::CylinderGeometryOperator<double> op_hn;
     op_hn.center = atlas::raw_pointer_cast(&c);
     op_hn.radius = atlas::raw_pointer_cast(&r_ok);
     op_hn.height = atlas::raw_pointer_cast(&hn);

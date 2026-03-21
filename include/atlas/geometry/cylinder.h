@@ -47,12 +47,48 @@
  */
 
 #include <atlas/geometry/geometry.h>
-#include <atlas/geometry/query_operator.h>
-#include <atlas/spatial/trace_operator.h>
+#include <atlas/spatial/ray.h>
 
 #include <type_traits>
 
 namespace atlas::geometry {
+
+template <typename T>
+struct CylinderGeometryOperator {
+    const atlas::math::Vector<T, 3>* center = nullptr;
+    const T* radius = nullptr;
+    const T* height = nullptr;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    centroid() const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    bound() const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    is_valid() const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
+    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
+    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+};
 
 /**
  * @brief Finite cylinder geometry primitive (axis-aligned in local space).
@@ -172,7 +208,7 @@ public:
      * @brief Create a trace operator bound to this cylinder.
      *
      * @details
-     * Returns a @ref TraceOperator that can be used by tracing systems to intersect rays
+     * Returns a @ref GeometryOperator that can be used by tracing systems to intersect rays
      * with this cylinder. Implementations commonly store non-owning pointers to `center`,
      * `radius`, and `height`.
      *
@@ -180,22 +216,20 @@ public:
      *
      * @note Host-only: operator construction typically binds pointers to host memory.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE TraceOperator<T>
-    make_trace_operator() const override;
 
     /**
      * @brief Create a query operator bound to this cylinder.
      *
      * @details
-     * Returns a @ref QueryOperator that can be used by query systems to compute closest points,
+     * Returns a @ref GeometryOperator that can be used by query systems to compute closest points,
      * signed distances, etc., against this cylinder.
      *
      * @return Query operator referencing this cylinder.
      *
      * @note Host-only: operator construction typically binds pointers to host memory.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE QueryOperator<T>
-    make_query_operator() const override;
+    ATLAS_HOST ATLAS_FORCE_INLINE GeometryOperator<T>
+    make_geometry_operator() const override;
 
     /**
      * @brief Compute the closest point on (or in) the cylinder to an input point.

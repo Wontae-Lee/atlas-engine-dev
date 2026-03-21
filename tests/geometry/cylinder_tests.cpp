@@ -69,24 +69,13 @@ TEST(Cylinder, HeightMemberIsWritable) {
     EXPECT_NEAR(c.height, 4.0, eps);
 }
 
-TEST(Cylinder, MakeTraceOperatorReturnsCylinderTraceOperatorVariant) {
+TEST(Cylinder, MakeGeometryOperatorReturnsCylinderGeometryOperatorVariant) {
 
-    // make_trace_operator() must return a TraceOperator variant tagged as Cylinder.
+    // make_geometry_operator() must return a GeometryOperator variant tagged as Cylinder.
     // This tag is used for runtime dispatch across geometry types.
     const geometry::Cylinder<double> c;
 
-    const auto op = c.make_trace_operator();
-
-    EXPECT_EQ(op.type, geometry::GeometryType::Cylinder);
-}
-
-TEST(Cylinder, MakeQueryOperatorReturnsCylinderQueryOperatorVariant) {
-
-    // make_query_operator() must return a QueryOperator variant tagged as Cylinder.
-    // This tag is used for runtime dispatch across query operator implementations.
-    const geometry::Cylinder<double> c;
-
-    const auto op = c.make_query_operator();
+    const auto op = c.make_geometry_operator();
 
     EXPECT_EQ(op.type, geometry::GeometryType::Cylinder);
 }

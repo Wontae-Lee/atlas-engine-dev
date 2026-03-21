@@ -5,18 +5,18 @@ namespace atlas::system {
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 bool
-SurfaceDespawnOperator<T>::despawn(const atlas::geometry::QueryOperator<T>& query,
+SurfaceDespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
                                    const Vector3<T>& particle,
-                                   const T tolerance) noexcept {
+                                   const T tolerance) const noexcept {
     return query.is_on_surface(particle, tolerance);
 }
 
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 bool
-VolumeDespawnOperator<T>::despawn(const atlas::geometry::QueryOperator<T>& query,
+VolumeDespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
                                   const Vector3<T>& particle,
-                                  const T tolerance) noexcept {
+                                  const T tolerance) const noexcept {
     return query.is_inside(particle, tolerance);
 }
 
@@ -130,7 +130,7 @@ DespawnOperator<T>::DespawnOperator(const VolumeDespawnOperator<T>& op)
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 bool
-DespawnOperator<T>::despawn(const atlas::geometry::QueryOperator<T>& query,
+DespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
                             const Vector3<T>& particle,
                             const T tolerance) const noexcept {
     switch (type) {

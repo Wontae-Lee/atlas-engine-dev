@@ -75,22 +75,12 @@ TEST(Plane, OffsetMemberIsWritable) {
     EXPECT_NEAR(p.offset, 4.25, eps);
 }
 
-TEST(Plane, MakeTraceOperatorReturnsPlaneTraceOperatorVariant) {
+TEST(Plane, MakeGeometryOperatorReturnsPlaneGeometryOperatorVariant) {
 
-    // make_trace_operator() must return a TraceOperator tagged as Plane for runtime dispatch.
+    // make_geometry_operator() must return a GeometryOperator tagged as Plane for runtime dispatch.
     const geometry::Plane<double> p;
 
-    const auto op = p.make_trace_operator();
-
-    EXPECT_EQ(op.type, geometry::GeometryType::Plane);
-}
-
-TEST(Plane, MakeQueryOperatorReturnsPlaneQueryOperatorVariant) {
-
-    // make_query_operator() must return a QueryOperator tagged as Plane for runtime dispatch.
-    const geometry::Plane<double> p;
-
-    const auto op = p.make_query_operator();
+    const auto op = p.make_geometry_operator();
 
     EXPECT_EQ(op.type, geometry::GeometryType::Plane);
 }

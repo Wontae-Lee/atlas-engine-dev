@@ -5,8 +5,8 @@
 
 using namespace atlas;
 
-TEST(TriangleQueryOperator, ClosestPointReturnsInputWhenVerticesNull) {
-    constexpr geometry::TriangleQueryOperator<double> op;
+TEST(TriangleGeometryOperator, ClosestPointReturnsInputWhenVerticesNull) {
+    constexpr geometry::TriangleGeometryOperator<double> op;
 
     constexpr Vector3<double> p(1.25, -2.5, 3.75);
     const auto cp = op.closest_point(p);
@@ -14,12 +14,12 @@ TEST(TriangleQueryOperator, ClosestPointReturnsInputWhenVerticesNull) {
     EXPECT_TRUE(test::vec_near(cp, p, eps));
 }
 
-TEST(TriangleQueryOperator, ClosestPointVertexRegionA) {
+TEST(TriangleGeometryOperator, ClosestPointVertexRegionA) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 1.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -30,12 +30,12 @@ TEST(TriangleQueryOperator, ClosestPointVertexRegionA) {
     EXPECT_TRUE(test::vec_near(cp, a, eps));
 }
 
-TEST(TriangleQueryOperator, ClosestPointVertexRegionB) {
+TEST(TriangleGeometryOperator, ClosestPointVertexRegionB) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 1.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -46,12 +46,12 @@ TEST(TriangleQueryOperator, ClosestPointVertexRegionB) {
     EXPECT_TRUE(test::vec_near(cp, b, eps));
 }
 
-TEST(TriangleQueryOperator, ClosestPointVertexRegionC) {
+TEST(TriangleGeometryOperator, ClosestPointVertexRegionC) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 1.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -62,12 +62,12 @@ TEST(TriangleQueryOperator, ClosestPointVertexRegionC) {
     EXPECT_TRUE(test::vec_near(cp, c, eps));
 }
 
-TEST(TriangleQueryOperator, ClosestPointEdgeRegionABProjectsToSegment) {
+TEST(TriangleGeometryOperator, ClosestPointEdgeRegionABProjectsToSegment) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(2.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 2.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -79,12 +79,12 @@ TEST(TriangleQueryOperator, ClosestPointEdgeRegionABProjectsToSegment) {
     EXPECT_TRUE(test::vec_near(cp, expected, eps));
 }
 
-TEST(TriangleQueryOperator, ClosestPointEdgeRegionACProjectsToSegment) {
+TEST(TriangleGeometryOperator, ClosestPointEdgeRegionACProjectsToSegment) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(2.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 2.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -96,12 +96,12 @@ TEST(TriangleQueryOperator, ClosestPointEdgeRegionACProjectsToSegment) {
     EXPECT_TRUE(test::vec_near(cp, expected, eps));
 }
 
-TEST(TriangleQueryOperator, ClosestPointEdgeRegionBCProjectsToSegment) {
+TEST(TriangleGeometryOperator, ClosestPointEdgeRegionBCProjectsToSegment) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(2.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 2.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -113,12 +113,12 @@ TEST(TriangleQueryOperator, ClosestPointEdgeRegionBCProjectsToSegment) {
     EXPECT_TRUE(test::vec_near(cp, expected, eps));
 }
 
-TEST(TriangleQueryOperator, ClosestPointFaceRegionUsesBarycentric) {
+TEST(TriangleGeometryOperator, ClosestPointFaceRegionUsesBarycentric) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(2.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 2.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -130,14 +130,14 @@ TEST(TriangleQueryOperator, ClosestPointFaceRegionUsesBarycentric) {
     EXPECT_TRUE(test::vec_near(cp, expected, eps));
 }
 
-TEST(TriangleQueryOperator, ClosestNormalReturnsExplicitNormalWhenProvided) {
+TEST(TriangleGeometryOperator, ClosestNormalReturnsExplicitNormalWhenProvided) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 1.0, 0.0);
 
     constexpr Vector3<double> n(0.0, 0.0, -1.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -149,12 +149,12 @@ TEST(TriangleQueryOperator, ClosestNormalReturnsExplicitNormalWhenProvided) {
     EXPECT_TRUE(test::vec_near(nn, n, eps));
 }
 
-TEST(TriangleQueryOperator, ClosestNormalComputesGeometricNormalWhenNoExplicitNormal) {
+TEST(TriangleGeometryOperator, ClosestNormalComputesGeometricNormalWhenNoExplicitNormal) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 1.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -166,8 +166,8 @@ TEST(TriangleQueryOperator, ClosestNormalComputesGeometricNormalWhenNoExplicitNo
     EXPECT_NEAR(nn.length(), 1.0, eps);
 }
 
-TEST(TriangleQueryOperator, ClosestNormalFallbackWhenVerticesNull) {
-    constexpr geometry::TriangleQueryOperator<double> op;
+TEST(TriangleGeometryOperator, ClosestNormalFallbackWhenVerticesNull) {
+    constexpr geometry::TriangleGeometryOperator<double> op;
 
     constexpr Vector3<double> p(0.0, 0.0, 0.0);
     const auto nn = op.closest_normal(p);
@@ -175,19 +175,19 @@ TEST(TriangleQueryOperator, ClosestNormalFallbackWhenVerticesNull) {
     EXPECT_TRUE(test::vec_near(nn, Vector3<double>(0.0, 0.0, 1.0), eps));
 }
 
-TEST(TriangleQueryOperator, SignedDistanceReturnsInfWhenVerticesNull) {
-    constexpr geometry::TriangleQueryOperator<double> op;
+TEST(TriangleGeometryOperator, SignedDistanceReturnsInfWhenVerticesNull) {
+    constexpr geometry::TriangleGeometryOperator<double> op;
 
     constexpr Vector3<double> p(0.0, 0.0, 0.0);
     EXPECT_TRUE(std::isinf(op.signed_distance(p)));
 }
 
-TEST(TriangleQueryOperator, SignedDistanceSignMatchesNormalSide) {
+TEST(TriangleGeometryOperator, SignedDistanceSignMatchesNormalSide) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 1.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -204,12 +204,12 @@ TEST(TriangleQueryOperator, SignedDistanceSignMatchesNormalSide) {
     EXPECT_NEAR(std::abs(d_neg), 2.0, eps);
 }
 
-TEST(TriangleQueryOperator, IsInsideUsesSignedSideAndTolerance) {
+TEST(TriangleGeometryOperator, IsInsideUsesSignedSideAndTolerance) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 1.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -219,12 +219,12 @@ TEST(TriangleQueryOperator, IsInsideUsesSignedSideAndTolerance) {
     EXPECT_TRUE(op.is_inside(Vector3<double>(0.25, 0.25, 0.1), 0.15));
 }
 
-TEST(TriangleQueryOperator, IsOnSurfaceDetectsSurfaceBand) {
+TEST(TriangleGeometryOperator, IsOnSurfaceDetectsSurfaceBand) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 1.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -234,19 +234,19 @@ TEST(TriangleQueryOperator, IsOnSurfaceDetectsSurfaceBand) {
     EXPECT_TRUE(op.is_on_surface(Vector3<double>(0.25, 0.25, 0.1), 0.15));
 }
 
-TEST(TriangleQueryOperator, CentroidReturnsZeroWhenVerticesNull) {
-    constexpr geometry::TriangleQueryOperator<double> op;
+TEST(TriangleGeometryOperator, CentroidReturnsZeroWhenVerticesNull) {
+    constexpr geometry::TriangleGeometryOperator<double> op;
 
     const auto ctd = op.centroid();
     EXPECT_TRUE(test::vec_near(ctd, Vector3<double>(0.0, 0.0, 0.0), eps));
 }
 
-TEST(TriangleQueryOperator, CentroidIsAverageOfVertices) {
+TEST(TriangleGeometryOperator, CentroidIsAverageOfVertices) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(3.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 6.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -257,8 +257,8 @@ TEST(TriangleQueryOperator, CentroidIsAverageOfVertices) {
     EXPECT_TRUE(test::vec_near(ctd, expected, eps));
 }
 
-TEST(TriangleQueryOperator, BoundReturnsDefaultWhenVerticesNull) {
-    constexpr geometry::TriangleQueryOperator<double> op;
+TEST(TriangleGeometryOperator, BoundReturnsDefaultWhenVerticesNull) {
+    constexpr geometry::TriangleGeometryOperator<double> op;
 
     const auto aabb = op.bound();
 
@@ -266,12 +266,12 @@ TEST(TriangleQueryOperator, BoundReturnsDefaultWhenVerticesNull) {
     EXPECT_TRUE(test::is_finite_vec(aabb.upper_corner));
 }
 
-TEST(TriangleQueryOperator, BoundIsComponentwiseMinMaxOfVertices) {
+TEST(TriangleGeometryOperator, BoundIsComponentwiseMinMaxOfVertices) {
     constexpr Vector3<double> a(-2.0, 3.0, 1.0);
     constexpr Vector3<double> b(5.0, -4.0, 2.0);
     constexpr Vector3<double> c(1.0, 2.0, -6.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -285,32 +285,32 @@ TEST(TriangleQueryOperator, BoundIsComponentwiseMinMaxOfVertices) {
     EXPECT_TRUE(test::vec_near(aabb.upper_corner, expected_hi, eps));
 }
 
-TEST(TriangleQueryOperator, IsValidFalseWhenAnyVertexNull) {
+TEST(TriangleGeometryOperator, IsValidFalseWhenAnyVertexNull) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op1;
+    geometry::TriangleGeometryOperator<double> op1;
     op1.a = atlas::raw_pointer_cast(&a);
     op1.b = atlas::raw_pointer_cast(&b);
     EXPECT_FALSE(op1.is_valid());
 
-    geometry::TriangleQueryOperator<double> op2;
+    geometry::TriangleGeometryOperator<double> op2;
     op2.a = atlas::raw_pointer_cast(&a);
     op2.c = atlas::raw_pointer_cast(&b);
     EXPECT_FALSE(op2.is_valid());
 
-    geometry::TriangleQueryOperator<double> op3;
+    geometry::TriangleGeometryOperator<double> op3;
     op3.b = atlas::raw_pointer_cast(&a);
     op3.c = atlas::raw_pointer_cast(&b);
     EXPECT_FALSE(op3.is_valid());
 }
 
-TEST(TriangleQueryOperator, IsValidFalseForDegenerateTriangle) {
+TEST(TriangleGeometryOperator, IsValidFalseForDegenerateTriangle) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(2.0, 0.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);
@@ -318,12 +318,12 @@ TEST(TriangleQueryOperator, IsValidFalseForDegenerateTriangle) {
     EXPECT_FALSE(op.is_valid());
 }
 
-TEST(TriangleQueryOperator, IsValidTrueForNonDegenerateTriangle) {
+TEST(TriangleGeometryOperator, IsValidTrueForNonDegenerateTriangle) {
     constexpr Vector3<double> a(0.0, 0.0, 0.0);
     constexpr Vector3<double> b(1.0, 0.0, 0.0);
     constexpr Vector3<double> c(0.0, 1.0, 0.0);
 
-    geometry::TriangleQueryOperator<double> op;
+    geometry::TriangleGeometryOperator<double> op;
     op.a = atlas::raw_pointer_cast(&a);
     op.b = atlas::raw_pointer_cast(&b);
     op.c = atlas::raw_pointer_cast(&c);

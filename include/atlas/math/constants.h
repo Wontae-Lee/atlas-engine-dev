@@ -49,7 +49,7 @@ constexpr double far = math::k_farthest_d;
 constexpr double inf = std::numeric_limits<double>::infinity();
 
 // Generic double-precision tolerance used for tighter comparisons.
-// Often used in query_operator predicates where float epsilon is too loose.
+// Often used in geometry_operator predicates where float epsilon is too loose.
 constexpr double tol = eps;
 
 } // namespace atlas

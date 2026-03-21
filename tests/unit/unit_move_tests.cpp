@@ -9,15 +9,14 @@ using namespace atlas;
 
 TEST(Unit, MoveFromIdentityPoseUpdatesTranslationExactly) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     // Default SyncOperator now represents the identity pose:
     // - translation = (0,0,0)
     // - orientation = identity quaternion
     system::SyncOperator<double> sop;
 
-    system::Unit<double> u(qop, top, sop);
+    system::Unit<double> u(geometry_op, sop);
 
     // Sanity check initial translation.
     EXPECT_TRUE(test::vec_near(
@@ -34,13 +33,12 @@ TEST(Unit, MoveFromIdentityPoseUpdatesTranslationExactly) {
 
 TEST(Unit, MoveAccumulatesTranslationFromNonZeroInitialPose) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(1.0, 2.0, 3.0);
     const math::Quaternion<double> q0; // identity rotation
 
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const Vector3<double> delta(-4.0, 5.0, 6.0);
     u.move(delta);
@@ -53,10 +51,9 @@ TEST(Unit, MoveAccumulatesTranslationFromNonZeroInitialPose) {
 
 TEST(Unit, MoveCanBeCalledMultipleTimesAndTranslationAccumulatesInOrder) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
 
     const Vector3<double> d1(1.0, 0.0, 0.0);
     const Vector3<double> d2(0.0, -2.0, 0.0);
@@ -83,13 +80,12 @@ TEST(Unit, MoveCanBeCalledMultipleTimesAndTranslationAccumulatesInOrder) {
 
 TEST(Unit, MoveWithZeroDeltaLeavesTranslationUnchanged) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(-3.0, 4.0, 5.0);
     const math::Quaternion<double> q0(Vector3<double>(0.0, 0.0, 1.0), 0.0);
 
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     u.move(Vector3<double>(0.0, 0.0, 0.0));
 
@@ -99,8 +95,7 @@ TEST(Unit, MoveWithZeroDeltaLeavesTranslationUnchanged) {
 
 TEST(Unit, MoveDoesNotModifyOrientation) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     // Use a non-identity orientation so accidental modification is visible.
     const Vector3<double> axis(0.0, 0.0, 1.0);
@@ -108,7 +103,7 @@ TEST(Unit, MoveDoesNotModifyOrientation) {
     const math::Quaternion<double> q0(axis, angle);
     const Vector3<double> t0(1.0, 2.0, 3.0);
 
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const auto before = u.sync_operator();
 
@@ -125,8 +120,7 @@ TEST(Unit, MoveDoesNotModifyOrientation) {
 
 TEST(Unit, MovePreservesRotationEffectOnDirections) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     // +90 deg about Z : (1,0,0) -> (0,1,0)
     const Vector3<double> axis(0.0, 0.0, 1.0);
@@ -134,7 +128,7 @@ TEST(Unit, MovePreservesRotationEffectOnDirections) {
     const math::Quaternion<double> q0(axis, angle);
     const Vector3<double> t0(0.0, 0.0, 0.0);
 
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const Vector3<double> local_dir(1.0, 0.0, 0.0);
     const auto world_dir_before = u.sync_operator().sync_dir_to_world(local_dir);
@@ -151,15 +145,14 @@ TEST(Unit, MovePreservesRotationEffectOnDirections) {
 
 TEST(Unit, MoveChangesWorldPointByExactlyDelta) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> axis(0.0, 0.0, 1.0);
     constexpr double angle = M_PI / 2.0;
     const math::Quaternion<double> q0(axis, angle);
     const Vector3<double> t0(1.0, 2.0, 3.0);
 
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const Vector3<double> local_point(1.0, 0.0, 0.0);
 
@@ -179,15 +172,14 @@ TEST(Unit, MoveChangesWorldPointByExactlyDelta) {
 
 TEST(Unit, MoveAndInverseSyncRemainConsistentForPoints) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> axis(0.0, 0.0, 1.0);
     constexpr double angle = M_PI / 4.0;
     const math::Quaternion<double> q0(axis, angle);
     const Vector3<double> t0(-2.0, 1.0, 0.5);
 
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const Vector3<double> local_point(2.0, -1.0, 4.0);
 
@@ -201,12 +193,11 @@ TEST(Unit, MoveAndInverseSyncRemainConsistentForPoints) {
     EXPECT_TRUE(test::vec_near(back_point, local_point, eps));
 }
 
-TEST(Unit, MoveDoesNotAffectQueryAndTraceOperatorAvailability) {
+TEST(Unit, MoveDoesNotAffectQueryAndGeometryOperatorAvailability) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
-    system::Unit<double> u(qop, top, system::SyncOperator<double> {});
+    system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
 
     u.move(Vector3<double>(1.0, 2.0, 3.0));
 
@@ -214,8 +205,8 @@ TEST(Unit, MoveDoesNotAffectQueryAndTraceOperatorAvailability) {
 
     // The purpose of this test is not to validate geometry math itself,
     // but to ensure move() does not invalidate stored operators.
-    const auto cp = u.query_operator().closest_point(query_point);
-    const auto cn = u.query_operator().closest_normal(query_point);
+    const auto cp = u.geometry_operator().closest_point(query_point);
+    const auto cn = u.geometry_operator().closest_normal(query_point);
 
     EXPECT_TRUE(test::is_finite_vec(cp));
     EXPECT_TRUE(test::is_finite_vec(cn));
@@ -223,13 +214,12 @@ TEST(Unit, MoveDoesNotAffectQueryAndTraceOperatorAvailability) {
 
 TEST(Unit, ConsecutiveMoveForwardAndBackwardReturnsToOriginalTranslation) {
     const auto sphere = test::make_sphere();
-    const auto qop    = sphere.make_query_operator();
-    const auto top    = sphere.make_trace_operator();
+    const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(2.0, -3.0, 4.0);
     const math::Quaternion<double> q0;
 
-    system::Unit<double> u(qop, top, test::make_sync_operator<double>(t0, q0));
+    system::Unit<double> u(geometry_op, test::make_sync_operator<double>(t0, q0));
 
     const Vector3<double> delta(5.5, -1.25, 2.75);
 

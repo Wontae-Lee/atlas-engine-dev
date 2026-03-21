@@ -41,18 +41,10 @@ TEST(Sphere, RadiusMemberIsWritable) {
     EXPECT_NEAR(s.radius, 3.5, eps);
 }
 
-TEST(Sphere, MakeTraceOperatorReturnsSphereTraceOperatorVariant) {
+TEST(Sphere, MakeGeometryOperatorReturnsSphereGeometryOperatorVariant) {
 
     const geometry::Sphere<double> s;
-    const auto op = s.make_trace_operator();
-
-    EXPECT_EQ(op.type, geometry::GeometryType::Sphere);
-}
-
-TEST(Sphere, MakeQueryOperatorReturnsSphereVariant) {
-
-    const geometry::Sphere<double> s;
-    const auto op = s.make_query_operator();
+    const auto op = s.make_geometry_operator();
 
     EXPECT_EQ(op.type, geometry::GeometryType::Sphere);
 }

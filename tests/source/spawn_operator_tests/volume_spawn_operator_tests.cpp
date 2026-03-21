@@ -5,9 +5,9 @@
 
 using namespace atlas;
 
-TEST(VolumeSpawnOperator, SpawnCreatesVolumeGridPointsFromBoxQueryOperator) {
+TEST(VolumeSpawnOperator, SpawnCreatesVolumeGridPointsFromBoxGeometryOperator) {
     const geometry::Box<double> box = test::make_box();
-    const auto query                = test::make_box_query_operator(box);
+    const auto query                = test::make_box_geometry_operator(box);
     const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
@@ -38,7 +38,7 @@ TEST(VolumeSpawnOperator, SpawnCreatesVolumeGridPointsFromBoxQueryOperator) {
 
 TEST(VolumeSpawnOperator, SpawnAcceptsInteriorSamplesUsingExplicitTolerance) {
     const geometry::Sphere<double> sphere = test::make_sphere();
-    const auto query                      = test::make_sphere_query_operator(sphere);
+    const auto query                      = test::make_sphere_geometry_operator(sphere);
     const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
@@ -60,9 +60,9 @@ TEST(VolumeSpawnOperator, SpawnAcceptsInteriorSamplesUsingExplicitTolerance) {
     }
 }
 
-TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromSphereQueryOperator) {
+TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromSphereGeometryOperator) {
     const geometry::Sphere<double> sphere = test::make_sphere();
-    const auto query                      = test::make_sphere_query_operator(sphere);
+    const auto query                      = test::make_sphere_geometry_operator(sphere);
     const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
@@ -84,9 +84,9 @@ TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromSphereQueryOperator) {
     }
 }
 
-TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromCylinderQueryOperator) {
+TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromCylinderGeometryOperator) {
     const geometry::Cylinder<double> cylinder = test::make_cylinder();
-    const auto query                          = test::make_cylinder_query_operator(cylinder);
+    const auto query                          = test::make_cylinder_geometry_operator(cylinder);
     const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles;
@@ -108,8 +108,8 @@ TEST(VolumeSpawnOperator, SpawnCreatesInteriorPointsFromCylinderQueryOperator) {
     }
 }
 
-TEST(VolumeSpawnOperator, SpawnReturnsEmptyBufferForInvalidQueryOperator) {
-    const geometry::QueryOperator<double> query;
+TEST(VolumeSpawnOperator, SpawnReturnsEmptyBufferForInvalidGeometryOperator) {
+    const geometry::GeometryOperator<double> query;
     const system::VolumeSpawnOperator<double> spawn_operator {};
 
     DeviceBuffer<Vector3<double>> particles(4, Vector3<double>(1.0, 2.0, 3.0));

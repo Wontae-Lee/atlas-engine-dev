@@ -84,7 +84,7 @@ TEST(SAHBVH, BuildTwoTrianglesCreatesInternalRootAndTwoLeaves) {
     ASSERT_EQ(bvh.indices().size(), static_cast<std::size_t>(2));
 }
 
-TEST(SAHBVH, TraceOperatorFromBVHHitsNearTriangle) {
+TEST(SAHBVH, GeometryOperatorFromBVHHitsNearTriangle) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
     atlas::spatial::SurfaceAreaHeuristicBoundingVolumeHierachy<double> bvh;
@@ -108,7 +108,7 @@ TEST(SAHBVH, TraceOperatorFromBVHHitsNearTriangle) {
 
     bvh.build(tris);
 
-    const auto op = bvh.make_trace_operator();
+    const auto op = bvh.make_geometry_operator();
 
     const atlas::Ray<double> r(
         atlas::math::Vector<double, 3>(0.25, 0.25, 1.0),

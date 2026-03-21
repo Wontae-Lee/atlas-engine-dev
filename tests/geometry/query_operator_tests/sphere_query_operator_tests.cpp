@@ -5,18 +5,18 @@
 
 using namespace atlas;
 
-TEST(SphereQueryOperator, ClosestPointReturnsInputWhenPointersNull) {
-    constexpr geometry::SphereQueryOperator<double> op;
+TEST(SphereGeometryOperator, ClosestPointReturnsInputWhenPointersNull) {
+    constexpr geometry::SphereGeometryOperator<double> op;
 
     const Vector3<double> p(1.25, -2.5, 3.75);
     EXPECT_TRUE(test::vec_near(op.closest_point(p), p, eps));
 }
 
-TEST(SphereQueryOperator, ClosestPointAtCenterReturnsPlusXOnSurface) {
+TEST(SphereGeometryOperator, ClosestPointAtCenterReturnsPlusXOnSurface) {
     const Vector3<double> c(1.0, 2.0, 3.0);
     constexpr double r = 4.0;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
 
@@ -26,11 +26,11 @@ TEST(SphereQueryOperator, ClosestPointAtCenterReturnsPlusXOnSurface) {
     EXPECT_TRUE(test::vec_near(op.closest_point(p), expected, eps));
 }
 
-TEST(SphereQueryOperator, ClosestPointProjectsToSurfaceAlongRadialDirection) {
+TEST(SphereGeometryOperator, ClosestPointProjectsToSurfaceAlongRadialDirection) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
 
@@ -40,18 +40,18 @@ TEST(SphereQueryOperator, ClosestPointProjectsToSurfaceAlongRadialDirection) {
     EXPECT_TRUE(test::vec_near(op.closest_point(p), expected, eps));
 }
 
-TEST(SphereQueryOperator, ClosestNormalReturnsZeroWhenPointersNull) {
-    constexpr geometry::SphereQueryOperator<double> op;
+TEST(SphereGeometryOperator, ClosestNormalReturnsZeroWhenPointersNull) {
+    constexpr geometry::SphereGeometryOperator<double> op;
 
     const Vector3<double> p(1.0, 2.0, 3.0);
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), Vector3<double>(0.0, 0.0, 0.0), eps));
 }
 
-TEST(SphereQueryOperator, ClosestNormalAtCenterReturnsPlusX) {
+TEST(SphereGeometryOperator, ClosestNormalAtCenterReturnsPlusX) {
     const Vector3<double> c(1.0, 2.0, 3.0);
     constexpr double r = 4.0;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
 
@@ -61,11 +61,11 @@ TEST(SphereQueryOperator, ClosestNormalAtCenterReturnsPlusX) {
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), expected, eps));
 }
 
-TEST(SphereQueryOperator, ClosestNormalIsNormalizedRadialVector) {
+TEST(SphereGeometryOperator, ClosestNormalIsNormalizedRadialVector) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 10.0;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
 
@@ -75,18 +75,18 @@ TEST(SphereQueryOperator, ClosestNormalIsNormalizedRadialVector) {
     EXPECT_TRUE(test::vec_near(op.closest_normal(p), expected, eps));
 }
 
-TEST(SphereQueryOperator, SignedDistanceReturnsInfWhenPointersNull) {
-    constexpr geometry::SphereQueryOperator<double> op;
+TEST(SphereGeometryOperator, SignedDistanceReturnsInfWhenPointersNull) {
+    constexpr geometry::SphereGeometryOperator<double> op;
 
     const Vector3<double> p(0.0, 0.0, 0.0);
     EXPECT_TRUE(std::isinf(op.signed_distance(p)));
 }
 
-TEST(SphereQueryOperator, SignedDistanceMatchesDefinition) {
+TEST(SphereGeometryOperator, SignedDistanceMatchesDefinition) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
 
@@ -95,11 +95,11 @@ TEST(SphereQueryOperator, SignedDistanceMatchesDefinition) {
     EXPECT_NEAR(op.signed_distance(Vector3<double>(5.0, 0.0, 0.0)), 3.0, eps);
 }
 
-TEST(SphereQueryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
+TEST(SphereGeometryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
 
@@ -108,11 +108,11 @@ TEST(SphereQueryOperator, IsInsideClassifiesInteriorAndToleranceBand) {
     EXPECT_TRUE(op.is_inside(Vector3<double>(2.2, 0.0, 0.0), 0.25));
 }
 
-TEST(SphereQueryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
+TEST(SphereGeometryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
     const Vector3<double> c(0.0, 0.0, 0.0);
     constexpr double r = 2.0;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
 
@@ -121,24 +121,24 @@ TEST(SphereQueryOperator, IsOnSurfaceDetectsBoundaryWithTolerance) {
     EXPECT_TRUE(op.is_on_surface(Vector3<double>(2.1, 0.0, 0.0), 0.15));
 }
 
-TEST(SphereQueryOperator, CentroidReturnsZeroWhenCenterNull) {
-    constexpr geometry::SphereQueryOperator<double> op;
+TEST(SphereGeometryOperator, CentroidReturnsZeroWhenCenterNull) {
+    constexpr geometry::SphereGeometryOperator<double> op;
     EXPECT_TRUE(test::vec_near(op.centroid(), Vector3<double>(0.0, 0.0, 0.0), eps));
 }
 
-TEST(SphereQueryOperator, CentroidReturnsCenterWhenValid) {
+TEST(SphereGeometryOperator, CentroidReturnsCenterWhenValid) {
     const Vector3<double> c(1.0, -2.0, 3.0);
     constexpr double r = 4.0;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
 
     EXPECT_TRUE(test::vec_near(op.centroid(), c, eps));
 }
 
-TEST(SphereQueryOperator, BoundReturnsDefaultWhenPointersNull) {
-    constexpr geometry::SphereQueryOperator<double> op;
+TEST(SphereGeometryOperator, BoundReturnsDefaultWhenPointersNull) {
+    constexpr geometry::SphereGeometryOperator<double> op;
 
     const auto aabb = op.bound();
 
@@ -146,11 +146,11 @@ TEST(SphereQueryOperator, BoundReturnsDefaultWhenPointersNull) {
     EXPECT_TRUE(test::is_finite_vec(aabb.upper_corner));
 }
 
-TEST(SphereQueryOperator, BoundIsCenterPlusMinusRadiusVector) {
+TEST(SphereGeometryOperator, BoundIsCenterPlusMinusRadiusVector) {
     const Vector3<double> c(1.0, -2.0, 3.0);
     constexpr double r = 2.5;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.center = atlas::raw_pointer_cast(&c);
     op.radius = atlas::raw_pointer_cast(&r);
 
@@ -164,28 +164,28 @@ TEST(SphereQueryOperator, BoundIsCenterPlusMinusRadiusVector) {
     EXPECT_TRUE(test::vec_near(aabb.upper_corner, hi, eps));
 }
 
-TEST(SphereQueryOperator, IsValidFalseWhenRadiusNull) {
-    constexpr geometry::SphereQueryOperator<double> op;
+TEST(SphereGeometryOperator, IsValidFalseWhenRadiusNull) {
+    constexpr geometry::SphereGeometryOperator<double> op;
     EXPECT_FALSE(op.is_valid());
 }
 
-TEST(SphereQueryOperator, IsValidTrueForPositiveRadius) {
+TEST(SphereGeometryOperator, IsValidTrueForPositiveRadius) {
     constexpr double r = 1.0;
 
-    geometry::SphereQueryOperator<double> op;
+    geometry::SphereGeometryOperator<double> op;
     op.radius = atlas::raw_pointer_cast(&r);
 
     EXPECT_TRUE(op.is_valid());
 }
 
-TEST(SphereQueryOperator, IsValidFalseForNonPositiveRadius) {
+TEST(SphereGeometryOperator, IsValidFalseForNonPositiveRadius) {
     constexpr double r0 = 0.0;
     constexpr double rn = -1.0;
 
-    geometry::SphereQueryOperator<double> op0;
+    geometry::SphereGeometryOperator<double> op0;
     op0.radius = atlas::raw_pointer_cast(&r0);
 
-    geometry::SphereQueryOperator<double> opn;
+    geometry::SphereGeometryOperator<double> opn;
     opn.radius = atlas::raw_pointer_cast(&rn);
 
     EXPECT_FALSE(op0.is_valid());

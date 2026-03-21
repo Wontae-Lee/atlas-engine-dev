@@ -255,10 +255,10 @@ sample_axis_count(T lower, T upper, T spacing) noexcept {
  * @param tolerance Classification tolerance forwarded to `predicate`.
  * @param predicate Point acceptance predicate.
  */
-template <typename T, typename QueryOperator, typename Predicate>
+template <typename T, typename GeometryOperator, typename Predicate>
 ATLAS_ALL_DEVICE void
 sample_spawn_grid(DeviceBuffer<Vector3<T>>& particles,
-                  const QueryOperator& query,
+                  const GeometryOperator& query,
                   T spacing,
                   T tolerance,
                   Predicate predicate) {

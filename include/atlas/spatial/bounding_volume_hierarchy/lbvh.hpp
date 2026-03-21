@@ -1,22 +1,22 @@
 #pragma once
 #include <algorithm>
-#include <atlas/geometry/query_operator.h>
+#include <atlas/geometry/geometry_operator.h>
 #include <atlas/memory/raw_pointer_cast.h>
 
 namespace atlas::spatial {
 
 template <typename T>
-BvhTraceOperator<T>
-LinearBoundingVolumeHierachy<T>::make_trace_operator() const {
+BvhGeometryOperator<T>
+LinearBoundingVolumeHierachy<T>::make_geometry_operator() const {
     // Expose raw pointers so the traversal operator becomes a light-weight view
     // over the already-built buffers. Ownership stays in the BVH object.
-    BvhTraceOperator<T> op;
+    BvhGeometryOperator<T> op;
 
-    op.nodes   = atlas::raw_pointer_cast(d_nodes.data());
-    op.indices = atlas::raw_pointer_cast(d_indices.data());
-    op.tris    = atlas::raw_pointer_cast(d_triangles.data());
+    op.bvh_nodes   = atlas::raw_pointer_cast(d_nodes.data());
+    op.bvh_indices = atlas::raw_pointer_cast(d_indices.data());
+    op.bvh_tris    = atlas::raw_pointer_cast(d_triangles.data());
 
-    op.root = _root;
+    op.bvh_root = _root;
     return op;
 }
 
@@ -110,7 +110,7 @@ template <typename T>
 int
 LinearBoundingVolumeHierachy<T>::leaf_node_index(const int k, const int n) noexcept {
     // Node layout:
-    //   [0, n-2]     -> internal nodes
+    //   [0, n-2]     -> internal bvh_nodes
     //   [n-1, 2n-2]  -> leaves in Morton order
     return (n - 1) + k;
 }
@@ -239,8 +239,8 @@ template <typename T>
 void
 LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& triangles) {
     // A full binary BVH built over n primitives has:
-    // - n leaf nodes   (one leaf per primitive)
-    // - n - 1 internal nodes
+    // - n leaf bvh_nodes   (one leaf per primitive)
+    // - n - 1 internal bvh_nodes
     //
     // Therefore the total node count is:
     //   2 * n - 1
@@ -254,7 +254,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
     //
     // This ensures:
     // - stale host/device buffers do not survive between builds
-    // - root index is reset consistently
+    // - bvh_root index is reset consistently
     // - partial old topology cannot leak into the new structure
     reset();
 
@@ -286,7 +286,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
     // - a(), b(), c() : triangle vertices
     // - d()           : stored normal
     //
-    // We wrap each primitive in TriangleQueryOperator so we can reuse:
+    // We wrap each primitive in TriangleGeometryOperator so we can reuse:
     // - bound()    for primitive AABB
     // - centroid() for Morton mapping
     //
@@ -297,9 +297,9 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         0,
         n,
         [this, &triangles](int i) {
-            geometry::TriangleQueryOperator<T> tri_op;
+            geometry::TriangleGeometryOperator<T> tri_op;
 
-            // TriangleQueryOperator expects raw addresses to triangle data.
+            // TriangleGeometryOperator expects raw addresses to triangle data.
             // TriangleContainer4 exposes those as references through a()/b()/c()/d().
             tri_op.a = &triangles[i].a();
             tri_op.b = &triangles[i].b();
@@ -432,8 +432,8 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
     // ------------------------------------------------------------------
     //
     // Node layout convention:
-    // - internal nodes occupy indices [0, n - 2]
-    // - leaf nodes occupy     indices [n - 1, 2n - 2]
+    // - internal bvh_nodes occupy indices [0, n - 2]
+    // - leaf bvh_nodes occupy     indices [n - 1, 2n - 2]
     //
     // For safety, std::max(1, 2*n - 1) keeps at least one slot allocated even
     // if some edge case slips through, though n > 0 here already.
@@ -475,8 +475,8 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
     // ------------------------------------------------------------------
     //
     // With one primitive:
-    // - there are no internal nodes
-    // - the root is that one leaf
+    // - there are no internal bvh_nodes
+    // - the bvh_root is that one leaf
     if (n == 1) {
         _root = leaf_node_index(0, n);
 
@@ -567,12 +567,12 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         // Children are stored by direct node indices into h_nodes.
         //
         // Depending on interval length:
-        // - left/right may point to internal nodes [0, n-2]
+        // - left/right may point to internal bvh_nodes [0, n-2]
         // - or to leaves                     [n-1, 2n-2]
         in.left  = left_child;
         in.right = right_child;
 
-        // Internal nodes do not directly own primitive ranges in leaf terms here.
+        // Internal bvh_nodes do not directly own primitive ranges in leaf terms here.
         in.start = -1;
         in.count = 0;
     }
@@ -584,7 +584,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
     // Internal node topology is now fixed.
     // Next, compute each internal node's AABB as the union of its two children.
     //
-    // Because of the chosen node layout, iterating internal nodes backwards from
+    // Because of the chosen node layout, iterating internal bvh_nodes backwards from
     // n-2 down to 0 guarantees child bounds are already initialized.
     for (int i = n - 2; i >= 0; --i) {
         BVHNode<T>& in      = h_nodes[i];
@@ -597,11 +597,11 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
     }
 
     // ------------------------------------------------------------------
-    // Step 11: Finalize root and mirror to device
+    // Step 11: Finalize bvh_root and mirror to device
     // ------------------------------------------------------------------
     //
     // In this LBVH layout, internal node 0 spans the full sorted primitive range
-    // and therefore acts as the root.
+    // and therefore acts as the bvh_root.
     _root = 0;
 
     // Copy finalized host-side BVH data to device buffers used during traversal.

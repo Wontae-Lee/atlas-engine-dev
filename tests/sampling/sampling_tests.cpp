@@ -123,7 +123,7 @@ TEST(Sampling, SampleSpawnGridEmitsAllGridPointsAcceptedByPredicate) {
     atlas::DeviceBuffer<atlas::Vector3D> particles;
 
     const atlas::BoxD box(atlas::Vector3D(0.0, 0.0, 0.0), atlas::Vector3D(1.0, 1.0, 1.0));
-    const auto query = box.make_query_operator();
+    const auto query = box.make_geometry_operator();
 
     atlas::sampling::sample_spawn_grid(
         particles,
@@ -147,7 +147,7 @@ TEST(Sampling, SampleSpawnGridFiltersSamplesUsingPredicateAndTolerance) {
     atlas::DeviceBuffer<atlas::Vector3D> particles;
 
     const atlas::BoxD box(atlas::Vector3D(0.0, 0.0, 0.0), atlas::Vector3D(1.0, 1.0, 1.0));
-    const auto query = box.make_query_operator();
+    const auto query = box.make_geometry_operator();
 
     atlas::sampling::sample_spawn_grid(
         particles,
@@ -171,7 +171,7 @@ TEST(Sampling, SampleSpawnGridFiltersSamplesUsingPredicateAndTolerance) {
 
 TEST(Sampling, SampleSpawnGridClearsOutputWhenQueryIsInvalid) {
     atlas::DeviceBuffer<atlas::Vector3D> particles = { atlas::Vector3D(9.0, 9.0, 9.0) };
-    const atlas::geometry::BoxQueryOperator<double> invalid_query;
+    const atlas::geometry::BoxGeometryOperator<double> invalid_query;
 
     atlas::sampling::sample_spawn_grid(
         particles,

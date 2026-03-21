@@ -71,34 +71,17 @@ Plane<T>::builder() noexcept {
     return Builder {};
 }
 
-template <typename T>
-TraceOperator<T>
-Plane<T>::make_trace_operator() const {
-    // Create a trace operator for ray-plane intersection.
-    //
-    // Implementation:
-    // - Build a small POD-like PlaneTraceOperator<T>.
-    // - Provide it raw pointers to this Plane<T>'s stored parameters.
-    //
-    // Lifetime note:
-    // - The returned operator holds pointers to *this->normal and *this->offset.
-    // - Therefore, the Plane<T> instance must remain alive while the operator is used.
-    atlas::spatial::PlaneTraceOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return TraceOperator<T>(op);
-}
 
 template <typename T>
-QueryOperator<T>
-Plane<T>::make_query_operator() const {
+GeometryOperator<T>
+Plane<T>::make_geometry_operator() const {
     // Create a query operator for closest-point/normal/signed-distance queries.
     //
-    // Same pointer/lifetime considerations as make_trace_operator().
-    atlas::geometry::PlaneQueryOperator<T> op;
+    // Same pointer/lifetime considerations as make_geometry_operator().
+    atlas::geometry::PlaneGeometryOperator<T> op;
     op.normal = atlas::raw_pointer_cast(&normal);
     op.offset = atlas::raw_pointer_cast(&offset);
-    return QueryOperator<T>(op);
+    return GeometryOperator<T>(op);
 }
 
 template <typename T>
@@ -109,7 +92,7 @@ Plane<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
     // Delegation pattern:
     // - Create a temporary query operator wired to this plane.
     // - Reuse its implementation for consistency with other code paths.
-    atlas::geometry::PlaneQueryOperator<T> op;
+    atlas::geometry::PlaneGeometryOperator<T> op;
     op.normal = atlas::raw_pointer_cast(&normal);
     op.offset = atlas::raw_pointer_cast(&offset);
     return op.closest_point(p);
@@ -124,8 +107,8 @@ Plane<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
     // - a normalized version of stored normal, or
     // - the stored normal as-is.
     //
-    // Exact behavior is defined by PlaneQueryOperator<T>::closest_normal().
-    atlas::geometry::PlaneQueryOperator<T> op;
+    // Exact behavior is defined by PlaneGeometryOperator<T>::closest_normal().
+    atlas::geometry::PlaneGeometryOperator<T> op;
     op.normal = atlas::raw_pointer_cast(&normal);
     op.offset = atlas::raw_pointer_cast(&offset);
     return op.closest_normal(p);
@@ -143,8 +126,8 @@ Plane<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
     // If normal is not unit-length:
     // - "distance" may be scaled by |normal|.
     //
-    // Delegates to PlaneQueryOperator<T> for consistent behavior.
-    atlas::geometry::PlaneQueryOperator<T> op;
+    // Delegates to PlaneGeometryOperator<T> for consistent behavior.
+    atlas::geometry::PlaneGeometryOperator<T> op;
     op.normal = atlas::raw_pointer_cast(&normal);
     op.offset = atlas::raw_pointer_cast(&offset);
     return op.signed_distance(p);
@@ -153,9 +136,9 @@ Plane<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
 template <typename T>
 bool
 Plane<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Plane half-space classification is forwarded to PlaneQueryOperator<T>
+    // Plane half-space classification is forwarded to PlaneGeometryOperator<T>
     // to keep the plane equation convention centralized.
-    return make_query_operator().is_inside(p, tolerance);
+    return make_geometry_operator().is_inside(p, tolerance);
 }
 
 template <typename T>
@@ -163,7 +146,7 @@ bool
 Plane<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
     // The query operator owns the tolerance-band interpretation for plane
     // membership, so the wrapper simply forwards the request.
-    return make_query_operator().is_on_surface(p, tolerance);
+    return make_geometry_operator().is_on_surface(p, tolerance);
 }
 
 template <typename T>
@@ -175,8 +158,8 @@ Plane<T>::centroid() const noexcept {
     // - the origin projected onto the plane, or
     // - some representative point on the plane (often along the normal).
     //
-    // Exact convention is defined by PlaneQueryOperator<T>::centroid().
-    atlas::geometry::PlaneQueryOperator<T> op;
+    // Exact convention is defined by PlaneGeometryOperator<T>::centroid().
+    atlas::geometry::PlaneGeometryOperator<T> op;
     op.normal = atlas::raw_pointer_cast(&normal);
     op.offset = atlas::raw_pointer_cast(&offset);
     return op.centroid();
@@ -191,8 +174,8 @@ Plane<T>::bound() const noexcept {
     // - an "infinite" AABB, or
     // - a very large sentinel box.
     //
-    // The exact behavior is defined in PlaneQueryOperator<T>::bound().
-    atlas::geometry::PlaneQueryOperator<T> op;
+    // The exact behavior is defined in PlaneGeometryOperator<T>::bound().
+    atlas::geometry::PlaneGeometryOperator<T> op;
     op.normal = atlas::raw_pointer_cast(&normal);
     op.offset = atlas::raw_pointer_cast(&offset);
     return op.bound();
@@ -207,8 +190,8 @@ Plane<T>::is_valid() const noexcept {
     // - normal is finite and non-zero length
     // - offset is finite
     //
-    // Exact rules are defined by PlaneQueryOperator<T>::is_valid().
-    atlas::geometry::PlaneQueryOperator<T> op;
+    // Exact rules are defined by PlaneGeometryOperator<T>::is_valid().
+    atlas::geometry::PlaneGeometryOperator<T> op;
     op.normal = atlas::raw_pointer_cast(&normal);
     op.offset = atlas::raw_pointer_cast(&offset);
     return op.is_valid();
@@ -301,9 +284,9 @@ Plane<T>::Builder::validate() const {
     // Validate builder parameters before producing Plane<T>.
     //
     // Delegation:
-    // - Use PlaneQueryOperator<T>::is_valid() to keep a single source of truth
+    // - Use PlaneGeometryOperator<T>::is_valid() to keep a single source of truth
     //   for "valid plane" rules across the codebase.
-    atlas::geometry::PlaneQueryOperator<T> op;
+    atlas::geometry::PlaneGeometryOperator<T> op;
     op.normal = atlas::raw_pointer_cast(&_normal);
     op.offset = atlas::raw_pointer_cast(&_offset);
 
@@ -312,6 +295,196 @@ Plane<T>::Builder::validate() const {
             << "Plane::Builder validation failed: normal must be finite and non-zero; offset must be finite.";
         throw std::runtime_error("Plane::Builder: invalid parameters.");
     }
+}
+
+/* PlaneGeometryOperator<T>                                                   */
+/* ====================================================================== */
+
+template <typename T>
+atlas::math::Vector<T, 3>
+PlaneGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
+    // Closest point on plane to p using projection.
+    //
+    // Plane implicit form:
+    //   n · x + d = 0
+    //
+    // Signed distance (scaled by |n| if n not unit):
+    //   s = n · p + d
+    //
+    // Projection (assuming n is unit):
+    //   cp = p - s * n
+    //
+    // If n is not unit, the correct projection would be:
+    //   cp = p - (s / |n|^2) * n
+    //
+    // This operator assumes the provided normal is already unit-length
+    // (or that the caller accepts the scaled behavior).
+    if (!normal || !offset) return p;
+
+    const T sdev = ((*normal).dot(p) + (*offset));
+    return p - sdev * (*normal);
+}
+
+template <typename T>
+atlas::math::Vector<T, 3>
+PlaneGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&) const noexcept {
+    // Plane normal is constant everywhere.
+    if (!normal) return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
+    return *normal;
+}
+
+template <typename T>
+T
+PlaneGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
+    // Signed distance (not necessarily normalized):
+    //   sd = n · p + d
+    if (!normal || !offset) return std::numeric_limits<T>::infinity();
+    return (*normal).dot(p) + (*offset);
+}
+
+template <typename T>
+bool
+PlaneGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies on the "inside" side of the plane, allowing tolerance.
+    //
+    // Plane implicit form:
+    //   n · x + d = 0
+    //
+    // The scalar
+    //   s = n · p + d
+    // classifies the point relative to the plane:
+    //
+    // - s < 0 : point is on the negative side of the plane
+    // - s = 0 : point lies exactly on the plane
+    // - s > 0 : point is on the positive side of the plane
+    //
+    // This operator defines "inside" as:
+    //   s <= tolerance
+    //
+    // Interpretation:
+    // - tolerance = 0:
+    //     inside includes the plane itself and the entire negative half-space
+    //
+    // - tolerance > 0:
+    //     the accepted half-space is expanded slightly into the positive side,
+    //     which is useful for numerical robustness near the plane
+    //
+    // - tolerance < 0:
+    //     the accepted region shrinks and becomes stricter
+    //
+    // Important note:
+    // - This is a half-space test, not a bounded-volume test.
+    // - For a plane, "inside" always means one side of the infinite plane.
+    //
+    // Fallback policy:
+    // - If either normal or offset is missing, there is no valid plane equation,
+    //   so return false.
+    if (!normal || !offset) return false;
+
+    // Evaluate the plane equation at p and compare against tolerance.
+    return (*normal).dot(p) + (*offset) <= tolerance;
+}
+
+template <typename T>
+bool
+PlaneGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    // Return whether point p lies on the plane surface within the given tolerance.
+    //
+    // Strategy:
+    // - Reuse signed_distance(p), which for this operator is:
+    //
+    //     sd = n · p + d
+    //
+    //   Note:
+    //   - This is the signed plane equation value.
+    //   - It is the true geometric signed distance only if the normal is unit length.
+    //   - If the normal is not normalized, this is still a consistent signed
+    //     classification value, just scaled by |n|.
+    //
+    // Surface test:
+    //   |sd| <= tolerance
+    //
+    // Meaning:
+    // - tolerance = 0:
+    //     only points exactly satisfying the plane equation count as on-surface
+    //
+    // - tolerance > 0:
+    //     accept a thin slab around the plane, which helps with floating-point
+    //     robustness and near-surface classification
+    //
+    // Design benefit:
+    // - This keeps the surface test fully consistent with the same signed-distance
+    //   convention used elsewhere by the operator.
+    return std::abs(signed_distance(p)) <= tolerance;
+}
+template <typename T>
+atlas::math::Vector<T, 3>
+PlaneGeometryOperator<T>::centroid() const noexcept {
+    // Infinite plane has no unique centroid.
+    // This implementation returns the origin as a stable placeholder.
+    return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
+}
+
+template <typename T>
+atlas::spatial::AxisAlignedBoundingBox<T>
+PlaneGeometryOperator<T>::bound() const noexcept {
+    // Infinite plane has an infinite AABB.
+    //
+    // Implementation uses numeric extremes as a sentinel "infinite" box.
+    const T lo = std::numeric_limits<T>::lowest();
+    const T hi = std::numeric_limits<T>::max();
+    return atlas::spatial::AxisAlignedBoundingBox<T>(
+        atlas::math::Vector<T, 3>(lo, lo, lo),
+        atlas::math::Vector<T, 3>(hi, hi, hi));
+}
+
+template <typename T>
+bool
+PlaneGeometryOperator<T>::is_valid() const noexcept {
+    // Validity rules:
+    // - both pointers must be present
+    // - normal must be non-zero length
+    // - offset must be finite
+    if (!normal || !offset) return false;
+
+    const T n2 = (*normal).length_squared();
+    return (n2 > T(0)) && std::isfinite(static_cast<double>(*offset));
+}
+
+template <typename T>
+HitSurface<T>
+PlaneGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexcept {
+    HitSurface<T> result {};
+    if (!normal || !offset) return result;
+
+    const atlas::math::Vector<T, 3>& n = *normal;
+    const T d                          = *offset;
+    const T denom = n.dot(ray.direction);
+    const T numer = -(n.dot(ray.origin) + d);
+
+    if (denom == T(0)) {
+        if (numer != T(0)) return result;
+        result.is_intersecting = true;
+        result.distance        = T(0);
+        result.point           = ray.origin;
+        result.normal          = n;
+        return result;
+    }
+
+    const T t = numer / denom;
+    if (t < T(0)) return result;
+
+    result.is_intersecting = true;
+    result.distance        = t;
+    result.point           = ray.point_at(t);
+    result.normal          = n;
+    return result;
+}
+
+template <typename T>
+HitSurface<T>
+PlaneGeometryOperator<T>::operator()(const atlas::spatial::Ray<T>& ray) const noexcept {
+    return trace(ray);
 }
 
 } // namespace atlas::geometry

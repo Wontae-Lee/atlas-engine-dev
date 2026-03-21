@@ -8,16 +8,16 @@
 namespace atlas::spatial {
 
 template <typename T>
-BvhTraceOperator<T>
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::make_trace_operator() const {
+BvhGeometryOperator<T>
+SurfaceAreaHeuristicBoundingVolumeHierachy<T>::make_geometry_operator() const {
     // Like the LBVH version, this returns a non-owning view over BVH storage.
-    BvhTraceOperator<T> op;
+    BvhGeometryOperator<T> op;
 
-    op.nodes   = atlas::raw_pointer_cast(d_nodes.data());
-    op.indices = atlas::raw_pointer_cast(d_indices.data());
-    op.tris    = atlas::raw_pointer_cast(d_triangles.data());
+    op.bvh_nodes   = atlas::raw_pointer_cast(d_nodes.data());
+    op.bvh_indices = atlas::raw_pointer_cast(d_indices.data());
+    op.bvh_tris    = atlas::raw_pointer_cast(d_triangles.data());
 
-    op.root = _root;
+    op.bvh_root = _root;
 
     return op;
 }
@@ -128,7 +128,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleCo
         0,
         n,
         [this, &triangles](int i) {
-            geometry::TriangleQueryOperator<T> tri_op;
+            geometry::TriangleGeometryOperator<T> tri_op;
             // TriangleContainer4 exposes one primitive through four packed slots;
             // the query operator consumes raw addresses and computes geometry
             // properties without materializing another triangle object.
@@ -147,16 +147,16 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleCo
     // Preallocate the worst-case full binary tree size.
     h_nodes.resize(std::max(1, 2 * n - 1), BVHNode<T>());
 
-    // build_recursive writes nodes into h_nodes linearly. next_node is the
-    // monotonic allocator cursor for that array and starts at the future root.
+    // build_recursive writes bvh_nodes into h_nodes linearly. next_node is the
+    // monotonic allocator cursor for that array and starts at the future bvh_root.
     int next_node = 0;
 
-    // The root covers the full primitive permutation range [0, n). Recursive
+    // The bvh_root covers the full primitive permutation range [0, n). Recursive
     // calls will keep partitioning that index interval into smaller subranges.
     _root = build_recursive(0, n, next_node);
 
     // Worst-case space was reserved up front; shrink back to the number of
-    // nodes actually emitted by the recursive builder.
+    // bvh_nodes actually emitted by the recursive builder.
     h_nodes.resize(next_node);
 
     // Device buffers mirror the compacted host arrays after construction.
@@ -188,14 +188,14 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
     // - incremented each time a new node is allocated
     // ------------------------------------------------------------------
 
-    // Reserve one node slot for the current subtree root.
+    // Reserve one node slot for the current subtree bvh_root.
     // This node may later become either:
     // - a leaf, or
     // - an internal node with two children.
     const int node_index = node_count++;
 
     // Ensure host node buffer is large enough to hold the newly allocated node.
-    // Recursive construction may discover nodes in depth-first order, so we grow
+    // Recursive construction may discover bvh_nodes in depth-first order, so we grow
     // on demand rather than precomputing the exact size here.
     if (node_index >= static_cast<int>(h_nodes.size())) {
         h_nodes.resize(node_index + 1);
@@ -523,7 +523,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(int start, const 
     node.left  = left_child;
     node.right = right_child;
 
-    // Internal nodes do not directly reference a primitive range.
+    // Internal bvh_nodes do not directly reference a primitive range.
     node.start = -1;
     node.count = 0;
 
@@ -545,11 +545,11 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::reset() {
     // - device side
     //
     // After reset():
-    // - there are no nodes
+    // - there are no bvh_nodes
     // - there is no primitive permutation
     // - there are no cached centroids/bounds
     // - the device mirrors are empty
-    // - root index is invalid
+    // - bvh_root index is invalid
     // ------------------------------------------------------------------
 
     // Host-side build products.
@@ -563,7 +563,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::reset() {
     d_indices.clear();
     d_triangles.clear();
 
-    // No valid root exists in the reset state.
+    // No valid bvh_root exists in the reset state.
     _root = -1;
 }
 }

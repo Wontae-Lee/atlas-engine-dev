@@ -21,7 +21,7 @@
 #include <atlas/geometry/geometry.h>
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/geometry/plane.h>
-#include <atlas/geometry/query_operator.h>
+#include <atlas/geometry/geometry_operator.h>
 #include <atlas/geometry/sphere.h>
 #include <atlas/geometry/triangle.h>
 #include <atlas/geometry/triangle_mesh.h>
@@ -78,7 +78,7 @@
 #include <atlas/spatial/bounding_volume_hierarchy/node.h>
 #include <atlas/spatial/bounding_volume_hierarchy/sah_bvh.h>
 #include <atlas/spatial/ray.h>
-#include <atlas/spatial/trace_operator.h>
+#include <atlas/geometry/geometry_operator.h>
 #include <atlas/sync/sync.h>
 #include <atlas/sync/sync_operator.h>
 #include <atlas/system/system.h>

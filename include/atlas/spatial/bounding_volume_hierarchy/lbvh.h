@@ -41,12 +41,12 @@ public:
     build(const HostBuffer<TriangleContainer4<T>>& triangles) override;
 
     /**
-     * @brief Expose the built hierarchy as a traversal operator.
+     * @brief Expose the built hierarchy as a traversal geometry operator.
      *
-     * @return Non-owning trace operator over the internal buffers.
+     * @return Non-owning geometry operator over the internal buffers.
      */
-    ATLAS_HOST BvhTraceOperator<T>
-    make_trace_operator() const override;
+    ATLAS_HOST BvhGeometryOperator<T>
+    make_geometry_operator() const override;
 
     /// Clear all host/device buffers and mark the hierarchy as empty.
     ATLAS_HOST ATLAS_FORCE_INLINE void

@@ -242,7 +242,7 @@ Domain<T>::Builder::with_geometry(const GeometryHostPtr<T>& geometry) noexcept {
     // ------------------------------------------------------------
     // Configures the builder's bounds from a geometry object.
     // ------------------------------------------------------------
-    auto op       = geometry->make_query_operator();
+    auto op       = geometry->make_geometry_operator();
     auto bound    = op.bound();
     _lower_corner = bound.lower_corner;
     _upper_corner = bound.upper_corner;

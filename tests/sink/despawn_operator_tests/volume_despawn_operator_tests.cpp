@@ -5,9 +5,9 @@
 
 using namespace atlas;
 
-TEST(VolumeDespawnOperator, DespawnReturnsTrueForInteriorParticleFromSphereQueryOperator) {
+TEST(VolumeDespawnOperator, DespawnReturnsTrueForInteriorParticleFromSphereGeometryOperator) {
     const geometry::Sphere<double> sphere = test::make_sphere();
-    const auto query                      = test::make_sphere_query_operator(sphere);
+    const auto query                      = test::make_sphere_geometry_operator(sphere);
 
     EXPECT_TRUE(system::VolumeDespawnOperator<double> {}.despawn(
         query,
@@ -15,9 +15,9 @@ TEST(VolumeDespawnOperator, DespawnReturnsTrueForInteriorParticleFromSphereQuery
         0.0));
 }
 
-TEST(VolumeDespawnOperator, DespawnReturnsFalseForExteriorParticleFromBoxQueryOperator) {
+TEST(VolumeDespawnOperator, DespawnReturnsFalseForExteriorParticleFromBoxGeometryOperator) {
     const geometry::Box<double> box = test::make_box();
-    const auto query                = test::make_box_query_operator(box);
+    const auto query                = test::make_box_geometry_operator(box);
 
     EXPECT_FALSE(system::VolumeDespawnOperator<double> {}.despawn(
         query,
@@ -27,7 +27,7 @@ TEST(VolumeDespawnOperator, DespawnReturnsFalseForExteriorParticleFromBoxQueryOp
 
 TEST(VolumeDespawnOperator, DespawnUsesToleranceBandForNearInteriorParticle) {
     const geometry::Box<double> box = test::make_box();
-    const auto query                = test::make_box_query_operator(box);
+    const auto query                = test::make_box_geometry_operator(box);
 
     EXPECT_TRUE(system::VolumeDespawnOperator<double> {}.despawn(
         query,
@@ -37,7 +37,7 @@ TEST(VolumeDespawnOperator, DespawnUsesToleranceBandForNearInteriorParticle) {
 
 TEST(DespawnOperator, DespawnDispatchesByRuntimeTypeForSingleParticle) {
     const geometry::Box<double> box = test::make_box();
-    const auto query                = test::make_box_query_operator(box);
+    const auto query                = test::make_box_geometry_operator(box);
     const auto particle             = Vector3<double>(1.0, 0.0, 0.0);
 
     EXPECT_TRUE(system::DespawnOperator<double>(system::DespawnType::Surface).despawn(
