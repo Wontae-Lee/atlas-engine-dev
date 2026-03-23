@@ -4,6 +4,8 @@ namespace atlas::system {
 
 template <typename T>
 System<T>::System(const size_t buffer_size)
+    // Construct storage first, then immediately bind the unique probe so the
+    // system exposes a ready-to-use runtime view from its first observable state.
     : _particle_data(atlas::make_host_shared<ParticleData<T>>(buffer_size))
     , _particle_probe(_particle_data->make_device_probe()) {
 }

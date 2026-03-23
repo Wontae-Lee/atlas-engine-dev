@@ -133,6 +133,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
+    /**
+     * @brief Return the runtime codec tag for this no-op implementation.
+     */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE CodecType
     type() const noexcept override;
 };

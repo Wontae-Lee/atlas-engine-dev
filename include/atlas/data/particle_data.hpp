@@ -7,17 +7,22 @@ namespace atlas::system {
 template <typename T>
 bool
 ParticleDeviceProbe<T>::empty() const noexcept {
+    // `particle_count` tracks the active prefix length, not allocation size.
     return particle_count <= 0;
 }
 
 template <typename T>
 bool
 ParticleDeviceProbe<T>::valid() const noexcept {
+    // A probe is considered usable once its raw pointers have been bound to
+    // storage and it exposes at least one active particle slot.
     return pos != nullptr && particle_count > 0;
 }
 
 template <typename T>
 ParticleData<T>::ParticleData(const size_t buffer_size) {
+    // All particle attributes are stored as parallel arrays with identical
+    // capacity so runtime systems can index them consistently.
     _buffer_size = buffer_size;
     d_pos.resize(buffer_size);
     d_vel.resize(buffer_size);
@@ -28,6 +33,8 @@ ParticleData<T>::ParticleData(const size_t buffer_size) {
 template <typename T>
 ParticleDeviceProbe<T>
 ParticleData<T>::make_device_probe() noexcept {
+    // Atlas expects one canonical probe per owning ParticleData instance so raw
+    // pointers do not proliferate beyond the system component managing them.
     ++_probe_count;
 
     ATLAS_ERROR_IF(_probe_count > 1)
@@ -36,6 +43,8 @@ ParticleData<T>::make_device_probe() noexcept {
         << "and the total number of device probes must be exactly one."
         << "\n";
 
+    // Expose raw pointers into each owned buffer; the probe itself remains a
+    // lightweight non-owning view suitable for kernels and runtime operators.
     ParticleDeviceProbe<T> probe {};
     probe.pos            = atlas::raw_pointer_cast(d_pos.data());
     probe.vel            = atlas::raw_pointer_cast(d_vel.data());
@@ -80,6 +89,8 @@ inline int
 count_selected_particles(const DeviceBuffer<int>& selection_mask,
                          const DeviceBuffer<int>& selection_offsets,
                          const int particle_count) {
+    // Compact/selection pipelines store the total count in the final
+    // mask+exclusive-scan pair, so only the tail values must be copied back.
     if (particle_count <= 0) return 0;
 
     const int* selection_mask_ptr    = atlas::raw_pointer_cast(selection_mask.data());

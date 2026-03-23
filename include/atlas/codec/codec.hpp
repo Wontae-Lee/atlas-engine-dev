@@ -28,7 +28,9 @@ Codec<T>::update(const ParticleDeviceProbe<T>& particle_probe,
                  const DomainDeviceProbe<T>& domain_probe,
                  const SpatialHashingProbe<T>& searcher_probe,
                  CodecDeviceProbe<T>& codec_probe) {
-
+    // The default lifecycle is "refresh outputs from current state, then apply
+    // them back if the codec has a decoding stage". Concrete codecs can
+    // override update() if they need a different orchestration.
     this->encode(particle_probe, domain_probe, searcher_probe, codec_probe);
     this->decode(particle_probe, domain_probe, searcher_probe, codec_probe);
 }
@@ -41,10 +43,9 @@ Codec<T>::make_device_probe() noexcept {
     // The returned probe must be trivially copyable so it can be passed to
     // CUDA kernels / device lambdas without owning memory.
     //
-    // Important: the probe stores raw pointers into this object's buffers,
-    // so it is only valid as long as:
-    // - this Codec instance remains particle_count, and
-    // - internal buffers are not resized/reset in a way that changes addresses.
+    // Important: the probe stores raw pointers into this object's buffers, so
+    // it is only valid while the codec object stays alive and its internal
+    // buffers are not rebuilt in a way that changes addresses.
 
     // ------------------------------------------------------------
     // Diagnostic guard: enforce a single probe instance.
@@ -67,7 +68,7 @@ Codec<T>::make_device_probe() noexcept {
     // ------------------------------------------------------------
     // Attach raw device pointers for kernel-side access.
     // ------------------------------------------------------------
-    // allocated_system is a per-cell array (size == domain->number_of_cells()).
+    // `allocated_system` is a per-cell array (size == domain->number_of_cells()).
     // Typical usage pattern in kernels:
     // - treat each cell as an independent slot,
     // - read/modify the allocation state quickly with O(1) indexing.
@@ -97,8 +98,8 @@ Codec<T>::reset() noexcept {
     // - and provides a deterministic starting state for subsequent kernel passes.
     const auto num_of_cells = _domain->number_of_cells();
 
-    // Resize the device buffer to exactly one element per cell and fill with zeros.
-    // If the buffer already has the correct size, this acts as a clear/reset.
+    // Resize the device buffer to exactly one element per cell and fill with
+    // zeros. If the buffer already has the correct size, this acts as a clear.
     d_allocated_system.resize(num_of_cells, 0);
 }
 

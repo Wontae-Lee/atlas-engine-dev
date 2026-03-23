@@ -29,6 +29,8 @@ DeepLearningCodec<T>::DeepLearningCodec(const DomainHostPtr<T>& domain)
     //
     // We explicitly reset to ensure this derived codec starts from a clean,
     // known state even if the base class behavior changes (defensive init).
+    // This is especially useful while the class is still a stub and does not
+    // yet own additional model/runtime buffers of its own.
     this->reset();
 }
 
@@ -132,6 +134,8 @@ DeepLearningCodec<T>::Builder::build() const {
     // Construct a DeepLearningCodec by value after validation.
     //
     // Useful when embedding the codec directly in other objects or for tests.
+    // Once model runtime handles are introduced, this path may become mainly a
+    // convenience wrapper over move construction.
     validate();
     return DeepLearningCodec<T>(_domain);
 }

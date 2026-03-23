@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace atlas::test {
 
@@ -92,6 +93,22 @@ point_buffers_near(const ContainerA& a, const ContainerB& b, T eps) {
         if (!vec_near(a[i], b[i], eps)) return false;
     }
     return true;
+}
+
+template <typename T>
+static ATLAS_FORCE_INLINE std::vector<T>
+copy_device_range(const T* src, std::size_t count) {
+    std::vector<T> host(count);
+    if (count > 0) {
+        atlas::copy_device_to_host(src, host.data(), count);
+    }
+    return host;
+}
+
+template <typename T>
+static ATLAS_FORCE_INLINE std::vector<T>
+copy_device_buffer(const atlas::DeviceBuffer<T>& src) {
+    return copy_device_range(atlas::raw_pointer_cast(src.data()), src.size());
 }
 
 struct Foo {

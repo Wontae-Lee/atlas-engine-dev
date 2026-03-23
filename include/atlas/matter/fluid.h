@@ -25,20 +25,15 @@ namespace atlas::system {
  *
  * ## Parallel buffers
  * In addition to particles, `Fluid` stores:
- * - an `amounts` buffer,
+ * - a `mole_fractions` buffer (normalized, sums to 1),
  * - a `generators` buffer.
  *
  * These are all parallel arrays:
- * - `_particles[i]` corresponds to `_amounts[i]` and `_generators[i]`
+ * - `_particles[i]` corresponds to `_mole_fractions[i]` and `_generators[i]`
  * - All buffers always represent the same logical length and indexing domain
  *
- * The semantic meaning of `amount` is intentionally left **simulation-specific**. Common uses include:
- * - macroparticle multiplicity / number of represented molecules
- * - injected amount / particle weight for source terms
- * - mixture fraction / mass fraction scalars carried alongside particles
- * - per-particle scaling for sampling or collision frequency adjustments
- *
- * By default, builder APIs that do not accept an explicit `amount` will assign `T(1)` to the new entry.
+ * Mole fractions represent the normalized proportion of each species in the mixture,
+ * used for stochastic species assignment during particle emission.
  *
  * ## Construction
  * `Fluid` is intended to be constructed through its nested fluent @ref Builder, which provides:
@@ -102,14 +97,14 @@ public:
     // ------------------------------------------------------------
 
     /**
-     * @brief Number of particles currently stored.
+     * @brief Number of species currently stored.
      *
-     * @return Count of particles (and also the length of @ref amounts() and @ref generators()).
+     * @return Count of species (and also the length of @ref mole_fractions() and @ref generators()).
      *
      * @note
      * This returns the number of entries in the parallel buffers.
      * The invariants expected by this type require:
-     * - `particles().size() == amounts().size() == generators().size()`
+     * - `particles().size() == mole_fractions().size() == generators().size()`
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE int
     size() const noexcept;
@@ -150,38 +145,40 @@ public:
      *
      * @warning
      * If you modify the particle buffer directly, you must maintain the invariant:
-     * `particles().size() == amounts().size() == generators().size()`.
+     * `particles().size() == mole_fractions().size() == generators().size()`.
      * Prefer using the @ref Builder for construction and controlled population.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<FluidicParticleHostPtr<T>>&
     particles() noexcept;
 
     /**
-     * @brief Immutable access to per-particle amounts (parallel to @ref particles()).
+     * @brief Immutable access to per-species mole fractions (parallel to @ref particles()).
      *
      * @details
-     * Returns a const reference to the amount buffer. The amount at index `i`
+     * Returns a const reference to the mole fraction buffer. The mole fraction at index `i`
      * corresponds to the particle at index `i` in @ref particles().
+     * Mole fractions are normalized and sum to 1.
      *
-     * @return Const reference to amount buffer.
+     * @return Const reference to mole fraction buffer.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<T>&
-    amounts() const noexcept;
+    mole_fractions() const noexcept;
 
     /**
-     * @brief Mutable access to per-particle amounts (parallel to @ref particles()).
+     * @brief Mutable access to per-species mole fractions (parallel to @ref particles()).
      *
      * @details
-     * Returns a mutable reference to the amount buffer. The amount at index `i`
+     * Returns a mutable reference to the mole fraction buffer. The mole fraction at index `i`
      * corresponds to the particle at index `i` in @ref particles().
      *
-     * @return Mutable reference to amount buffer.
+     * @return Mutable reference to mole fraction buffer.
      *
      * @warning
-     * If you modify amounts directly, ensure indices remain aligned with @ref particles().
+     * If you modify mole fractions directly, ensure indices remain aligned with @ref particles()
+     * and that they sum to 1.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<T>&
-    amounts() noexcept;
+    mole_fractions() noexcept;
 
     /**
      * @brief Immutable access to per-species velocity generators.
@@ -211,29 +208,6 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<GeneratorHostPtr<T>>&
     generators() noexcept;
 
-    /**
-     * @brief Returns whether @ref amounts() forms a normalized mixture ratio vector.
-     *
-     * @details
-     * This predicate is useful when a `Fluid` is used as a species-mixture descriptor
-     * for source emission rather than as a generic weighted particle list.
-     *
-     * The stored amounts are considered normalized when:
-     * - the buffer is non-empty,
-     * - every amount is finite,
-     * - every amount is non-negative,
-     * - the total sum differs from `1` by at most `eps`.
-     *
-     * @param eps Absolute tolerance used for the total-sum check.
-     * @return `true` if the amount buffer satisfies the normalized-ratio invariant,
-     *         otherwise `false`.
-     *
-     * @note
-     * This function does not mutate the object and does not perform renormalization.
-     * It is only a structural/semantic check over the currently stored values.
-     */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    normalized(T eps = atlas::eps) const noexcept;
 
 private:
     /// @brief Allow @ref Builder to populate internals without exposing mutators publicly.
@@ -250,13 +224,13 @@ private:
     HostBuffer<FluidicParticleHostPtr<T>> _particles;
 
     /**
-     * @brief Per-particle amount/weight buffer.
+     * @brief Per-species mole fraction buffer (normalized, sums to 1).
      *
      * @details
      * Maintains a 1:1 index correspondence with @ref _particles.
-     * The meaning of "amount" is domain-specific and chosen by the simulation.
+     * Mole fractions represent the relative proportion of each species in the mixture.
      */
-    HostBuffer<T> _amounts;
+    HostBuffer<T> _mole_fractions;
 
     /**
      * @brief Per-species velocity-generator buffer.
@@ -282,24 +256,23 @@ private:
  *
  * ## Parallel buffers
  * Internally, the builder maintains:
- * - `_particles[i]`  : `FluidicParticleHostPtr<T>` (shared pointer to a particle)
- * - `_amounts[i]`    : `T` (amount associated with that particle)
- * - `_generators[i]` : `GeneratorHostPtr<T>` (velocity generator for that particle/species)
+ * - `_particles[i]`      : `FluidicParticleHostPtr<T>` (shared pointer to a particle)
+ * - `_mole_fractions[i]` : `T` (mole fraction for that species)
+ * - `_generators[i]`     : `GeneratorHostPtr<T>` (velocity generator for that particle/species)
  *
  * All buffers are intended to remain the same length at all times.
  *
- * ## Default amount behavior
- * Many `add_*` overloads do not require an explicit `amount`. In those cases:
- * - the builder appends `T(1)` as the amount for the newly added particle(s)
+ * ## Default mole fraction behavior
+ * Many `add_*` overloads do not require an explicit mole fraction. In those cases:
+ * - the builder will automatically normalize all mole fractions to sum to 1 at build time
  *
  * ## Validation policies
  * The builder supports independent policy switches:
  * - @ref require_non_empty : reject building if no particles were added
  * - @ref reject_null_particles : reject building if any particle pointer is null
- * - @ref reject_negative_amounts : reject building if any amount is negative
  *
  * Validation is applied in @ref validate and is triggered by @ref build and
- * @ref make_host_shared.
+ * @ref make_host_shared. Mole fractions are automatically normalized at build time.
  *
  * ---
  *
@@ -318,9 +291,9 @@ public:
      * Creates an empty builder with default policies:
      * - `_require_non_empty = false` (empty fluids allowed)
      * - `_reject_null_particles = true` (null pointers rejected by default)
-     * - `_reject_negative_amounts = true` (negative amounts rejected by default)
      *
      * No particles are added and no allocation is performed beyond buffer defaults.
+     * Mole fractions will be automatically normalized at build time.
      */
     Builder() = default;
 
@@ -357,56 +330,50 @@ public:
     // ------------------------------------------------------------
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particle(const FluidicParticle<T>& p);
+    add_species(const FluidicParticle<T>& p);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particle(const FluidicParticle<T>& p, T amount);
+    add_species(const FluidicParticle<T>& p, T mole_fraction);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particle(const FluidicParticle<T>& p, T amount, GeneratorHostPtr<T> generator);
+    add_species(const FluidicParticle<T>& p, T mole_fraction, GeneratorHostPtr<T> generator);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particle(FluidicParticleHostPtr<T> p);
+    add_species(FluidicParticleHostPtr<T> p);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particle(FluidicParticleHostPtr<T> p, T amount);
+    add_species(FluidicParticleHostPtr<T> p, T mole_fraction);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particle(FluidicParticleHostPtr<T> p, T amount, GeneratorHostPtr<T> generator);
+    add_species(FluidicParticleHostPtr<T> p, T mole_fraction, GeneratorHostPtr<T> generator);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particles(const HostBuffer<FluidicParticle<T>>& ps);
+    add_species_bulk(const HostBuffer<FluidicParticle<T>>& ps);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particles(const HostBuffer<FluidicParticle<T>>& ps, const HostBuffer<T>& amounts);
+    add_species_bulk(const HostBuffer<FluidicParticle<T>>& ps, const HostBuffer<T>& mole_fractions);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particles(const HostBuffer<FluidicParticle<T>>& ps,
-                  const HostBuffer<T>& amounts,
-                  const HostBuffer<GeneratorHostPtr<T>>& generators);
+    add_species_bulk(const HostBuffer<FluidicParticle<T>>& ps,
+                     const HostBuffer<T>& mole_fractions,
+                     const HostBuffer<GeneratorHostPtr<T>>& generators);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particles(const HostBuffer<FluidicParticleHostPtr<T>>& ps);
+    add_species_bulk(const HostBuffer<FluidicParticleHostPtr<T>>& ps);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particles(const HostBuffer<FluidicParticleHostPtr<T>>& ps, const HostBuffer<T>& amounts);
+    add_species_bulk(const HostBuffer<FluidicParticleHostPtr<T>>& ps, const HostBuffer<T>& mole_fractions);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_particles(const HostBuffer<FluidicParticleHostPtr<T>>& ps,
-                  const HostBuffer<T>& amounts,
-                  const HostBuffer<GeneratorHostPtr<T>>& generators);
+    add_species_bulk(const HostBuffer<FluidicParticleHostPtr<T>>& ps,
+                     const HostBuffer<T>& mole_fractions,
+                     const HostBuffer<GeneratorHostPtr<T>>& generators);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     require_non_empty(bool on = true) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     reject_null_particles(bool on = true) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    reject_negative_amounts(bool on = true) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    require_normalized_amounts(bool on = true) noexcept;
 
 private:
     /**
@@ -419,13 +386,10 @@ private:
      *   - if true, `_particles.size()` must be > 0
      * - `_reject_null_particles`:
      *   - if true, no entry in `_particles` may be null
-     * - `_reject_negative_amounts`:
-     *   - if true, all entries in `_amounts` must be >= 0
-     * - `_require_normalized_amounts`:
-     *   - if true, `_amounts` must be non-empty, finite, non-negative, and sum to 1
      *
      * It is also responsible for basic structural invariants:
-     * - `_particles.size() == _amounts.size() == _generators.size()`
+     * - `_particles.size() == _mole_fractions.size() == _generators.size()`
+     * - Normalizes mole fractions to sum to 1
      *
      * @throws std::runtime_error if any check fails.
      */
@@ -433,13 +397,13 @@ private:
     validate() const;
 
 private:
-    /// @brief Accumulated particle pointers (parallel to @ref _amounts).
+    /// @brief Accumulated particle pointers (parallel to @ref _mole_fractions).
     HostBuffer<FluidicParticleHostPtr<T>> _particles;
 
-    /// @brief Accumulated amounts (parallel to @ref _particles).
-    HostBuffer<T> _amounts;
+    /// @brief Accumulated mole fractions (parallel to @ref _particles).
+    HostBuffer<T> _mole_fractions;
 
-    /// @brief Accumulated generators (parallel to @ref _particles and @ref _amounts).
+    /// @brief Accumulated generators (parallel to @ref _particles and @ref _mole_fractions).
     HostBuffer<GeneratorHostPtr<T>> _generators;
 
     /// @brief Policy: reject building empty fluids when enabled.
@@ -447,12 +411,6 @@ private:
 
     /// @brief Policy: reject null pointers in `_particles` when enabled.
     bool _reject_null_particles = true;
-
-    /// @brief Policy: reject negative values in `_amounts` when enabled.
-    bool _reject_negative_amounts = true;
-
-    /// @brief Policy: require `_amounts` to form a normalized ratio vector.
-    bool _require_normalized_amounts = false;
 };
 
 } // namespace atlas::system
