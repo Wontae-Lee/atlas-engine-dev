@@ -39,7 +39,6 @@ Sphere<T>::builder() noexcept {
     return Builder {};
 }
 
-
 template <typename T>
 GeometryOperator<T>
 Sphere<T>::make_geometry_operator() const {
@@ -428,10 +427,10 @@ SphereGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
     const atlas::math::Vector<T, 3>& c = *center;
     const T r                          = *radius;
     const atlas::math::Vector<T, 3> oc = ray.origin - c;
-    const T a    = ray.direction.length_squared();
-    const T b    = T(2) * oc.dot(ray.direction);
-    const T cc   = oc.length_squared() - r * r;
-    const T disc = b * b - T(4) * a * cc;
+    const T a                          = ray.direction.length_squared();
+    const T b                          = T(2) * oc.dot(ray.direction);
+    const T cc                         = oc.length_squared() - r * r;
+    const T disc                       = b * b - T(4) * a * cc;
     if (disc < T(0)) return result;
 
     const T sqrt_disc = static_cast<T>(std::sqrt(disc));
@@ -444,11 +443,11 @@ SphereGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
     if (t0 >= T(0)) t = t0;
     if (t1 >= T(0) && t1 < t) t = t1;
 
-    result.is_intersecting = true;
-    result.distance        = t;
-    result.point           = ray.point_at(t);
+    result.is_intersecting      = true;
+    result.distance             = t;
+    result.point                = ray.point_at(t);
     atlas::math::Vector<T, 3> n = result.point - c;
-    const T len2 = n.length_squared();
+    const T len2                = n.length_squared();
     if (len2 > T(0)) n *= (T(1) / static_cast<T>(std::sqrt(len2)));
     else
         n = atlas::math::Vector<T, 3>(T(1), T(0), T(0));

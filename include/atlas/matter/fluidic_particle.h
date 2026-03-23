@@ -501,7 +501,6 @@ private:
 
     /// @brief Optional: particle charge.
     std::optional<int> _charge;
-
 };
 
 } // namespace atlas::system

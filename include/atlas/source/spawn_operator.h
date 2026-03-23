@@ -25,10 +25,10 @@ enum class SpawnType : int {
  */
 template <typename T>
 struct SurfaceSpawnOperator final {
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
     spawn(const atlas::geometry::GeometryOperator<T>& query,
           const Vector3<T>& particle,
-          T tolerance = T(0)) const noexcept;
+          T tolerance = T(0)) noexcept;
 };
 
 /**
@@ -41,10 +41,10 @@ struct SurfaceSpawnOperator final {
  */
 template <typename T>
 struct VolumeSpawnOperator final {
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
     spawn(const atlas::geometry::GeometryOperator<T>& query,
           const Vector3<T>& particle,
-          T tolerance = T(0)) const noexcept;
+          T tolerance = T(0)) noexcept;
 };
 
 /**
@@ -63,8 +63,7 @@ struct SpawnOperator final {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     SpawnOperator() noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    explicit SpawnOperator(SpawnType type) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit SpawnOperator(SpawnType type) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     SpawnOperator(const SpawnOperator& other) noexcept;

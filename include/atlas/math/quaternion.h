@@ -188,11 +188,9 @@ public:
     Quaternion(const Quaternion&) noexcept = default;
     ~Quaternion() noexcept                 = default;
     Quaternion&
-    operator=(const Quaternion&) noexcept
-        = default;
+    operator=(const Quaternion&) noexcept = default;
     Quaternion&
-    operator=(Quaternion&&) noexcept
-        = default;
+    operator=(Quaternion&&) noexcept = default;
 
     /**
      * @brief Creates a quaternion from axis-angle (factory).

@@ -54,8 +54,8 @@
  *   imply internal locking.
  */
 
-#include <atlas/container/container.h>
 #include <atlas/buffer/device_buffer.h>
+#include <atlas/container/container.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
@@ -71,13 +71,13 @@ namespace atlas ::geometry {
 template <typename T>
 struct TriangleMeshGeometryOperator {
     const atlas::math::Vector<T, 3>* vertices = nullptr;
-    const int* indices = nullptr;
-    int triangle_count = 0;
+    const int* indices                        = nullptr;
+    int triangle_count                        = 0;
 
     const atlas::spatial::BVHNode<T>* bvh_nodes = nullptr;
-    const int* bvh_indices = nullptr;
-    const TriangleContainer4<T>* bvh_tris = nullptr;
-    int bvh_root = -1;
+    const int* bvh_indices                      = nullptr;
+    const TriangleContainer4<T>* bvh_tris       = nullptr;
+    int bvh_root                                = -1;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     solid_angle(const atlas::math::Vector<T, 3>& p,
@@ -182,8 +182,7 @@ public:
      * @brief Default constructor (empty mesh).
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
-    TriangleMesh() noexcept
-        = default;
+    TriangleMesh() noexcept = default;
 
     /**
      * @brief Construct from a triangle buffer (copy).
@@ -220,9 +219,8 @@ public:
     operator=(const TriangleMesh&)
         = default;
     TriangleMesh&
-    operator=(TriangleMesh&&) noexcept
-        = default;
-    ~TriangleMesh() override = default;
+    operator=(TriangleMesh&&) noexcept = default;
+    ~TriangleMesh() override           = default;
 
     /**
      * @brief Replace triangle storage (copy).

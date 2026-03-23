@@ -71,7 +71,7 @@ namespace atlas::geometry {
 template <typename T>
 struct PlaneGeometryOperator {
     const atlas::math::Vector<T, 3>* normal = nullptr;
-    const T* offset = nullptr;
+    const T* offset                         = nullptr;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
@@ -317,7 +317,7 @@ public:
      * @return `true` if the point is classified as on the plane surface.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance ) const noexcept override;
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Return a representative "centroid" for the plane.

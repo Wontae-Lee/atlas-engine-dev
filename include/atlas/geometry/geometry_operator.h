@@ -28,8 +28,10 @@ struct GeometryOperator {
         TriangleMeshGeometryOperator<T> triangle_mesh;
     };
 
-    ATLAS_HOST GeometryOperator() noexcept;
-    ATLAS_HOST GeometryOperator(const GeometryOperator& other) noexcept;
+    ATLAS_HOST
+    GeometryOperator() noexcept;
+    ATLAS_HOST
+    GeometryOperator(const GeometryOperator& other) noexcept;
 
     ATLAS_HOST GeometryOperator&
     operator=(const GeometryOperator& other) noexcept;

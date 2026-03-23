@@ -13,7 +13,7 @@ namespace atlas {
 namespace detail {
 
     template <typename InputIt, typename OutputIt, typename T, typename BinaryOp>
-    ATLAS_FORCE_INLINE OutputIt
+    OutputIt
     exclusive_scan_host_impl(InputIt first, InputIt last,
                              OutputIt result,
                              T init,
@@ -47,7 +47,7 @@ namespace detail {
     }
 
     template <typename InputIt, typename OutputIt, typename T, typename BinaryOp>
-    ATLAS_FORCE_INLINE OutputIt
+    OutputIt
     exclusive_scan_device_impl(InputIt first, InputIt last,
                                OutputIt result,
                                T init,
@@ -80,7 +80,7 @@ namespace detail {
     }
 
     template <typename InputIt, typename OutputIt, typename T, typename BinaryOp>
-    ATLAS_FORCE_INLINE OutputIt
+    OutputIt
     exclusive_scan_serial_impl(InputIt first, InputIt last,
                                OutputIt result,
                                T init,
@@ -121,7 +121,7 @@ namespace detail {
                                                       typename std::iterator_traits<It>::iterator_category>;
 
     template <typename InputIt, typename OutputIt, typename T, typename BinaryOp>
-    ATLAS_FORCE_INLINE OutputIt
+    OutputIt
 
     exclusive_scan_host_impl(InputIt first, InputIt last,
                              OutputIt result,
@@ -252,7 +252,7 @@ namespace detail {
     }
 
     template <typename InputIt, typename OutputIt, typename T, typename BinaryOp>
-    ATLAS_FORCE_INLINE OutputIt
+    OutputIt
 
     exclusive_scan_device_impl(InputIt first, InputIt last,
                                OutputIt result,
@@ -269,7 +269,7 @@ namespace detail {
     }
 
     template <typename InputIt, typename OutputIt, typename T, typename BinaryOp>
-    ATLAS_FORCE_INLINE OutputIt
+    OutputIt
 
     exclusive_scan_serial_impl(InputIt first, InputIt last,
                                OutputIt result,
@@ -305,7 +305,7 @@ namespace detail {
 // ---------------------------
 
 template <ExecutionPolicy P, typename InputIt, typename OutputIt, typename T, typename BinaryOp>
-ATLAS_FORCE_INLINE OutputIt
+OutputIt
 exclusive_scan(InputIt first, InputIt last,
                OutputIt result,
                T init,
@@ -331,7 +331,7 @@ exclusive_scan(InputIt first, InputIt last,
 }
 
 template <ExecutionPolicy P, typename InputIt, typename OutputIt, typename T>
-ATLAS_FORCE_INLINE OutputIt
+OutputIt
 exclusive_scan(InputIt first, InputIt last,
                OutputIt result,
                T init) {
@@ -345,7 +345,7 @@ exclusive_scan(InputIt first, InputIt last,
 }
 
 template <ExecutionPolicy P, typename InputIt, typename OutputIt>
-ATLAS_FORCE_INLINE OutputIt
+OutputIt
 exclusive_scan(InputIt first, InputIt last,
                OutputIt result) {
     // ------------------------------------------------------------

@@ -317,9 +317,9 @@ Unit<T>::Builder::build() {
 
     // Store the geometry owner first so the operator views assigned below will continue
     // to reference live geometry storage after the builder goes away.
-    u._geometry_owner = std::move(*geometry);
+    u._geometry_owner    = std::move(*geometry);
     u._geometry_operator = std::move(*_geometry_operator);
-    u._sync_operator  = std::move(*_sync_operator);
+    u._sync_operator     = std::move(*_sync_operator);
 
     // Persist the normalized motion state.
     u._velocity             = std::move(velocity);

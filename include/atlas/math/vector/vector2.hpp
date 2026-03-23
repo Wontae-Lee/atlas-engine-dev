@@ -415,9 +415,8 @@ reflected(const Vector<T, 2>& v, const Vector<T, 2>& normal) noexcept {
 }
 
 template <typename T>
-ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Vector<T, 2>
-    projected(const Vector<T, 2>& v, const Vector<T, 2>& n) noexcept {
+ATLAS_NODISCARD Vector<T, 2>
+projected(const Vector<T, 2>& v, const Vector<T, 2>& n) noexcept {
     const T nn = dot(n, n);
     if (nn == T(0)) {
         return v;

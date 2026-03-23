@@ -71,7 +71,6 @@ Plane<T>::builder() noexcept {
     return Builder {};
 }
 
-
 template <typename T>
 GeometryOperator<T>
 Plane<T>::make_geometry_operator() const {
@@ -459,8 +458,8 @@ PlaneGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexcep
 
     const atlas::math::Vector<T, 3>& n = *normal;
     const T d                          = *offset;
-    const T denom = n.dot(ray.direction);
-    const T numer = -(n.dot(ray.origin) + d);
+    const T denom                      = n.dot(ray.direction);
+    const T numer                      = -(n.dot(ray.origin) + d);
 
     if (denom == T(0)) {
         if (numer != T(0)) return result;

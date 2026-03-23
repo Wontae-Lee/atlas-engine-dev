@@ -10,7 +10,7 @@ namespace atlas::geometry {
 template <typename T>
 struct SphereGeometryOperator {
     const atlas::math::Vector<T, 3>* center = nullptr;
-    const T* radius = nullptr;
+    const T* radius                         = nullptr;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;

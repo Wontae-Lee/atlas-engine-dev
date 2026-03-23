@@ -208,7 +208,6 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<GeneratorHostPtr<T>>&
     generators() noexcept;
 
-
 private:
     /// @brief Allow @ref Builder to populate internals without exposing mutators publicly.
     friend class Builder;

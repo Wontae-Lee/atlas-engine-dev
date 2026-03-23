@@ -1,8 +1,8 @@
 #pragma once
 
 #include <atlas/geometry/geometry.h>
-#include <atlas/math/math.h>
 #include <atlas/geometry/geometry_operator.h>
+#include <atlas/math/math.h>
 
 #include <optional>
 #include <type_traits>

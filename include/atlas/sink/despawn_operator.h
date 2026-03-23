@@ -25,10 +25,10 @@ enum class DespawnType : int {
  */
 template <typename T>
 struct SurfaceDespawnOperator final {
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
     despawn(const atlas::geometry::GeometryOperator<T>& query,
             const Vector3<T>& particle,
-            T tolerance = T(0)) const noexcept;
+            T tolerance = T(0)) noexcept;
 };
 
 /**
@@ -41,10 +41,10 @@ struct SurfaceDespawnOperator final {
  */
 template <typename T>
 struct VolumeDespawnOperator final {
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
     despawn(const atlas::geometry::GeometryOperator<T>& query,
             const Vector3<T>& particle,
-            T tolerance = T(0)) const noexcept;
+            T tolerance = T(0)) noexcept;
 };
 
 /**
@@ -63,8 +63,7 @@ struct DespawnOperator final {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     DespawnOperator() noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    explicit DespawnOperator(DespawnType type) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit DespawnOperator(DespawnType type) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     DespawnOperator(const DespawnOperator& other) noexcept;

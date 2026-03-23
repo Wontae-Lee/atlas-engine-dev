@@ -1,8 +1,8 @@
 #pragma once
 
-#include <atlas/spatial/bounding_volume_hierarchy/sah_bvh.h>
 #include <atlas/geometry/geometry_operator.h>
 #include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/spatial/bounding_volume_hierarchy/sah_bvh.h>
 
 #include <cmath>     // std::sqrt
 #include <limits>    // std::numeric_limits
@@ -61,7 +61,7 @@ TriangleMesh<T>::set_triangles(const HostBuffer<TriangleContainer4<T>>& triangle
     //
     // We do the full rebuild because:
     // - Triangles are the BVH primitives; any change invalidates the tree.
-    triangles = triangles_;
+    triangles         = triangles_;
     query_cache_built = false;
     ensure_bvh();
     build_bvh();
@@ -122,8 +122,8 @@ TriangleMesh<T>::rebuild_query_cache() const {
     _query_indices.resize(count * 3);
 
     for (std::size_t t = 0; t < count; ++t) {
-        const auto& tri         = triangles[t];
-        const std::size_t base  = t * 3;
+        const auto& tri        = triangles[t];
+        const std::size_t base = t * 3;
 
         _query_vertices[base + 0] = tri.a();
         _query_vertices[base + 1] = tri.b();
@@ -141,7 +141,6 @@ TriangleMesh<T>::rebuild_query_cache() const {
 /* Operators: Trace / Query                                                */
 /* ---------------------------------------------------------------------- */
 
-
 template <typename T>
 GeometryOperator<T>
 TriangleMesh<T>::make_geometry_operator() const {
@@ -155,10 +154,10 @@ TriangleMesh<T>::make_geometry_operator() const {
 
     if (_bvh && bvh_built) {
         const auto bvh_op = _bvh->make_geometry_operator();
-        op.bvh_nodes   = bvh_op.bvh_nodes;
-        op.bvh_indices = bvh_op.bvh_indices;
-        op.bvh_tris    = bvh_op.bvh_tris;
-        op.bvh_root    = bvh_op.bvh_root;
+        op.bvh_nodes      = bvh_op.bvh_nodes;
+        op.bvh_indices    = bvh_op.bvh_indices;
+        op.bvh_tris       = bvh_op.bvh_tris;
+        op.bvh_root       = bvh_op.bvh_root;
     }
 
     return GeometryOperator<T>(op);
@@ -259,10 +258,10 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
                 n = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
             }
 
-    // Store normal in the 4th slot.
-    tc.d() = n;
+            // Store normal in the 4th slot.
+            tc.d() = n;
 
-    triangles.push_back(tc);
+            triangles.push_back(tc);
         }
     }
 
@@ -622,9 +621,9 @@ TriangleMesh<T>::Builder::validate() const {
 template <typename T>
 T
 TriangleMeshGeometryOperator<T>::solid_angle(const atlas::math::Vector<T, 3>& p,
-                                          const atlas::math::Vector<T, 3>& a,
-                                          const atlas::math::Vector<T, 3>& b,
-                                          const atlas::math::Vector<T, 3>& c) const noexcept {
+                                             const atlas::math::Vector<T, 3>& a,
+                                             const atlas::math::Vector<T, 3>& b,
+                                             const atlas::math::Vector<T, 3>& c) const noexcept {
     const atlas::math::Vector<T, 3> va = a - p;
     const atlas::math::Vector<T, 3> vb = b - p;
     const atlas::math::Vector<T, 3> vc = c - p;
@@ -926,21 +925,21 @@ TriangleMeshGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const no
     stack[sp++] = bvh_root;
 
     while (sp) {
-        const int ni = stack[--sp];
+        const int ni                         = stack[--sp];
         const atlas::spatial::BVHNode<T>& nd = bvh_nodes[ni];
-        const auto hit = nd.bounds.trace(r);
+        const auto hit                       = nd.bounds.trace(r);
         if (!hit.is_intersecting || hit.enter > best_t) continue;
 
         if (nd.is_leaf) {
             TriangleGeometryOperator<T> tri_op {};
             ATLAS_UNROLL
             for (int k = 0; k < nd.count; ++k) {
-                const int pid = bvh_indices[nd.start + k];
+                const int pid                    = bvh_indices[nd.start + k];
                 const TriangleContainer4<T>& tri = bvh_tris[pid];
-                tri_op.a = &tri.a();
-                tri_op.b = &tri.b();
-                tri_op.c = &tri.c();
-                tri_op.n = &tri.d();
+                tri_op.a                         = &tri.a();
+                tri_op.b                         = &tri.b();
+                tri_op.c                         = &tri.c();
+                tri_op.n                         = &tri.d();
 
                 const HitSurface<T> h = tri_op.trace(r);
                 if (h.is_intersecting && h.distance < best_t) {
@@ -952,9 +951,11 @@ TriangleMeshGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const no
             }
         } else {
             if (sp < 63) stack[sp++] = nd.left;
-            else stack[63] = nd.left;
+            else
+                stack[63] = nd.left;
             if (sp < 63) stack[sp++] = nd.right;
-            else stack[63] = nd.right;
+            else
+                stack[63] = nd.right;
         }
     }
 

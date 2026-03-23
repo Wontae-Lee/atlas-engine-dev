@@ -60,10 +60,10 @@ namespace atlas::geometry {
 
 template <typename T>
 struct TriangleGeometryOperator {
-    const atlas::math::Vector<T, 3>* a = nullptr;
-    const atlas::math::Vector<T, 3>* b = nullptr;
-    const atlas::math::Vector<T, 3>* c = nullptr;
-    const atlas::math::Vector<T, 3>* n = nullptr;
+    const atlas::math::Vector<T, 3>* a      = nullptr;
+    const atlas::math::Vector<T, 3>* b      = nullptr;
+    const atlas::math::Vector<T, 3>* c      = nullptr;
+    const atlas::math::Vector<T, 3>* n      = nullptr;
     const atlas::math::Vector<T, 3>* normal = nullptr;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>

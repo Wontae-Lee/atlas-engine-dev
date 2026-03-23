@@ -158,8 +158,7 @@ public:
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept
-        = 0;
+    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept = 0;
 
     /**
      * @brief Test whether a point lies inside the geometry within a tolerance.
@@ -177,8 +176,7 @@ public:
      * @ref make_geometry_operator(), which is also host-only.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance ) const noexcept
-        = 0;
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept = 0;
 
     /**
      * @brief Test whether a point lies on the surface within a tolerance.
@@ -192,8 +190,7 @@ public:
      * @ref make_geometry_operator(), which is also host-only.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance ) const noexcept
-        = 0;
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept = 0;
 
     /**
      * @brief Compute a representative centroid of the geometry.
@@ -233,8 +230,7 @@ public:
      * @return `true` if geometry is valid and safe to query.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
-    is_valid() const noexcept
-        = 0;
+    is_valid() const noexcept = 0;
 
     /**
      * @brief Get the runtime type tag of this geometry.
@@ -246,8 +242,7 @@ public:
      * @return Geometry type tag.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual GeometryType
-    type() const noexcept
-        = 0;
+    type() const noexcept = 0;
 };
 
 } // namespace atlas::geometry

@@ -93,7 +93,6 @@ GeometryOperator<T>::operator=(const GeometryOperator& other) noexcept {
 }
 
 template <typename T>
-ATLAS_HOST
 GeometryOperator<T>::GeometryOperator(const BoxGeometryOperator<T>& op)
     : type(GeometryType::Box)
     , box(op) {
@@ -101,7 +100,6 @@ GeometryOperator<T>::GeometryOperator(const BoxGeometryOperator<T>& op)
 }
 
 template <typename T>
-ATLAS_HOST
 GeometryOperator<T>::GeometryOperator(const CylinderGeometryOperator<T>& op)
     : type(GeometryType::Cylinder)
     , cylinder(op) {
@@ -109,7 +107,6 @@ GeometryOperator<T>::GeometryOperator(const CylinderGeometryOperator<T>& op)
 }
 
 template <typename T>
-ATLAS_HOST
 GeometryOperator<T>::GeometryOperator(const PlaneGeometryOperator<T>& op)
     : type(GeometryType::Plane)
     , plane(op) {
@@ -117,7 +114,6 @@ GeometryOperator<T>::GeometryOperator(const PlaneGeometryOperator<T>& op)
 }
 
 template <typename T>
-ATLAS_HOST
 GeometryOperator<T>::GeometryOperator(const SphereGeometryOperator<T>& op)
     : type(GeometryType::Sphere)
     , sphere(op) {
@@ -125,7 +121,6 @@ GeometryOperator<T>::GeometryOperator(const SphereGeometryOperator<T>& op)
 }
 
 template <typename T>
-ATLAS_HOST
 GeometryOperator<T>::GeometryOperator(const TriangleGeometryOperator<T>& op)
     : type(GeometryType::Triangle)
     , triangle(op) {
@@ -133,7 +128,6 @@ GeometryOperator<T>::GeometryOperator(const TriangleGeometryOperator<T>& op)
 }
 
 template <typename T>
-ATLAS_HOST
 GeometryOperator<T>::GeometryOperator(const TriangleMeshGeometryOperator<T>& op)
     : type(GeometryType::TriangleMesh)
     , triangle_mesh(op) {

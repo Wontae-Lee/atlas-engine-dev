@@ -9,13 +9,11 @@
 namespace atlas::system {
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
 UniformGenerateOperator<T>::UniformGenerateOperator(const unsigned int seed) noexcept
     : seed(seed)
     , engine(seed) { }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
 Vector3<T>
 UniformGenerateOperator<T>::generate(const T min_value,
                                      const T max_value) const {
@@ -30,13 +28,11 @@ UniformGenerateOperator<T>::generate(const T min_value,
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
 MaxwellSigmaGenerateOperator<T>::MaxwellSigmaGenerateOperator(const unsigned int seed) noexcept
     : seed(seed)
     , engine(seed) { }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
 Vector3<T>
 MaxwellSigmaGenerateOperator<T>::generate(const T sigma) const {
     // Degenerate sigma values collapse to zero velocity rather than producing
@@ -53,13 +49,11 @@ MaxwellSigmaGenerateOperator<T>::generate(const T sigma) const {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
 MaxwellBoltzmannGenerateOperator<T>::MaxwellBoltzmannGenerateOperator(const unsigned int seed) noexcept
     : seed(seed)
     , engine(seed) { }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
 Vector3<T>
 MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
                                               const T molecular_mass,
@@ -77,7 +71,7 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
                sigma * atlas::sampling::generate_standard_normal<T>(engine),
                sigma * atlas::sampling::generate_standard_normal<T>(engine),
                sigma * atlas::sampling::generate_standard_normal<T>(engine))
-           + bulk_velocity;
+        + bulk_velocity;
 }
 
 /* ====================================================================== */
@@ -85,7 +79,6 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
 /* ====================================================================== */
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 GenerateOperator<T>::GenerateOperator() noexcept
     : type(GenerateType::uniform) {
     // Default-construct the active union member to keep the tagged union valid.
@@ -93,7 +86,6 @@ GenerateOperator<T>::GenerateOperator() noexcept
 }
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 GenerateOperator<T>::GenerateOperator(const GenerateType type,
                                       const unsigned int seed) noexcept
     : type(type) {
@@ -117,14 +109,13 @@ GenerateOperator<T>::GenerateOperator(const GenerateType type,
 }
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 GenerateOperator<T>::GenerateOperator(const GenerateOperator& other) noexcept
     : type(other.type) {
     copy_from(other);
 }
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE GenerateOperator<T>&
+GenerateOperator<T>&
 GenerateOperator<T>::operator=(const GenerateOperator& other) noexcept {
     if (this == &other) return *this;
     // Rebuild the active union member because the source and destination tags
@@ -136,13 +127,12 @@ GenerateOperator<T>::operator=(const GenerateOperator& other) noexcept {
 }
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 GenerateOperator<T>::~GenerateOperator() noexcept {
     destroy_active();
 }
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+void
 GenerateOperator<T>::destroy_active() noexcept {
     // Only the member selected by `type` is alive at any point.
     switch (type) {
@@ -162,7 +152,7 @@ GenerateOperator<T>::destroy_active() noexcept {
 }
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+void
 GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
     // Copy-construct the active union alternative matching the already-copied tag.
     switch (type) {
@@ -187,21 +177,18 @@ GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
 /* ====================================================================== */
 
 template <typename T>
-ATLAS_HOST
 GenerateOperator<T>::GenerateOperator(const UniformGenerateOperator<T>& op)
     : type(GenerateType::uniform) {
     new (&uniform) UniformGenerateOperator<T>(op);
 }
 
 template <typename T>
-ATLAS_HOST
 GenerateOperator<T>::GenerateOperator(const MaxwellSigmaGenerateOperator<T>& op)
     : type(GenerateType::maxwell_sigma) {
     new (&maxwell_sigma) MaxwellSigmaGenerateOperator<T>(op);
 }
 
 template <typename T>
-ATLAS_HOST
 GenerateOperator<T>::GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>& op)
     : type(GenerateType::maxwell_boltzmann) {
     new (&maxwell_boltzmann) MaxwellBoltzmannGenerateOperator<T>(op);
@@ -212,7 +199,6 @@ GenerateOperator<T>::GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>&
 /* ====================================================================== */
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
 Vector3<T>
 GenerateOperator<T>::generate(const T param0,
                               const T param1) const {
@@ -234,7 +220,6 @@ GenerateOperator<T>::generate(const T param0,
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
 Vector3<T>
 GenerateOperator<T>::generate(const T param0,
                               const T param1,

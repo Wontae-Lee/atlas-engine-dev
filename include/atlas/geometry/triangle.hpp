@@ -50,7 +50,6 @@ Triangle<T>::builder() noexcept {
 /* Operators: Trace / Query                                                */
 /* ---------------------------------------------------------------------- */
 
-
 template <typename T>
 GeometryOperator<T>
 Triangle<T>::make_geometry_operator() const {
@@ -627,8 +626,8 @@ TriangleGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const
     const T d2                         = (p - cp).length_squared();
 
     const atlas::math::Vector<T, 3>* normal_ptr = normal ? normal : n;
-    atlas::math::Vector<T, 3> nn = normal_ptr ? *normal_ptr : atlas::math::cross((*b) - (*a), (*c) - (*a));
-    const T nn_len2              = nn.length_squared();
+    atlas::math::Vector<T, 3> nn                = normal_ptr ? *normal_ptr : atlas::math::cross((*b) - (*a), (*c) - (*a));
+    const T nn_len2                             = nn.length_squared();
     if (nn_len2 <= T(0)) return false;
 
     const T side = (p - (*a)).dot(nn);
@@ -705,22 +704,22 @@ TriangleGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexce
     HitSurface<T> result {};
     if (!a || !b || !c) return result;
 
-    const atlas::math::Vector<T, 3> v0 = *a;
-    const atlas::math::Vector<T, 3> v1 = *b;
-    const atlas::math::Vector<T, 3> v2 = *c;
-    const atlas::math::Vector<T, 3> e1 = v1 - v0;
-    const atlas::math::Vector<T, 3> e2 = v2 - v0;
+    const atlas::math::Vector<T, 3> v0   = *a;
+    const atlas::math::Vector<T, 3> v1   = *b;
+    const atlas::math::Vector<T, 3> v2   = *c;
+    const atlas::math::Vector<T, 3> e1   = v1 - v0;
+    const atlas::math::Vector<T, 3> e2   = v2 - v0;
     const atlas::math::Vector<T, 3> pvec = atlas::math::cross(r.direction, e2);
-    const T det = e1.dot(pvec);
+    const T det                          = e1.dot(pvec);
     if (static_cast<T>(std::fabs(static_cast<double>(det))) <= T(eps)) return result;
 
-    const T inv_det = T(1) / det;
+    const T inv_det                      = T(1) / det;
     const atlas::math::Vector<T, 3> tvec = r.origin - v0;
-    const T u = tvec.dot(pvec) * inv_det;
+    const T u                            = tvec.dot(pvec) * inv_det;
     if (u < T(0) || u > T(1)) return result;
 
     const atlas::math::Vector<T, 3> qvec = atlas::math::cross(tvec, e1);
-    const T v = r.direction.dot(qvec) * inv_det;
+    const T v                            = r.direction.dot(qvec) * inv_det;
     if (v < T(0) || (u + v) > T(1)) return result;
 
     const T t = e2.dot(qvec) * inv_det;
@@ -731,8 +730,8 @@ TriangleGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexce
     result.point           = r.point_at(t);
 
     const atlas::math::Vector<T, 3>* normal_ptr = normal ? normal : n;
-    atlas::math::Vector<T, 3> normal_vec = normal_ptr ? *normal_ptr : atlas::math::cross(e1, e2);
-    const T n2 = normal_vec.length_squared();
+    atlas::math::Vector<T, 3> normal_vec        = normal_ptr ? *normal_ptr : atlas::math::cross(e1, e2);
+    const T n2                                  = normal_vec.length_squared();
     if (n2 > T(0)) normal_vec *= (T(1) / static_cast<T>(std::sqrt(n2)));
     else
         normal_vec = atlas::math::Vector<T, 3>(T(1), T(0), T(0));

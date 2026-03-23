@@ -45,10 +45,10 @@ BoxGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const 
     if (inside) {
         const atlas::math::Vector<T, 3> l_to_p = p - lo;
         const atlas::math::Vector<T, 3> p_to_u = hi - p;
-        const bool hit_lower = (l_to_p.min() < p_to_u.min());
-        const std::size_t axis = hit_lower ? l_to_p.minor_axis()
-                                           : p_to_u.minor_axis();
-        cp[axis] = hit_lower ? lo[axis] : hi[axis];
+        const bool hit_lower                   = (l_to_p.min() < p_to_u.min());
+        const std::size_t axis                 = hit_lower ? l_to_p.minor_axis()
+                                                           : p_to_u.minor_axis();
+        cp[axis]                               = hit_lower ? lo[axis] : hi[axis];
     }
 
     return cp;
@@ -63,7 +63,7 @@ BoxGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const
 
     const atlas::math::Vector<T, 3>& lo = *lower_corner;
     const atlas::math::Vector<T, 3>& hi = *upper_corner;
-    const bool inside = (p.x >= lo.x && p.x <= hi.x)
+    const bool inside                   = (p.x >= lo.x && p.x <= hi.x)
         && (p.y >= lo.y && p.y <= hi.y)
         && (p.z >= lo.z && p.z <= hi.z);
 
@@ -72,17 +72,17 @@ BoxGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const
     if (inside) {
         const atlas::math::Vector<T, 3> l_to_p = p - lo;
         const atlas::math::Vector<T, 3> p_to_u = hi - p;
-        const bool hit_lower = (l_to_p.min() < p_to_u.min());
-        const std::size_t axis = hit_lower ? l_to_p.minor_axis()
-                                           : p_to_u.minor_axis();
-        n[axis] = hit_lower ? T(-1) : T(1);
+        const bool hit_lower                   = (l_to_p.min() < p_to_u.min());
+        const std::size_t axis                 = hit_lower ? l_to_p.minor_axis()
+                                                           : p_to_u.minor_axis();
+        n[axis]                                = hit_lower ? T(-1) : T(1);
         return n;
     }
 
     const atlas::math::Vector<T, 3> cp = atlas::math::clamp(p, lo, hi);
-    const atlas::math::Vector<T, 3> d = p - cp;
-    const std::size_t axis = atlas::math::abs(d).major_axis();
-    n[axis] = (d[axis] >= T(0)) ? T(1) : T(-1);
+    const atlas::math::Vector<T, 3> d  = p - cp;
+    const std::size_t axis             = atlas::math::abs(d).major_axis();
+    n[axis]                            = (d[axis] >= T(0)) ? T(1) : T(-1);
     return n;
 }
 
@@ -93,15 +93,15 @@ BoxGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) cons
 
     const atlas::math::Vector<T, 3>& lo = *lower_corner;
     const atlas::math::Vector<T, 3>& hi = *upper_corner;
-    const bool inside = (p.x >= lo.x && p.x <= hi.x)
+    const bool inside                   = (p.x >= lo.x && p.x <= hi.x)
         && (p.y >= lo.y && p.y <= hi.y)
         && (p.z >= lo.z && p.z <= hi.z);
 
     if (inside) {
         const atlas::math::Vector<T, 3> l_to_p = p - lo;
         const atlas::math::Vector<T, 3> p_to_u = hi - p;
-        const T m1 = l_to_p.min();
-        const T m2 = p_to_u.min();
+        const T m1                             = l_to_p.min();
+        const T m2                             = p_to_u.min();
         return -((m1 < m2) ? m1 : m2);
     }
 
@@ -162,30 +162,30 @@ BoxGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexcept {
     HitSurface<T> result {};
     if (!lower_corner || !upper_corner) return result;
 
-    const atlas::math::Vector<T, 3>& lo = *lower_corner;
-    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+    const atlas::math::Vector<T, 3>& lo     = *lower_corner;
+    const atlas::math::Vector<T, 3>& hi     = *upper_corner;
     const atlas::math::Vector<T, 3> inv_dir = T(1) / r.direction;
-    const atlas::math::Vector<T, 3> t0 = (lo - r.origin) * inv_dir;
-    const atlas::math::Vector<T, 3> t1 = (hi - r.origin) * inv_dir;
-    const atlas::math::Vector<T, 3> tmin_v = atlas::math::cmin(t0, t1);
-    const atlas::math::Vector<T, 3> tmax_v = atlas::math::cmax(t0, t1);
-    const T t_enter = tmin_v.max();
-    const T t_exit = tmax_v.min();
+    const atlas::math::Vector<T, 3> t0      = (lo - r.origin) * inv_dir;
+    const atlas::math::Vector<T, 3> t1      = (hi - r.origin) * inv_dir;
+    const atlas::math::Vector<T, 3> tmin_v  = atlas::math::cmin(t0, t1);
+    const atlas::math::Vector<T, 3> tmax_v  = atlas::math::cmax(t0, t1);
+    const T t_enter                         = tmin_v.max();
+    const T t_exit                          = tmax_v.min();
     if (t_exit < t_enter || t_exit < T(eps)) return result;
 
-    const bool use_enter = (t_enter >= T(eps));
-    const T t = use_enter ? t_enter : t_exit;
+    const bool use_enter   = (t_enter >= T(eps));
+    const T t              = use_enter ? t_enter : t_exit;
     const std::size_t axis = use_enter ? tmin_v.major_axis() : tmax_v.minor_axis();
 
     atlas::math::Vector<T, 3> n(T(0));
     const T dir = r.direction[axis];
-    n[axis] = use_enter ? ((dir >= T(0)) ? T(-1) : T(1))
-                        : ((dir >= T(0)) ? T(1) : T(-1));
+    n[axis]     = use_enter ? ((dir >= T(0)) ? T(-1) : T(1))
+                            : ((dir >= T(0)) ? T(1) : T(-1));
 
     result.is_intersecting = true;
-    result.distance = t;
-    result.point = r.point_at(t);
-    result.normal = n;
+    result.distance        = t;
+    result.point           = r.point_at(t);
+    result.normal          = n;
     return result;
 }
 
@@ -244,7 +244,6 @@ Box<T>::builder() noexcept {
     // - It keeps construction readable in call sites with multiple parameters.
     return Builder {};
 }
-
 
 template <typename T>
 GeometryOperator<T>

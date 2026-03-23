@@ -48,6 +48,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     Sink(Unit<T> unit,
          DespawnType despawn_type = DespawnType::Surface,
+         bool flip                = false,
          T tolerance              = T(0)) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
@@ -78,6 +79,18 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_tolerance(T tolerance) noexcept;
 
+    /**
+     * @brief Enable or disable inversion of the despawn predicate.
+     *
+     * @details
+     * When `flip` is enabled, particles that would normally be kept are
+     * removed, and particles that would normally be removed are kept.
+     *
+     * @param flip Whether to invert despawn classification.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_flip(bool flip) noexcept;
+
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const Unit<T>&
     unit() const noexcept;
 
@@ -90,9 +103,16 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     tolerance() const noexcept;
 
+    /**
+     * @brief Return whether despawn classification is inverted.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    flip() const noexcept;
+
 private:
     Unit<T> _unit;
     DespawnOperator<T> _despawn_operator { DespawnType::Surface };
+    bool _flip   = false;
     T _tolerance = T(0);
 };
 
@@ -119,6 +139,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_tolerance(T tolerance) noexcept;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_flip(bool flip) noexcept;
+
 private:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     validate() const;
@@ -126,6 +149,7 @@ private:
 private:
     std::optional<Unit<T>> _unit;
     DespawnType _despawn_type = DespawnType::Surface;
+    bool _flip                = false;
     T _tolerance              = T(0);
 };
 

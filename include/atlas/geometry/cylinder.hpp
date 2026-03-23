@@ -55,7 +55,6 @@ Cylinder<T>::builder() noexcept {
     return Builder {};
 }
 
-
 template <typename T>
 GeometryOperator<T>
 Cylinder<T>::make_geometry_operator() const {
@@ -657,10 +656,10 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
 
     const atlas::math::Vector<T, 3> ro = ray.origin - *center;
     const atlas::math::Vector<T, 3> rd = ray.direction;
-    const T r    = *radius;
-    const T hz   = (*height) * T(0.5);
-    const T zmin = -hz;
-    const T zmax = hz;
+    const T r                          = *radius;
+    const T hz                         = (*height) * T(0.5);
+    const T zmin                       = -hz;
+    const T zmax                       = hz;
 
     T best_t = std::numeric_limits<T>::infinity();
     atlas::math::Vector<T, 3> best_n(T(0), T(0), T(0));
@@ -673,12 +672,12 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
         if (ro.z < zmin || ro.z > zmax) z_ok = false;
     } else {
         const T inv_dz = T(1) / rd.z;
-        T a = (zmin - ro.z) * inv_dz;
-        T b = (zmax - ro.z) * inv_dz;
+        T a            = (zmin - ro.z) * inv_dz;
+        T b            = (zmax - ro.z) * inv_dz;
         if (a > b) {
             const T tmp = a;
-            a = b;
-            b = tmp;
+            a           = b;
+            b           = tmp;
         }
         t_z_enter = a;
         t_z_exit  = b;
@@ -700,8 +699,8 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
                 T t1 = (A == T(0)) ? std::numeric_limits<T>::infinity() : (q / A);
                 if (t0 > t1) {
                     const T tmp = t0;
-                    t0 = t1;
-                    t1 = tmp;
+                    t0          = t1;
+                    t1          = tmp;
                 }
 
                 auto accept_side = [&](const T t) -> bool {
@@ -711,9 +710,9 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
                 };
 
                 auto set_side_hit = [&](const T t) {
-                    best_t = t;
+                    best_t                             = t;
                     const atlas::math::Vector<T, 3> ph = ro + rd * t;
-                    const T rr2 = ph.x * ph.x + ph.y * ph.y;
+                    const T rr2                        = ph.x * ph.x + ph.y * ph.y;
                     if (rr2 > T(0)) {
                         const T inv_rr = T(1) / static_cast<T>(std::sqrt(rr2));
                         best_n         = atlas::math::Vector<T, 3>(ph.x * inv_rr, ph.y * inv_rr, T(0));

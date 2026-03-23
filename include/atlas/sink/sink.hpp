@@ -17,9 +17,11 @@ namespace atlas::system {
 template <typename T>
 Sink<T>::Sink(Unit<T> unit,
               const DespawnType despawn_type,
+              const bool flip,
               const T tolerance) noexcept
     : _unit(std::move(unit))
     , _despawn_operator(despawn_type)
+    , _flip(flip)
     , _tolerance(tolerance) { }
 
 template <typename T>
@@ -34,6 +36,7 @@ Sink<T>::sink(ParticleDeviceProbe<T>& particle_probe) {
     const auto sync_op          = _unit.sync_operator();
     const auto geometry_op      = _unit.geometry_operator();
     const auto despawn_operator = _despawn_operator;
+    const bool flip             = _flip;
     const T tol                 = _tolerance;
 
     auto pos       = particle_probe.pos;
@@ -48,9 +51,10 @@ Sink<T>::sink(ParticleDeviceProbe<T>& particle_probe) {
         zip_begin,
         zip_end,
         [=] ATLAS_DEVICE(const atlas::tuple<Vector3<T>, Vector3<T>, size_t>& t) {
-            const Vector3<T>& p      = atlas::get<0>(t);
-            const Vector3<T> local_p = sync_op.sync_to_local(p);
-            return despawn_operator.despawn(geometry_op, local_p, tol);
+            const Vector3<T>& p       = atlas::get<0>(t);
+            const Vector3<T> local_p  = sync_op.sync_to_local(p);
+            const bool should_despawn = despawn_operator.despawn(geometry_op, local_p, tol);
+            return flip ? !should_despawn : should_despawn;
         });
 
     particle_probe.particle_count = static_cast<int>(new_end - zip_begin);
@@ -81,6 +85,12 @@ Sink<T>::set_tolerance(const T tolerance) noexcept {
 }
 
 template <typename T>
+void
+Sink<T>::set_flip(const bool flip) noexcept {
+    _flip = flip;
+}
+
+template <typename T>
 const Unit<T>&
 Sink<T>::unit() const noexcept {
     return _unit;
@@ -105,10 +115,16 @@ Sink<T>::tolerance() const noexcept {
 }
 
 template <typename T>
+bool
+Sink<T>::flip() const noexcept {
+    return _flip;
+}
+
+template <typename T>
 Sink<T>
 Sink<T>::Builder::build() {
     validate();
-    return Sink<T>(std::move(*_unit), _despawn_type, _tolerance);
+    return Sink<T>(std::move(*_unit), _despawn_type, _flip, _tolerance);
 }
 
 template <typename T>
@@ -142,6 +158,13 @@ template <typename T>
 typename Sink<T>::Builder&
 Sink<T>::Builder::with_tolerance(const T tolerance) noexcept {
     _tolerance = tolerance;
+    return *this;
+}
+
+template <typename T>
+typename Sink<T>::Builder&
+Sink<T>::Builder::with_flip(const bool flip) noexcept {
+    _flip = flip;
     return *this;
 }
 

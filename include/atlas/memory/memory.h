@@ -232,23 +232,33 @@ public:
 
     /// @brief Returns the raw pointer (may be null).
     __host__ __device__ T*
-    get() const { return ptr; }
+    get() const {
+        return ptr;
+    }
 
     /// @brief Dereferences the stored pointer (undefined behavior if null).
     __host__ __device__ T&
-    operator*() const { return *ptr; }
+    operator*() const {
+        return *ptr;
+    }
 
     /// @brief Member access (undefined behavior if null).
     __host__ __device__ T*
-    operator->() const { return ptr; }
+    operator->() const {
+        return ptr;
+    }
 
     /// @brief Returns current reference count.
     __host__ __device__ int
-    use_count() const { return ref.use_count(); }
+    use_count() const {
+        return ref.use_count();
+    }
 
     /// @brief Checks whether this pointer is non-null.
     __host__ __device__ explicit
-    operator bool() const { return ptr != nullptr; }
+    operator bool() const {
+        return ptr != nullptr;
+    }
 
 private:
     /**

@@ -37,7 +37,6 @@ Vector<T, N>::Vector(Args... args) noexcept
 }
 
 template <typename T, std::size_t N>
-ATLAS_HOST ATLAS_FORCE_INLINE
 Vector<T, N>::Vector(std::initializer_list<T> list) noexcept {
     // Initialize from { ... }.
     // - Copies up to N values.

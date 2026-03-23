@@ -186,7 +186,7 @@ SpatialHashingSearcher<T>::init_indices_iota(int n_active) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         n_active,
-        [=] ATLAS_ALL_DEVICE(const int i) {
+        [=](const int i) {
             indices_ptr[i] = i;
         });
 }
@@ -207,7 +207,7 @@ SpatialHashingSearcher<T>::compute_keys(int alive, const Vector3<T>* pos) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         alive,
-        [=] ATLAS_ALL_DEVICE(int i) {
+        [=](int i) {
             const Vector3<T> rel = (pos[i] - lc) * inv_h;
 
             // Map to grid coordinates and clamp.
@@ -256,7 +256,7 @@ SpatialHashingSearcher<T>::build_cell_ranges(int alive) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         alive,
-        [=] ATLAS_ALL_DEVICE(const int i) {
+        [=](const int i) {
             const std::uint32_t key = keys[i];
             if (i == 0 || key != keys[i - 1]) cell_start[key] = i;
             if (i == count - 1 || key != keys[i + 1]) cell_end[key] = i + 1;

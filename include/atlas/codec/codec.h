@@ -196,8 +196,7 @@ public:
      * @return `CodecType` enumeration value identifying the codec strategy.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual CodecType
-    type() const noexcept
-        = 0;
+    type() const noexcept = 0;
 
 private:
     /// @brief Counter used to track probe creation or versioning (implementation-defined).

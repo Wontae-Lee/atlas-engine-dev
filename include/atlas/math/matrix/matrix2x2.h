@@ -187,8 +187,7 @@ namespace math {
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T&
         operator()(std::size_t r, std::size_t c) noexcept;
         Matrix&
-        operator=(const Matrix&) noexcept
-            = default;
+        operator=(const Matrix&) noexcept = default;
         /**
          * @brief Sets all elements to zero.
          */

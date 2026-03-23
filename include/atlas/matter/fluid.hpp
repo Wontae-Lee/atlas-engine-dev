@@ -11,58 +11,55 @@ namespace atlas::system {
  * ========================= */
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder
-    Fluid<T>::builder() noexcept {
+typename Fluid<T>::Builder
+Fluid<T>::builder() noexcept {
     return Builder {};
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE int
+ATLAS_NODISCARD int
 Fluid<T>::size() const noexcept {
     return static_cast<int>(_particles.size());
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+ATLAS_NODISCARD bool
 Fluid<T>::empty() const noexcept {
     return size() == 0;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<FluidicParticleHostPtr<T>>&
+ATLAS_NODISCARD const HostBuffer<FluidicParticleHostPtr<T>>&
 Fluid<T>::particles() const noexcept {
     return _particles;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE
-    HostBuffer<FluidicParticleHostPtr<T>>&
-    Fluid<T>::particles() noexcept {
+ATLAS_NODISCARD HostBuffer<FluidicParticleHostPtr<T>>&
+Fluid<T>::particles() noexcept {
     return _particles;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<T>&
+ATLAS_NODISCARD const HostBuffer<T>&
 Fluid<T>::mole_fractions() const noexcept {
     return _mole_fractions;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE
-    HostBuffer<T>&
-    Fluid<T>::mole_fractions() noexcept {
+ATLAS_NODISCARD HostBuffer<T>&
+Fluid<T>::mole_fractions() noexcept {
     return _mole_fractions;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<GeneratorHostPtr<T>>&
+ATLAS_NODISCARD const HostBuffer<GeneratorHostPtr<T>>&
 Fluid<T>::generators() const noexcept {
     return _generators;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<GeneratorHostPtr<T>>&
+ATLAS_NODISCARD HostBuffer<GeneratorHostPtr<T>>&
 Fluid<T>::generators() noexcept {
     return _generators;
 }
@@ -72,9 +69,8 @@ Fluid<T>::generators() noexcept {
  * ========================= */
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    Fluid<T>
-    Fluid<T>::Builder::build() const {
+Fluid<T>
+Fluid<T>::Builder::build() const {
     validate();
 
     Fluid<T> f {};
@@ -86,33 +82,29 @@ ATLAS_HOST ATLAS_FORCE_INLINE
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    atlas::host_shared_ptr<Fluid<T>>
-    Fluid<T>::Builder::make_host_shared() const {
+atlas::host_shared_ptr<Fluid<T>>
+Fluid<T>::Builder::make_host_shared() const {
     auto f = build();
     return atlas::make_host_shared<Fluid<T>>(std::move(f));
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species(const FluidicParticle<T>& p) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species(const FluidicParticle<T>& p) {
     return add_species(p, T(1));
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species(const FluidicParticle<T>& p, T mole_fraction) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species(const FluidicParticle<T>& p, T mole_fraction) {
     return add_species(p, mole_fraction, nullptr);
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species(const FluidicParticle<T>& p,
-                                   T mole_fraction,
-                                   GeneratorHostPtr<T> generator) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species(const FluidicParticle<T>& p,
+                               T mole_fraction,
+                               GeneratorHostPtr<T> generator) {
     _particles.push_back(atlas::make_host_shared<FluidicParticle<T>>(p));
     _mole_fractions.push_back(mole_fraction);
     _generators.push_back(std::move(generator));
@@ -120,25 +112,22 @@ ATLAS_HOST ATLAS_FORCE_INLINE
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species(FluidicParticleHostPtr<T> p) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species(FluidicParticleHostPtr<T> p) {
     return add_species(std::move(p), T(1));
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species(FluidicParticleHostPtr<T> p, T mole_fraction) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species(FluidicParticleHostPtr<T> p, T mole_fraction) {
     return add_species(std::move(p), mole_fraction, nullptr);
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species(FluidicParticleHostPtr<T> p,
-                                   T mole_fraction,
-                                   GeneratorHostPtr<T> generator) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species(FluidicParticleHostPtr<T> p,
+                               T mole_fraction,
+                               GeneratorHostPtr<T> generator) {
     _particles.push_back(std::move(p));
     _mole_fractions.push_back(mole_fraction);
     _generators.push_back(std::move(generator));
@@ -146,9 +135,8 @@ ATLAS_HOST ATLAS_FORCE_INLINE
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species_bulk(const HostBuffer<FluidicParticle<T>>& ps) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species_bulk(const HostBuffer<FluidicParticle<T>>& ps) {
     const int n = static_cast<int>(ps.size());
     for (int i = 0; i < n; ++i) {
         add_species(ps[i], T(1));
@@ -157,22 +145,20 @@ ATLAS_HOST ATLAS_FORCE_INLINE
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species_bulk(
-        const HostBuffer<FluidicParticle<T>>& ps,
-        const HostBuffer<T>& mole_fractions) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species_bulk(
+    const HostBuffer<FluidicParticle<T>>& ps,
+    const HostBuffer<T>& mole_fractions) {
     const HostBuffer<GeneratorHostPtr<T>> generators(ps.size(), nullptr);
     return add_species_bulk(ps, mole_fractions, generators);
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species_bulk(
-        const HostBuffer<FluidicParticle<T>>& ps,
-        const HostBuffer<T>& mole_fractions,
-        const HostBuffer<GeneratorHostPtr<T>>& generators) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species_bulk(
+    const HostBuffer<FluidicParticle<T>>& ps,
+    const HostBuffer<T>& mole_fractions,
+    const HostBuffer<GeneratorHostPtr<T>>& generators) {
     const int n = static_cast<int>(ps.size());
     if (static_cast<int>(mole_fractions.size()) != n || static_cast<int>(generators.size()) != n) {
         throw std::runtime_error(
@@ -186,10 +172,9 @@ ATLAS_HOST ATLAS_FORCE_INLINE
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species_bulk(
-        const HostBuffer<FluidicParticleHostPtr<T>>& ps) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species_bulk(
+    const HostBuffer<FluidicParticleHostPtr<T>>& ps) {
     const int n = static_cast<int>(ps.size());
     for (int i = 0; i < n; ++i) {
         add_species(ps[i], T(1));
@@ -198,22 +183,20 @@ ATLAS_HOST ATLAS_FORCE_INLINE
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species_bulk(
-        const HostBuffer<FluidicParticleHostPtr<T>>& ps,
-        const HostBuffer<T>& mole_fractions) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species_bulk(
+    const HostBuffer<FluidicParticleHostPtr<T>>& ps,
+    const HostBuffer<T>& mole_fractions) {
     const HostBuffer<GeneratorHostPtr<T>> generators(ps.size(), nullptr);
     return add_species_bulk(ps, mole_fractions, generators);
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::add_species_bulk(
-        const HostBuffer<FluidicParticleHostPtr<T>>& ps,
-        const HostBuffer<T>& mole_fractions,
-        const HostBuffer<GeneratorHostPtr<T>>& generators) {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::add_species_bulk(
+    const HostBuffer<FluidicParticleHostPtr<T>>& ps,
+    const HostBuffer<T>& mole_fractions,
+    const HostBuffer<GeneratorHostPtr<T>>& generators) {
     const int n = static_cast<int>(ps.size());
     if (static_cast<int>(mole_fractions.size()) != n || static_cast<int>(generators.size()) != n) {
         throw std::runtime_error(
@@ -227,23 +210,21 @@ ATLAS_HOST ATLAS_FORCE_INLINE
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::require_non_empty(bool on) noexcept {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::require_non_empty(bool on) noexcept {
     _require_non_empty = on;
     return *this;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    typename Fluid<T>::Builder&
-    Fluid<T>::Builder::reject_null_particles(bool on) noexcept {
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::reject_null_particles(bool on) noexcept {
     _reject_null_particles = on;
     return *this;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Fluid<T>::Builder::validate() const {
     if (_particles.size() != _mole_fractions.size() || _particles.size() != _generators.size()) {
         throw std::runtime_error(

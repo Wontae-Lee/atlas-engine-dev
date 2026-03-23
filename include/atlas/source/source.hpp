@@ -19,10 +19,12 @@ template <typename T>
 Source<T>::Source(Unit<T> unit,
                   FluidHostPtr<T> fluid,
                   const SpawnType spawn_type,
+                  const bool flip,
                   const T tolerance) noexcept
     : _unit(std::move(unit))
     , _fluid(std::move(fluid))
     , _spawn_operator(spawn_type)
+    , _flip(flip)
     , _tolerance(tolerance)
     , _is_invalidated_cache(true) { }
 
@@ -49,12 +51,13 @@ Source<T>::rebuild_cache() noexcept {
         _species_cache.clear();
         _shuffled_species.clear();
         _shuffle_keys.clear();
-        _shuffle_seed = 0;
-        _is_invalidated_cache  = false;
+        _shuffle_seed         = 0;
+        _is_invalidated_cache = false;
         return;
     }
 
     const auto geometry_op = _unit.geometry_operator();
+    const bool flip        = _flip;
     atlas::sampling::sample_spawn_grid(
         _local_positions,
         geometry_op,
@@ -62,8 +65,9 @@ Source<T>::rebuild_cache() noexcept {
         _tolerance,
         // sample_spawn_grid() already performs predicate filtering and compaction,
         // so `_local_positions` contains only spawn-eligible samples afterwards.
-        [spawn_op = _spawn_operator] ATLAS_DEVICE(const auto& query, const Vector3<T>& sample, T tol) {
-            return spawn_op.spawn(query, sample, tol);
+        [spawn_op = _spawn_operator, flip] ATLAS_DEVICE(const auto& query, const Vector3<T>& sample, T tol) {
+            const bool should_spawn = spawn_op.spawn(query, sample, tol);
+            return flip ? !should_spawn : should_spawn;
         });
 
     const int local_count = static_cast<int>(_local_positions.size());
@@ -83,7 +87,7 @@ Source<T>::rebuild_cache() noexcept {
         for (int i = 0; i < local_count; ++i) {
             // Build a deterministic baseline species layout from the cumulative
             // mole-fraction distribution. Later emits only reshuffle this cache.
-            const T fraction = static_cast<T>(i) / static_cast<T>(local_count);
+            const T fraction   = static_cast<T>(i) / static_cast<T>(local_count);
             size_t species_idx = 0;
             T running_sum      = T(0);
 
@@ -104,8 +108,8 @@ Source<T>::rebuild_cache() noexcept {
             static_cast<std::size_t>(local_count));
     }
 
-    _shuffle_seed = 0;
-    _is_invalidated_cache  = false;
+    _shuffle_seed         = 0;
+    _is_invalidated_cache = false;
 }
 
 template <typename T>
@@ -119,16 +123,16 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
         return;
     }
 
-    const int local_count = static_cast<int>(_local_positions.size());
+    const int local_count           = static_cast<int>(_local_positions.size());
     const Vector3<T>* local_pos_ptr = atlas::raw_pointer_cast(_local_positions.data());
-    const int spawn_count = local_count;
+    const int spawn_count           = local_count;
     if (spawn_count <= 0) {
         return;
     }
 
     // Emission appends into the active prefix, so the source must reject writes
     // that would overflow the probe's preallocated storage.
-    const int current_count = particle_probe.particle_count;
+    const int current_count  = particle_probe.particle_count;
     const int required_space = current_count + spawn_count;
     if (required_space > static_cast<int>(particle_probe.buffer_size)) {
         atlas::logger::warn()
@@ -141,22 +145,22 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
     const auto sync_op = _unit.sync_operator();
     const auto gen_op  = _generate_operator;
 
-    Vector3<T>* out_pos     = particle_probe.pos + current_count;
-    Vector3<T>* out_vel     = particle_probe.vel + current_count;
-    size_t* out_species     = particle_probe.species + current_count;
+    Vector3<T>* out_pos = particle_probe.pos + current_count;
+    Vector3<T>* out_vel = particle_probe.vel + current_count;
+    size_t* out_species = particle_probe.species + current_count;
 
     // Start from the deterministic baseline species arrangement and permute it
     // via random sort keys generated on the active backend buffer.
     _shuffled_species = _species_cache;
 
-    const std::uint64_t seed = _shuffle_seed++;
+    const std::uint64_t seed        = _shuffle_seed++;
     std::uint64_t* shuffle_keys_ptr = atlas::raw_pointer_cast(_shuffle_keys.data());
     const ShuffleOperator shuffle_op {};
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         local_count,
-        [=] ATLAS_ALL_DEVICE(const int i) {
+        [=](const int i) {
             shuffle_keys_ptr[i] = shuffle_op(i, seed);
         });
 
@@ -175,7 +179,7 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         local_count,
-        [=] ATLAS_ALL_DEVICE(const int i) {
+        [=](const int i) {
             const Vector3<T>& local_p = local_pos_ptr[i];
 
             // Transform accepted local samples into world-space particle state.
@@ -185,7 +189,7 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
 
             // Each emitted slot receives a freshly generated velocity and a
             // species tag from the shuffled cache computed above.
-            out_vel[i] = gen_op.generate(param0, param1);
+            out_vel[i]     = gen_op.generate(param0, param1);
             out_species[i] = shuffled_species_ptr[i];
         });
 
@@ -195,42 +199,49 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
 template <typename T>
 void
 Source<T>::set_unit(Unit<T> unit) noexcept {
-    _unit = std::move(unit);
+    _unit                 = std::move(unit);
     _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_fluid(FluidHostPtr<T> fluid) noexcept {
-    _fluid = std::move(fluid);
+    _fluid                = std::move(fluid);
     _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_spawn_type(const SpawnType spawn_type) noexcept {
-    _spawn_operator = SpawnOperator<T>(spawn_type);
+    _spawn_operator       = SpawnOperator<T>(spawn_type);
     _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_spawn_operator(const SpawnOperator<T> spawn_operator) noexcept {
-    _spawn_operator = spawn_operator;
+    _spawn_operator       = spawn_operator;
     _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_tolerance(const T tolerance) noexcept {
-    _tolerance = tolerance;
+    _tolerance            = tolerance;
+    _is_invalidated_cache = true;
+}
+
+template <typename T>
+void
+Source<T>::set_flip(const bool flip) noexcept {
+    _flip                 = flip;
     _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_spacing(const T spacing) noexcept {
-    _spacing = spacing;
+    _spacing              = spacing;
     _is_invalidated_cache = true;
 }
 
@@ -271,6 +282,12 @@ Source<T>::tolerance() const noexcept {
 }
 
 template <typename T>
+bool
+Source<T>::flip() const noexcept {
+    return _flip;
+}
+
+template <typename T>
 T
 Source<T>::spacing() const noexcept {
     return _spacing;
@@ -292,9 +309,9 @@ template <typename T>
 Source<T>
 Source<T>::Builder::build() {
     validate();
-    Source<T> source(std::move(*_unit), _fluid, _spawn_type, _tolerance);
-    source._spacing = _spacing;
-    source._generate_operator = _generate_operator;
+    Source<T> source(std::move(*_unit), _fluid, _spawn_type, _flip, _tolerance);
+    source._spacing              = _spacing;
+    source._generate_operator    = _generate_operator;
     source._is_invalidated_cache = true;
     return source;
 }
@@ -337,6 +354,13 @@ template <typename T>
 typename Source<T>::Builder&
 Source<T>::Builder::with_tolerance(const T tolerance) noexcept {
     _tolerance = tolerance;
+    return *this;
+}
+
+template <typename T>
+typename Source<T>::Builder&
+Source<T>::Builder::with_flip(const bool flip) noexcept {
+    _flip = flip;
     return *this;
 }
 

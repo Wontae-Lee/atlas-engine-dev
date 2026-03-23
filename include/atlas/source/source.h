@@ -59,6 +59,7 @@ public:
     Source(Unit<T> unit,
            FluidHostPtr<T> fluid,
            SpawnType spawn_type = SpawnType::Surface,
+           bool flip            = false,
            T tolerance          = T(0)) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
@@ -121,6 +122,18 @@ public:
     set_tolerance(T tolerance) noexcept;
 
     /**
+     * @brief Invert the spawn predicate used during cache construction.
+     *
+     * @details
+     * When `flip` is enabled, positions that would normally be rejected are
+     * cached, and positions that would normally be cached are rejected.
+     *
+     * @param flip Whether to invert spawn classification.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_flip(bool flip) noexcept;
+
+    /**
      * @brief Set grid spacing for cached spawn samples and invalidate caches.
      *
      * @param spacing Uniform sample spacing in local coordinates.
@@ -167,6 +180,12 @@ public:
     tolerance() const noexcept;
 
     /**
+     * @brief Return whether cached spawn classification is inverted.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    flip() const noexcept;
+
+    /**
      * @brief Return the current sample spacing used for cache construction.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
@@ -200,6 +219,7 @@ private:
     FluidHostPtr<T> _fluid;
     SpawnOperator<T> _spawn_operator { SpawnType::Surface };
     GenerateOperator<T> _generate_operator { GenerateType::uniform };
+    bool _flip   = false;
     T _tolerance = T(0);
     T _spacing   = T(0.1);
     DeviceBuffer<Vector3<T>> _local_positions;
@@ -207,7 +227,7 @@ private:
     DeviceBuffer<size_t> _shuffled_species;
     DeviceBuffer<std::uint64_t> _shuffle_keys;
     std::uint64_t _shuffle_seed = 0;
-    bool _is_invalidated_cache = true;
+    bool _is_invalidated_cache  = true;
 };
 
 template <typename T>
@@ -259,6 +279,12 @@ public:
     with_tolerance(T tolerance) noexcept;
 
     /**
+     * @brief Invert spawn classification during cache construction.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_flip(bool flip) noexcept;
+
+    /**
      * @brief Set local-space sample spacing.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -282,8 +308,9 @@ private:
     FluidHostPtr<T> _fluid;
     SpawnType _spawn_type = SpawnType::Surface;
     GenerateOperator<T> _generate_operator { GenerateType::uniform };
-    T _tolerance          = T(0);
-    T _spacing            = T(0.1);
+    bool _flip   = false;
+    T _tolerance = T(0);
+    T _spacing   = T(0.1);
 };
 
 } // namespace atlas::system

@@ -202,3 +202,29 @@ TEST(Source, ChangingSpawnTypeInvalidatesCacheAndRebuildsLocalPositions) {
         EXPECT_TRUE(query.is_on_surface(local_position, 0.0));
     }
 }
+
+TEST(Source, FlipInvertsSpawnClassificationWhenRebuildingCache) {
+    auto system = atlas::system::System<double>(64);
+    auto& probe = system.particle_probe();
+    probe.particle_count = 0;
+
+    auto source = atlas::Source<double>::builder()
+                      .with_unit(make_box_unit<double>())
+                      .with_fluid(make_test_fluid<double>())
+                      .with_spawn_type(atlas::system::SpawnType::Volume)
+                      .with_flip(true)
+                      .with_spacing(1.0)
+                      .build();
+
+    source.emit(probe);
+
+    EXPECT_TRUE(source.flip());
+    EXPECT_EQ(source.local_positions().size(), 0u);
+    EXPECT_EQ(probe.particle_count, 0);
+
+    const auto local_positions = test::copy_device_buffer(source.local_positions());
+    const auto query = source.unit().geometry_operator();
+    for (const auto& local_position : local_positions) {
+        EXPECT_FALSE(query.is_inside(local_position, 0.0));
+    }
+}
