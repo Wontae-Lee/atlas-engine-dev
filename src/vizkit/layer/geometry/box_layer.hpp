@@ -70,7 +70,7 @@ BoxLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
     positions.clear();
     if (!this->_unit) return;
 
-    const auto& query = this->_unit->query_operator();
+    const auto& query = this->_unit->geometry_operator();
 
     if (query.type != atlas::geometry::GeometryType::Box) return;
 

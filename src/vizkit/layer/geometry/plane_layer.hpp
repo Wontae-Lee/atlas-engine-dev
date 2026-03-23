@@ -35,7 +35,7 @@ PlaneLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
     positions.clear();
     if (!this->_unit) return;
 
-    const auto& query = this->_unit->query_operator();
+    const auto& query = this->_unit->geometry_operator();
     if (query.type != atlas::geometry::GeometryType::Plane) return;
 
     const auto& plane = query.plane;
@@ -104,7 +104,7 @@ PlaneLayer<T>::Builder::validate() const {
 
     if (!_unit) throw std::runtime_error("PlaneLayer: unit null");
 
-    const auto& query = _unit->query_operator();
+    const auto& query = _unit->geometry_operator();
     if (query.type != atlas::geometry::GeometryType::Plane) {
         throw std::runtime_error("PlaneLayer: query type must be Plane");
     }

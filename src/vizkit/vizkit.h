@@ -2,6 +2,7 @@
 
 #include <vizkit/camera/camera.h>
 #include <vizkit/layer/geometry/box_layer.h>
+#include <vizkit/layer/geometry/circle_layer.h>
 #include <vizkit/layer/geometry/cylinder_layer.h>
 #include <vizkit/layer/geometry/geometry_layer.h>
 #include <vizkit/layer/geometry/plane_layer.h>

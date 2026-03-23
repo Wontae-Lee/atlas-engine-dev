@@ -3,7 +3,7 @@
 #ifdef ATLAS_ENABLE_VIZKIT
 
 namespace atlas::vizkit {
-void
+inline void
 Camera::init_mouse_controls(GLFWwindow* w) {
     if (mouse_initialized || w == nullptr) return;
 
@@ -13,7 +13,7 @@ Camera::init_mouse_controls(GLFWwindow* w) {
     mouse_initialized = true;
 }
 
-void
+inline void
 Camera::scroll_callback(GLFWwindow* w, double xoffset, double yoffset) {
     (void)xoffset;
 
@@ -25,7 +25,7 @@ Camera::scroll_callback(GLFWwindow* w, double xoffset, double yoffset) {
     camera->pending_scroll_zoom -= static_cast<float>(yoffset) * 0.8f;
 }
 
-void
+inline void
 Camera::handle(GLFWwindow* w) {
     init_mouse_controls(w);
 
@@ -76,7 +76,7 @@ Camera::handle(GLFWwindow* w) {
     dist = fminf(fmaxf(dist, 2.0f), 100.0f);
 }
 
-void
+inline void
 Camera::build_mvp(int w, int h, float out_mvp[16]) const {
     {
 

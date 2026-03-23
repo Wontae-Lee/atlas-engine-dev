@@ -26,7 +26,7 @@ SphereLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
     positions.clear();
     if (!this->_unit) return;
 
-    const auto& q = this->_unit->query_operator();
+    const auto& q = this->_unit->geometry_operator();
     if (q.type != atlas::geometry::GeometryType::Sphere) return;
 
     const auto& s = q.sphere;

@@ -22,7 +22,7 @@ TriangleMeshLayer<T>::build_geometry(std::vector<Vector3<T>>& pos) {
     pos.clear();
     if (!this->_unit) return;
 
-    auto& q = this->_unit->query_operator();
+    const auto& q = this->_unit->geometry_operator();
     if (q.type != atlas::geometry::GeometryType::TriangleMesh) return;
 
     auto& m = q.triangle_mesh;

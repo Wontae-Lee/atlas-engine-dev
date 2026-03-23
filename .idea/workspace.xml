@@ -140,7 +140,24 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Reset comments." />
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Reset comments.">
+      <change afterPath="$PROJECT_DIR$/tests/vizkit/camera/camera_tests.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/vizkit/layer/geometry/box_layer_tests.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/vizkit/layer/geometry/geometry_layer_tests.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/vizkit/layer/layer_tests.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/vizkit/shader/shader_program_tests.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/vizkit/viewer/viewer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/shader/shader_program.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/shader/shader_program.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/utilities/tests_utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/tests/utilities/tests_utils.h" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -273,7 +290,7 @@
       <recent name="$PROJECT_DIR$/include/atlas/generator" />
     </key>
   </component>
-  <component name="RunManager" selected="Google Test.All in atlas_tests">
+  <component name="RunManager" selected="CMake Application.dynamic">
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -620,7 +637,7 @@
       <workItem from="1774093199857" duration="5226000" />
       <workItem from="1774098528212" duration="7642000" />
       <workItem from="1774252883308" duration="3766000" />
-      <workItem from="1774256946302" duration="6934000" />
+      <workItem from="1774256946302" duration="10016000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

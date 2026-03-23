@@ -2,7 +2,7 @@
 
 #ifdef ATLAS_ENABLE_VIZKIT
 namespace atlas::vizkit {
-ShaderProgram::ShaderProgram(const char* vs, const char* fs) {
+inline ShaderProgram::ShaderProgram(const char* vs, const char* fs) {
     {
 
         const GLuint v = compile(GL_VERTEX_SHADER, vs);
@@ -29,19 +29,19 @@ ShaderProgram::ShaderProgram(const char* vs, const char* fs) {
     }
 }
 
-void
+inline void
 ShaderProgram::use() const {
 
     glUseProgram(_prog);
 }
 
-GLint
+inline GLint
 ShaderProgram::uniform_loc(const char* name) const {
 
     return glGetUniformLocation(_prog, name);
 }
 
-GLuint
+inline GLuint
 ShaderProgram::compile(GLenum type, const char* src) {
 
     const GLuint s = glCreateShader(type);

@@ -27,7 +27,7 @@ CylinderLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
     positions.clear();
     if (!this->_unit) return;
 
-    const auto& query = this->_unit->query_operator();
+    const auto& query = this->_unit->geometry_operator();
     if (query.type != atlas::geometry::GeometryType::Cylinder) return;
 
     const auto& cyl = query.cylinder;
@@ -103,7 +103,7 @@ CylinderLayer<T>::Builder::validate() const {
 
     if (!_unit) throw std::runtime_error("CylinderLayer: unit null");
 
-    const auto& query = _unit->query_operator();
+    const auto& query = _unit->geometry_operator();
     if (query.type != atlas::geometry::GeometryType::Cylinder) {
         throw std::runtime_error("CylinderLayer: query type must be Cylinder");
     }

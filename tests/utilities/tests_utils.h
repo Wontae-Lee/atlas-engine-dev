@@ -260,4 +260,94 @@ make_domain_ptr() {
     return atlas::make_host_shared<system::Domain<double>>(make_domain());
 }
 
+} // namespace atlas::test
+
+#ifdef ATLAS_ENABLE_VIZKIT
+
+#include <vizkit/layer/geometry/geometry_layer.h>
+#include <vizkit/layer/layer.h>
+
+namespace atlas::test {
+
+template <typename T>
+atlas::UnitHostPtr<T>
+make_vizkit_translated_box_unit(const atlas::Vector3<T>& translation) {
+    const auto geometry = atlas::geometry::Box<T>::builder()
+                              .with_lower_corner(atlas::Vector3<T>(T(-1), T(-1), T(-1)))
+                              .with_upper_corner(atlas::Vector3<T>(T(1), T(1), T(1)))
+                              .make_host_shared();
+    const auto sync = atlas::system::Sync<T>::builder()
+                          .with_rigid_pose(translation, atlas::Quaternion<T>())
+                          .make_host_shared();
+    return atlas::system::Unit<T>::builder()
+        .with_geometry(geometry)
+        .with_sync(sync)
+        .make_host_shared();
 }
+
+template <typename T>
+atlas::UnitHostPtr<T>
+make_vizkit_box_unit(const atlas::Vector3<T>& lower,
+                     const atlas::Vector3<T>& upper) {
+    const auto geometry = atlas::geometry::Box<T>::builder()
+                              .with_lower_corner(lower)
+                              .with_upper_corner(upper)
+                              .make_host_shared();
+    const auto sync = atlas::system::Sync<T>::builder().make_host_shared();
+    return atlas::system::Unit<T>::builder()
+        .with_geometry(geometry)
+        .with_sync(sync)
+        .make_host_shared();
+}
+
+template <typename T>
+class TestVizkitGeometryLayer final : public atlas::vizkit::GeometryLayer<T> {
+public:
+    explicit TestVizkitGeometryLayer(const atlas::UnitHostPtr<T>& unit = nullptr)
+        : atlas::vizkit::GeometryLayer<T>(GL_LINES, unit) { }
+
+    void
+    build_geometry(std::vector<atlas::Vector3<T>>& positions) override {
+        positions = seeded_positions;
+    }
+
+    bool
+    synchronize_public(std::vector<atlas::Vector3<T>>& world_positions, T dt) {
+        return this->synchronize(world_positions, dt);
+    }
+
+    std::vector<atlas::Vector3<T>>&
+    local_positions_public() {
+        return this->_local_positions;
+    }
+
+    std::vector<atlas::Vector3<T>> seeded_positions;
+};
+
+template <typename T>
+class DummyVizkitLayer final : public atlas::vizkit::Layer<T> {
+public:
+    void
+    init(GLFWwindow* window, atlas::vizkit::Camera& camera) override {
+        init_called = true;
+        last_window = window;
+        (void)camera;
+    }
+
+    void
+    update(GLFWwindow* window, atlas::vizkit::Camera& camera, T dt) override {
+        update_called = true;
+        last_window   = window;
+        last_dt       = dt;
+        (void)camera;
+    }
+
+    bool init_called = false;
+    bool update_called = false;
+    GLFWwindow* last_window = nullptr;
+    T last_dt = T(0);
+};
+
+} // namespace atlas::test
+
+#endif
