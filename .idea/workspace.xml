@@ -140,16 +140,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Renamed the member value.">
-      <change afterPath="$PROJECT_DIR$/include/atlas/geometry/circle.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/geometry/circle.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/geometry_type.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry_type.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/spatial/trace_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/spatial/trace_operator_tests.cpp" afterDir="false" />
-    </list>
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Reset comments." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -282,7 +273,7 @@
       <recent name="$PROJECT_DIR$/include/atlas/generator" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.remove_comments">
+  <component name="RunManager" selected="Google Test.All in atlas_tests">
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -629,7 +620,7 @@
       <workItem from="1774093199857" duration="5226000" />
       <workItem from="1774098528212" duration="7642000" />
       <workItem from="1774252883308" duration="3766000" />
-      <workItem from="1774256946302" duration="6657000" />
+      <workItem from="1774256946302" duration="6934000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
@@ -751,7 +742,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774261440671</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Reset comments.">
+      <option name="closed" value="true" />
+      <created>1774264128117</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1774264128117</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -819,7 +818,8 @@
     <MESSAGE value="updated submodules." />
     <MESSAGE value="developing with Copilot" />
     <MESSAGE value="Renamed the member value." />
-    <option name="LAST_COMMIT_MESSAGE" value="Renamed the member value." />
+    <MESSAGE value="Reset comments." />
+    <option name="LAST_COMMIT_MESSAGE" value="Reset comments." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

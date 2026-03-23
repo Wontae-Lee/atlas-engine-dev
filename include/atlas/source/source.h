@@ -2,7 +2,8 @@
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/data/particle_data.h>
-#include <atlas/generator/generate_operator.h>
+#include <atlas/generator/generator.h>
+#include <atlas/generator/uniform_generator.h>
 #include <atlas/matter/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/sampling/sampling.h>
@@ -62,7 +63,7 @@ public:
     set_spacing(T spacing) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_generate_operator(GenerateOperator<T> generate_operator) noexcept;
+    set_generator(GeneratorHostPtr<T> generator) noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const Unit<T>&
     unit() const noexcept;
@@ -85,8 +86,8 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     spacing() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const GenerateOperator<T>&
-    generate_operator() const noexcept;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const GeneratorHostPtr<T>&
+    generator() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<Vector3<T>>&
     local_positions() const noexcept;
@@ -98,8 +99,8 @@ private:
 private:
     Unit<T> _unit;
     FluidHostPtr<T> _fluid;
+    GeneratorHostPtr<T> _generator;
     SpawnOperator<T> _spawn_operator { SpawnType::Surface };
-    GenerateOperator<T> _generate_operator { GenerateType::uniform };
     bool _flip   = false;
     T _tolerance = T(0);
     T _spacing   = T(0.1);
@@ -144,7 +145,7 @@ public:
     with_spacing(T spacing) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_generate_operator(GenerateOperator<T> generate_operator) noexcept;
+    with_generator(GeneratorHostPtr<T> generator) noexcept;
 
 private:
     ATLAS_HOST ATLAS_FORCE_INLINE void
@@ -153,8 +154,8 @@ private:
 private:
     std::optional<Unit<T>> _unit;
     FluidHostPtr<T> _fluid;
+    GeneratorHostPtr<T> _generator;
     SpawnType _spawn_type = SpawnType::Surface;
-    GenerateOperator<T> _generate_operator { GenerateType::uniform };
     bool _flip   = false;
     T _tolerance = T(0);
     T _spacing   = T(0.1);

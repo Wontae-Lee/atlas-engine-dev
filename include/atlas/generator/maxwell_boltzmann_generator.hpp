@@ -21,15 +21,30 @@ MaxwellBoltzmannGenerator<T>::MaxwellBoltzmannGenerator(const T temperature,
     , _molecular_mass(molecular_mass)
     , _bulk_velocity(bulk_velocity)
     , _seed(seed)
-    , _operator(seed) { }
+    , _operator(MaxwellBoltzmannGenerateOperator<T>(seed, bulk_velocity)) { }
 
 template <typename T>
 Vector3<T>
 MaxwellBoltzmannGenerator<T>::generate() const {
-    return _operator.generate(
-        _temperature,
-        _molecular_mass,
-        _bulk_velocity);
+    return _operator.generate(_temperature, _molecular_mass);
+}
+
+template <typename T>
+const GenerateOperator<T>&
+MaxwellBoltzmannGenerator<T>::generate_operator() const noexcept {
+    return _operator;
+}
+
+template <typename T>
+T
+MaxwellBoltzmannGenerator<T>::param0() const noexcept {
+    return _temperature;
+}
+
+template <typename T>
+T
+MaxwellBoltzmannGenerator<T>::param1() const noexcept {
+    return _molecular_mass;
 }
 
 template <typename T>

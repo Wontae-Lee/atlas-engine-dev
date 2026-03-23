@@ -21,12 +21,13 @@ TEST(GenerateOperator, MaxwellSigmaDispatchMatchesConcreteOperator) {
 
 TEST(GenerateOperator, MaxwellBoltzmannDispatchMatchesConcreteOperator) {
     const Vector3<double> bulk_velocity(1.0, 2.0, 3.0);
-    const auto expected = MaxwellBoltzmannGenerateOperator<double>(10u).generate(
+    const auto expected = MaxwellBoltzmannGenerateOperator<double>(10u, bulk_velocity).generate(
         350.0,
-        4.65e-26,
-        bulk_velocity);
+        4.65e-26);
 
-    const auto actual = GenerateOperator<double>(GenerateType::maxwell_boltzmann, 10u).generate(350.0, 4.65e-26, bulk_velocity);
+    const auto actual = GenerateOperator<double>(
+                            MaxwellBoltzmannGenerateOperator<double>(10u, bulk_velocity))
+                            .generate(350.0, 4.65e-26);
 
     EXPECT_TRUE(test::vec_near(expected, actual, eps));
 }

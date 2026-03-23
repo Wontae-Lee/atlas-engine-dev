@@ -24,6 +24,15 @@ public:
     ATLAS_HOST ATLAS_NODISCARD Vector3<T>
     generate() const override;
 
+    ATLAS_HOST ATLAS_NODISCARD const GenerateOperator<T>&
+    generate_operator() const noexcept override;
+
+    ATLAS_HOST ATLAS_NODISCARD T
+    param0() const noexcept override;
+
+    ATLAS_HOST ATLAS_NODISCARD T
+    param1() const noexcept override;
+
     ATLAS_HOST ATLAS_NODISCARD GenerateType
     type() const noexcept override;
 
@@ -32,7 +41,7 @@ private:
     T _molecular_mass;
     Vector3<T> _bulk_velocity;
     unsigned int _seed;
-    MaxwellBoltzmannGenerateOperator<T> _operator;
+    GenerateOperator<T> _operator;
 };
 
 template <typename T>

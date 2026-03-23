@@ -9,10 +9,9 @@ using namespace atlas;
 
 TEST(MaxwellBoltzmannGenerator, GenerateUsesStoredThermalParameters) {
     const Vector3<double> bulk_velocity(0.25, -0.5, 1.0);
-    const auto expected = MaxwellBoltzmannGenerateOperator<double>(14u).generate(
+    const auto expected = MaxwellBoltzmannGenerateOperator<double>(14u, bulk_velocity).generate(
         325.0,
-        4.65e-26,
-        bulk_velocity);
+        4.65e-26);
 
     MaxwellBoltzmannGenerator<double> generator(
         325.0,
@@ -22,6 +21,9 @@ TEST(MaxwellBoltzmannGenerator, GenerateUsesStoredThermalParameters) {
     const auto actual = generator.generate();
 
     EXPECT_TRUE(test::vec_near(expected, actual, eps));
+    EXPECT_EQ(generator.generate_operator().type, GenerateType::maxwell_boltzmann);
+    EXPECT_TRUE(test::near(generator.param0(), 325.0, eps));
+    EXPECT_TRUE(test::near(generator.param1(), 4.65e-26, eps));
 }
 
 TEST(MaxwellBoltzmannGenerator, TypeReturnsMaxwellBoltzmann) {

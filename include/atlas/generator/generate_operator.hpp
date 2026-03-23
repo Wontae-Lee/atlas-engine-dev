@@ -46,15 +46,17 @@ MaxwellSigmaGenerateOperator<T>::generate(const T sigma) const {
 }
 
 template <typename T>
-MaxwellBoltzmannGenerateOperator<T>::MaxwellBoltzmannGenerateOperator(const unsigned int seed) noexcept
+MaxwellBoltzmannGenerateOperator<T>::MaxwellBoltzmannGenerateOperator(
+    const unsigned int seed,
+    const Vector3<T>& bulk_velocity) noexcept
     : seed(seed)
+    , bulk_velocity(bulk_velocity)
     , engine(seed) { }
 
 template <typename T>
 Vector3<T>
 MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
-                                              const T molecular_mass,
-                                              const Vector3<T>& bulk_velocity) const {
+                                              const T molecular_mass) const {
 
     if (!(temperature > T(0)) || !(molecular_mass > T(0))) {
         return Vector3<T>(T(0), T(0), T(0));
@@ -65,7 +67,7 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
                sigma * atlas::sampling::generate_standard_normal<T>(engine),
                sigma * atlas::sampling::generate_standard_normal<T>(engine),
                sigma * atlas::sampling::generate_standard_normal<T>(engine))
-        + bulk_velocity;
+        + this->bulk_velocity;
 }
 
 template <typename T>
@@ -189,28 +191,7 @@ GenerateOperator<T>::generate(const T param0,
     case GenerateType::maxwell_sigma:
         return maxwell_sigma.generate(param0);
     case GenerateType::maxwell_boltzmann:
-        return maxwell_boltzmann.generate(
-            param0,
-            param1,
-            Vector3<T>(T(0), T(0), T(0)));
-    default:
-        return Vector3<T>(T(0), T(0), T(0));
-    }
-}
-
-template <typename T>
-Vector3<T>
-GenerateOperator<T>::generate(const T param0,
-                              const T param1,
-                              const Vector3<T>& bulk_velocity) const {
-
-    switch (type) {
-    case GenerateType::uniform:
-        return uniform.generate(param0, param1);
-    case GenerateType::maxwell_sigma:
-        return maxwell_sigma.generate(param0);
-    case GenerateType::maxwell_boltzmann:
-        return maxwell_boltzmann.generate(param0, param1, bulk_velocity);
+        return maxwell_boltzmann.generate(param0, param1);
     default:
         return Vector3<T>(T(0), T(0), T(0));
     }

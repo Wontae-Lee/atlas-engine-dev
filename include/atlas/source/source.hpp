@@ -23,6 +23,10 @@ Source<T>::Source(Unit<T> unit,
                   const T tolerance) noexcept
     : _unit(std::move(unit))
     , _fluid(std::move(fluid))
+    , _generator(atlas::UniformGenerator<T>::builder()
+                     .with_min_value(T(0))
+                     .with_max_value(T(1))
+                     .make_host_shared())
     , _spawn_operator(spawn_type)
     , _flip(flip)
     , _tolerance(tolerance)
@@ -133,8 +137,10 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
         return;
     }
 
-    const auto sync_op = _unit.sync_operator();
-    const auto gen_op  = _generate_operator;
+    const auto sync_op   = _unit.sync_operator();
+    const auto gen_op    = _generator->generate_operator();
+    const T param0       = _generator->param0();
+    const T param1       = _generator->param1();
 
     Vector3<T>* out_pos = particle_probe.pos + current_count;
     Vector3<T>* out_vel = particle_probe.vel + current_count;
@@ -159,9 +165,6 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
         _shuffled_species.begin());
 
     const size_t* shuffled_species_ptr = atlas::raw_pointer_cast(_shuffled_species.data());
-
-    const T param0 = T(0);
-    const T param1 = T(1);
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -231,8 +234,8 @@ Source<T>::set_spacing(const T spacing) noexcept {
 
 template <typename T>
 void
-Source<T>::set_generate_operator(const GenerateOperator<T> generate_operator) noexcept {
-    _generate_operator = generate_operator;
+Source<T>::set_generator(GeneratorHostPtr<T> generator) noexcept {
+    _generator = std::move(generator);
 }
 
 template <typename T>
@@ -278,9 +281,9 @@ Source<T>::spacing() const noexcept {
 }
 
 template <typename T>
-const GenerateOperator<T>&
-Source<T>::generate_operator() const noexcept {
-    return _generate_operator;
+const GeneratorHostPtr<T>&
+Source<T>::generator() const noexcept {
+    return _generator;
 }
 
 template <typename T>
@@ -295,7 +298,9 @@ Source<T>::Builder::build() {
     validate();
     Source<T> source(std::move(*_unit), _fluid, _spawn_type, _flip, _tolerance);
     source._spacing              = _spacing;
-    source._generate_operator    = _generate_operator;
+    if (_generator) {
+        source._generator = _generator;
+    }
     source._is_invalidated_cache = true;
     return source;
 }
@@ -357,8 +362,8 @@ Source<T>::Builder::with_spacing(const T spacing) noexcept {
 
 template <typename T>
 typename Source<T>::Builder&
-Source<T>::Builder::with_generate_operator(const GenerateOperator<T> generate_operator) noexcept {
-    _generate_operator = generate_operator;
+Source<T>::Builder::with_generator(GeneratorHostPtr<T> generator) noexcept {
+    _generator = std::move(generator);
     return *this;
 }
 

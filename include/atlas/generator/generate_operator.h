@@ -39,14 +39,16 @@ struct MaxwellSigmaGenerateOperator final {
 template <typename T>
 struct MaxwellBoltzmannGenerateOperator final {
     unsigned int seed = 0u;
+    Vector3<T> bulk_velocity { T(0), T(0), T(0) };
     mutable atlas::default_random_engine<T> engine;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit MaxwellBoltzmannGenerateOperator(unsigned int seed = 0u) noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit MaxwellBoltzmannGenerateOperator(
+        unsigned int seed = 0u,
+        const Vector3<T>& bulk_velocity = Vector3<T>(T(0), T(0), T(0))) noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T temperature,
-             T molecular_mass,
-             const Vector3<T>& bulk_velocity) const;
+             T molecular_mass) const;
 };
 
 template <typename T>
@@ -86,11 +88,6 @@ struct GenerateOperator final {
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T param0,
              T param1 = T(1)) const;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
-    generate(T param0,
-             T param1,
-             const Vector3<T>& bulk_velocity) const;
 
 private:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void

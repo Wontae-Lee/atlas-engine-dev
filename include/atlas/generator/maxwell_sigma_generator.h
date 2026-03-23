@@ -21,13 +21,22 @@ public:
     ATLAS_HOST ATLAS_NODISCARD Vector3<T>
     generate() const override;
 
+    ATLAS_HOST ATLAS_NODISCARD const GenerateOperator<T>&
+    generate_operator() const noexcept override;
+
+    ATLAS_HOST ATLAS_NODISCARD T
+    param0() const noexcept override;
+
+    ATLAS_HOST ATLAS_NODISCARD T
+    param1() const noexcept override;
+
     ATLAS_HOST ATLAS_NODISCARD GenerateType
     type() const noexcept override;
 
 private:
     T _sigma;
     unsigned int _seed;
-    MaxwellSigmaGenerateOperator<T> _operator;
+    GenerateOperator<T> _operator;
 };
 
 template <typename T>

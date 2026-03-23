@@ -17,12 +17,30 @@ MaxwellSigmaGenerator<T>::MaxwellSigmaGenerator(const T sigma,
                                                 const unsigned int seed) noexcept
     : _sigma(sigma)
     , _seed(seed)
-    , _operator(seed) { }
+    , _operator(MaxwellSigmaGenerateOperator<T>(seed)) { }
 
 template <typename T>
 Vector3<T>
 MaxwellSigmaGenerator<T>::generate() const {
     return _operator.generate(_sigma);
+}
+
+template <typename T>
+const GenerateOperator<T>&
+MaxwellSigmaGenerator<T>::generate_operator() const noexcept {
+    return _operator;
+}
+
+template <typename T>
+T
+MaxwellSigmaGenerator<T>::param0() const noexcept {
+    return _sigma;
+}
+
+template <typename T>
+T
+MaxwellSigmaGenerator<T>::param1() const noexcept {
+    return T(1);
 }
 
 template <typename T>

@@ -19,12 +19,30 @@ UniformGenerator<T>::UniformGenerator(const T min_value,
     : _min_value(min_value)
     , _max_value(max_value)
     , _seed(seed)
-    , _operator(seed) { }
+    , _operator(UniformGenerateOperator<T>(seed)) { }
 
 template <typename T>
 Vector3<T>
 UniformGenerator<T>::generate() const {
     return _operator.generate(_min_value, _max_value);
+}
+
+template <typename T>
+const GenerateOperator<T>&
+UniformGenerator<T>::generate_operator() const noexcept {
+    return _operator;
+}
+
+template <typename T>
+T
+UniformGenerator<T>::param0() const noexcept {
+    return _min_value;
+}
+
+template <typename T>
+T
+UniformGenerator<T>::param1() const noexcept {
+    return _max_value;
 }
 
 template <typename T>

@@ -51,7 +51,11 @@ make_box_unit(const atlas::Vector3<T>& translation = atlas::Vector3<T>(T(0), T(0
 TEST(Source, BuilderBuildStoresConfiguredValues) {
     const auto fluid = make_test_fluid<double>();
     const auto unit  = make_box_unit<double>(Vector3<double>(3.0, 4.0, 5.0));
-    const atlas::GenerateOperator<double> generate_operator(atlas::GenerateType::uniform, 17u);
+    const auto generator = atlas::UniformGenerator<double>::builder()
+                               .with_min_value(-1.0)
+                               .with_max_value(2.0)
+                               .with_seed(17u)
+                               .make_host_shared();
 
     const auto source = atlas::Source<double>::builder()
                             .with_unit(unit)
@@ -59,14 +63,17 @@ TEST(Source, BuilderBuildStoresConfiguredValues) {
                             .with_spawn_type(atlas::system::SpawnType::Volume)
                             .with_tolerance(0.25)
                             .with_spacing(0.5)
-                            .with_generate_operator(generate_operator)
+                            .with_generator(generator)
                             .build();
 
     EXPECT_EQ(source.fluid(), fluid);
     EXPECT_EQ(source.spawn_type(), atlas::system::SpawnType::Volume);
     EXPECT_TRUE(test::near(source.tolerance(), 0.25, 1e-12));
     EXPECT_TRUE(test::near(source.spacing(), 0.5, 1e-12));
-    EXPECT_EQ(source.generate_operator().type, atlas::GenerateType::uniform);
+    ASSERT_TRUE(source.generator());
+    EXPECT_EQ(source.generator()->type(), atlas::GenerateType::uniform);
+    EXPECT_TRUE(test::near(source.generator()->param0(), -1.0, 1e-12));
+    EXPECT_TRUE(test::near(source.generator()->param1(), 2.0, 1e-12));
     EXPECT_TRUE(test::vec_near(
         source.unit().sync_operator().translation,
         Vector3<double>(3.0, 4.0, 5.0),

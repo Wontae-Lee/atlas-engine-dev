@@ -28,6 +28,15 @@ public:
     ATLAS_HOST ATLAS_NODISCARD virtual Vector3<T>
     generate() const = 0;
 
+    ATLAS_HOST ATLAS_NODISCARD virtual const GenerateOperator<T>&
+    generate_operator() const noexcept = 0;
+
+    ATLAS_HOST ATLAS_NODISCARD virtual T
+    param0() const noexcept = 0;
+
+    ATLAS_HOST ATLAS_NODISCARD virtual T
+    param1() const noexcept = 0;
+
     ATLAS_HOST ATLAS_NODISCARD virtual GenerateType
     type() const noexcept = 0;
 };
