@@ -19,9 +19,9 @@
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/cylinder.h>
 #include <atlas/geometry/geometry.h>
+#include <atlas/geometry/geometry_operator.h>
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/geometry/plane.h>
-#include <atlas/geometry/geometry_operator.h>
 #include <atlas/geometry/sphere.h>
 #include <atlas/geometry/triangle.h>
 #include <atlas/geometry/triangle_mesh.h>
@@ -62,15 +62,16 @@
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/parallel/parallel_sort.h>
 #include <atlas/random/default_random_engine.h>
-#include <atlas/random/random.h>
 #include <atlas/random/uniform_real_distribution.h>
 #include <atlas/remove/remove.h>
 #include <atlas/sampling/sampling.h>
 #include <atlas/scan/exclusive_scan.h>
 #include <atlas/searcher/searcher.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
+#include <atlas/source/source.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
@@ -78,7 +79,6 @@
 #include <atlas/spatial/bounding_volume_hierarchy/node.h>
 #include <atlas/spatial/bounding_volume_hierarchy/sah_bvh.h>
 #include <atlas/spatial/ray.h>
-#include <atlas/geometry/geometry_operator.h>
 #include <atlas/sync/sync.h>
 #include <atlas/sync/sync_operator.h>
 #include <atlas/system/system.h>

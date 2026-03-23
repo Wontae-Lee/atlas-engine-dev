@@ -6,6 +6,7 @@
 #include <atlas/matter/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/sampling/sampling.h>
+#include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/sync/sync_operator.h>
 #include <atlas/unit/unit.h>

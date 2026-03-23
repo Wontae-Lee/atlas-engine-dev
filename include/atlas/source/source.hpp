@@ -151,15 +151,13 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
 
     const std::uint64_t seed = _shuffle_seed++;
     std::uint64_t* shuffle_keys_ptr = atlas::raw_pointer_cast(_shuffle_keys.data());
+    const ShuffleOperator shuffle_op {};
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         local_count,
         [=] ATLAS_ALL_DEVICE(const int i) {
-            std::uint64_t x = static_cast<std::uint64_t>(i) + seed + 0x9e3779b97f4a7c15ull;
-            x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
-            x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
-            shuffle_keys_ptr[i] = x ^ (x >> 31);
+            shuffle_keys_ptr[i] = shuffle_op(i, seed);
         });
 
     atlas::parallel_sort_by_key<ExecutionPolicy::device>(
