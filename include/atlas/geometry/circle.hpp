@@ -319,4 +319,4 @@ CircleGeometryOperator<T>::operator()(const atlas::spatial::Ray<T>& ray) const n
     return trace(ray);
 }
 
-} // namespace atlas::geometry
+}

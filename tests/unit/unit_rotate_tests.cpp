@@ -8,7 +8,7 @@
 using namespace atlas;
 
 TEST(Unit, RotateWithZeroAxisIsNoOp) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(1.0, 2.0, 3.0);
@@ -29,7 +29,7 @@ TEST(Unit, RotateWithZeroAxisIsNoOp) {
 }
 
 TEST(Unit, RotateWithZeroAngleKeepsOrientationUnchanged) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(-1.0, 4.0, 2.0);
@@ -50,7 +50,7 @@ TEST(Unit, RotateWithZeroAngleKeepsOrientationUnchanged) {
 }
 
 TEST(Unit, RotateFromIdentityPoseUpdatesDirectionAsExpected) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
@@ -65,7 +65,7 @@ TEST(Unit, RotateFromIdentityPoseUpdatesDirectionAsExpected) {
 }
 
 TEST(Unit, RotateDoesNotModifyTranslation) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(3.0, -2.0, 7.0);
@@ -78,7 +78,7 @@ TEST(Unit, RotateDoesNotModifyTranslation) {
 }
 
 TEST(Unit, RotateNormalizesAxisBeforeApplyingRotation) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     system::Unit<double> u1(geometry_op, system::SyncOperator<double> {});
@@ -97,7 +97,7 @@ TEST(Unit, RotateNormalizesAxisBeforeApplyingRotation) {
 }
 
 TEST(Unit, RotateChangesWorldPointButPreservesDistanceFromTranslationOrigin) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(2.0, -1.0, 0.5);
@@ -119,7 +119,7 @@ TEST(Unit, RotateChangesWorldPointButPreservesDistanceFromTranslationOrigin) {
 }
 
 TEST(Unit, RotateAndInverseSyncRemainConsistentForPoints) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(2.0, -1.0, 0.5);
@@ -137,7 +137,7 @@ TEST(Unit, RotateAndInverseSyncRemainConsistentForPoints) {
 }
 
 TEST(Unit, RotateAndInverseSyncRemainConsistentForDirections) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
@@ -153,7 +153,7 @@ TEST(Unit, RotateAndInverseSyncRemainConsistentForDirections) {
 }
 
 TEST(Unit, ConsecutiveRotationsAccumulateInOrder) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
@@ -170,7 +170,7 @@ TEST(Unit, ConsecutiveRotationsAccumulateInOrder) {
 }
 
 TEST(Unit, RotateByAngleAndThenNegativeAngleRestoresOriginalOrientationEffect) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
@@ -187,7 +187,7 @@ TEST(Unit, RotateByAngleAndThenNegativeAngleRestoresOriginalOrientationEffect) {
 }
 
 TEST(Unit, RotateAffectsRayOriginAndDirectionThroughSyncOperator) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
@@ -205,7 +205,7 @@ TEST(Unit, RotateAffectsRayOriginAndDirectionThroughSyncOperator) {
 }
 
 TEST(Unit, RotateKeepsDirectionLengthInvariant) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     system::Unit<double> u(geometry_op, system::SyncOperator<double> {});
@@ -222,7 +222,7 @@ TEST(Unit, RotateKeepsDirectionLengthInvariant) {
 }
 
 TEST(Unit, RotateKeepsPointOffsetLengthInvariantWhenTranslationIsFixed) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     const Vector3<double> t0(4.0, -1.0, 2.0);

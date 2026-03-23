@@ -260,4 +260,4 @@ make_domain_ptr() {
     return atlas::make_host_shared<system::Domain<double>>(make_domain());
 }
 
-} // namespace atlas::test
+}

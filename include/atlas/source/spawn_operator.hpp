@@ -18,10 +18,6 @@ VolumeSpawnOperator<T>::spawn(const atlas::geometry::GeometryOperator<T>& query,
     return query.is_inside(particle, tolerance);
 }
 
-/* ====================================================================== */
-/* SpawnOperator special members                                           */
-/* ====================================================================== */
-
 template <typename T>
 SpawnOperator<T>::SpawnOperator() noexcept
     : type(SpawnType::Surface) {
@@ -99,10 +95,6 @@ SpawnOperator<T>::copy_from(const SpawnOperator& other) noexcept {
     }
 }
 
-/* ====================================================================== */
-/* SpawnOperator tagged constructors                                       */
-/* ====================================================================== */
-
 template <typename T>
 SpawnOperator<T>::SpawnOperator(const SurfaceSpawnOperator<T>& op)
     : type(SpawnType::Surface) {
@@ -114,10 +106,6 @@ SpawnOperator<T>::SpawnOperator(const VolumeSpawnOperator<T>& op)
     : type(SpawnType::Volume) {
     new (&volume) VolumeSpawnOperator<T>(op);
 }
-
-/* ====================================================================== */
-/* Spawn dispatch                                                          */
-/* ====================================================================== */
 
 template <typename T>
 bool
@@ -134,4 +122,4 @@ SpawnOperator<T>::spawn(const atlas::geometry::GeometryOperator<T>& query,
     }
 }
 
-} // namespace atlas::system
+}

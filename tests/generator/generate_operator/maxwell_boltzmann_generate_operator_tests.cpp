@@ -25,7 +25,7 @@ TEST(MaxwellBoltzmannGenerateOperator, GenerateMatchesSigmaOperatorPlusBulkVeloc
     MaxwellSigmaGenerateOperator<double> sigma_op(17u);
     MaxwellBoltzmannGenerateOperator<double> mb_op(17u);
     const auto expected = sigma_op.generate(sigma) + bulk_velocity;
-    const auto actual = mb_op.generate(
+    const auto actual   = mb_op.generate(
         temperature,
         molecular_mass,
         bulk_velocity);

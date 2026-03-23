@@ -184,4 +184,4 @@ Sink<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::system
+}

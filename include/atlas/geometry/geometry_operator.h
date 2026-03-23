@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file geometry_operator.h
- * @brief Unified geometry query and trace dispatcher.
- */
-
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/circle.h>
 #include <atlas/geometry/cylinder.h>
@@ -77,6 +72,6 @@ struct GeometryOperator {
     operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
 };
 
-} // namespace atlas::geometry
+}
 
 #include <atlas/geometry/geometry_operator.hpp>

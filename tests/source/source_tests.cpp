@@ -46,11 +46,11 @@ make_box_unit(const atlas::Vector3<T>& translation = atlas::Vector3<T>(T(0), T(0
         .build();
 }
 
-} // namespace
+}
 
 TEST(Source, BuilderBuildStoresConfiguredValues) {
     const auto fluid = make_test_fluid<double>();
-    const auto unit = make_box_unit<double>(Vector3<double>(3.0, 4.0, 5.0));
+    const auto unit  = make_box_unit<double>(Vector3<double>(3.0, 4.0, 5.0));
     const atlas::GenerateOperator<double> generate_operator(atlas::GenerateType::uniform, 17u);
 
     const auto source = atlas::Source<double>::builder()
@@ -75,7 +75,7 @@ TEST(Source, BuilderBuildStoresConfiguredValues) {
 
 TEST(Source, BuilderRejectsMissingRequiredInputsAndInvalidSpacing) {
     const auto fluid = make_test_fluid<double>();
-    const auto unit = make_box_unit<double>();
+    const auto unit  = make_box_unit<double>();
 
     EXPECT_THROW(
         atlas::Source<double>::builder()
@@ -101,8 +101,8 @@ TEST(Source, BuilderRejectsMissingRequiredInputsAndInvalidSpacing) {
 TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
     constexpr double eps = 1e-12;
 
-    auto system = atlas::system::System<double>(64);
-    auto& probe = system.particle_probe();
+    auto system          = atlas::system::System<double>(64);
+    auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
     auto source = atlas::Source<double>::builder()
@@ -120,8 +120,8 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
 
     const auto local_positions = test::copy_device_buffer(source.local_positions());
     const auto world_positions = test::copy_device_range(probe.pos, static_cast<std::size_t>(probe.particle_count));
-    const auto velocities = test::copy_device_range(probe.vel, static_cast<std::size_t>(probe.particle_count));
-    const auto species = test::copy_device_range(probe.species, static_cast<std::size_t>(probe.particle_count));
+    const auto velocities      = test::copy_device_range(probe.vel, static_cast<std::size_t>(probe.particle_count));
+    const auto species         = test::copy_device_range(probe.species, static_cast<std::size_t>(probe.particle_count));
 
     ASSERT_EQ(local_positions.size(), world_positions.size());
     ASSERT_EQ(world_positions.size(), velocities.size());
@@ -140,14 +140,14 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
     }
 
     const auto species_zero_count = static_cast<int>(std::count(species.begin(), species.end(), std::size_t(0)));
-    const auto species_one_count = static_cast<int>(std::count(species.begin(), species.end(), std::size_t(1)));
+    const auto species_one_count  = static_cast<int>(std::count(species.begin(), species.end(), std::size_t(1)));
     EXPECT_EQ(species_zero_count, 14);
     EXPECT_EQ(species_one_count, 13);
 }
 
 TEST(Source, EmitAppendsUsingCachedPositionsAndPreservesSpeciesTotalsPerEmission) {
-    auto system = atlas::system::System<double>(64);
-    auto& probe = system.particle_probe();
+    auto system          = atlas::system::System<double>(64);
+    auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
     auto source = atlas::Source<double>::builder()
@@ -175,8 +175,8 @@ TEST(Source, EmitAppendsUsingCachedPositionsAndPreservesSpeciesTotalsPerEmission
 }
 
 TEST(Source, ChangingSpawnTypeInvalidatesCacheAndRebuildsLocalPositions) {
-    auto system = atlas::system::System<double>(64);
-    auto& probe = system.particle_probe();
+    auto system          = atlas::system::System<double>(64);
+    auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
     auto source = atlas::Source<double>::builder()
@@ -197,15 +197,15 @@ TEST(Source, ChangingSpawnTypeInvalidatesCacheAndRebuildsLocalPositions) {
     EXPECT_EQ(probe.particle_count, 26);
 
     const auto local_positions = test::copy_device_buffer(source.local_positions());
-    const auto query = source.unit().geometry_operator();
+    const auto query           = source.unit().geometry_operator();
     for (const auto& local_position : local_positions) {
         EXPECT_TRUE(query.is_on_surface(local_position, 0.0));
     }
 }
 
 TEST(Source, FlipInvertsSpawnClassificationWhenRebuildingCache) {
-    auto system = atlas::system::System<double>(64);
-    auto& probe = system.particle_probe();
+    auto system          = atlas::system::System<double>(64);
+    auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
     auto source = atlas::Source<double>::builder()
@@ -223,7 +223,7 @@ TEST(Source, FlipInvertsSpawnClassificationWhenRebuildingCache) {
     EXPECT_EQ(probe.particle_count, 0);
 
     const auto local_positions = test::copy_device_buffer(source.local_positions());
-    const auto query = source.unit().geometry_operator();
+    const auto query           = source.unit().geometry_operator();
     for (const auto& local_position : local_positions) {
         EXPECT_FALSE(query.is_inside(local_position, 0.0));
     }

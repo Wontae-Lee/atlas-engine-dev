@@ -8,10 +8,6 @@ using namespace atlas;
 
 TEST(SyncOperator, DefaultConstructorActsAsIdentityTransform) {
 
-    // Default SyncOperator must represent the identity pose:
-    // - translation = (0,0,0)
-    // - orientation = identity quaternion
-    // Therefore all sync operations must act as no-ops.
     const system::SyncOperator<double> op;
 
     const Vector3<double> point(1.0, -2.0, 3.5);
@@ -20,7 +16,6 @@ TEST(SyncOperator, DefaultConstructorActsAsIdentityTransform) {
         Vector3<double>(1.0, 2.0, 3.0),
         Vector3<double>(0.0, 0.0, -2.0));
 
-    // Point: local -> world -> local
     Vector3<double> world_point;
     op.sync_to_world(point, world_point);
     EXPECT_TRUE(test::vec_near(world_point, point, eps));
@@ -29,7 +24,6 @@ TEST(SyncOperator, DefaultConstructorActsAsIdentityTransform) {
     op.sync_to_local(point, local_point);
     EXPECT_TRUE(test::vec_near(local_point, point, eps));
 
-    // Direction: local -> world -> local
     Vector3<double> world_dir;
     op.sync_dir_to_world(dir, world_dir);
     EXPECT_TRUE(test::vec_near(world_dir, dir, eps));
@@ -38,7 +32,6 @@ TEST(SyncOperator, DefaultConstructorActsAsIdentityTransform) {
     op.sync_dir_to_local(dir, local_dir);
     EXPECT_TRUE(test::vec_near(local_dir, dir, eps));
 
-    // Ray: local -> world -> local
     Ray<double> world_ray;
     op.sync_to_world(ray, world_ray);
     EXPECT_TRUE(test::vec_near(world_ray.origin, ray.origin, eps));
@@ -52,7 +45,6 @@ TEST(SyncOperator, DefaultConstructorActsAsIdentityTransform) {
 
 TEST(SyncOperator, ReturnByValueOverloadsActAsIdentityForDefaultPose) {
 
-    // Verify the convenience overloads that return values directly.
     const system::SyncOperator<double> op;
 
     const Vector3<double> point(1.0, -2.0, 3.0);
@@ -81,9 +73,6 @@ TEST(SyncOperator, ReturnByValueOverloadsActAsIdentityForDefaultPose) {
 
 TEST(SyncOperator, PureTranslationAffectsPointsButNotDirections) {
 
-    // Translation only:
-    // - points are shifted by t
-    // - directions are unchanged
     const Vector3<double> t(5.0, -2.0, 1.0);
     const math::Quaternion<double> q;
     const system::SyncOperator<double> op(t, q);
@@ -110,9 +99,6 @@ TEST(SyncOperator, PureTranslationAffectsPointsButNotDirections) {
 
 TEST(SyncOperator, RaySyncAppliesTranslationToOriginOnlyWhenRotationIsIdentity) {
 
-    // Identity rotation + non-zero translation:
-    // - origin behaves as a point
-    // - direction behaves as a direction
     const Vector3<double> t(1.0, 2.0, 3.0);
     const math::Quaternion<double> q;
     const system::SyncOperator<double> op(t, q);
@@ -136,7 +122,6 @@ TEST(SyncOperator, RaySyncAppliesTranslationToOriginOnlyWhenRotationIsIdentity) 
 
 TEST(SyncOperator, TranslationOrientationConstructorBuildsWorkingRigidPose) {
 
-    // Mixed-sign translation with identity rotation.
     const Vector3<double> t(-1.0, 2.0, -3.0);
     const math::Quaternion<double> q;
     const system::SyncOperator<double> op(t, q);
@@ -151,7 +136,6 @@ TEST(SyncOperator, TranslationOrientationConstructorBuildsWorkingRigidPose) {
 
 TEST(SyncOperator, RotationOnlyAffectsPointsAndDirections_NonIdentityQuaternion) {
 
-    // Pure rotation about +Z by +90 degrees.
     const Vector3<double> t(0.0, 0.0, 0.0);
     const Vector3<double> axis(0.0, 0.0, 1.0);
     constexpr double radians = M_PI / 2.0;
@@ -182,9 +166,6 @@ TEST(SyncOperator, RotationOnlyAffectsPointsAndDirections_NonIdentityQuaternion)
 
 TEST(SyncOperator, RotationAndTranslationApplyCorrectlyToRay_NonIdentityQuaternion) {
 
-    // Full rigid pose:
-    // - rotate by +90 degrees about +Z
-    // - then translate by t
     const Vector3<double> t(10.0, -2.0, 3.0);
     const Vector3<double> axis(0.0, 0.0, 1.0);
     constexpr double radians = M_PI / 2.0;
@@ -214,7 +195,6 @@ TEST(SyncOperator, RotationAndTranslationApplyCorrectlyToRay_NonIdentityQuaterni
 
 TEST(SyncOperator, NonIdentityRotationWorksForReturnByValueOverloads) {
 
-    // Verify return-by-value overloads under a real rotation.
     const Vector3<double> t(-4.0, 5.0, 6.0);
     const Vector3<double> axis(0.0, 0.0, 1.0);
     constexpr double radians = M_PI / 2.0;
@@ -243,12 +223,10 @@ TEST(SyncOperator, NonIdentityRotationWorksForReturnByValueOverloads) {
 
 TEST(SyncOperator, NonUnitQuaternionBreaksRoundTripButNormalizedQuaternionRestoresIt) {
 
-    // Start from a valid +90 degree rotation about +Z.
     const Vector3<double> axis(0.0, 0.0, 1.0);
     constexpr double radians = M_PI / 2.0;
     const math::Quaternion<double> q_unit(axis, radians);
 
-    // Intentionally break the unit-length assumption.
     math::Quaternion<double> q_non_unit = q_unit;
     q_non_unit *= 2.0;
 
@@ -265,8 +243,6 @@ TEST(SyncOperator, NonUnitQuaternionBreaksRoundTripButNormalizedQuaternionRestor
     Vector3<double> p_back_bad;
     op_bad.sync_to_local(p_world_bad, p_back_bad);
 
-    // Because inverse_orientation_matrix is built as transpose(R),
-    // round-trip is only guaranteed when R is orthonormal.
     EXPECT_FALSE(test::vec_near(p_back_bad, local_point, eps));
 
     const Vector3<double> local_dir(1.0, 2.0, -3.0);
@@ -312,7 +288,6 @@ TEST(SyncOperator, NonUnitQuaternionBreaksRoundTripButNormalizedQuaternionRestor
 
 TEST(SyncOperator, RebuildMatricesIsIdempotentAndKeepsTransformsConsistent) {
 
-    // Translation + unit rotation.
     const Vector3<double> t(3.0, -4.0, 5.0);
     const Vector3<double> axis(0.0, 0.0, 1.0);
     constexpr double radians = M_PI / 2.0;

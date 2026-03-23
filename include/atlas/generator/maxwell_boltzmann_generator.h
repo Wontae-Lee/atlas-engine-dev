@@ -6,11 +6,6 @@
 
 namespace atlas::system {
 
-/**
- * @brief Maxwell-Boltzmann velocity generator with thermal and drift parameters.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 class MaxwellBoltzmannGenerator final : public Generator<T> {
 public:
@@ -74,13 +69,13 @@ private:
     unsigned int _seed = 0u;
 };
 
-} // namespace atlas::system
+}
 
 namespace atlas {
 
 template <typename T>
 using MaxwellBoltzmannGenerator = atlas::system::MaxwellBoltzmannGenerator<T>;
 
-} // namespace atlas
+}
 
 #include <atlas/generator/maxwell_boltzmann_generator.hpp>

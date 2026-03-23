@@ -17,8 +17,7 @@ template <typename T>
 Vector3<T>
 UniformGenerateOperator<T>::generate(const T min_value,
                                      const T max_value) const {
-    // The engine is stored inside the operator so repeated generate() calls
-    // advance a deterministic sequence for a given seed.
+
     atlas::uniform_real_distribution<T> dist(min_value, max_value);
 
     return Vector3<T>(
@@ -35,13 +34,11 @@ MaxwellSigmaGenerateOperator<T>::MaxwellSigmaGenerateOperator(const unsigned int
 template <typename T>
 Vector3<T>
 MaxwellSigmaGenerateOperator<T>::generate(const T sigma) const {
-    // Degenerate sigma values collapse to zero velocity rather than producing
-    // invalid normal-distribution parameters.
+
     if (!(sigma > T(0))) {
         return Vector3<T>(T(0), T(0), T(0));
     }
 
-    // Each Cartesian component is sampled independently from N(0, sigma^2).
     return Vector3<T>(
         sigma * atlas::sampling::generate_standard_normal<T>(engine),
         sigma * atlas::sampling::generate_standard_normal<T>(engine),
@@ -58,14 +55,11 @@ Vector3<T>
 MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
                                               const T molecular_mass,
                                               const Vector3<T>& bulk_velocity) const {
-    // Invalid thermodynamic parameters map to a zero vector to keep the
-    // runtime operator total and side-effect free.
+
     if (!(temperature > T(0)) || !(molecular_mass > T(0))) {
         return Vector3<T>(T(0), T(0), T(0));
     }
 
-    // Convert the physical parameters into the equivalent component-wise
-    // Gaussian sigma, then add the optional drift velocity.
     const T sigma = std::sqrt(static_cast<T>(atlas::boltzmann_constant) * temperature / molecular_mass);
     return Vector3<T>(
                sigma * atlas::sampling::generate_standard_normal<T>(engine),
@@ -74,14 +68,10 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
         + bulk_velocity;
 }
 
-/* ====================================================================== */
-/* GenerateOperator special members                                        */
-/* ====================================================================== */
-
 template <typename T>
 GenerateOperator<T>::GenerateOperator() noexcept
     : type(GenerateType::uniform) {
-    // Default-construct the active union member to keep the tagged union valid.
+
     new (&uniform) UniformGenerateOperator<T> {};
 }
 
@@ -89,8 +79,7 @@ template <typename T>
 GenerateOperator<T>::GenerateOperator(const GenerateType type,
                                       const unsigned int seed) noexcept
     : type(type) {
-    // Manual tagged-union construction keeps the runtime wrapper trivially
-    // lightweight while still supporting multiple generator families.
+
     switch (type) {
     case GenerateType::uniform:
         new (&uniform) UniformGenerateOperator<T>(seed);
@@ -118,8 +107,7 @@ template <typename T>
 GenerateOperator<T>&
 GenerateOperator<T>::operator=(const GenerateOperator& other) noexcept {
     if (this == &other) return *this;
-    // Rebuild the active union member because the source and destination tags
-    // may refer to different generator types.
+
     destroy_active();
     type = other.type;
     copy_from(other);
@@ -134,7 +122,7 @@ GenerateOperator<T>::~GenerateOperator() noexcept {
 template <typename T>
 void
 GenerateOperator<T>::destroy_active() noexcept {
-    // Only the member selected by `type` is alive at any point.
+
     switch (type) {
     case GenerateType::uniform:
         uniform.~UniformGenerateOperator<T>();
@@ -154,7 +142,7 @@ GenerateOperator<T>::destroy_active() noexcept {
 template <typename T>
 void
 GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
-    // Copy-construct the active union alternative matching the already-copied tag.
+
     switch (type) {
     case GenerateType::uniform:
         new (&uniform) UniformGenerateOperator<T>(other.uniform);
@@ -171,10 +159,6 @@ GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
         return;
     }
 }
-
-/* ====================================================================== */
-/* GenerateOperator tagged constructors                                    */
-/* ====================================================================== */
 
 template <typename T>
 GenerateOperator<T>::GenerateOperator(const UniformGenerateOperator<T>& op)
@@ -194,16 +178,11 @@ GenerateOperator<T>::GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>&
     new (&maxwell_boltzmann) MaxwellBoltzmannGenerateOperator<T>(op);
 }
 
-/* ====================================================================== */
-/* Generate dispatch                                                       */
-/* ====================================================================== */
-
 template <typename T>
 Vector3<T>
 GenerateOperator<T>::generate(const T param0,
                               const T param1) const {
-    // Dispatch to the concrete generator while interpreting the generic
-    // parameters according to the active runtime tag.
+
     switch (type) {
     case GenerateType::uniform:
         return uniform.generate(param0, param1);
@@ -224,8 +203,7 @@ Vector3<T>
 GenerateOperator<T>::generate(const T param0,
                               const T param1,
                               const Vector3<T>& bulk_velocity) const {
-    // The 3-argument overload only affects Maxwell-Boltzmann generation; the
-    // other modes intentionally ignore the drift term.
+
     switch (type) {
     case GenerateType::uniform:
         return uniform.generate(param0, param1);
@@ -238,4 +216,4 @@ GenerateOperator<T>::generate(const T param0,
     }
 }
 
-} // namespace atlas::system
+}

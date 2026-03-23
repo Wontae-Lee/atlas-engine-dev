@@ -37,16 +37,13 @@ Source<T>::builder() noexcept {
 template <typename T>
 void
 Source<T>::rebuild_cache() noexcept {
-    // Cache rebuilds are intentionally coarse-grained: any structural change
-    // to unit/fluid/spawn parameters flips `_is_invalidated_cache`, and the next emit
-    // reconstructs both spawnable positions and the baseline species layout.
+
     if (!_is_invalidated_cache) {
         return;
     }
 
     if (!_fluid || _fluid->empty()) {
-        // An empty fluid means the source is effectively disabled; clear every
-        // cache so later emits become cheap early-outs without stale data.
+
         _local_positions.clear();
         _species_cache.clear();
         _shuffled_species.clear();
@@ -63,8 +60,7 @@ Source<T>::rebuild_cache() noexcept {
         geometry_op,
         _spacing,
         _tolerance,
-        // sample_spawn_grid() already performs predicate filtering and compaction,
-        // so `_local_positions` contains only spawn-eligible samples afterwards.
+
         [spawn_op = _spawn_operator, flip] ATLAS_DEVICE(const auto& query, const Vector3<T>& sample, T tol) {
             const bool should_spawn = spawn_op.spawn(query, sample, tol);
             return flip ? !should_spawn : should_spawn;
@@ -85,8 +81,7 @@ Source<T>::rebuild_cache() noexcept {
         _shuffle_keys.resize(static_cast<std::size_t>(local_count));
 
         for (int i = 0; i < local_count; ++i) {
-            // Build a deterministic baseline species layout from the cumulative
-            // mole-fraction distribution. Later emits only reshuffle this cache.
+
             const T fraction   = static_cast<T>(i) / static_cast<T>(local_count);
             size_t species_idx = 0;
             T running_sum      = T(0);
@@ -115,8 +110,7 @@ Source<T>::rebuild_cache() noexcept {
 template <typename T>
 void
 Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
-    // Rebuild-on-demand keeps setter APIs cheap and pushes the heavy work to
-    // the first emit that actually needs fresh cached state.
+
     rebuild_cache();
 
     if (!_fluid || _fluid->empty() || _local_positions.empty()) {
@@ -130,8 +124,6 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
         return;
     }
 
-    // Emission appends into the active prefix, so the source must reject writes
-    // that would overflow the probe's preallocated storage.
     const int current_count  = particle_probe.particle_count;
     const int required_space = current_count + spawn_count;
     if (required_space > static_cast<int>(particle_probe.buffer_size)) {
@@ -141,7 +133,6 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
         return;
     }
 
-    // Prepare append pointers into the active suffix that this emit call owns.
     const auto sync_op = _unit.sync_operator();
     const auto gen_op  = _generate_operator;
 
@@ -149,8 +140,6 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
     Vector3<T>* out_vel = particle_probe.vel + current_count;
     size_t* out_species = particle_probe.species + current_count;
 
-    // Start from the deterministic baseline species arrangement and permute it
-    // via random sort keys generated on the active backend buffer.
     _shuffled_species = _species_cache;
 
     const std::uint64_t seed        = _shuffle_seed++;
@@ -171,8 +160,6 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
 
     const size_t* shuffled_species_ptr = atlas::raw_pointer_cast(_shuffled_species.data());
 
-    // The current Source API still uses the runtime GenerateOperator directly.
-    // Species-specific generator parameters can be threaded in here later.
     const T param0 = T(0);
     const T param1 = T(1);
 
@@ -182,13 +169,10 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
         [=](const int i) {
             const Vector3<T>& local_p = local_pos_ptr[i];
 
-            // Transform accepted local samples into world-space particle state.
             Vector3<T> world_p;
             sync_op.sync_to_world(local_p, world_p);
             out_pos[i] = world_p;
 
-            // Each emitted slot receives a freshly generated velocity and a
-            // species tag from the shuffled cache computed above.
             out_vel[i]     = gen_op.generate(param0, param1);
             out_species[i] = shuffled_species_ptr[i];
         });
@@ -406,4 +390,4 @@ Source<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::system
+}

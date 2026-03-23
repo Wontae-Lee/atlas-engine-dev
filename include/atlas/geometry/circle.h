@@ -44,11 +44,6 @@ struct CircleGeometryOperator {
     operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
 };
 
-/**
- * @brief Finite circular disk embedded in 3D space.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 class Circle final : public Geometry<T> {
     static_assert(std::is_floating_point_v<T>, "Circle requires a floating-point T");
@@ -137,12 +132,12 @@ private:
     T _radius { T(1) };
 };
 
-} // namespace atlas::geometry
+}
 
 namespace atlas {
 
 template <typename T>
-using Circle = geometry::Circle<T>;
+using Circle  = geometry::Circle<T>;
 using CircleF = geometry::Circle<float>;
 using CircleD = geometry::Circle<double>;
 
@@ -151,6 +146,6 @@ using CircleHostPtr = atlas::host_shared_ptr<geometry::Circle<T>>;
 template <typename T>
 using CircleDevicePtr = atlas::device_shared_ptr<geometry::Circle<T>>;
 
-} // namespace atlas
+}
 
 #include <atlas/geometry/circle.hpp>

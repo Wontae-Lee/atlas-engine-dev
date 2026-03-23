@@ -1,4 +1,4 @@
-// <atlas/memory/copy.h>
+
 #pragma once
 
 #include <atlas/core/macros.h>
@@ -18,10 +18,6 @@
 #endif
 
 namespace atlas {
-
-/* =========================
- * Raw pointer copies
- * ========================= */
 
 template <typename T>
 ATLAS_HOST ATLAS_FORCE_INLINE void
@@ -58,10 +54,6 @@ copy_host_to_device(const T* src, T* dst, const std::size_t count) {
     std::memcpy(dst, src, bytes);
 #endif
 }
-
-/* =========================
- * Thrust overloads (CUDA only)
- * ========================= */
 
 #if defined(ATLAS_TASKING_CUDA)
 
@@ -113,6 +105,6 @@ copy_device_to_host(const thrust::device_vector<T>& src, T* dst, const std::size
     copy_device_to_host(thrust::device_ptr<const T>(src.data()), dst, count);
 }
 
-#endif // ATLAS_TASKING_CUDA
+#endif
 
-} // namespace atlas
+}

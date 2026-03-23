@@ -7,7 +7,6 @@ using namespace atlas;
 
 TEST(Sphere, DefaultConstructorSetsCanonicalParams) {
 
-    // Default-constructed Sphere<T> should be the unit sphere at the origin.
     const geometry::Sphere<double> s;
 
     EXPECT_TRUE(test::vec_near(s.center, Vector3<double>(0.0, 0.0, 0.0), eps));
@@ -16,7 +15,6 @@ TEST(Sphere, DefaultConstructorSetsCanonicalParams) {
 
 TEST(Sphere, ConstructorCopiesCenterAndRadius) {
 
-    // Explicit constructor should copy the provided center/radius verbatim.
     const geometry::Sphere<double> s(Vector3<double>(1.0, -2.0, 3.0), 4.0);
 
     EXPECT_TRUE(test::vec_near(s.center, Vector3<double>(1.0, -2.0, 3.0), eps));
@@ -53,8 +51,6 @@ TEST(Sphere, ClosestPointProjectsToSurfaceAlongRadialDirection) {
 
     const geometry::Sphere<double> s(Vector3<double>(0.0, 0.0, 0.0), 2.0);
 
-    // (3,4,0) lies 5 units from center, so the closest point on radius 2 sphere is
-    // 2/5 of the displacement vector.
     const Vector3<double> p(3.0, 4.0, 0.0);
     const Vector3<double> expected(1.2, 1.6, 0.0);
 

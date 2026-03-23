@@ -1,14 +1,10 @@
-// <atlas/matter/fluid.hpp>
+
 #pragma once
 
-#include <stdexcept> // std::runtime_error
-#include <utility>   // std::move
+#include <stdexcept>
+#include <utility>
 
 namespace atlas::system {
-
-/* =========================
- * Fluid<T>
- * ========================= */
 
 template <typename T>
 typename Fluid<T>::Builder
@@ -63,10 +59,6 @@ ATLAS_NODISCARD HostBuffer<GeneratorHostPtr<T>>&
 Fluid<T>::generators() noexcept {
     return _generators;
 }
-
-/* =========================
- * Fluid<T>::Builder
- * ========================= */
 
 template <typename T>
 Fluid<T>
@@ -246,7 +238,6 @@ Fluid<T>::Builder::validate() const {
         }
     }
 
-    // Normalize mole fractions
     T sum       = T(0);
     const int n = static_cast<int>(_mole_fractions.size());
     for (int i = 0; i < n; ++i) {
@@ -267,4 +258,4 @@ Fluid<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::system
+}

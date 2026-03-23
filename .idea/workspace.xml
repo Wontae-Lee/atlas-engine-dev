@@ -282,7 +282,7 @@
       <recent name="$PROJECT_DIR$/include/atlas/generator" />
     </key>
   </component>
-  <component name="RunManager" selected="Google Test.All in atlas_tests">
+  <component name="RunManager" selected="Python.remove_comments">
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -568,8 +568,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.remove_comments" />
+        <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.generate_headers" />

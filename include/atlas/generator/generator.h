@@ -8,15 +8,6 @@
 
 namespace atlas::system {
 
-/**
- * @brief Abstract velocity generator interface.
- *
- * @details
- * A `Generator<T>` stores the parameters required to generate one vector sample
- * at a time and exposes a uniform polymorphic API through @ref generate.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 class Generator {
     static_assert(std::is_floating_point_v<T>, "Generator requires a floating-point T");
@@ -34,23 +25,14 @@ public:
     operator=(Generator&&)
         = default;
 
-    /**
-     * @brief Generates one vector sample according to the concrete policy.
-     *
-     */
     ATLAS_HOST ATLAS_NODISCARD virtual Vector3<T>
     generate() const = 0;
 
-    /**
-     * @brief Returns the runtime generation kind represented by this object.
-     *
-     * @return Concrete generation type.
-     */
     ATLAS_HOST ATLAS_NODISCARD virtual GenerateType
     type() const noexcept = 0;
 };
 
-} // namespace atlas::system
+}
 
 namespace atlas {
 
@@ -63,6 +45,6 @@ using GeneratorHostPtr = atlas::host_shared_ptr<atlas::system::Generator<T>>;
 template <typename T>
 using GeneratorDevicePtr = atlas::device_shared_ptr<atlas::system::Generator<T>>;
 
-} // namespace atlas
+}
 
 #include <atlas/generator/generator.hpp>

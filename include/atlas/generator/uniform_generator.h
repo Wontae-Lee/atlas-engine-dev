@@ -6,11 +6,6 @@
 
 namespace atlas::system {
 
-/**
- * @brief Uniform component-wise vector generator.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 class UniformGenerator final : public Generator<T> {
 public:
@@ -66,13 +61,13 @@ private:
     unsigned int _seed = 0u;
 };
 
-} // namespace atlas::system
+}
 
 namespace atlas {
 
 template <typename T>
 using UniformGenerator = atlas::system::UniformGenerator<T>;
 
-} // namespace atlas
+}
 
 #include <atlas/generator/uniform_generator.hpp>

@@ -5,24 +5,11 @@
 
 namespace atlas::system {
 
-/**
- * @brief Despawn classification mode used by @ref DespawnOperator.
- *
- * @tparam T Floating-point scalar type.
- */
 enum class DespawnType : int {
     Surface,
     Volume
 };
 
-/**
- * @brief Surface despawn predicate for a single particle position.
- *
- * @details
- * Returns `true` when the particle should be despawned by surface classification.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 struct SurfaceDespawnOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
@@ -31,14 +18,6 @@ struct SurfaceDespawnOperator final {
             T tolerance = T(0)) noexcept;
 };
 
-/**
- * @brief Volume despawn predicate for a single particle position.
- *
- * @details
- * Returns `true` when the particle should be despawned by volume classification.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 struct VolumeDespawnOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
@@ -47,11 +26,6 @@ struct VolumeDespawnOperator final {
             T tolerance = T(0)) noexcept;
 };
 
-/**
- * @brief Runtime-dispatched despawn operator for surface or volume classification.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 struct DespawnOperator final {
     DespawnType type = DespawnType::Surface;
@@ -92,6 +66,6 @@ private:
     copy_from(const DespawnOperator& other) noexcept;
 };
 
-} // namespace atlas::system
+}
 
 #include <atlas/sink/despawn_operator.hpp>

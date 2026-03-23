@@ -18,10 +18,6 @@ VolumeDespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& qu
     return query.is_inside(particle, tolerance);
 }
 
-/* ====================================================================== */
-/* DespawnOperator special members                                         */
-/* ====================================================================== */
-
 template <typename T>
 
 DespawnOperator<T>::DespawnOperator() noexcept
@@ -103,10 +99,6 @@ DespawnOperator<T>::copy_from(const DespawnOperator& other) noexcept {
     }
 }
 
-/* ====================================================================== */
-/* DespawnOperator tagged constructors                                     */
-/* ====================================================================== */
-
 template <typename T>
 DespawnOperator<T>::DespawnOperator(const SurfaceDespawnOperator<T>& op)
     : type(DespawnType::Surface) {
@@ -118,10 +110,6 @@ DespawnOperator<T>::DespawnOperator(const VolumeDespawnOperator<T>& op)
     : type(DespawnType::Volume) {
     new (&volume) VolumeDespawnOperator<T>(op);
 }
-
-/* ====================================================================== */
-/* Despawn dispatch                                                        */
-/* ====================================================================== */
 
 template <typename T>
 bool
@@ -138,4 +126,4 @@ DespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
     }
 }
 
-} // namespace atlas::system
+}

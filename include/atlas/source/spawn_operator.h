@@ -5,24 +5,11 @@
 
 namespace atlas::system {
 
-/**
- * @brief Spawn classification mode used by @ref SpawnOperator.
- *
- * @tparam T Floating-point scalar type.
- */
 enum class SpawnType : int {
     Surface,
     Volume
 };
 
-/**
- * @brief Surface spawn predicate for a single sample position.
- *
- * @details
- * Returns `true` when the sample should be accepted by surface classification.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 struct SurfaceSpawnOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
@@ -31,14 +18,6 @@ struct SurfaceSpawnOperator final {
           T tolerance = T(0)) noexcept;
 };
 
-/**
- * @brief Volume spawn predicate for a single sample position.
- *
- * @details
- * Returns `true` when the sample should be accepted by volume classification.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 struct VolumeSpawnOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
@@ -47,11 +26,6 @@ struct VolumeSpawnOperator final {
           T tolerance = T(0)) noexcept;
 };
 
-/**
- * @brief Runtime-dispatched spawn predicate for surface or volume classification.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 struct SpawnOperator final {
     SpawnType type = SpawnType::Surface;
@@ -92,6 +66,6 @@ private:
     copy_from(const SpawnOperator& other) noexcept;
 };
 
-} // namespace atlas::system
+}
 
 #include <atlas/source/spawn_operator.hpp>

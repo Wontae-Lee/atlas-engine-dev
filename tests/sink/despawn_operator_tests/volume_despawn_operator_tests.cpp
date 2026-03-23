@@ -40,13 +40,7 @@ TEST(DespawnOperator, DespawnDispatchesByRuntimeTypeForSingleParticle) {
     const auto query                = test::make_box_geometry_operator(box);
     const auto particle             = Vector3<double>(1.0, 0.0, 0.0);
 
-    EXPECT_TRUE(system::DespawnOperator<double>(system::DespawnType::Surface).despawn(
-        query,
-        particle,
-        0.0));
+    EXPECT_TRUE(system::DespawnOperator<double>(system::DespawnType::Surface).despawn(query, particle, 0.0));
 
-    EXPECT_TRUE(system::DespawnOperator<double>(system::DespawnType::Volume).despawn(
-        query,
-        particle,
-        0.0));
+    EXPECT_TRUE(system::DespawnOperator<double>(system::DespawnType::Volume).despawn(query, particle, 0.0));
 }

@@ -18,4 +18,4 @@ ShuffleOperator::operator()(const int index,
     return shuffle_key(index, seed);
 }
 
-} // namespace atlas::system
+}

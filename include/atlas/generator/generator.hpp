@@ -2,4 +2,4 @@
 
 namespace atlas::system {
 
-} // namespace atlas::system
+}

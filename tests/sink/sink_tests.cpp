@@ -7,29 +7,29 @@ using namespace atlas;
 
 TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
     atlas::system::System<double> sim_system(5);
-    auto& particle_probe = sim_system.particle_probe();
+    auto& particle_probe          = sim_system.particle_probe();
     particle_probe.particle_count = 3;
 
-    particle_probe.pos[0]    = Vector3<double>(0.0, 0.0, 0.0);
-    particle_probe.pos[1]    = Vector3<double>(2.0, 0.0, 0.0);
-    particle_probe.pos[2]    = Vector3<double>(0.5, 0.0, 0.0);
-    particle_probe.pos[3]    = Vector3<double>(3.0, 0.0, 0.0);
-    particle_probe.pos[4]    = Vector3<double>(0.0, 0.0, 0.0);
-    particle_probe.vel[0]    = Vector3<double>(1.0, 0.0, 0.0);
-    particle_probe.vel[1]    = Vector3<double>(2.0, 0.0, 0.0);
-    particle_probe.vel[2]    = Vector3<double>(3.0, 0.0, 0.0);
-    particle_probe.vel[3]    = Vector3<double>(4.0, 0.0, 0.0);
-    particle_probe.vel[4]    = Vector3<double>(5.0, 0.0, 0.0);
+    particle_probe.pos[0]     = Vector3<double>(0.0, 0.0, 0.0);
+    particle_probe.pos[1]     = Vector3<double>(2.0, 0.0, 0.0);
+    particle_probe.pos[2]     = Vector3<double>(0.5, 0.0, 0.0);
+    particle_probe.pos[3]     = Vector3<double>(3.0, 0.0, 0.0);
+    particle_probe.pos[4]     = Vector3<double>(0.0, 0.0, 0.0);
+    particle_probe.vel[0]     = Vector3<double>(1.0, 0.0, 0.0);
+    particle_probe.vel[1]     = Vector3<double>(2.0, 0.0, 0.0);
+    particle_probe.vel[2]     = Vector3<double>(3.0, 0.0, 0.0);
+    particle_probe.vel[3]     = Vector3<double>(4.0, 0.0, 0.0);
+    particle_probe.vel[4]     = Vector3<double>(5.0, 0.0, 0.0);
     particle_probe.species[0] = 10;
     particle_probe.species[1] = 11;
     particle_probe.species[2] = 12;
     particle_probe.species[3] = 13;
     particle_probe.species[4] = 14;
-    particle_probe.acitve[0] = 1;
-    particle_probe.acitve[1] = 1;
-    particle_probe.acitve[2] = 1;
-    particle_probe.acitve[3] = 0;
-    particle_probe.acitve[4] = 0;
+    particle_probe.acitve[0]  = 1;
+    particle_probe.acitve[1]  = 1;
+    particle_probe.acitve[2]  = 1;
+    particle_probe.acitve[3]  = 0;
+    particle_probe.acitve[4]  = 0;
 
     const auto geometry = geometry::Box<double>::builder()
                               .with_lower_corner(Vector3<double>(-1.0, -1.0, -1.0))
@@ -58,7 +58,7 @@ TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
 
 TEST(Sink, FlipInvertsVolumeDespawnClassification) {
     atlas::system::System<double> sim_system(5);
-    auto& particle_probe = sim_system.particle_probe();
+    auto& particle_probe          = sim_system.particle_probe();
     particle_probe.particle_count = 3;
 
     particle_probe.pos[0]     = Vector3<double>(0.0, 0.0, 0.0);

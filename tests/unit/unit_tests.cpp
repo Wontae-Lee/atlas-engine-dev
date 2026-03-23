@@ -10,7 +10,7 @@
 using namespace atlas;
 
 TEST(Unit, ConstructorStoresOperatorsAndLeavesKinematicsEmpty) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
     const auto sop         = system::SyncOperator<double> {};
 
@@ -29,7 +29,7 @@ TEST(Unit, ConstructorStoresOperatorsAndLeavesKinematicsEmpty) {
 }
 
 TEST(Unit, ConstructorWithKinematicsStoresAllValues) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
     const auto sop         = system::SyncOperator<double> {};
 
@@ -79,7 +79,7 @@ TEST(Unit, SetGeometryOperatorReplacesStoredGeometryOperator) {
 }
 
 TEST(Unit, SetSyncOperatorReplacesStoredPose) {
-    const auto sphere = test::make_sphere();
+    const auto sphere      = test::make_sphere();
     const auto geometry_op = sphere.make_geometry_operator();
 
     system::Unit<double> u(geometry_op, system::SyncOperator<double> {});

@@ -6,11 +6,6 @@
 
 namespace atlas::system {
 
-/**
- * @brief Gaussian velocity-component generator with precomputed sigma.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 class MaxwellSigmaGenerator final : public Generator<T> {
 public:
@@ -61,13 +56,13 @@ private:
     unsigned int _seed = 0u;
 };
 
-} // namespace atlas::system
+}
 
 namespace atlas {
 
 template <typename T>
 using MaxwellSigmaGenerator = atlas::system::MaxwellSigmaGenerator<T>;
 
-} // namespace atlas
+}
 
 #include <atlas/generator/maxwell_sigma_generator.hpp>

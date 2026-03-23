@@ -51,7 +51,7 @@ TEST(Circle, BoundMatchesGeometryOperator) {
     op.radius = atlas::raw_pointer_cast(&circle.radius);
 
     const auto expected = op.bound();
-    const auto got = circle.bound();
+    const auto got      = circle.bound();
 
     EXPECT_TRUE(test::vec_near(got.lower_corner, expected.lower_corner, eps));
     EXPECT_TRUE(test::vec_near(got.upper_corner, expected.upper_corner, eps));
