@@ -6,7 +6,6 @@
 #include <atlas/matter/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/sampling/sampling.h>
-#include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/sync/sync_operator.h>
 #include <atlas/unit/unit.h>
@@ -208,7 +207,7 @@ private:
     DeviceBuffer<size_t> _shuffled_species;
     DeviceBuffer<std::uint64_t> _shuffle_keys;
     std::uint64_t _shuffle_seed = 0;
-    bool _cache_dirty = true;
+    bool _is_invalidated_cache = true;
 };
 
 template <typename T>

@@ -24,7 +24,7 @@ Source<T>::Source(Unit<T> unit,
     , _fluid(std::move(fluid))
     , _spawn_operator(spawn_type)
     , _tolerance(tolerance)
-    , _cache_dirty(true) { }
+    , _is_invalidated_cache(true) { }
 
 template <typename T>
 typename Source<T>::Builder
@@ -36,9 +36,9 @@ template <typename T>
 void
 Source<T>::rebuild_cache() noexcept {
     // Cache rebuilds are intentionally coarse-grained: any structural change
-    // to unit/fluid/spawn parameters flips `_cache_dirty`, and the next emit
+    // to unit/fluid/spawn parameters flips `_is_invalidated_cache`, and the next emit
     // reconstructs both spawnable positions and the baseline species layout.
-    if (!_cache_dirty) {
+    if (!_is_invalidated_cache) {
         return;
     }
 
@@ -50,7 +50,7 @@ Source<T>::rebuild_cache() noexcept {
         _shuffled_species.clear();
         _shuffle_keys.clear();
         _shuffle_seed = 0;
-        _cache_dirty  = false;
+        _is_invalidated_cache  = false;
         return;
     }
 
@@ -105,7 +105,7 @@ Source<T>::rebuild_cache() noexcept {
     }
 
     _shuffle_seed = 0;
-    _cache_dirty  = false;
+    _is_invalidated_cache  = false;
 }
 
 template <typename T>
@@ -196,42 +196,42 @@ template <typename T>
 void
 Source<T>::set_unit(Unit<T> unit) noexcept {
     _unit = std::move(unit);
-    _cache_dirty = true;
+    _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_fluid(FluidHostPtr<T> fluid) noexcept {
     _fluid = std::move(fluid);
-    _cache_dirty = true;
+    _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_spawn_type(const SpawnType spawn_type) noexcept {
     _spawn_operator = SpawnOperator<T>(spawn_type);
-    _cache_dirty = true;
+    _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_spawn_operator(const SpawnOperator<T> spawn_operator) noexcept {
     _spawn_operator = spawn_operator;
-    _cache_dirty = true;
+    _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_tolerance(const T tolerance) noexcept {
     _tolerance = tolerance;
-    _cache_dirty = true;
+    _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
 Source<T>::set_spacing(const T spacing) noexcept {
     _spacing = spacing;
-    _cache_dirty = true;
+    _is_invalidated_cache = true;
 }
 
 template <typename T>
@@ -295,7 +295,7 @@ Source<T>::Builder::build() {
     Source<T> source(std::move(*_unit), _fluid, _spawn_type, _tolerance);
     source._spacing = _spacing;
     source._generate_operator = _generate_operator;
-    source._cache_dirty = true;
+    source._is_invalidated_cache = true;
     return source;
 }
 
