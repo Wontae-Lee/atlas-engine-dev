@@ -140,7 +140,16 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Renamed the member value." />
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Renamed the member value.">
+      <change afterPath="$PROJECT_DIR$/include/atlas/geometry/circle.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/geometry/circle.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/geometry_type.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry_type.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/spatial/trace_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/spatial/trace_operator_tests.cpp" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -620,7 +629,7 @@
       <workItem from="1774093199857" duration="5226000" />
       <workItem from="1774098528212" duration="7642000" />
       <workItem from="1774252883308" duration="3766000" />
-      <workItem from="1774256946302" duration="4226000" />
+      <workItem from="1774256946302" duration="6657000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

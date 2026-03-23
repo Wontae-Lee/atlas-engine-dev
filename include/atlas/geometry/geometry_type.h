@@ -18,6 +18,8 @@ namespace atlas::geometry {
 enum class GeometryType : int {
     /// @brief Axis-aligned box operator.
     Box,
+    /// @brief Finite circle operator.
+    Circle,
     /// @brief Finite cylinder operator (axis-aligned in its local frame).
     Cylinder,
     /// @brief Infinite plane operator.

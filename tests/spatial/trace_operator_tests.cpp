@@ -266,6 +266,60 @@ TEST(GeometryOperator_Sphere, MissWhenDiscriminantNegative) {
     EXPECT_FALSE(h.is_intersecting);
 }
 
+TEST(GeometryOperator_Circle, MissingParamsReturnsMiss) {
+    constexpr atlas::geometry::CircleGeometryOperator<double> op;
+
+    const atlas::Ray<double> r(atlas::math::Vector<double, 3>(0.0, 0.0, 1.0),
+                               atlas::math::Vector<double, 3>(0.0, 0.0, -1.0));
+
+    const auto h = op(r);
+    EXPECT_FALSE(h.is_intersecting);
+}
+
+TEST(GeometryOperator_Circle, HitReturnsPlaneIntersectionInsideRadius) {
+    constexpr auto eps = static_cast<double>(atlas::eps);
+
+    const atlas::math::Vector<double, 3> center(0.0, 0.0, 0.0);
+    const atlas::math::Vector<double, 3> normal(0.0, 0.0, 1.0);
+    constexpr double radius = 2.0;
+
+    atlas::geometry::CircleGeometryOperator<double> op;
+    op.center = &center;
+    op.normal = &normal;
+    op.radius = &radius;
+
+    const atlas::Ray<double> r(atlas::math::Vector<double, 3>(0.5, 0.5, 3.0),
+                               atlas::math::Vector<double, 3>(0.0, 0.0, -1.0));
+
+    const auto [is_intersecting, distance, point, hit_normal] = op(r);
+
+    EXPECT_TRUE(is_intersecting);
+    EXPECT_TRUE(atlas::test::near(distance, 3.0, eps));
+    EXPECT_TRUE(atlas::test::vec_near(point,
+                                      atlas::math::Vector<double, 3>(0.5, 0.5, 0.0),
+                                      eps));
+    EXPECT_TRUE(atlas::test::vec_near(hit_normal,
+                                      atlas::math::Vector<double, 3>(0.0, 0.0, 1.0),
+                                      eps));
+}
+
+TEST(GeometryOperator_Circle, MissWhenPlaneIntersectionFallsOutsideRadius) {
+    const atlas::math::Vector<double, 3> center(0.0, 0.0, 0.0);
+    const atlas::math::Vector<double, 3> normal(0.0, 0.0, 1.0);
+    constexpr double radius = 2.0;
+
+    atlas::geometry::CircleGeometryOperator<double> op;
+    op.center = &center;
+    op.normal = &normal;
+    op.radius = &radius;
+
+    const atlas::Ray<double> r(atlas::math::Vector<double, 3>(3.0, 0.0, 3.0),
+                               atlas::math::Vector<double, 3>(0.0, 0.0, -1.0));
+
+    const auto h = op(r);
+    EXPECT_FALSE(h.is_intersecting);
+}
+
 TEST(GeometryOperator_Triangle, MissingParamsReturnsMiss) {
     constexpr atlas::geometry::TriangleGeometryOperator<double> op;
 
@@ -353,5 +407,33 @@ TEST(GeometryOperator_Dispatch, TaggedConstructorsSelectCorrectVariant) {
     EXPECT_TRUE(atlas::test::near(h.distance, 2.0, eps));
     EXPECT_TRUE(atlas::test::vec_near(h.point,
                                       atlas::math::Vector<double, 3>(-1.0, 0.0, 0.0),
+                                      eps));
+}
+
+TEST(GeometryOperator_Dispatch, CircleTaggedConstructorDispatchesTraceCorrectly) {
+    constexpr auto eps = static_cast<double>(atlas::eps);
+
+    const atlas::math::Vector<double, 3> center(0.0, 0.0, 0.0);
+    const atlas::math::Vector<double, 3> normal(0.0, 0.0, 1.0);
+    constexpr double radius = 2.0;
+
+    atlas::geometry::CircleGeometryOperator<double> circle;
+    circle.center = &center;
+    circle.normal = &normal;
+    circle.radius = &radius;
+
+    const atlas::GeometryOperator<double> op(circle);
+    const atlas::Ray<double> r(atlas::math::Vector<double, 3>(1.0, 0.0, 2.0),
+                               atlas::math::Vector<double, 3>(0.0, 0.0, -1.0));
+
+    const auto h = op.trace(r);
+
+    EXPECT_TRUE(h.is_intersecting);
+    EXPECT_TRUE(atlas::test::near(h.distance, 2.0, eps));
+    EXPECT_TRUE(atlas::test::vec_near(h.point,
+                                      atlas::math::Vector<double, 3>(1.0, 0.0, 0.0),
+                                      eps));
+    EXPECT_TRUE(atlas::test::vec_near(h.normal,
+                                      atlas::math::Vector<double, 3>(0.0, 0.0, 1.0),
                                       eps));
 }

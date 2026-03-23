@@ -6,6 +6,7 @@
  */
 
 #include <atlas/geometry/box.h>
+#include <atlas/geometry/circle.h>
 #include <atlas/geometry/cylinder.h>
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/geometry/plane.h>
@@ -21,6 +22,7 @@ struct GeometryOperator {
 
     union {
         BoxGeometryOperator<T> box;
+        CircleGeometryOperator<T> circle;
         CylinderGeometryOperator<T> cylinder;
         PlaneGeometryOperator<T> plane;
         SphereGeometryOperator<T> sphere;
@@ -37,6 +39,7 @@ struct GeometryOperator {
     operator=(const GeometryOperator& other) noexcept;
 
     ATLAS_HOST explicit GeometryOperator(const BoxGeometryOperator<T>& op);
+    ATLAS_HOST explicit GeometryOperator(const CircleGeometryOperator<T>& op);
     ATLAS_HOST explicit GeometryOperator(const CylinderGeometryOperator<T>& op);
     ATLAS_HOST explicit GeometryOperator(const PlaneGeometryOperator<T>& op);
     ATLAS_HOST explicit GeometryOperator(const SphereGeometryOperator<T>& op);

@@ -17,6 +17,7 @@
 #include <atlas/generator/maxwell_sigma_generator.h>
 #include <atlas/generator/uniform_generator.h>
 #include <atlas/geometry/box.h>
+#include <atlas/geometry/circle.h>
 #include <atlas/geometry/cylinder.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/geometry/geometry_operator.h>

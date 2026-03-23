@@ -36,6 +36,9 @@ GeometryOperator<T>::GeometryOperator(const GeometryOperator& other) noexcept
     case GeometryType::Box:
         box = other.box;
         return;
+    case GeometryType::Circle:
+        circle = other.circle;
+        return;
     case GeometryType::Cylinder:
         cylinder = other.cylinder;
         return;
@@ -70,6 +73,9 @@ GeometryOperator<T>::operator=(const GeometryOperator& other) noexcept {
     case GeometryType::Box:
         box = other.box;
         return *this;
+    case GeometryType::Circle:
+        circle = other.circle;
+        return *this;
     case GeometryType::Cylinder:
         cylinder = other.cylinder;
         return *this;
@@ -97,6 +103,12 @@ GeometryOperator<T>::GeometryOperator(const BoxGeometryOperator<T>& op)
     : type(GeometryType::Box)
     , box(op) {
     // Construct GeometryOperator as "Box" variant.
+}
+
+template <typename T>
+GeometryOperator<T>::GeometryOperator(const CircleGeometryOperator<T>& op)
+    : type(GeometryType::Circle)
+    , circle(op) {
 }
 
 template <typename T>
@@ -141,6 +153,8 @@ GeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noe
     switch (type) {
     case GeometryType::Box:
         return box.closest_point(p);
+    case GeometryType::Circle:
+        return circle.closest_point(p);
     case GeometryType::Cylinder:
         return cylinder.closest_point(p);
     case GeometryType::Plane:
@@ -164,6 +178,8 @@ GeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const no
     switch (type) {
     case GeometryType::Box:
         return box.closest_normal(p);
+    case GeometryType::Circle:
+        return circle.closest_normal(p);
     case GeometryType::Cylinder:
         return cylinder.closest_normal(p);
     case GeometryType::Plane:
@@ -186,6 +202,8 @@ GeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const n
     switch (type) {
     case GeometryType::Box:
         return box.signed_distance(p);
+    case GeometryType::Circle:
+        return circle.signed_distance(p);
     case GeometryType::Cylinder:
         return cylinder.signed_distance(p);
     case GeometryType::Plane:
@@ -207,6 +225,8 @@ GeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T toler
     switch (type) {
     case GeometryType::Box:
         return box.is_inside(p, tolerance);
+    case GeometryType::Circle:
+        return circle.is_inside(p, tolerance);
     case GeometryType::Cylinder:
         return cylinder.is_inside(p, tolerance);
     case GeometryType::Plane:
@@ -228,6 +248,8 @@ GeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T t
     switch (type) {
     case GeometryType::Box:
         return box.is_on_surface(p, tolerance);
+    case GeometryType::Circle:
+        return circle.is_on_surface(p, tolerance);
     case GeometryType::Cylinder:
         return cylinder.is_on_surface(p, tolerance);
     case GeometryType::Plane:
@@ -250,6 +272,8 @@ GeometryOperator<T>::centroid() const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.centroid();
+    case GeometryType::Circle:
+        return circle.centroid();
     case GeometryType::Cylinder:
         return cylinder.centroid();
     case GeometryType::Plane:
@@ -272,6 +296,8 @@ GeometryOperator<T>::bound() const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.bound();
+    case GeometryType::Circle:
+        return circle.bound();
     case GeometryType::Cylinder:
         return cylinder.bound();
     case GeometryType::Plane:
@@ -294,6 +320,8 @@ GeometryOperator<T>::is_valid() const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.is_valid();
+    case GeometryType::Circle:
+        return circle.is_valid();
     case GeometryType::Cylinder:
         return cylinder.is_valid();
     case GeometryType::Plane:
@@ -315,6 +343,8 @@ GeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.trace(ray);
+    case GeometryType::Circle:
+        return circle.trace(ray);
     case GeometryType::Cylinder:
         return cylinder.trace(ray);
     case GeometryType::Plane:
