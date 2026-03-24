@@ -1,11 +1,14 @@
 #pragma once
 
+#include <atlas/advector/advector.h>
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/codec/codec.h>
 #include <atlas/codec/deep_learning_codec.h>
 #include <atlas/codec/knudsen_codec.h>
 #include <atlas/codec/single_codec.h>
+#include <atlas/collider/collider.h>
+#include <atlas/collider/collider_surface_interaction.h>
 #include <atlas/container/container.h>
 #include <atlas/core/macros.h>
 #include <atlas/data/particle_data.h>
@@ -72,6 +75,16 @@
 #include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
+#include <atlas/solver/dsmc/dsmc_data.h>
+#include <atlas/solver/dsmc/dsmc_solver.h>
+#include <atlas/solver/dsmc/kernel/collide_kernel.h>
+#include <atlas/solver/dsmc/kernel/hard_sphere.h>
+#include <atlas/solver/dsmc/metrics/g_ref_estimator.h>
+#include <atlas/solver/dsmc/metrics/g_ref_operator.h>
+#include <atlas/solver/dsmc/metrics/g_ref_rms.h>
+#include <atlas/solver/dsmc/pair/no_time_counter.h>
+#include <atlas/solver/dsmc/pair/pair_strategy.h>
+#include <atlas/solver/solver.h>
 #include <atlas/source/source.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
