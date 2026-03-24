@@ -18,7 +18,7 @@ TEST(CountingIterator, DefaultConstructStartsAtZero) {
 }
 
 TEST(CountingIterator, ConstructFromStartValue) {
-    constexpr atlas::counting_iterator<int> it(7);
+    atlas::counting_iterator<int> it(7);
 
     EXPECT_EQ(*it, 7);
     EXPECT_EQ(it.base(), 7);
@@ -30,7 +30,7 @@ TEST(CountingIterator, ConstructFromStartValue) {
 }
 
 TEST(CountingIterator, DerefAndIndexingReturnExpectedValues) {
-    constexpr atlas::counting_iterator<int> it(10);
+    atlas::counting_iterator<int> it(10);
 
     EXPECT_EQ(*it, 10);
     EXPECT_EQ(it[0], 10);
@@ -43,7 +43,7 @@ TEST(CountingIterator, DerefAndIndexingReturnExpectedValues) {
 
 TEST(CountingIterator, IteratorArithmeticPlusMinusAndDistance) {
     atlas::counting_iterator<int> a(3);
-    constexpr atlas::counting_iterator<int> b(11);
+    atlas::counting_iterator<int> b(11);
 
     EXPECT_EQ(b - a, 8);
     EXPECT_EQ(a - b, -8);
@@ -54,7 +54,7 @@ TEST(CountingIterator, IteratorArithmeticPlusMinusAndDistance) {
     const auto d = 4 + a;
     EXPECT_EQ(*d, 7);
 
-    constexpr auto e = b - 6;
+    const auto e = b - 6;
     EXPECT_EQ(*e, 5);
 
     a += 10;
@@ -64,9 +64,9 @@ TEST(CountingIterator, IteratorArithmeticPlusMinusAndDistance) {
 }
 
 TEST(CountingIterator, ComparisonsBehaveLikeValues) {
-    constexpr atlas::counting_iterator<int> a(5);
-    constexpr atlas::counting_iterator<int> b(7);
-    constexpr atlas::counting_iterator<int> c(5);
+    atlas::counting_iterator<int> a(5);
+    atlas::counting_iterator<int> b(7);
+    atlas::counting_iterator<int> c(5);
 
     EXPECT_TRUE(a == c);
     EXPECT_FALSE(a != c);
@@ -84,13 +84,13 @@ TEST(CountingIterator, ComparisonsBehaveLikeValues) {
 TEST(CountingIterator, WorksWithUnsignedValueTypeDistanceIsSigned) {
     using U = std::size_t;
 
-    constexpr atlas::counting_iterator<U> a(static_cast<U>(2));
-    constexpr atlas::counting_iterator<U> b(static_cast<U>(9));
+    atlas::counting_iterator<U> a(static_cast<U>(2));
+    atlas::counting_iterator<U> b(static_cast<U>(9));
 
-    static_assert(std::is_same_v<typename atlas::counting_iterator<U>::difference_type, std::ptrdiff_t>);
+    EXPECT_TRUE((std::is_same_v<typename atlas::counting_iterator<U>::difference_type, std::ptrdiff_t>));
 
-    constexpr auto d1 = b - a;
-    constexpr auto d2 = a - b;
+    const auto d1 = b - a;
+    const auto d2 = a - b;
 
     EXPECT_EQ(d1, static_cast<std::ptrdiff_t>(7));
     EXPECT_EQ(d2, static_cast<std::ptrdiff_t>(-7));

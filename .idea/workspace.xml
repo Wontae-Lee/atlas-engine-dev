@@ -36,11 +36,11 @@
       <config projectName="atlas-engine-dev" targetName="benchmark_test" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalMemCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="benchmark_setup_teardown_cb_types_gtest" />
+      <config projectName="atlas-engine-dev" targetName="atlas-logging" />
       <config projectName="atlas-engine-dev" targetName="benchmark_min_time_flag_time_test" />
       <config projectName="atlas-engine-dev" targetName="profiler_manager_iterations_test" />
       <config projectName="atlas-engine-dev" targetName="internal_threading_test" />
       <config projectName="atlas-engine-dev" targetName="diagnostics_test" />
-      <config projectName="atlas-engine-dev" targetName="visualization" />
       <config projectName="atlas-engine-dev" targetName="ContinuousMemCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="link_main_test" />
       <config projectName="atlas-engine-dev" targetName="options_test" />
@@ -50,7 +50,6 @@
       <config projectName="atlas-engine-dev" targetName="NightlyConfigure" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="memory_manager_test" />
       <config projectName="atlas-engine-dev" targetName="profiler_manager_gtest" />
-      <config projectName="atlas-engine-dev" targetName="cuda_smart_pointer" />
       <config projectName="atlas-engine-dev" targetName="benchmark_main" />
       <config projectName="atlas-engine-dev" targetName="templated_fixture_test" />
       <config projectName="atlas-engine-dev" targetName="basic_test" />
@@ -62,7 +61,6 @@
       <config projectName="atlas-engine-dev" targetName="string_util_gtest" />
       <config projectName="atlas-engine-dev" targetName="user_counters_thousands_test" />
       <config projectName="atlas-engine-dev" targetName="commandlineflags_gtest" />
-      <config projectName="atlas-engine-dev" targetName="sah_bvh" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalTest" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="time_unit_gtest" />
       <config projectName="atlas-engine-dev" targetName="skip_with_error_test" />
@@ -72,10 +70,11 @@
       <config projectName="atlas-engine-dev" targetName="profiler_manager_test" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalCoverage" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="ContinuousBuild" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests" />
       <config projectName="atlas-engine-dev" targetName="solver" />
-      <config projectName="atlas-engine-dev" targetName="triangle_mesh" />
       <config projectName="atlas-engine-dev" targetName="min_time_parse_gtest" />
       <config projectName="atlas-engine-dev" targetName="memory_results_gtest" />
+      <config projectName="atlas-engine-dev" targetName="dynamic" />
       <config projectName="atlas-engine-dev" targetName="gmock_main" />
       <config projectName="atlas-engine-dev" targetName="filter_test" />
       <config projectName="atlas-engine-dev" targetName="perf_counters_gtest" />
@@ -84,7 +83,6 @@
       <config projectName="atlas-engine-dev" targetName="cxx11_test" />
       <config projectName="atlas-engine-dev" targetName="perf_counters_test" />
       <config projectName="atlas-engine-dev" targetName="user_counters_tabular_test" />
-      <config projectName="atlas-engine-dev" targetName="atlas-core" />
       <config projectName="atlas-engine-dev" targetName="statistics_gtest" />
       <config projectName="atlas-engine-dev" targetName="complexity_test" />
       <config projectName="atlas-engine-dev" targetName="tinyobjloader" />
@@ -142,8 +140,33 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Reset comments.">
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="added the lagacy sketches.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/dynamic/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/dynamic/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/dynamic/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/dynamic/main.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/main.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/container/container.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/container/container.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/circle.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/circle.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/circle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/circle.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/cylinder.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/cylinder.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/geometry.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/plane.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/plane.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/sphere.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/sphere.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/iterator/counting_iterator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/iterator/counting_iterator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/iterator/zip_iterator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/iterator/zip_iterator_tests.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -166,7 +189,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="265" />
+    <option name="cachedIndexableFilesCount" value="302" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -277,7 +300,12 @@
       <recent name="$PROJECT_DIR$/include/atlas/generator" />
     </key>
   </component>
-  <component name="RunManager" selected="Google Test.All in atlas_tests">
+  <component name="RunManager" selected="CMake Application.dynamic">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -420,11 +448,6 @@
       </method>
     </configuration>
     <configuration name="NightlyUpdate" type="CMakeRunConfiguration" factoryName="Application" folderName="CTestDashboardTargets" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="NightlyUpdate" CONFIG_NAME="Debug">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -625,6 +648,7 @@
       <workItem from="1774098528212" duration="7642000" />
       <workItem from="1774252883308" duration="3766000" />
       <workItem from="1774256946302" duration="10016000" />
+      <workItem from="1774369914951" duration="3302000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
@@ -754,7 +778,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774264128117</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="added the lagacy sketches.">
+      <option name="closed" value="true" />
+      <created>1774369191618</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1774369191618</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -823,7 +855,8 @@
     <MESSAGE value="developing with Copilot" />
     <MESSAGE value="Renamed the member value." />
     <MESSAGE value="Reset comments." />
-    <option name="LAST_COMMIT_MESSAGE" value="Reset comments." />
+    <MESSAGE value="added the lagacy sketches." />
+    <option name="LAST_COMMIT_MESSAGE" value="added the lagacy sketches." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -241,15 +241,19 @@ Box<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
 template <typename T>
 bool
 Box<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-
-    return make_geometry_operator().is_inside(p, tolerance);
+    atlas::geometry::BoxGeometryOperator<T> op;
+    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
+    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
+    return op.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 Box<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-
-    return make_geometry_operator().is_on_surface(p, tolerance);
+    atlas::geometry::BoxGeometryOperator<T> op;
+    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
+    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
+    return op.is_on_surface(p, tolerance);
 }
 
 template <typename T>

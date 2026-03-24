@@ -32,10 +32,10 @@ public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual T
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept = 0;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
     is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept = 0;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
     is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept = 0;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual atlas::math::Vector<T, 3>

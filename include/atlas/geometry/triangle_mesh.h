@@ -1,6 +1,6 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/container/container.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
@@ -112,10 +112,10 @@ public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
@@ -136,13 +136,15 @@ private:
 private:
     BVHHostPtr<T> _bvh = nullptr;
 
-    mutable DeviceBuffer<Vector3<T>> _query_vertices;
+    mutable HostBuffer<Vector3<T>> _query_vertices;
 
-    mutable DeviceBuffer<int> _query_indices;
+    mutable HostBuffer<int> _query_indices;
 
     bool bvh_built = false;
 
     mutable bool query_cache_built = false;
+
+    mutable TriangleMeshGeometryOperator<T> _cached_op {};
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     ensure_bvh() noexcept;
@@ -155,6 +157,9 @@ private:
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     rebuild_query_cache() const;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    update_cached_op() const;
 };
 
 template <typename T>

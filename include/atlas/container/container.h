@@ -24,10 +24,10 @@ public:
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr const T&
     operator[](std::size_t i) const noexcept;
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr T&
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE constexpr T&
     at(std::size_t i);
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr const T&
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE constexpr const T&
     at(std::size_t i) const;
 
     template <std::size_t M = N, typename = std::enable_if_t<(M >= 1)>>

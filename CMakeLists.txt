@@ -18,12 +18,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # =====================================================
 # User-configurable options
 # =====================================================
-option(ATLAS_USE_CUDA "Enable CUDA tasking backend" OFF )
-option(ATLAS_USE_TBB "Enable TBB tasking backend" ON)
+option(ATLAS_USE_CUDA "Enable CUDA tasking backend" ON )
+option(ATLAS_USE_TBB "Enable TBB tasking backend" OFF)
 option(ATLAS_USE_VIZKIT "Build vizkit-based visualization modules" ON)
 option(ATLAS_LOGGING "Enable logging functionality" ON)
 option(ATLAS_TESTS "Build and enable tests" ON)
-option(ATLAS_BENCHMARKS "Build and enable benchmarks" ON)
+option(ATLAS_BENCHMARKS "Build and enable benchmarks" OFF)
 
 # =====================================================
 # Enforce EXACTLY ONE tasking backend
@@ -34,11 +34,6 @@ endif ()
 
 if ((NOT ATLAS_USE_CUDA) AND (NOT ATLAS_USE_TBB))
     message(FATAL_ERROR "[ATLAS] Invalid configuration: one of ATLAS_USE_CUDA or ATLAS_USE_TBB must be ON.")
-endif ()
-
-if (ATLAS_USE_CUDA AND ATLAS_TESTS)
-    message(WARNING "[ATLAS] ATLAS_TESTS are not yet compatible with CUDA backend. Disabling tests.")
-    set(ATLAS_TESTS OFF)
 endif ()
 
 if (ATLAS_USE_CUDA AND ATLAS_BENCHMARKS)
@@ -69,7 +64,11 @@ set(ATLAS_CORE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 add_library(atlas-core INTERFACE)
 add_library(atlas::core ALIAS atlas-core)
 
-target_compile_features(atlas-core INTERFACE cxx_std_20)
+target_compile_options(atlas-core INTERFACE
+        "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:MSVC>>:/std:c++20>"
+        "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CXX_COMPILER_ID:MSVC>>>:-std=c++20>"
+        "$<$<COMPILE_LANGUAGE:CUDA>:--std=c++20>"
+)
 
 target_include_directories(atlas-core
         INTERFACE
@@ -89,8 +88,6 @@ if (ATLAS_USE_CUDA)
     find_package(TBB REQUIRED)
     target_link_libraries(atlas-core INTERFACE TBB::tbb)
     enable_language(CUDA)
-    set(CMAKE_CUDA_STANDARD 20)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
     # Choose your default arch
     set(CMAKE_CUDA_ARCHITECTURES 86)
@@ -144,7 +141,10 @@ if (ATLAS_LOGGING)
     )
     add_library(atlas::logging ALIAS atlas-logging)
 
-    target_compile_features(atlas-logging PUBLIC cxx_std_20)
+    target_compile_options(atlas-logging PUBLIC
+            "$<$<CXX_COMPILER_ID:MSVC>:/std:c++20>"
+            "$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-std=c++20>"
+    )
     target_include_directories(atlas-logging PUBLIC "${ATLAS_CORE_INCLUDE_DIR}")
 
     target_compile_definitions(atlas-core INTERFACE ATLAS_ENABLE_LOGGING)

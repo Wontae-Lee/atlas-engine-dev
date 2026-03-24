@@ -74,15 +74,19 @@ Plane<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
 template <typename T>
 bool
 Plane<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-
-    return make_geometry_operator().is_inside(p, tolerance);
+    atlas::geometry::PlaneGeometryOperator<T> op;
+    op.normal = atlas::raw_pointer_cast(&normal);
+    op.offset = atlas::raw_pointer_cast(&offset);
+    return op.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 Plane<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-
-    return make_geometry_operator().is_on_surface(p, tolerance);
+    atlas::geometry::PlaneGeometryOperator<T> op;
+    op.normal = atlas::raw_pointer_cast(&normal);
+    op.offset = atlas::raw_pointer_cast(&offset);
+    return op.is_on_surface(p, tolerance);
 }
 
 template <typename T>

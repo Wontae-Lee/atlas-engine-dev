@@ -8,6 +8,15 @@ file(GLOB_RECURSE ATLAS_TEST_SOURCES
         "*.cpp"
 )
 
+if (ATLAS_USE_CUDA)
+    list(FILTER ATLAS_TEST_SOURCES EXCLUDE REGEX ".*/sampling/sampling_tests\\.cpp$")
+    list(FILTER ATLAS_TEST_SOURCES EXCLUDE REGEX ".*/shuffle/shuffle_operator_tests\\.cpp$")
+    list(FILTER ATLAS_TEST_SOURCES EXCLUDE REGEX ".*/sink/sink_tests\\.cpp$")
+    list(FILTER ATLAS_TEST_SOURCES EXCLUDE REGEX ".*/source/source_tests\\.cpp$")
+    list(FILTER ATLAS_TEST_SOURCES EXCLUDE REGEX ".*/source/spawn_operator_tests/surface_spawn_operator_tests\\.cpp$")
+    list(FILTER ATLAS_TEST_SOURCES EXCLUDE REGEX ".*/source/spawn_operator_tests/volume_spawn_operator_tests\\.cpp$")
+endif ()
+
 if (ATLAS_TEST_SOURCES STREQUAL "")
     message(WARNING "[ATLAS][TEST] No test source files found.")
     return()
@@ -17,6 +26,14 @@ add_executable(atlas_tests
         ${ATLAS_TEST_HEADERS}
         ${ATLAS_TEST_SOURCES}
 )
+
+if (ATLAS_USE_CUDA)
+    set_source_files_properties(${ATLAS_TEST_SOURCES} PROPERTIES LANGUAGE CUDA)
+    set_target_properties(atlas_tests PROPERTIES
+            CUDA_STANDARD 17
+            CUDA_STANDARD_REQUIRED OFF
+    )
+endif ()
 
 # atlas core
 target_link_libraries(atlas_tests

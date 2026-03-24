@@ -79,15 +79,23 @@ Triangle<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept 
 template <typename T>
 bool
 Triangle<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-
-    return make_geometry_operator().is_inside(p, tolerance);
+    atlas::geometry::TriangleGeometryOperator<T> op;
+    op.a = atlas::raw_pointer_cast(&a);
+    op.b = atlas::raw_pointer_cast(&b);
+    op.c = atlas::raw_pointer_cast(&c);
+    op.n = atlas::raw_pointer_cast(&normal);
+    return op.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 Triangle<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-
-    return make_geometry_operator().is_on_surface(p, tolerance);
+    atlas::geometry::TriangleGeometryOperator<T> op;
+    op.a = atlas::raw_pointer_cast(&a);
+    op.b = atlas::raw_pointer_cast(&b);
+    op.c = atlas::raw_pointer_cast(&c);
+    op.n = atlas::raw_pointer_cast(&normal);
+    return op.is_on_surface(p, tolerance);
 }
 
 template <typename T>

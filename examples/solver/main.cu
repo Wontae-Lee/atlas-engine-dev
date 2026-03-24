@@ -9,10 +9,10 @@ main() {
     // Define the global simulation domain as an axis-aligned box
     // spanning from (-1, -1, -1) to (1, 1, 1)
     // ------------------------------------------------------------
-    const geometry::Box<sim_t> box {
-        Vector3<sim_t> { -1.f, -1.f, -1.f },
-        Vector3<sim_t> {  1.f,  1.f,  1.f }
-    };
+    const auto box_domain = geometry::Box<sim_t>::builder()
+                                .with_lower_corner(Vector3<sim_t> { -1.0f, -1.0f, -1.0f })
+                                .with_upper_corner(Vector3<sim_t> { 1.0f, 1.0f, 1.0f })
+                                .make_host_shared();
 
     atlas::logger::info() << "\n"
                           << "Starting simulation...";
@@ -25,32 +25,9 @@ main() {
     // - uniform cell size used for spatial partitioning
     // ------------------------------------------------------------
     const auto domain = system::Domain<sim_t>::builder()
-                            .with_lower_corner(box.lower_corner)
-                            .with_upper_corner(box.upper_corner)
+                            .with_geometry(box_domain)
                             .with_cell_size(0.02f)
                             .make_host_shared();
-
-    // ------------------------------------------------------------
-    // Construct the neighbor-search structure
-    //
-    // SpatialHashingSearcher is responsible for:
-    // - mapping positions to grid cells
-    // - efficiently finding nearby particles or units
-    // ------------------------------------------------------------
-    const auto searcher = system::SpatialHashingSearcher<sim_t>::builder()
-                              .with_domain(domain)
-                              .with_range(system::NeighborSearchRange::single)
-                              .make_host_shared();
-
-    // ------------------------------------------------------------
-    // Codec for encoding/decoding particle states inside the domain
-    //
-    // The codec defines how particle data is packed, stored,
-    // and interpreted during simulation.
-    // ------------------------------------------------------------
-    const auto codec = system::SingleCodec<sim_t>::builder()
-                           .with_domain(domain)
-                           .make_host_shared();
 
     // ------------------------------------------------------------
     // Define a fluidic particle species (e.g., Nitrogen gas)
@@ -68,7 +45,7 @@ main() {
     // associated physical properties.
     // ------------------------------------------------------------
     const auto fluid = system::Fluid<sim_t>::builder()
-                           .add_particle(nitrogen)
+                           .add_species(nitrogen)
                            .make_host_shared();
 
     // ------------------------------------------------------------
@@ -79,7 +56,7 @@ main() {
     // ------------------------------------------------------------
     const auto box_unit = geometry::Box<sim_t>::builder()
                               .with_lower_corner(Vector3<sim_t> { -0.5f, -0.5f, -0.5f })
-                              .with_upper_corner(Vector3<sim_t> {  0.5f,  0.5f,  0.5f })
+                              .with_upper_corner(Vector3<sim_t> { 0.5f, 0.5f, 0.5f })
                               .make_host_shared();
 
     // ------------------------------------------------------------
@@ -104,10 +81,9 @@ main() {
                           .with_sync(fixed_sync)
                           .make_host_shared();
 
-
-    (void)searcher;
-    (void)codec;
     (void)fluid;
+    (void)domain;
+    (void)unit;
 
     return EXIT_SUCCESS;
 }

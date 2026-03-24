@@ -92,7 +92,6 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<Vector3<T>>&
     local_positions() const noexcept;
 
-private:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     rebuild_cache() noexcept;
 

@@ -1,113 +1,135 @@
 #include <atlas/atlas.h>
-using namespace atlas;
+#include <vizkit/vizkit.h>
 
 int
 main() {
-    using sim_t = float;
+    using sim_t      = float;
+    using Vector3    = atlas::math::Vector<sim_t, 3>;
+    using Quaternion = atlas::math::Quaternion<sim_t>;
 
-    // ------------------------------------------------------------
-    // Define the global simulation domain as an axis-aligned box
-    // spanning from (-1, -1, -1) to (1, 1, 1)
-    // ------------------------------------------------------------
-    const geometry::Box<sim_t> box {
-        Vector3<sim_t> { -1.f, -1.f, -1.f },
-        Vector3<sim_t> {  1.f,  1.f,  1.f }
+    const auto make_sync = [](const Vector3& position) {
+        return atlas::system::Sync<sim_t>::builder()
+            .with_rigid_pose(position, Quaternion())
+            .make_host_shared();
     };
 
-    atlas::logger::info() << "\n"
-                          << "Starting simulation...";
+    const auto make_unit =
+        [&](const atlas::GeometryHostPtr<sim_t>& geometry,
+            const Vector3& position,
+            const Vector3& velocity,
+            const Vector3& angular_velocity) {
+            return atlas::system::Unit<sim_t>::builder()
+                .with_geometry(geometry)
+                .with_sync(make_sync(position))
+                .with_velocity(velocity)
+                .with_acceleration(Vector3(0.0f, 0.0f, 0.0f))
+                .with_angular_velocity(angular_velocity)
+                .with_angular_acceleration(Vector3(0.0f, 0.0f, 0.0f))
+                .make_host_shared();
+        };
 
-    // ------------------------------------------------------------
-    // Create the simulation domain and spatial discretization
-    //
-    // The domain defines:
-    // - global coordinate bounds
-    // - uniform cell size used for spatial partitioning
-    // ------------------------------------------------------------
-    const auto domain = system::Domain<sim_t>::builder()
-                            .with_lower_corner(box.lower_corner)
-                            .with_upper_corner(box.upper_corner)
-                            .with_cell_size(0.02f)
+    const auto box = atlas::geometry::Box<sim_t>::builder()
+                         .with_lower_corner(Vector3(-0.8f, -0.4f, -0.5f))
+                         .with_upper_corner(Vector3(0.8f, 0.4f, 0.5f))
+                         .make_host_shared();
+
+    const auto sphere = atlas::geometry::Sphere<sim_t>::builder()
+                            .with_center(Vector3(0.0f, 0.0f, 0.0f))
+                            .with_radius(0.55f)
                             .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Construct the neighbor-search structure
-    //
-    // SpatialHashingSearcher is responsible for:
-    // - mapping positions to grid cells
-    // - efficiently finding nearby particles or units
-    // ------------------------------------------------------------
-    const auto searcher = system::SpatialHashingSearcher<sim_t>::builder()
-                              .with_domain(domain)
-                              .with_range(system::NeighborSearchRange::single)
+    const auto cylinder = atlas::geometry::Cylinder<sim_t>::builder()
+                              .with_center(Vector3(0.0f, 0.0f, 0.0f))
+                              .with_radius(0.45f)
+                              .with_height(1.4f)
                               .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Codec for encoding/decoding particle states inside the domain
-    //
-    // The codec defines how particle data is packed, stored,
-    // and interpreted during simulation.
-    // ------------------------------------------------------------
-    const auto codec = system::SingleCodec<sim_t>::builder()
-                           .with_domain(domain)
+    const auto plane = atlas::geometry::Plane<sim_t>::builder()
+                           .with_point_normal(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f))
                            .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Define a fluidic particle species (e.g., Nitrogen gas)
-    //
-    // The molecular mass is specified in kilograms.
-    // ------------------------------------------------------------
-    const auto nitrogen = FluidicParticle<sim_t>::builder()
-                              .with_molecular_mass(4.65e-26)
+    const auto circle = atlas::geometry::Circle<sim_t>::builder()
+                            .with_center(Vector3(0.0f, 0.0f, 0.0f))
+                            .with_normal(Vector3(0.35f, 0.75f, 0.55f))
+                            .with_radius(0.7f)
+                            .make_host_shared();
+
+    const auto triangle = atlas::geometry::Triangle<sim_t>::builder()
+                              .with_vertices(
+                                  Vector3(-0.8f, -0.45f, 0.0f),
+                                  Vector3(0.8f, -0.35f, 0.0f),
+                                  Vector3(0.0f, 0.75f, 0.0f))
                               .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Create a fluid composed of one or more particle species
-    //
-    // Fluids manage collections of particle definitions and
-    // associated physical properties.
-    // ------------------------------------------------------------
-    const auto fluid = system::Fluid<sim_t>::builder()
-                           .add_particle(nitrogen)
-                           .make_host_shared();
+    atlas::HostBuffer<atlas::TriangleContainer4<sim_t>> mesh_triangles;
+    mesh_triangles.resize(4);
+    mesh_triangles[0] = atlas::TriangleContainer4<sim_t>(
+        Vector3(-0.6f, -0.6f, 0.0f),
+        Vector3(0.6f, -0.6f, 0.0f),
+        Vector3(0.0f, 0.0f, 0.9f),
+        Vector3(0.0f, -0.83205f, 0.5547f));
+    mesh_triangles[1] = atlas::TriangleContainer4<sim_t>(
+        Vector3(0.6f, -0.6f, 0.0f),
+        Vector3(0.0f, 0.6f, 0.0f),
+        Vector3(0.0f, 0.0f, 0.9f),
+        Vector3(0.78087f, 0.39043f, 0.48804f));
+    mesh_triangles[2] = atlas::TriangleContainer4<sim_t>(
+        Vector3(0.0f, 0.6f, 0.0f),
+        Vector3(-0.6f, -0.6f, 0.0f),
+        Vector3(0.0f, 0.0f, 0.9f),
+        Vector3(-0.78087f, 0.39043f, 0.48804f));
+    mesh_triangles[3] = atlas::TriangleContainer4<sim_t>(
+        Vector3(-0.6f, -0.6f, 0.0f),
+        Vector3(0.0f, 0.6f, 0.0f),
+        Vector3(0.6f, -0.6f, 0.0f),
+        Vector3(0.0f, 0.0f, -1.0f));
 
-    // ------------------------------------------------------------
-    // Define a geometric unit to be inserted into the simulation
-    //
-    // This unit represents a smaller box located at the center
-    // of the domain, acting as a solid or interaction object.
-    // ------------------------------------------------------------
-    const auto box_unit = geometry::Box<sim_t>::builder()
-                              .with_lower_corner(Vector3<sim_t> { -0.5f, -0.5f, -0.5f })
-                              .with_upper_corner(Vector3<sim_t> {  0.5f,  0.5f,  0.5f })
-                              .make_host_shared();
+    const auto triangle_mesh = atlas::geometry::TriangleMesh<sim_t>::builder()
+                                   .with_triangles(mesh_triangles)
+                                   .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Build a synchronization policy for the unit
-    //
-    // Identity sync implies:
-    // - the unit remains stationary
-    // - no time-dependent transformation is applied
-    // ------------------------------------------------------------
-    const auto fixed_sync = system::Sync<sim_t>::builder()
-                                .make_host_shared();
+    const auto box_unit           = make_unit(box, Vector3(-3.0f, 1.4f, 0.0f), Vector3(0.35f, 0.0f, 0.0f), Vector3(0.0f, 0.8f, 0.0f));
+    const auto sphere_unit        = make_unit(sphere, Vector3(-1.0f, 1.4f, 0.0f), Vector3(-0.2f, 0.0f, 0.0f), Vector3(0.4f, 0.7f, 0.0f));
+    const auto cylinder_unit      = make_unit(cylinder, Vector3(1.0f, 1.4f, 0.0f), Vector3(0.25f, 0.0f, 0.0f), Vector3(0.0f, 0.6f, 0.6f));
+    const auto plane_unit         = make_unit(plane, Vector3(3.0f, 1.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f), Vector3(0.3f, 0.0f, 0.0f));
+    const auto circle_unit        = make_unit(circle, Vector3(-3.0f, -1.4f, 0.0f), Vector3(0.15f, 0.0f, 0.0f), Vector3(0.55f, 0.15f, 0.65f));
+    const auto triangle_unit      = make_unit(triangle, Vector3(-0.2f, -1.4f, 0.0f), Vector3(0.18f, 0.0f, 0.0f), Vector3(0.0f, 0.9f, 0.0f));
+    const auto triangle_mesh_unit = make_unit(triangle_mesh, Vector3(2.8f, -1.4f, 0.0f), Vector3(-0.18f, 0.0f, 0.0f), Vector3(0.5f, 0.4f, 0.0f));
 
-    // ------------------------------------------------------------
-    // Assemble the simulation unit by combining geometry and sync
-    //
-    // Unit<T> represents:
-    // - a geometric object
-    // - its spatial transformation and motion policy
-    // ------------------------------------------------------------
-    const auto unit = system::Unit<sim_t>::builder()
-                          .with_geometry(box_unit)
-                          .with_sync(fixed_sync)
-                          .make_host_shared();
+    const auto box_layer = atlas::vizkit::BoxLayer<sim_t>::builder()
+                               .with_unit(box_unit)
+                               .make_shared();
+    const auto sphere_layer = atlas::vizkit::SphereLayer<sim_t>::builder()
+                                  .with_unit(sphere_unit)
+                                  .make_shared();
+    const auto cylinder_layer = atlas::vizkit::CylinderLayer<sim_t>::builder()
+                                    .with_unit(cylinder_unit)
+                                    .make_shared();
+    const auto plane_layer = atlas::vizkit::PlaneLayer<sim_t>::builder()
+                                 .with_unit(plane_unit)
+                                 .with_extent(1.2f)
+                                 .make_shared();
+    const auto circle_layer = atlas::vizkit::CircleLayer<sim_t>::builder()
+                                  .with_unit(circle_unit)
+                                  .make_shared();
+    const auto triangle_layer = atlas::vizkit::TriangleLayer<sim_t>::builder()
+                                    .with_unit(triangle_unit)
+                                    .make_shared();
+    const auto triangle_mesh_layer = atlas::vizkit::TriangleMeshLayer<sim_t>::builder()
+                                         .with_unit(triangle_mesh_unit)
+                                         .make_shared();
 
+    auto viewer = atlas::vizkit::Viewer<sim_t>::builder()
+                      .with_title("ATLAS Dynamic Geometry Viewer")
+                      .build();
 
-    (void)searcher;
-    (void)codec;
-    (void)fluid;
+    viewer.add_layer(box_layer);
+    viewer.add_layer(sphere_layer);
+    viewer.add_layer(cylinder_layer);
+    viewer.add_layer(plane_layer);
+    viewer.add_layer(circle_layer);
+    viewer.add_layer(triangle_layer);
+    viewer.add_layer(triangle_mesh_layer);
 
-    return EXIT_SUCCESS;
+    return viewer.run();
 }
