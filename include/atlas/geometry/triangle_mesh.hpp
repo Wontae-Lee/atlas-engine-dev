@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/geometry/geometry_operator.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/spatial/bounding_volume_hierarchy/sah_bvh.h>
 
@@ -209,114 +208,28 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-#if !defined(__CUDA_ARCH__)
+
     if (triangles.empty()) return p;
 
     return make_geometry_operator().closest_point(p);
-#else
-
-    if (triangles.empty()) return p;
-
-    T best_d2                         = std::numeric_limits<T>::infinity();
-    atlas::math::Vector<T, 3> best_cp = p;
-
-    for (const auto& tc : triangles) {
-
-        TriangleGeometryOperator<T> tri {};
-        tri.a = &tc.a();
-        tri.b = &tc.b();
-        tri.c = &tc.c();
-        tri.n = &tc.d();
-
-        const atlas::math::Vector<T, 3> cp = tri.closest_point(p);
-        const atlas::math::Vector<T, 3> d  = cp - p;
-        const T d2                         = d.length_squared();
-
-        if (d2 < best_d2) {
-            best_d2 = d2;
-            best_cp = cp;
-        }
-    }
-
-    return best_cp;
-#endif
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-#if !defined(__CUDA_ARCH__)
+
     if (triangles.empty()) return atlas::math::Vector<T, 3>(T(0), T(0), T(1));
 
     return make_geometry_operator().closest_normal(p);
-#else
-
-    if (triangles.empty()) return atlas::math::Vector<T, 3>(T(0), T(0), T(1));
-
-    T best_d2 = std::numeric_limits<T>::infinity();
-    atlas::math::Vector<T, 3> best_n(T(0), T(0), T(1));
-
-    for (const auto& tc : triangles) {
-        TriangleGeometryOperator<T> tri {};
-        tri.a = &tc.a();
-        tri.b = &tc.b();
-        tri.c = &tc.c();
-        tri.n = &tc.d();
-
-        const atlas::math::Vector<T, 3> cp = tri.closest_point(p);
-        const atlas::math::Vector<T, 3> d  = cp - p;
-        const T d2                         = d.length_squared();
-
-        if (d2 < best_d2) {
-            best_d2 = d2;
-            best_n  = tri.closest_normal(p);
-        }
-    }
-
-    return best_n;
-#endif
 }
 
 template <typename T>
 T
 TriangleMesh<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-#if !defined(__CUDA_ARCH__)
+
     if (triangles.empty()) return std::numeric_limits<T>::infinity();
 
     return make_geometry_operator().signed_distance(p);
-#else
-
-    if (triangles.empty()) return std::numeric_limits<T>::infinity();
-
-    T best_d2                         = std::numeric_limits<T>::infinity();
-    atlas::math::Vector<T, 3> best_cp = p;
-    atlas::math::Vector<T, 3> best_n(T(0), T(0), T(1));
-
-    for (const auto& tc : triangles) {
-        TriangleGeometryOperator<T> tri {};
-        tri.a = &tc.a();
-        tri.b = &tc.b();
-        tri.c = &tc.c();
-        tri.n = &tc.d();
-
-        const atlas::math::Vector<T, 3> cp = tri.closest_point(p);
-        const atlas::math::Vector<T, 3> d  = p - cp;
-        const T d2                         = d.length_squared();
-
-        if (d2 < best_d2) {
-            best_d2 = d2;
-            best_cp = cp;
-            best_n  = tri.closest_normal(p);
-        }
-    }
-
-    const atlas::math::Vector<T, 3> v = p - best_cp;
-    const T dist                      = static_cast<T>(std::sqrt(best_d2));
-
-    const T s = (best_n.dot(v) >= T(0)) ? T(1) : T(-1);
-
-    return s * dist;
-#endif
 }
 
 template <typename T>
@@ -338,52 +251,19 @@ TriangleMesh<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T toler
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::centroid() const noexcept {
-#if !defined(__CUDA_ARCH__)
+
     if (triangles.empty()) return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
 
     return make_geometry_operator().centroid();
-#else
-
-    if (triangles.empty()) return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
-
-    atlas::math::Vector<T, 3> acc(T(0), T(0), T(0));
-    const T inv = T(1) / static_cast<T>(triangles.size());
-
-    for (const auto& tc : triangles) {
-        const atlas::math::Vector<T, 3> c = (tc.a() + tc.b() + tc.c()) * (T(1) / T(3));
-        acc += c;
-    }
-
-    return acc * inv;
-#endif
 }
 
 template <typename T>
 atlas::spatial::AxisAlignedBoundingBox<T>
 TriangleMesh<T>::bound() const noexcept {
-#if !defined(__CUDA_ARCH__)
+
     if (triangles.empty()) return atlas::spatial::AxisAlignedBoundingBox<T>();
 
     return make_geometry_operator().bound();
-#else
-
-    if (triangles.empty()) return atlas::spatial::AxisAlignedBoundingBox<T>();
-
-    atlas::math::Vector<T, 3> lo = triangles[0].a();
-    atlas::math::Vector<T, 3> hi = triangles[0].a();
-
-    for (const auto& tc : triangles) {
-        lo = atlas::math::cmin(lo, tc.a());
-        lo = atlas::math::cmin(lo, tc.b());
-        lo = atlas::math::cmin(lo, tc.c());
-
-        hi = atlas::math::cmax(hi, tc.a());
-        hi = atlas::math::cmax(hi, tc.b());
-        hi = atlas::math::cmax(hi, tc.c());
-    }
-
-    return atlas::spatial::AxisAlignedBoundingBox<T>(lo, hi);
-#endif
 }
 
 template <typename T>
