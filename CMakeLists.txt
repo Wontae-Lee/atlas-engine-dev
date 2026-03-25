@@ -18,8 +18,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # =====================================================
 # User-configurable options
 # =====================================================
-option(ATLAS_USE_CUDA "Enable CUDA tasking backend" ON )
-option(ATLAS_USE_TBB "Enable TBB tasking backend" OFF)
+option(ATLAS_USE_CUDA "Enable CUDA tasking backend" OFF)
+option(ATLAS_USE_TBB "Enable TBB tasking backend" ON)
 option(ATLAS_USE_VIZKIT "Build vizkit-based visualization modules" ON)
 option(ATLAS_LOGGING "Enable logging functionality" ON)
 option(ATLAS_TESTS "Build and enable tests" ON)
@@ -88,6 +88,10 @@ if (ATLAS_USE_CUDA)
     find_package(TBB REQUIRED)
     target_link_libraries(atlas-core INTERFACE TBB::tbb)
     enable_language(CUDA)
+
+    # Use a shared CUDA language standard for all CUDA targets in this build.
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED OFF)
 
     # Choose your default arch
     set(CMAKE_CUDA_ARCHITECTURES 86)

@@ -10,18 +10,66 @@ template <typename T>
 Plane<T>::Plane() noexcept
     : normal(T(0), T(0), T(1))
     , offset(T(0)) {
+    bind_operator();
 }
 
 template <typename T>
 Plane<T>::Plane(const Vector3<T>& normal_, T offset_) noexcept
     : normal(normal_)
     , offset(offset_) {
+    bind_operator();
 }
 
 template <typename T>
 Plane<T>::Plane(const Vector3<T>& point, const Vector3<T>& normal_) noexcept
     : normal(normal_)
     , offset(-(normal_.dot(point))) {
+    bind_operator();
+}
+
+template <typename T>
+Plane<T>::Plane(const Plane& other) noexcept
+    : normal(other.normal)
+    , offset(other.offset) {
+    bind_operator();
+}
+
+template <typename T>
+Plane<T>::Plane(Plane&& other) noexcept
+    : normal(std::move(other.normal))
+    , offset(other.offset) {
+    bind_operator();
+    other.bind_operator();
+}
+
+template <typename T>
+Plane<T>&
+Plane<T>::operator=(const Plane& other) noexcept {
+    if (this == &other) return *this;
+
+    normal = other.normal;
+    offset = other.offset;
+    bind_operator();
+    return *this;
+}
+
+template <typename T>
+Plane<T>&
+Plane<T>::operator=(Plane&& other) noexcept {
+    if (this == &other) return *this;
+
+    normal = std::move(other.normal);
+    offset = other.offset;
+    bind_operator();
+    other.bind_operator();
+    return *this;
+}
+
+template <typename T>
+void
+Plane<T>::bind_operator() noexcept {
+    _operator.normal = atlas::raw_pointer_cast(&normal);
+    _operator.offset = atlas::raw_pointer_cast(&offset);
 }
 
 template <typename T>
@@ -34,89 +82,55 @@ Plane<T>::builder() noexcept {
 template <typename T>
 GeometryOperator<T>
 Plane<T>::make_geometry_operator() const {
-
-    atlas::geometry::PlaneGeometryOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return GeometryOperator<T>(op);
+    return GeometryOperator<T>(_operator);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Plane<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::PlaneGeometryOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return op.closest_point(p);
+    return _operator.closest_point(p);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Plane<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::PlaneGeometryOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return op.closest_normal(p);
+    return _operator.closest_normal(p);
 }
 
 template <typename T>
 T
 Plane<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::PlaneGeometryOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return op.signed_distance(p);
+    return _operator.signed_distance(p);
 }
 
 template <typename T>
 bool
 Plane<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::PlaneGeometryOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return op.is_inside(p, tolerance);
+    return _operator.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 Plane<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::PlaneGeometryOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return op.is_on_surface(p, tolerance);
+    return _operator.is_on_surface(p, tolerance);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Plane<T>::centroid() const noexcept {
-
-    atlas::geometry::PlaneGeometryOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return op.centroid();
+    return _operator.centroid();
 }
 
 template <typename T>
 atlas::spatial::AxisAlignedBoundingBox<T>
 Plane<T>::bound() const noexcept {
-
-    atlas::geometry::PlaneGeometryOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return op.bound();
+    return _operator.bound();
 }
 
 template <typename T>
 bool
 Plane<T>::is_valid() const noexcept {
-
-    atlas::geometry::PlaneGeometryOperator<T> op;
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.offset = atlas::raw_pointer_cast(&offset);
-    return op.is_valid();
+    return _operator.is_valid();
 }
 
 template <typename T>

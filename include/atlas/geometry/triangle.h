@@ -63,7 +63,8 @@ public:
 
     Vector3<T> normal { T(0), T(0), T(1) };
 
-    Triangle() noexcept = default;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Triangle() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
     Triangle(const Vector3<T>& a_, const Vector3<T>& b_, const Vector3<T>& c_) noexcept;
@@ -71,7 +72,17 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    Triangle(const Triangle&) noexcept = default;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Triangle(const Triangle& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Triangle(Triangle&& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Triangle&
+    operator=(const Triangle& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Triangle&
+    operator=(Triangle&& other) noexcept;
 
     ~Triangle() override = default;
 
@@ -113,6 +124,11 @@ public:
 
 private:
     friend class Builder;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    bind_operator() noexcept;
+
+    mutable TriangleGeometryOperator<T> _operator {};
 };
 
 template <typename T>

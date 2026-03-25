@@ -16,6 +16,18 @@ make_zip_iterator(thrust::tuple<Iterators...> t) {
     return thrust::make_zip_iterator(t);
 }
 
+template <typename... Ts>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
+make_zip_tuple(Ts&&... args) {
+    return thrust::make_tuple(std::forward<Ts>(args)...);
+}
+
+template <std::size_t I, typename Tuple>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE decltype(auto)
+zip_get(Tuple&& t) {
+    return thrust::get<I>(std::forward<Tuple>(t));
+}
+
 }
 
 #else
@@ -116,6 +128,18 @@ template <typename... Iterators>
 inline zip_iterator<Iterators...>
 make_zip_iterator(std::tuple<Iterators...> t) {
     return zip_iterator<Iterators...>(t);
+}
+
+template <typename... Ts>
+inline auto
+make_zip_tuple(Ts&&... args) {
+    return std::make_tuple(std::forward<Ts>(args)...);
+}
+
+template <std::size_t I, typename Tuple>
+inline decltype(auto)
+zip_get(Tuple&& t) {
+    return std::get<I>(std::forward<Tuple>(t));
 }
 
 }

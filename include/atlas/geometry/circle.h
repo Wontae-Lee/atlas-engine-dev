@@ -65,7 +65,18 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    Circle(const Circle&) noexcept = default;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Circle(const Circle& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Circle(Circle&& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Circle&
+    operator=(const Circle& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Circle&
+    operator=(Circle&& other) noexcept;
+
     ~Circle() override             = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE GeometryOperator<T>
@@ -100,6 +111,11 @@ public:
 
 private:
     friend class Builder;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    bind_operator() noexcept;
+
+    mutable CircleGeometryOperator<T> _operator {};
 };
 
 template <typename T>

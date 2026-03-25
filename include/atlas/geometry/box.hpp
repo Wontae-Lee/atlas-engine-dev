@@ -182,6 +182,7 @@ template <typename T>
 Box<T>::Box() noexcept
     : lower_corner(T(-1), T(-1), T(-1))
     , upper_corner(T(+1), T(+1), T(+1)) {
+    bind_operator();
 }
 
 template <typename T>
@@ -189,6 +190,52 @@ Box<T>::Box(const Vector3<T>& lower_corner_,
             const Vector3<T>& upper_corner_) noexcept
     : lower_corner(lower_corner_)
     , upper_corner(upper_corner_) {
+    bind_operator();
+}
+
+template <typename T>
+Box<T>::Box(const Box& other) noexcept
+    : lower_corner(other.lower_corner)
+    , upper_corner(other.upper_corner) {
+    bind_operator();
+}
+
+template <typename T>
+Box<T>::Box(Box&& other) noexcept
+    : lower_corner(std::move(other.lower_corner))
+    , upper_corner(std::move(other.upper_corner)) {
+    bind_operator();
+    other.bind_operator();
+}
+
+template <typename T>
+Box<T>&
+Box<T>::operator=(const Box& other) noexcept {
+    if (this == &other) return *this;
+
+    lower_corner = other.lower_corner;
+    upper_corner = other.upper_corner;
+    bind_operator();
+    return *this;
+}
+
+template <typename T>
+Box<T>&
+Box<T>::operator=(Box&& other) noexcept {
+    if (this == &other) return *this;
+
+    lower_corner = std::move(other.lower_corner);
+    upper_corner = std::move(other.upper_corner);
+    bind_operator();
+    other.bind_operator();
+    return *this;
+}
+
+template <typename T>
+void
+Box<T>::bind_operator() noexcept {
+    _operator.lower_corner = atlas::raw_pointer_cast(&lower_corner);
+    _operator.upper_corner = atlas::raw_pointer_cast(&upper_corner);
 }
 
 template <typename T>
@@ -201,89 +248,55 @@ Box<T>::builder() noexcept {
 template <typename T>
 GeometryOperator<T>
 Box<T>::make_geometry_operator() const {
-
-    atlas::geometry::BoxGeometryOperator<T> op;
-    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    return GeometryOperator<T>(op);
+    return GeometryOperator<T>(_operator);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Box<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::BoxGeometryOperator<T> op;
-    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    return op.closest_point(p);
+    return _operator.closest_point(p);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Box<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::BoxGeometryOperator<T> op;
-    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    return op.closest_normal(p);
+    return _operator.closest_normal(p);
 }
 
 template <typename T>
 T
 Box<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::BoxGeometryOperator<T> op;
-    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    return op.signed_distance(p);
+    return _operator.signed_distance(p);
 }
 
 template <typename T>
 bool
 Box<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::BoxGeometryOperator<T> op;
-    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    return op.is_inside(p, tolerance);
+    return _operator.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 Box<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::BoxGeometryOperator<T> op;
-    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    return op.is_on_surface(p, tolerance);
+    return _operator.is_on_surface(p, tolerance);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Box<T>::centroid() const noexcept {
-
-    atlas::geometry::BoxGeometryOperator<T> op;
-    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    return op.centroid();
+    return _operator.centroid();
 }
 
 template <typename T>
 atlas::spatial::AxisAlignedBoundingBox<T>
 Box<T>::bound() const noexcept {
-
-    atlas::geometry::BoxGeometryOperator<T> op;
-    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    return op.bound();
+    return _operator.bound();
 }
 
 template <typename T>
 bool
 Box<T>::is_valid() const noexcept {
-
-    atlas::geometry::BoxGeometryOperator<T> op;
-    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    return op.is_valid();
+    return _operator.is_valid();
 }
 
 template <typename T>

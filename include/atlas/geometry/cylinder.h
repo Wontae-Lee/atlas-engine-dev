@@ -67,7 +67,17 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    Cylinder(const Cylinder&) noexcept = default;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Cylinder(const Cylinder& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Cylinder(Cylinder&& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Cylinder&
+    operator=(const Cylinder& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Cylinder&
+    operator=(Cylinder&& other) noexcept;
 
     ~Cylinder() override = default;
 
@@ -103,6 +113,11 @@ public:
 
 private:
     friend class Builder;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    bind_operator() noexcept;
+
+    mutable CylinderGeometryOperator<T> _operator {};
 };
 
 template <typename T>

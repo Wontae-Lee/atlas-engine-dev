@@ -64,7 +64,17 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    Sphere(const Sphere&) noexcept = default;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Sphere(const Sphere& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Sphere(Sphere&& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Sphere&
+    operator=(const Sphere& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Sphere&
+    operator=(Sphere&& other) noexcept;
 
     ~Sphere() override = default;
 
@@ -100,6 +110,11 @@ public:
 
 private:
     friend class Builder;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    bind_operator() noexcept;
+
+    mutable SphereGeometryOperator<T> _operator {};
 };
 
 template <typename T>

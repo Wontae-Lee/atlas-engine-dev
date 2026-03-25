@@ -67,7 +67,17 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    Plane(const Plane&) noexcept = default;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Plane(const Plane& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Plane(Plane&& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Plane&
+    operator=(const Plane& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Plane&
+    operator=(Plane&& other) noexcept;
 
     ~Plane() override = default;
 
@@ -103,6 +113,11 @@ public:
 
 private:
     friend class Builder;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    bind_operator() noexcept;
+
+    mutable PlaneGeometryOperator<T> _operator {};
 };
 
 template <typename T>

@@ -85,14 +85,19 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    TriangleMesh(const TriangleMesh&)     = default;
-    TriangleMesh(TriangleMesh&&) noexcept = default;
-    TriangleMesh&
-    operator=(const TriangleMesh&)
-        = default;
-    TriangleMesh&
-    operator=(TriangleMesh&&) noexcept = default;
-    ~TriangleMesh() override           = default;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    TriangleMesh(const TriangleMesh& other);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    TriangleMesh(TriangleMesh&& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE TriangleMesh&
+    operator=(const TriangleMesh& other);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE TriangleMesh&
+    operator=(TriangleMesh&& other) noexcept;
+
+    ~TriangleMesh() override = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_triangles(const HostBuffer<TriangleContainer4<T>>& triangles_);
@@ -144,7 +149,7 @@ private:
 
     mutable bool query_cache_built = false;
 
-    mutable TriangleMeshGeometryOperator<T> _cached_op {};
+    mutable TriangleMeshGeometryOperator<T> _operator {};
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     ensure_bvh() noexcept;
@@ -159,7 +164,7 @@ private:
     rebuild_query_cache() const;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    update_cached_op() const;
+    update_operator() const;
 };
 
 template <typename T>

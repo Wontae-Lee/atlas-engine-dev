@@ -12,6 +12,7 @@ Cylinder<T>::Cylinder() noexcept
     : center(T(0), T(0), T(0))
     , radius(T(1))
     , height(T(1)) {
+    bind_operator();
 }
 
 template <typename T>
@@ -19,6 +20,57 @@ Cylinder<T>::Cylinder(const Vector3<T>& center_, T radius_, T height_) noexcept
     : center(center_)
     , radius(radius_)
     , height(height_) {
+    bind_operator();
+}
+
+template <typename T>
+Cylinder<T>::Cylinder(const Cylinder& other) noexcept
+    : center(other.center)
+    , radius(other.radius)
+    , height(other.height) {
+    bind_operator();
+}
+
+template <typename T>
+Cylinder<T>::Cylinder(Cylinder&& other) noexcept
+    : center(std::move(other.center))
+    , radius(other.radius)
+    , height(other.height) {
+    bind_operator();
+    other.bind_operator();
+}
+
+template <typename T>
+Cylinder<T>&
+Cylinder<T>::operator=(const Cylinder& other) noexcept {
+    if (this == &other) return *this;
+
+    center = other.center;
+    radius = other.radius;
+    height = other.height;
+    bind_operator();
+    return *this;
+}
+
+template <typename T>
+Cylinder<T>&
+Cylinder<T>::operator=(Cylinder&& other) noexcept {
+    if (this == &other) return *this;
+
+    center = std::move(other.center);
+    radius = other.radius;
+    height = other.height;
+    bind_operator();
+    other.bind_operator();
+    return *this;
+}
+
+template <typename T>
+void
+Cylinder<T>::bind_operator() noexcept {
+    _operator.center = atlas::raw_pointer_cast(&center);
+    _operator.radius = atlas::raw_pointer_cast(&radius);
+    _operator.height = atlas::raw_pointer_cast(&height);
 }
 
 template <typename T>
@@ -31,98 +83,55 @@ Cylinder<T>::builder() noexcept {
 template <typename T>
 GeometryOperator<T>
 Cylinder<T>::make_geometry_operator() const {
-
-    atlas::geometry::CylinderGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    op.height = atlas::raw_pointer_cast(&height);
-    return GeometryOperator<T>(op);
+    return GeometryOperator<T>(_operator);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Cylinder<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::CylinderGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    op.height = atlas::raw_pointer_cast(&height);
-    return op.closest_point(p);
+    return _operator.closest_point(p);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Cylinder<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::CylinderGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    op.height = atlas::raw_pointer_cast(&height);
-    return op.closest_normal(p);
+    return _operator.closest_normal(p);
 }
 
 template <typename T>
 T
 Cylinder<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::CylinderGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    op.height = atlas::raw_pointer_cast(&height);
-    return op.signed_distance(p);
+    return _operator.signed_distance(p);
 }
 
 template <typename T>
 bool
 Cylinder<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::CylinderGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    op.height = atlas::raw_pointer_cast(&height);
-    return op.is_inside(p, tolerance);
+    return _operator.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 Cylinder<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::CylinderGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    op.height = atlas::raw_pointer_cast(&height);
-    return op.is_on_surface(p, tolerance);
+    return _operator.is_on_surface(p, tolerance);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Cylinder<T>::centroid() const noexcept {
-
-    atlas::geometry::CylinderGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    op.height = atlas::raw_pointer_cast(&height);
-    return op.centroid();
+    return _operator.centroid();
 }
 
 template <typename T>
 atlas::spatial::AxisAlignedBoundingBox<T>
 Cylinder<T>::bound() const noexcept {
-
-    atlas::geometry::CylinderGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    op.height = atlas::raw_pointer_cast(&height);
-    return op.bound();
+    return _operator.bound();
 }
 
 template <typename T>
 bool
 Cylinder<T>::is_valid() const noexcept {
-
-    atlas::geometry::CylinderGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    op.height = atlas::raw_pointer_cast(&height);
-    return op.is_valid();
+    return _operator.is_valid();
 }
 
 template <typename T>

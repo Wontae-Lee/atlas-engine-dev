@@ -7,6 +7,11 @@
 namespace atlas::geometry {
 
 template <typename T>
+Triangle<T>::Triangle() noexcept {
+    bind_operator();
+}
+
+template <typename T>
 Triangle<T>::Triangle(const Vector3<T>& a_,
                       const Vector3<T>& b_,
                       const Vector3<T>& c_) noexcept
@@ -15,6 +20,63 @@ Triangle<T>::Triangle(const Vector3<T>& a_,
     , c(c_) {
 
     normal = math::cross(b - a, c - a).normalized();
+    bind_operator();
+}
+
+template <typename T>
+Triangle<T>::Triangle(const Triangle& other) noexcept
+    : a(other.a)
+    , b(other.b)
+    , c(other.c)
+    , normal(other.normal) {
+    bind_operator();
+}
+
+template <typename T>
+Triangle<T>::Triangle(Triangle&& other) noexcept
+    : a(std::move(other.a))
+    , b(std::move(other.b))
+    , c(std::move(other.c))
+    , normal(std::move(other.normal)) {
+    bind_operator();
+    other.bind_operator();
+}
+
+template <typename T>
+Triangle<T>&
+Triangle<T>::operator=(const Triangle& other) noexcept {
+    if (this == &other) return *this;
+
+    a = other.a;
+    b = other.b;
+    c = other.c;
+    normal = other.normal;
+    bind_operator();
+    return *this;
+}
+
+template <typename T>
+Triangle<T>&
+Triangle<T>::operator=(Triangle&& other) noexcept {
+    if (this == &other) return *this;
+
+    a = std::move(other.a);
+    b = std::move(other.b);
+    c = std::move(other.c);
+    normal = std::move(other.normal);
+    bind_operator();
+    other.bind_operator();
+    return *this;
+}
+
+template <typename T>
+void
+Triangle<T>::bind_operator() noexcept {
+    _operator.a = atlas::raw_pointer_cast(&a);
+    _operator.b = atlas::raw_pointer_cast(&b);
+    _operator.c = atlas::raw_pointer_cast(&c);
+    _operator.n = atlas::raw_pointer_cast(&normal);
+    _operator.normal = atlas::raw_pointer_cast(&normal);
 }
 
 template <typename T>
@@ -27,114 +89,55 @@ Triangle<T>::builder() noexcept {
 template <typename T>
 GeometryOperator<T>
 Triangle<T>::make_geometry_operator() const {
-
-    atlas::geometry::TriangleGeometryOperator<T> op;
-    op.a = atlas::raw_pointer_cast(&a);
-    op.b = atlas::raw_pointer_cast(&b);
-    op.c = atlas::raw_pointer_cast(&c);
-    op.n = atlas::raw_pointer_cast(&normal);
-
-    return GeometryOperator<T>(op);
+    return GeometryOperator<T>(_operator);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Triangle<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::TriangleGeometryOperator<T> op;
-    op.a = atlas::raw_pointer_cast(&a);
-    op.b = atlas::raw_pointer_cast(&b);
-    op.c = atlas::raw_pointer_cast(&c);
-    op.n = atlas::raw_pointer_cast(&normal);
-
-    return op.closest_point(p);
+    return _operator.closest_point(p);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Triangle<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::TriangleGeometryOperator<T> op;
-    op.a = atlas::raw_pointer_cast(&a);
-    op.b = atlas::raw_pointer_cast(&b);
-    op.c = atlas::raw_pointer_cast(&c);
-    op.n = atlas::raw_pointer_cast(&normal);
-
-    return op.closest_normal(p);
+    return _operator.closest_normal(p);
 }
 
 template <typename T>
 T
 Triangle<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    atlas::geometry::TriangleGeometryOperator<T> op;
-    op.a = atlas::raw_pointer_cast(&a);
-    op.b = atlas::raw_pointer_cast(&b);
-    op.c = atlas::raw_pointer_cast(&c);
-    op.n = atlas::raw_pointer_cast(&normal);
-
-    return op.signed_distance(p);
+    return _operator.signed_distance(p);
 }
 
 template <typename T>
 bool
 Triangle<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::TriangleGeometryOperator<T> op;
-    op.a = atlas::raw_pointer_cast(&a);
-    op.b = atlas::raw_pointer_cast(&b);
-    op.c = atlas::raw_pointer_cast(&c);
-    op.n = atlas::raw_pointer_cast(&normal);
-    return op.is_inside(p, tolerance);
+    return _operator.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 Triangle<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::TriangleGeometryOperator<T> op;
-    op.a = atlas::raw_pointer_cast(&a);
-    op.b = atlas::raw_pointer_cast(&b);
-    op.c = atlas::raw_pointer_cast(&c);
-    op.n = atlas::raw_pointer_cast(&normal);
-    return op.is_on_surface(p, tolerance);
+    return _operator.is_on_surface(p, tolerance);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Triangle<T>::centroid() const noexcept {
-
-    atlas::geometry::TriangleGeometryOperator<T> op;
-    op.a = atlas::raw_pointer_cast(&a);
-    op.b = atlas::raw_pointer_cast(&b);
-    op.c = atlas::raw_pointer_cast(&c);
-    op.n = atlas::raw_pointer_cast(&normal);
-
-    return op.centroid();
+    return _operator.centroid();
 }
 
 template <typename T>
 atlas::spatial::AxisAlignedBoundingBox<T>
 Triangle<T>::bound() const noexcept {
-
-    atlas::geometry::TriangleGeometryOperator<T> op;
-    op.a = atlas::raw_pointer_cast(&a);
-    op.b = atlas::raw_pointer_cast(&b);
-    op.c = atlas::raw_pointer_cast(&c);
-    op.n = atlas::raw_pointer_cast(&normal);
-
-    return op.bound();
+    return _operator.bound();
 }
 
 template <typename T>
 bool
 Triangle<T>::is_valid() const noexcept {
-
-    atlas::geometry::TriangleGeometryOperator<T> op;
-    op.a = atlas::raw_pointer_cast(&a);
-    op.b = atlas::raw_pointer_cast(&b);
-    op.c = atlas::raw_pointer_cast(&c);
-    op.n = atlas::raw_pointer_cast(&normal);
-
-    return op.is_valid();
+    return _operator.is_valid();
 }
 
 template <typename T>
@@ -155,6 +158,7 @@ Triangle<T>::set_vertices(const Vector3<T>& a_,
     c = c_;
 
     normal = math::cross(b - a, c - a).normalized();
+    bind_operator();
 }
 
 template <typename T>

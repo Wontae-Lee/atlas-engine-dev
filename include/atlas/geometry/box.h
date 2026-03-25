@@ -65,7 +65,17 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    Box(const Box& other) noexcept = default;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Box(const Box& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Box(Box&& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Box&
+    operator=(const Box& other) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Box&
+    operator=(Box&& other) noexcept;
 
     ~Box() override = default;
 
@@ -101,6 +111,11 @@ public:
 
 private:
     friend class Builder;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    bind_operator() noexcept;
+
+    mutable BoxGeometryOperator<T> _operator {};
 };
 
 template <typename T>

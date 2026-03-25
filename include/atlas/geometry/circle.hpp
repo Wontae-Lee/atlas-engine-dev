@@ -11,7 +11,9 @@
 namespace atlas::geometry {
 
 template <typename T>
-Circle<T>::Circle() noexcept = default;
+Circle<T>::Circle() noexcept {
+    bind_operator();
+}
 
 template <typename T>
 Circle<T>::Circle(const Vector3<T>& center_,
@@ -19,7 +21,59 @@ Circle<T>::Circle(const Vector3<T>& center_,
                   const T radius_) noexcept
     : center(center_)
     , normal(normal_)
-    , radius(radius_) { }
+    , radius(radius_) {
+    bind_operator();
+}
+
+template <typename T>
+Circle<T>::Circle(const Circle& other) noexcept
+    : center(other.center)
+    , normal(other.normal)
+    , radius(other.radius) {
+    bind_operator();
+}
+
+template <typename T>
+Circle<T>::Circle(Circle&& other) noexcept
+    : center(std::move(other.center))
+    , normal(std::move(other.normal))
+    , radius(other.radius) {
+    bind_operator();
+    other.bind_operator();
+}
+
+template <typename T>
+Circle<T>&
+Circle<T>::operator=(const Circle& other) noexcept {
+    if (this == &other) return *this;
+
+    center = other.center;
+    normal = other.normal;
+    radius = other.radius;
+    bind_operator();
+    return *this;
+}
+
+template <typename T>
+Circle<T>&
+Circle<T>::operator=(Circle&& other) noexcept {
+    if (this == &other) return *this;
+
+    center = std::move(other.center);
+    normal = std::move(other.normal);
+    radius = other.radius;
+    bind_operator();
+    other.bind_operator();
+    return *this;
+}
+
+template <typename T>
+void
+Circle<T>::bind_operator() noexcept {
+    _operator.center = atlas::raw_pointer_cast(&center);
+    _operator.normal = atlas::raw_pointer_cast(&normal);
+    _operator.radius = atlas::raw_pointer_cast(&radius);
+}
 
 template <typename T>
 typename Circle<T>::Builder
@@ -30,91 +84,55 @@ Circle<T>::builder() noexcept {
 template <typename T>
 GeometryOperator<T>
 Circle<T>::make_geometry_operator() const {
-    CircleGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    return GeometryOperator<T>(op);
+    return GeometryOperator<T>(_operator);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Circle<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-    CircleGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    return op.closest_point(p);
+    return _operator.closest_point(p);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Circle<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-    CircleGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    return op.closest_normal(p);
+    return _operator.closest_normal(p);
 }
 
 template <typename T>
 T
 Circle<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-    CircleGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    return op.signed_distance(p);
+    return _operator.signed_distance(p);
 }
 
 template <typename T>
 bool
 Circle<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::CircleGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    return op.is_inside(p, tolerance);
+    return _operator.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 Circle<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    atlas::geometry::CircleGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    return op.is_on_surface(p, tolerance);
+    return _operator.is_on_surface(p, tolerance);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 Circle<T>::centroid() const noexcept {
-    CircleGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    return op.centroid();
+    return _operator.centroid();
 }
 
 template <typename T>
 atlas::spatial::AxisAlignedBoundingBox<T>
 Circle<T>::bound() const noexcept {
-    CircleGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    return op.bound();
+    return _operator.bound();
 }
 
 template <typename T>
 bool
 Circle<T>::is_valid() const noexcept {
-    CircleGeometryOperator<T> op;
-    op.center = atlas::raw_pointer_cast(&center);
-    op.normal = atlas::raw_pointer_cast(&normal);
-    op.radius = atlas::raw_pointer_cast(&radius);
-    return op.is_valid();
+    return _operator.is_valid();
 }
 
 template <typename T>

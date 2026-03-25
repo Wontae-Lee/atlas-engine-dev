@@ -31,6 +31,66 @@ TriangleMesh<T>::TriangleMesh(HostBuffer<TriangleContainer4<T>>&& triangles_) no
 }
 
 template <typename T>
+TriangleMesh<T>::TriangleMesh(const TriangleMesh& other)
+    : triangles(other.triangles)
+    , _bvh(other._bvh)
+    , _query_vertices(other._query_vertices)
+    , _query_indices(other._query_indices)
+    , bvh_built(other.bvh_built)
+    , query_cache_built(other.query_cache_built) {
+    update_operator();
+}
+
+template <typename T>
+TriangleMesh<T>::TriangleMesh(TriangleMesh&& other) noexcept
+    : triangles(std::move(other.triangles))
+    , _bvh(std::move(other._bvh))
+    , _query_vertices(std::move(other._query_vertices))
+    , _query_indices(std::move(other._query_indices))
+    , bvh_built(other.bvh_built)
+    , query_cache_built(other.query_cache_built) {
+    update_operator();
+
+    other.bvh_built = false;
+    other.query_cache_built = false;
+    other.update_operator();
+}
+
+template <typename T>
+TriangleMesh<T>&
+TriangleMesh<T>::operator=(const TriangleMesh& other) {
+    if (this == &other) return *this;
+
+    triangles = other.triangles;
+    _bvh = other._bvh;
+    _query_vertices = other._query_vertices;
+    _query_indices = other._query_indices;
+    bvh_built = other.bvh_built;
+    query_cache_built = other.query_cache_built;
+    update_operator();
+    return *this;
+}
+
+template <typename T>
+TriangleMesh<T>&
+TriangleMesh<T>::operator=(TriangleMesh&& other) noexcept {
+    if (this == &other) return *this;
+
+    triangles = std::move(other.triangles);
+    _bvh = std::move(other._bvh);
+    _query_vertices = std::move(other._query_vertices);
+    _query_indices = std::move(other._query_indices);
+    bvh_built = other.bvh_built;
+    query_cache_built = other.query_cache_built;
+    update_operator();
+
+    other.bvh_built = false;
+    other.query_cache_built = false;
+    other.update_operator();
+    return *this;
+}
+
+template <typename T>
 typename TriangleMesh<T>::Builder
 TriangleMesh<T>::builder() noexcept {
 
@@ -99,27 +159,27 @@ TriangleMesh<T>::rebuild_query_cache() const {
     }
 
     query_cache_built = true;
-    update_cached_op();
+    update_operator();
 }
 
 template <typename T>
 void
-TriangleMesh<T>::update_cached_op() const {
-    _cached_op.vertices       = _query_vertices.empty() ? nullptr : atlas::raw_pointer_cast(_query_vertices.data());
-    _cached_op.indices        = _query_indices.empty() ? nullptr : atlas::raw_pointer_cast(_query_indices.data());
-    _cached_op.triangle_count = static_cast<int>(triangles.size());
+TriangleMesh<T>::update_operator() const {
+    _operator.vertices       = _query_vertices.empty() ? nullptr : atlas::raw_pointer_cast(_query_vertices.data());
+    _operator.indices        = _query_indices.empty() ? nullptr : atlas::raw_pointer_cast(_query_indices.data());
+    _operator.triangle_count = static_cast<int>(triangles.size());
 
     if (_bvh && bvh_built) {
         const auto bvh_op    = _bvh->make_geometry_operator();
-        _cached_op.bvh_nodes   = bvh_op.bvh_nodes;
-        _cached_op.bvh_indices = bvh_op.bvh_indices;
-        _cached_op.bvh_tris    = bvh_op.bvh_tris;
-        _cached_op.bvh_root    = bvh_op.bvh_root;
+        _operator.bvh_nodes   = bvh_op.bvh_nodes;
+        _operator.bvh_indices = bvh_op.bvh_indices;
+        _operator.bvh_tris    = bvh_op.bvh_tris;
+        _operator.bvh_root    = bvh_op.bvh_root;
     } else {
-        _cached_op.bvh_nodes   = nullptr;
-        _cached_op.bvh_indices = nullptr;
-        _cached_op.bvh_tris    = nullptr;
-        _cached_op.bvh_root    = -1;
+        _operator.bvh_nodes   = nullptr;
+        _operator.bvh_indices = nullptr;
+        _operator.bvh_tris    = nullptr;
+        _operator.bvh_root    = -1;
     }
 }
 
@@ -129,7 +189,7 @@ TriangleMesh<T>::make_geometry_operator() const {
 
     ensure_query_cache();
 
-    return GeometryOperator<T>(_cached_op);
+    return GeometryOperator<T>(_operator);
 }
 
 template <typename T>
@@ -221,57 +281,57 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    return _cached_op.closest_point(p);
+    ensure_query_cache();
+    return _operator.closest_point(p);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    return _cached_op.closest_normal(p);
+    ensure_query_cache();
+    return _operator.closest_normal(p);
 }
 
 template <typename T>
 T
 TriangleMesh<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-
-    return _cached_op.signed_distance(p);
+    ensure_query_cache();
+    return _operator.signed_distance(p);
 }
 
 template <typename T>
 bool
 TriangleMesh<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-
-    return _cached_op.is_inside(p, tolerance);
+    ensure_query_cache();
+    return _operator.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 TriangleMesh<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-
-    return _cached_op.is_on_surface(p, tolerance);
+    ensure_query_cache();
+    return _operator.is_on_surface(p, tolerance);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::centroid() const noexcept {
-
-    return _cached_op.centroid();
+    ensure_query_cache();
+    return _operator.centroid();
 }
 
 template <typename T>
 atlas::spatial::AxisAlignedBoundingBox<T>
 TriangleMesh<T>::bound() const noexcept {
-
-    return _cached_op.bound();
+    ensure_query_cache();
+    return _operator.bound();
 }
 
 template <typename T>
 bool
 TriangleMesh<T>::is_valid() const noexcept {
-
-    return _cached_op.is_valid();
+    ensure_query_cache();
+    return _operator.is_valid();
 }
 
 template <typename T>
