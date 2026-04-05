@@ -55,6 +55,12 @@ vec_near(const atlas::Vector<T, 3>& a,
     return true;
 }
 
+template <typename V, typename T>
+static ATLAS_FORCE_INLINE bool
+vec_length_near(const V& v, T expected, T eps) {
+    return near<T>(v.length(), expected, eps);
+}
+
 template <typename Container, typename T, std::size_t N>
 static ATLAS_FORCE_INLINE bool
 contains_point(const Container& points,
@@ -245,6 +251,39 @@ make_triangle_geometry_operator(const geometry::Triangle<T>& triangle) {
 ATLAS_FORCE_INLINE host_shared_ptr<geometry::Sphere<double>>
 make_host_shared_sphere() {
     return atlas::make_host_shared<geometry::Sphere<double>>(make_sphere());
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE atlas::UnitHostPtr<T>
+make_host_shared_unit() {
+    auto geometry = atlas::make_host_shared<geometry::Sphere<T>>(
+        geometry::Sphere<T>(Vector3<T>(T(0), T(0), T(0)), T(2)));
+    auto sync = atlas::make_host_shared<system::Sync<T>>();
+
+    return system::Unit<T>::builder()
+        .with_geometry(geometry)
+        .with_sync(sync)
+        .make_host_shared();
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE atlas::ColliderSurfaceInteractionHostPtr<T>
+make_host_shared_collider_surface_interaction() {
+    return atlas::ColliderSurfaceInteraction<T>::builder()
+        .with_diffuse_sampling(system::DiffuseSampling::CosineWeighted)
+        .with_restitution(T(0.7))
+        .with_tangential_momentum_accommodation(T(0.3))
+        .with_temperature(T(325))
+        .make_host_shared();
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE atlas::ColliderHostPtr<T>
+make_host_shared_collider() {
+    return atlas::Collider<T>::builder()
+        .with_unit(make_host_shared_unit<T>())
+        .with_surface_interaction(make_host_shared_collider_surface_interaction<T>())
+        .make_host_shared();
 }
 
 ATLAS_FORCE_INLINE system::Domain<double>
