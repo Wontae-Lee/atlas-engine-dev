@@ -180,6 +180,20 @@ TEST(System, StoresRuntimeProbesAsMembers) {
     EXPECT_EQ(sim_system.codec_probe().type, atlas::system::CodecType::single);
 }
 
+TEST(System, ClassifyUpdatesCodecDeviceProbe) {
+    auto domain = test::make_domain_ptr<double>();
+    auto codec = atlas::make_host_shared<atlas::test::DummyCodec<double>>(domain);
+    system::System<double> sim_system(4);
+
+    sim_system.set_domain(domain);
+    sim_system.set_codec(codec);
+    sim_system.classify();
+
+    EXPECT_TRUE(codec->encode_called);
+    EXPECT_TRUE(codec->decode_called);
+    EXPECT_EQ(sim_system.codec_probe().type, codec->type());
+}
+
 TEST(System, BuilderAcceptsColliderValuesInHostBuffer) {
     HostBuffer<Collider<double>> colliders {
         *test::make_host_shared_collider<double>(),

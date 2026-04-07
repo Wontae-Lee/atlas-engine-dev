@@ -41,16 +41,17 @@ Sink<T>::sink(ParticleDeviceProbe<T>& particle_probe) {
 
     auto pos       = particle_probe.pos;
     auto vel       = particle_probe.vel;
+    auto temperature = particle_probe.temperature;
     auto species   = particle_probe.species;
     auto zip_begin = atlas::make_zip_iterator(
-        atlas::make_tuple(pos, vel, species));
+        atlas::make_tuple(pos, vel, temperature, species));
     auto zip_end = zip_begin + particle_probe.particle_count;
 
     auto new_end = atlas::remove_if(
         atlas::device,
         zip_begin,
         zip_end,
-        [=] ATLAS_DEVICE(const atlas::tuple<Vector3<T>, Vector3<T>, size_t>& t) {
+        [=] ATLAS_DEVICE(const atlas::tuple<Vector3<T>, Vector3<T>, T, size_t>& t) {
             const Vector3<T>& p       = atlas::get<0>(t);
             const Vector3<T> local_p  = sync_op.sync_to_local(p);
             const bool should_despawn = despawn_operator.despawn(geometry_op, local_p, tol);

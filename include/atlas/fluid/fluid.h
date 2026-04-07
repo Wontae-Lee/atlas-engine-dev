@@ -139,4 +139,4 @@ using FluidHostPtr = atlas::host_shared_ptr<system::Fluid<T>>;
 
 }
 
-#include <atlas/matter/fluid.hpp>
+#include <atlas/fluid/fluid.hpp>

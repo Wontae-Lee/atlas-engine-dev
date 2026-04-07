@@ -16,6 +16,8 @@ namespace system {
 
         Vector3<T>* vel { nullptr };
 
+        T* temperature { nullptr };
+
         size_t* species { nullptr };
 
         int* acitve { nullptr };
@@ -46,6 +48,9 @@ namespace system {
         ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<Vector3<T>>&
         velocities() noexcept;
 
+        ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<T>&
+        temperatures() noexcept;
+
         ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<size_t>&
         species() noexcept;
 
@@ -59,6 +64,8 @@ namespace system {
         DeviceBuffer<Vector3<T>> d_pos;
 
         DeviceBuffer<Vector3<T>> d_vel;
+
+        DeviceBuffer<T> d_temperature;
 
         DeviceBuffer<size_t> d_species;
 

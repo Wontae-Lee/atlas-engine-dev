@@ -26,7 +26,7 @@ Domain<T>::Domain(const Vector3<T>& lower_corner,
 
     _num_of_cells = _grid_size.x * _grid_size.y * _grid_size.z;
 
-    d_temperature.resize(_num_of_cells, T(0));
+    d_field_temperature.resize(_num_of_cells, T(0));
     d_field_force.resize(_num_of_cells, Vector3<T> { T(0), T(0), T(0) });
 }
 
@@ -51,8 +51,8 @@ Domain<T>::make_device_probe() noexcept {
 
     DomainDeviceProbe<T> probe;
 
-    probe.temperature = atlas::raw_pointer_cast(d_temperature.data());
-    probe.field_force = atlas::raw_pointer_cast(d_field_force.data());
+    probe.field_temperature = atlas::raw_pointer_cast(d_field_temperature.data());
+    probe.field_force       = atlas::raw_pointer_cast(d_field_force.data());
 
     probe.lower_corner = _lower_corner;
     probe.upper_corner = _upper_corner;

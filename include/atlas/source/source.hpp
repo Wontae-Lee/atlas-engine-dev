@@ -20,7 +20,8 @@ Source<T>::Source(Unit<T> unit,
                   FluidHostPtr<T> fluid,
                   const SpawnType spawn_type,
                   const bool flip,
-                  const T tolerance) noexcept
+                  const T tolerance,
+                  const T temperature) noexcept
     : _unit(std::move(unit))
     , _fluid(std::move(fluid))
     , _generator(atlas::UniformGenerator<T>::builder()
@@ -30,6 +31,7 @@ Source<T>::Source(Unit<T> unit,
     , _spawn_operator(spawn_type)
     , _flip(flip)
     , _tolerance(tolerance)
+    , _temperature(temperature)
     , _is_invalidated_cache(true) { }
 
 template <typename T>
@@ -137,13 +139,15 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
         return;
     }
 
-    const auto sync_op   = _unit.sync_operator();
-    const auto gen_op    = _generator->generate_operator();
-    const T param0       = _generator->param0();
-    const T param1       = _generator->param1();
+    const auto sync_op = _unit.sync_operator();
+    const auto gen_op  = _generator->generate_operator();
+    const T param0     = _generator->param0();
+    const T param1     = _generator->param1();
+    const T temperature = _temperature;
 
     Vector3<T>* out_pos = particle_probe.pos + current_count;
     Vector3<T>* out_vel = particle_probe.vel + current_count;
+    T* out_temperature  = particle_probe.temperature + current_count;
     size_t* out_species = particle_probe.species + current_count;
 
     _shuffled_species = _species_cache;
@@ -176,8 +180,9 @@ Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
             sync_op.sync_to_world(local_p, world_p);
             out_pos[i] = world_p;
 
-            out_vel[i]     = gen_op.generate(param0, param1);
-            out_species[i] = shuffled_species_ptr[i];
+            out_vel[i]         = gen_op.generate(param0, param1);
+            out_temperature[i] = temperature;
+            out_species[i]     = shuffled_species_ptr[i];
         });
 
     particle_probe.particle_count += spawn_count;
@@ -239,6 +244,12 @@ Source<T>::set_generator(GeneratorHostPtr<T> generator) noexcept {
 }
 
 template <typename T>
+void
+Source<T>::set_temperature(const T temperature) noexcept {
+    _temperature = temperature;
+}
+
+template <typename T>
 const Unit<T>&
 Source<T>::unit() const noexcept {
     return _unit;
@@ -287,6 +298,12 @@ Source<T>::generator() const noexcept {
 }
 
 template <typename T>
+T
+Source<T>::temperature() const noexcept {
+    return _temperature;
+}
+
+template <typename T>
 const DeviceBuffer<Vector3<T>>&
 Source<T>::local_positions() const noexcept {
     return _local_positions;
@@ -296,8 +313,8 @@ template <typename T>
 Source<T>
 Source<T>::Builder::build() {
     validate();
-    Source<T> source(std::move(*_unit), _fluid, _spawn_type, _flip, _tolerance);
-    source._spacing              = _spacing;
+    Source<T> source(std::move(*_unit), _fluid, _spawn_type, _flip, _tolerance, _temperature);
+    source._spacing = _spacing;
     if (_generator) {
         source._generator = _generator;
     }
@@ -368,6 +385,13 @@ Source<T>::Builder::with_generator(GeneratorHostPtr<T> generator) noexcept {
 }
 
 template <typename T>
+typename Source<T>::Builder&
+Source<T>::Builder::with_temperature(const T temperature) noexcept {
+    _temperature = temperature;
+    return *this;
+}
+
+template <typename T>
 void
 Source<T>::Builder::validate() const {
     if (!_unit.has_value()) {
@@ -392,6 +416,12 @@ Source<T>::Builder::validate() const {
         atlas::logger::error()
             << "Source::Builder: spacing must be finite and positive.";
         throw std::runtime_error("Source::Builder: spacing must be finite and positive.");
+    }
+
+    if (!std::isfinite(_temperature) || _temperature < T(0)) {
+        atlas::logger::error()
+            << "Source::Builder: temperature must be finite and non-negative.";
+        throw std::runtime_error("Source::Builder: temperature must be finite and non-negative.");
     }
 }
 

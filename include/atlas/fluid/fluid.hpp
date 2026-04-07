@@ -13,49 +13,49 @@ Fluid<T>::builder() noexcept {
 }
 
 template <typename T>
-ATLAS_NODISCARD int
+int
 Fluid<T>::size() const noexcept {
     return static_cast<int>(_particles.size());
 }
 
 template <typename T>
-ATLAS_NODISCARD bool
+bool
 Fluid<T>::empty() const noexcept {
     return size() == 0;
 }
 
 template <typename T>
-ATLAS_NODISCARD const HostBuffer<FluidicParticleHostPtr<T>>&
+const HostBuffer<FluidicParticleHostPtr<T>>&
 Fluid<T>::particles() const noexcept {
     return _particles;
 }
 
 template <typename T>
-ATLAS_NODISCARD HostBuffer<FluidicParticleHostPtr<T>>&
+HostBuffer<FluidicParticleHostPtr<T>>&
 Fluid<T>::particles() noexcept {
     return _particles;
 }
 
 template <typename T>
-ATLAS_NODISCARD const HostBuffer<T>&
+const HostBuffer<T>&
 Fluid<T>::mole_fractions() const noexcept {
     return _mole_fractions;
 }
 
 template <typename T>
-ATLAS_NODISCARD HostBuffer<T>&
+HostBuffer<T>&
 Fluid<T>::mole_fractions() noexcept {
     return _mole_fractions;
 }
 
 template <typename T>
-ATLAS_NODISCARD const HostBuffer<GeneratorHostPtr<T>>&
+const HostBuffer<GeneratorHostPtr<T>>&
 Fluid<T>::generators() const noexcept {
     return _generators;
 }
 
 template <typename T>
-ATLAS_NODISCARD HostBuffer<GeneratorHostPtr<T>>&
+HostBuffer<GeneratorHostPtr<T>>&
 Fluid<T>::generators() noexcept {
     return _generators;
 }

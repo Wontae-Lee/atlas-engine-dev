@@ -10,7 +10,7 @@ namespace atlas::system {
 template <typename T>
 struct DomainDeviceProbe {
 
-    T* temperature = nullptr;
+    T* field_temperature = nullptr;
 
     Vector3<T>* field_force = nullptr;
 
@@ -70,7 +70,7 @@ public:
     inverse_cell_size() const noexcept;
 
 private:
-    DeviceBuffer<T> d_temperature;
+    DeviceBuffer<T> d_field_temperature;
 
     DeviceBuffer<Vector3<T>> d_field_force;
 

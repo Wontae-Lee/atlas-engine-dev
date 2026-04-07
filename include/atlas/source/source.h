@@ -4,7 +4,7 @@
 #include <atlas/data/particle_data.h>
 #include <atlas/generator/generator.h>
 #include <atlas/generator/uniform_generator.h>
-#include <atlas/matter/fluid.h>
+#include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/sampling/sampling.h>
 #include <atlas/source/spawn_operator.h>
@@ -33,7 +33,8 @@ public:
            FluidHostPtr<T> fluid,
            SpawnType spawn_type = SpawnType::Surface,
            bool flip            = false,
-           T tolerance          = T(0)) noexcept;
+           T tolerance          = T(0),
+           T temperature        = T(273.15)) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
@@ -65,6 +66,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_generator(GeneratorHostPtr<T> generator) noexcept;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_temperature(T temperature) noexcept;
+
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const Unit<T>&
     unit() const noexcept;
 
@@ -89,6 +93,9 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const GeneratorHostPtr<T>&
     generator() const noexcept;
 
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
+    temperature() const noexcept;
+
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<Vector3<T>>&
     local_positions() const noexcept;
 
@@ -103,6 +110,7 @@ private:
     bool _flip   = false;
     T _tolerance = T(0);
     T _spacing   = T(0.1);
+    T _temperature { T(273.15) };
     DeviceBuffer<Vector3<T>> _local_positions;
     DeviceBuffer<size_t> _species_cache;
     DeviceBuffer<size_t> _shuffled_species;
@@ -146,6 +154,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_generator(GeneratorHostPtr<T> generator) noexcept;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_temperature(T temperature) noexcept;
+
 private:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     validate() const;
@@ -158,6 +169,7 @@ private:
     bool _flip   = false;
     T _tolerance = T(0);
     T _spacing   = T(0.1);
+    T _temperature { T(273.15) };
 };
 
 }

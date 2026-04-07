@@ -47,6 +47,12 @@ public:
     emit();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
+    search();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    classify();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
     advect() const;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void

@@ -20,6 +20,11 @@ TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
     particle_probe.vel[2]     = Vector3<double>(3.0, 0.0, 0.0);
     particle_probe.vel[3]     = Vector3<double>(4.0, 0.0, 0.0);
     particle_probe.vel[4]     = Vector3<double>(5.0, 0.0, 0.0);
+    particle_probe.temperature[0] = 300.0;
+    particle_probe.temperature[1] = 301.0;
+    particle_probe.temperature[2] = 302.0;
+    particle_probe.temperature[3] = 303.0;
+    particle_probe.temperature[4] = 304.0;
     particle_probe.species[0] = 10;
     particle_probe.species[1] = 11;
     particle_probe.species[2] = 12;
@@ -52,6 +57,7 @@ TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
     EXPECT_EQ(particle_probe.particle_count, 1);
     EXPECT_TRUE(test::vec_near(particle_probe.pos[0], Vector3<double>(2.0, 0.0, 0.0), 1e-12));
     EXPECT_TRUE(test::vec_near(particle_probe.vel[0], Vector3<double>(2.0, 0.0, 0.0), 1e-12));
+    EXPECT_DOUBLE_EQ(particle_probe.temperature[0], 301.0);
     EXPECT_EQ(particle_probe.species[0], std::size_t(11));
     EXPECT_EQ(particle_probe.acitve[0], 1);
 }
@@ -67,6 +73,9 @@ TEST(Sink, FlipInvertsVolumeDespawnClassification) {
     particle_probe.vel[0]     = Vector3<double>(1.0, 0.0, 0.0);
     particle_probe.vel[1]     = Vector3<double>(2.0, 0.0, 0.0);
     particle_probe.vel[2]     = Vector3<double>(3.0, 0.0, 0.0);
+    particle_probe.temperature[0] = 300.0;
+    particle_probe.temperature[1] = 301.0;
+    particle_probe.temperature[2] = 302.0;
     particle_probe.species[0] = 10;
     particle_probe.species[1] = 11;
     particle_probe.species[2] = 12;
@@ -96,6 +105,8 @@ TEST(Sink, FlipInvertsVolumeDespawnClassification) {
     EXPECT_EQ(particle_probe.particle_count, 2);
     EXPECT_TRUE(test::vec_near(particle_probe.pos[0], Vector3<double>(0.0, 0.0, 0.0), 1e-12));
     EXPECT_TRUE(test::vec_near(particle_probe.pos[1], Vector3<double>(0.5, 0.0, 0.0), 1e-12));
+    EXPECT_DOUBLE_EQ(particle_probe.temperature[0], 300.0);
+    EXPECT_DOUBLE_EQ(particle_probe.temperature[1], 302.0);
     EXPECT_EQ(particle_probe.species[0], std::size_t(10));
     EXPECT_EQ(particle_probe.species[1], std::size_t(12));
 }

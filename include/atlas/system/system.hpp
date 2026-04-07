@@ -57,6 +57,8 @@ template <typename T>
 void
 System<T>::update() {
     emit();
+    search();
+    classify();
     advect();
     remove();
 }
@@ -69,6 +71,22 @@ System<T>::emit() {
             source->emit(_particle_probe);
         }
     }
+}
+
+template <typename T>
+void
+System<T>::search() {
+    if (!_searcher) return;
+
+    _searcher->build(_particle_probe);
+}
+
+template <typename T>
+void
+System<T>::classify() {
+    if (!_codec || !_domain || !_searcher) return;
+
+    _codec->update(_particle_probe, _domain_probe, _searcher_probe, _codec_probe);
 }
 
 template <typename T>

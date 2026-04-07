@@ -63,6 +63,7 @@ TEST(Source, BuilderBuildStoresConfiguredValues) {
                             .with_spawn_type(atlas::system::SpawnType::Volume)
                             .with_tolerance(0.25)
                             .with_spacing(0.5)
+                            .with_temperature(425.0)
                             .with_generator(generator)
                             .build();
 
@@ -70,6 +71,7 @@ TEST(Source, BuilderBuildStoresConfiguredValues) {
     EXPECT_EQ(source.spawn_type(), atlas::system::SpawnType::Volume);
     EXPECT_TRUE(test::near(source.tolerance(), 0.25, 1e-12));
     EXPECT_TRUE(test::near(source.spacing(), 0.5, 1e-12));
+    EXPECT_TRUE(test::near(source.temperature(), 425.0, 1e-12));
     ASSERT_TRUE(source.generator());
     EXPECT_EQ(source.generator()->type(), atlas::GenerateType::uniform);
     EXPECT_TRUE(test::near(source.generator()->param0(), -1.0, 1e-12));
@@ -103,10 +105,19 @@ TEST(Source, BuilderRejectsMissingRequiredInputsAndInvalidSpacing) {
             .with_spacing(0.0)
             .build(),
         std::runtime_error);
+
+    EXPECT_THROW(
+        atlas::Source<double>::builder()
+            .with_unit(unit)
+            .with_fluid(fluid)
+            .with_temperature(-1.0)
+            .build(),
+        std::runtime_error);
 }
 
 TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
     constexpr double eps = 1e-12;
+    constexpr double source_temperature = 350.0;
 
     auto system          = atlas::system::System<double>(64);
     auto& probe          = system.particle_probe();
@@ -118,6 +129,7 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
                       .with_spawn_type(atlas::system::SpawnType::Volume)
                       .with_tolerance(0.0)
                       .with_spacing(1.0)
+                      .with_temperature(source_temperature)
                       .build();
 
     source.emit(probe);
@@ -128,10 +140,12 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
     const auto local_positions = test::copy_device_buffer(source.local_positions());
     const auto world_positions = test::copy_device_range(probe.pos, static_cast<std::size_t>(probe.particle_count));
     const auto velocities      = test::copy_device_range(probe.vel, static_cast<std::size_t>(probe.particle_count));
+    const auto temperatures    = test::copy_device_range(probe.temperature, static_cast<std::size_t>(probe.particle_count));
     const auto species         = test::copy_device_range(probe.species, static_cast<std::size_t>(probe.particle_count));
 
     ASSERT_EQ(local_positions.size(), world_positions.size());
     ASSERT_EQ(world_positions.size(), velocities.size());
+    ASSERT_EQ(velocities.size(), temperatures.size());
     ASSERT_EQ(velocities.size(), species.size());
 
     const auto query = source.unit().geometry_operator();
@@ -143,6 +157,7 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
             eps));
         EXPECT_TRUE(test::is_finite_vec(velocities[i]));
         EXPECT_TRUE(test::points_in_range(std::array<Vector3<double>, 1> { velocities[i] }, 0.0, 1.0));
+        EXPECT_TRUE(test::near(temperatures[i], source_temperature, eps));
         EXPECT_LT(species[i], std::size_t(2));
     }
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/memory/copy.h>
 #include <atlas/memory/raw_pointer_cast.h>
 
 namespace atlas::system {
@@ -24,6 +23,7 @@ ParticleData<T>::ParticleData(const size_t buffer_size) {
     _buffer_size = buffer_size;
     d_pos.resize(buffer_size);
     d_vel.resize(buffer_size);
+    d_temperature.resize(buffer_size);
     d_species.resize(buffer_size);
     d_active.resize(buffer_size);
 }
@@ -43,6 +43,7 @@ ParticleData<T>::make_device_probe() noexcept {
     ParticleDeviceProbe<T> probe {};
     probe.pos            = atlas::raw_pointer_cast(d_pos.data());
     probe.vel            = atlas::raw_pointer_cast(d_vel.data());
+    probe.temperature    = atlas::raw_pointer_cast(d_temperature.data());
     probe.species        = atlas::raw_pointer_cast(d_species.data());
     probe.acitve         = atlas::raw_pointer_cast(d_active.data());
     probe.particle_count = static_cast<int>(_buffer_size);
@@ -63,6 +64,12 @@ ParticleData<T>::velocities() noexcept {
 }
 
 template <typename T>
+DeviceBuffer<T>&
+ParticleData<T>::temperatures() noexcept {
+    return d_temperature;
+}
+
+template <typename T>
 DeviceBuffer<size_t>&
 ParticleData<T>::species() noexcept {
     return d_species;
@@ -78,23 +85,6 @@ template <typename T>
 size_t
 ParticleData<T>::buffer_size() const noexcept {
     return _buffer_size;
-}
-
-inline int
-count_selected_particles(const DeviceBuffer<int>& selection_mask,
-                         const DeviceBuffer<int>& selection_offsets,
-                         const int particle_count) {
-
-    if (particle_count <= 0) return 0;
-
-    const int* selection_mask_ptr    = atlas::raw_pointer_cast(selection_mask.data());
-    const int* selection_offsets_ptr = atlas::raw_pointer_cast(selection_offsets.data());
-    int last_mask                    = 0;
-    int last_offset                  = 0;
-
-    atlas::copy_device_to_host(selection_mask_ptr + (particle_count - 1), &last_mask, 1);
-    atlas::copy_device_to_host(selection_offsets_ptr + (particle_count - 1), &last_offset, 1);
-    return last_mask + last_offset;
 }
 
 }
