@@ -73,6 +73,7 @@ Circle<T>::bind_operator() noexcept {
     _operator.center = atlas::raw_pointer_cast(&center);
     _operator.normal = atlas::raw_pointer_cast(&normal);
     _operator.radius = atlas::raw_pointer_cast(&radius);
+    this->invalidate_validity_cache();
 }
 
 template <typename T>
@@ -132,7 +133,9 @@ Circle<T>::bound() const noexcept {
 template <typename T>
 bool
 Circle<T>::is_valid() const noexcept {
-    return _operator.is_valid();
+    return this->cached_is_valid([this]() noexcept {
+        return _operator.is_valid();
+    });
 }
 
 template <typename T>

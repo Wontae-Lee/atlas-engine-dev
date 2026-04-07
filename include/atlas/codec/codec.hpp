@@ -37,7 +37,7 @@ Codec<T>::make_device_probe() noexcept {
 
     CodecDeviceProbe<T> probe {};
 
-    probe.allocated_solver = atlas::raw_pointer_cast(d_allocated_system.data());
+    probe.allocated_system = atlas::raw_pointer_cast(d_allocated_system.data());
 
     probe.type = this->type();
 

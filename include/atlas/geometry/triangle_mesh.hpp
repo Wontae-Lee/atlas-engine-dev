@@ -103,6 +103,7 @@ TriangleMesh<T>::set_triangles(const HostBuffer<TriangleContainer4<T>>& triangle
 
     triangles         = triangles_;
     query_cache_built = false;
+    this->invalidate_validity_cache();
     ensure_bvh();
     build_bvh();
     ensure_query_cache();
@@ -168,6 +169,7 @@ TriangleMesh<T>::update_operator() const {
     _operator.vertices       = _query_vertices.empty() ? nullptr : atlas::raw_pointer_cast(_query_vertices.data());
     _operator.indices        = _query_indices.empty() ? nullptr : atlas::raw_pointer_cast(_query_indices.data());
     _operator.triangle_count = static_cast<int>(triangles.size());
+    this->invalidate_validity_cache();
 
     if (_bvh && bvh_built) {
         const auto bvh_op    = _bvh->make_geometry_operator();
@@ -197,6 +199,8 @@ bool
 TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) {
 
     triangles.clear();
+    query_cache_built = false;
+    this->invalidate_validity_cache();
 
     tinyobj::ObjReaderConfig config;
     config.mtl_search_path = "";
@@ -331,7 +335,9 @@ template <typename T>
 bool
 TriangleMesh<T>::is_valid() const noexcept {
     ensure_query_cache();
-    return _operator.is_valid();
+    return this->cached_is_valid([this]() noexcept {
+        return _operator.is_valid();
+    });
 }
 
 template <typename T>
@@ -692,6 +698,21 @@ bool
 TriangleMeshGeometryOperator<T>::is_valid() const noexcept {
     if (!vertices || !indices) return false;
     if (triangle_count <= 0) return false;
+
+    for (int t = 0; t < triangle_count; ++t) {
+        const int j0 = indices[3 * t + 0];
+        const int j1 = indices[3 * t + 1];
+        const int j2 = indices[3 * t + 2];
+
+        const auto ab = vertices[j1] - vertices[j0];
+        const auto ac = vertices[j2] - vertices[j0];
+        const auto n = atlas::math::cross(ab, ac);
+
+        if (!(n.length_squared() > static_cast<T>(atlas::eps))) {
+            return false;
+        }
+    }
+
     return true;
 }
 

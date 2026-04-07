@@ -286,17 +286,29 @@ make_host_shared_collider() {
         .make_host_shared();
 }
 
+template <typename T>
+ATLAS_FORCE_INLINE system::Domain<T>
+make_domain() {
+    const Vector3<T> lower(T(-1), T(-1), T(-1));
+    const Vector3<T> upper(T(1), T(1), T(1));
+    const T h = T(0.5);
+    return { lower, upper, h };
+}
+
 ATLAS_FORCE_INLINE system::Domain<double>
 make_domain() {
-    const Vector3<double> lower(-1.0, -1.0, -1.0);
-    const Vector3<double> upper(1.0, 1.0, 1.0);
-    constexpr double h = 0.5;
-    return { lower, upper, h };
+    return make_domain<double>();
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE host_shared_ptr<system::Domain<T>>
+make_domain_ptr() {
+    return atlas::make_host_shared<system::Domain<T>>(make_domain<T>());
 }
 
 ATLAS_FORCE_INLINE host_shared_ptr<system::Domain<double>>
 make_domain_ptr() {
-    return atlas::make_host_shared<system::Domain<double>>(make_domain());
+    return make_domain_ptr<double>();
 }
 
 } // namespace atlas::test

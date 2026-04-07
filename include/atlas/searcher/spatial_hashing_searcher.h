@@ -2,9 +2,13 @@
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/domain/domain.h>
-#include <atlas/searcher/searcher.h>
 
 namespace atlas::system {
+
+enum class NeighborSearchRange : int {
+    single,
+    multiple
+};
 
 template <typename T>
 struct SpatialHashingProbe {
@@ -37,7 +41,7 @@ struct SpatialHashingProbe {
 };
 
 template <typename T>
-class SpatialHashingSearcher final : public Searcher<T> {
+class SpatialHashingSearcher final {
 public:
     class Builder;
 
@@ -47,10 +51,10 @@ public:
         DomainHostPtr<T> domain,
         NeighborSearchRange range = NeighborSearchRange::single);
 
-    ~SpatialHashingSearcher() override = default;
+    ~SpatialHashingSearcher() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    build(const system::ParticleDeviceProbe<T>& particle_probe) override;
+    build(const system::ParticleDeviceProbe<T>& particle_probe);
 
     ATLAS_HOST ATLAS_FORCE_INLINE SpatialHashingProbe<T>
     make_device_probe() noexcept;

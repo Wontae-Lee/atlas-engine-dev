@@ -70,6 +70,7 @@ void
 Plane<T>::bind_operator() noexcept {
     _operator.normal = atlas::raw_pointer_cast(&normal);
     _operator.offset = atlas::raw_pointer_cast(&offset);
+    this->invalidate_validity_cache();
 }
 
 template <typename T>
@@ -130,7 +131,9 @@ Plane<T>::bound() const noexcept {
 template <typename T>
 bool
 Plane<T>::is_valid() const noexcept {
-    return _operator.is_valid();
+    return this->cached_is_valid([this]() noexcept {
+        return _operator.is_valid();
+    });
 }
 
 template <typename T>

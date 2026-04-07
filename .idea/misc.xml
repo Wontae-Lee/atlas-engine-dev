@@ -14,6 +14,7 @@
       <file path="$PROJECT_DIR$/tests" />
     </sourceRoots>
     <excludeRoots>
+      <file path="$PROJECT_DIR$/.claude" />
       <file path="$PROJECT_DIR$/.venv" />
       <file path="$PROJECT_DIR$/build" />
       <file path="$PROJECT_DIR$/external" />

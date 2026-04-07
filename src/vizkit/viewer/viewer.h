@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef ATLAS_ENABLE_VIZKIT
+#include <atlas/system/system.h>
 #include <vizkit/camera/camera.h>
 #include <vizkit/layer/layer.h>
 #include <vizkit/macros/macros.h>
@@ -19,7 +20,7 @@ public:
     Viewer() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
-    Viewer(T dt,
+    Viewer(SystemHostPtr<T> system,
            int width,
            int height,
            const char* title,
@@ -32,6 +33,9 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     add_layer(const std::shared_ptr<Layer<T>>& layer);
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SystemHostPtr<T>&
+    system() const noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE int
     run();
@@ -53,7 +57,7 @@ private:
     cleanup_gl();
 
 private:
-    T _dt = static_cast<T>(0.01);
+    SystemHostPtr<T> _system;
 
     int _width = 0;
 
@@ -76,7 +80,7 @@ public:
     Builder() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_dt(T dt) noexcept;
+    with_system(const SystemHostPtr<T>& system);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_title(const char* title) noexcept;
@@ -98,7 +102,7 @@ private:
     validate() const;
 
 private:
-    T _dt = static_cast<T>(0.01);
+    SystemHostPtr<T> _system;
 
     int _width = 0;
 

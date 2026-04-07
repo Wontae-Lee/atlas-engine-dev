@@ -2,107 +2,147 @@
 
 ## Project Overview
 
-Atlas is a C++20 header-only particle simulation engine with dual CUDA/TBB backends. The core library (`atlas::core`) lives entirely in `include/atlas/` — only `src/logging/` (compiled static lib) and `src/vizkit/` (OpenGL visualization) contain `.cpp` files.
+Atlas is a C++20 particle simulation engine with a header-only core in `include/atlas/` and an optional OpenGL visualization layer in `src/vizkit/`. Most engine behavior is template-based and inline; compiled sources are primarily in `src/logging/` and `src/vizkit/`.
 
 ## Architecture
 
-- **Header-only core**: `include/atlas/` — all templates, no link step. The umbrella header is `atlas/atlas.h`.
-- **Backend abstraction**: A single `ATLAS_TASKING_CUDA` or `ATLAS_TASKING_TBB` define selects between Thrust (GPU) and TBB (CPU). Exactly one must be active. Key abstractions:
-  - `DeviceBuffer<T>` → `thrust::device_vector<T>` or `std::vector<T>`
-  - `HostBuffer<T>` → `thrust::host_vector<T>` or `std::vector<T>`
-  - `parallel_for<ExecutionPolicy>(...)` → Thrust or TBB dispatch
-  - `device_shared_ptr<T>` → CUDA managed-memory ref-counted ptr or `std::shared_ptr<T>`
-- **Vizkit** (`src/vizkit/`): Optional OpenGL visualization layer, guarded by `#ifdef ATLAS_ENABLE_VIZKIT`.
-- **Namespaces**: Core types use `atlas::` (e.g., `Vector3`, `DeviceBuffer`). Simulation systems use `atlas::system::` (Domain, Codec, Searcher, Fluid, Generator, Source, Sink, Unit, Sync, System). Geometry uses `atlas::geometry::`. Math lives in `atlas::math::` with convenience aliases in `atlas::`.
+- **Header-only core**: `include/atlas/` contains the simulation, math, geometry, container, sampling, source/sink, and system layers. The umbrella header is `atlas/atlas.h`.
+- **Backend abstraction**: exactly one of `ATLAS_TASKING_CUDA` or `ATLAS_TASKING_TBB` must be active.
+  - `DeviceBuffer<T>` maps to `thrust::device_vector<T>` on CUDA and `std::vector<T>` on TBB.
+  - `HostBuffer<T>` maps to `thrust::host_vector<T>` on CUDA and `std::vector<T>` on TBB.
+  - `parallel_for<ExecutionPolicy>(...)` dispatches to Thrust or TBB.
+  - `device_shared_ptr<T>` maps to CUDA managed-memory ownership or `std::shared_ptr<T>`.
+- **Simulation orchestration**: `atlas::system::System<T>` is now the high-level runtime object.
+  - Owns `ParticleData<T>` and exposes one `ParticleDeviceProbe<T>`.
+  - Stores simulation `dt`.
+  - Stores `HostBuffer<SourceHostPtr<T>>`, `HostBuffer<SinkHostPtr<T>>`, and collider lists.
+  - Executes staged updates through `update()`, `emit()`, `advect()`, `remove()`, and `time_integration()`.
 - **Particle ownership split**:
-  - `ParticleData<T>` owns storage buffers and exposes one `ParticleDeviceProbe<T>`
-  - `ParticleDeviceProbe<T>::particle_count` is the active prefix length, not merely the total capacity
-  - `ParticleDeviceProbe<T>::buffer_size` is the actual allocated capacity
-- **Emission / removal pipeline**:
-  - `Source<T>` fills inactive slots (`active == 0`) inside a `ParticleDeviceProbe<T>`
-  - `Sink<T>` compacts the active prefix in-place via `remove_if`
-  - `Fluid<T>` now carries per-species `amounts` and optional velocity `generators`
+  - `ParticleData<T>` owns storage buffers.
+  - `ParticleDeviceProbe<T>::particle_count` is the active prefix length.
+  - `ParticleDeviceProbe<T>::buffer_size` is the allocated capacity.
+- **Source / sink pipeline**:
+  - `Source<T>` writes into inactive capacity through `emit(ParticleDeviceProbe<T>&)`.
+  - `Sink<T>` compacts the active prefix with `remove_if`.
+  - `System<T>::update()` runs `emit() -> advect() -> remove()`.
+- **Collision / advection**:
+  - The former standalone `Advector` API has been removed.
+  - Collider-aware particle motion now lives in `System<T>::advect()`.
+  - When no colliders are configured, `advect()` falls back to `time_integration()`.
+- **Vizkit** (`src/vizkit/`): optional viewer and layer system behind `#ifdef ATLAS_ENABLE_VIZKIT`.
+  - `vizkit::Viewer<T>` no longer owns its own `dt`.
+  - `Viewer<T>` stores a `SystemHostPtr<T>` and reads `system()->dt()` during rendering updates.
+- **Namespaces**:
+  - Core aliases are under `atlas::`.
+  - Simulation runtime types are under `atlas::system::`.
+  - Geometry is under `atlas::geometry::`.
+  - Math is under `atlas::math::` with convenience aliases in `atlas::`.
 
 ## Key Patterns
 
-### Builder Pattern (Pervasive)
-Every major type uses a nested `Builder` with fluent `.with_*()` setters, `.build()` for value construction, and `.make_host_shared()` for `host_shared_ptr` ownership:
+### Builder Pattern
+Most public types use a nested `Builder` with fluent `.with_*()` setters, `.build()`, and `.make_host_shared()`:
 ```cpp
-const auto domain = system::Domain<sim_t>::builder()
-    .with_geometry(box)
-    .with_cell_size(0.02f)
-    .make_host_shared();
-```
-See `examples/solver/main.cpp` for the canonical usage flow.
-
-Recent additions follow the same pattern:
-```cpp
-const auto generator = UniformGenerator<float>::builder()
-    .with_min_value(-1.0f)
-    .with_max_value(1.0f)
-    .with_seed(7u)
+const auto fluid = atlas::system::Fluid<float>::builder()
+    .add_species(species_ptr, 1.0f, generator)
     .make_host_shared();
 
-const auto fluid = system::Fluid<float>::builder()
-    .add_particle(species_ptr, 1.0f, generator)
-    .make_host_shared();
-
-const auto source = system::Source<float>::builder()
+const auto source = atlas::system::Source<float>::builder()
     .with_unit(unit)
-    .with_spawn_type(system::SpawnType::Volume)
-    .with_spacing(0.02f)
     .with_fluid(fluid)
+    .with_spacing(0.02f)
     .build();
+
+const auto sim_system = atlas::system::System<float>::builder()
+    .with_buffer_size(4096)
+    .with_dt(0.01f)
+    .with_source(source_ptr)
+    .with_sink(sink_ptr)
+    .with_collider(collider_ptr)
+    .make_host_shared();
 ```
 
 ### Device Portability Macros
-All host/device-annotated functions use macros from `include/atlas/core/macros.h`:
-- `ATLAS_HOST`, `ATLAS_DEVICE`, `ATLAS_ALL_DEVICE` — expand to CUDA qualifiers or no-ops
-- `ATLAS_FORCE_INLINE` — compiler-specific force-inline
-- `ATLAS_NODISCARD`, `ATLAS_MAYBE_UNUSED`, `RESTRICT`
-
-Always use these macros instead of raw `__host__`/`__device__`.
+Use macros from `include/atlas/core/macros.h` instead of raw CUDA attributes:
+- `ATLAS_HOST`
+- `ATLAS_DEVICE`
+- `ATLAS_ALL_DEVICE`
+- `ATLAS_FORCE_INLINE`
+- `ATLAS_NODISCARD`
+- `ATLAS_MAYBE_UNUSED`
+- `RESTRICT`
 
 ### Header / Implementation Split
-Templates use a `.h` (declarations + docs) / `.hpp` (definitions) pair in the same directory. The `.h` includes the `.hpp` at the bottom. Example: `geometry/box.h` includes `geometry/box.hpp`.
+Template components use paired `.h` and `.hpp` files in the same directory. The `.h` includes the `.hpp` at the bottom.
+
+### System API Ordering
+`include/atlas/system/system.h` and `include/atlas/system/system.hpp` are intentionally ordered as:
+1. constructors / destructor
+2. major runtime functions
+3. setters
+4. getters
+5. clear functions
+
+Preserve that ordering when editing `System`.
+
+## Include Layout
+
+Key `include/atlas/` modules currently include:
+- `buffer`, `codec`, `collider`, `container`, `core`, `data`, `domain`
+- `flatten`, `generator`, `geometry`, `indexer`, `iterator`
+- `logging`, `math`, `matter`, `memory`, `parallel`, `random`
+- `remove`, `sampling`, `scan`, `searcher`, `shuffle`
+- `sink`, `solver`, `source`, `spatial`, `sync`, `system`
+- `transform`, `tuple`, `unit`
+
+There is no longer an `include/atlas/advector/` module.
+
+## Vizkit Notes
+
+- `src/vizkit/viewer/viewer.h` depends on `atlas/system/system.h`.
+- `Viewer<T>::Builder` uses `.with_system(...)`, `.with_title(...)`, `.with_size(...)`, and `.with_fullscreen(...)`.
+- Layer updates still receive `(GLFWwindow*, Camera&, T dt)`, but that `dt` comes from the bound `System`.
 
 ## Build & Test
 
 ```bash
-# Configure + build (TBB/CPU, Debug, with tests)
 cmake --preset tbb-debug
 cmake --build build/tbb-debug -j$(nproc)
-
-# Run tests
 ctest --test-dir build/tbb-debug --output-on-failure
 
-# CUDA build (tests/benchmarks auto-disabled)
 cmake --preset cuda-debug
 cmake --build build/cuda-debug -j$(nproc)
 ```
-Key CMake options: `ATLAS_USE_CUDA`, `ATLAS_USE_TBB` (mutually exclusive), `ATLAS_USE_VIZKIT`, `ATLAS_LOGGING`, `ATLAS_TESTS`, `ATLAS_BENCHMARKS`. See `CMakePresets.json` for all presets.
+
+Important options:
+- `ATLAS_USE_CUDA`
+- `ATLAS_USE_TBB`
+- `ATLAS_USE_VIZKIT`
+- `ATLAS_LOGGING`
+- `ATLAS_TESTS`
+- `ATLAS_BENCHMARKS`
 
 ## Tests
 
-- Framework: GoogleTest (in-tree at `external/googletest/`)
-- All test sources: `tests/<module>/*_tests.cpp` — auto-discovered via `GLOB_RECURSE`
-- Single test binary: `atlas_tests` (links `atlas::core` + GTest)
-- Test helpers: `tests/utilities/tests_utils.h` — provides `test::near()`, `test::vec_near()`, `test::is_finite_vec()`, `test::all_finite_points()`, `test::points_in_range()`, `test::point_buffers_near()`
-- Tests include `#include "../utilities/tests_utils.h"` then `#include <atlas/atlas.h>`
-- Generator coverage lives under `tests/generator/`; sink/source behavior lives under `tests/sink/` and `tests/source/`
+- Framework: GoogleTest from `external/googletest/`
+- Test discovery: recursive `*_tests.cpp` glob in `tests/`
+- Single test binary: `atlas_tests`
+- Common helpers: `tests/utilities/tests_utils.h`
+- `particle_count`-sensitive tests must set the active prefix explicitly instead of assuming it matches capacity
+- `System` behavior coverage now lives in `tests/system/system_tests.cpp`
+- Source and sink behavior remain covered in `tests/source/` and `tests/sink/`
 
 ## File Conventions
 
-- All headers use `#pragma once` (no include guards). The tool `tools/update_header_guard.py` enforces this.
-- `tools/generate_headers.py` auto-generates umbrella headers (`atlas/atlas.h`, `vizkit/vizkit.h`) — do not hand-edit these files.
-- CUDA source files use `.cu` extension; CPU equivalents use `.cpp`. Examples provide both (`main.cpp` + `main.cu`).
-- Doxygen-style `/** */` comments on all public APIs with `@brief`, `@details`, `@tparam`, `@note`, `@warning`.
-- `particle_count`-sensitive tests should set the active prefix explicitly rather than assuming it equals buffer capacity.
+- Use `#pragma once` in headers.
+- Do not hand-edit generated umbrella headers such as `include/atlas/atlas.h`; use `tools/generate_headers.py`.
+- CUDA translation units use `.cu`; CPU translation units use `.cpp`.
+- Public APIs are expected to keep Doxygen-style comments where the surrounding file already uses them.
 
 ## Dependencies
 
-- **TBB** (system): `find_package(TBB REQUIRED)` — must be installed
-- **tinyobjloader** (in-tree): `external/tinyobj/` — OBJ mesh loading
-- **Lyra** (in-tree, header-only): `external/lyra/` — CLI argument parsing
-- **OpenGL stack** (vizkit only): glfw3, GLEW, GLU, GLUT — system packages
-- **CUDA 12.x** (GPU builds): arch 86 default, nvcc flags `--expt-relaxed-constexpr --extended-lambda`
+- **TBB**: required for CPU backend
+- **tinyobjloader**: in-tree under `external/tinyobj/`
+- **Lyra**: header-only, in-tree under `external/lyra/`
+- **OpenGL stack**: needed for vizkit builds (`glfw3`, `GLEW`, `GLU`, `GLUT`)
+- **CUDA 12.x**: for GPU builds, with `--expt-relaxed-constexpr --extended-lambda`

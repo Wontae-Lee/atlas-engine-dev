@@ -9,14 +9,19 @@
 #include <gtest/gtest.h>
 
 TEST(VizkitViewer, BuilderBuildStoresConfiguredValues) {
+    const auto sim_system = atlas::System<float>::builder()
+                                .with_buffer_size(4)
+                                .with_dt(0.02f)
+                                .make_host_shared();
     const auto viewer = atlas::vizkit::Viewer<float>::builder()
-                            .with_dt(0.02f)
+                            .with_system(sim_system)
                             .with_size(1280, 720)
                             .with_title("Vizkit Test")
                             .with_fullscreen(true)
                             .build();
 
-    EXPECT_FLOAT_EQ(viewer._dt, 0.02f);
+    EXPECT_EQ(viewer._system, sim_system);
+    EXPECT_FLOAT_EQ(viewer._system->dt(), 0.02f);
     EXPECT_EQ(viewer._width, 1280);
     EXPECT_EQ(viewer._height, 720);
     EXPECT_STREQ(viewer._title, "Vizkit Test");
@@ -26,19 +31,21 @@ TEST(VizkitViewer, BuilderBuildStoresConfiguredValues) {
 TEST(VizkitViewer, BuilderRejectsInvalidParameters) {
     EXPECT_THROW(
         atlas::vizkit::Viewer<float>::builder()
-            .with_dt(0.0f)
             .build(),
         std::runtime_error);
 
     EXPECT_THROW(
         atlas::vizkit::Viewer<float>::builder()
+            .with_system(atlas::System<float>::builder().with_buffer_size(1).make_host_shared())
             .with_size(-1, 720)
             .build(),
         std::runtime_error);
 }
 
 TEST(VizkitViewer, AddLayerAppendsLayerToInternalStorage) {
-    atlas::vizkit::Viewer<float> viewer;
+    auto viewer = atlas::vizkit::Viewer<float>::builder()
+                      .with_system(atlas::System<float>::builder().with_buffer_size(1).make_host_shared())
+                      .build();
     auto layer = std::make_shared<atlas::test::DummyVizkitLayer<float>>();
 
     viewer.add_layer(layer);

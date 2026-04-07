@@ -63,6 +63,7 @@ void
 Sphere<T>::bind_operator() noexcept {
     _operator.center = atlas::raw_pointer_cast(&center);
     _operator.radius = atlas::raw_pointer_cast(&radius);
+    this->invalidate_validity_cache();
 }
 
 template <typename T>
@@ -123,7 +124,9 @@ Sphere<T>::bound() const noexcept {
 template <typename T>
 bool
 Sphere<T>::is_valid() const noexcept {
-    return _operator.is_valid();
+    return this->cached_is_valid([this]() noexcept {
+        return _operator.is_valid();
+    });
 }
 
 template <typename T>

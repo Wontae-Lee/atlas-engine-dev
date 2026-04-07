@@ -49,6 +49,28 @@ public:
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual GeometryType
     type() const noexcept = 0;
+
+protected:
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    invalidate_validity_cache() const noexcept {
+        _validity_cache_built = false;
+    }
+
+    template <typename Func>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    cached_is_valid(Func&& compute) const noexcept {
+        if (!_validity_cache_built) {
+            _validity_cache       = static_cast<bool>(compute());
+            _validity_cache_built = true;
+        }
+
+        return _validity_cache;
+    }
+
+private:
+    mutable bool _validity_cache = false;
+
+    mutable bool _validity_cache_built = false;
 };
 
 }

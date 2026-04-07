@@ -119,7 +119,12 @@ main() {
                                          .with_unit(triangle_mesh_unit)
                                          .make_shared();
 
+    const auto sim_system = atlas::System<sim_t>::builder()
+                                .with_buffer_size(0)
+                                .make_host_shared();
+
     auto viewer = atlas::vizkit::Viewer<sim_t>::builder()
+                      .with_system(sim_system)
                       .with_title("ATLAS Dynamic Geometry Viewer")
                       .build();
 

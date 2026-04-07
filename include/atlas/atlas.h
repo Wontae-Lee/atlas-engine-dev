@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/advector/advector.h>
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/codec/codec.h>
@@ -70,12 +69,11 @@
 #include <atlas/remove/remove.h>
 #include <atlas/sampling/sampling.h>
 #include <atlas/scan/exclusive_scan.h>
-#include <atlas/searcher/searcher.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
-#include <atlas/solve/solve.h>
+#include <atlas/solver/solver.h>
 #include <atlas/source/source.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>

@@ -8,41 +8,47 @@
 namespace atlas::vizkit {
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-Viewer<T>::Viewer(T dt,
+
+Viewer<T>::Viewer(SystemHostPtr<T> system,
                   int width,
                   int height,
                   const char* title,
                   bool fullscreen) noexcept
 
-    : _dt(dt)
+    : _system(std::move(system))
     , _width(width)
     , _height(height)
     , _title(title ? title : "Atlas Viewer")
     , _fullscreen(fullscreen) { }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE
-    Viewer<T>::~Viewer() {
+
+Viewer<T>::~Viewer() {
 
     cleanup_gl();
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE typename Viewer<T>::Builder
+typename Viewer<T>::Builder
 Viewer<T>::builder() noexcept {
     return Builder {};
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Viewer<T>::add_layer(const std::shared_ptr<Layer<T>>& layer) {
 
     _layers.push_back(layer);
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE int
+const SystemHostPtr<T>&
+Viewer<T>::system() const noexcept {
+    return _system;
+}
+
+template <typename T>
+int
 Viewer<T>::run() {
     try {
 
@@ -62,7 +68,7 @@ Viewer<T>::run() {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Viewer<T>::init_gl() {
 
     if (!glfwInit()) {
@@ -128,7 +134,7 @@ Viewer<T>::init_gl() {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Viewer<T>::init_layers() {
 
     for (const auto& layer : _layers) {
@@ -139,7 +145,7 @@ Viewer<T>::init_layers() {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Viewer<T>::main_loop() {
 
     while (!glfwWindowShouldClose(_win)) {
@@ -163,7 +169,7 @@ Viewer<T>::main_loop() {
 
         for (const auto& layer : _layers) {
             if (layer) {
-                layer->update(_win, _cam, _dt);
+                layer->update(_win, _cam, _system->dt());
             }
         }
 
@@ -172,7 +178,7 @@ Viewer<T>::main_loop() {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Viewer<T>::shutdown_layers() {
 
     for (const auto& layer : _layers) {
@@ -183,7 +189,7 @@ Viewer<T>::shutdown_layers() {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Viewer<T>::cleanup_gl() {
 
     if (_win) {
@@ -195,15 +201,20 @@ Viewer<T>::cleanup_gl() {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE typename Viewer<T>::Builder&
-Viewer<T>::Builder::with_dt(T dt) noexcept {
+typename Viewer<T>::Builder&
+Viewer<T>::Builder::with_system(const SystemHostPtr<T>& system) {
+    if (!system) {
+        atlas::logger::error()
+            << "Viewer::Builder: system must not be null.";
+        throw std::runtime_error("Viewer::Builder: system must not be null.");
+    }
 
-    _dt = dt;
+    _system = system;
     return *this;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE typename Viewer<T>::Builder&
+typename Viewer<T>::Builder&
 Viewer<T>::Builder::with_title(const char* title) noexcept {
 
     _title = title ? title : "Atlas Viewer";
@@ -211,7 +222,7 @@ Viewer<T>::Builder::with_title(const char* title) noexcept {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE typename Viewer<T>::Builder&
+typename Viewer<T>::Builder&
 Viewer<T>::Builder::with_size(int width, int height) noexcept {
 
     _width  = width;
@@ -220,20 +231,19 @@ Viewer<T>::Builder::with_size(int width, int height) noexcept {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE typename Viewer<T>::Builder&
+typename Viewer<T>::Builder&
 Viewer<T>::Builder::with_fullscreen(bool fullscreen) noexcept {
     _fullscreen = fullscreen;
     return *this;
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE void
+void
 Viewer<T>::Builder::validate() const {
-
-    if (_dt <= T(0)) {
+    if (_system == nullptr) {
         atlas::logger::error()
-            << "Viewer::Builder validation failed: dt must be positive.";
-        throw std::runtime_error("Viewer::Builder: dt must be positive.");
+            << "Viewer::Builder validation failed: system must not be null.";
+        throw std::runtime_error("Viewer::Builder: system must not be null.");
     }
 
     if ((_width < 0) || (_height < 0)) {
@@ -250,15 +260,15 @@ Viewer<T>::Builder::validate() const {
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE Viewer<T>
+Viewer<T>
 Viewer<T>::Builder::build() const {
 
     validate();
-    return Viewer<T>(_dt, _width, _height, _title, _fullscreen);
+    return Viewer<T>(_system, _width, _height, _title, _fullscreen);
 }
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE std::shared_ptr<Viewer<T>>
+std::shared_ptr<Viewer<T>>
 Viewer<T>::Builder::make_shared() const {
 
     auto viewer = build();

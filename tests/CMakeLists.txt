@@ -72,5 +72,5 @@ endif ()
 # CTest
 include(GoogleTest)
 gtest_discover_tests(atlas_tests
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

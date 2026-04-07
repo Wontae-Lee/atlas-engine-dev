@@ -54,7 +54,6 @@ public:
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     operator()(const Vector3<T>& incident, const Vector3<T>& normal) const noexcept;
 
-private:
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     hashed_unit_interval(const Vector3<T>& seed, T salt) noexcept;
 
