@@ -54,7 +54,7 @@ public:
     ~SpatialHashingSearcher() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    build(const system::ParticleDeviceProbe<T>& particle_probe);
+    build(const system::FluidDeviceProbe<T>& particle_probe);
 
     ATLAS_HOST ATLAS_FORCE_INLINE SpatialHashingProbe<T>
     make_device_probe() noexcept;

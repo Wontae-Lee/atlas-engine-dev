@@ -17,13 +17,13 @@ public:
     ~SingleCodec() override = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    encode(const ParticleDeviceProbe<T>& particle_probe,
+    encode(const FluidDeviceProbe<T>& particle_probe,
            const DomainDeviceProbe<T>& domain_probe,
            const SpatialHashingProbe<T>& searcher_probe,
            CodecDeviceProbe<T>& codec_probe) override;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    decode(const ParticleDeviceProbe<T>& particle_probe,
+    decode(const FluidDeviceProbe<T>& particle_probe,
            const DomainDeviceProbe<T>& domain_probe,
            const SpatialHashingProbe<T>& searcher_probe,
            CodecDeviceProbe<T>& codec_probe) override;

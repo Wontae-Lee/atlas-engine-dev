@@ -1,15 +1,39 @@
 
 #pragma once
 
+#include <atlas/memory/raw_pointer_cast.h>
+
 #include <stdexcept>
 #include <utility>
 
 namespace atlas::system {
 
 template <typename T>
+bool
+FluidDeviceProbe<T>::empty() const noexcept {
+    return particle_count <= 0;
+}
+
+template <typename T>
+bool
+FluidDeviceProbe<T>::valid() const noexcept {
+    return pos != nullptr && particle_count > 0;
+}
+
+template <typename T>
 typename Fluid<T>::Builder
 Fluid<T>::builder() noexcept {
     return Builder {};
+}
+
+template <typename T>
+Fluid<T>::Fluid(const size_t buffer_size)
+    : _buffer_size(buffer_size) {
+    d_pos.resize(buffer_size);
+    d_vel.resize(buffer_size);
+    d_temperature.resize(buffer_size);
+    d_species.resize(buffer_size);
+    d_active.resize(buffer_size);
 }
 
 template <typename T>
@@ -61,6 +85,64 @@ Fluid<T>::generators() noexcept {
 }
 
 template <typename T>
+FluidDeviceProbe<T>
+Fluid<T>::make_device_probe() noexcept {
+    ++_probe_count;
+
+    ATLAS_ERROR_IF(_probe_count > 1)
+        << "\n"
+        << "The fluid device probe must be generated only by the system, "
+        << "and the total number of device probes must be exactly one."
+        << "\n";
+
+    FluidDeviceProbe<T> probe {};
+    probe.pos            = atlas::raw_pointer_cast(d_pos.data());
+    probe.vel            = atlas::raw_pointer_cast(d_vel.data());
+    probe.temperature    = atlas::raw_pointer_cast(d_temperature.data());
+    probe.species        = atlas::raw_pointer_cast(d_species.data());
+    probe.active         = atlas::raw_pointer_cast(d_active.data());
+    probe.particle_count = static_cast<int>(_buffer_size);
+    probe.buffer_size    = _buffer_size;
+    return probe;
+}
+
+template <typename T>
+DeviceBuffer<Vector3<T>>&
+Fluid<T>::positions() noexcept {
+    return d_pos;
+}
+
+template <typename T>
+DeviceBuffer<Vector3<T>>&
+Fluid<T>::velocities() noexcept {
+    return d_vel;
+}
+
+template <typename T>
+DeviceBuffer<T>&
+Fluid<T>::temperatures() noexcept {
+    return d_temperature;
+}
+
+template <typename T>
+DeviceBuffer<size_t>&
+Fluid<T>::species_ids() noexcept {
+    return d_species;
+}
+
+template <typename T>
+DeviceBuffer<int>&
+Fluid<T>::active() noexcept {
+    return d_active;
+}
+
+template <typename T>
+size_t
+Fluid<T>::buffer_size() const noexcept {
+    return _buffer_size;
+}
+
+template <typename T>
 Fluid<T>
 Fluid<T>::Builder::build() const {
     validate();
@@ -69,6 +151,12 @@ Fluid<T>::Builder::build() const {
     f._particles      = _particles;
     f._mole_fractions = _mole_fractions;
     f._generators     = _generators;
+    f._buffer_size    = _buffer_size;
+    f.d_pos.resize(_buffer_size);
+    f.d_vel.resize(_buffer_size);
+    f.d_temperature.resize(_buffer_size);
+    f.d_species.resize(_buffer_size);
+    f.d_active.resize(_buffer_size);
 
     return f;
 }
@@ -198,6 +286,13 @@ Fluid<T>::Builder::add_species_bulk(
     for (int i = 0; i < n; ++i) {
         add_species(ps[i], mole_fractions[i], generators[i]);
     }
+    return *this;
+}
+
+template <typename T>
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::with_buffer_size(const size_t buffer_size) noexcept {
+    _buffer_size = buffer_size;
     return *this;
 }
 

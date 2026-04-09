@@ -4,11 +4,21 @@
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
+#include <atlas/memory/raw_pointer_cast.h>
+
+#include <optional>
 
 namespace atlas::system {
 
+enum class DomainType : int {
+    isothermal,
+    variable
+};
+
 template <typename T>
 struct DomainDeviceProbe {
+
+    DomainType type = DomainType::variable;
 
     T* field_temperature = nullptr;
 
@@ -38,7 +48,9 @@ public:
 
     Domain(const Vector3<T>& lower_corner,
            const Vector3<T>& upper_corner,
-           T cell_size);
+           T cell_size,
+           DomainType type = DomainType::variable,
+           std::optional<T> temperature = std::nullopt);
 
     ~Domain() = default;
 
@@ -50,6 +62,12 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE int
     number_of_cells() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DomainType
+    type() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
+    isothermal_field_temperature() const;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     lower_corner() const noexcept;
@@ -88,6 +106,10 @@ private:
 
     int _num_of_cells = 1;
 
+    DomainType _type = DomainType::variable;
+
+    std::optional<T> _isothermal_field_temperature;
+
     std::uint64_t _probe_count = 0;
 };
 
@@ -114,6 +136,12 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_cell_size(T h) noexcept;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_type(DomainType type) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_temperature(T temperature) noexcept;
+
 private:
     void
     validate() const;
@@ -124,11 +152,18 @@ private:
     Vector3<T> _upper_corner { T(1), T(1), T(1) };
 
     T _cell_size = T(1);
+
+    DomainType _type = DomainType::variable;
+
+    std::optional<T> _isothermal_field_temperature;
 };
 
 }
 
 namespace atlas {
+
+using DomainType = atlas::system::DomainType;
+
 template <typename T>
 using Domain = atlas::system::Domain<T>;
 template <typename T>

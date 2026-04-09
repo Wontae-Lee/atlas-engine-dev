@@ -115,7 +115,7 @@ Source<T>::rebuild_cache() noexcept {
 
 template <typename T>
 void
-Source<T>::emit(ParticleDeviceProbe<T>& particle_probe) {
+Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
 
     rebuild_cache();
 

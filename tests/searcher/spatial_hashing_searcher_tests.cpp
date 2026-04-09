@@ -46,7 +46,7 @@ TEST(SpatialHashingSearcher, BuildPopulatesSortedIndicesAndCellRanges) {
                         .with_range(system::NeighborSearchRange::single)
                         .build();
 
-    system::ParticleData<float> particle_data(3);
+    system::Fluid<float> particle_data(3);
     auto particle_probe = particle_data.make_device_probe();
     particle_probe.particle_count = 3;
 

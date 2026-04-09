@@ -1,7 +1,7 @@
 #pragma once
 
-#include <atlas/data/particle_data.h>
 #include <atlas/domain/domain.h>
+#include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 
@@ -31,20 +31,20 @@ public:
     virtual ~Codec() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    update(const ParticleDeviceProbe<T>& particle_probe,
+    update(const FluidDeviceProbe<T>& particle_probe,
            const DomainDeviceProbe<T>& domain_probe,
            const SpatialHashingProbe<T>& searcher_probe,
            CodecDeviceProbe<T>& codec_probe);
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    encode(const ParticleDeviceProbe<T>& particle_probe,
+    encode(const FluidDeviceProbe<T>& particle_probe,
            const DomainDeviceProbe<T>& domain_probe,
            const SpatialHashingProbe<T>& searcher_probe,
            CodecDeviceProbe<T>& codec_probe)
         = 0;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    decode(const ParticleDeviceProbe<T>& particle_probe,
+    decode(const FluidDeviceProbe<T>& particle_probe,
            const DomainDeviceProbe<T>& domain_probe,
            const SpatialHashingProbe<T>& searcher_probe,
            CodecDeviceProbe<T>& codec_probe)

@@ -2,7 +2,7 @@
 
 #include <atlas/logging/logging.h>
 #include <atlas/parallel/parallel_for.h>
-
+#include <atlas/codec/single_codec.h>
 #include <limits>
 #include <stdexcept>
 #include <utility>
@@ -18,7 +18,7 @@ System<T>::builder() noexcept {
 template <typename T>
 System<T>::System(const size_t buffer_size)
 
-    : _particle_data(atlas::make_host_shared<ParticleData<T>>(buffer_size))
+    : _particle_data(atlas::make_host_shared<Fluid<T>>(buffer_size))
     , _particle_probe(_particle_data->make_device_probe()) {
 }
 
@@ -29,19 +29,21 @@ System<T>::System(const size_t buffer_size,
                   CodecHostPtr<T> codec,
                   HostBuffer<SourceHostPtr<T>> sources,
                   HostBuffer<SinkHostPtr<T>> sinks,
+                  HostBuffer<MeasureHostPtr<T>> measures,
                   HostBuffer<ColliderHostPtr<T>> colliders) noexcept
 
-    : _particle_data(atlas::make_host_shared<ParticleData<T>>(buffer_size))
+    : _particle_data(atlas::make_host_shared<Fluid<T>>(buffer_size))
     , _dt(dt)
     , _domain(std::move(domain))
     , _codec(std::move(codec))
     , _particle_probe(_particle_data->make_device_probe())
     , _sources(std::move(sources))
     , _sinks(std::move(sinks))
+    , _measures(std::move(measures))
     , _colliders(std::move(colliders)) {
     if (_domain) {
-        _searcher = atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain);
-        _domain_probe = _domain->make_device_probe();
+        _searcher       = atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain);
+        _domain_probe   = _domain->make_device_probe();
         _searcher_probe = _searcher->make_device_probe();
         if (!_codec) {
             _codec = atlas::make_host_shared<SingleCodec<T>>(_domain);
@@ -59,6 +61,7 @@ System<T>::update() {
     emit();
     search();
     classify();
+    measure();
     advect();
     remove();
 }
@@ -87,6 +90,18 @@ System<T>::classify() {
     if (!_codec || !_domain || !_searcher) return;
 
     _codec->update(_particle_probe, _domain_probe, _searcher_probe, _codec_probe);
+}
+
+template <typename T>
+void
+System<T>::measure() {
+    if (!_domain || !_searcher) return;
+
+    for (const auto& measure : _measures) {
+        if (measure) {
+            measure->measure(_domain_probe, _searcher_probe, _particle_probe);
+        }
+    }
 }
 
 template <typename T>
@@ -212,12 +227,12 @@ System<T>::set_domain(const DomainHostPtr<T>& domain) {
         throw std::runtime_error("System: domain must not be null.");
     }
 
-    _domain   = domain;
-    _searcher = atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain);
-    _domain_probe = _domain->make_device_probe();
+    _domain         = domain;
+    _searcher       = atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain);
+    _domain_probe   = _domain->make_device_probe();
     _searcher_probe = _searcher->make_device_probe();
     if (!_codec || _codec->type() == CodecType::single) {
-        _codec = atlas::make_host_shared<SingleCodec<T>>(_domain);
+        _codec       = atlas::make_host_shared<SingleCodec<T>>(_domain);
         _codec_probe = _codec->make_device_probe();
     }
 }
@@ -231,7 +246,7 @@ System<T>::set_codec(const CodecHostPtr<T>& codec) {
         throw std::runtime_error("System: codec must not be null.");
     }
 
-    _codec = codec;
+    _codec       = codec;
     _codec_probe = _codec->make_device_probe();
 }
 
@@ -257,6 +272,18 @@ template <typename T>
 void
 System<T>::set_sinks(const HostBuffer<SinkHostPtr<T>>& sinks) {
     _sinks = sinks;
+}
+
+template <typename T>
+void
+System<T>::add_measure(const MeasureHostPtr<T>& measure) {
+    _measures.push_back(measure);
+}
+
+template <typename T>
+void
+System<T>::set_measures(const HostBuffer<MeasureHostPtr<T>>& measures) {
+    _measures = measures;
 }
 
 template <typename T>
@@ -289,19 +316,19 @@ System<T>::set_colliders(const HostBuffer<Collider<T>>& colliders) {
 }
 
 template <typename T>
-ParticleDataHostPtr<T>
-System<T>::particle_data() const noexcept {
+FluidHostPtr<T>
+System<T>::fluid() const noexcept {
     return _particle_data;
 }
 
 template <typename T>
-ParticleDeviceProbe<T>&
+FluidDeviceProbe<T>&
 System<T>::particle_probe() noexcept {
     return _particle_probe;
 }
 
 template <typename T>
-const ParticleDeviceProbe<T>&
+const FluidDeviceProbe<T>&
 System<T>::particle_probe() const noexcept {
     return _particle_probe;
 }
@@ -373,6 +400,12 @@ System<T>::sinks() const noexcept {
 }
 
 template <typename T>
+const HostBuffer<MeasureHostPtr<T>>&
+System<T>::measures() const noexcept {
+    return _measures;
+}
+
+template <typename T>
 const HostBuffer<ColliderHostPtr<T>>&
 System<T>::colliders() const noexcept {
     return _colliders;
@@ -388,6 +421,12 @@ template <typename T>
 void
 System<T>::clear_sinks() noexcept {
     _sinks.clear();
+}
+
+template <typename T>
+void
+System<T>::clear_measures() noexcept {
+    _measures.clear();
 }
 
 template <typename T>
@@ -466,6 +505,20 @@ System<T>::Builder::with_sinks(const HostBuffer<SinkHostPtr<T>>& sinks) {
 
 template <typename T>
 typename System<T>::Builder&
+System<T>::Builder::with_measure(const MeasureHostPtr<T>& measure) {
+    _measures.push_back(measure);
+    return *this;
+}
+
+template <typename T>
+typename System<T>::Builder&
+System<T>::Builder::with_measures(const HostBuffer<MeasureHostPtr<T>>& measures) {
+    _measures = measures;
+    return *this;
+}
+
+template <typename T>
+typename System<T>::Builder&
 System<T>::Builder::with_collider(const ColliderHostPtr<T>& collider) {
     _colliders.push_back(collider);
     return *this;
@@ -503,13 +556,14 @@ System<T>
 System<T>::Builder::build() {
     validate();
 
-    System<T> system(_buffer_size, _dt, _domain, _codec, _sources, _sinks, _colliders);
+    System<T> system(_buffer_size, _dt, _domain, _codec, _sources, _sinks, _measures, _colliders);
     _buffer_size = 0;
     _dt          = static_cast<T>(0.01);
     _domain      = nullptr;
     _codec       = nullptr;
     _sources.clear();
     _sinks.clear();
+    _measures.clear();
     _colliders.clear();
     return system;
 }
@@ -527,6 +581,12 @@ System<T>::Builder::validate() const {
         atlas::logger::error()
             << "System::Builder: dt must be positive.";
         throw std::runtime_error("System::Builder: dt must be positive.");
+    }
+
+    if (_domain && _domain->type() == DomainType::isothermal && !_measures.empty()) {
+        atlas::logger::error()
+            << "System::Builder: measures must be empty when the domain type is isothermal.";
+        throw std::runtime_error("System::Builder: measures must be empty when the domain type is isothermal.");
     }
 }
 

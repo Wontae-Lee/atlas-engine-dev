@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atlas/buffer/device_buffer.h>
-#include <atlas/data/particle_data.h>
+#include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/remove/remove.h>
 #include <atlas/sink/despawn_operator.h>
@@ -34,7 +34,7 @@ public:
     builder() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    sink(ParticleDeviceProbe<T>& particle_probe);
+    sink(FluidDeviceProbe<T>& particle_probe);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_unit(Unit<T> unit) noexcept;

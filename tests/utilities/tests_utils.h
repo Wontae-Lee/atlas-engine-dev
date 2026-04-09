@@ -143,7 +143,7 @@ public:
         : Base(domain) { }
 
     void
-    encode(const system::ParticleDeviceProbe<T>&,
+    encode(const system::FluidDeviceProbe<T>&,
            const system::DomainDeviceProbe<T>&,
            const system::SpatialHashingProbe<T>&,
            system::CodecDeviceProbe<T>&) override {
@@ -151,7 +151,7 @@ public:
     }
 
     void
-    decode(const system::ParticleDeviceProbe<T>&,
+    decode(const system::FluidDeviceProbe<T>&,
            const system::DomainDeviceProbe<T>&,
            const system::SpatialHashingProbe<T>&,
            system::CodecDeviceProbe<T>&) override {
@@ -162,6 +162,17 @@ public:
     type() const noexcept override {
         return system::CodecType::single;
     }
+};
+
+template <typename T>
+class DummyMeasure final : public system::Measure<T> {
+public:
+    void
+    measure(system::DomainDeviceProbe<T>, system::SpatialHashingProbe<T>, system::FluidDeviceProbe<T>) override {
+        ++call_count;
+    }
+
+    int call_count = 0;
 };
 
 template <typename T>
@@ -304,6 +315,27 @@ template <typename T>
 ATLAS_FORCE_INLINE host_shared_ptr<system::Domain<T>>
 make_domain_ptr() {
     return atlas::make_host_shared<system::Domain<T>>(make_domain<T>());
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE host_shared_ptr<system::Domain<T>>
+make_isothermal_domain_ptr(T temperature = T(300)) {
+    return system::Domain<T>::builder()
+        .with_lower_corner(Vector3<T>(T(0), T(0), T(0)))
+        .with_upper_corner(Vector3<T>(T(1), T(1), T(1)))
+        .with_cell_size(T(0.5))
+        .with_type(system::DomainType::isothermal)
+        .with_temperature(temperature)
+        .make_host_shared();
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE system::SpatialHashingSearcher<T>
+make_single_range_searcher(const atlas::DomainHostPtr<T>& domain) {
+    return atlas::SpatialHashingSearcher<T>::builder()
+        .with_domain(domain)
+        .with_range(system::NeighborSearchRange::single)
+        .build();
 }
 
 ATLAS_FORCE_INLINE host_shared_ptr<system::Domain<double>>

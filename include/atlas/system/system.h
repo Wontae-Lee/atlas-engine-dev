@@ -2,11 +2,11 @@
 
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/codec/codec.h>
-#include <atlas/codec/single_codec.h>
 #include <atlas/collider/collider.h>
 #include <atlas/core/macros.h>
-#include <atlas/data/particle_data.h>
 #include <atlas/domain/domain.h>
+#include <atlas/fluid/fluid.h>
+#include <atlas/measure/measure.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/sink/sink.h>
@@ -33,6 +33,7 @@ public:
            CodecHostPtr<T> codec,
            HostBuffer<SourceHostPtr<T>> sources,
            HostBuffer<SinkHostPtr<T>> sinks,
+           HostBuffer<MeasureHostPtr<T>> measures,
            HostBuffer<ColliderHostPtr<T>> colliders) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE ~System() = default;
@@ -51,6 +52,9 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     classify();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    measure();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     advect() const;
@@ -83,6 +87,12 @@ public:
     set_sinks(const HostBuffer<SinkHostPtr<T>>& sinks);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
+    add_measure(const MeasureHostPtr<T>& measure);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_measures(const HostBuffer<MeasureHostPtr<T>>& measures);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
     add_collider(const ColliderHostPtr<T>& collider);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
@@ -94,13 +104,13 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_colliders(const HostBuffer<Collider<T>>& colliders);
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE ParticleDataHostPtr<T>
-    particle_data() const noexcept;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidHostPtr<T>
+    fluid() const noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE ParticleDeviceProbe<T>&
+    ATLAS_HOST ATLAS_FORCE_INLINE FluidDeviceProbe<T>&
     particle_probe() noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE const ParticleDeviceProbe<T>&
+    ATLAS_HOST ATLAS_FORCE_INLINE const FluidDeviceProbe<T>&
     particle_probe() const noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE DomainDeviceProbe<T>&
@@ -136,6 +146,9 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<SinkHostPtr<T>>&
     sinks() const noexcept;
 
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<MeasureHostPtr<T>>&
+    measures() const noexcept;
+
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<ColliderHostPtr<T>>&
     colliders() const noexcept;
 
@@ -146,6 +159,9 @@ public:
     clear_sinks() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
+    clear_measures() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
     clear_colliders() noexcept;
 
 private:
@@ -154,15 +170,16 @@ private:
     DomainHostPtr<T> _domain {};
     CodecHostPtr<T> _codec {};
     SpatialHashingSearcherHostPtr<T> _searcher {};
-    ParticleDataHostPtr<T> _particle_data;
+    FluidHostPtr<T> _particle_data;
 
-    ParticleDeviceProbe<T> _particle_probe {};
+    FluidDeviceProbe<T> _particle_probe {};
     DomainDeviceProbe<T> _domain_probe {};
     SpatialHashingProbe<T> _searcher_probe {};
     CodecDeviceProbe<T> _codec_probe {};
 
     HostBuffer<SourceHostPtr<T>> _sources;
     HostBuffer<SinkHostPtr<T>> _sinks;
+    HostBuffer<MeasureHostPtr<T>> _measures;
     HostBuffer<ColliderHostPtr<T>> _colliders;
 };
 
@@ -196,6 +213,12 @@ public:
     with_sinks(const HostBuffer<SinkHostPtr<T>>& sinks);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_measure(const MeasureHostPtr<T>& measure);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_measures(const HostBuffer<MeasureHostPtr<T>>& measures);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_collider(const ColliderHostPtr<T>& collider);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -226,6 +249,7 @@ private:
 
     HostBuffer<SourceHostPtr<T>> _sources;
     HostBuffer<SinkHostPtr<T>> _sinks;
+    HostBuffer<MeasureHostPtr<T>> _measures;
     HostBuffer<ColliderHostPtr<T>> _colliders;
 };
 

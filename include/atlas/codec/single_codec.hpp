@@ -20,7 +20,7 @@ SingleCodec<T>::SingleCodec(const DomainHostPtr<T>& domain)
 
 template <typename T>
 void
-SingleCodec<T>::encode(const ParticleDeviceProbe<T>&,
+SingleCodec<T>::encode(const FluidDeviceProbe<T>&,
                        const DomainDeviceProbe<T>&,
                        const SpatialHashingProbe<T>&,
                        CodecDeviceProbe<T>&) {
@@ -28,7 +28,7 @@ SingleCodec<T>::encode(const ParticleDeviceProbe<T>&,
 
 template <typename T>
 void
-SingleCodec<T>::decode(const ParticleDeviceProbe<T>&,
+SingleCodec<T>::decode(const FluidDeviceProbe<T>&,
                        const DomainDeviceProbe<T>&,
                        const SpatialHashingProbe<T>&,
                        CodecDeviceProbe<T>&) {

@@ -1,11 +1,40 @@
 #pragma once
 
+#include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
+#include <atlas/core/macros.h>
+#include <atlas/fluid/fluidic_particle.h>
 #include <atlas/generator/generator.h>
-#include <atlas/matter/fluidic_particle.h>
+#include <atlas/logging/logging.h>
+#include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
 
+#include <cstdint>
+
 namespace atlas::system {
+
+template <typename T>
+struct FluidDeviceProbe {
+    Vector3<T>* pos { nullptr };
+
+    Vector3<T>* vel { nullptr };
+
+    T* temperature { nullptr };
+
+    size_t* species { nullptr };
+
+    int* active { nullptr };
+
+    int particle_count { 0 };
+
+    size_t buffer_size { 0 };
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    empty() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    valid() const noexcept;
+};
 
 template <typename T>
 class Fluid final {
@@ -13,6 +42,8 @@ public:
     class Builder;
 
     Fluid() = default;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit Fluid(size_t buffer_size);
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
@@ -43,6 +74,27 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<GeneratorHostPtr<T>>&
     generators() noexcept;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE FluidDeviceProbe<T>
+    make_device_probe() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<Vector3<T>>&
+    positions() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<Vector3<T>>&
+    velocities() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<T>&
+    temperatures() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE DeviceBuffer<size_t>&
+    species_ids() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<int>&
+    active() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE size_t
+    buffer_size() const noexcept;
+
 private:
     friend class Builder;
 
@@ -52,6 +104,20 @@ private:
     HostBuffer<T> _mole_fractions;
 
     HostBuffer<GeneratorHostPtr<T>> _generators;
+
+    DeviceBuffer<Vector3<T>> d_pos;
+
+    DeviceBuffer<Vector3<T>> d_vel;
+
+    DeviceBuffer<T> d_temperature;
+
+    DeviceBuffer<size_t> d_species;
+
+    DeviceBuffer<int> d_active;
+
+    size_t _buffer_size = 0;
+
+    std::uint64_t _probe_count = 0;
 };
 
 template <typename T>
@@ -106,6 +172,9 @@ public:
                      const HostBuffer<GeneratorHostPtr<T>>& generators);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_buffer_size(size_t buffer_size) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     require_non_empty(bool on = true) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -122,6 +191,8 @@ private:
 
     HostBuffer<GeneratorHostPtr<T>> _generators;
 
+    size_t _buffer_size = 0;
+
     bool _require_non_empty = false;
 
     bool _reject_null_particles = true;
@@ -133,6 +204,9 @@ namespace atlas {
 
 template <typename T>
 using Fluid = system::Fluid<T>;
+
+template <typename T>
+using FluidDeviceProbe = system::FluidDeviceProbe<T>;
 
 template <typename T>
 using FluidHostPtr = atlas::host_shared_ptr<system::Fluid<T>>;

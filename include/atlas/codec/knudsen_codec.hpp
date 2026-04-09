@@ -25,7 +25,7 @@ KnudsenCodec<T>::KnudsenCodec(const DomainHostPtr<T>& domain, T characteristic_l
 
 template <typename T>
 void
-KnudsenCodec<T>::encode(const ParticleDeviceProbe<T>& particle_probe,
+KnudsenCodec<T>::encode(const FluidDeviceProbe<T>& particle_probe,
                         const DomainDeviceProbe<T>&,
                         const SpatialHashingProbe<T>&,
                         CodecDeviceProbe<T>&) {
@@ -35,7 +35,7 @@ KnudsenCodec<T>::encode(const ParticleDeviceProbe<T>& particle_probe,
 
 template <typename T>
 void
-KnudsenCodec<T>::decode(const ParticleDeviceProbe<T>&,
+KnudsenCodec<T>::decode(const FluidDeviceProbe<T>&,
                         const DomainDeviceProbe<T>&,
                         const SpatialHashingProbe<T>&,
                         CodecDeviceProbe<T>&) {

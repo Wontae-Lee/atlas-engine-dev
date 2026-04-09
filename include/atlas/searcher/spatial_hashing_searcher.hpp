@@ -234,7 +234,7 @@ SpatialHashingSearcher<T>::build_cell_ranges(int alive) {
 
 template <typename T>
 void
-SpatialHashingSearcher<T>::build(const system::ParticleDeviceProbe<T>& particle_probe) {
+SpatialHashingSearcher<T>::build(const system::FluidDeviceProbe<T>& particle_probe) {
 
     const int alive = particle_probe.particle_count;
 

@@ -1,18 +1,35 @@
 #pragma once
+
 #include <atlas/core/macros.h>
-#include <atlas/data/particle_data.h>
 #include <atlas/domain/domain.h>
+#include <atlas/fluid/fluid.h>
+#include <atlas/memory/memory.h>
+#include <atlas/searcher/spatial_hashing_searcher.h>
 
 namespace atlas::system {
+
 template <typename T>
 class Measure {
 public:
-
-    Measure()  = default;
+    Measure()          = default;
     virtual ~Measure() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    measure(DomainDeviceProbe<T> domain, ParticleDeviceProbe<T> particle)
+    measure(DomainDeviceProbe<T> domain, SpatialHashingProbe<T> searcher, FluidDeviceProbe<T> particle)
         = 0;
 };
+
+}
+
+namespace atlas {
+
+template <typename T>
+using Measure = atlas::system::Measure<T>;
+
+template <typename T>
+using MeasureHostPtr = atlas::host_shared_ptr<atlas::system::Measure<T>>;
+
+template <typename T>
+using MeasureDevicePtr = atlas::device_shared_ptr<atlas::system::Measure<T>>;
+
 }

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atlas/buffer/device_buffer.h>
-#include <atlas/data/particle_data.h>
 #include <atlas/generator/generator.h>
 #include <atlas/generator/uniform_generator.h>
 #include <atlas/fluid/fluid.h>
@@ -40,7 +39,7 @@ public:
     builder() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    emit(ParticleDeviceProbe<T>& particle_probe);
+    emit(FluidDeviceProbe<T>& particle_probe);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_unit(Unit<T> unit) noexcept;

@@ -6,10 +6,14 @@ namespace atlas::system {
 template <typename T>
 Domain<T>::Domain(const Vector3<T>& lower_corner,
                   const Vector3<T>& upper_corner,
-                  T cell_size)
+                  T cell_size,
+                  const DomainType type,
+                  std::optional<T> temperature)
     : _lower_corner(lower_corner)
     , _upper_corner(upper_corner)
-    , _cell_size(cell_size) {
+    , _cell_size(cell_size)
+    , _type(type)
+    , _isothermal_field_temperature(std::move(temperature)) {
 
     atlas::logger::info()
         << "\n"
@@ -26,7 +30,11 @@ Domain<T>::Domain(const Vector3<T>& lower_corner,
 
     _num_of_cells = _grid_size.x * _grid_size.y * _grid_size.z;
 
-    d_field_temperature.resize(_num_of_cells, T(0));
+    const T initial_temperature = (_type == DomainType::isothermal && _isothermal_field_temperature.has_value())
+        ? *_isothermal_field_temperature
+        : T(0);
+
+    d_field_temperature.resize(_num_of_cells, initial_temperature);
     d_field_force.resize(_num_of_cells, Vector3<T> { T(0), T(0), T(0) });
 }
 
@@ -51,6 +59,7 @@ Domain<T>::make_device_probe() noexcept {
 
     DomainDeviceProbe<T> probe;
 
+    probe.type              = _type;
     probe.field_temperature = atlas::raw_pointer_cast(d_field_temperature.data());
     probe.field_force       = atlas::raw_pointer_cast(d_field_force.data());
 
@@ -72,6 +81,31 @@ int
 Domain<T>::number_of_cells() const noexcept {
 
     return _num_of_cells;
+}
+
+template <typename T>
+DomainType
+Domain<T>::type() const noexcept {
+
+    return _type;
+}
+
+template <typename T>
+T
+Domain<T>::isothermal_field_temperature() const {
+    if (_type != DomainType::isothermal) {
+        atlas::logger::error()
+            << "Domain: isothermal_field_temperature() is only valid for isothermal domains.";
+        throw std::runtime_error("Domain: isothermal_field_temperature() is only valid for isothermal domains.");
+    }
+
+    if (!_isothermal_field_temperature.has_value()) {
+        atlas::logger::error()
+            << "Domain: isothermal_field_temperature() is not configured for this isothermal domain.";
+        throw std::runtime_error("Domain: isothermal_field_temperature() is not configured for this isothermal domain.");
+    }
+
+    return *_isothermal_field_temperature;
 }
 
 template <typename T>
@@ -121,7 +155,7 @@ Domain<T>
 Domain<T>::Builder::build() const {
 
     validate();
-    return Domain<T>(_lower_corner, _upper_corner, _cell_size);
+    return Domain<T>(_lower_corner, _upper_corner, _cell_size, _type, _isothermal_field_temperature);
 }
 
 template <typename T>
@@ -129,7 +163,12 @@ atlas::host_shared_ptr<Domain<T>>
 Domain<T>::Builder::make_host_shared() const {
 
     validate();
-    return atlas::make_host_shared<Domain<T>>(_lower_corner, _upper_corner, _cell_size);
+    return atlas::make_host_shared<Domain<T>>(
+        _lower_corner,
+        _upper_corner,
+        _cell_size,
+        _type,
+        _isothermal_field_temperature);
 }
 
 template <typename T>
@@ -164,6 +203,28 @@ typename Domain<T>::Builder&
 Domain<T>::Builder::with_cell_size(T h) noexcept {
 
     _cell_size = h;
+    return *this;
+}
+
+template <typename T>
+typename Domain<T>::Builder&
+Domain<T>::Builder::with_type(const DomainType type) noexcept {
+
+    if (type == DomainType::isothermal) {
+        atlas::logger::warn()
+            << "Domain::Builder: isothermal domain selected. "
+            << "Temperature checks or updates driven by Measure are forbidden for this domain type.";
+    }
+
+    _type = type;
+    return *this;
+}
+
+template <typename T>
+typename Domain<T>::Builder&
+Domain<T>::Builder::with_temperature(const T temperature) noexcept {
+
+    _isothermal_field_temperature = temperature;
     return *this;
 }
 
@@ -204,6 +265,16 @@ Domain<T>::Builder::validate() const {
         << "Domain::Builder validation failed: number_of_cells overflow/invalid. "
         << "number_of_cells=" << cells64 << ", "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
+
+    if (_type == DomainType::isothermal) {
+        atlas::check<std::invalid_argument>(_isothermal_field_temperature.has_value())
+            << "Domain::Builder validation failed: isothermal domain temperature must be provided.";
+
+        atlas::check<std::invalid_argument>(
+            std::isfinite(*_isothermal_field_temperature) && *_isothermal_field_temperature >= T(0))
+            << "Domain::Builder validation failed: isothermal domain temperature must be finite and non-negative. "
+            << "temperature=" << *_isothermal_field_temperature;
+    }
 }
 
 }

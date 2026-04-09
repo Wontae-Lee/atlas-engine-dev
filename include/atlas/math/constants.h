@@ -19,6 +19,8 @@ constexpr double pi = M_PI;
 
 constexpr double boltzmann_constant = 1.380649e-23;
 
+constexpr double gravity = 9.80665;
+
 constexpr double eps = math::k_epsilon_d;
 
 constexpr double far = math::k_farthest_d;

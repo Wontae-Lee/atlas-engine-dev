@@ -30,11 +30,11 @@ TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
     particle_probe.species[2] = 12;
     particle_probe.species[3] = 13;
     particle_probe.species[4] = 14;
-    particle_probe.acitve[0]  = 1;
-    particle_probe.acitve[1]  = 1;
-    particle_probe.acitve[2]  = 1;
-    particle_probe.acitve[3]  = 0;
-    particle_probe.acitve[4]  = 0;
+    particle_probe.active[0]  = 1;
+    particle_probe.active[1]  = 1;
+    particle_probe.active[2]  = 1;
+    particle_probe.active[3]  = 0;
+    particle_probe.active[4]  = 0;
 
     const auto geometry = geometry::Box<double>::builder()
                               .with_lower_corner(Vector3<double>(-1.0, -1.0, -1.0))
@@ -59,7 +59,7 @@ TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
     EXPECT_TRUE(test::vec_near(particle_probe.vel[0], Vector3<double>(2.0, 0.0, 0.0), 1e-12));
     EXPECT_DOUBLE_EQ(particle_probe.temperature[0], 301.0);
     EXPECT_EQ(particle_probe.species[0], std::size_t(11));
-    EXPECT_EQ(particle_probe.acitve[0], 1);
+    EXPECT_EQ(particle_probe.active[0], 1);
 }
 
 TEST(Sink, FlipInvertsVolumeDespawnClassification) {
@@ -79,9 +79,9 @@ TEST(Sink, FlipInvertsVolumeDespawnClassification) {
     particle_probe.species[0] = 10;
     particle_probe.species[1] = 11;
     particle_probe.species[2] = 12;
-    particle_probe.acitve[0]  = 1;
-    particle_probe.acitve[1]  = 1;
-    particle_probe.acitve[2]  = 1;
+    particle_probe.active[0]  = 1;
+    particle_probe.active[1]  = 1;
+    particle_probe.active[2]  = 1;
 
     const auto geometry = geometry::Box<double>::builder()
                               .with_lower_corner(Vector3<double>(-1.0, -1.0, -1.0))

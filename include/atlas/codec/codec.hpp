@@ -14,7 +14,7 @@ Codec<T>::Codec(DomainHostPtr<T> domain)
 
 template <typename T>
 void
-Codec<T>::update(const ParticleDeviceProbe<T>& particle_probe,
+Codec<T>::update(const FluidDeviceProbe<T>& particle_probe,
                  const DomainDeviceProbe<T>& domain_probe,
                  const SpatialHashingProbe<T>& searcher_probe,
                  CodecDeviceProbe<T>& codec_probe) {

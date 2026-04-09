@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/matter/matter.h>
 #include <atlas/memory/memory.h>
 
 #include <optional>
@@ -8,7 +7,7 @@
 namespace atlas::system {
 
 template <typename T>
-class FluidicParticle final : public Matter<T> {
+class FluidicParticle final {
 public:
     class Builder;
 
@@ -129,4 +128,4 @@ using FluidicParticleDevicePtr = atlas::device_shared_ptr<system::FluidicParticl
 
 }
 
-#include <atlas/matter/fluidic_particle.hpp>
+#include <atlas/fluid/fluidic_particle.hpp>

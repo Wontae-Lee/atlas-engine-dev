@@ -32,7 +32,7 @@ Sink<T>::builder() noexcept {
 
 template <typename T>
 void
-Sink<T>::sink(ParticleDeviceProbe<T>& particle_probe) {
+Sink<T>::sink(FluidDeviceProbe<T>& particle_probe) {
     const auto sync_op          = _unit.sync_operator();
     const auto geometry_op      = _unit.geometry_operator();
     const auto despawn_operator = _despawn_operator;

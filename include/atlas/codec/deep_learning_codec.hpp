@@ -20,7 +20,7 @@ DeepLearningCodec<T>::DeepLearningCodec(const DomainHostPtr<T>& domain)
 
 template <typename T>
 void
-DeepLearningCodec<T>::encode(const ParticleDeviceProbe<T>&,
+DeepLearningCodec<T>::encode(const FluidDeviceProbe<T>&,
                              const DomainDeviceProbe<T>&,
                              const SpatialHashingProbe<T>&,
                              CodecDeviceProbe<T>&) {
@@ -28,7 +28,7 @@ DeepLearningCodec<T>::encode(const ParticleDeviceProbe<T>&,
 
 template <typename T>
 void
-DeepLearningCodec<T>::decode(const ParticleDeviceProbe<T>&,
+DeepLearningCodec<T>::decode(const FluidDeviceProbe<T>&,
                              const DomainDeviceProbe<T>&,
                              const SpatialHashingProbe<T>&,
                              CodecDeviceProbe<T>&) {
