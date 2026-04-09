@@ -141,29 +141,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/include/atlas/material/matrial_properties.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/material/matrial_properties.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/dynamic/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/dynamic/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/main.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluidic_particle.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluidic_particle.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/generator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/generator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/maxwell_boltzmann_generator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/maxwell_boltzmann_generator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/maxwell_boltzmann_generator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/maxwell_boltzmann_generator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/maxwell_sigma_generator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/maxwell_sigma_generator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/maxwell_sigma_generator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/maxwell_sigma_generator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/uniform_generator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/uniform_generator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/uniform_generator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/uniform_generator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/rms_thermometer.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/rms_thermometer.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_type.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_type.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/measure/thermometer/rms_thermometer_tests.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/source/source_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/source/source_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/system/system_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/system/system_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/measure/thermometer/variance_thermometer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measure/thermometer/variance_thermometer_tests.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -207,6 +191,7 @@
     <setting file="file://$PROJECT_DIR$/include/atlas/core/macros.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/domain/domain.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/flatten/flatten.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/box.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.h" root0="FORCE_HIGHLIGHTING" />
@@ -302,6 +287,11 @@
     </key>
   </component>
   <component name="RunManager" selected="Google Test.All in atlas_tests">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -587,8 +577,8 @@
       <list>
         <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.remove_comments" />
-        <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.generate_headers" />
+        <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.remove_comments" />
       </list>
     </recent_temporary>

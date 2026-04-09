@@ -103,7 +103,7 @@ Fluid<T>::make_device_probe() noexcept {
     probe.temperature    = atlas::raw_pointer_cast(d_temperature.data());
     probe.species        = atlas::raw_pointer_cast(d_species.data());
     probe.active         = atlas::raw_pointer_cast(d_active.data());
-    probe.particle_count = static_cast<int>(_buffer_size);
+    probe.particle_count = 0;
     probe.buffer_size    = _buffer_size;
     return probe;
 }

@@ -82,9 +82,10 @@ TEST(VarianceThermometer, OperatorComputesCellTemperatureFromVelocityVariance) {
         static_cast<std::size_t>(particle_probe.particle_count));
 
     const double expected_temperature = 2.0 / (3.0 * static_cast<double>(atlas::boltzmann_constant));
+    const auto first_cell = atlas::SpatialHashingSearcher<double>::linear_key(0, 0, 0, domain->grid_size());
 
-    ASSERT_EQ(field.size(), 1u);
-    EXPECT_NEAR(field[0], expected_temperature, expected_temperature * 1e-12);
+    ASSERT_LT(static_cast<std::size_t>(first_cell), field.size());
+    EXPECT_NEAR(field[static_cast<std::size_t>(first_cell)], expected_temperature, expected_temperature * 1e-12);
     EXPECT_NEAR(particle_temperatures[0], expected_temperature, expected_temperature * 1e-12);
     EXPECT_NEAR(particle_temperatures[1], expected_temperature, expected_temperature * 1e-12);
 }

@@ -62,22 +62,23 @@ main() {
                               .make_host_shared();
 
     atlas::HostBuffer<atlas::TriangleContainer4<sim_t>> mesh_triangles;
-    mesh_triangles.emplace_back(
+    mesh_triangles.resize(4);
+    mesh_triangles[0] = atlas::TriangleContainer4<sim_t>(
         Vector3(-0.6f, -0.6f, 0.0f),
         Vector3(0.6f, -0.6f, 0.0f),
         Vector3(0.0f, 0.0f, 0.9f),
         Vector3(0.0f, -0.83205f, 0.5547f));
-    mesh_triangles.emplace_back(
+    mesh_triangles[1] = atlas::TriangleContainer4<sim_t>(
         Vector3(0.6f, -0.6f, 0.0f),
         Vector3(0.0f, 0.6f, 0.0f),
         Vector3(0.0f, 0.0f, 0.9f),
         Vector3(0.78087f, 0.39043f, 0.48804f));
-    mesh_triangles.emplace_back(
+    mesh_triangles[2] = atlas::TriangleContainer4<sim_t>(
         Vector3(0.0f, 0.6f, 0.0f),
         Vector3(-0.6f, -0.6f, 0.0f),
         Vector3(0.0f, 0.0f, 0.9f),
         Vector3(-0.78087f, 0.39043f, 0.48804f));
-    mesh_triangles.emplace_back(
+    mesh_triangles[3] = atlas::TriangleContainer4<sim_t>(
         Vector3(-0.6f, -0.6f, 0.0f),
         Vector3(0.0f, 0.6f, 0.0f),
         Vector3(0.6f, -0.6f, 0.0f),
@@ -118,8 +119,12 @@ main() {
                                          .with_unit(triangle_mesh_unit)
                                          .make_shared();
 
+    const auto fluid = atlas::system::Fluid<sim_t>::builder()
+                           .with_buffer_size(0)
+                           .make_host_shared();
+
     const auto sim_system = atlas::System<sim_t>::builder()
-                                .with_buffer_size(0)
+                                .with_fluid(fluid)
                                 .make_host_shared();
 
     auto viewer = atlas::vizkit::Viewer<sim_t>::builder()

@@ -1,8 +1,8 @@
 #pragma once
 
+#include <atlas/codec/single_codec.h>
 #include <atlas/logging/logging.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/codec/single_codec.h>
 #include <limits>
 #include <stdexcept>
 #include <utility>
@@ -36,7 +36,8 @@ System<T>::System(FluidHostPtr<T> fluid,
                   HostBuffer<SourceHostPtr<T>> sources,
                   HostBuffer<SinkHostPtr<T>> sinks,
                   HostBuffer<MeasureHostPtr<T>> measures,
-                  HostBuffer<ColliderHostPtr<T>> colliders)
+                  HostBuffer<ColliderHostPtr<T>> colliders,
+                  HostBuffer<SolverHostPtr<T>> solvers)
 
     : _fluid(std::move(fluid))
     , _dt(dt)
@@ -46,7 +47,8 @@ System<T>::System(FluidHostPtr<T> fluid,
     , _sources(std::move(sources))
     , _sinks(std::move(sinks))
     , _measures(std::move(measures))
-    , _colliders(std::move(colliders)) {
+    , _colliders(std::move(colliders))
+    , _solvers(std::move(solvers)) {
     if (!_fluid) {
         atlas::logger::error()
             << "System: fluid must not be null.";
@@ -70,62 +72,117 @@ System<T>::System(FluidHostPtr<T> fluid,
 template <typename T>
 void
 System<T>::update() {
+    atlas::logger::info() << "System::update: begin";
+
     emit();
     search();
     classify();
     measure();
+    solve();
     advect();
     remove();
+
+    atlas::logger::info() << "System::update: end";
 }
 
 template <typename T>
 void
 System<T>::emit() {
+    atlas::logger::info() << "System::emit: begin";
+
     for (const auto& source : _sources) {
         if (source) {
             source->emit(_particle_probe);
         }
     }
+
+    atlas::logger::info() << "System::emit: end";
 }
 
 template <typename T>
 void
 System<T>::search() {
-    if (!_searcher) return;
+    atlas::logger::info() << "System::search: begin";
+
+    if (!_searcher) {
+        atlas::logger::info() << "System::search: end";
+        return;
+    }
 
     _searcher->build(_particle_probe);
+
+    atlas::logger::info() << "System::search: end";
 }
 
 template <typename T>
 void
 System<T>::classify() {
-    if (!_codec || !_domain || !_searcher) return;
+    atlas::logger::info() << "System::classify: begin";
+
+    if (!_codec || !_domain || !_searcher) {
+        atlas::logger::info() << "System::classify: end";
+        return;
+    }
 
     _codec->update(_particle_probe, _domain_probe, _searcher_probe, _codec_probe);
+
+    atlas::logger::info() << "System::classify: end";
 }
 
 template <typename T>
 void
 System<T>::measure() {
-    if (!_domain || !_searcher) return;
+    atlas::logger::info() << "System::measure: begin";
+
+    if (!_domain || !_searcher) {
+        atlas::logger::info() << "System::measure: end";
+        return;
+    }
 
     for (const auto& measure : _measures) {
         if (measure) {
             measure->measure(_domain_probe, _searcher_probe, _particle_probe);
         }
     }
+
+    atlas::logger::info() << "System::measure: end";
+}
+
+template <typename T>
+void
+System<T>::solve() {
+    atlas::logger::info() << "System::solve: begin";
+
+    if (!_domain || !_searcher || !_codec) {
+        atlas::logger::info() << "System::solve: end";
+        return;
+    }
+
+    for (const auto& solver : _solvers) {
+        if (solver) {
+            solver->solve(_domain_probe, _searcher_probe, _particle_probe, _codec_probe);
+        }
+    }
+
+    atlas::logger::info() << "System::solve: end";
 }
 
 template <typename T>
 void
 System<T>::advect() const {
+    atlas::logger::info() << "System::advect: begin";
+
     const auto probe = _particle_probe;
     const T dt       = _dt;
 
-    if (probe.empty() || !(dt > T(0))) return;
+    if (probe.empty() || !(dt > T(0))) {
+        atlas::logger::info() << "System::advect: end";
+        return;
+    }
 
     if (_colliders.empty()) {
         time_integration();
+        atlas::logger::info() << "System::advect: end";
         return;
     }
 
@@ -188,16 +245,22 @@ System<T>::advect() const {
             probe.pos[i]            = best_pos + best_norm * epsilon;
             probe.vel[i]            = interaction(velocity, best_norm);
         });
+
+    atlas::logger::info() << "System::advect: end";
 }
 
 template <typename T>
 void
 System<T>::remove() {
+    atlas::logger::info() << "System::remove: begin";
+
     for (const auto& sink : _sinks) {
         if (sink) {
             sink->sink(_particle_probe);
         }
     }
+
+    atlas::logger::info() << "System::remove: end";
 }
 
 template <typename T>
@@ -341,6 +404,18 @@ System<T>::set_colliders(const HostBuffer<Collider<T>>& colliders) {
 }
 
 template <typename T>
+void
+System<T>::add_solver(const SolverHostPtr<T>& solver) {
+    _solvers.push_back(solver);
+}
+
+template <typename T>
+void
+System<T>::set_solvers(const HostBuffer<SolverHostPtr<T>>& solvers) {
+    _solvers = solvers;
+}
+
+template <typename T>
 FluidHostPtr<T>
 System<T>::fluid() const noexcept {
     return _fluid;
@@ -437,6 +512,12 @@ System<T>::colliders() const noexcept {
 }
 
 template <typename T>
+const HostBuffer<SolverHostPtr<T>>&
+System<T>::solvers() const noexcept {
+    return _solvers;
+}
+
+template <typename T>
 void
 System<T>::clear_sources() noexcept {
     _sources.clear();
@@ -458,6 +539,12 @@ template <typename T>
 void
 System<T>::clear_colliders() noexcept {
     _colliders.clear();
+}
+
+template <typename T>
+void
+System<T>::clear_solvers() noexcept {
+    _solvers.clear();
 }
 
 template <typename T>
@@ -494,6 +581,13 @@ System<T>::Builder::with_codec(const CodecHostPtr<T>& codec) {
         atlas::logger::error()
             << "System::Builder: codec must not be null.";
         throw std::runtime_error("System::Builder: codec must not be null.");
+    }
+
+    if (codec->type() != CodecType::single) {
+        atlas::logger::error()
+            << "System::Builder: only SingleCodec is supported by the builder at this time.";
+        throw std::runtime_error(
+            "System::Builder: only SingleCodec is supported by the builder at this time.");
     }
 
     _codec = codec;
@@ -577,11 +671,25 @@ System<T>::Builder::with_colliders(const HostBuffer<Collider<T>>& colliders) {
 }
 
 template <typename T>
+typename System<T>::Builder&
+System<T>::Builder::with_solver(const SolverHostPtr<T>& solver) {
+    _solvers.push_back(solver);
+    return *this;
+}
+
+template <typename T>
+typename System<T>::Builder&
+System<T>::Builder::with_solvers(const HostBuffer<SolverHostPtr<T>>& solvers) {
+    _solvers = solvers;
+    return *this;
+}
+
+template <typename T>
 System<T>
 System<T>::Builder::build() {
     validate();
 
-    System<T> system(_fluid, _dt, _domain, _codec, _sources, _sinks, _measures, _colliders);
+    System<T> system(_fluid, _dt, _domain, _codec, _sources, _sinks, _measures, _colliders, _solvers);
     _fluid  = nullptr;
     _dt     = static_cast<T>(0.01);
     _domain = nullptr;
@@ -590,6 +698,7 @@ System<T>::Builder::build() {
     _sinks.clear();
     _measures.clear();
     _colliders.clear();
+    _solvers.clear();
     return system;
 }
 
@@ -612,6 +721,13 @@ System<T>::Builder::validate() const {
         atlas::logger::error()
             << "System::Builder: dt must be positive.";
         throw std::runtime_error("System::Builder: dt must be positive.");
+    }
+
+    if (_codec && _codec->type() != CodecType::single) {
+        atlas::logger::error()
+            << "System::Builder: only SingleCodec is supported by the builder at this time.";
+        throw std::runtime_error(
+            "System::Builder: only SingleCodec is supported by the builder at this time.");
     }
 
     if (_domain && _domain->type() == DomainType::isothermal && !_measures.empty()) {

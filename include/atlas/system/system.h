@@ -9,6 +9,7 @@
 #include <atlas/measure/measure.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/solver/solver.h>
 #include <atlas/sink/sink.h>
 #include <atlas/source/source.h>
 
@@ -34,7 +35,8 @@ public:
            HostBuffer<SourceHostPtr<T>> sources,
            HostBuffer<SinkHostPtr<T>> sinks,
            HostBuffer<MeasureHostPtr<T>> measures,
-           HostBuffer<ColliderHostPtr<T>> colliders);
+           HostBuffer<ColliderHostPtr<T>> colliders,
+           HostBuffer<SolverHostPtr<T>> solvers);
 
     ATLAS_HOST ATLAS_FORCE_INLINE ~System() = default;
 
@@ -55,6 +57,9 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     measure();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    solve();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     advect() const;
@@ -107,6 +112,12 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_colliders(const HostBuffer<Collider<T>>& colliders);
 
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    add_solver(const SolverHostPtr<T>& solver);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_solvers(const HostBuffer<SolverHostPtr<T>>& solvers);
+
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidHostPtr<T>
     fluid() const noexcept;
 
@@ -155,6 +166,9 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<ColliderHostPtr<T>>&
     colliders() const noexcept;
 
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<SolverHostPtr<T>>&
+    solvers() const noexcept;
+
     ATLAS_HOST ATLAS_FORCE_INLINE void
     clear_sources() noexcept;
 
@@ -166,6 +180,9 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     clear_colliders() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    clear_solvers() noexcept;
 
 private:
     T _dt { static_cast<T>(0.01) };
@@ -184,6 +201,7 @@ private:
     HostBuffer<SinkHostPtr<T>> _sinks;
     HostBuffer<MeasureHostPtr<T>> _measures;
     HostBuffer<ColliderHostPtr<T>> _colliders;
+    HostBuffer<SolverHostPtr<T>> _solvers;
 };
 
 template <typename T>
@@ -233,6 +251,12 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_colliders(const HostBuffer<Collider<T>>& colliders);
 
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_solver(const SolverHostPtr<T>& solver);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_solvers(const HostBuffer<SolverHostPtr<T>>& solvers);
+
     ATLAS_HOST ATLAS_FORCE_INLINE System<T>
     build();
 
@@ -254,6 +278,7 @@ private:
     HostBuffer<SinkHostPtr<T>> _sinks;
     HostBuffer<MeasureHostPtr<T>> _measures;
     HostBuffer<ColliderHostPtr<T>> _colliders;
+    HostBuffer<SolverHostPtr<T>> _solvers;
 };
 
 }
