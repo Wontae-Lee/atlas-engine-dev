@@ -32,6 +32,12 @@ MaxwellSigmaGenerator<T>::generate_operator() const noexcept {
 }
 
 template <typename T>
+GenerateOperator<T>
+MaxwellSigmaGenerator<T>::make_generate_operator() const noexcept {
+    return _operator;
+}
+
+template <typename T>
 T
 MaxwellSigmaGenerator<T>::param0() const noexcept {
     return _sigma;

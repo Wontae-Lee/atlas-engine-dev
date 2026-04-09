@@ -31,6 +31,9 @@ public:
     ATLAS_HOST ATLAS_NODISCARD virtual const GenerateOperator<T>&
     generate_operator() const noexcept = 0;
 
+    ATLAS_HOST ATLAS_NODISCARD virtual GenerateOperator<T>
+    make_generate_operator() const noexcept = 0;
+
     ATLAS_HOST ATLAS_NODISCARD virtual T
     param0() const noexcept = 0;
 

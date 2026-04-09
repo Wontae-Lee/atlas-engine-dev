@@ -9,7 +9,7 @@
 namespace atlas::system {
 
 template <typename T>
-struct RmsThermometerOperator final {
+struct VarianceThermometerOperator final {
     ATLAS_HOST ATLAS_FORCE_INLINE void
     measure(const DomainDeviceProbe<T>& domain,
             const SpatialHashingProbe<T>& searcher,
@@ -29,7 +29,7 @@ struct ThermometerOperator final {
     ThermometerType type = ThermometerType::Average;
 
     union {
-        RmsThermometerOperator<T> rms;
+        VarianceThermometerOperator<T> variance;
         AverageThermometerOperator<T> average;
     };
 
@@ -46,7 +46,7 @@ struct ThermometerOperator final {
 
     ATLAS_HOST ATLAS_FORCE_INLINE ~ThermometerOperator() noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit ThermometerOperator(const RmsThermometerOperator<T>& op) noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit ThermometerOperator(const VarianceThermometerOperator<T>& op) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE explicit ThermometerOperator(const AverageThermometerOperator<T>& op) noexcept;
 

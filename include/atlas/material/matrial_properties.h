@@ -6,13 +6,25 @@
 
 namespace atlas::system {
 
+struct MaterialType final {
+    enum Value : int {
+        Molecule,
+        Atom,
+        Ion,
+        Neutron,
+        Solid
+    };
+};
+
 template <typename T>
-class FluidicParticle final {
+class MatrialProperties final {
 public:
     class Builder;
 
 public:
-    T molecular_mass {};
+    MaterialType::Value type {};
+
+    T mass {};
 
     std::optional<T> statistical_weight;
 
@@ -35,25 +47,28 @@ public:
     std::optional<int> charge;
 
 public:
-    FluidicParticle() = default;
+    MatrialProperties() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 };
 
 template <typename T>
-class FluidicParticle<T>::Builder final {
+class MatrialProperties<T>::Builder final {
 public:
     Builder() = default;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE FluidicParticle<T>
+    ATLAS_HOST ATLAS_FORCE_INLINE MatrialProperties<T>
     build() const;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<FluidicParticle<T>>
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<MatrialProperties<T>>
     make_host_shared() const;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_molecular_mass(T mass);
+    with_type(MaterialType::Value type);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_mass(T mass);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_statistical_weight(T w);
@@ -90,7 +105,9 @@ private:
     validate() const;
 
 private:
-    std::optional<T> _molecular_mass;
+    std::optional<MaterialType::Value> _type;
+
+    std::optional<T> _mass;
 
     std::optional<T> _statistical_weight;
 
@@ -117,15 +134,17 @@ private:
 
 namespace atlas {
 
-template <typename T>
-using FluidicParticle = system::FluidicParticle<T>;
+using MaterialType = system::MaterialType;
 
 template <typename T>
-using FluidicParticleHostPtr = atlas::host_shared_ptr<system::FluidicParticle<T>>;
+using MatrialProperties = system::MatrialProperties<T>;
 
 template <typename T>
-using FluidicParticleDevicePtr = atlas::device_shared_ptr<system::FluidicParticle<T>>;
+using MatrialPropertiesHostPtr = atlas::host_shared_ptr<system::MatrialProperties<T>>;
+
+template <typename T>
+using MatrialPropertiesDevicePtr = atlas::device_shared_ptr<system::MatrialProperties<T>>;
 
 }
 
-#include <atlas/fluid/fluidic_particle.hpp>
+#include <atlas/material/matrial_properties.hpp>

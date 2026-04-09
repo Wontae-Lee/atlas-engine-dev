@@ -15,11 +15,11 @@ namespace {
 template <typename T>
 atlas::FluidHostPtr<T>
 make_test_fluid() {
-    const auto species_a = atlas::system::FluidicParticle<T>::builder()
-                               .with_molecular_mass(T(1))
+    const auto species_a = atlas::system::MatrialProperties<T>::builder()
+                               .with_mass(T(1))
                                .make_host_shared();
-    const auto species_b = atlas::system::FluidicParticle<T>::builder()
-                               .with_molecular_mass(T(2))
+    const auto species_b = atlas::system::MatrialProperties<T>::builder()
+                               .with_mass(T(2))
                                .make_host_shared();
 
     return atlas::system::Fluid<T>::builder()

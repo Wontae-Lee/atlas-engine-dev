@@ -5,24 +5,23 @@
 namespace atlas::system {
 
 template <typename T>
-class RmsThermometer final : public Thermometer<T> {
+class VarianceThermometer final : public Thermometer<T> {
 public:
     class Builder;
 
 public:
-    RmsThermometer() = default;
+    VarianceThermometer() = default;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit RmsThermometer(
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit VarianceThermometer(
         const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit RmsThermometer(
-        const atlas::system::RmsThermometerOperator<T>& thermometer_operator) noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit VarianceThermometer(
+        const atlas::system::VarianceThermometerOperator<T>& thermometer_operator) noexcept;
 
-    ~RmsThermometer() override = default;
+    ~VarianceThermometer() override = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
-
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     measure(DomainDeviceProbe<T> domain, SpatialHashingProbe<T> searcher, FluidDeviceProbe<T> particle)
@@ -41,11 +40,11 @@ public:
     thermometer_operator() const noexcept;
 
 private:
-    atlas::system::ThermometerOperator<T> _thermometer_operator { ThermometerType::Rms };
+    atlas::system::ThermometerOperator<T> _thermometer_operator { ThermometerType::Variance };
 };
 
 template <typename T>
-class RmsThermometer<T>::Builder final {
+class VarianceThermometer<T>::Builder final {
 public:
     Builder() = default;
 
@@ -53,16 +52,16 @@ public:
     with_thermometer_operator(const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_thermometer_operator(const atlas::system::RmsThermometerOperator<T>& thermometer_operator) noexcept;
+    with_thermometer_operator(const atlas::system::VarianceThermometerOperator<T>& thermometer_operator) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE RmsThermometer<T>
+    ATLAS_HOST ATLAS_FORCE_INLINE VarianceThermometer<T>
     build() const;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<RmsThermometer<T>>
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<VarianceThermometer<T>>
     make_host_shared() const;
 
 private:
-    atlas::system::ThermometerOperator<T> _thermometer_operator { ThermometerType::Rms };
+    atlas::system::ThermometerOperator<T> _thermometer_operator { ThermometerType::Variance };
 };
 
 }
@@ -70,14 +69,14 @@ private:
 namespace atlas {
 
 template <typename T>
-using RmsThermometer = atlas::system::RmsThermometer<T>;
+using VarianceThermometer = atlas::system::VarianceThermometer<T>;
 
 template <typename T>
-using RmsThermometerHostPtr = atlas::host_shared_ptr<atlas::system::RmsThermometer<T>>;
+using VarianceThermometerHostPtr = atlas::host_shared_ptr<atlas::system::VarianceThermometer<T>>;
 
 template <typename T>
-using RmsThermometerDevicePtr = atlas::device_shared_ptr<atlas::system::RmsThermometer<T>>;
+using VarianceThermometerDevicePtr = atlas::device_shared_ptr<atlas::system::VarianceThermometer<T>>;
 
 }
 
-#include <atlas/measure/thermometer/rms_thermometer.hpp>
+#include <atlas/measure/thermometer/variance_thermometer.hpp>

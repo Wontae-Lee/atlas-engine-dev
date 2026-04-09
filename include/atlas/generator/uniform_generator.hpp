@@ -34,6 +34,12 @@ UniformGenerator<T>::generate_operator() const noexcept {
 }
 
 template <typename T>
+GenerateOperator<T>
+UniformGenerator<T>::make_generate_operator() const noexcept {
+    return _operator;
+}
+
+template <typename T>
 T
 UniformGenerator<T>::param0() const noexcept {
     return _min_value;

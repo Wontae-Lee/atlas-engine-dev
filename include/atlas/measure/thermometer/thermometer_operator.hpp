@@ -8,24 +8,26 @@ namespace atlas::system {
 
 template <typename T>
 void
-RmsThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
-                                   const SpatialHashingProbe<T>& searcher,
-                                   const FluidDeviceProbe<T>& particle) const {
-    T* const field                   = domain.field_temperature;
-    const Vector3<T>* const position = particle.pos;
-    Vector3<T>* const velocity       = particle.vel;
-    T* const particle_temperature    = particle.temperature;
-    const int* const indices         = searcher.indices;
-    const int* const cell_start      = searcher.cell_start;
-    const int* const cell_end        = searcher.cell_end;
-    const Vector3<int> grid_size     = domain.grid_size;
-    const Vector3<T> lower_corner    = domain.lower_corner;
-    const T inv_h                    = domain.inv_h;
-    const int num_of_cells           = domain.num_of_cells;
-    const int particle_count         = particle.particle_count;
+VarianceThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
+                                        const SpatialHashingProbe<T>& searcher,
+                                        const FluidDeviceProbe<T>& particle) const {
+    T* const field                                      = domain.field_temperature;
+    const Vector3<T>* const position                    = particle.pos;
+    const Vector3<T>* const velocity                    = particle.vel;
+    const MatrialProperties<T>* const particle_property = particle.particle_property;
+    T* const particle_temperature                       = particle.temperature;
+    const size_t* const species                         = particle.species;
+    const int* const indices                            = searcher.indices;
+    const int* const cell_start                         = searcher.cell_start;
+    const int* const cell_end                           = searcher.cell_end;
+    const Vector3<int> grid_size                        = domain.grid_size;
+    const Vector3<T> lower_corner                       = domain.lower_corner;
+    const T inv_h                                       = domain.inv_h;
+    const int num_of_cells                              = domain.num_of_cells;
+    const int particle_count                            = particle.particle_count;
 
-    if (field == nullptr || position == nullptr || velocity == nullptr || particle_temperature == nullptr
-        || indices == nullptr
+    if (field == nullptr || position == nullptr || velocity == nullptr || particle_property == nullptr
+        || particle_temperature == nullptr || species == nullptr || indices == nullptr
         || cell_start == nullptr || cell_end == nullptr || num_of_cells <= 0 || particle_count < 0) {
         return;
     }
@@ -42,34 +44,39 @@ RmsThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
 
             const int end = cell_end[cell];
             Vector3<T> mean_velocity { T(0), T(0), T(0) };
-            int count = 0;
+            T momentum_weight_sum = T(0);
+            int count             = 0;
 
             for (int k = begin; k < end; ++k) {
                 const int particle_index = indices[k];
                 if (particle_index < 0 || particle_index >= particle_count) continue;
-                mean_velocity += velocity[particle_index];
+                const size_t species_index = species[particle_index];
+                const T mass               = particle_property[species_index].mass;
+                mean_velocity += velocity[particle_index] * mass;
+                momentum_weight_sum += mass;
                 ++count;
             }
 
-            if (count <= 0) {
+            if (count <= 0 || !(momentum_weight_sum > T(0))) {
                 field[cell] = T(0);
                 return;
             }
 
-            mean_velocity /= static_cast<T>(count);
+            mean_velocity /= momentum_weight_sum;
 
-            T squared_fluctuation_sum = T(0);
+            T thermal_energy_sum = T(0);
             for (int k = begin; k < end; ++k) {
                 const int particle_index = indices[k];
                 if (particle_index < 0 || particle_index >= particle_count) continue;
 
-                const Vector3<T> dv = velocity[particle_index] - mean_velocity;
-                squared_fluctuation_sum += dv.x * dv.x + dv.y * dv.y + dv.z * dv.z;
+                const size_t species_index = species[particle_index];
+                const T mass               = particle_property[species_index].mass;
+                const Vector3<T> dv        = velocity[particle_index] - mean_velocity;
+                thermal_energy_sum += mass * (dv.x * dv.x + dv.y * dv.y + dv.z * dv.z);
             }
 
-            const T rms_temperature = static_cast<T>(std::sqrt(
-                static_cast<double>(squared_fluctuation_sum / static_cast<T>(count))));
-            field[cell]             = rms_temperature;
+            field[cell] = thermal_energy_sum
+                / (static_cast<T>(3) * static_cast<T>(atlas::boltzmann_constant) * static_cast<T>(count));
         });
 
     const Vector3<int> hi = grid_size - Vector3<int> { 1, 1, 1 };
@@ -141,8 +148,8 @@ template <typename T>
 ThermometerOperator<T>::ThermometerOperator(const ThermometerType type_) noexcept
     : type(type_) {
     switch (type) {
-    case ThermometerType::Rms:
-        new (&rms) RmsThermometerOperator<T> {};
+    case ThermometerType::Variance:
+        new (&variance) VarianceThermometerOperator<T> {};
         return;
     case ThermometerType::Average:
         new (&average) AverageThermometerOperator<T> {};
@@ -176,9 +183,9 @@ ThermometerOperator<T>::~ThermometerOperator() noexcept {
 }
 
 template <typename T>
-ThermometerOperator<T>::ThermometerOperator(const RmsThermometerOperator<T>& op) noexcept
-    : type(ThermometerType::Rms) {
-    new (&rms) RmsThermometerOperator<T>(op);
+ThermometerOperator<T>::ThermometerOperator(const VarianceThermometerOperator<T>& op) noexcept
+    : type(ThermometerType::Variance) {
+    new (&variance) VarianceThermometerOperator<T>(op);
 }
 
 template <typename T>
@@ -193,40 +200,38 @@ ThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
                                 const SpatialHashingProbe<T>& searcher,
                                 const FluidDeviceProbe<T>& particle) const {
     switch (type) {
-    case ThermometerType::Rms:
-        rms.measure(domain, searcher, particle);
+    case ThermometerType::Variance:
+        variance.measure(domain, searcher, particle);
         return;
     case ThermometerType::Average:
         average.measure(domain, searcher, particle);
         return;
-    default:
-        average.measure(domain, searcher, particle);
-        return;
     }
+
+    average.measure(domain, searcher, particle);
 }
 
 template <typename T>
 void
 ThermometerOperator<T>::destroy_active() noexcept {
     switch (type) {
-    case ThermometerType::Rms:
-        rms.~RmsThermometerOperator<T>();
+    case ThermometerType::Variance:
+        variance.~VarianceThermometerOperator<T>();
         return;
     case ThermometerType::Average:
         average.~AverageThermometerOperator<T>();
         return;
-    default:
-        average.~AverageThermometerOperator<T>();
-        return;
     }
+
+    average.~AverageThermometerOperator<T>();
 }
 
 template <typename T>
 void
 ThermometerOperator<T>::copy_from(const ThermometerOperator& other) noexcept {
     switch (type) {
-    case ThermometerType::Rms:
-        new (&rms) RmsThermometerOperator<T>(other.rms);
+    case ThermometerType::Variance:
+        new (&variance) VarianceThermometerOperator<T>(other.variance);
         return;
     case ThermometerType::Average:
         new (&average) AverageThermometerOperator<T>(other.average);

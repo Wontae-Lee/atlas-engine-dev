@@ -3,9 +3,9 @@
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/core/macros.h>
-#include <atlas/fluid/fluidic_particle.h>
 #include <atlas/generator/generator.h>
 #include <atlas/logging/logging.h>
+#include <atlas/material/matrial_properties.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
 
@@ -15,6 +15,10 @@ namespace atlas::system {
 
 template <typename T>
 struct FluidDeviceProbe {
+    MatrialProperties<T>* particle_property { nullptr };
+
+    GenerateOperator<T>* generator { nullptr };
+
     Vector3<T>* pos { nullptr };
 
     Vector3<T>* vel { nullptr };
@@ -56,22 +60,22 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     empty() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<FluidicParticleHostPtr<T>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<MatrialProperties<T>>&
     particles() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<FluidicParticleHostPtr<T>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<MatrialProperties<T>>&
     particles() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<T>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<T>&
     mole_fractions() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<T>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<T>&
     mole_fractions() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<GeneratorHostPtr<T>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<GenerateOperator<T>>&
     generators() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE HostBuffer<GeneratorHostPtr<T>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<GenerateOperator<T>>&
     generators() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE FluidDeviceProbe<T>
@@ -99,11 +103,11 @@ private:
     friend class Builder;
 
 private:
-    HostBuffer<FluidicParticleHostPtr<T>> _particles;
+    DeviceBuffer<MatrialProperties<T>> _particle_properties;
 
-    HostBuffer<T> _mole_fractions;
+    DeviceBuffer<T> _mole_fractions;
 
-    HostBuffer<GeneratorHostPtr<T>> _generators;
+    DeviceBuffer<GenerateOperator<T>> _generators;
 
     DeviceBuffer<Vector3<T>> d_pos;
 
@@ -132,42 +136,42 @@ public:
     make_host_shared() const;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species(const FluidicParticle<T>& p);
+    add_species(const MatrialProperties<T>& p);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species(const FluidicParticle<T>& p, T mole_fraction);
+    add_species(const MatrialProperties<T>& p, T mole_fraction);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species(const FluidicParticle<T>& p, T mole_fraction, GeneratorHostPtr<T> generator);
+    add_species(const MatrialProperties<T>& p, T mole_fraction, GeneratorHostPtr<T> generator);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species(FluidicParticleHostPtr<T> p);
+    add_species(MatrialPropertiesHostPtr<T> p);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species(FluidicParticleHostPtr<T> p, T mole_fraction);
+    add_species(MatrialPropertiesHostPtr<T> p, T mole_fraction);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species(FluidicParticleHostPtr<T> p, T mole_fraction, GeneratorHostPtr<T> generator);
+    add_species(MatrialPropertiesHostPtr<T> p, T mole_fraction, GeneratorHostPtr<T> generator);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species_bulk(const HostBuffer<FluidicParticle<T>>& ps);
+    add_species_bulk(const HostBuffer<MatrialProperties<T>>& ps);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species_bulk(const HostBuffer<FluidicParticle<T>>& ps, const HostBuffer<T>& mole_fractions);
+    add_species_bulk(const HostBuffer<MatrialProperties<T>>& ps, const HostBuffer<T>& mole_fractions);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species_bulk(const HostBuffer<FluidicParticle<T>>& ps,
+    add_species_bulk(const HostBuffer<MatrialProperties<T>>& ps,
                      const HostBuffer<T>& mole_fractions,
                      const HostBuffer<GeneratorHostPtr<T>>& generators);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species_bulk(const HostBuffer<FluidicParticleHostPtr<T>>& ps);
+    add_species_bulk(const HostBuffer<MatrialPropertiesHostPtr<T>>& ps);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species_bulk(const HostBuffer<FluidicParticleHostPtr<T>>& ps, const HostBuffer<T>& mole_fractions);
+    add_species_bulk(const HostBuffer<MatrialPropertiesHostPtr<T>>& ps, const HostBuffer<T>& mole_fractions);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    add_species_bulk(const HostBuffer<FluidicParticleHostPtr<T>>& ps,
+    add_species_bulk(const HostBuffer<MatrialPropertiesHostPtr<T>>& ps,
                      const HostBuffer<T>& mole_fractions,
                      const HostBuffer<GeneratorHostPtr<T>>& generators);
 
@@ -185,11 +189,11 @@ private:
     validate() const;
 
 private:
-    HostBuffer<FluidicParticleHostPtr<T>> _particles;
+    DeviceBuffer<MatrialProperties<T>> _particles;
 
-    HostBuffer<T> _mole_fractions;
+    DeviceBuffer<T> _mole_fractions;
 
-    HostBuffer<GeneratorHostPtr<T>> _generators;
+    DeviceBuffer<GenerateOperator<T>> _generators;
 
     size_t _buffer_size = 0;
 

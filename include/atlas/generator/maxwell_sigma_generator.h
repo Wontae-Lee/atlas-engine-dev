@@ -24,6 +24,9 @@ public:
     ATLAS_HOST ATLAS_NODISCARD const GenerateOperator<T>&
     generate_operator() const noexcept override;
 
+    ATLAS_HOST ATLAS_NODISCARD GenerateOperator<T>
+    make_generate_operator() const noexcept override;
+
     ATLAS_HOST ATLAS_NODISCARD T
     param0() const noexcept override;
 

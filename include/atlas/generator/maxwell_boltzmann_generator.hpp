@@ -36,6 +36,12 @@ MaxwellBoltzmannGenerator<T>::generate_operator() const noexcept {
 }
 
 template <typename T>
+GenerateOperator<T>
+MaxwellBoltzmannGenerator<T>::make_generate_operator() const noexcept {
+    return _operator;
+}
+
+template <typename T>
 T
 MaxwellBoltzmannGenerator<T>::param0() const noexcept {
     return _temperature;

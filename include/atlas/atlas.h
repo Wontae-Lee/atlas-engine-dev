@@ -13,7 +13,6 @@
 #include <atlas/domain/domain.h>
 #include <atlas/flatten/flatten.h>
 #include <atlas/fluid/fluid.h>
-#include <atlas/fluid/fluidic_particle.h>
 #include <atlas/generator/generate_operator.h>
 #include <atlas/generator/generator.h>
 #include <atlas/generator/maxwell_boltzmann_generator.h>
@@ -33,6 +32,7 @@
 #include <atlas/iterator/counting_iterator.h>
 #include <atlas/iterator/zip_iterator.h>
 #include <atlas/logging/logging.h>
+#include <atlas/material/matrial_properties.h>
 #include <atlas/math/constants.h>
 #include <atlas/math/detail/config.h>
 #include <atlas/math/detail/ops.h>
@@ -58,9 +58,9 @@
 #include <atlas/measure/measure.h>
 #include <atlas/measure/thermometer.h>
 #include <atlas/measure/thermometer/average_thermometer.h>
-#include <atlas/measure/thermometer/rms_thermometer.h>
 #include <atlas/measure/thermometer/thermometer_operator.h>
 #include <atlas/measure/thermometer/thermometer_type.h>
+#include <atlas/measure/thermometer/variance_thermometer.h>
 #include <atlas/memory/copy.h>
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>
