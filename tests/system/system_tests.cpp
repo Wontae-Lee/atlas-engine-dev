@@ -22,10 +22,18 @@ make_test_fluid() {
         .make_host_shared();
 }
 
+template <typename T>
+atlas::FluidHostPtr<T>
+make_buffered_fluid(const std::size_t buffer_size) {
+    return atlas::system::Fluid<T>::builder()
+        .with_buffer_size(buffer_size)
+        .make_host_shared();
+}
+
 }
 
 TEST(System, AddColliderStoresPointer) {
-    system::System<double> sim_system(0);
+    system::System<double> sim_system(make_buffered_fluid<double>(0));
     auto collider = test::make_host_shared_collider<double>();
 
     sim_system.add_collider(collider);
@@ -35,7 +43,7 @@ TEST(System, AddColliderStoresPointer) {
 }
 
 TEST(System, AddColliderValueOverloadCreatesStoredCollider) {
-    system::System<double> sim_system(0);
+    system::System<double> sim_system(make_buffered_fluid<double>(0));
     auto collider_ptr = test::make_host_shared_collider<double>();
 
     sim_system.add_collider(*collider_ptr);
@@ -47,7 +55,7 @@ TEST(System, AddColliderValueOverloadCreatesStoredCollider) {
 }
 
 TEST(System, SetCollidersCopiesConfiguredPointerListAndClearRemovesAll) {
-    system::System<double> sim_system(0);
+    system::System<double> sim_system(make_buffered_fluid<double>(0));
     HostBuffer<ColliderHostPtr<double>> colliders {
         test::make_host_shared_collider<double>(),
         test::make_host_shared_collider<double>()
@@ -64,7 +72,7 @@ TEST(System, SetCollidersCopiesConfiguredPointerListAndClearRemovesAll) {
 }
 
 TEST(System, SetCollidersCopiesConfiguredValueList) {
-    system::System<double> sim_system(0);
+    system::System<double> sim_system(make_buffered_fluid<double>(0));
     HostBuffer<Collider<double>> colliders {
         *test::make_host_shared_collider<double>(),
         *test::make_host_shared_collider<double>()
@@ -84,7 +92,7 @@ TEST(System, BuilderBuildStoresConfiguredColliders) {
     auto collider1 = test::make_host_shared_collider<double>();
 
     const auto sim_system = system::System<double>::builder()
-                                .with_buffer_size(0)
+                                .with_fluid(make_buffered_fluid<double>(0))
                                 .with_collider(collider0)
                                 .with_collider(collider1)
                                 .build();
@@ -104,7 +112,7 @@ TEST(System, BuilderStoresConfiguredDtSourcesAndSinks) {
                     .make_host_shared();
 
     const auto sim_system = system::System<double>::builder()
-                                .with_buffer_size(3)
+                                .with_fluid(make_buffered_fluid<double>(3))
                                 .with_dt(0.125)
                                 .with_source(source)
                                 .with_sink(sink)
@@ -123,7 +131,7 @@ TEST(System, BuilderStoresConfiguredDomainAndCodec) {
     auto codec = atlas::make_host_shared<atlas::test::DummyCodec<double>>(domain);
 
     const auto sim_system = system::System<double>::builder()
-                                .with_buffer_size(0)
+                                .with_fluid(make_buffered_fluid<double>(0))
                                 .with_domain(domain)
                                 .with_codec(codec)
                                 .build();
@@ -136,7 +144,7 @@ TEST(System, BuilderUsesSingleCodecByDefaultWhenDomainIsConfigured) {
     auto domain = test::make_domain_ptr<double>();
 
     const auto sim_system = system::System<double>::builder()
-                                .with_buffer_size(0)
+                                .with_fluid(make_buffered_fluid<double>(0))
                                 .with_domain(domain)
                                 .build();
 
@@ -145,7 +153,7 @@ TEST(System, BuilderUsesSingleCodecByDefaultWhenDomainIsConfigured) {
 }
 
 TEST(System, SetDomainAndCodecStoreConfiguredPointers) {
-    system::System<double> sim_system(0);
+    system::System<double> sim_system(make_buffered_fluid<double>(0));
     auto domain = test::make_domain_ptr<double>();
     auto codec = atlas::make_host_shared<atlas::test::DummyCodec<double>>(domain);
 
@@ -157,7 +165,7 @@ TEST(System, SetDomainAndCodecStoreConfiguredPointers) {
 }
 
 TEST(System, SetDomainCreatesDefaultSingleCodecWhenCodecIsMissing) {
-    system::System<double> sim_system(0);
+    system::System<double> sim_system(make_buffered_fluid<double>(0));
     auto domain = test::make_domain_ptr<double>();
 
     sim_system.set_domain(domain);
@@ -170,7 +178,7 @@ TEST(System, StoresRuntimeProbesAsMembers) {
     auto domain = test::make_domain_ptr<double>();
 
     auto sim_system = system::System<double>::builder()
-                          .with_buffer_size(4)
+                          .with_fluid(make_buffered_fluid<double>(4))
                           .with_domain(domain)
                           .build();
 
@@ -183,7 +191,7 @@ TEST(System, StoresRuntimeProbesAsMembers) {
 TEST(System, ClassifyUpdatesCodecDeviceProbe) {
     auto domain = test::make_domain_ptr<double>();
     auto codec = atlas::make_host_shared<atlas::test::DummyCodec<double>>(domain);
-    system::System<double> sim_system(4);
+    system::System<double> sim_system(make_buffered_fluid<double>(4));
 
     sim_system.set_domain(domain);
     sim_system.set_codec(codec);
@@ -201,7 +209,7 @@ TEST(System, BuilderAcceptsColliderValuesInHostBuffer) {
     };
 
     const auto sim_system = system::System<double>::builder()
-                                .with_buffer_size(0)
+                                .with_fluid(make_buffered_fluid<double>(0))
                                 .with_colliders(colliders)
                                 .build();
 
@@ -216,7 +224,7 @@ TEST(System, BuilderMakeHostSharedCreatesNonNullPointer) {
     auto collider = test::make_host_shared_collider<double>();
 
     const auto sim_system = system::System<double>::builder()
-                                .with_buffer_size(4)
+                                .with_fluid(make_buffered_fluid<double>(4))
                                 .with_collider(collider)
                                 .make_host_shared();
 
@@ -227,12 +235,12 @@ TEST(System, BuilderMakeHostSharedCreatesNonNullPointer) {
 }
 
 TEST(System, BuilderAndSetterAllowNullColliderPointersAndSkipThem) {
-    system::System<double> sim_system(0);
+    system::System<double> sim_system(make_buffered_fluid<double>(0));
     sim_system.add_collider(ColliderHostPtr<double> {});
     EXPECT_EQ(sim_system.colliders().size(), 1u);
 
     const auto built = system::System<double>::builder()
-                           .with_buffer_size(0)
+                           .with_fluid(make_buffered_fluid<double>(0))
                            .with_collider(ColliderHostPtr<double> {})
                            .build();
     EXPECT_EQ(built.colliders().size(), 1u);
@@ -242,18 +250,20 @@ TEST(System, BuilderAndSetterAllowNullColliderPointersAndSkipThem) {
     EXPECT_EQ(sim_system.colliders().size(), 1u);
 
     const auto built_from_buffer = system::System<double>::builder()
-                                       .with_buffer_size(0)
+                                       .with_fluid(make_buffered_fluid<double>(0))
                                        .with_colliders(colliders)
                                        .build();
     EXPECT_EQ(built_from_buffer.colliders().size(), 1u);
 }
 
 TEST(System, BuilderAndSetterAllowNullSourcesAndSinksAndRejectOnlyInvalidDtDomainCodec) {
-    system::System<double> sim_system(0);
+    system::System<double> sim_system(make_buffered_fluid<double>(0));
 
     EXPECT_THROW((void)sim_system.set_dt(0.0), std::runtime_error);
     EXPECT_THROW((void)sim_system.set_domain(DomainHostPtr<double> {}), std::runtime_error);
     EXPECT_THROW((void)sim_system.set_codec(CodecHostPtr<double> {}), std::runtime_error);
+    EXPECT_THROW((void)sim_system.set_fluid(FluidHostPtr<double> {}), std::runtime_error);
+    EXPECT_THROW((void)system::System<double>::builder().build(), std::runtime_error);
     EXPECT_THROW((void)system::System<double>::builder().with_dt(0.0).build(), std::runtime_error);
     EXPECT_THROW((void)system::System<double>::builder().with_domain(DomainHostPtr<double> {}), std::runtime_error);
     EXPECT_THROW((void)system::System<double>::builder().with_codec(CodecHostPtr<double> {}), std::runtime_error);
@@ -268,7 +278,7 @@ TEST(System, BuilderAndSetterAllowNullSourcesAndSinksAndRejectOnlyInvalidDtDomai
     EXPECT_EQ(sim_system.sinks().size(), 1u);
 
     const auto built = system::System<double>::builder()
-                           .with_buffer_size(0)
+                           .with_fluid(make_buffered_fluid<double>(0))
                            .with_source(SourceHostPtr<double> {})
                            .with_sink(SinkHostPtr<double> {})
                            .with_sources(sources)
@@ -280,7 +290,7 @@ TEST(System, BuilderAndSetterAllowNullSourcesAndSinksAndRejectOnlyInvalidDtDomai
 
 TEST(System, UpdateSkipsNullSourceSinkAndColliderStages) {
     auto sim_system = system::System<float>::builder()
-                          .with_buffer_size(1)
+                          .with_fluid(make_buffered_fluid<float>(1))
                           .with_dt(1.0f)
                           .with_source(SourceHostPtr<float> {})
                           .with_sink(SinkHostPtr<float> {})
@@ -306,7 +316,7 @@ TEST(System, UpdateSkipsNullSourceSinkAndColliderStages) {
 
 TEST(System, OperatorWithoutCollidersFallsBackToTimeIntegration) {
     auto sim_system = system::System<float>::builder()
-                          .with_buffer_size(1)
+                          .with_fluid(make_buffered_fluid<float>(1))
                           .with_dt(2.0f)
                           .build();
     auto& probe = sim_system.particle_probe();
@@ -331,7 +341,7 @@ TEST(System, OperatorWithoutCollidersFallsBackToTimeIntegration) {
 
 TEST(System, NoArgOperatorUsesStoredDt) {
     auto sim_system = system::System<float>::builder()
-                          .with_buffer_size(1)
+                          .with_fluid(make_buffered_fluid<float>(1))
                           .with_dt(2.0f)
                           .build();
     auto& probe = sim_system.particle_probe();
@@ -366,7 +376,7 @@ TEST(System, EmitAndRemoveRunSourceAndSinkStages) {
                     .make_host_shared();
 
     auto sim_system = system::System<float>::builder()
-                          .with_buffer_size(128)
+                          .with_fluid(make_buffered_fluid<float>(128))
                           .with_source(source)
                           .with_sink(sink)
                           .build();
@@ -399,7 +409,7 @@ TEST(System, OperatorWithColliderReflectsVelocityAtClosestHit) {
                         .make_host_shared();
 
     auto sim_system = system::System<float>::builder()
-                          .with_buffer_size(1)
+                          .with_fluid(make_buffered_fluid<float>(1))
                           .with_dt(2.0f)
                           .with_collider(collider)
                           .build();

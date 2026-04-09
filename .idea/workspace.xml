@@ -140,28 +140,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="added the lagacy sketches.">
-      <change afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/average_thermometer.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/average_thermometer.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/rms_thermometer.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_type.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/measure/measure_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/measure/thermometer/average_thermometer_tests.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/measure/thermometer/rms_thermometer_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/domain/domain.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/domain/domain.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/domain/domain.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/domain/domain.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/constants.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/constants.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/measure.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/measure.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/rms_thermometer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/utilities/tests_utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/tests/utilities/tests_utils.h" afterDir="false" />
-    </list>
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="added the lagacy sketches." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

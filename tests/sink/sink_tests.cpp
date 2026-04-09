@@ -5,8 +5,20 @@
 
 using namespace atlas;
 
+namespace {
+
+template <typename T>
+atlas::FluidHostPtr<T>
+make_buffered_fluid(const std::size_t buffer_size) {
+    return atlas::system::Fluid<T>::builder()
+        .with_buffer_size(buffer_size)
+        .make_host_shared();
+}
+
+}
+
 TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
-    atlas::system::System<double> sim_system(5);
+    atlas::system::System<double> sim_system(make_buffered_fluid<double>(5));
     auto& particle_probe          = sim_system.particle_probe();
     particle_probe.particle_count = 3;
 
@@ -63,7 +75,7 @@ TEST(Sink, VolumeSinkRemovesInteriorActiveParticlesAndCompactsProbe) {
 }
 
 TEST(Sink, FlipInvertsVolumeDespawnClassification) {
-    atlas::system::System<double> sim_system(5);
+    atlas::system::System<double> sim_system(make_buffered_fluid<double>(5));
     auto& particle_probe          = sim_system.particle_probe();
     particle_probe.particle_count = 3;
 

@@ -29,6 +29,14 @@ make_test_fluid() {
 }
 
 template <typename T>
+atlas::FluidHostPtr<T>
+make_buffered_fluid(const std::size_t buffer_size) {
+    return atlas::system::Fluid<T>::builder()
+        .with_buffer_size(buffer_size)
+        .make_host_shared();
+}
+
+template <typename T>
 atlas::Unit<T>
 make_box_unit(const atlas::Vector3<T>& translation = atlas::Vector3<T>(T(0), T(0), T(0))) {
     const auto geometry = atlas::geometry::Box<T>::builder()
@@ -119,7 +127,7 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
     constexpr double eps = 1e-12;
     constexpr double source_temperature = 350.0;
 
-    auto system          = atlas::system::System<double>(64);
+    auto system          = atlas::system::System<double>(make_buffered_fluid<double>(64));
     auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
@@ -168,7 +176,7 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
 }
 
 TEST(Source, EmitAppendsUsingCachedPositionsAndPreservesSpeciesTotalsPerEmission) {
-    auto system          = atlas::system::System<double>(64);
+    auto system          = atlas::system::System<double>(make_buffered_fluid<double>(64));
     auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
@@ -197,7 +205,7 @@ TEST(Source, EmitAppendsUsingCachedPositionsAndPreservesSpeciesTotalsPerEmission
 }
 
 TEST(Source, ChangingSpawnTypeInvalidatesCacheAndRebuildsLocalPositions) {
-    auto system          = atlas::system::System<double>(64);
+    auto system          = atlas::system::System<double>(make_buffered_fluid<double>(64));
     auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
@@ -226,7 +234,7 @@ TEST(Source, ChangingSpawnTypeInvalidatesCacheAndRebuildsLocalPositions) {
 }
 
 TEST(Source, FlipInvertsSpawnClassificationWhenRebuildingCache) {
-    auto system          = atlas::system::System<double>(64);
+    auto system          = atlas::system::System<double>(make_buffered_fluid<double>(64));
     auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 

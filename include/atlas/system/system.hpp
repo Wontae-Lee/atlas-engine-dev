@@ -16,31 +16,43 @@ System<T>::builder() noexcept {
 }
 
 template <typename T>
-System<T>::System(const size_t buffer_size)
+System<T>::System(FluidHostPtr<T> fluid)
 
-    : _particle_data(atlas::make_host_shared<Fluid<T>>(buffer_size))
-    , _particle_probe(_particle_data->make_device_probe()) {
+    : _fluid(std::move(fluid)) {
+    if (!_fluid) {
+        atlas::logger::error()
+            << "System: fluid must not be null.";
+        throw std::runtime_error("System: fluid must not be null.");
+    }
+
+    _particle_probe = _fluid->make_device_probe();
 }
 
 template <typename T>
-System<T>::System(const size_t buffer_size,
+System<T>::System(FluidHostPtr<T> fluid,
                   const T dt,
                   DomainHostPtr<T> domain,
                   CodecHostPtr<T> codec,
                   HostBuffer<SourceHostPtr<T>> sources,
                   HostBuffer<SinkHostPtr<T>> sinks,
                   HostBuffer<MeasureHostPtr<T>> measures,
-                  HostBuffer<ColliderHostPtr<T>> colliders) noexcept
+                  HostBuffer<ColliderHostPtr<T>> colliders)
 
-    : _particle_data(atlas::make_host_shared<Fluid<T>>(buffer_size))
+    : _fluid(std::move(fluid))
     , _dt(dt)
     , _domain(std::move(domain))
     , _codec(std::move(codec))
-    , _particle_probe(_particle_data->make_device_probe())
+    , _particle_probe(_fluid->make_device_probe())
     , _sources(std::move(sources))
     , _sinks(std::move(sinks))
     , _measures(std::move(measures))
     , _colliders(std::move(colliders)) {
+    if (!_fluid) {
+        atlas::logger::error()
+            << "System: fluid must not be null.";
+        throw std::runtime_error("System: fluid must not be null.");
+    }
+
     if (_domain) {
         _searcher       = atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain);
         _domain_probe   = _domain->make_device_probe();
@@ -208,6 +220,19 @@ System<T>::time_integration() const {
 
 template <typename T>
 void
+System<T>::set_fluid(FluidHostPtr<T> fluid) {
+    if (!fluid) {
+        atlas::logger::error()
+            << "System: fluid must not be null.";
+        throw std::runtime_error("System: fluid must not be null.");
+    }
+
+    _fluid          = std::move(fluid);
+    _particle_probe = _fluid->make_device_probe();
+}
+
+template <typename T>
+void
 System<T>::set_dt(const T dt) {
     if (!(dt > T(0))) {
         atlas::logger::error()
@@ -318,7 +343,7 @@ System<T>::set_colliders(const HostBuffer<Collider<T>>& colliders) {
 template <typename T>
 FluidHostPtr<T>
 System<T>::fluid() const noexcept {
-    return _particle_data;
+    return _fluid;
 }
 
 template <typename T>
@@ -437,8 +462,8 @@ System<T>::clear_colliders() noexcept {
 
 template <typename T>
 typename System<T>::Builder&
-System<T>::Builder::with_buffer_size(const size_t buffer_size) noexcept {
-    _buffer_size = buffer_size;
+System<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
+    _fluid = std::move(fluid);
     return *this;
 }
 
@@ -556,11 +581,11 @@ System<T>
 System<T>::Builder::build() {
     validate();
 
-    System<T> system(_buffer_size, _dt, _domain, _codec, _sources, _sinks, _measures, _colliders);
-    _buffer_size = 0;
-    _dt          = static_cast<T>(0.01);
-    _domain      = nullptr;
-    _codec       = nullptr;
+    System<T> system(_fluid, _dt, _domain, _codec, _sources, _sinks, _measures, _colliders);
+    _fluid  = nullptr;
+    _dt     = static_cast<T>(0.01);
+    _domain = nullptr;
+    _codec  = nullptr;
     _sources.clear();
     _sinks.clear();
     _measures.clear();
@@ -577,6 +602,12 @@ System<T>::Builder::make_host_shared() {
 template <typename T>
 void
 System<T>::Builder::validate() const {
+    if (!_fluid) {
+        atlas::logger::error()
+            << "System::Builder: fluid must not be null.";
+        throw std::runtime_error("System::Builder: fluid must not be null.");
+    }
+
     if (!(_dt > T(0))) {
         atlas::logger::error()
             << "System::Builder: dt must be positive.";
