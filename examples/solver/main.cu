@@ -5,10 +5,6 @@ int
 main() {
     using sim_t = float;
 
-    // ------------------------------------------------------------
-    // Define the global simulation domain as an axis-aligned box
-    // spanning from (-1, -1, -1) to (1, 1, 1)
-    // ------------------------------------------------------------
     const auto box_domain = geometry::Box<sim_t>::builder()
                                 .with_lower_corner(Vector3<sim_t> { -1.0f, -1.0f, -1.0f })
                                 .with_upper_corner(Vector3<sim_t> { 1.0f, 1.0f, 1.0f })
@@ -17,77 +13,32 @@ main() {
     atlas::logger::info() << "\n"
                           << "Starting simulation...";
 
-    // ------------------------------------------------------------
-    // Create the simulation domain and spatial discretization
-    //
-    // The domain defines:
-    // - global coordinate bounds
-    // - uniform cell size used for spatial partitioning
-    // ------------------------------------------------------------
     const auto domain = system::Domain<sim_t>::builder()
                             .with_geometry(box_domain)
                             .with_cell_size(0.02f)
                             .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Construct the neighbor-search structure
-    //
-    // SpatialHashingSearcher is responsible for:
-    // - mapping positions to grid cells
-    // - efficiently finding nearby particles or units
-    // ------------------------------------------------------------
     const auto codec = system::SingleCodec<sim_t>::builder()
                            .with_domain(domain)
                            .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Define a fluidic particle species (e.g., Nitrogen gas)
-    //
-    // The molecular mass is specified in kilograms.
-    // ------------------------------------------------------------
     const auto nitrogen = MatrialProperties<sim_t>::builder()
                               .with_mass(4.65e-26f)
                               .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Create a fluid composed of one or more particle species
-    //
-    // Fluids manage collections of particle definitions and
-    // associated physical properties.
-    // ------------------------------------------------------------
     const auto fluid = system::Fluid<sim_t>::builder()
                            .with_buffer_size(200000)
                            .add_species(nitrogen)
                            .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Define a geometric unit to be inserted into the simulation
-    //
-    // This unit represents a smaller box located at the center
-    // of the domain, acting as a solid or interaction object.
-    // ------------------------------------------------------------
     const auto box_unit = geometry::Box<sim_t>::builder()
                               .with_lower_corner(Vector3<sim_t> { -0.5f, -0.5f, -0.5f })
                               .with_upper_corner(Vector3<sim_t> { 0.5f, 0.5f, 0.5f })
                               .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Build a synchronization policy for the unit
-    //
-    // Identity sync implies:
-    // - the unit remains stationary
-    // - no time-dependent transformation is applied
-    // ------------------------------------------------------------
     const auto fixed_sync = system::Sync<sim_t>::builder()
                                 .make_host_shared();
 
-    // ------------------------------------------------------------
-    // Assemble the simulation unit by combining geometry and sync
-    //
-    // Unit<T> represents:
-    // - a geometric object
-    // - its spatial transformation and motion policy
-    // ------------------------------------------------------------
     const auto unit = system::Unit<sim_t>::builder()
                           .with_geometry(box_unit)
                           .with_sync(fixed_sync)
@@ -99,16 +50,18 @@ main() {
                                  .make_host_shared();
 
     const auto source = system::Source<sim_t>::builder()
-                            .with_unit(*unit)
+                            .with_units(HostBuffer<system::Unit<sim_t>> { *unit })
                             .with_fluid(fluid)
-                            .with_spawn_type(system::SpawnType::Volume)
+                            .with_spawn_types(HostBuffer<system::SpawnType> { system::SpawnType::Volume })
+                            .with_spawn_operator(system::SpawnOperator<sim_t>(system::SpawnType::Volume))
                             .with_spacing(20.f)
                             .with_temperature(300.0f)
                             .make_host_shared();
 
     const auto sink = system::Sink<sim_t>::builder()
-                          .with_unit(*domain_unit)
-                          .with_despawn_type(system::DespawnType::Volume)
+                          .with_units(HostBuffer<system::Unit<sim_t>> { *domain_unit })
+                          .with_despawn_types(HostBuffer<system::DespawnType> { system::DespawnType::Volume })
+                          .with_despawn_operator(system::DespawnOperator<sim_t>(system::DespawnType::Volume))
                           .with_flip(true)
                           .make_host_shared();
 
@@ -122,8 +75,9 @@ main() {
                                  .make_host_shared();
 
     const auto collider = system::Collider<sim_t>::builder()
-                              .with_unit(unit)
-                              .with_surface_interaction(interaction)
+                              .with_units(HostBuffer<system::Unit<sim_t>> { *unit })
+                              .with_surface_interactions(
+                                  HostBuffer<system::ColliderSurfaceInteraction<sim_t>> { *interaction })
                               .make_host_shared();
 
     const auto solver = atlas::make_host_shared<Solver<sim_t>>();

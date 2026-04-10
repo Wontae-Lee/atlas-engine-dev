@@ -291,10 +291,33 @@ make_host_shared_collider_surface_interaction() {
 template <typename T>
 ATLAS_FORCE_INLINE atlas::ColliderHostPtr<T>
 make_host_shared_collider() {
+    HostBuffer<system::Unit<T>> units { *make_host_shared_unit<T>() };
+    HostBuffer<system::ColliderSurfaceInteraction<T>> interactions {
+        *make_host_shared_collider_surface_interaction<T>()
+    };
+
     return atlas::Collider<T>::builder()
-        .with_unit(make_host_shared_unit<T>())
-        .with_surface_interaction(make_host_shared_collider_surface_interaction<T>())
+        .with_units(units)
+        .with_surface_interactions(interactions)
         .make_host_shared();
+}
+
+template <typename T>
+ATLAS_FORCE_INLINE atlas::Unit<T>
+make_box_unit(const atlas::Vector3<T>& translation = atlas::Vector3<T>(T(0), T(0), T(0))) {
+    const auto geometry = atlas::geometry::Box<T>::builder()
+                              .with_lower_corner(atlas::Vector3<T>(T(-1), T(-1), T(-1)))
+                              .with_upper_corner(atlas::Vector3<T>(T(1), T(1), T(1)))
+                              .make_host_shared();
+
+    const auto sync = atlas::system::Sync<T>::builder()
+                          .with_rigid_pose(translation, atlas::Quaternion<T>())
+                          .make_host_shared();
+
+    return atlas::system::Unit<T>::builder()
+        .with_geometry(geometry)
+        .with_sync(sync)
+        .build();
 }
 
 template <typename T>
@@ -342,6 +365,55 @@ ATLAS_FORCE_INLINE host_shared_ptr<system::Domain<double>>
 make_domain_ptr() {
     return make_domain_ptr<double>();
 }
+
+
+template <typename T>
+atlas::FluidHostPtr<T>
+make_test_fluid() {
+    const auto species_a = atlas::system::MatrialProperties<T>::builder()
+                               .with_mass(T(1))
+                               .make_host_shared();
+    const auto species_b = atlas::system::MatrialProperties<T>::builder()
+                               .with_mass(T(2))
+                               .make_host_shared();
+
+    return atlas::system::Fluid<T>::builder()
+        .add_species(species_a, T(0.5))
+        .add_species(species_b, T(0.5))
+        .with_buffer_size(128)
+        .make_host_shared();
+}
+
+template <typename T>
+atlas::FluidHostPtr<T>
+make_buffered_fluid(const std::size_t buffer_size) {
+    return atlas::system::Fluid<T>::builder()
+        .with_buffer_size(buffer_size)
+        .make_host_shared();
+}
+
+template <typename T>
+atlas::SourceHostPtr<T>
+make_test_source() {
+    return atlas::Source<T>::builder()
+        .with_units({ *test::make_host_shared_unit<T>() })
+        .with_fluid(make_test_fluid<T>())
+        .with_spawn_types({ atlas::system::SpawnType::Volume })
+        .with_spawn_operator(atlas::system::SpawnOperator<T>(atlas::system::SpawnType::Volume))
+        .with_spacing(T(1))
+        .make_host_shared();
+}
+
+template <typename T>
+atlas::SinkHostPtr<T>
+make_test_sink() {
+    return atlas::Sink<T>::builder()
+        .with_units({ *test::make_host_shared_unit<T>() })
+        .with_despawn_types({ atlas::system::DespawnType::Volume })
+        .with_despawn_operator(atlas::system::DespawnOperator<T>(atlas::system::DespawnType::Volume))
+        .make_host_shared();
+}
+
 
 } // namespace atlas::test
 

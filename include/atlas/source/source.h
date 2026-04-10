@@ -1,8 +1,7 @@
 #pragma once
 
 #include <atlas/buffer/device_buffer.h>
-#include <atlas/generator/generator.h>
-#include <atlas/generator/uniform_generator.h>
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/sampling/sampling.h>
@@ -28,9 +27,10 @@ public:
     ~Source() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
-    Source(Unit<T> unit,
+    Source(DeviceBuffer<Unit<T>> units,
+           DeviceBuffer<SpawnType> spawn_types,
+           DeviceBuffer<SpawnOperator<T>> spawn_operators,
            FluidHostPtr<T> fluid,
-           SpawnType spawn_type = SpawnType::Surface,
            bool flip            = false,
            T tolerance          = T(0),
            T temperature        = T(273.15)) noexcept;
@@ -39,19 +39,31 @@ public:
     builder() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
+    update(T dt);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
     emit(FluidDeviceProbe<T>& particle_probe);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_unit(Unit<T> unit) noexcept;
+    set_units(DeviceBuffer<Unit<T>> units) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_units(const HostBuffer<Unit<T>>& units);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_spawn_type(SpawnType spawn_type) noexcept;
+    set_spawn_types(DeviceBuffer<SpawnType> spawn_types) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_spawn_operator(SpawnOperator<T> spawn_operator) noexcept;
+    set_spawn_types(const HostBuffer<SpawnType>& spawn_types);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_spawn_operators(DeviceBuffer<SpawnOperator<T>> spawn_operators) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_spawn_operators(const HostBuffer<SpawnOperator<T>>& spawn_operators);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_tolerance(T tolerance) noexcept;
@@ -63,22 +75,28 @@ public:
     set_spacing(T spacing) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_generator(GeneratorHostPtr<T> generator) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
     set_temperature(T temperature) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const Unit<T>&
-    unit() const noexcept;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<Unit<T>>&
+    units() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<Unit<T>>&
+    units() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const FluidHostPtr<T>&
     fluid() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE SpawnType
-    spawn_type() const noexcept;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<SpawnType>&
+    spawn_types() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SpawnOperator<T>&
-    spawn_operator() const noexcept;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<SpawnType>&
+    spawn_types() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<SpawnOperator<T>>&
+    spawn_operators() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<SpawnOperator<T>>&
+    spawn_operators() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     tolerance() const noexcept;
@@ -88,9 +106,6 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     spacing() const noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const GeneratorHostPtr<T>&
-    generator() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     temperature() const noexcept;
@@ -102,15 +117,16 @@ public:
     rebuild_cache() noexcept;
 
 private:
-    Unit<T> _unit;
+    DeviceBuffer<Unit<T>> _units;
+    DeviceBuffer<SpawnType> _spawn_types;
+    DeviceBuffer<SpawnOperator<T>> _spawn_operators;
     FluidHostPtr<T> _fluid;
-    GeneratorHostPtr<T> _generator;
-    SpawnOperator<T> _spawn_operator { SpawnType::Surface };
     bool _flip   = false;
     T _tolerance = T(0);
     T _spacing   = T(0.1);
     T _temperature { T(273.15) };
     DeviceBuffer<Vector3<T>> _local_positions;
+    DeviceBuffer<int> _local_position_unit_indices;
     DeviceBuffer<size_t> _species_cache;
     DeviceBuffer<size_t> _shuffled_species;
     DeviceBuffer<std::uint64_t> _shuffle_keys;
@@ -130,16 +146,19 @@ public:
     make_host_shared();
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_unit(const Unit<T>& unit) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_unit(Unit<T>&& unit) noexcept;
+    with_units(const HostBuffer<Unit<T>>& units);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_spawn_type(SpawnType spawn_type) noexcept;
+    with_spawn_types(const HostBuffer<SpawnType>& spawn_types);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_spawn_operator(const SpawnOperator<T>& spawn_operator) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_spawn_operators(const HostBuffer<SpawnOperator<T>>& spawn_operators);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_tolerance(T tolerance) noexcept;
@@ -151,9 +170,6 @@ public:
     with_spacing(T spacing) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_generator(GeneratorHostPtr<T> generator) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_temperature(T temperature) noexcept;
 
 private:
@@ -161,10 +177,10 @@ private:
     validate() const;
 
 private:
-    std::optional<Unit<T>> _unit;
+    HostBuffer<Unit<T>> _units;
     FluidHostPtr<T> _fluid;
-    GeneratorHostPtr<T> _generator;
-    SpawnType _spawn_type = SpawnType::Surface;
+    HostBuffer<SpawnType> _spawn_types;
+    HostBuffer<SpawnOperator<T>> _spawn_operators;
     bool _flip   = false;
     T _tolerance = T(0);
     T _spacing   = T(0.1);

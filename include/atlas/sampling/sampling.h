@@ -1,11 +1,10 @@
 #pragma once
 #include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/math/math.h>
-#include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/random/default_random_engine.h>
 #include <atlas/random/uniform_real_distribution.h>
-#include <atlas/scan/exclusive_scan.h>
 #include <cmath>
 
 namespace atlas::sampling {
@@ -117,59 +116,41 @@ sample_spawn_grid(DeviceBuffer<Vector3<T>>& particles,
 
     if (nx <= 0 || ny <= 0 || nz <= 0) return;
 
-    const std::size_t total_candidates = static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny) * static_cast<std::size_t>(nz);
+    const std::size_t total_particles =
+        static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny) * static_cast<std::size_t>(nz);
 
-    if (total_candidates == 0) return;
+    HostBuffer<Vector3<T>> sampled_particles(total_particles);
+    HostBuffer<unsigned char> keep_mask(total_particles, 0);
 
-    DeviceBuffer<Vector3<T>> candidates(total_candidates);
-    DeviceBuffer<int> keep_mask(total_candidates, 0);
-    DeviceBuffer<int> offsets(total_candidates, 0);
-
-    Vector3<T>* candidates_ptr = atlas::raw_pointer_cast(candidates.data());
-    int* keep_mask_ptr         = atlas::raw_pointer_cast(keep_mask.data());
-
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        static_cast<int>(total_candidates),
-        [=] ATLAS_DEVICE(const int index) mutable {
-            const int plane = nx * ny;
-            const int iz    = index / plane;
-            const int rem   = index - iz * plane;
-            const int iy    = rem / nx;
-            const int ix    = rem - iy * nx;
+    atlas::parallel_for<atlas::ExecutionPolicy::device>(
+        static_cast<std::size_t>(0), total_particles, [&](std::size_t linear_index) {
+            const int ix = static_cast<int>(linear_index % static_cast<std::size_t>(nx));
+            const int iy = static_cast<int>((linear_index / static_cast<std::size_t>(nx))
+                                            % static_cast<std::size_t>(ny));
+            const int iz = static_cast<int>(linear_index
+                                            / (static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny)));
 
             const Vector3<T> sample(
                 lower.x + static_cast<T>(ix) * spacing,
                 lower.y + static_cast<T>(iy) * spacing,
                 lower.z + static_cast<T>(iz) * spacing);
 
-            candidates_ptr[index] = sample;
-            keep_mask_ptr[index]  = predicate(query, sample, tolerance) ? 1 : 0;
+            sampled_particles[linear_index] = sample;
+            keep_mask[linear_index]         = predicate(query, sample, tolerance) ? 1 : 0;
         });
 
-    atlas::exclusive_scan<ExecutionPolicy::device>(
-        keep_mask.begin(),
-        keep_mask.end(),
-        offsets.begin(),
-        0);
+    HostBuffer<Vector3<T>> accepted_particles;
+    accepted_particles.reserve(total_particles);
 
-    const int kept = offsets.back() + keep_mask.back();
-    if (kept <= 0) return;
+    for (std::size_t i = 0; i < total_particles; ++i) {
+        if (keep_mask[i] != 0) {
+            accepted_particles.push_back(sampled_particles[i]);
+        }
+    }
 
-    particles.resize(static_cast<std::size_t>(kept));
+    if (accepted_particles.empty()) return;
 
-    const Vector3<T>* candidate_ptr = atlas::raw_pointer_cast(candidates.data());
-    const int* offsets_ptr          = atlas::raw_pointer_cast(offsets.data());
-    const int* keep_ptr             = atlas::raw_pointer_cast(keep_mask.data());
-    Vector3<T>* particles_ptr       = atlas::raw_pointer_cast(particles.data());
-
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        static_cast<int>(total_candidates),
-        [=] ATLAS_DEVICE(const int index) {
-            if (!keep_ptr[index]) return;
-            particles_ptr[offsets_ptr[index]] = candidate_ptr[index];
-        });
+    particles = DeviceBuffer<Vector3<T>>(accepted_particles.begin(), accepted_particles.end());
 }
 
 }

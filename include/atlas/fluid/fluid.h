@@ -17,8 +17,6 @@ template <typename T>
 struct FluidDeviceProbe {
     MatrialProperties<T>* particle_property { nullptr };
 
-    GenerateOperator<T>* generator { nullptr };
-
     Vector3<T>* pos { nullptr };
 
     Vector3<T>* vel { nullptr };

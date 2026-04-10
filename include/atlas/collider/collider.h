@@ -24,14 +24,6 @@ public:
     ~Collider() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
-    Collider(Unit<T> unit,
-             ColliderSurfaceInteraction<T> surface_interaction) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE
-    Collider(UnitHostPtr<T> unit,
-             atlas::host_shared_ptr<ColliderSurfaceInteraction<T>> surface_interaction);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE
     Collider(DeviceBuffer<Unit<T>> units,
              DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions) noexcept;
 
@@ -45,23 +37,10 @@ public:
     set_units(const HostBuffer<Unit<T>>& units);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_unit(const Unit<T>& unit);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_unit(const UnitHostPtr<T>& unit);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
     set_surface_interactions(DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_surface_interactions(const HostBuffer<ColliderSurfaceInteraction<T>>& surface_interactions);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_surface_interaction(const ColliderSurfaceInteraction<T>& surface_interaction);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_surface_interaction(const atlas::host_shared_ptr<ColliderSurfaceInteraction<T>>&
-                                surface_interaction);
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<Unit<T>>&
     units() noexcept;
@@ -95,26 +74,7 @@ public:
     Builder() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_unit(const Unit<T>& unit);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_unit(Unit<T>&& unit);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_unit(const UnitHostPtr<T>& unit);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_units(const HostBuffer<Unit<T>>& units);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_surface_interaction(const ColliderSurfaceInteraction<T>& surface_interaction);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_surface_interaction(ColliderSurfaceInteraction<T>&& surface_interaction);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_surface_interaction(const atlas::host_shared_ptr<ColliderSurfaceInteraction<T>>&
-                                 surface_interaction);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_surface_interactions(const HostBuffer<ColliderSurfaceInteraction<T>>& surface_interactions);

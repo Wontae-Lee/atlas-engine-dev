@@ -17,7 +17,7 @@ FluidDeviceProbe<T>::empty() const noexcept {
 template <typename T>
 bool
 FluidDeviceProbe<T>::valid() const noexcept {
-    return particle_property != nullptr && generator != nullptr && pos != nullptr && particle_count > 0;
+    return particle_property != nullptr && pos != nullptr && particle_count > 0;
 }
 
 template <typename T>
@@ -97,7 +97,6 @@ Fluid<T>::make_device_probe() noexcept {
 
     FluidDeviceProbe<T> probe {};
     probe.particle_property = atlas::raw_pointer_cast(_particle_properties.data());
-    probe.generator         = atlas::raw_pointer_cast(_generators.data());
     probe.pos            = atlas::raw_pointer_cast(d_pos.data());
     probe.vel            = atlas::raw_pointer_cast(d_vel.data());
     probe.temperature    = atlas::raw_pointer_cast(d_temperature.data());

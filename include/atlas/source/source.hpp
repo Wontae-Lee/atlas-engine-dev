@@ -16,19 +16,17 @@
 namespace atlas::system {
 
 template <typename T>
-Source<T>::Source(Unit<T> unit,
+Source<T>::Source(DeviceBuffer<Unit<T>> units,
+                  DeviceBuffer<SpawnType> spawn_types,
+                  DeviceBuffer<SpawnOperator<T>> spawn_operators,
                   FluidHostPtr<T> fluid,
-                  const SpawnType spawn_type,
                   const bool flip,
                   const T tolerance,
                   const T temperature) noexcept
-    : _unit(std::move(unit))
+    : _units(std::move(units))
+    , _spawn_types(std::move(spawn_types))
+    , _spawn_operators(std::move(spawn_operators))
     , _fluid(std::move(fluid))
-    , _generator(atlas::UniformGenerator<T>::builder()
-                     .with_min_value(T(0))
-                     .with_max_value(T(1))
-                     .make_host_shared())
-    , _spawn_operator(spawn_type)
     , _flip(flip)
     , _tolerance(tolerance)
     , _temperature(temperature)
@@ -42,15 +40,31 @@ Source<T>::builder() noexcept {
 
 template <typename T>
 void
-Source<T>::rebuild_cache() noexcept {
+Source<T>::update(const T dt) {
+    if (_units.empty() || !(dt > T(0))) {
+        return;
+    }
 
+    auto* units = atlas::raw_pointer_cast(_units.data());
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        static_cast<int>(_units.size()),
+        [units, dt] ATLAS_DEVICE(const int i) {
+            units[i].update(dt);
+        });
+}
+
+template <typename T>
+void
+Source<T>::rebuild_cache() noexcept {
     if (!_is_invalidated_cache) {
         return;
     }
 
-    if (!_fluid || _fluid->empty()) {
-
+    if (_units.empty() || _spawn_types.empty() || _spawn_operators.empty() || !_fluid || _fluid->empty()) {
         _local_positions.clear();
+        _local_position_unit_indices.clear();
         _species_cache.clear();
         _shuffled_species.clear();
         _shuffle_keys.clear();
@@ -59,18 +73,62 @@ Source<T>::rebuild_cache() noexcept {
         return;
     }
 
-    const auto geometry_op = _unit.geometry_operator();
-    const bool flip        = _flip;
-    atlas::sampling::sample_spawn_grid(
-        _local_positions,
-        geometry_op,
-        _spacing,
-        _tolerance,
+    HostBuffer<Unit<T>> units_host(_units.size());
+    HostBuffer<SpawnOperator<T>> spawn_operators_host(_spawn_operators.size());
+    atlas::copy_device_to_host(
+        atlas::raw_pointer_cast(_units.data()),
+        units_host.data(),
+        units_host.size());
+    atlas::copy_device_to_host(
+        atlas::raw_pointer_cast(_spawn_operators.data()),
+        spawn_operators_host.data(),
+        spawn_operators_host.size());
 
-        [spawn_op = _spawn_operator, flip] ATLAS_DEVICE(const auto& query, const Vector3<T>& sample, T tol) {
-            const bool should_spawn = spawn_op.spawn(query, sample, tol);
-            return flip ? !should_spawn : should_spawn;
-        });
+    HostBuffer<Vector3<T>> local_positions_host;
+    HostBuffer<int> local_position_unit_indices_host;
+
+    for (std::size_t i = 0; i < units_host.size(); ++i) {
+        DeviceBuffer<Vector3<T>> local_positions_for_unit;
+        const auto& unit             = units_host[i];
+        const auto& geometry_op      = unit.geometry_operator();
+        const std::size_t spawn_index = (spawn_operators_host.size() == 1 || i >= spawn_operators_host.size()) ? 0 : i;
+        const auto spawn_operator    = spawn_operators_host[spawn_index];
+        const bool flip              = _flip;
+
+        atlas::sampling::sample_spawn_grid(
+            local_positions_for_unit,
+            geometry_op,
+            _spacing,
+            _tolerance,
+            [spawn_operator, flip] ATLAS_DEVICE(const auto& query, const Vector3<T>& sample, T tol) {
+                const bool should_spawn = spawn_operator.spawn(query, sample, tol);
+                return flip ? !should_spawn : should_spawn;
+            });
+
+        if (local_positions_for_unit.empty()) {
+            continue;
+        }
+
+        HostBuffer<Vector3<T>> local_positions_for_unit_host(local_positions_for_unit.size());
+        atlas::copy_device_to_host(
+            atlas::raw_pointer_cast(local_positions_for_unit.data()),
+            local_positions_for_unit_host.data(),
+            local_positions_for_unit_host.size());
+
+        local_positions_host.insert(
+            local_positions_host.end(),
+            local_positions_for_unit_host.begin(),
+            local_positions_for_unit_host.end());
+        local_position_unit_indices_host.insert(
+            local_position_unit_indices_host.end(),
+            local_positions_for_unit_host.size(),
+            static_cast<int>(i));
+    }
+
+    _local_positions = DeviceBuffer<Vector3<T>>(local_positions_host.begin(), local_positions_host.end());
+    _local_position_unit_indices = DeviceBuffer<int>(
+        local_position_unit_indices_host.begin(),
+        local_position_unit_indices_host.end());
 
     const int local_count = static_cast<int>(_local_positions.size());
     _species_cache.clear();
@@ -87,7 +145,6 @@ Source<T>::rebuild_cache() noexcept {
         _shuffle_keys.resize(static_cast<std::size_t>(local_count));
 
         for (int i = 0; i < local_count; ++i) {
-
             const T fraction   = static_cast<T>(i) / static_cast<T>(local_count);
             size_t species_idx = 0;
             T running_sum      = T(0);
@@ -116,22 +173,19 @@ Source<T>::rebuild_cache() noexcept {
 template <typename T>
 void
 Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
-
     rebuild_cache();
 
-    if (!_fluid || _fluid->empty() || _local_positions.empty()) {
+    if (_units.empty() || !_fluid || _fluid->empty() || _local_positions.empty()) {
         return;
     }
 
-    const int local_count           = static_cast<int>(_local_positions.size());
-    const Vector3<T>* local_pos_ptr = atlas::raw_pointer_cast(_local_positions.data());
-    const int spawn_count           = local_count;
-    if (spawn_count <= 0) {
+    const int local_count = static_cast<int>(_local_positions.size());
+    if (local_count <= 0) {
         return;
     }
 
     const int current_count  = particle_probe.particle_count;
-    const int required_space = current_count + spawn_count;
+    const int required_space = current_count + local_count;
     if (required_space > static_cast<int>(particle_probe.buffer_size)) {
         atlas::logger::warn()
             << "Source::emit: insufficient space. Required: " << required_space
@@ -139,11 +193,12 @@ Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
         return;
     }
 
-    const auto sync_op = _unit.sync_operator();
-    const auto gen_op  = _generator->generate_operator();
-    const T param0     = _generator->param0();
-    const T param1     = _generator->param1();
-    const T temperature = _temperature;
+    const auto* units                 = atlas::raw_pointer_cast(_units.data());
+    const auto* generators            = atlas::raw_pointer_cast(_fluid->generators().data());
+    const auto* particle_properties   = atlas::raw_pointer_cast(_fluid->particles().data());
+    const Vector3<T>* local_pos_ptr   = atlas::raw_pointer_cast(_local_positions.data());
+    const int* local_unit_indices_ptr = atlas::raw_pointer_cast(_local_position_unit_indices.data());
+    const T temperature               = _temperature;
 
     Vector3<T>* out_pos = particle_probe.pos + current_count;
     Vector3<T>* out_vel = particle_probe.vel + current_count;
@@ -175,23 +230,38 @@ Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
         local_count,
         [=] ATLAS_DEVICE(const int i) {
             const Vector3<T>& local_p = local_pos_ptr[i];
+            const auto& sync_op       = units[local_unit_indices_ptr[i]].sync_operator();
+            const size_t species_id   = shuffled_species_ptr[i];
 
             Vector3<T> world_p;
             sync_op.sync_to_world(local_p, world_p);
             out_pos[i] = world_p;
 
-            out_vel[i]         = gen_op.generate(param0, param1);
+            out_vel[i]         = generators[species_id].generate(temperature, particle_properties[species_id].mass);
             out_temperature[i] = temperature;
-            out_species[i]     = shuffled_species_ptr[i];
+            out_species[i]     = species_id;
         });
 
-    particle_probe.particle_count += spawn_count;
+    particle_probe.particle_count += local_count;
 }
 
 template <typename T>
 void
-Source<T>::set_unit(Unit<T> unit) noexcept {
-    _unit                 = std::move(unit);
+Source<T>::set_units(DeviceBuffer<Unit<T>> units) noexcept {
+    _units                 = std::move(units);
+    _is_invalidated_cache  = true;
+}
+
+template <typename T>
+void
+Source<T>::set_units(const HostBuffer<Unit<T>>& units) {
+    if (units.empty()) {
+        atlas::logger::error()
+            << "Source: units must not be empty.";
+        throw std::runtime_error("Source: units must not be empty.");
+    }
+
+    _units = DeviceBuffer<Unit<T>>(units.begin(), units.end());
     _is_invalidated_cache = true;
 }
 
@@ -204,15 +274,41 @@ Source<T>::set_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 void
-Source<T>::set_spawn_type(const SpawnType spawn_type) noexcept {
-    _spawn_operator       = SpawnOperator<T>(spawn_type);
+Source<T>::set_spawn_types(DeviceBuffer<SpawnType> spawn_types) noexcept {
+    _spawn_types          = std::move(spawn_types);
     _is_invalidated_cache = true;
 }
 
 template <typename T>
 void
-Source<T>::set_spawn_operator(const SpawnOperator<T> spawn_operator) noexcept {
-    _spawn_operator       = spawn_operator;
+Source<T>::set_spawn_types(const HostBuffer<SpawnType>& spawn_types) {
+    if (spawn_types.empty()) {
+        atlas::logger::error()
+            << "Source: spawn types must not be empty.";
+        throw std::runtime_error("Source: spawn types must not be empty.");
+    }
+
+    _spawn_types = DeviceBuffer<SpawnType>(spawn_types.begin(), spawn_types.end());
+    _is_invalidated_cache = true;
+}
+
+template <typename T>
+void
+Source<T>::set_spawn_operators(DeviceBuffer<SpawnOperator<T>> spawn_operators) noexcept {
+    _spawn_operators      = std::move(spawn_operators);
+    _is_invalidated_cache = true;
+}
+
+template <typename T>
+void
+Source<T>::set_spawn_operators(const HostBuffer<SpawnOperator<T>>& spawn_operators) {
+    if (spawn_operators.empty()) {
+        atlas::logger::error()
+            << "Source: spawn operators must not be empty.";
+        throw std::runtime_error("Source: spawn operators must not be empty.");
+    }
+
+    _spawn_operators = DeviceBuffer<SpawnOperator<T>>(spawn_operators.begin(), spawn_operators.end());
     _is_invalidated_cache = true;
 }
 
@@ -239,20 +335,20 @@ Source<T>::set_spacing(const T spacing) noexcept {
 
 template <typename T>
 void
-Source<T>::set_generator(GeneratorHostPtr<T> generator) noexcept {
-    _generator = std::move(generator);
-}
-
-template <typename T>
-void
 Source<T>::set_temperature(const T temperature) noexcept {
     _temperature = temperature;
 }
 
 template <typename T>
-const Unit<T>&
-Source<T>::unit() const noexcept {
-    return _unit;
+DeviceBuffer<Unit<T>>&
+Source<T>::units() noexcept {
+    return _units;
+}
+
+template <typename T>
+const DeviceBuffer<Unit<T>>&
+Source<T>::units() const noexcept {
+    return _units;
 }
 
 template <typename T>
@@ -262,15 +358,27 @@ Source<T>::fluid() const noexcept {
 }
 
 template <typename T>
-SpawnType
-Source<T>::spawn_type() const noexcept {
-    return _spawn_operator.type;
+DeviceBuffer<SpawnType>&
+Source<T>::spawn_types() noexcept {
+    return _spawn_types;
 }
 
 template <typename T>
-const SpawnOperator<T>&
-Source<T>::spawn_operator() const noexcept {
-    return _spawn_operator;
+const DeviceBuffer<SpawnType>&
+Source<T>::spawn_types() const noexcept {
+    return _spawn_types;
+}
+
+template <typename T>
+DeviceBuffer<SpawnOperator<T>>&
+Source<T>::spawn_operators() noexcept {
+    return _spawn_operators;
+}
+
+template <typename T>
+const DeviceBuffer<SpawnOperator<T>>&
+Source<T>::spawn_operators() const noexcept {
+    return _spawn_operators;
 }
 
 template <typename T>
@@ -292,12 +400,6 @@ Source<T>::spacing() const noexcept {
 }
 
 template <typename T>
-const GeneratorHostPtr<T>&
-Source<T>::generator() const noexcept {
-    return _generator;
-}
-
-template <typename T>
 T
 Source<T>::temperature() const noexcept {
     return _temperature;
@@ -313,11 +415,16 @@ template <typename T>
 Source<T>
 Source<T>::Builder::build() {
     validate();
-    Source<T> source(std::move(*_unit), _fluid, _spawn_type, _flip, _tolerance, _temperature);
+
+    Source<T> source(
+        DeviceBuffer<Unit<T>>(_units.begin(), _units.end()),
+        DeviceBuffer<SpawnType>(_spawn_types.begin(), _spawn_types.end()),
+        DeviceBuffer<SpawnOperator<T>>(_spawn_operators.begin(), _spawn_operators.end()),
+        _fluid,
+        _flip,
+        _tolerance,
+        _temperature);
     source._spacing = _spacing;
-    if (_generator) {
-        source._generator = _generator;
-    }
     source._is_invalidated_cache = true;
     return source;
 }
@@ -330,15 +437,14 @@ Source<T>::Builder::make_host_shared() {
 
 template <typename T>
 typename Source<T>::Builder&
-Source<T>::Builder::with_unit(const Unit<T>& unit) noexcept {
-    _unit = unit;
-    return *this;
-}
+Source<T>::Builder::with_units(const HostBuffer<Unit<T>>& units) {
+    if (units.empty()) {
+        atlas::logger::error()
+            << "Source::Builder: units must not be empty.";
+        throw std::runtime_error("Source::Builder: units must not be empty.");
+    }
 
-template <typename T>
-typename Source<T>::Builder&
-Source<T>::Builder::with_unit(Unit<T>&& unit) noexcept {
-    _unit = std::move(unit);
+    _units.insert(_units.end(), units.begin(), units.end());
     return *this;
 }
 
@@ -351,8 +457,34 @@ Source<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 typename Source<T>::Builder&
-Source<T>::Builder::with_spawn_type(const SpawnType spawn_type) noexcept {
-    _spawn_type = spawn_type;
+Source<T>::Builder::with_spawn_types(const HostBuffer<SpawnType>& spawn_types) {
+    if (spawn_types.empty()) {
+        atlas::logger::error()
+            << "Source::Builder: spawn types must not be empty.";
+        throw std::runtime_error("Source::Builder: spawn types must not be empty.");
+    }
+
+    _spawn_types.insert(_spawn_types.end(), spawn_types.begin(), spawn_types.end());
+    return *this;
+}
+
+template <typename T>
+typename Source<T>::Builder&
+Source<T>::Builder::with_spawn_operator(const SpawnOperator<T>& spawn_operator) noexcept {
+    _spawn_operators.push_back(spawn_operator);
+    return *this;
+}
+
+template <typename T>
+typename Source<T>::Builder&
+Source<T>::Builder::with_spawn_operators(const HostBuffer<SpawnOperator<T>>& spawn_operators) {
+    if (spawn_operators.empty()) {
+        atlas::logger::error()
+            << "Source::Builder: spawn operators must not be empty.";
+        throw std::runtime_error("Source::Builder: spawn operators must not be empty.");
+    }
+
+    _spawn_operators.insert(_spawn_operators.end(), spawn_operators.begin(), spawn_operators.end());
     return *this;
 }
 
@@ -379,13 +511,6 @@ Source<T>::Builder::with_spacing(const T spacing) noexcept {
 
 template <typename T>
 typename Source<T>::Builder&
-Source<T>::Builder::with_generator(GeneratorHostPtr<T> generator) noexcept {
-    _generator = std::move(generator);
-    return *this;
-}
-
-template <typename T>
-typename Source<T>::Builder&
 Source<T>::Builder::with_temperature(const T temperature) noexcept {
     _temperature = temperature;
     return *this;
@@ -394,16 +519,42 @@ Source<T>::Builder::with_temperature(const T temperature) noexcept {
 template <typename T>
 void
 Source<T>::Builder::validate() const {
-    if (!_unit.has_value()) {
+    if (_units.empty()) {
         atlas::logger::error()
-            << "Source::Builder: unit must be provided.";
-        throw std::runtime_error("Source::Builder: unit must be provided.");
+            << "Source::Builder: units must not be empty.";
+        throw std::runtime_error("Source::Builder: units must not be empty.");
     }
 
     if (!_fluid) {
         atlas::logger::error()
             << "Source::Builder: fluid must be provided.";
         throw std::runtime_error("Source::Builder: fluid must be provided.");
+    }
+
+    if (_spawn_types.empty()) {
+        atlas::logger::error()
+            << "Source::Builder: spawn types must not be empty.";
+        throw std::runtime_error("Source::Builder: spawn types must not be empty.");
+    }
+
+    if (_spawn_operators.empty()) {
+        atlas::logger::error()
+            << "Source::Builder: spawn operators must not be empty.";
+        throw std::runtime_error("Source::Builder: spawn operators must not be empty.");
+    }
+
+    if (_spawn_types.size() != 1 && _spawn_types.size() != _units.size()) {
+        atlas::logger::error()
+            << "Source::Builder: spawn types must have size 1 or match unit count.";
+        throw std::runtime_error(
+            "Source::Builder: spawn types must have size 1 or match unit count.");
+    }
+
+    if (_spawn_operators.size() != 1 && _spawn_operators.size() != _units.size()) {
+        atlas::logger::error()
+            << "Source::Builder: spawn operators must have size 1 or match unit count.";
+        throw std::runtime_error(
+            "Source::Builder: spawn operators must have size 1 or match unit count.");
     }
 
     if (!std::isfinite(_tolerance)) {
@@ -418,11 +569,12 @@ Source<T>::Builder::validate() const {
         throw std::runtime_error("Source::Builder: spacing must be finite and positive.");
     }
 
-    if (!std::isfinite(_temperature) || _temperature < T(0)) {
+    if (!std::isfinite(_temperature)) {
         atlas::logger::error()
-            << "Source::Builder: temperature must be finite and non-negative.";
-        throw std::runtime_error("Source::Builder: temperature must be finite and non-negative.");
+            << "Source::Builder: temperature must be finite.";
+        throw std::runtime_error("Source::Builder: temperature must be finite.");
     }
+
 }
 
 }

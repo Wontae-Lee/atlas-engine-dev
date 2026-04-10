@@ -2,9 +2,8 @@
 
 #include <atlas/codec/single_codec.h>
 #include <atlas/logging/logging.h>
-#include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <limits>
+
 #include <stdexcept>
 #include <utility>
 
@@ -18,7 +17,6 @@ System<T>::builder() noexcept {
 
 template <typename T>
 System<T>::System(FluidHostPtr<T> fluid)
-
     : _fluid(std::move(fluid)) {
     if (!_fluid) {
         atlas::logger::error()
@@ -34,27 +32,27 @@ System<T>::System(FluidHostPtr<T> fluid,
                   const T dt,
                   DomainHostPtr<T> domain,
                   CodecHostPtr<T> codec,
-                  HostBuffer<SourceHostPtr<T>> sources,
-                  HostBuffer<SinkHostPtr<T>> sinks,
-                  HostBuffer<MeasureHostPtr<T>> measures,
-                  HostBuffer<ColliderHostPtr<T>> colliders,
-                  HostBuffer<SolverHostPtr<T>> solvers)
-
-    : _fluid(std::move(fluid))
-    , _dt(dt)
+                  SourceHostPtr<T> source,
+                  SinkHostPtr<T> sink,
+                  MeasureHostPtr<T> measure,
+                  ColliderHostPtr<T> collider,
+                  SolverHostPtr<T> solver)
+    : _dt(dt)
+    , _fluid(std::move(fluid))
     , _domain(std::move(domain))
     , _codec(std::move(codec))
-    , _particle_probe(_fluid->make_device_probe())
-    , _sources(std::move(sources))
-    , _sinks(std::move(sinks))
-    , _measures(std::move(measures))
-    , _colliders(std::move(colliders))
-    , _solvers(std::move(solvers)) {
+    , _source(std::move(source))
+    , _sink(std::move(sink))
+    , _measure(std::move(measure))
+    , _collider(std::move(collider))
+    , _solver(std::move(solver)) {
     if (!_fluid) {
         atlas::logger::error()
             << "System: fluid must not be null.";
         throw std::runtime_error("System: fluid must not be null.");
     }
+
+    _particle_probe = _fluid->make_device_probe();
 
     if (_domain) {
         _searcher       = atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain);
@@ -91,10 +89,9 @@ void
 System<T>::emit() {
     atlas::logger::info() << "System::emit: begin";
 
-    for (const auto& source : _sources) {
-        if (source) {
-            source->emit(_particle_probe);
-        }
+    if (_source) {
+        _source->update(_dt);
+        _source->emit(_particle_probe);
     }
 
     atlas::logger::info() << "System::emit: end";
@@ -135,16 +132,12 @@ void
 System<T>::measure() {
     atlas::logger::info() << "System::measure: begin";
 
-    if (!_domain || !_searcher) {
+    if (!_domain || !_searcher || !_measure) {
         atlas::logger::info() << "System::measure: end";
         return;
     }
 
-    for (const auto& measure : _measures) {
-        if (measure) {
-            measure->measure(_domain_probe, _searcher_probe, _particle_probe);
-        }
-    }
+    _measure->measure(_domain_probe, _searcher_probe, _particle_probe);
 
     atlas::logger::info() << "System::measure: end";
 }
@@ -154,23 +147,19 @@ void
 System<T>::solve() {
     atlas::logger::info() << "System::solve: begin";
 
-    if (!_domain || !_searcher || !_codec) {
+    if (!_domain || !_searcher || !_codec || !_solver) {
         atlas::logger::info() << "System::solve: end";
         return;
     }
 
-    for (const auto& solver : _solvers) {
-        if (solver) {
-            solver->solve(_domain_probe, _searcher_probe, _particle_probe, _codec_probe);
-        }
-    }
+    _solver->solve(_domain_probe, _searcher_probe, _particle_probe, _codec_probe);
 
     atlas::logger::info() << "System::solve: end";
 }
 
 template <typename T>
 void
-System<T>::collide() const {
+System<T>::collide() {
     atlas::logger::info() << "System::collide: begin";
 
     if (_particle_probe.empty() || !(_dt > T(0))) {
@@ -178,17 +167,10 @@ System<T>::collide() const {
         return;
     }
 
-    bool has_active_collider = false;
-
-    for (const auto& collider : _colliders) {
-        if (collider && !collider->empty()) {
-            has_active_collider = true;
-            collider->update(_dt);
-            collider->collide(_particle_probe, _dt);
-        }
-    }
-
-    if (!has_active_collider) {
+    if (_collider && !_collider->empty()) {
+        _collider->update(_dt);
+        _collider->collide(_particle_probe, _dt);
+    } else {
         time_integration();
     }
 
@@ -200,10 +182,9 @@ void
 System<T>::remove() {
     atlas::logger::info() << "System::remove: begin";
 
-    for (const auto& sink : _sinks) {
-        if (sink) {
-            sink->sink(_particle_probe);
-        }
+    if (_sink) {
+        _sink->update(_dt);
+        _sink->sink(_particle_probe);
     }
 
     atlas::logger::info() << "System::remove: end";
@@ -211,8 +192,10 @@ System<T>::remove() {
 
 template <typename T>
 void
-System<T>::time_integration() const {
-    if (_particle_probe.empty() || !(_dt > T(0))) return;
+System<T>::time_integration() {
+    if (_particle_probe.empty() || !(_dt > T(0))) {
+        return;
+    }
 
     const auto probe = _particle_probe;
     const T dt       = _dt;
@@ -286,79 +269,38 @@ System<T>::set_codec(const CodecHostPtr<T>& codec) {
 
 template <typename T>
 void
-System<T>::add_source(const SourceHostPtr<T>& source) {
-    _sources.push_back(source);
+System<T>::set_source(const SourceHostPtr<T>& source) {
+    _source = source;
 }
 
 template <typename T>
 void
-System<T>::set_sources(const HostBuffer<SourceHostPtr<T>>& sources) {
-    _sources = sources;
+System<T>::set_sink(const SinkHostPtr<T>& sink) {
+    _sink = sink;
 }
 
 template <typename T>
 void
-System<T>::add_sink(const SinkHostPtr<T>& sink) {
-    _sinks.push_back(sink);
+System<T>::set_measure(const MeasureHostPtr<T>& measure) {
+    _measure = measure;
 }
 
 template <typename T>
 void
-System<T>::set_sinks(const HostBuffer<SinkHostPtr<T>>& sinks) {
-    _sinks = sinks;
+System<T>::set_collider(const ColliderHostPtr<T>& collider) {
+    _collider = collider;
 }
 
 template <typename T>
 void
-System<T>::add_measure(const MeasureHostPtr<T>& measure) {
-    _measures.push_back(measure);
+System<T>::set_collider(const Collider<T>& collider) {
+    _collider = atlas::make_host_shared<Collider<T>>(collider);
 }
 
 template <typename T>
 void
-System<T>::set_measures(const HostBuffer<MeasureHostPtr<T>>& measures) {
-    _measures = measures;
-}
-
-template <typename T>
-void
-System<T>::add_collider(const ColliderHostPtr<T>& collider) {
-    _colliders.push_back(collider);
-}
-
-template <typename T>
-void
-System<T>::add_collider(const Collider<T>& collider) {
-    _colliders.push_back(atlas::make_host_shared<Collider<T>>(collider));
-}
-
-template <typename T>
-void
-System<T>::set_colliders(const HostBuffer<ColliderHostPtr<T>>& colliders) {
-    _colliders = colliders;
-}
-
-template <typename T>
-void
-System<T>::set_colliders(const HostBuffer<Collider<T>>& colliders) {
-    _colliders.clear();
-    _colliders.reserve(colliders.size());
-
-    for (const auto& collider : colliders) {
-        _colliders.push_back(atlas::make_host_shared<Collider<T>>(collider));
-    }
-}
-
-template <typename T>
-void
-System<T>::add_solver(const SolverHostPtr<T>& solver) {
-    _solvers.push_back(solver);
-}
-
-template <typename T>
-void
-System<T>::set_solvers(const HostBuffer<SolverHostPtr<T>>& solvers) {
-    _solvers = solvers;
+System<T>::set_solver(const SolverHostPtr<T>& solver) {
+    _solver = solver;
 }
 
 template <typename T>
@@ -434,63 +376,63 @@ System<T>::codec() const noexcept {
 }
 
 template <typename T>
-const HostBuffer<SourceHostPtr<T>>&
-System<T>::sources() const noexcept {
-    return _sources;
+const SourceHostPtr<T>&
+System<T>::source() const noexcept {
+    return _source;
 }
 
 template <typename T>
-const HostBuffer<SinkHostPtr<T>>&
-System<T>::sinks() const noexcept {
-    return _sinks;
+const SinkHostPtr<T>&
+System<T>::sink() const noexcept {
+    return _sink;
 }
 
 template <typename T>
-const HostBuffer<MeasureHostPtr<T>>&
-System<T>::measures() const noexcept {
-    return _measures;
+const MeasureHostPtr<T>&
+System<T>::measure() const noexcept {
+    return _measure;
 }
 
 template <typename T>
-const HostBuffer<ColliderHostPtr<T>>&
-System<T>::colliders() const noexcept {
-    return _colliders;
+const ColliderHostPtr<T>&
+System<T>::collider() const noexcept {
+    return _collider;
 }
 
 template <typename T>
-const HostBuffer<SolverHostPtr<T>>&
-System<T>::solvers() const noexcept {
-    return _solvers;
-}
-
-template <typename T>
-void
-System<T>::clear_sources() noexcept {
-    _sources.clear();
+const SolverHostPtr<T>&
+System<T>::solver() const noexcept {
+    return _solver;
 }
 
 template <typename T>
 void
-System<T>::clear_sinks() noexcept {
-    _sinks.clear();
+System<T>::clear_source() noexcept {
+    _source.reset();
 }
 
 template <typename T>
 void
-System<T>::clear_measures() noexcept {
-    _measures.clear();
+System<T>::clear_sink() noexcept {
+    _sink.reset();
 }
 
 template <typename T>
 void
-System<T>::clear_colliders() noexcept {
-    _colliders.clear();
+System<T>::clear_measure() noexcept {
+    _measure.reset();
 }
 
 template <typename T>
 void
-System<T>::clear_solvers() noexcept {
-    _solvers.clear();
+System<T>::clear_collider() noexcept {
+    _collider.reset();
+}
+
+template <typename T>
+void
+System<T>::clear_solver() noexcept {
+    _solver.reset();
 }
 
 template <typename T>
@@ -510,12 +452,6 @@ System<T>::Builder::with_dt(const T dt) noexcept {
 template <typename T>
 typename System<T>::Builder&
 System<T>::Builder::with_domain(const DomainHostPtr<T>& domain) {
-    if (!domain) {
-        atlas::logger::error()
-            << "System::Builder: domain must not be null.";
-        throw std::runtime_error("System::Builder: domain must not be null.");
-    }
-
     _domain = domain;
     return *this;
 }
@@ -523,19 +459,6 @@ System<T>::Builder::with_domain(const DomainHostPtr<T>& domain) {
 template <typename T>
 typename System<T>::Builder&
 System<T>::Builder::with_codec(const CodecHostPtr<T>& codec) {
-    if (!codec) {
-        atlas::logger::error()
-            << "System::Builder: codec must not be null.";
-        throw std::runtime_error("System::Builder: codec must not be null.");
-    }
-
-    if (codec->type() != CodecType::single) {
-        atlas::logger::error()
-            << "System::Builder: only SingleCodec is supported by the builder at this time.";
-        throw std::runtime_error(
-            "System::Builder: only SingleCodec is supported by the builder at this time.");
-    }
-
     _codec = codec;
     return *this;
 }
@@ -543,90 +466,42 @@ System<T>::Builder::with_codec(const CodecHostPtr<T>& codec) {
 template <typename T>
 typename System<T>::Builder&
 System<T>::Builder::with_source(const SourceHostPtr<T>& source) {
-    _sources.push_back(source);
-    return *this;
-}
-
-template <typename T>
-typename System<T>::Builder&
-System<T>::Builder::with_sources(const HostBuffer<SourceHostPtr<T>>& sources) {
-    _sources = sources;
+    _source = source;
     return *this;
 }
 
 template <typename T>
 typename System<T>::Builder&
 System<T>::Builder::with_sink(const SinkHostPtr<T>& sink) {
-    _sinks.push_back(sink);
-    return *this;
-}
-
-template <typename T>
-typename System<T>::Builder&
-System<T>::Builder::with_sinks(const HostBuffer<SinkHostPtr<T>>& sinks) {
-    _sinks = sinks;
+    _sink = sink;
     return *this;
 }
 
 template <typename T>
 typename System<T>::Builder&
 System<T>::Builder::with_measure(const MeasureHostPtr<T>& measure) {
-    _measures.push_back(measure);
-    return *this;
-}
-
-template <typename T>
-typename System<T>::Builder&
-System<T>::Builder::with_measures(const HostBuffer<MeasureHostPtr<T>>& measures) {
-    _measures = measures;
+    _measure = measure;
     return *this;
 }
 
 template <typename T>
 typename System<T>::Builder&
 System<T>::Builder::with_collider(const ColliderHostPtr<T>& collider) {
-    _colliders.push_back(collider);
+    _collider = collider;
     return *this;
 }
 
 template <typename T>
 typename System<T>::Builder&
 System<T>::Builder::with_collider(const Collider<T>& collider) {
-    _colliders.push_back(atlas::make_host_shared<Collider<T>>(collider));
-    return *this;
-}
-
-template <typename T>
-typename System<T>::Builder&
-System<T>::Builder::with_colliders(const HostBuffer<ColliderHostPtr<T>>& colliders) {
-    _colliders = colliders;
-    return *this;
-}
-
-template <typename T>
-typename System<T>::Builder&
-System<T>::Builder::with_colliders(const HostBuffer<Collider<T>>& colliders) {
-    _colliders.clear();
-    _colliders.reserve(colliders.size());
-
-    for (const auto& collider : colliders) {
-        _colliders.push_back(atlas::make_host_shared<Collider<T>>(collider));
-    }
-
+    _collider = atlas::make_host_shared<Collider<T>>(collider);
     return *this;
 }
 
 template <typename T>
 typename System<T>::Builder&
 System<T>::Builder::with_solver(const SolverHostPtr<T>& solver) {
-    _solvers.push_back(solver);
-    return *this;
-}
-
-template <typename T>
-typename System<T>::Builder&
-System<T>::Builder::with_solvers(const HostBuffer<SolverHostPtr<T>>& solvers) {
-    _solvers = solvers;
+    _solver = solver;
     return *this;
 }
 
@@ -634,18 +509,16 @@ template <typename T>
 System<T>
 System<T>::Builder::build() {
     validate();
-
-    System<T> system(_fluid, _dt, _domain, _codec, _sources, _sinks, _measures, _colliders, _solvers);
-    _fluid  = nullptr;
-    _dt     = static_cast<T>(0.01);
-    _domain = nullptr;
-    _codec  = nullptr;
-    _sources.clear();
-    _sinks.clear();
-    _measures.clear();
-    _colliders.clear();
-    _solvers.clear();
-    return system;
+    return System<T>(
+        _fluid,
+        _dt,
+        _domain,
+        _codec,
+        _source,
+        _sink,
+        _measure,
+        _collider,
+        _solver);
 }
 
 template <typename T>
@@ -659,27 +532,14 @@ void
 System<T>::Builder::validate() const {
     if (!_fluid) {
         atlas::logger::error()
-            << "System::Builder: fluid must not be null.";
-        throw std::runtime_error("System::Builder: fluid must not be null.");
+            << "System::Builder: fluid must be provided.";
+        throw std::runtime_error("System::Builder: fluid must be provided.");
     }
 
     if (!(_dt > T(0))) {
         atlas::logger::error()
             << "System::Builder: dt must be positive.";
         throw std::runtime_error("System::Builder: dt must be positive.");
-    }
-
-    if (_codec && _codec->type() != CodecType::single) {
-        atlas::logger::error()
-            << "System::Builder: only SingleCodec is supported by the builder at this time.";
-        throw std::runtime_error(
-            "System::Builder: only SingleCodec is supported by the builder at this time.");
-    }
-
-    if (_domain && _domain->type() == DomainType::isothermal && !_measures.empty()) {
-        atlas::logger::error()
-            << "System::Builder: measures must be empty when the domain type is isothermal.";
-        throw std::runtime_error("System::Builder: measures must be empty when the domain type is isothermal.");
     }
 }
 

@@ -114,7 +114,7 @@ TEST(SurfaceSpawnOperator, SpawnReturnsEmptyBufferForInvalidGeometryOperator) {
         1.0,
         0.0,
         [=] ATLAS_ALL_DEVICE(const auto& query_op, const auto& sample, const double tol) {
-            return spawn_operator.spawn(query_op, sample, tol);
+            return atlas::system::SurfaceSpawnOperator<double>::spawn(query_op, sample, tol);
         });
 
     EXPECT_TRUE(particles.empty());

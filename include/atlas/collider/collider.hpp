@@ -11,19 +11,6 @@
 namespace atlas::system {
 
 template <typename T>
-Collider<T>::Collider(Unit<T> unit,
-                      ColliderSurfaceInteraction<T> surface_interaction) noexcept
-    : _units(1, std::move(unit))
-    , _surface_interactions(1, std::move(surface_interaction)) { }
-
-template <typename T>
-Collider<T>::Collider(
-    UnitHostPtr<T> unit,
-    atlas::host_shared_ptr<ColliderSurfaceInteraction<T>> surface_interaction)
-    : Collider(unit ? *unit : Unit<T> {},
-               surface_interaction ? *surface_interaction : ColliderSurfaceInteraction<T> {}) { }
-
-template <typename T>
 Collider<T>::Collider(DeviceBuffer<Unit<T>> units,
                       DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions) noexcept
     : _units(std::move(units))
@@ -55,24 +42,6 @@ Collider<T>::set_units(const HostBuffer<Unit<T>>& units) {
 
 template <typename T>
 void
-Collider<T>::set_unit(const Unit<T>& unit) {
-    set_units(DeviceBuffer<Unit<T>>(1, unit));
-}
-
-template <typename T>
-void
-Collider<T>::set_unit(const UnitHostPtr<T>& unit) {
-    if (!unit) {
-        atlas::logger::error()
-            << "Collider: unit must not be null.";
-        throw std::runtime_error("Collider: unit must not be null.");
-    }
-
-    set_unit(*unit);
-}
-
-template <typename T>
-void
 Collider<T>::set_surface_interactions(DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions) noexcept {
     _surface_interactions = std::move(surface_interactions);
 }
@@ -89,25 +58,6 @@ Collider<T>::set_surface_interactions(const HostBuffer<ColliderSurfaceInteractio
     _surface_interactions = DeviceBuffer<ColliderSurfaceInteraction<T>>(
         surface_interactions.begin(),
         surface_interactions.end());
-}
-
-template <typename T>
-void
-Collider<T>::set_surface_interaction(const ColliderSurfaceInteraction<T>& surface_interaction) {
-    set_surface_interactions(DeviceBuffer<ColliderSurfaceInteraction<T>>(1, surface_interaction));
-}
-
-template <typename T>
-void
-Collider<T>::set_surface_interaction(
-    const atlas::host_shared_ptr<ColliderSurfaceInteraction<T>>& surface_interaction) {
-    if (!surface_interaction) {
-        atlas::logger::error()
-            << "Collider: surface interaction must not be null.";
-        throw std::runtime_error("Collider: surface interaction must not be null.");
-    }
-
-    set_surface_interaction(*surface_interaction);
 }
 
 template <typename T>
@@ -227,33 +177,6 @@ Collider<T>::empty() const noexcept {
 
 template <typename T>
 typename Collider<T>::Builder&
-Collider<T>::Builder::with_unit(const Unit<T>& unit) {
-    _units.push_back(unit);
-    return *this;
-}
-
-template <typename T>
-typename Collider<T>::Builder&
-Collider<T>::Builder::with_unit(Unit<T>&& unit) {
-    _units.push_back(std::move(unit));
-    return *this;
-}
-
-template <typename T>
-typename Collider<T>::Builder&
-Collider<T>::Builder::with_unit(const UnitHostPtr<T>& unit) {
-    if (!unit) {
-        atlas::logger::error()
-            << "Collider::Builder: unit must not be null.";
-        throw std::runtime_error("Collider::Builder: unit must not be null.");
-    }
-
-    _units.push_back(*unit);
-    return *this;
-}
-
-template <typename T>
-typename Collider<T>::Builder&
 Collider<T>::Builder::with_units(const HostBuffer<Unit<T>>& units) {
     if (units.empty()) {
         atlas::logger::error()
@@ -262,34 +185,6 @@ Collider<T>::Builder::with_units(const HostBuffer<Unit<T>>& units) {
     }
 
     _units = units;
-    return *this;
-}
-
-template <typename T>
-typename Collider<T>::Builder&
-Collider<T>::Builder::with_surface_interaction(const ColliderSurfaceInteraction<T>& surface_interaction) {
-    _surface_interactions.push_back(surface_interaction);
-    return *this;
-}
-
-template <typename T>
-typename Collider<T>::Builder&
-Collider<T>::Builder::with_surface_interaction(ColliderSurfaceInteraction<T>&& surface_interaction) {
-    _surface_interactions.push_back(std::move(surface_interaction));
-    return *this;
-}
-
-template <typename T>
-typename Collider<T>::Builder&
-Collider<T>::Builder::with_surface_interaction(
-    const atlas::host_shared_ptr<ColliderSurfaceInteraction<T>>& surface_interaction) {
-    if (!surface_interaction) {
-        atlas::logger::error()
-            << "Collider::Builder: surface interaction must not be null.";
-        throw std::runtime_error("Collider::Builder: surface interaction must not be null.");
-    }
-
-    _surface_interactions.push_back(*surface_interaction);
     return *this;
 }
 

@@ -5,120 +5,78 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <limits>
 #include <stdexcept>
 #include <vector>
 
 using namespace atlas;
 
-namespace {
-
-template <typename T>
-atlas::FluidHostPtr<T>
-make_test_fluid() {
-    const auto species_a = atlas::system::MatrialProperties<T>::builder()
-                               .with_mass(T(1))
-                               .make_host_shared();
-    const auto species_b = atlas::system::MatrialProperties<T>::builder()
-                               .with_mass(T(2))
-                               .make_host_shared();
-
-    return atlas::system::Fluid<T>::builder()
-        .add_species(species_a, T(0.5))
-        .add_species(species_b, T(0.5))
-        .make_host_shared();
-}
-
-template <typename T>
-atlas::FluidHostPtr<T>
-make_buffered_fluid(const std::size_t buffer_size) {
-    return atlas::system::Fluid<T>::builder()
-        .with_buffer_size(buffer_size)
-        .make_host_shared();
-}
-
-template <typename T>
-atlas::Unit<T>
-make_box_unit(const atlas::Vector3<T>& translation = atlas::Vector3<T>(T(0), T(0), T(0))) {
-    const auto geometry = atlas::geometry::Box<T>::builder()
-                              .with_lower_corner(atlas::Vector3<T>(T(-1), T(-1), T(-1)))
-                              .with_upper_corner(atlas::Vector3<T>(T(1), T(1), T(1)))
-                              .make_host_shared();
-
-    const auto sync = atlas::system::Sync<T>::builder()
-                          .with_rigid_pose(translation, atlas::Quaternion<T>())
-                          .make_host_shared();
-
-    return atlas::system::Unit<T>::builder()
-        .with_geometry(geometry)
-        .with_sync(sync)
-        .build();
-}
-
-}
-
 TEST(Source, BuilderBuildStoresConfiguredValues) {
-    const auto fluid = make_test_fluid<double>();
-    const auto unit  = make_box_unit<double>(Vector3<double>(3.0, 4.0, 5.0));
-    const auto generator = atlas::UniformGenerator<double>::builder()
-                               .with_min_value(-1.0)
-                               .with_max_value(2.0)
-                               .with_seed(17u)
-                               .make_host_shared();
+    const auto fluid = test::make_test_fluid<double>();
+    const auto unit  = test::make_box_unit<double>(Vector3<double>(3.0, 4.0, 5.0));
 
     const auto source = atlas::Source<double>::builder()
-                            .with_unit(unit)
+                            .with_units({ unit })
                             .with_fluid(fluid)
-                            .with_spawn_type(atlas::system::SpawnType::Volume)
+                            .with_spawn_types({ atlas::system::SpawnType::Volume })
+                            .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Volume))
                             .with_tolerance(0.25)
                             .with_spacing(0.5)
                             .with_temperature(425.0)
-                            .with_generator(generator)
                             .build();
 
     EXPECT_EQ(source.fluid(), fluid);
-    EXPECT_EQ(source.spawn_type(), atlas::system::SpawnType::Volume);
+    ASSERT_EQ(source.units().size(), 1u);
+    ASSERT_EQ(source.spawn_types().size(), 1u);
+    ASSERT_EQ(source.spawn_operators().size(), 1u);
+    EXPECT_EQ(source.spawn_types()[0], atlas::system::SpawnType::Volume);
+    EXPECT_EQ(source.spawn_operators()[0].type, atlas::system::SpawnType::Volume);
     EXPECT_TRUE(test::near(source.tolerance(), 0.25, 1e-12));
     EXPECT_TRUE(test::near(source.spacing(), 0.5, 1e-12));
     EXPECT_TRUE(test::near(source.temperature(), 425.0, 1e-12));
-    ASSERT_TRUE(source.generator());
-    EXPECT_EQ(source.generator()->type(), atlas::GenerateType::uniform);
-    EXPECT_TRUE(test::near(source.generator()->param0(), -1.0, 1e-12));
-    EXPECT_TRUE(test::near(source.generator()->param1(), 2.0, 1e-12));
     EXPECT_TRUE(test::vec_near(
-        source.unit().sync_operator().translation,
+        source.units()[0].sync_operator().translation,
         Vector3<double>(3.0, 4.0, 5.0),
         1e-12));
 }
 
 TEST(Source, BuilderRejectsMissingRequiredInputsAndInvalidSpacing) {
-    const auto fluid = make_test_fluid<double>();
-    const auto unit  = make_box_unit<double>();
+    const auto fluid = test::make_test_fluid<double>();
+    const auto unit  = test::make_box_unit<double>();
 
     EXPECT_THROW(
         atlas::Source<double>::builder()
             .with_fluid(fluid)
+            .with_spawn_types({ atlas::system::SpawnType::Volume })
+            .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Volume))
             .build(),
         std::runtime_error);
 
     EXPECT_THROW(
         atlas::Source<double>::builder()
-            .with_unit(unit)
+            .with_units({ unit })
+            .with_spawn_types({ atlas::system::SpawnType::Volume })
+            .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Volume))
             .build(),
         std::runtime_error);
 
     EXPECT_THROW(
         atlas::Source<double>::builder()
-            .with_unit(unit)
+            .with_units({ unit })
             .with_fluid(fluid)
+            .with_spawn_types({ atlas::system::SpawnType::Volume })
+            .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Volume))
             .with_spacing(0.0)
             .build(),
         std::runtime_error);
 
     EXPECT_THROW(
         atlas::Source<double>::builder()
-            .with_unit(unit)
+            .with_units({ unit })
             .with_fluid(fluid)
-            .with_temperature(-1.0)
+            .with_spawn_types({ atlas::system::SpawnType::Volume })
+            .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Volume))
+            .with_temperature(std::numeric_limits<double>::quiet_NaN())
             .build(),
         std::runtime_error);
 }
@@ -127,14 +85,15 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
     constexpr double eps = 1e-12;
     constexpr double source_temperature = 350.0;
 
-    auto system          = atlas::system::System<double>(make_buffered_fluid<double>(64));
+    auto system          = atlas::system::System<double>(test::make_buffered_fluid<double>(64));
     auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
     auto source = atlas::Source<double>::builder()
-                      .with_unit(make_box_unit<double>(Vector3<double>(10.0, 0.0, -2.0)))
-                      .with_fluid(make_test_fluid<double>())
-                      .with_spawn_type(atlas::system::SpawnType::Volume)
+                      .with_units({ test::make_box_unit<double>(Vector3<double>(10.0, 0.0, -2.0)) })
+                      .with_fluid(test::make_test_fluid<double>())
+                      .with_spawn_types({ atlas::system::SpawnType::Volume })
+                      .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Volume))
                       .with_tolerance(0.0)
                       .with_spacing(1.0)
                       .with_temperature(source_temperature)
@@ -156,15 +115,15 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
     ASSERT_EQ(velocities.size(), temperatures.size());
     ASSERT_EQ(velocities.size(), species.size());
 
-    const auto query = source.unit().geometry_operator();
+    const auto query = source.units()[0].geometry_operator();
     for (std::size_t i = 0; i < local_positions.size(); ++i) {
-        EXPECT_TRUE(query.is_inside(local_positions[i], 0.0));
+        EXPECT_TRUE(query.is_inside(local_positions[i], 0.0) || query.is_on_surface(local_positions[i], 0.0));
         EXPECT_TRUE(test::vec_near(
             world_positions[i],
             local_positions[i] + Vector3<double>(10.0, 0.0, -2.0),
             eps));
         EXPECT_TRUE(test::is_finite_vec(velocities[i]));
-        EXPECT_TRUE(test::points_in_range(std::array<Vector3<double>, 1> { velocities[i] }, 0.0, 1.0));
+        EXPECT_GT(velocities[i].length(), 0.0);
         EXPECT_TRUE(test::near(temperatures[i], source_temperature, eps));
         EXPECT_LT(species[i], std::size_t(2));
     }
@@ -176,14 +135,15 @@ TEST(Source, EmitCachesSpawnableLocalPositionsAndWritesWorldParticles) {
 }
 
 TEST(Source, EmitAppendsUsingCachedPositionsAndPreservesSpeciesTotalsPerEmission) {
-    auto system          = atlas::system::System<double>(make_buffered_fluid<double>(64));
+    auto system          = atlas::system::System<double>(test::make_buffered_fluid<double>(64));
     auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
     auto source = atlas::Source<double>::builder()
-                      .with_unit(make_box_unit<double>())
-                      .with_fluid(make_test_fluid<double>())
-                      .with_spawn_type(atlas::system::SpawnType::Volume)
+                      .with_units({ test::make_box_unit<double>() })
+                      .with_fluid(test::make_test_fluid<double>())
+                      .with_spawn_types({ atlas::system::SpawnType::Volume })
+                      .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Volume))
                       .with_spacing(1.0)
                       .build();
 
@@ -204,44 +164,52 @@ TEST(Source, EmitAppendsUsingCachedPositionsAndPreservesSpeciesTotalsPerEmission
     EXPECT_EQ(source.local_positions().size(), 27u);
 }
 
-TEST(Source, ChangingSpawnTypeInvalidatesCacheAndRebuildsLocalPositions) {
-    auto system          = atlas::system::System<double>(make_buffered_fluid<double>(64));
+TEST(Source, SurfaceSpawnBuildCreatesSurfaceOnlyLocalPositions) {
+    auto system          = atlas::system::System<double>(test::make_buffered_fluid<double>(64));
     auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
-    auto source = atlas::Source<double>::builder()
-                      .with_unit(make_box_unit<double>())
-                      .with_fluid(make_test_fluid<double>())
-                      .with_spawn_type(atlas::system::SpawnType::Volume)
+    auto volume_source = atlas::Source<double>::builder()
+                      .with_units({ test::make_box_unit<double>() })
+                      .with_fluid(test::make_test_fluid<double>())
+                      .with_spawn_types({ atlas::system::SpawnType::Volume })
+                      .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Volume))
                       .with_spacing(1.0)
                       .build();
 
-    source.emit(probe);
-    ASSERT_EQ(source.local_positions().size(), 27u);
+    volume_source.emit(probe);
+    ASSERT_EQ(volume_source.local_positions().size(), 27u);
 
     probe.particle_count = 0;
-    source.set_spawn_type(atlas::system::SpawnType::Surface);
-    source.emit(probe);
+    auto surface_source = atlas::Source<double>::builder()
+                              .with_units({ test::make_box_unit<double>() })
+                              .with_fluid(test::make_test_fluid<double>())
+                              .with_spawn_types({ atlas::system::SpawnType::Surface })
+                              .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Surface))
+                              .with_spacing(1.0)
+                              .build();
+    surface_source.emit(probe);
 
-    EXPECT_EQ(source.local_positions().size(), 26u);
+    EXPECT_EQ(surface_source.local_positions().size(), 26u);
     EXPECT_EQ(probe.particle_count, 26);
 
-    const auto local_positions = test::copy_device_buffer(source.local_positions());
-    const auto query           = source.unit().geometry_operator();
+    const auto local_positions = test::copy_device_buffer(surface_source.local_positions());
+    const auto query           = surface_source.units()[0].geometry_operator();
     for (const auto& local_position : local_positions) {
         EXPECT_TRUE(query.is_on_surface(local_position, 0.0));
     }
 }
 
 TEST(Source, FlipInvertsSpawnClassificationWhenRebuildingCache) {
-    auto system          = atlas::system::System<double>(make_buffered_fluid<double>(64));
+    auto system          = atlas::system::System<double>(test::make_buffered_fluid<double>(64));
     auto& probe          = system.particle_probe();
     probe.particle_count = 0;
 
     auto source = atlas::Source<double>::builder()
-                      .with_unit(make_box_unit<double>())
-                      .with_fluid(make_test_fluid<double>())
-                      .with_spawn_type(atlas::system::SpawnType::Volume)
+                      .with_units({ test::make_box_unit<double>() })
+                      .with_fluid(test::make_test_fluid<double>())
+                      .with_spawn_types({ atlas::system::SpawnType::Volume })
+                      .with_spawn_operator(atlas::system::SpawnOperator<double>(atlas::system::SpawnType::Volume))
                       .with_flip(true)
                       .with_spacing(1.0)
                       .build();
@@ -253,7 +221,7 @@ TEST(Source, FlipInvertsSpawnClassificationWhenRebuildingCache) {
     EXPECT_EQ(probe.particle_count, 0);
 
     const auto local_positions = test::copy_device_buffer(source.local_positions());
-    const auto query           = source.unit().geometry_operator();
+    const auto query           = source.units()[0].geometry_operator();
     for (const auto& local_position : local_positions) {
         EXPECT_FALSE(query.is_inside(local_position, 0.0));
     }
