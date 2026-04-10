@@ -4,8 +4,8 @@ if (ATLAS_USE_CUDA)
             CUDA_STANDARD 17
             CUDA_STANDARD_REQUIRED OFF
     )
-    target_link_libraries(solver PRIVATE atlas-core)
 else ()
     add_executable(solver main.cpp)
-    target_link_libraries(solver PRIVATE atlas-core)
 endif ()
+
+target_link_libraries(solver PRIVATE atlas-core)

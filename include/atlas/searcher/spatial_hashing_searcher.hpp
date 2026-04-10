@@ -159,7 +159,7 @@ SpatialHashingSearcher<T>::init_indices_iota(int n_active) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         n_active,
-        [=](const int i) {
+        [=] ATLAS_DEVICE(const int i) {
             indices_ptr[i] = i;
         });
 }
@@ -180,7 +180,7 @@ SpatialHashingSearcher<T>::compute_keys(int alive, const Vector3<T>* pos) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         alive,
-        [=](int i) {
+        [=] ATLAS_DEVICE(int i) {
             const Vector3<T> rel = (pos[i] - lc) * inv_h;
 
             Vector3<int> ijk = atlas::math::floor(rel).template cast_to<int>();
@@ -225,7 +225,7 @@ SpatialHashingSearcher<T>::build_cell_ranges(int alive) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         alive,
-        [=](const int i) {
+        [=] ATLAS_DEVICE(const int i) {
             const std::uint32_t key = keys[i];
             if (i == 0 || key != keys[i - 1]) cell_start[key] = i;
             if (i == count - 1 || key != keys[i + 1]) cell_end[key] = i + 1;

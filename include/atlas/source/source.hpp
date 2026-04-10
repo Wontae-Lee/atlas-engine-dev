@@ -159,7 +159,7 @@ Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         local_count,
-        [=](const int i) {
+        [=] ATLAS_DEVICE(const int i) {
             shuffle_keys_ptr[i] = shuffle_op(i, seed);
         });
 
@@ -173,7 +173,7 @@ Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         local_count,
-        [=](const int i) {
+        [=] ATLAS_DEVICE(const int i) {
             const Vector3<T>& local_p = local_pos_ptr[i];
 
             Vector3<T> world_p;

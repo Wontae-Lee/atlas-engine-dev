@@ -2,6 +2,7 @@
 
 #include <atlas/codec/single_codec.h>
 #include <atlas/logging/logging.h>
+#include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 #include <limits>
 #include <stdexcept>
@@ -79,7 +80,7 @@ System<T>::update() {
     classify();
     measure();
     solve();
-    advect();
+    collide();
     remove();
 
     atlas::logger::info() << "System::update: end";
@@ -169,84 +170,29 @@ System<T>::solve() {
 
 template <typename T>
 void
-System<T>::advect() const {
-    atlas::logger::info() << "System::advect: begin";
+System<T>::collide() const {
+    atlas::logger::info() << "System::collide: begin";
 
-    const auto probe = _particle_probe;
-    const T dt       = _dt;
-
-    if (probe.empty() || !(dt > T(0))) {
-        atlas::logger::info() << "System::advect: end";
+    if (_particle_probe.empty() || !(_dt > T(0))) {
+        atlas::logger::info() << "System::collide: end";
         return;
     }
 
-    if (_colliders.empty()) {
+    bool has_active_collider = false;
+
+    for (const auto& collider : _colliders) {
+        if (collider && !collider->empty()) {
+            has_active_collider = true;
+            collider->update(_dt);
+            collider->collide(_particle_probe, _dt);
+        }
+    }
+
+    if (!has_active_collider) {
         time_integration();
-        atlas::logger::info() << "System::advect: end";
-        return;
     }
 
-    const auto* collider_ptrs = _colliders.data();
-    const int collider_count  = static_cast<int>(_colliders.size());
-    const T far               = static_cast<T>(atlas::far);
-    const T epsilon           = static_cast<T>(atlas::eps);
-    const T tolerance         = epsilon;
-
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        probe.particle_count,
-        [probe, dt, collider_ptrs, collider_count, far, epsilon, tolerance] ATLAS_DEVICE(const int i) {
-            const Vector3<T> p0        = probe.pos[i];
-            const Vector3<T> velocity  = probe.vel[i];
-            const Vector3<T> direction = velocity * dt;
-            const T segment_length     = direction.length();
-
-            if (segment_length <= tolerance) {
-                return;
-            }
-
-            bool any_hit = false;
-            T best_t     = far;
-            Vector3<T> best_pos {};
-            Vector3<T> best_norm {};
-            int best_index = -1;
-
-            for (int j = 0; j < collider_count; ++j) {
-                const auto& collider = collider_ptrs[j];
-                if (!collider || !collider->unit() || !collider->surface_interaction()) continue;
-
-                const auto& unit    = *collider->unit();
-                const auto& sync_op = unit.sync_operator();
-                const auto& geom_op = unit.geometry_operator();
-
-                const atlas::spatial::Ray<T> world_ray(p0, direction);
-                const atlas::spatial::Ray<T> local_ray = sync_op.sync_to_local(world_ray);
-                const HitSurface<T> local_hit          = geom_op(local_ray);
-
-                if (!local_hit.is_intersecting || local_hit.distance > segment_length
-                    || local_hit.distance >= best_t) {
-                    continue;
-                }
-
-                any_hit    = true;
-                best_t     = local_hit.distance;
-                best_pos   = sync_op.sync_to_world(local_hit.point);
-                best_norm  = sync_op.sync_dir_to_world(local_hit.normal);
-                best_index = j;
-            }
-
-            if (!any_hit || best_index < 0) {
-                probe.pos[i] = p0 + direction;
-                probe.vel[i] = velocity;
-                return;
-            }
-
-            const auto& interaction = *collider_ptrs[best_index]->surface_interaction();
-            probe.pos[i]            = best_pos + best_norm * epsilon;
-            probe.vel[i]            = interaction(velocity, best_norm);
-        });
-
-    atlas::logger::info() << "System::advect: end";
+    atlas::logger::info() << "System::collide: end";
 }
 
 template <typename T>

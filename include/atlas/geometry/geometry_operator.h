@@ -25,21 +25,21 @@ struct GeometryOperator {
         TriangleMeshGeometryOperator<T> triangle_mesh;
     };
 
-    ATLAS_HOST
+    ATLAS_ALL_DEVICE
     GeometryOperator() noexcept;
-    ATLAS_HOST
+    ATLAS_ALL_DEVICE
     GeometryOperator(const GeometryOperator& other) noexcept;
 
-    ATLAS_HOST GeometryOperator&
+    ATLAS_ALL_DEVICE GeometryOperator&
     operator=(const GeometryOperator& other) noexcept;
 
-    ATLAS_HOST explicit GeometryOperator(const BoxGeometryOperator<T>& op);
-    ATLAS_HOST explicit GeometryOperator(const CircleGeometryOperator<T>& op);
-    ATLAS_HOST explicit GeometryOperator(const CylinderGeometryOperator<T>& op);
-    ATLAS_HOST explicit GeometryOperator(const PlaneGeometryOperator<T>& op);
-    ATLAS_HOST explicit GeometryOperator(const SphereGeometryOperator<T>& op);
-    ATLAS_HOST explicit GeometryOperator(const TriangleGeometryOperator<T>& op);
-    ATLAS_HOST explicit GeometryOperator(const TriangleMeshGeometryOperator<T>& op);
+    ATLAS_ALL_DEVICE explicit GeometryOperator(const BoxGeometryOperator<T>& op);
+    ATLAS_ALL_DEVICE explicit GeometryOperator(const CircleGeometryOperator<T>& op);
+    ATLAS_ALL_DEVICE explicit GeometryOperator(const CylinderGeometryOperator<T>& op);
+    ATLAS_ALL_DEVICE explicit GeometryOperator(const PlaneGeometryOperator<T>& op);
+    ATLAS_ALL_DEVICE explicit GeometryOperator(const SphereGeometryOperator<T>& op);
+    ATLAS_ALL_DEVICE explicit GeometryOperator(const TriangleGeometryOperator<T>& op);
+    ATLAS_ALL_DEVICE explicit GeometryOperator(const TriangleMeshGeometryOperator<T>& op);
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;

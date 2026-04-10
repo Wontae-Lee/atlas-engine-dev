@@ -77,7 +77,6 @@ Triangle<T>::bind_operator() noexcept {
     _operator.c = atlas::raw_pointer_cast(&c);
     _operator.n = atlas::raw_pointer_cast(&normal);
     _operator.normal = atlas::raw_pointer_cast(&normal);
-    this->invalidate_validity_cache();
 }
 
 template <typename T>
@@ -138,9 +137,7 @@ Triangle<T>::bound() const noexcept {
 template <typename T>
 bool
 Triangle<T>::is_valid() const noexcept {
-    return this->cached_is_valid([this]() noexcept {
-        return _operator.is_valid();
-    });
+    return _operator.is_valid();
 }
 
 template <typename T>

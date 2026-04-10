@@ -236,7 +236,6 @@ void
 Box<T>::bind_operator() noexcept {
     _operator.lower_corner = atlas::raw_pointer_cast(&lower_corner);
     _operator.upper_corner = atlas::raw_pointer_cast(&upper_corner);
-    this->invalidate_validity_cache();
 }
 
 template <typename T>
@@ -297,9 +296,7 @@ Box<T>::bound() const noexcept {
 template <typename T>
 bool
 Box<T>::is_valid() const noexcept {
-    return this->cached_is_valid([this]() noexcept {
-        return _operator.is_valid();
-    });
+    return _operator.is_valid();
 }
 
 template <typename T>

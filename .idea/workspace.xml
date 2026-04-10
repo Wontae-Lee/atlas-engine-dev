@@ -29,6 +29,7 @@
       <config projectName="atlas-engine-dev" targetName="gtest_main" />
       <config projectName="atlas-engine-dev" targetName="benchmark_min_time_flag_iters_test" />
       <config projectName="atlas-engine-dev" targetName="repetitions_test" />
+      <config projectName="atlas-engine-dev" targetName="atlas_cuda_tests" />
       <config projectName="atlas-engine-dev" targetName="benchmark_gtest" />
       <config projectName="atlas-engine-dev" targetName="NightlyMemoryCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="locale_impermeability_test" />
@@ -70,7 +71,6 @@
       <config projectName="atlas-engine-dev" targetName="profiler_manager_test" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalCoverage" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="ContinuousBuild" folderName="CTestDashboardTargets" />
-      <config projectName="atlas-engine-dev" targetName="atlas_tests" />
       <config projectName="atlas-engine-dev" targetName="solver" />
       <config projectName="atlas-engine-dev" targetName="min_time_parse_gtest" />
       <config projectName="atlas-engine-dev" targetName="memory_results_gtest" />
@@ -120,9 +120,9 @@
   <component name="CMakeSettings">
     <configurations>
       <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
-      <configuration PROFILE_NAME="tbb-debug" PROFILE_DISPLAY_NAME="Atlas TBB Debug (Vizkit+Logging+Tests+Benchmarks)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-debug" />
-      <configuration PROFILE_NAME="tbb-release" PROFILE_DISPLAY_NAME="Atlas TBB Release (Vizkit+Logging+Tests+Benchmarks)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-release" />
-      <configuration PROFILE_NAME="tbb-relwithdebinfo" PROFILE_DISPLAY_NAME="Atlas TBB RelWithDebInfo (Vizkit+Logging+Tests+Benchmarks)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-relwithdebinfo" />
+      <configuration PROFILE_NAME="tbb-debug" PROFILE_DISPLAY_NAME="Atlas TBB Debug (Vizkit+Logging+GoogleTest+Benchmarks)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-debug" />
+      <configuration PROFILE_NAME="tbb-release" PROFILE_DISPLAY_NAME="Atlas TBB Release (Vizkit+Logging+GoogleTest+Benchmarks)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-release" />
+      <configuration PROFILE_NAME="tbb-relwithdebinfo" PROFILE_DISPLAY_NAME="Atlas TBB RelWithDebInfo (Vizkit+Logging+GoogleTest+Benchmarks)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-relwithdebinfo" />
       <configuration PROFILE_NAME="tbb-debug-make" PROFILE_DISPLAY_NAME="Atlas TBB Debug (Unix Makefiles)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-debug-make" />
       <configuration PROFILE_NAME="cuda-debug" PROFILE_DISPLAY_NAME="Atlas CUDA Debug (Thrust host=TBB, TBB linked)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug" />
       <configuration PROFILE_NAME="cuda-release" PROFILE_DISPLAY_NAME="Atlas CUDA Release (Thrust host=TBB, TBB linked)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-release" />
@@ -141,13 +141,38 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/cuda/cuda_tests.cu" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/unit/unit_tests.cuh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/dynamic/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/dynamic/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakePresets.json" beforeDir="false" afterPath="$PROJECT_DIR$/CMakePresets.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/dynamic/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/dynamic/main.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/main.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/generator/generate_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/generate_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/circle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/circle.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/geometry.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/geometry_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sampling/sampling.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sampling/sampling.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/system/system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/measure/thermometer/variance_thermometer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measure/thermometer/variance_thermometer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/unit/unit.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/unit/unit.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/unit/unit.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/unit/unit.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/collider/collider_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/collider/collider_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/system/system_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/system/system_tests.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -231,44 +256,45 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;CMake Application.dynamic.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.solver.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.visualization.executor&quot;: &quot;Run&quot;,
-    &quot;Google Test.All in atlas_tests.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.generate_headers.executor&quot;: &quot;Run&quot;,
-    &quot;Python.remove_comments.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.west.config.association.type.startup.service&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;cf.advertisement.text.overridden&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;ctest.advertisement.all.test.configuration.is.created&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/wontae/CLionProjects/atlas-engine-dev/include/atlas/measure/temperature&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.LLMConfigurable&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "CMake Application.atlas_unit_cuda_tests.executor": "Run",
+    "CMake Application.dynamic.executor": "Run",
+    "CMake Application.solver.executor": "Run",
+    "CMake Application.visualization.executor": "Run",
+    "Google Test.All in atlas_tests.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.generate_headers.executor": "Run",
+    "Python.remove_comments.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.RadMigrateCodeStyle": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "RunOnceActivity.west.config.association.type.startup.service": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cf.advertisement.text.overridden": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "ctest.advertisement.all.test.configuration.is.created": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/include/atlas/advector",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.first.attach.projects": "true",
+    "settings.editor.selected.configurable": "ml.llm.LLMConfigurable",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="main" />
@@ -276,22 +302,17 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/include/atlas/advector" />
       <recent name="$PROJECT_DIR$/include/atlas/measure/temperature" />
       <recent name="$PROJECT_DIR$/tests/collider" />
       <recent name="$PROJECT_DIR$/include/atlas/shuffle" />
       <recent name="$PROJECT_DIR$/include/atlas/source" />
-      <recent name="$PROJECT_DIR$/tests/generator" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/tests/measure" />
     </key>
   </component>
-  <component name="RunManager" selected="Google Test.All in atlas_tests">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
+  <component name="RunManager" selected="CMake Application.ContinuousBuild">
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -438,7 +459,17 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="atlas-logging" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-logging" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="atlas_cuda_tests" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_cuda_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_cuda_tests">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -568,6 +599,7 @@
       <item itemvalue="CMake Application.solver" />
       <item itemvalue="CMake Application.tinyobjloader" />
       <item itemvalue="CMake Application.uninstall" />
+      <item itemvalue="CMake Application.atlas_cuda_tests" />
       <item itemvalue="CTest Application.All CTest" />
       <item itemvalue="Google Test.All in atlas_tests" />
       <item itemvalue="Python.generate_headers" />
@@ -640,6 +672,7 @@
       <workItem from="1774369914951" duration="3302000" />
       <workItem from="1775738054085" duration="602000" />
       <workItem from="1775739073760" duration="3567000" />
+      <workItem from="1775805875648" duration="11760000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

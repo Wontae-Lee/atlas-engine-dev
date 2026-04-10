@@ -18,11 +18,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # =====================================================
 # User-configurable options
 # =====================================================
-option(ATLAS_USE_CUDA "Enable CUDA tasking backend" OFF)
-option(ATLAS_USE_TBB "Enable TBB tasking backend" ON)
+option(ATLAS_USE_CUDA "Enable CUDA tasking backend" ON)
+option(ATLAS_USE_TBB "Enable TBB tasking backend" OFF)
 option(ATLAS_USE_VIZKIT "Build vizkit-based visualization modules" ON)
 option(ATLAS_LOGGING "Enable logging functionality" ON)
-option(ATLAS_TESTS "Build and enable tests" ON)
+option(ATLAS_GOOGLE_TEST "Build GoogleTest-based C++ tests" OFF)
+option(ATLAS_CUDA_TEST "Build CUDA-specific tests" ON)
 option(ATLAS_BENCHMARKS "Build and enable benchmarks" OFF)
 
 # =====================================================
@@ -39,6 +40,11 @@ endif ()
 if (ATLAS_USE_CUDA AND ATLAS_BENCHMARKS)
     message(WARNING "[ATLAS] ATLAS_BENCHMARKS are not yet compatible with CUDA backend. Disabling benchmarks.")
     set(ATLAS_BENCHMARKS OFF)
+endif ()
+
+if (ATLAS_USE_CUDA AND ATLAS_GOOGLE_TEST)
+    message(WARNING "[ATLAS] GoogleTest-based tests are disabled for CUDA backend. Disabling ATLAS_GOOGLE_TEST.")
+    set(ATLAS_GOOGLE_TEST OFF)
 endif ()
 
 
@@ -190,8 +196,10 @@ endif ()
 # =====================================================
 # Tests
 # =====================================================
-if (ATLAS_TESTS)
-    add_subdirectory(external/googletest)
+if (ATLAS_GOOGLE_TEST OR ATLAS_CUDA_TEST)
+    if (ATLAS_GOOGLE_TEST)
+        add_subdirectory(external/googletest)
+    endif ()
     add_subdirectory(tests)
 endif ()
 
@@ -217,7 +225,8 @@ message(STATUS "ATLAS_USE_CUDA     : ${ATLAS_USE_CUDA}")
 message(STATUS "ATLAS_USE_TBB      : ${ATLAS_USE_TBB}")
 message(STATUS "ATLAS_USE_VIZKIT   : ${ATLAS_USE_VIZKIT}")
 message(STATUS "ATLAS_LOGGING      : ${ATLAS_LOGGING}")
-message(STATUS "ATLAS_TESTS       : ${ATLAS_TESTS}")
+message(STATUS "ATLAS_GOOGLE_TEST : ${ATLAS_GOOGLE_TEST}")
+message(STATUS "ATLAS_CUDA_TEST   : ${ATLAS_CUDA_TEST}")
 message(STATUS "ATLAS_BENCHMARKS   : ${ATLAS_BENCHMARKS}")
 if (ATLAS_USE_CUDA)
     message(STATUS "CUDA Archs         : ${CMAKE_CUDA_ARCHITECTURES}")

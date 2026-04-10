@@ -50,8 +50,10 @@ TEST(System, AddColliderValueOverloadCreatesStoredCollider) {
 
     ASSERT_EQ(sim_system.colliders().size(), 1u);
     ASSERT_NE(sim_system.colliders().front(), nullptr);
-    EXPECT_EQ(sim_system.colliders().front()->unit(), collider_ptr->unit());
-    EXPECT_EQ(sim_system.colliders().front()->surface_interaction(), collider_ptr->surface_interaction());
+    EXPECT_EQ(sim_system.colliders().front()->units().size(), 1u);
+    EXPECT_NEAR(sim_system.colliders().front()->surface_interaction().restitution(),
+                collider_ptr->surface_interaction().restitution(),
+                eps);
 }
 
 TEST(System, SetCollidersCopiesConfiguredPointerListAndClearRemovesAll) {
@@ -83,8 +85,10 @@ TEST(System, SetCollidersCopiesConfiguredValueList) {
     ASSERT_EQ(sim_system.colliders().size(), 2u);
     ASSERT_NE(sim_system.colliders()[0], nullptr);
     ASSERT_NE(sim_system.colliders()[1], nullptr);
-    EXPECT_EQ(sim_system.colliders()[0]->unit(), colliders[0].unit());
-    EXPECT_EQ(sim_system.colliders()[1]->surface_interaction(), colliders[1].surface_interaction());
+    EXPECT_EQ(sim_system.colliders()[0]->units().size(), colliders[0].units().size());
+    EXPECT_NEAR(sim_system.colliders()[1]->surface_interaction().restitution(),
+                colliders[1].surface_interaction().restitution(),
+                eps);
 }
 
 TEST(System, BuilderBuildStoresConfiguredColliders) {
@@ -216,8 +220,10 @@ TEST(System, BuilderAcceptsColliderValuesInHostBuffer) {
     ASSERT_EQ(sim_system.colliders().size(), 2u);
     ASSERT_NE(sim_system.colliders()[0], nullptr);
     ASSERT_NE(sim_system.colliders()[1], nullptr);
-    EXPECT_EQ(sim_system.colliders()[0]->unit(), colliders[0].unit());
-    EXPECT_EQ(sim_system.colliders()[1]->surface_interaction(), colliders[1].surface_interaction());
+    EXPECT_EQ(sim_system.colliders()[0]->units().size(), colliders[0].units().size());
+    EXPECT_NEAR(sim_system.colliders()[1]->surface_interaction().restitution(),
+                colliders[1].surface_interaction().restitution(),
+                eps);
 }
 
 TEST(System, BuilderMakeHostSharedCreatesNonNullPointer) {
@@ -328,7 +334,7 @@ TEST(System, OperatorWithoutCollidersFallsBackToTimeIntegration) {
     atlas::copy_host_to_device(pos.data(), probe.pos, pos.size());
     atlas::copy_host_to_device(vel.data(), probe.vel, vel.size());
 
-    sim_system.advect();
+    sim_system.collide();
 
     const auto out_pos = test::copy_device_range(probe.pos, 1);
     const auto out_vel = test::copy_device_range(probe.vel, 1);
@@ -407,7 +413,6 @@ TEST(System, OperatorWithColliderReflectsVelocityAtClosestHit) {
                         .with_unit(unit)
                         .with_surface_interaction(interaction)
                         .make_host_shared();
-
     auto sim_system = system::System<float>::builder()
                           .with_fluid(make_buffered_fluid<float>(1))
                           .with_dt(2.0f)
@@ -422,7 +427,7 @@ TEST(System, OperatorWithColliderReflectsVelocityAtClosestHit) {
     atlas::copy_host_to_device(pos.data(), probe.pos, pos.size());
     atlas::copy_host_to_device(vel.data(), probe.vel, vel.size());
 
-    sim_system.advect();
+    sim_system.collide();
 
     const auto out_pos = test::copy_device_range(probe.pos, 1);
     const auto out_vel = test::copy_device_range(probe.vel, 1);

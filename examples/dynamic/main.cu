@@ -120,7 +120,6 @@ main() {
                                          .make_shared();
 
     const auto sim_system = atlas::System<sim_t>::builder()
-                                .with_buffer_size(0)
                                 .make_host_shared();
 
     auto viewer = atlas::vizkit::Viewer<sim_t>::builder()

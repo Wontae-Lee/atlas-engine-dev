@@ -11,7 +11,7 @@
 namespace atlas::sampling {
 
 template <typename T>
-ATLAS_HOST ATLAS_FORCE_INLINE T
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
 generate_standard_normal(atlas::default_random_engine<T>& engine) {
     atlas::uniform_real_distribution<T> dist(T(0), T(1));
 
@@ -96,7 +96,7 @@ sample_axis_count(T lower, T upper, T spacing) noexcept {
 }
 
 template <typename T, typename GeometryOperator, typename Predicate>
-ATLAS_ALL_DEVICE void
+ATLAS_HOST void
 sample_spawn_grid(DeviceBuffer<Vector3<T>>& particles,
                   const GeometryOperator& query,
                   T spacing,
@@ -131,7 +131,7 @@ sample_spawn_grid(DeviceBuffer<Vector3<T>>& particles,
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         static_cast<int>(total_candidates),
-        [=] ATLAS_ALL_DEVICE(const int index) {
+        [=] ATLAS_DEVICE(const int index) mutable {
             const int plane = nx * ny;
             const int iz    = index / plane;
             const int rem   = index - iz * plane;
@@ -166,7 +166,7 @@ sample_spawn_grid(DeviceBuffer<Vector3<T>>& particles,
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         static_cast<int>(total_candidates),
-        [=] ATLAS_ALL_DEVICE(const int index) {
+        [=] ATLAS_DEVICE(const int index) {
             if (!keep_ptr[index]) return;
             particles_ptr[offsets_ptr[index]] = candidate_ptr[index];
         });

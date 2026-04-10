@@ -18,9 +18,9 @@ struct UniformGenerateOperator final {
     unsigned int seed = 0u;
     mutable atlas::default_random_engine<T> engine;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit UniformGenerateOperator(unsigned int seed = 0u) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit UniformGenerateOperator(unsigned int seed = 0u) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T min_value,
              T max_value) const;
 };
@@ -30,9 +30,9 @@ struct MaxwellSigmaGenerateOperator final {
     unsigned int seed = 0u;
     mutable atlas::default_random_engine<T> engine;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit MaxwellSigmaGenerateOperator(unsigned int seed = 0u) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit MaxwellSigmaGenerateOperator(unsigned int seed = 0u) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T sigma) const;
 };
 
@@ -42,11 +42,11 @@ struct MaxwellBoltzmannGenerateOperator final {
     Vector3<T> bulk_velocity { T(0), T(0), T(0) };
     mutable atlas::default_random_engine<T> engine;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit MaxwellBoltzmannGenerateOperator(
-        unsigned int seed = 0u,
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit MaxwellBoltzmannGenerateOperator(
+        unsigned int seed               = 0u,
         const Vector3<T>& bulk_velocity = Vector3<T>(T(0), T(0), T(0))) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T temperature,
              T molecular_mass) const;
 };
@@ -85,7 +85,7 @@ struct GenerateOperator final {
     ATLAS_HOST
     GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>& op);
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T param0,
              T param1 = T(1)) const;
 

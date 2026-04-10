@@ -9,8 +9,8 @@
 #include <atlas/measure/measure.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
-#include <atlas/solver/solver.h>
 #include <atlas/sink/sink.h>
+#include <atlas/solver/solver.h>
 #include <atlas/source/source.h>
 
 #include <type_traits>
@@ -62,7 +62,7 @@ public:
     solve();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    advect() const;
+    collide() const;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     remove();

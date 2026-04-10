@@ -324,25 +324,29 @@ Fluid<T>::Builder::validate() const {
             "Fluid::Builder: particles/mole_fractions/generators size mismatch.");
     }
 
-    if (_require_non_empty && _particles.size() == 0) {
+    if (_require_non_empty && _particles.empty()) {
         throw std::runtime_error(
             "Fluid::Builder: fluid must contain at least one species.");
     }
 
+    const HostBuffer<T> mole_fractions_host(_mole_fractions.begin(), _mole_fractions.end());
     T sum       = T(0);
-    const int n = static_cast<int>(_mole_fractions.size());
+    const int n = static_cast<int>(mole_fractions_host.size());
     for (int i = 0; i < n; ++i) {
-        if (!std::isfinite(_mole_fractions[i]) || _mole_fractions[i] < T(0)) {
+        if (!std::isfinite(mole_fractions_host[i]) || mole_fractions_host[i] < T(0)) {
             throw std::runtime_error(
                 "Fluid::Builder: mole fractions must be finite and non-negative.");
         }
-        sum += _mole_fractions[i];
+        sum += mole_fractions_host[i];
     }
 
     if (n > 0 && sum > T(0)) {
+        HostBuffer<T> normalized = mole_fractions_host;
         for (int i = 0; i < n; ++i) {
-            const_cast<DeviceBuffer<T>&>(_mole_fractions)[i] /= sum;
+            normalized[i] /= sum;
         }
+        auto& mole_fractions = const_cast<DeviceBuffer<T>&>(_mole_fractions);
+        mole_fractions = DeviceBuffer<T>(normalized.begin(), normalized.end());
     } else if (n > 0) {
         throw std::runtime_error(
             "Fluid::Builder: mole fractions sum to zero.");

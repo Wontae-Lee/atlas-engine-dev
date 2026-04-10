@@ -35,7 +35,7 @@ VarianceThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         num_of_cells,
-        [=](const int cell) {
+        [=] ATLAS_DEVICE(const int cell) {
             const int begin = cell_start[cell];
             if (begin < 0) {
                 field[cell] = T(0);
@@ -85,7 +85,7 @@ VarianceThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         particle_count,
-        [=](const int i) {
+        [=] ATLAS_DEVICE(const int i) {
             const Vector3<T> rel = (position[i] - lower_corner) * inv_h;
             Vector3<int> ijk     = atlas::math::floor(rel).template cast_to<int>();
             ijk                  = atlas::math::clamp(ijk, lo, hi);
@@ -116,7 +116,7 @@ AverageThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         num_of_cells,
-        [=](const int cell) {
+        [=] ATLAS_DEVICE(const int cell) {
             const int begin = cell_start[cell];
             if (begin < 0) {
                 field[cell] = T(0);

@@ -5,17 +5,19 @@
 
 using namespace atlas;
 
-TEST(Collider, ConstructorStoresProvidedPointers) {
+TEST(Collider, ConstructorStoresProvidedValues) {
     auto unit        = test::make_host_shared_unit<double>();
     auto interaction = test::make_host_shared_collider_surface_interaction<double>();
 
     const system::Collider<double> collider(unit, interaction);
 
-    EXPECT_EQ(collider.unit(), unit);
-    EXPECT_EQ(collider.surface_interaction(), interaction);
+    EXPECT_EQ(collider.units().size(), 1u);
+    EXPECT_EQ(collider.surface_interactions().size(), 1u);
+    EXPECT_EQ(collider.surface_interaction().diffuse_sampling(), interaction->diffuse_sampling());
+    EXPECT_NEAR(collider.surface_interaction().restitution(), interaction->restitution(), eps);
 }
 
-TEST(Collider, SettersUpdateStoredPointers) {
+TEST(Collider, SettersUpdateStoredValues) {
     system::Collider<double> collider;
 
     auto unit        = test::make_host_shared_unit<double>();
@@ -24,11 +26,12 @@ TEST(Collider, SettersUpdateStoredPointers) {
     collider.set_unit(unit);
     collider.set_surface_interaction(interaction);
 
-    EXPECT_EQ(collider.unit(), unit);
-    EXPECT_EQ(collider.surface_interaction(), interaction);
+    EXPECT_EQ(collider.units().size(), 1u);
+    EXPECT_EQ(collider.surface_interactions().size(), 1u);
+    EXPECT_NEAR(collider.surface_interaction().temperature(), interaction->temperature(), eps);
 }
 
-TEST(Collider, BuilderBuildUsesProvidedPointers) {
+TEST(Collider, BuilderBuildUsesProvidedValues) {
     auto unit        = test::make_host_shared_unit<double>();
     auto interaction = test::make_host_shared_collider_surface_interaction<double>();
 
@@ -37,8 +40,8 @@ TEST(Collider, BuilderBuildUsesProvidedPointers) {
                               .with_surface_interaction(interaction)
                               .build();
 
-    EXPECT_EQ(collider.unit(), unit);
-    EXPECT_EQ(collider.surface_interaction(), interaction);
+    EXPECT_EQ(collider.units().size(), 1u);
+    EXPECT_NEAR(collider.surface_interaction().restitution(), interaction->restitution(), eps);
 }
 
 TEST(Collider, BuilderCreatesDefaultSurfaceInteractionWhenNotProvided) {
@@ -48,11 +51,11 @@ TEST(Collider, BuilderCreatesDefaultSurfaceInteractionWhenNotProvided) {
                               .with_unit(unit)
                               .build();
 
-    ASSERT_NE(collider.surface_interaction(), nullptr);
-    EXPECT_EQ(collider.unit(), unit);
-    EXPECT_EQ(collider.surface_interaction()->diffuse_sampling(), system::DiffuseSampling::Uniform);
-    EXPECT_NEAR(collider.surface_interaction()->restitution(), 1.0, eps);
-    EXPECT_NEAR(collider.surface_interaction()->tangential_momentum_accommodation(), 1.0, eps);
+    EXPECT_EQ(collider.units().size(), 1u);
+    EXPECT_EQ(collider.surface_interactions().size(), 1u);
+    EXPECT_EQ(collider.surface_interaction().diffuse_sampling(), system::DiffuseSampling::Uniform);
+    EXPECT_NEAR(collider.surface_interaction().restitution(), 1.0, eps);
+    EXPECT_NEAR(collider.surface_interaction().tangential_momentum_accommodation(), 1.0, eps);
 }
 
 TEST(Collider, BuilderMakeHostSharedCreatesNonNullPointer) {
@@ -65,8 +68,8 @@ TEST(Collider, BuilderMakeHostSharedCreatesNonNullPointer) {
                               .make_host_shared();
 
     ASSERT_NE(collider, nullptr);
-    EXPECT_EQ(collider->unit(), unit);
-    EXPECT_EQ(collider->surface_interaction(), interaction);
+    EXPECT_EQ(collider->units().size(), 1u);
+    EXPECT_NEAR(collider->surface_interaction().restitution(), interaction->restitution(), eps);
 }
 
 TEST(Collider, BuilderThrowsWhenUnitIsNull) {

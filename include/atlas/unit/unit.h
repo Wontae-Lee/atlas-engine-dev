@@ -21,12 +21,12 @@ public:
 
     ~Unit() = default;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     Unit(
         atlas::GeometryOperator<T> geometry_operator,
         SyncOperator<T> sync_operator) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     Unit(
         atlas::GeometryOperator<T> geometry_operator,
         SyncOperator<T> sync_operator,
@@ -38,44 +38,44 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE void
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     set_geometry_operator(atlas::GeometryOperator<T> geometry_operator) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE void
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     set_sync_operator(SyncOperator<T> sync_operator) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE void
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     update(T dt) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE void
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     move(const Vector<T, 3>& delta_world) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE void
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     rotate(const Vector<T, 3>& axis_world, T angle_rad) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::GeometryOperator<T>&
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::GeometryOperator<T>&
     geometry_operator() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::SyncOperator<T>&
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::SyncOperator<T>&
     sync_operator() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector<T, 3>>&
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector<T, 3>>&
     velocity() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector<T, 3>>&
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector<T, 3>>&
     acceleration() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector<T, 3>>&
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector<T, 3>>&
     angular_velocity() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector<T, 3>>&
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector<T, 3>>&
     angular_acceleration() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     dynamic() const noexcept;
 
 private:
-    ATLAS_HOST ATLAS_FORCE_INLINE static void
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
     canonicalize_kinematics(std::optional<Vector<T, 3>>& velocity,
                             std::optional<Vector<T, 3>>& acceleration,
                             std::optional<Vector<T, 3>>& angular_velocity,
@@ -87,8 +87,6 @@ private:
     atlas::GeometryOperator<T> _geometry_operator;
 
     SyncOperator<T> _sync_operator;
-
-    GeometryHostPtr<T> _geometry_owner;
 
     std::optional<Vector<T, 3>> _velocity;
 

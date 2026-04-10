@@ -7,6 +7,7 @@
 namespace atlas::system {
 
 template <typename T>
+
 Unit<T>::Unit(
     atlas::GeometryOperator<T> geometry_operator,
     SyncOperator<T> sync_operator) noexcept
@@ -15,6 +16,7 @@ Unit<T>::Unit(
     , _sync_operator(std::move(sync_operator)) { }
 
 template <typename T>
+
 Unit<T>::Unit(
     atlas::GeometryOperator<T> geometry_operator,
     SyncOperator<T> sync_operator,
@@ -276,7 +278,6 @@ Unit<T>::Builder::build() {
 
     Unit<T> u {};
 
-    u._geometry_owner    = std::move(*geometry);
     u._geometry_operator = std::move(*_geometry_operator);
     u._sync_operator     = std::move(*_sync_operator);
 
