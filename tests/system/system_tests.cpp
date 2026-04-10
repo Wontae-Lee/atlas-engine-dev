@@ -150,7 +150,7 @@ TEST(System, CollideWithColliderReflectsVelocityAtClosestHit) {
     ASSERT_EQ(out_pos.size(), 1u);
     ASSERT_EQ(out_vel.size(), 1u);
 
-    const float epsf = static_cast<float>(atlas::eps);
+    const auto epsf = static_cast<float>(atlas::eps);
     EXPECT_NEAR(out_pos[0].x, 0.0f, epsf);
     EXPECT_NEAR(out_pos[0].y, 0.0f, epsf);
     EXPECT_NEAR(out_pos[0].z, 1.0f + epsf, 5.0f * epsf);

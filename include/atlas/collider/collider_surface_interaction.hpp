@@ -90,7 +90,7 @@ ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
         diffuse_dir = atlas::sampling::sample_uniform_hemisphere(normal, u1, u2);
     }
 
-    const T mix = hashed_unit_interval(incident + normal * T(17), T(2.41));
+    const T mix              = hashed_unit_interval(incident + normal * T(17), T(2.41));
     const Vector3<T> out_dir = (mix < _tmac) ? diffuse_dir : specular_dir;
     return out_dir * _restitution_coeff;
 }
