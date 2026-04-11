@@ -7,9 +7,9 @@
 #include <atlas/fluid/fluid.h>
 #include <atlas/measure/measure.h>
 #include <atlas/memory/memory.h>
+#include <atlas/orchestrator/orchestrator.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/sink/sink.h>
-#include <atlas/solver/solver.h>
 #include <atlas/source/source.h>
 
 #include <type_traits>
@@ -35,7 +35,7 @@ public:
            SinkHostPtr<T> sink,
            MeasureHostPtr<T> measure,
            ColliderHostPtr<T> collider,
-           SolverHostPtr<T> solver);
+           OrchestratorHostPtr<T> solver);
 
     ATLAS_HOST ATLAS_FORCE_INLINE ~System() = default;
 
@@ -97,7 +97,7 @@ public:
     set_collider(const Collider<T>& collider);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_solver(const SolverHostPtr<T>& solver);
+    set_solver(const OrchestratorHostPtr<T>& solver);
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidHostPtr<T>
     fluid() const noexcept;
@@ -147,7 +147,7 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const ColliderHostPtr<T>&
     collider() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SolverHostPtr<T>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const OrchestratorHostPtr<T>&
     solver() const noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
@@ -182,7 +182,7 @@ private:
     SinkHostPtr<T> _sink {};
     MeasureHostPtr<T> _measure {};
     ColliderHostPtr<T> _collider {};
-    SolverHostPtr<T> _solver {};
+    OrchestratorHostPtr<T> _solver {};
 };
 
 template <typename T>
@@ -218,7 +218,7 @@ public:
     with_collider(const Collider<T>& collider);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_solver(const SolverHostPtr<T>& solver);
+    with_solver(const OrchestratorHostPtr<T>& solver);
 
     ATLAS_HOST ATLAS_FORCE_INLINE System<T>
     build();
@@ -241,7 +241,7 @@ private:
     SinkHostPtr<T> _sink {};
     MeasureHostPtr<T> _measure {};
     ColliderHostPtr<T> _collider {};
-    SolverHostPtr<T> _solver {};
+    OrchestratorHostPtr<T> _solver {};
 };
 
 }

@@ -1,0 +1,317 @@
+#pragma once
+
+#include <atlas/memory/copy.h>
+#include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/parallel/parallel_for.h>
+#include <atlas/scan/exclusive_scan.h>
+
+#include <stdexcept>
+#include <utility>
+
+namespace atlas::system {
+
+template <typename T>
+Sph<T>::Sph(FluidHostPtr<T> fluid,
+            SphOperator<T> op)
+    : _fluid(std::move(fluid))
+    , _operator(std::move(op)) {
+    rebuild_pair_tables();
+}
+
+template <typename T>
+typename Sph<T>::Builder
+Sph<T>::builder() noexcept {
+    return Builder {};
+}
+
+template <typename T>
+void
+Sph<T>::solve(DomainDeviceProbe<T> domain,
+              SpatialHashingProbe<T> searcher,
+              FluidDeviceProbe<T> particle,
+              CodecDeviceProbe<T>) {
+    if (particle.particle_count <= 0 || particle.pos == nullptr || particle.vel == nullptr || particle.species == nullptr) {
+        return;
+    }
+
+    const auto interaction_operator = _operator;
+    auto* positions                 = particle.pos;
+    auto* velocities                = particle.vel;
+    const auto* temperatures        = particle.temperature;
+    const auto* species             = particle.species;
+    const auto* cell_start          = searcher.cell_start;
+    const auto* cell_end            = searcher.cell_end;
+    const auto* indices             = searcher.indices;
+    const auto* field_force         = domain.field_force;
+    const auto* rest_densities      = atlas::raw_pointer_cast(_rest_densities.data());
+    const auto* pressure_coeffs     = atlas::raw_pointer_cast(_pressure_coefficients.data());
+    const auto* dynamic_viscosities = atlas::raw_pointer_cast(_dynamic_viscosities.data());
+    const auto* smoothing_lengths   = atlas::raw_pointer_cast(_smoothing_lengths.data());
+    const auto pair_indexer         = _pair_indexer;
+    const int num_cells             = domain.num_of_cells;
+    const int species_count         = _species_count;
+    const Vector3<T> lower_corner   = domain.lower_corner;
+    const Vector3<int> grid_size    = domain.grid_size;
+    const T inv_h                   = domain.inv_h;
+
+    if (num_cells <= 0 || cell_start == nullptr || cell_end == nullptr || indices == nullptr || species_count <= 0) {
+        return;
+    }
+
+    if (field_force != nullptr) {
+        const Vector3<int> lo { 0, 0, 0 };
+        const Vector3<int> hi = grid_size - Vector3<int> { 1, 1, 1 };
+
+        atlas::parallel_for<ExecutionPolicy::device>(
+            0,
+            particle.particle_count,
+            [=] ATLAS_DEVICE(const int i) {
+                const Vector3<T> rel = (positions[i] - lower_corner) * inv_h;
+                Vector3<int> ijk     = atlas::math::floor(rel).template cast_to<int>();
+                ijk                  = atlas::math::clamp(ijk, lo, hi);
+
+                const int cell = ijk.x + ijk.y * grid_size.x + ijk.z * grid_size.x * grid_size.y;
+                velocities[i] += field_force[cell];
+            });
+    }
+
+    _cell_pair_counts.resize(static_cast<std::size_t>(num_cells));
+    _pair_offsets.resize(static_cast<std::size_t>(num_cells + 1));
+
+    auto* cell_pair_counts_ptr = atlas::raw_pointer_cast(_cell_pair_counts.data());
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        num_cells,
+        [=] ATLAS_DEVICE(const int cell) {
+            const int begin = cell_start[cell];
+            if (begin < 0) {
+                cell_pair_counts_ptr[cell] = 0;
+                return;
+            }
+
+            const int end              = cell_end[cell];
+            const int pair_count       = (end - begin) / 2;
+            cell_pair_counts_ptr[cell] = (pair_count > 0) ? pair_count : 0;
+        });
+
+    atlas::exclusive_scan<ExecutionPolicy::device>(
+        _cell_pair_counts.begin(),
+        _cell_pair_counts.end(),
+        _pair_offsets.begin(),
+        0);
+
+    int last_pair_offset = 0;
+    int last_pair_count  = 0;
+    atlas::copy_device_to_host(
+        atlas::raw_pointer_cast(_pair_offsets.data()) + (num_cells - 1),
+        &last_pair_offset,
+        1);
+    atlas::copy_device_to_host(
+        atlas::raw_pointer_cast(_cell_pair_counts.data()) + (num_cells - 1),
+        &last_pair_count,
+        1);
+
+    const int total_pairs = last_pair_offset + last_pair_count;
+    _pair_offsets[static_cast<std::size_t>(num_cells)] = total_pairs;
+
+    if (total_pairs <= 0) {
+        return;
+    }
+
+    const auto* pair_offsets_ptr = atlas::raw_pointer_cast(_pair_offsets.data());
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        total_pairs,
+        [=] ATLAS_DEVICE(const int work_index) {
+            int left  = 0;
+            int right = num_cells;
+
+            while (left + 1 < right) {
+                const int mid = left + (right - left) / 2;
+                if (pair_offsets_ptr[mid] <= work_index) {
+                    left = mid;
+                } else {
+                    right = mid;
+                }
+            }
+
+            const int cell        = left;
+            const int pair_offset = work_index - pair_offsets_ptr[cell];
+            const int pair_begin  = cell_start[cell] + 2 * pair_offset;
+            const int p           = indices[pair_begin];
+            const int q           = indices[pair_begin + 1];
+
+            if (p < 0 || q < 0 || p >= particle.particle_count || q >= particle.particle_count) {
+                return;
+            }
+
+            const size_t species_p = species[p];
+            const size_t species_q = species[q];
+            const int material_pair_index = pair_indexer.pair_index(
+                static_cast<int>(species_p),
+                static_cast<int>(species_q),
+                species_count);
+
+            const Vector3<T> dx       = positions[q] - positions[p];
+            const T distance          = dx.length();
+            const T smoothing_length  = smoothing_lengths[material_pair_index];
+            if (!(smoothing_length > T(0)) || !(distance > T(0)) || distance >= smoothing_length) {
+                return;
+            }
+
+            const T weight = interaction_operator.weight(distance, smoothing_length);
+            const T grad   = interaction_operator.gradient_factor(distance, smoothing_length);
+            const T lap    = interaction_operator.laplacian(distance, smoothing_length);
+            const T mass_p = particle.particle_property[species_p].mass;
+            const T mass_q = particle.particle_property[species_q].mass;
+            const T rest_density = rest_densities[material_pair_index];
+            const T pressure_coeff = pressure_coeffs[material_pair_index];
+            const T dynamic_viscosity = dynamic_viscosities[material_pair_index];
+            const T temperature_p = (temperatures != nullptr && temperatures[p] > T(0)) ? temperatures[p] : T(1);
+            const T temperature_q = (temperatures != nullptr && temperatures[q] > T(0)) ? temperatures[q] : T(1);
+            const T pair_temperature = T(0.5) * (temperature_p + temperature_q);
+
+            if (!(mass_p > T(0)) || !(mass_q > T(0)) || !(rest_density > T(0))) {
+                return;
+            }
+
+            const T pair_density = (mass_p + mass_q) * weight;
+            const T pressure     = pressure_coeff * pair_temperature * (pair_density - rest_density);
+            const Vector3<T> dir = dx / distance;
+            const Vector3<T> pressure_force = dir * (-pressure * grad);
+            const Vector3<T> viscosity_force = (velocities[q] - velocities[p])
+                * (dynamic_viscosity * pair_temperature * lap);
+
+            velocities[p] += (pressure_force + viscosity_force) / mass_p;
+            velocities[q] -= (pressure_force + viscosity_force) / mass_q;
+        });
+}
+
+template <typename T>
+void
+Sph<T>::set_operator(SphOperator<T> op) noexcept {
+    _operator = std::move(op);
+}
+
+template <typename T>
+void
+Sph<T>::set_fluid(FluidHostPtr<T> fluid) {
+    _fluid = std::move(fluid);
+    rebuild_pair_tables();
+}
+
+template <typename T>
+const FluidHostPtr<T>&
+Sph<T>::fluid() const noexcept {
+    return _fluid;
+}
+
+template <typename T>
+const SphOperator<T>&
+Sph<T>::interaction_operator() const noexcept {
+    return _operator;
+}
+
+template <typename T>
+SphOperator<T>&
+Sph<T>::interaction_operator() noexcept {
+    return _operator;
+}
+
+template <typename T>
+void
+Sph<T>::rebuild_pair_tables() {
+    if (!_fluid) {
+        throw std::runtime_error("Sph: fluid must not be null.");
+    }
+
+    _species_count = _fluid->size();
+    if (_species_count <= 0) {
+        _rest_densities.clear();
+        _pressure_coefficients.clear();
+        _dynamic_viscosities.clear();
+        _smoothing_lengths.clear();
+        return;
+    }
+
+    const std::size_t pair_count =
+        static_cast<std::size_t>(_species_count) * static_cast<std::size_t>(_species_count + 1) / 2;
+
+    HostBuffer<MatrialProperties<T>> particles_host(static_cast<std::size_t>(_species_count));
+    atlas::copy_device_to_host(
+        atlas::raw_pointer_cast(_fluid->particles().data()),
+        particles_host.data(),
+        particles_host.size());
+
+    HostBuffer<T> rest_density_host(pair_count, T(1));
+    HostBuffer<T> pressure_coeff_host(pair_count, T(1));
+    HostBuffer<T> dynamic_viscosity_host(pair_count, T(0));
+    HostBuffer<T> smoothing_length_host(pair_count, T(1));
+
+    for (int s = 0; s < _species_count; ++s) {
+        for (int r = s; r < _species_count; ++r) {
+            const int pair_index = _pair_indexer.pair_index(s, r, _species_count);
+            const auto& a = particles_host[static_cast<std::size_t>(s)];
+            const auto& b = particles_host[static_cast<std::size_t>(r)];
+
+            const T rho_a = a.rest_density.has_value() ? *a.rest_density : T(1);
+            const T rho_b = b.rest_density.has_value() ? *b.rest_density : T(1);
+            const T k_a   = a.pressure_coefficient.has_value() ? *a.pressure_coefficient : T(1);
+            const T k_b   = b.pressure_coefficient.has_value() ? *b.pressure_coefficient : T(1);
+            const T mu_a  = a.dynamic_viscosity.has_value() ? *a.dynamic_viscosity : T(0);
+            const T mu_b  = b.dynamic_viscosity.has_value() ? *b.dynamic_viscosity : T(0);
+            const T h_a   = a.smoothing_length.has_value() ? *a.smoothing_length : T(1);
+            const T h_b   = b.smoothing_length.has_value() ? *b.smoothing_length : T(1);
+
+            rest_density_host[static_cast<std::size_t>(pair_index)]       = T(0.5) * (rho_a + rho_b);
+            pressure_coeff_host[static_cast<std::size_t>(pair_index)]     = T(0.5) * (k_a + k_b);
+            dynamic_viscosity_host[static_cast<std::size_t>(pair_index)]  = T(0.5) * (mu_a + mu_b);
+            smoothing_length_host[static_cast<std::size_t>(pair_index)]   = T(0.5) * (h_a + h_b);
+        }
+    }
+
+    _rest_densities = DeviceBuffer<T>(rest_density_host.begin(), rest_density_host.end());
+    _pressure_coefficients = DeviceBuffer<T>(pressure_coeff_host.begin(), pressure_coeff_host.end());
+    _dynamic_viscosities = DeviceBuffer<T>(dynamic_viscosity_host.begin(), dynamic_viscosity_host.end());
+    _smoothing_lengths = DeviceBuffer<T>(smoothing_length_host.begin(), smoothing_length_host.end());
+}
+
+template <typename T>
+typename Sph<T>::Builder&
+Sph<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
+    _fluid = std::move(fluid);
+    return *this;
+}
+
+template <typename T>
+typename Sph<T>::Builder&
+Sph<T>::Builder::with_operator(const SphOperator<T>& op) noexcept {
+    _operator = op;
+    return *this;
+}
+
+template <typename T>
+void
+Sph<T>::Builder::validate() const {
+    if (!_fluid) {
+        throw std::runtime_error("Sph::Builder: fluid must not be null.");
+    }
+}
+
+template <typename T>
+Sph<T>
+Sph<T>::Builder::build() const {
+    validate();
+    return Sph<T>(_fluid, _operator);
+}
+
+template <typename T>
+atlas::host_shared_ptr<Sph<T>>
+Sph<T>::Builder::make_host_shared() const {
+    validate();
+    return atlas::make_host_shared<Sph<T>>(_fluid, _operator);
+}
+
+}

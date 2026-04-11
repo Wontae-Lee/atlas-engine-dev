@@ -35,7 +35,6 @@ Domain<T>::Domain(const Vector3<T>& lower_corner,
         : T(0);
 
     d_field_temperature.resize(_num_of_cells, initial_temperature);
-    d_field_force.resize(_num_of_cells, Vector3<T> { T(0), T(0), T(0) });
 }
 
 template <typename T>
@@ -61,7 +60,7 @@ Domain<T>::make_device_probe() noexcept {
 
     probe.type              = _type;
     probe.field_temperature = atlas::raw_pointer_cast(d_field_temperature.data());
-    probe.field_force       = atlas::raw_pointer_cast(d_field_force.data());
+    probe.field_force       = d_field_force.empty() ? nullptr : atlas::raw_pointer_cast(d_field_force.data());
 
     probe.lower_corner = _lower_corner;
     probe.upper_corner = _upper_corner;
@@ -106,6 +105,28 @@ Domain<T>::isothermal_field_temperature() const {
     }
 
     return *_isothermal_field_temperature;
+}
+
+template <typename T>
+void
+Domain<T>::set_field_force(DeviceBuffer<Vector3<T>> field_force) noexcept {
+
+    d_field_force = std::move(field_force);
+}
+
+
+template <typename T>
+DeviceBuffer<Vector3<T>>&
+Domain<T>::field_force() noexcept {
+
+    return d_field_force;
+}
+
+template <typename T>
+const DeviceBuffer<Vector3<T>>&
+Domain<T>::field_force() const noexcept {
+
+    return d_field_force;
 }
 
 template <typename T>

@@ -42,6 +42,14 @@ public:
 
     std::optional<T> scattering_parameter;
 
+    std::optional<T> rest_density;
+
+    std::optional<T> pressure_coefficient;
+
+    std::optional<T> dynamic_viscosity;
+
+    std::optional<T> smoothing_length;
+
     std::optional<T> electronic_energy;
 
     std::optional<int> charge;
@@ -95,6 +103,18 @@ public:
     with_scattering_parameter(T alpha);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_rest_density(T rho0);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_pressure_coefficient(T k);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_dynamic_viscosity(T mu);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_smoothing_length(T h);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_electronic_energy(T e);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -124,6 +144,14 @@ private:
     std::optional<T> _viscosity_index;
 
     std::optional<T> _scattering_parameter;
+
+    std::optional<T> _rest_density;
+
+    std::optional<T> _pressure_coefficient;
+
+    std::optional<T> _dynamic_viscosity;
+
+    std::optional<T> _smoothing_length;
 
     std::optional<T> _electronic_energy;
 

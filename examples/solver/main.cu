@@ -80,7 +80,7 @@ main() {
                                   HostBuffer<system::ColliderSurfaceInteraction<sim_t>> { *interaction })
                               .make_host_shared();
 
-    const auto solver = atlas::make_host_shared<Solver<sim_t>>();
+    const auto solver = atlas::make_host_shared<Orchestrator<sim_t>>();
 
     const auto sim_system = system::System<sim_t>::builder()
                                 .with_fluid(fluid)

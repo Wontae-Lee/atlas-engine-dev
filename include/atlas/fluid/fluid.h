@@ -30,12 +30,6 @@ struct FluidDeviceProbe {
     int particle_count { 0 };
 
     size_t buffer_size { 0 };
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    empty() const noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    valid() const noexcept;
 };
 
 template <typename T>

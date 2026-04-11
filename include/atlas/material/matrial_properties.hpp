@@ -34,6 +34,10 @@ MatrialProperties<T>::Builder::build() const {
     p.collision_diameter   = _collision_diameter;
     p.viscosity_index      = _viscosity_index;
     p.scattering_parameter = _scattering_parameter;
+    p.rest_density         = _rest_density;
+    p.pressure_coefficient = _pressure_coefficient;
+    p.dynamic_viscosity    = _dynamic_viscosity;
+    p.smoothing_length     = _smoothing_length;
 
     p.electronic_energy = _electronic_energy;
     p.charge            = _charge;
@@ -120,6 +124,34 @@ template <typename T>
 typename MatrialProperties<T>::Builder&
 MatrialProperties<T>::Builder::with_scattering_parameter(T alpha) {
     _scattering_parameter = alpha;
+    return *this;
+}
+
+template <typename T>
+typename MatrialProperties<T>::Builder&
+MatrialProperties<T>::Builder::with_rest_density(T rho0) {
+    _rest_density = rho0;
+    return *this;
+}
+
+template <typename T>
+typename MatrialProperties<T>::Builder&
+MatrialProperties<T>::Builder::with_pressure_coefficient(T k) {
+    _pressure_coefficient = k;
+    return *this;
+}
+
+template <typename T>
+typename MatrialProperties<T>::Builder&
+MatrialProperties<T>::Builder::with_dynamic_viscosity(T mu) {
+    _dynamic_viscosity = mu;
+    return *this;
+}
+
+template <typename T>
+typename MatrialProperties<T>::Builder&
+MatrialProperties<T>::Builder::with_smoothing_length(T h) {
+    _smoothing_length = h;
     return *this;
 }
 

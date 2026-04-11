@@ -48,7 +48,7 @@ Sink<T>::update(const T dt) {
 template <typename T>
 void
 Sink<T>::sink(FluidDeviceProbe<T>& particle_probe) {
-    if (particle_probe.empty() || empty()) {
+    if (particle_probe.particle_count <= 0 || empty()) {
         return;
     }
 

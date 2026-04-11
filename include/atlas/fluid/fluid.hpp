@@ -9,18 +9,6 @@
 namespace atlas::system {
 
 template <typename T>
-bool
-FluidDeviceProbe<T>::empty() const noexcept {
-    return particle_count <= 0;
-}
-
-template <typename T>
-bool
-FluidDeviceProbe<T>::valid() const noexcept {
-    return particle_property != nullptr && pos != nullptr && particle_count > 0;
-}
-
-template <typename T>
 typename Fluid<T>::Builder
 Fluid<T>::builder() noexcept {
     return Builder {};

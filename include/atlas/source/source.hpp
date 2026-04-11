@@ -73,26 +73,19 @@ Source<T>::rebuild_cache() noexcept {
         return;
     }
 
-    HostBuffer<Unit<T>> units_host(_units.size());
-    HostBuffer<SpawnOperator<T>> spawn_operators_host(_spawn_operators.size());
-    atlas::copy_device_to_host(
-        atlas::raw_pointer_cast(_units.data()),
-        units_host.data(),
-        units_host.size());
-    atlas::copy_device_to_host(
-        atlas::raw_pointer_cast(_spawn_operators.data()),
-        spawn_operators_host.data(),
-        spawn_operators_host.size());
+    HostBuffer<DeviceBuffer<Vector3<T>>> local_position_chunks(_units.size());
+    HostBuffer<std::size_t> local_position_counts(_units.size(), 0);
 
-    HostBuffer<Vector3<T>> local_positions_host;
-    HostBuffer<int> local_position_unit_indices_host;
+    std::size_t total_local_positions = 0;
 
-    for (std::size_t i = 0; i < units_host.size(); ++i) {
-        DeviceBuffer<Vector3<T>> local_positions_for_unit;
-        const auto& unit             = units_host[i];
-        const auto& geometry_op      = unit.geometry_operator();
-        const std::size_t spawn_index = (spawn_operators_host.size() == 1 || i >= spawn_operators_host.size()) ? 0 : i;
-        const auto spawn_operator    = spawn_operators_host[spawn_index];
+    for (std::size_t i = 0; i < _units.size(); ++i) {
+        auto& local_positions_for_unit = local_position_chunks[i];
+        const auto unit                = _units[i];
+        const auto& geometry_op        = unit.geometry_operator();
+        const std::size_t spawn_operator_count = _spawn_operators.size();
+        const std::size_t spawn_index =
+            (spawn_operator_count == 1 || i >= spawn_operator_count) ? 0 : i;
+        const auto spawn_operator     = _spawn_operators[spawn_index];
         const bool flip              = _flip;
 
         atlas::sampling::sample_spawn_grid(
@@ -109,26 +102,38 @@ Source<T>::rebuild_cache() noexcept {
             continue;
         }
 
-        HostBuffer<Vector3<T>> local_positions_for_unit_host(local_positions_for_unit.size());
-        atlas::copy_device_to_host(
-            atlas::raw_pointer_cast(local_positions_for_unit.data()),
-            local_positions_for_unit_host.data(),
-            local_positions_for_unit_host.size());
-
-        local_positions_host.insert(
-            local_positions_host.end(),
-            local_positions_for_unit_host.begin(),
-            local_positions_for_unit_host.end());
-        local_position_unit_indices_host.insert(
-            local_position_unit_indices_host.end(),
-            local_positions_for_unit_host.size(),
-            static_cast<int>(i));
+        local_position_counts[i] = local_positions_for_unit.size();
+        total_local_positions += local_positions_for_unit.size();
     }
 
-    _local_positions = DeviceBuffer<Vector3<T>>(local_positions_host.begin(), local_positions_host.end());
-    _local_position_unit_indices = DeviceBuffer<int>(
-        local_position_unit_indices_host.begin(),
-        local_position_unit_indices_host.end());
+    _local_positions.resize(total_local_positions);
+    _local_position_unit_indices.resize(total_local_positions);
+
+    if (total_local_positions > 0) {
+        std::size_t offset = 0;
+
+        for (std::size_t i = 0; i < local_position_chunks.size(); ++i) {
+            const auto count = local_position_counts[i];
+            if (count == 0) {
+                continue;
+            }
+
+            auto* dst_positions = atlas::raw_pointer_cast(_local_positions.data()) + offset;
+            auto* dst_indices   = atlas::raw_pointer_cast(_local_position_unit_indices.data()) + offset;
+            const auto* src_positions = atlas::raw_pointer_cast(local_position_chunks[i].data());
+            const int unit_index      = static_cast<int>(i);
+
+            atlas::parallel_for<ExecutionPolicy::device>(
+                static_cast<std::size_t>(0),
+                count,
+                [=] ATLAS_DEVICE(const std::size_t j) {
+                    dst_positions[j] = src_positions[j];
+                    dst_indices[j]   = unit_index;
+                });
+
+            offset += count;
+        }
+    }
 
     const int local_count = static_cast<int>(_local_positions.size());
     _species_cache.clear();
@@ -138,32 +143,31 @@ Source<T>::rebuild_cache() noexcept {
     if (local_count > 0) {
         const auto& mole_fractions = _fluid->mole_fractions();
         const int num_species      = static_cast<int>(mole_fractions.size());
-        HostBuffer<size_t> species_cache_host(static_cast<std::size_t>(local_count));
 
         _shuffled_species.resize(static_cast<std::size_t>(local_count));
         _species_cache.resize(static_cast<std::size_t>(local_count));
         _shuffle_keys.resize(static_cast<std::size_t>(local_count));
+        const auto* mole_fractions_ptr = atlas::raw_pointer_cast(mole_fractions.data());
+        auto* species_cache_ptr        = atlas::raw_pointer_cast(_species_cache.data());
 
-        for (int i = 0; i < local_count; ++i) {
-            const T fraction   = static_cast<T>(i) / static_cast<T>(local_count);
-            size_t species_idx = 0;
-            T running_sum      = T(0);
+        atlas::parallel_for<ExecutionPolicy::device>(
+            0,
+            local_count,
+            [=] ATLAS_DEVICE(const int i) {
+                const T fraction   = static_cast<T>(i) / static_cast<T>(local_count);
+                size_t species_idx = 0;
+                T running_sum      = T(0);
 
-            for (int s = 0; s < num_species; ++s) {
-                running_sum += mole_fractions[s];
-                if (fraction < running_sum) {
-                    species_idx = static_cast<size_t>(s);
-                    break;
+                for (int s = 0; s < num_species; ++s) {
+                    running_sum += mole_fractions_ptr[s];
+                    if (fraction < running_sum) {
+                        species_idx = static_cast<size_t>(s);
+                        break;
+                    }
                 }
-            }
 
-            species_cache_host[static_cast<std::size_t>(i)] = species_idx;
-        }
-
-        atlas::copy_host_to_device(
-            species_cache_host.data(),
-            atlas::raw_pointer_cast(_species_cache.data()),
-            static_cast<std::size_t>(local_count));
+                species_cache_ptr[i] = species_idx;
+            });
     }
 
     _shuffle_seed         = 0;

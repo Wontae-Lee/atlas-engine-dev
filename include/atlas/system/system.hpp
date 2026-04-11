@@ -36,7 +36,7 @@ System<T>::System(FluidHostPtr<T> fluid,
                   SinkHostPtr<T> sink,
                   MeasureHostPtr<T> measure,
                   ColliderHostPtr<T> collider,
-                  SolverHostPtr<T> solver)
+                  OrchestratorHostPtr<T> solver)
     : _dt(dt)
     , _fluid(std::move(fluid))
     , _domain(std::move(domain))
@@ -162,7 +162,7 @@ void
 System<T>::collide() {
     atlas::logger::info() << "System::collide: begin";
 
-    if (_particle_probe.empty() || !(_dt > T(0))) {
+    if (_particle_probe.particle_count <= 0 || !(_dt > T(0))) {
         atlas::logger::info() << "System::collide: end";
         return;
     }
@@ -193,7 +193,7 @@ System<T>::remove() {
 template <typename T>
 void
 System<T>::time_integration() {
-    if (_particle_probe.empty() || !(_dt > T(0))) {
+    if (_particle_probe.particle_count <= 0 || !(_dt > T(0))) {
         return;
     }
 
@@ -299,7 +299,7 @@ System<T>::set_collider(const Collider<T>& collider) {
 
 template <typename T>
 void
-System<T>::set_solver(const SolverHostPtr<T>& solver) {
+System<T>::set_solver(const OrchestratorHostPtr<T>& solver) {
     _solver = solver;
 }
 
@@ -400,7 +400,7 @@ System<T>::collider() const noexcept {
 }
 
 template <typename T>
-const SolverHostPtr<T>&
+const OrchestratorHostPtr<T>&
 System<T>::solver() const noexcept {
     return _solver;
 }
@@ -500,7 +500,7 @@ System<T>::Builder::with_collider(const Collider<T>& collider) {
 
 template <typename T>
 typename System<T>::Builder&
-System<T>::Builder::with_solver(const SolverHostPtr<T>& solver) {
+System<T>::Builder::with_solver(const OrchestratorHostPtr<T>& solver) {
     _solver = solver;
     return *this;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
@@ -68,6 +69,15 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     isothermal_field_temperature() const;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_field_force(DeviceBuffer<Vector3<T>> field_force) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<Vector3<T>>&
+    field_force() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<Vector3<T>>&
+    field_force() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     lower_corner() const noexcept;

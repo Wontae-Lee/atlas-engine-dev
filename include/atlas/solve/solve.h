@@ -10,17 +10,17 @@
 namespace atlas::system {
 
 template <typename T>
-class Solver {
+class Solve {
 public:
-    Solver()          = default;
-    virtual ~Solver() = default;
+    Solve()          = default;
+    virtual ~Solve() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     solve(DomainDeviceProbe<T> domain,
           SpatialHashingProbe<T> searcher,
           FluidDeviceProbe<T> particle,
-          CodecDeviceProbe<T> codec) {
-    }
+          CodecDeviceProbe<T> codec)
+        = 0;
 };
 
 }
@@ -28,12 +28,12 @@ public:
 namespace atlas {
 
 template <typename T>
-using Solver = atlas::system::Solver<T>;
+using Solve = atlas::system::Solve<T>;
 
 template <typename T>
-using SolverHostPtr = atlas::host_shared_ptr<atlas::system::Solver<T>>;
+using SolveHostPtr = atlas::host_shared_ptr<atlas::system::Solve<T>>;
 
 template <typename T>
-using SolverDevicePtr = atlas::device_shared_ptr<atlas::system::Solver<T>>;
+using SolveDevicePtr = atlas::device_shared_ptr<atlas::system::Solve<T>>;
 
 }

@@ -65,6 +65,7 @@
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/observer/observer.h>
+#include <atlas/orchestrator/orchestrator.h>
 #include <atlas/parallel/parallel.h>
 #include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
@@ -78,7 +79,11 @@
 #include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
-#include <atlas/solver/solver.h>
+#include <atlas/solve/dsmc/dsmc.h>
+#include <atlas/solve/dsmc/dsmc_operator.h>
+#include <atlas/solve/solve.h>
+#include <atlas/solve/sph/sph.h>
+#include <atlas/solve/sph/sph_operator.h>
 #include <atlas/source/source.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>

@@ -104,7 +104,7 @@ Collider<T>::update(const T dt) {
 template <typename T>
 void
 Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
-    if (particle_probe.empty() || !(dt > T(0)) || empty()) {
+    if (particle_probe.particle_count <= 0 || !(dt > T(0)) || empty()) {
         return;
     }
 
