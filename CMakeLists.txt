@@ -18,12 +18,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # =====================================================
 # User-configurable options
 # =====================================================
-option(ATLAS_USE_CUDA "Enable CUDA tasking backend" ON)
-option(ATLAS_USE_TBB "Enable TBB tasking backend" OFF)
+option(ATLAS_USE_CUDA "Enable CUDA tasking backend" OFF)
+option(ATLAS_USE_TBB "Enable TBB tasking backend" ON)
 option(ATLAS_USE_VIZKIT "Build vizkit-based visualization modules" ON)
 option(ATLAS_LOGGING "Enable logging functionality" ON)
-option(ATLAS_GOOGLE_TEST "Build GoogleTest-based C++ tests" OFF)
-option(ATLAS_CUDA_TEST "Build CUDA-specific tests" ON)
+option(ATLAS_GOOGLE_TEST "Build GoogleTest-based C++ tests" ON)
+option(ATLAS_CUDA_TEST "Build CUDA-specific tests" OFF)
 option(ATLAS_BENCHMARKS "Build and enable benchmarks" OFF)
 
 # =====================================================

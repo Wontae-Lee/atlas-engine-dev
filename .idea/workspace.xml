@@ -38,6 +38,7 @@
       <config projectName="atlas-engine-dev" targetName="benchmark_setup_teardown_cb_types_gtest" />
       <config projectName="atlas-engine-dev" targetName="atlas-logging" />
       <config projectName="atlas-engine-dev" targetName="benchmark_min_time_flag_time_test" />
+      <config projectName="atlas-engine-dev" targetName="overview" />
       <config projectName="atlas-engine-dev" targetName="profiler_manager_iterations_test" />
       <config projectName="atlas-engine-dev" targetName="internal_threading_test" />
       <config projectName="atlas-engine-dev" targetName="diagnostics_test" />
@@ -141,23 +142,50 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactory Colliders and Tests.">
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solve/dsmc/dsmc.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solve/dsmc/dsmc.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solve/dsmc/dsmc_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_kernel_operator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solve/dsmc/dsmc_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_kernel_operator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solve/solve.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solve/sph/sph.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solve/sph/sph.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solve/sph/sph_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_operator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solve/sph/sph_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_operator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/solve/dsmc_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solve/dsmc_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/codec.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/codec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/single_codec.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/single_codec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/single_codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/single_codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/constants.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/constants.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/detail/ops.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/detail/ops.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_elementwise.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_elementwise.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_expression.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_expression.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_operators.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_operators.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_reductions.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_reductions.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_statistics.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix_statistics.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/quaternion.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/quaternion.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/quaternion.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/quaternion.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector2.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector2.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector2.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector2.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector3.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector3.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector3.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector4.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector4.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector4.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector_elementwise.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector_elementwise.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector_expression.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector_expression.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector_operators.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector_operators.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector_statistics.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector_statistics.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -269,7 +297,6 @@
     "cidr.known.project.marker": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "com.jetbrains.cidr.cpp.cmake.workspace.CMakeCacheInvalidator.marker": "true",
     "ctest.advertisement.all.test.configuration.is.created": "true",
     "git-widget-placeholder": "main",
     "junie.onboarding.icon.badge.shown": "true",
@@ -304,7 +331,7 @@
       <recent name="$PROJECT_DIR$/tests/measure" />
     </key>
   </component>
-  <component name="RunManager" selected="CMake Application.solver">
+  <component name="RunManager" selected="Google Test.All in atlas_tests">
     <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="CLION.EXTERNAL.BUILD" enabled="true" />
