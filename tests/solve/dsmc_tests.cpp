@@ -9,10 +9,10 @@ TEST(DsmcOperator, HardSphereSetsModelType) {
     const auto op = atlas::HardSphereDsmcOperator<double>(1.0, 7u);
     const auto dsmc_op = atlas::DsmcOperator<double>(op);
 
-    EXPECT_EQ(dsmc_op.type, atlas::system::DsmcModelType::hard_sphere);
+    EXPECT_EQ(dsmc_op.type, atlas::system::DsmcModelType::hs);
 }
 
-TEST(Dsmc, BuilderAndSetterStoreSolveMode) {
+TEST(Dsmc, BaseClassStoresSharedConfiguration) {
     const auto fluid = atlas::Fluid<double>::builder()
                            .add_species(
                                atlas::MatrialProperties<double>::builder()
@@ -24,15 +24,14 @@ TEST(Dsmc, BuilderAndSetterStoreSolveMode) {
                            .with_buffer_size(2)
                            .make_host_shared();
 
-    auto dsmc = atlas::Dsmc<double>::builder()
+    auto dsmc = atlas::DsmcDisjointPair<double>::builder()
                     .with_fluid(fluid)
-                    .with_solve_mode(atlas::DsmcSolveMode::ntc)
                     .build();
 
-    EXPECT_EQ(dsmc.solve_mode(), atlas::DsmcSolveMode::ntc);
+    EXPECT_EQ(dsmc.fluid(), fluid);
 
-    dsmc.set_solve_mode(atlas::DsmcSolveMode::disjoint_pair);
-    EXPECT_EQ(dsmc.solve_mode(), atlas::DsmcSolveMode::disjoint_pair);
+    dsmc.set_operator(atlas::DsmcOperator<double>(atlas::HardSphereDsmcOperator<double>(2.0, 9u)));
+    EXPECT_EQ(dsmc.collision_operator().type, atlas::system::DsmcModelType::hs);
 }
 
 TEST(Dsmc, SolveScattersPairedParticlesWhileConservingMomentum) {
@@ -68,7 +67,7 @@ TEST(Dsmc, SolveScattersPairedParticlesWhileConservingMomentum) {
                         .build();
     searcher.build(particle_probe);
 
-    auto dsmc = atlas::Dsmc<double>::builder()
+    auto dsmc = atlas::DsmcDisjointPair<double>::builder()
                     .with_fluid(fluid)
                     .with_operator(atlas::DsmcOperator<double>(atlas::HardSphereDsmcOperator<double>(1.0, 42u)))
                     .build();
@@ -121,7 +120,7 @@ TEST(Dsmc, SolveAppliesDomainFieldForceToParticleVelocity) {
                         .build();
     searcher.build(particle_probe);
 
-    auto dsmc = atlas::Dsmc<double>::builder()
+    auto dsmc = atlas::DsmcDisjointPair<double>::builder()
                     .with_fluid(fluid)
                     .with_operator(atlas::DsmcOperator<double>(atlas::HardSphereDsmcOperator<double>(1.0, 42u)))
                     .build();
@@ -172,7 +171,7 @@ TEST(Dsmc, SolveUsesDomainFieldTemperatureForVhsModel) {
                         .build();
     searcher.build(particle_probe);
 
-    auto dsmc = atlas::Dsmc<double>::builder()
+    auto dsmc = atlas::DsmcDisjointPair<double>::builder()
                     .with_fluid(fluid)
                     .with_operator(atlas::DsmcOperator<double>(atlas::VhsDsmcOperator<double>(0.0, 1.0e12, 7u)))
                     .build();
@@ -222,10 +221,9 @@ TEST(Dsmc, NtcSolveScattersPairedParticlesWhileConservingMomentum) {
                         .build();
     searcher.build(particle_probe);
 
-    auto dsmc = atlas::Dsmc<double>::builder()
+    auto dsmc = atlas::DsmcNtc<double>::builder()
                     .with_fluid(fluid)
                     .with_operator(atlas::DsmcOperator<double>(atlas::HardSphereDsmcOperator<double>(1.0, 42u)))
-                    .with_solve_mode(atlas::DsmcSolveMode::ntc)
                     .build();
 
     auto domain_probe   = domain.make_device_probe();

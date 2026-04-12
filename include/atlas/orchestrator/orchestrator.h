@@ -6,7 +6,7 @@
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
-#include <atlas/solve/solve.h>
+#include <atlas/solver/solver.h>
 
 #include <stdexcept>
 #include <utility>

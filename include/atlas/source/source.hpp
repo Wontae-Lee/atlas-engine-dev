@@ -47,6 +47,7 @@ Source<T>::update(const T dt) {
 
     auto* units = atlas::raw_pointer_cast(_units.data());
 
+    // Keep all source units in sync before sampling world-space emission positions.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         static_cast<int>(_units.size()),
@@ -63,6 +64,7 @@ Source<T>::rebuild_cache() noexcept {
     }
 
     if (_units.empty() || _spawn_types.empty() || _spawn_operators.empty() || !_fluid || _fluid->empty()) {
+        // Any missing dependency invalidates emission until configuration is complete.
         _local_positions.clear();
         _local_position_unit_indices.clear();
         _species_cache.clear();
@@ -75,28 +77,54 @@ Source<T>::rebuild_cache() noexcept {
 
     HostBuffer<DeviceBuffer<Vector3<T>>> local_position_chunks(_units.size());
     HostBuffer<std::size_t> local_position_counts(_units.size(), 0);
+    const HostBuffer<Unit<T>> host_units(_units.begin(), _units.end());
+    const HostBuffer<SpawnOperator<T>> host_spawn_operators(
+        _spawn_operators.begin(),
+        _spawn_operators.end());
 
     std::size_t total_local_positions = 0;
 
     for (std::size_t i = 0; i < _units.size(); ++i) {
         auto& local_positions_for_unit = local_position_chunks[i];
-        const auto unit                = _units[i];
+        const auto& unit               = host_units[i];
         const auto& geometry_op        = unit.geometry_operator();
-        const std::size_t spawn_operator_count = _spawn_operators.size();
+        const std::size_t spawn_operator_count = host_spawn_operators.size();
         const std::size_t spawn_index =
             (spawn_operator_count == 1 || i >= spawn_operator_count) ? 0 : i;
-        const auto spawn_operator     = _spawn_operators[spawn_index];
+        const auto spawn_operator     = host_spawn_operators[spawn_index];
         const bool flip              = _flip;
+        const auto bounds            = geometry_op.bound();
+        const auto& lower            = bounds.lower_corner;
+        const auto& upper            = bounds.upper_corner;
+        const int nx = atlas::sampling::sample_axis_count(lower.x, upper.x, _spacing);
+        const int ny = atlas::sampling::sample_axis_count(lower.y, upper.y, _spacing);
+        const int nz = atlas::sampling::sample_axis_count(lower.z, upper.z, _spacing);
+        HostBuffer<Vector3<T>> host_local_positions;
 
-        atlas::sampling::sample_spawn_grid(
-            local_positions_for_unit,
-            geometry_op,
-            _spacing,
-            _tolerance,
-            [spawn_operator, flip] ATLAS_DEVICE(const auto& query, const Vector3<T>& sample, T tol) {
-                const bool should_spawn = spawn_operator.spawn(query, sample, tol);
-                return flip ? !should_spawn : should_spawn;
-            });
+        if (nx > 0 && ny > 0 && nz > 0) {
+            host_local_positions.reserve(
+                static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny) * static_cast<std::size_t>(nz));
+
+            for (int iz = 0; iz < nz; ++iz) {
+                for (int iy = 0; iy < ny; ++iy) {
+                    for (int ix = 0; ix < nx; ++ix) {
+                        const Vector3<T> sample(
+                            lower.x + static_cast<T>(ix) * _spacing,
+                            lower.y + static_cast<T>(iy) * _spacing,
+                            lower.z + static_cast<T>(iz) * _spacing);
+                        const bool should_spawn = spawn_operator.spawn(geometry_op, sample, _tolerance);
+
+                        if (flip ? !should_spawn : should_spawn) {
+                            host_local_positions.push_back(sample);
+                        }
+                    }
+                }
+            }
+        }
+
+        local_positions_for_unit = DeviceBuffer<Vector3<T>>(
+            host_local_positions.begin(),
+            host_local_positions.end());
 
         if (local_positions_for_unit.empty()) {
             continue;
@@ -123,6 +151,7 @@ Source<T>::rebuild_cache() noexcept {
             const auto* src_positions = atlas::raw_pointer_cast(local_position_chunks[i].data());
             const int unit_index      = static_cast<int>(i);
 
+            // Flatten per-unit chunks into one contiguous device buffer.
             atlas::parallel_for<ExecutionPolicy::device>(
                 static_cast<std::size_t>(0),
                 count,
@@ -150,6 +179,7 @@ Source<T>::rebuild_cache() noexcept {
         const auto* mole_fractions_ptr = atlas::raw_pointer_cast(mole_fractions.data());
         auto* species_cache_ptr        = atlas::raw_pointer_cast(_species_cache.data());
 
+        // Convert mole fractions into a deterministic species layout over the sampled positions.
         atlas::parallel_for<ExecutionPolicy::device>(
             0,
             local_count,
@@ -215,6 +245,7 @@ Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
     std::uint64_t* shuffle_keys_ptr = atlas::raw_pointer_cast(_shuffle_keys.data());
     const ShuffleOperator shuffle_op {};
 
+    // Shuffle species assignments between emissions without rebuilding the composition cache.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         local_count,
@@ -229,6 +260,7 @@ Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
 
     const size_t* shuffled_species_ptr = atlas::raw_pointer_cast(_shuffled_species.data());
 
+    // Materialize emitted particles into the inactive suffix of the fluid buffers.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         local_count,
@@ -420,6 +452,7 @@ Source<T>
 Source<T>::Builder::build() {
     validate();
 
+    // Construct once, then mark the geometry-derived cache dirty for first use.
     Source<T> source(
         DeviceBuffer<Unit<T>>(_units.begin(), _units.end()),
         DeviceBuffer<SpawnType>(_spawn_types.begin(), _spawn_types.end()),

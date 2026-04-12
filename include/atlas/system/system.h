@@ -1,5 +1,15 @@
 #pragma once
 
+/**
+ * @file system.h
+ * @brief Declares the high-level simulation runtime orchestration object.
+ *
+ * System ties together fluid storage, domain data, search structures, codecs,
+ * emitters, sinks, measurement, colliders, and solvers. It owns the canonical
+ * device probes for the active simulation and executes the staged update loop
+ * used by Atlas runtime examples and applications.
+ */
+
 #include <atlas/codec/codec.h>
 #include <atlas/collider/collider.h>
 #include <atlas/core/macros.h>
@@ -16,6 +26,16 @@
 
 namespace atlas::system {
 
+/**
+ * @brief High-level runtime object that orchestrates a simulation step.
+ *
+ * System owns or references the major simulation subsystems and runs them in a
+ * fixed order through update(). It also caches the single authoritative device
+ * probes for the fluid, domain, searcher, and codec so backend code can be
+ * dispatched without repeatedly rebuilding runtime views.
+ *
+ * @tparam T Floating-point scalar used by the simulation.
+ */
 template <typename T>
 class System {
     static_assert(std::is_floating_point_v<T>, "System requires a floating-point T");
@@ -24,8 +44,14 @@ public:
     class Builder;
 
 public:
+    /**
+     * @brief Constructs a system with only fluid storage.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE explicit System(FluidHostPtr<T> fluid);
 
+    /**
+     * @brief Constructs a fully configured system.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE
     System(FluidHostPtr<T> fluid,
            T dt,
@@ -37,11 +63,14 @@ public:
            ColliderHostPtr<T> collider,
            OrchestratorHostPtr<T> solver);
 
+    /// @brief Destructor.
     ATLAS_HOST ATLAS_FORCE_INLINE ~System() = default;
 
+    /// @brief Returns a builder initialized with default values.
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
+    /// @brief Executes one full simulation step.
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update();
 
@@ -166,28 +195,29 @@ public:
     clear_solver() noexcept;
 
 private:
-    T _dt { static_cast<T>(0.01) };
+    T _dt { static_cast<T>(0.01) }; ///< Simulation timestep.
 
-    FluidHostPtr<T> _fluid {};
-    DomainHostPtr<T> _domain {};
-    CodecHostPtr<T> _codec {};
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    FluidHostPtr<T> _fluid {}; ///< Owned fluid subsystem.
+    DomainHostPtr<T> _domain {}; ///< Owned domain subsystem.
+    CodecHostPtr<T> _codec {}; ///< Owned codec subsystem.
+    SpatialHashingSearcherHostPtr<T> _searcher {}; ///< Derived spatial search structure.
 
-    FluidDeviceProbe<T> _particle_probe {};
-    DomainDeviceProbe<T> _domain_probe {};
-    SpatialHashingProbe<T> _searcher_probe {};
-    CodecDeviceProbe<T> _codec_probe {};
+    FluidDeviceProbe<T> _particle_probe {}; ///< Canonical fluid device probe.
+    DomainDeviceProbe<T> _domain_probe {}; ///< Canonical domain device probe.
+    SpatialHashingProbe<T> _searcher_probe {}; ///< Canonical searcher device probe.
+    CodecDeviceProbe<T> _codec_probe {}; ///< Canonical codec device probe.
 
-    SourceHostPtr<T> _source {};
-    SinkHostPtr<T> _sink {};
-    MeasureHostPtr<T> _measure {};
-    ColliderHostPtr<T> _collider {};
-    OrchestratorHostPtr<T> _solver {};
+    SourceHostPtr<T> _source {}; ///< Optional source stage.
+    SinkHostPtr<T> _sink {}; ///< Optional sink stage.
+    MeasureHostPtr<T> _measure {}; ///< Optional measurement stage.
+    ColliderHostPtr<T> _collider {}; ///< Optional collision stage.
+    OrchestratorHostPtr<T> _solver {}; ///< Optional solver stage.
 };
 
 template <typename T>
 class System<T>::Builder final {
 public:
+    /// @brief Default constructor.
     Builder() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -231,26 +261,32 @@ private:
     validate() const;
 
 private:
-    T _dt { static_cast<T>(0.01) };
+    T _dt { static_cast<T>(0.01) }; ///< Pending timestep.
 
-    FluidHostPtr<T> _fluid {};
-    DomainHostPtr<T> _domain {};
-    CodecHostPtr<T> _codec {};
+    FluidHostPtr<T> _fluid {}; ///< Pending fluid subsystem.
+    DomainHostPtr<T> _domain {}; ///< Pending domain subsystem.
+    CodecHostPtr<T> _codec {}; ///< Pending codec subsystem.
 
-    SourceHostPtr<T> _source {};
-    SinkHostPtr<T> _sink {};
-    MeasureHostPtr<T> _measure {};
-    ColliderHostPtr<T> _collider {};
-    OrchestratorHostPtr<T> _solver {};
+    SourceHostPtr<T> _source {}; ///< Pending source subsystem.
+    SinkHostPtr<T> _sink {}; ///< Pending sink subsystem.
+    MeasureHostPtr<T> _measure {}; ///< Pending measure subsystem.
+    ColliderHostPtr<T> _collider {}; ///< Pending collider subsystem.
+    OrchestratorHostPtr<T> _solver {}; ///< Pending solver subsystem.
 };
 
 }
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::System.
+ */
 template <typename T>
 using System = system::System<T>;
 
+/**
+ * @brief Host shared pointer alias for System.
+ */
 template <typename T>
 using SystemHostPtr = atlas::host_shared_ptr<system::System<T>>;
 

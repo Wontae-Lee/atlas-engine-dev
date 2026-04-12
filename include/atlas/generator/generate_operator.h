@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file generate_operator.h
+ * @brief Declares backend-portable particle generation operators.
+ *
+ * GenerateOperator is the device-friendly counterpart to host-side Generator
+ * objects. It erases the concrete distribution choice into a tagged union so
+ * source emission code can sample velocities inside backend kernels.
+ */
+
 #include <atlas/math/math.h>
 #include <atlas/random/default_random_engine.h>
 
@@ -7,6 +16,9 @@
 
 namespace atlas::system {
 
+/**
+ * @brief Identifies the concrete generation law stored in GenerateOperator.
+ */
 enum class GenerateType : int {
     maxwell_sigma,
     maxwell_boltzmann,
@@ -51,6 +63,11 @@ struct MaxwellBoltzmannGenerateOperator final {
              T molecular_mass) const;
 };
 
+/**
+ * @brief Tagged-union wrapper over all supported generation operators.
+ *
+ * @tparam T Floating-point scalar used by the simulation.
+ */
 template <typename T>
 struct GenerateOperator final {
     static_assert(std::is_floating_point_v<T>, "GenerateOperator requires a floating-point T");
@@ -101,6 +118,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::GenerateOperator.
+ */
 template <typename T>
 using GenerateOperator = atlas::system::GenerateOperator<T>;
 

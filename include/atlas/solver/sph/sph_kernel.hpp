@@ -5,12 +5,12 @@
 namespace atlas::system {
 
 template <typename T>
-Poly6SphOperator<T>::Poly6SphOperator(const T support_scale) noexcept
+SphPoly6Kernel<T>::SphPoly6Kernel(const T support_scale) noexcept
     : support_scale(support_scale) { }
 
 template <typename T>
 T
-Poly6SphOperator<T>::weight(const T distance,
+SphPoly6Kernel<T>::weight(const T distance,
                             const T smoothing_length) const noexcept {
     const T h = smoothing_length * support_scale;
     if (!(h > T(0)) || distance >= h) return T(0);
@@ -20,7 +20,7 @@ Poly6SphOperator<T>::weight(const T distance,
 
 template <typename T>
 T
-Poly6SphOperator<T>::gradient_factor(const T distance,
+SphPoly6Kernel<T>::gradient_factor(const T distance,
                                      const T smoothing_length) const noexcept {
     const T h = smoothing_length * support_scale;
     if (!(h > T(0)) || !(distance > T(0)) || distance >= h) return T(0);
@@ -30,7 +30,7 @@ Poly6SphOperator<T>::gradient_factor(const T distance,
 
 template <typename T>
 T
-Poly6SphOperator<T>::laplacian(const T distance,
+SphPoly6Kernel<T>::laplacian(const T distance,
                                const T smoothing_length) const noexcept {
     const T h = smoothing_length * support_scale;
     if (!(h > T(0)) || distance >= h) return T(0);
@@ -40,12 +40,12 @@ Poly6SphOperator<T>::laplacian(const T distance,
 }
 
 template <typename T>
-SpikySphOperator<T>::SpikySphOperator(const T support_scale) noexcept
+SphSpikyKernel<T>::SphSpikyKernel(const T support_scale) noexcept
     : support_scale(support_scale) { }
 
 template <typename T>
 T
-SpikySphOperator<T>::weight(const T distance,
+SphSpikyKernel<T>::weight(const T distance,
                             const T smoothing_length) const noexcept {
     const T h = smoothing_length * support_scale;
     if (!(h > T(0)) || distance >= h) return T(0);
@@ -55,7 +55,7 @@ SpikySphOperator<T>::weight(const T distance,
 
 template <typename T>
 T
-SpikySphOperator<T>::gradient_factor(const T distance,
+SphSpikyKernel<T>::gradient_factor(const T distance,
                                      const T smoothing_length) const noexcept {
     const T h = smoothing_length * support_scale;
     if (!(h > T(0)) || !(distance > T(0)) || distance >= h) return T(0);
@@ -65,7 +65,7 @@ SpikySphOperator<T>::gradient_factor(const T distance,
 
 template <typename T>
 T
-SpikySphOperator<T>::laplacian(const T distance,
+SphSpikyKernel<T>::laplacian(const T distance,
                                const T smoothing_length) const noexcept {
     const T h = smoothing_length * support_scale;
     if (!(h > T(0)) || distance >= h) return T(0);
@@ -73,12 +73,12 @@ SpikySphOperator<T>::laplacian(const T distance,
 }
 
 template <typename T>
-WendlandSphOperator<T>::WendlandSphOperator(const T support_scale) noexcept
+SphWendlandKernel<T>::SphWendlandKernel(const T support_scale) noexcept
     : support_scale(support_scale) { }
 
 template <typename T>
 T
-WendlandSphOperator<T>::weight(const T distance,
+SphWendlandKernel<T>::weight(const T distance,
                                const T smoothing_length) const noexcept {
     const T h = smoothing_length * support_scale;
     if (!(h > T(0)) || distance >= h) return T(0);
@@ -89,7 +89,7 @@ WendlandSphOperator<T>::weight(const T distance,
 
 template <typename T>
 T
-WendlandSphOperator<T>::gradient_factor(const T distance,
+SphWendlandKernel<T>::gradient_factor(const T distance,
                                         const T smoothing_length) const noexcept {
     const T h = smoothing_length * support_scale;
     if (!(h > T(0)) || !(distance > T(0)) || distance >= h) return T(0);
@@ -100,7 +100,7 @@ WendlandSphOperator<T>::gradient_factor(const T distance,
 
 template <typename T>
 T
-WendlandSphOperator<T>::laplacian(const T distance,
+SphWendlandKernel<T>::laplacian(const T distance,
                                   const T smoothing_length) const noexcept {
     const T h = smoothing_length * support_scale;
     if (!(h > T(0)) || distance >= h) return T(0);
@@ -110,41 +110,41 @@ WendlandSphOperator<T>::laplacian(const T distance,
 }
 
 template <typename T>
-SphOperator<T>::SphOperator() noexcept
+SphKernel<T>::SphKernel() noexcept
     : type(SphModelType::spiky) {
-    new (&spiky) SpikySphOperator<T> {};
+    new (&spiky) SphSpikyKernel<T> {};
 }
 
 template <typename T>
-SphOperator<T>::SphOperator(const SphModelType type,
-                            const T support_scale) noexcept
+SphKernel<T>::SphKernel(const SphModelType type,
+                                        const T support_scale) noexcept
     : type(type) {
     switch (type) {
     case SphModelType::poly6:
-        new (&poly6) Poly6SphOperator<T>(support_scale);
+        new (&poly6) SphPoly6Kernel<T>(support_scale);
         return;
     case SphModelType::spiky:
-        new (&spiky) SpikySphOperator<T>(support_scale);
+        new (&spiky) SphSpikyKernel<T>(support_scale);
         return;
     case SphModelType::wendland:
-        new (&wendland) WendlandSphOperator<T>(support_scale);
+        new (&wendland) SphWendlandKernel<T>(support_scale);
         return;
     default:
         this->type = SphModelType::spiky;
-        new (&spiky) SpikySphOperator<T>(support_scale);
+        new (&spiky) SphSpikyKernel<T>(support_scale);
         return;
     }
 }
 
 template <typename T>
-SphOperator<T>::SphOperator(const SphOperator& other) noexcept
+SphKernel<T>::SphKernel(const SphKernel& other) noexcept
     : type(other.type) {
     copy_from(other);
 }
 
 template <typename T>
-SphOperator<T>&
-SphOperator<T>::operator=(const SphOperator& other) noexcept {
+SphKernel<T>&
+SphKernel<T>::operator=(const SphKernel& other) noexcept {
     if (this == &other) return *this;
     destroy_active();
     type = other.type;
@@ -153,32 +153,32 @@ SphOperator<T>::operator=(const SphOperator& other) noexcept {
 }
 
 template <typename T>
-SphOperator<T>::~SphOperator() noexcept {
+SphKernel<T>::~SphKernel() noexcept {
     destroy_active();
 }
 
 template <typename T>
-SphOperator<T>::SphOperator(const Poly6SphOperator<T>& op)
+SphKernel<T>::SphKernel(const SphPoly6Kernel<T>& op)
     : type(SphModelType::poly6) {
-    new (&poly6) Poly6SphOperator<T>(op);
+    new (&poly6) SphPoly6Kernel<T>(op);
 }
 
 template <typename T>
-SphOperator<T>::SphOperator(const SpikySphOperator<T>& op)
+SphKernel<T>::SphKernel(const SphSpikyKernel<T>& op)
     : type(SphModelType::spiky) {
-    new (&spiky) SpikySphOperator<T>(op);
+    new (&spiky) SphSpikyKernel<T>(op);
 }
 
 template <typename T>
-SphOperator<T>::SphOperator(const WendlandSphOperator<T>& op)
+SphKernel<T>::SphKernel(const SphWendlandKernel<T>& op)
     : type(SphModelType::wendland) {
-    new (&wendland) WendlandSphOperator<T>(op);
+    new (&wendland) SphWendlandKernel<T>(op);
 }
 
 template <typename T>
 T
-SphOperator<T>::weight(const T distance,
-                       const T smoothing_length) const noexcept {
+SphKernel<T>::weight(const T distance,
+                             const T smoothing_length) const noexcept {
     switch (type) {
     case SphModelType::poly6:
         return poly6.weight(distance, smoothing_length);
@@ -193,8 +193,8 @@ SphOperator<T>::weight(const T distance,
 
 template <typename T>
 T
-SphOperator<T>::gradient_factor(const T distance,
-                                const T smoothing_length) const noexcept {
+SphKernel<T>::gradient_factor(const T distance,
+                                      const T smoothing_length) const noexcept {
     switch (type) {
     case SphModelType::poly6:
         return poly6.gradient_factor(distance, smoothing_length);
@@ -209,8 +209,8 @@ SphOperator<T>::gradient_factor(const T distance,
 
 template <typename T>
 T
-SphOperator<T>::laplacian(const T distance,
-                          const T smoothing_length) const noexcept {
+SphKernel<T>::laplacian(const T distance,
+                                const T smoothing_length) const noexcept {
     switch (type) {
     case SphModelType::poly6:
         return poly6.laplacian(distance, smoothing_length);
@@ -225,7 +225,7 @@ SphOperator<T>::laplacian(const T distance,
 
 template <typename T>
 void
-SphOperator<T>::destroy_active() noexcept {
+SphKernel<T>::destroy_active() noexcept {
     switch (type) {
     case SphModelType::poly6:
         poly6.~Poly6SphOperator<T>();
@@ -244,20 +244,20 @@ SphOperator<T>::destroy_active() noexcept {
 
 template <typename T>
 void
-SphOperator<T>::copy_from(const SphOperator& other) noexcept {
+SphKernel<T>::copy_from(const SphKernel& other) noexcept {
     switch (type) {
     case SphModelType::poly6:
-        new (&poly6) Poly6SphOperator<T>(other.poly6);
+        new (&poly6) SphPoly6Kernel<T>(other.poly6);
         return;
     case SphModelType::spiky:
-        new (&spiky) SpikySphOperator<T>(other.spiky);
+        new (&spiky) SphSpikyKernel<T>(other.spiky);
         return;
     case SphModelType::wendland:
-        new (&wendland) WendlandSphOperator<T>(other.wendland);
+        new (&wendland) SphWendlandKernel<T>(other.wendland);
         return;
     default:
         type = SphModelType::spiky;
-        new (&spiky) SpikySphOperator<T>(other.spiky);
+        new (&spiky) SphSpikyKernel<T>(other.spiky);
         return;
     }
 }

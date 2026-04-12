@@ -24,6 +24,7 @@ UniformGenerator<T>::UniformGenerator(const T min_value,
 template <typename T>
 Vector3<T>
 UniformGenerator<T>::generate() const {
+    // Reuse the backend-portable operator so host and device semantics stay aligned.
     return _operator.generate(_min_value, _max_value);
 }
 

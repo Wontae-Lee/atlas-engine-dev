@@ -2,7 +2,7 @@
 
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
-#include <atlas/solve/solve.h>
+#include <atlas/solver/solver.h>
 
 #include <type_traits>
 
@@ -15,10 +15,10 @@ enum class SphModelType : int {
 };
 
 template <typename T>
-struct Poly6SphOperator final {
+struct SphPoly6Kernel final {
     T support_scale { T(1) };
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Poly6SphOperator(T support_scale = T(1)) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit SphPoly6Kernel(T support_scale = T(1)) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     weight(T distance, T smoothing_length) const noexcept;
@@ -31,10 +31,10 @@ struct Poly6SphOperator final {
 };
 
 template <typename T>
-struct SpikySphOperator final {
+struct SphSpikyKernel final {
     T support_scale { T(1) };
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit SpikySphOperator(T support_scale = T(1)) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit SphSpikyKernel(T support_scale = T(1)) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     weight(T distance, T smoothing_length) const noexcept;
@@ -47,10 +47,10 @@ struct SpikySphOperator final {
 };
 
 template <typename T>
-struct WendlandSphOperator final {
+struct SphWendlandKernel final {
     T support_scale { T(1) };
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit WendlandSphOperator(T support_scale = T(1)) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit SphWendlandKernel(T support_scale = T(1)) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     weight(T distance, T smoothing_length) const noexcept;
@@ -63,39 +63,39 @@ struct WendlandSphOperator final {
 };
 
 template <typename T>
-struct SphOperator final {
-    static_assert(std::is_floating_point_v<T>, "SphOperator requires a floating-point T");
+struct SphKernel final {
+    static_assert(std::is_floating_point_v<T>, "SphKernel requires a floating-point T");
 
     SphModelType type = SphModelType::spiky;
     union {
-        Poly6SphOperator<T> poly6;
-        SpikySphOperator<T> spiky;
-        WendlandSphOperator<T> wendland;
+        SphPoly6Kernel<T> poly6;
+        SphSpikyKernel<T> spiky;
+        SphWendlandKernel<T> wendland;
     };
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    SphOperator() noexcept;
+    SphKernel() noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    SphOperator(SphModelType type,
+    SphKernel(SphModelType type,
                 T support_scale = T(1)) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    SphOperator(const SphOperator& other) noexcept;
+    SphKernel(const SphKernel& other) noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE SphOperator&
-    operator=(const SphOperator& other) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE SphKernel&
+    operator=(const SphKernel& other) noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~SphOperator() noexcept;
-
-    ATLAS_HOST
-    SphOperator(const Poly6SphOperator<T>& op);
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~SphKernel() noexcept;
 
     ATLAS_HOST
-    SphOperator(const SpikySphOperator<T>& op);
+    SphKernel(const SphPoly6Kernel<T>& op);
 
     ATLAS_HOST
-    SphOperator(const WendlandSphOperator<T>& op);
+    SphKernel(const SphSpikyKernel<T>& op);
+
+    ATLAS_HOST
+    SphKernel(const SphWendlandKernel<T>& op);
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     weight(T distance, T smoothing_length) const noexcept;
@@ -111,7 +111,7 @@ private:
     destroy_active() noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    copy_from(const SphOperator& other) noexcept;
+    copy_from(const SphKernel& other) noexcept;
 };
 
 }
@@ -119,19 +119,19 @@ private:
 namespace atlas {
 
 template <typename T>
-using SphOperator = atlas::system::SphOperator<T>;
+using SphOperator = atlas::system::SphKernel<T>;
 
 template <typename T>
-using Poly6SphOperator = atlas::system::Poly6SphOperator<T>;
+using Poly6SphOperator = atlas::system::SphPoly6Kernel<T>;
 
 template <typename T>
-using SpikySphOperator = atlas::system::SpikySphOperator<T>;
+using SpikySphOperator = atlas::system::SphSpikyKernel<T>;
 
 template <typename T>
-using WendlandSphOperator = atlas::system::WendlandSphOperator<T>;
+using WendlandSphOperator = atlas::system::SphWendlandKernel<T>;
 
 using SphModelType = atlas::system::SphModelType;
 
 }
 
-#include <atlas/solve/sph/sph_operator.hpp>
+#include <atlas/solver/sph/sph_kernel.hpp>

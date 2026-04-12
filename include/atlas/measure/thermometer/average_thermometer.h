@@ -13,10 +13,12 @@ public:
     AverageThermometer() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE explicit AverageThermometer(
-        const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept;
+        const atlas::system::ThermometerOperator<T>& thermometer_operator,
+        MeasureModeType measure_mode = MeasureModeType::All) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE explicit AverageThermometer(
-        const atlas::system::AverageThermometerOperator<T>& thermometer_operator) noexcept;
+        const atlas::system::AverageThermometerOperator<T>& thermometer_operator,
+        MeasureModeType measure_mode = MeasureModeType::All) noexcept;
 
     ~AverageThermometer() override = default;
 
@@ -49,6 +51,9 @@ public:
     Builder() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_measure_mode(MeasureModeType measure_mode) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_thermometer_operator(const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -61,6 +66,8 @@ public:
     make_host_shared() const;
 
 private:
+    MeasureModeType _measure_mode { MeasureModeType::All };
+
     atlas::system::ThermometerOperator<T> _thermometer_operator { ThermometerType::Average };
 };
 

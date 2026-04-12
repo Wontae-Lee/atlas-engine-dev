@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file box.h
+ * @brief Declares axis-aligned box geometry and its runtime operator.
+ */
+
 #include <atlas/geometry/geometry.h>
 #include <atlas/spatial/ray.h>
 
@@ -7,10 +12,13 @@
 
 namespace atlas::geometry {
 
+/**
+ * @brief Runtime query operator for an axis-aligned box.
+ */
 template <typename T>
 struct BoxGeometryOperator {
-    const atlas::math::Vector<T, 3>* lower_corner = nullptr;
-    const atlas::math::Vector<T, 3>* upper_corner = nullptr;
+    const atlas::math::Vector<T, 3>* lower_corner = nullptr; ///< Minimum corner.
+    const atlas::math::Vector<T, 3>* upper_corner = nullptr; ///< Maximum corner.
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
@@ -43,6 +51,9 @@ struct BoxGeometryOperator {
     operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
 };
 
+/**
+ * @brief Axis-aligned box geometry.
+ */
 template <typename T>
 class Box final : public Geometry<T> {
     static_assert(std::is_floating_point_v<T>, "Box requires a floating-point T");
@@ -51,9 +62,8 @@ public:
     class Builder;
 
 public:
-    Vector3<T> lower_corner { T(-1), T(-1), T(-1) };
-
-    Vector3<T> upper_corner { T(+1), T(+1), T(+1) };
+    Vector3<T> lower_corner { T(-1), T(-1), T(-1) }; ///< Minimum corner.
+    Vector3<T> upper_corner { T(+1), T(+1), T(+1) }; ///< Maximum corner.
 
     ATLAS_HOST ATLAS_FORCE_INLINE
     Box() noexcept;
@@ -115,7 +125,7 @@ private:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     bind_operator() noexcept;
 
-    mutable BoxGeometryOperator<T> _operator {};
+    mutable BoxGeometryOperator<T> _operator {}; ///< Cached runtime operator.
 };
 
 template <typename T>
@@ -149,6 +159,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::geometry::Box.
+ */
 template <typename T>
 using Box = geometry::Box<T>;
 

@@ -1,11 +1,19 @@
 #pragma once
 
+/**
+ * @file uniform_generator.h
+ * @brief Declares a host-side uniform velocity generator.
+ */
+
 #include <atlas/generator/generator.h>
 
 #include <optional>
 
 namespace atlas::system {
 
+/**
+ * @brief Host-side generator for uniformly distributed velocity components.
+ */
 template <typename T>
 class UniformGenerator final : public Generator<T> {
 public:
@@ -37,10 +45,10 @@ public:
     type() const noexcept override;
 
 private:
-    T _min_value;
-    T _max_value;
-    unsigned int _seed;
-    GenerateOperator<T> _operator;
+    T _min_value; ///< Minimum component value.
+    T _max_value; ///< Maximum component value.
+    unsigned int _seed; ///< Deterministic seed.
+    GenerateOperator<T> _operator; ///< Cached backend-portable operator.
 };
 
 template <typename T>
@@ -77,6 +85,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::UniformGenerator.
+ */
 template <typename T>
 using UniformGenerator = atlas::system::UniformGenerator<T>;
 

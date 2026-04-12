@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file geometry.h
+ * @brief Declares the abstract geometry interface used throughout Atlas.
+ *
+ * Geometry objects expose closest-point queries, signed-distance evaluation,
+ * containment tests, bounding volumes, and a value-type GeometryOperator for
+ * backend-portable runtime use.
+ */
+
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
@@ -11,6 +20,11 @@ namespace atlas::geometry {
 template <typename T>
 struct GeometryOperator;
 
+/**
+ * @brief Abstract base class for queryable geometric primitives.
+ *
+ * @tparam T Floating-point scalar used by the simulation.
+ */
 template <typename T>
 class Geometry {
     static_assert(std::is_floating_point_v<T>, "Geometry requires a floating-point T");
@@ -20,6 +34,9 @@ public:
 
     virtual ~Geometry() = default;
 
+    /**
+     * @brief Creates a value-type operator for host/device runtime queries.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE virtual atlas::geometry::GeometryOperator<T>
     make_geometry_operator() const = 0;
 
@@ -55,9 +72,15 @@ public:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::geometry::GeometryOperator.
+ */
 template <typename T>
 using GeometryOperator = geometry::GeometryOperator<T>;
 
+/**
+ * @brief Convenience alias for atlas::geometry::Geometry.
+ */
 template <typename T>
 using Geometry = geometry::Geometry<T>;
 

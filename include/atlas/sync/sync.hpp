@@ -35,6 +35,7 @@ template <typename T>
 Vector3<T>
 Sync<T>::sync_to_world(const Vector3<T>& local_point) const noexcept {
 
+    // Return-by-value convenience wrapper over the in-place operator API.
     Vector3<T> out;
     sync_operator.sync_to_world(local_point, out);
     return out;
@@ -44,6 +45,7 @@ template <typename T>
 Vector3<T>
 Sync<T>::sync_to_local(const Vector3<T>& world_point) const noexcept {
 
+    // Return-by-value convenience wrapper over the in-place operator API.
     Vector3<T> out;
     sync_operator.sync_to_local(world_point, out);
     return out;
@@ -53,6 +55,7 @@ template <typename T>
 Vector3<T>
 Sync<T>::sync_dir_to_world(const Vector3<T>& local_dir) const noexcept {
 
+    // Direction transforms ignore translation and rotate only.
     Vector3<T> out;
     sync_operator.sync_dir_to_world(local_dir, out);
     return out;
@@ -62,6 +65,7 @@ template <typename T>
 Vector3<T>
 Sync<T>::sync_dir_to_local(const Vector3<T>& world_dir) const noexcept {
 
+    // Direction transforms ignore translation and rotate only.
     Vector3<T> out;
     sync_operator.sync_dir_to_local(world_dir, out);
     return out;
@@ -211,6 +215,7 @@ Sync<T>::Builder::validate() const {
         + orientation.y * orientation.y
         + orientation.z * orientation.z);
 
+    // Non-unit quaternions are still accepted, but the caller gets an explicit warning.
     if (std::abs(norm - T(1)) > T(1e-3)) {
         atlas::logger::warn()
             << "Sync::Builder: quaternion not normalized.";
@@ -226,13 +231,14 @@ Sync<T>::Builder::build() const {
     Sync<T> s {};
 
     if (_has_sync_operator) {
-
+        // Reuse the caller-provided operator verbatim when one is supplied.
         s.sync_operator = _op_storage;
     } else {
-
+        // Otherwise build the operator from the stored rigid pose.
         s.sync_operator = atlas::system::SyncOperator<T>(_translation, _orientation);
     }
 
+    // Ensure cached matrices match the final pose before the Sync is returned.
     s.rebuild_matrices();
     return s;
 }

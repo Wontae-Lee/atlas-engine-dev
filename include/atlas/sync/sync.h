@@ -1,11 +1,21 @@
 #pragma once
 
+/**
+ * @file sync.h
+ * @brief Declares a host-friendly wrapper around SyncOperator.
+ */
+
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
 #include <atlas/sync/sync_operator.h>
 
 namespace atlas::system {
 
+/**
+ * @brief Stores a rigid transform and exposes local/world conversion helpers.
+ *
+ * @tparam T Floating-point scalar used by the simulation.
+ */
 template <typename T>
 class Sync final {
 public:
@@ -72,7 +82,7 @@ private:
     friend class Builder;
 
 private:
-    atlas::system::SyncOperator<T> sync_operator;
+    atlas::system::SyncOperator<T> sync_operator; ///< Backing rigid transform operator.
 };
 
 template <typename T>
@@ -111,6 +121,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::Sync.
+ */
 template <typename T>
 using Sync = atlas::system::Sync<T>;
 

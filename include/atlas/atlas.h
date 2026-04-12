@@ -11,7 +11,6 @@
 #include <atlas/container/container.h>
 #include <atlas/core/macros.h>
 #include <atlas/domain/domain.h>
-#include <atlas/flatten/flatten.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/generator/generate_operator.h>
 #include <atlas/generator/generator.h>
@@ -64,7 +63,6 @@
 #include <atlas/memory/copy.h>
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/observer/observer.h>
 #include <atlas/orchestrator/orchestrator.h>
 #include <atlas/parallel/parallel.h>
 #include <atlas/parallel/parallel_fill.h>
@@ -79,11 +77,13 @@
 #include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
-#include <atlas/solve/dsmc/dsmc.h>
-#include <atlas/solve/dsmc/dsmc_operator.h>
-#include <atlas/solve/solve.h>
-#include <atlas/solve/sph/sph.h>
-#include <atlas/solve/sph/sph_operator.h>
+#include <atlas/solver/dsmc/dsmc_disjoint_pair_solver.h>
+#include <atlas/solver/dsmc/dsmc_kernel.h>
+#include <atlas/solver/dsmc/dsmc_ntc_solver.h>
+#include <atlas/solver/dsmc/dsmc_solver.h>
+#include <atlas/solver/solver.h>
+#include <atlas/solver/sph/sph_kernel.h>
+#include <atlas/solver/sph/sph_solver.h>
 #include <atlas/source/source.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>

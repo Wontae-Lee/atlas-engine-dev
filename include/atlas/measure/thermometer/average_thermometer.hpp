@@ -11,14 +11,18 @@ AverageThermometer<T>::builder() noexcept {
 }
 
 template <typename T>
-AverageThermometer<T>::AverageThermometer(const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept
-    : _thermometer_operator(thermometer_operator) {
+AverageThermometer<T>::AverageThermometer(const atlas::system::ThermometerOperator<T>& thermometer_operator,
+                                          const MeasureModeType measure_mode) noexcept
+    : Thermometer<T>(measure_mode)
+    , _thermometer_operator(thermometer_operator) {
 }
 
 template <typename T>
 AverageThermometer<T>::AverageThermometer(
-    const atlas::system::AverageThermometerOperator<T>& thermometer_operator) noexcept
-    : _thermometer_operator(thermometer_operator) {
+    const atlas::system::AverageThermometerOperator<T>& thermometer_operator,
+    const MeasureModeType measure_mode) noexcept
+    : Thermometer<T>(measure_mode)
+    , _thermometer_operator(thermometer_operator) {
 }
 
 template <typename T>
@@ -32,7 +36,7 @@ AverageThermometer<T>::measure(DomainDeviceProbe<T> domain,
         throw std::runtime_error("AverageThermometer: measure() is forbidden when the domain type is isothermal.");
     }
 
-    _thermometer_operator.measure(domain, searcher, particle);
+    _thermometer_operator.measure(domain, searcher, particle, this->measure_mode());
 }
 
 template <typename T>
@@ -62,6 +66,13 @@ AverageThermometer<T>::thermometer_operator() const noexcept {
 
 template <typename T>
 typename AverageThermometer<T>::Builder&
+AverageThermometer<T>::Builder::with_measure_mode(const MeasureModeType measure_mode) noexcept {
+    _measure_mode = measure_mode;
+    return *this;
+}
+
+template <typename T>
+typename AverageThermometer<T>::Builder&
 AverageThermometer<T>::Builder::with_thermometer_operator(
     const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept {
     _thermometer_operator = thermometer_operator;
@@ -79,7 +90,7 @@ AverageThermometer<T>::Builder::with_thermometer_operator(
 template <typename T>
 AverageThermometer<T>
 AverageThermometer<T>::Builder::build() const {
-    return AverageThermometer<T>(_thermometer_operator);
+    return AverageThermometer<T>(_thermometer_operator, _measure_mode);
 }
 
 template <typename T>

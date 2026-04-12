@@ -15,6 +15,7 @@ template <typename T>
 DeepLearningCodec<T>::DeepLearningCodec(const DomainHostPtr<T>& domain)
     : Codec<T>(domain) {
 
+    // Keep the codec state initialized even though the learned path is a stub.
     this->reset();
 }
 
@@ -24,6 +25,7 @@ DeepLearningCodec<T>::encode(const FluidDeviceProbe<T>&,
                              const DomainDeviceProbe<T>&,
                              const SpatialHashingProbe<T>&,
                              CodecDeviceProbe<T>&) {
+    // Placeholder: learned encoding logic will be added here.
 }
 
 template <typename T>
@@ -32,6 +34,7 @@ DeepLearningCodec<T>::decode(const FluidDeviceProbe<T>&,
                              const DomainDeviceProbe<T>&,
                              const SpatialHashingProbe<T>&,
                              CodecDeviceProbe<T>&) {
+    // Placeholder: learned decoding logic will be added here.
 }
 
 template <typename T>
@@ -45,6 +48,7 @@ template <typename T>
 typename DeepLearningCodec<T>::Builder&
 DeepLearningCodec<T>::Builder::with_domain(DomainHostPtr<T> domain) noexcept {
 
+    // Builders take ownership of dependencies until construction.
     _domain = std::move(domain);
     return *this;
 }

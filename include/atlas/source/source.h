@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file source.h
+ * @brief Declares particle source logic and source builder utilities.
+ *
+ * A Source samples positions on one or more units, chooses species according to
+ * fluid mole fractions, generates outgoing velocities, and writes new particles
+ * into inactive fluid capacity.
+ */
+
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/fluid/fluid.h>
@@ -15,6 +24,15 @@
 
 namespace atlas::system {
 
+/**
+ * @brief Emits new particles from configured units into a fluid buffer.
+ *
+ * Source combines spawn geometry, spawn operators, species composition, and
+ * velocity generators. It also caches sampled local positions so repeated emit
+ * calls can reuse geometry-dependent work until relevant configuration changes.
+ *
+ * @tparam T Floating-point scalar used by the simulation.
+ */
 template <typename T>
 class Source final {
     static_assert(std::is_floating_point_v<T>, "Source requires a floating-point T");
@@ -31,9 +49,9 @@ public:
            DeviceBuffer<SpawnType> spawn_types,
            DeviceBuffer<SpawnOperator<T>> spawn_operators,
            FluidHostPtr<T> fluid,
-           bool flip            = false,
-           T tolerance          = T(0),
-           T temperature        = T(273.15)) noexcept;
+           bool flip     = false,
+           T tolerance   = T(0),
+           T temperature = T(273.15)) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
@@ -117,21 +135,21 @@ public:
     rebuild_cache() noexcept;
 
 private:
-    DeviceBuffer<Unit<T>> _units;
-    DeviceBuffer<SpawnType> _spawn_types;
-    DeviceBuffer<SpawnOperator<T>> _spawn_operators;
-    FluidHostPtr<T> _fluid;
-    bool _flip   = false;
-    T _tolerance = T(0);
-    T _spacing   = T(0.1);
-    T _temperature { T(273.15) };
-    DeviceBuffer<Vector3<T>> _local_positions;
-    DeviceBuffer<int> _local_position_unit_indices;
-    DeviceBuffer<size_t> _species_cache;
-    DeviceBuffer<size_t> _shuffled_species;
-    DeviceBuffer<std::uint64_t> _shuffle_keys;
-    std::uint64_t _shuffle_seed = 0;
-    bool _is_invalidated_cache  = true;
+    DeviceBuffer<Unit<T>> _units;                    ///< Spawn units.
+    DeviceBuffer<SpawnType> _spawn_types;            ///< Spawn types per unit.
+    DeviceBuffer<SpawnOperator<T>> _spawn_operators; ///< Spawn rules per unit.
+    FluidHostPtr<T> _fluid;                          ///< Fluid dependency for species and generators.
+    bool _flip   = false;                            ///< Whether spawn decisions are inverted.
+    T _tolerance = T(0);                             ///< Geometric tolerance used during spawn tests.
+    T _spacing   = T(0.1);                           ///< Grid spacing used to sample candidate local positions.
+    T _temperature { T(273.15) };                    ///< Emission temperature assigned to new particles.
+    DeviceBuffer<Vector3<T>> _local_positions;       ///< Cached local spawn positions.
+    DeviceBuffer<int> _local_position_unit_indices;  ///< Owning unit index per cached position.
+    DeviceBuffer<size_t> _species_cache;             ///< Cached deterministic species layout.
+    DeviceBuffer<size_t> _shuffled_species;          ///< Per-emission shuffled species assignment.
+    DeviceBuffer<std::uint64_t> _shuffle_keys;       ///< Keys used to shuffle emitted species.
+    std::uint64_t _shuffle_seed = 0;                 ///< Monotonic seed used to decorrelate emissions.
+    bool _is_invalidated_cache  = true;              ///< Whether cached geometry-derived data must be rebuilt.
 };
 
 template <typename T>
@@ -191,6 +209,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::Source.
+ */
 template <typename T>
 using Source = atlas::system::Source<T>;
 

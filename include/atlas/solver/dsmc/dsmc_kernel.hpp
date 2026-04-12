@@ -7,14 +7,14 @@
 namespace atlas::system {
 
 template <typename T>
-HardSphereDsmcOperator<T>::HardSphereDsmcOperator(const T probability_scale,
+DsmcHsKernel<T>::DsmcHsKernel(const T probability_scale,
                                                   const unsigned int seed) noexcept
     : probability_scale(probability_scale)
     , seed(seed) { }
 
 template <typename T>
 T
-HardSphereDsmcOperator<T>::collision_kernel(const T effective_collision_diameter,
+DsmcHsKernel<T>::collision_kernel(const T effective_collision_diameter,
                                             const T relative_speed) const noexcept {
     if (!(effective_collision_diameter > T(0)) || !(relative_speed > T(0))) {
         return T(0);
@@ -23,7 +23,7 @@ HardSphereDsmcOperator<T>::collision_kernel(const T effective_collision_diameter
 }
 
 template <typename T>
-VhsDsmcOperator<T>::VhsDsmcOperator(const T reference_temperature,
+DsmcVhsKernel<T>::DsmcVhsKernel(const T reference_temperature,
                                     const T probability_scale,
                                     const unsigned int seed) noexcept
     : reference_temperature(reference_temperature)
@@ -32,7 +32,7 @@ VhsDsmcOperator<T>::VhsDsmcOperator(const T reference_temperature,
 
 template <typename T>
 T
-VhsDsmcOperator<T>::collision_kernel(const T effective_collision_diameter,
+DsmcVhsKernel<T>::collision_kernel(const T effective_collision_diameter,
                                      const T reduced_mass,
                                      const T effective_viscosity_index,
                                      const T local_temperature,
@@ -50,7 +50,7 @@ VhsDsmcOperator<T>::collision_kernel(const T effective_collision_diameter,
 }
 
 template <typename T>
-VssDsmcOperator<T>::VssDsmcOperator(const T reference_temperature,
+DsmcVssKernel<T>::DsmcVssKernel(const T reference_temperature,
                                     const T probability_scale,
                                     const unsigned int seed) noexcept
     : reference_temperature(reference_temperature)
@@ -59,7 +59,7 @@ VssDsmcOperator<T>::VssDsmcOperator(const T reference_temperature,
 
 template <typename T>
 T
-VssDsmcOperator<T>::collision_kernel(const T effective_collision_diameter,
+DsmcVssKernel<T>::collision_kernel(const T effective_collision_diameter,
                                      const T reduced_mass,
                                      const T effective_viscosity_index,
                                      const T effective_scattering_parameter,
@@ -82,43 +82,43 @@ VssDsmcOperator<T>::collision_kernel(const T effective_collision_diameter,
 }
 
 template <typename T>
-DsmcOperator<T>::DsmcOperator() noexcept
-    : type(DsmcModelType::hard_sphere) {
-    new (&hard_sphere) HardSphereDsmcOperator<T> {};
+DsmcKernel<T>::DsmcKernel() noexcept
+    : type(DsmcModelType::hs) {
+    new (&hard_sphere) DsmcHsKernel<T> {};
 }
 
 template <typename T>
-DsmcOperator<T>::DsmcOperator(const DsmcModelType type,
-                              const T param0,
-                              const T probability,
-                              const unsigned int seed) noexcept
+DsmcKernel<T>::DsmcKernel(const DsmcModelType type,
+                                          const T param0,
+                                          const T probability,
+                                          const unsigned int seed) noexcept
     : type(type) {
     switch (type) {
-    case DsmcModelType::hard_sphere:
-        new (&hard_sphere) HardSphereDsmcOperator<T>(probability, seed);
+    case DsmcModelType::hs:
+        new (&hard_sphere) DsmcHsKernel<T>(probability, seed);
         return;
     case DsmcModelType::vhs:
-        new (&vhs) VhsDsmcOperator<T>(param0, probability, seed);
+        new (&vhs) DsmcVhsKernel<T>(param0, probability, seed);
         return;
     case DsmcModelType::vss:
-        new (&vss) VssDsmcOperator<T>(param0, probability, seed);
+        new (&vss) DsmcVssKernel<T>(param0, probability, seed);
         return;
     default:
-        this->type = DsmcModelType::hard_sphere;
-        new (&hard_sphere) HardSphereDsmcOperator<T>(probability, seed);
+        this->type = DsmcModelType::hs;
+        new (&hard_sphere) DsmcHsKernel<T>(probability, seed);
         return;
     }
 }
 
 template <typename T>
-DsmcOperator<T>::DsmcOperator(const DsmcOperator& other) noexcept
+DsmcKernel<T>::DsmcKernel(const DsmcKernel& other) noexcept
     : type(other.type) {
     copy_from(other);
 }
 
 template <typename T>
-DsmcOperator<T>&
-DsmcOperator<T>::operator=(const DsmcOperator& other) noexcept {
+DsmcKernel<T>&
+DsmcKernel<T>::operator=(const DsmcKernel& other) noexcept {
     if (this == &other) return *this;
     destroy_active();
     type = other.type;
@@ -127,38 +127,38 @@ DsmcOperator<T>::operator=(const DsmcOperator& other) noexcept {
 }
 
 template <typename T>
-DsmcOperator<T>::~DsmcOperator() noexcept {
+DsmcKernel<T>::~DsmcKernel() noexcept {
     destroy_active();
 }
 
 template <typename T>
-DsmcOperator<T>::DsmcOperator(const HardSphereDsmcOperator<T>& op)
-    : type(DsmcModelType::hard_sphere) {
-    new (&hard_sphere) HardSphereDsmcOperator<T>(op);
+DsmcKernel<T>::DsmcKernel(const DsmcHsKernel<T>& op)
+    : type(DsmcModelType::hs) {
+    new (&hard_sphere) DsmcHsKernel<T>(op);
 }
 
 template <typename T>
-DsmcOperator<T>::DsmcOperator(const VhsDsmcOperator<T>& op)
+DsmcKernel<T>::DsmcKernel(const DsmcVhsKernel<T>& op)
     : type(DsmcModelType::vhs) {
-    new (&vhs) VhsDsmcOperator<T>(op);
+    new (&vhs) DsmcVhsKernel<T>(op);
 }
 
 template <typename T>
-DsmcOperator<T>::DsmcOperator(const VssDsmcOperator<T>& op)
+DsmcKernel<T>::DsmcKernel(const DsmcVssKernel<T>& op)
     : type(DsmcModelType::vss) {
-    new (&vss) VssDsmcOperator<T>(op);
+    new (&vss) DsmcVssKernel<T>(op);
 }
 
 template <typename T>
 T
-DsmcOperator<T>::collision_kernel(const T effective_collision_diameter,
-                                  const T reduced_mass,
-                                  const T effective_viscosity_index,
-                                  const T effective_scattering_parameter,
-                                  const T local_temperature,
-                                  const T relative_speed) const noexcept {
+DsmcKernel<T>::collision_kernel(const T effective_collision_diameter,
+                                        const T reduced_mass,
+                                        const T effective_viscosity_index,
+                                        const T effective_scattering_parameter,
+                                        const T local_temperature,
+                                        const T relative_speed) const noexcept {
     switch (type) {
-    case DsmcModelType::hard_sphere:
+    case DsmcModelType::hs:
         return hard_sphere.collision_kernel(effective_collision_diameter, relative_speed);
     case DsmcModelType::vhs:
         return vhs.collision_kernel(
@@ -182,9 +182,9 @@ DsmcOperator<T>::collision_kernel(const T effective_collision_diameter,
 
 template <typename T>
 unsigned int
-DsmcOperator<T>::base_seed() const noexcept {
+DsmcKernel<T>::base_seed() const noexcept {
     switch (type) {
-    case DsmcModelType::hard_sphere:
+    case DsmcModelType::hs:
         return hard_sphere.seed;
     case DsmcModelType::vhs:
         return vhs.seed;
@@ -197,13 +197,13 @@ DsmcOperator<T>::base_seed() const noexcept {
 
 template <typename T>
 bool
-DsmcOperator<T>::should_collide(const T effective_collision_diameter,
-                                const T reduced_mass,
-                                const T effective_viscosity_index,
-                                const T effective_scattering_parameter,
-                                const T local_temperature,
-                                const Vector3<T>& relative_velocity,
-                                const std::uint64_t pair_id) const noexcept {
+DsmcKernel<T>::should_collide(const T effective_collision_diameter,
+                                      const T reduced_mass,
+                                      const T effective_viscosity_index,
+                                      const T effective_scattering_parameter,
+                                      const T local_temperature,
+                                      const Vector3<T>& relative_velocity,
+                                      const std::uint64_t pair_id) const noexcept {
     const T relative_speed = relative_velocity.length();
     const T kernel         = collision_kernel(
         effective_collision_diameter,
@@ -224,9 +224,9 @@ DsmcOperator<T>::should_collide(const T effective_collision_diameter,
 
 template <typename T>
 Vector3<T>
-DsmcOperator<T>::scatter_relative_velocity(const T effective_scattering_parameter,
-                                           const Vector3<T>& relative_velocity,
-                                           const std::uint64_t pair_id) const noexcept {
+DsmcKernel<T>::scatter_relative_velocity(const T effective_scattering_parameter,
+                                                 const Vector3<T>& relative_velocity,
+                                                 const std::uint64_t pair_id) const noexcept {
     const T relative_speed = relative_velocity.length();
     if (!(relative_speed > T(0))) {
         return Vector3<T>(T(0), T(0), T(0));
@@ -247,39 +247,39 @@ DsmcOperator<T>::scatter_relative_velocity(const T effective_scattering_paramete
 
 template <typename T>
 void
-DsmcOperator<T>::destroy_active() noexcept {
+DsmcKernel<T>::destroy_active() noexcept {
     switch (type) {
-    case DsmcModelType::hard_sphere:
-        hard_sphere.~HardSphereDsmcOperator<T>();
+    case DsmcModelType::hs:
+        hard_sphere.~DsmcHsKernel<T>();
         return;
     case DsmcModelType::vhs:
-        vhs.~VhsDsmcOperator<T>();
+        vhs.~DsmcVhsKernel<T>();
         return;
     case DsmcModelType::vss:
-        vss.~VssDsmcOperator<T>();
+        vss.~DsmcVssKernel<T>();
         return;
     default:
-        hard_sphere.~HardSphereDsmcOperator<T>();
+        hard_sphere.~DsmcHsKernel<T>();
         return;
     }
 }
 
 template <typename T>
 void
-DsmcOperator<T>::copy_from(const DsmcOperator& other) noexcept {
+DsmcKernel<T>::copy_from(const DsmcKernel& other) noexcept {
     switch (type) {
-    case DsmcModelType::hard_sphere:
-        new (&hard_sphere) HardSphereDsmcOperator<T>(other.hard_sphere);
+    case DsmcModelType::hs:
+        new (&hard_sphere) DsmcHsKernel<T>(other.hard_sphere);
         return;
     case DsmcModelType::vhs:
-        new (&vhs) VhsDsmcOperator<T>(other.vhs);
+        new (&vhs) DsmcVhsKernel<T>(other.vhs);
         return;
     case DsmcModelType::vss:
-        new (&vss) VssDsmcOperator<T>(other.vss);
+        new (&vss) DsmcVssKernel<T>(other.vss);
         return;
     default:
-        type = DsmcModelType::hard_sphere;
-        new (&hard_sphere) HardSphereDsmcOperator<T>(other.hard_sphere);
+        type = DsmcModelType::hs;
+        new (&hard_sphere) DsmcHsKernel<T>(other.hard_sphere);
         return;
     }
 }

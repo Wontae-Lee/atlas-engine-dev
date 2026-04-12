@@ -25,6 +25,7 @@ Collider<T>::builder() noexcept {
 template <typename T>
 void
 Collider<T>::set_units(DeviceBuffer<Unit<T>> units) noexcept {
+    // Accept prebuilt device storage without additional validation.
     _units = std::move(units);
 }
 
@@ -37,12 +38,14 @@ Collider<T>::set_units(const HostBuffer<Unit<T>>& units) {
         throw std::runtime_error("Collider: units must not be empty.");
     }
 
+    // Materialize host-authored units into backend-native storage.
     _units = DeviceBuffer<Unit<T>>(units.begin(), units.end());
 }
 
 template <typename T>
 void
 Collider<T>::set_surface_interactions(DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions) noexcept {
+    // Accept prebuilt device storage without additional validation.
     _surface_interactions = std::move(surface_interactions);
 }
 
@@ -55,6 +58,7 @@ Collider<T>::set_surface_interactions(const HostBuffer<ColliderSurfaceInteractio
         throw std::runtime_error("Collider: surface interactions must not be empty.");
     }
 
+    // Materialize host-authored interactions into backend-native storage.
     _surface_interactions = DeviceBuffer<ColliderSurfaceInteraction<T>>(
         surface_interactions.begin(),
         surface_interactions.end());
@@ -93,6 +97,7 @@ Collider<T>::update(const T dt) {
 
     auto* units = atlas::raw_pointer_cast(_units.data());
 
+    // Advance every collision unit so pose-dependent tracing stays current.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         static_cast<int>(_units.size()),
@@ -116,6 +121,7 @@ Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
     const T epsilon                  = static_cast<T>(atlas::eps);
     const T tolerance                = epsilon;
 
+    // Trace each particle sweep independently against all registered units.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         particle_probe.particle_count,
@@ -141,6 +147,7 @@ Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
                 const auto& geom_op = unit.geometry_operator();
 
                 const atlas::spatial::Ray<T> world_ray(p0, direction);
+                // Transform the particle trajectory into the unit's local frame.
                 const atlas::spatial::Ray<T> local_ray = sync_op.sync_to_local(world_ray);
                 const HitSurface<T> local_hit          = geom_op(local_ray);
 
@@ -157,13 +164,16 @@ Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
             }
 
             if (!any_hit || best_index < 0) {
+                // No hit: complete the free-flight step unchanged.
                 particle_probe.pos[i] = p0 + direction;
                 particle_probe.vel[i] = velocity;
                 return;
             }
 
+            // A single interaction can be broadcast to all units, otherwise index per unit.
             const int interaction_index = (interaction_count == 1 || best_index >= interaction_count) ? 0 : best_index;
 
+            // Push slightly off the surface to avoid sticking on the next step.
             particle_probe.pos[i] = best_pos + best_norm * epsilon;
             particle_probe.vel[i] = surface_interactions[interaction_index](velocity, best_norm);
         });
@@ -208,12 +218,14 @@ Collider<T>::Builder::build() {
     validate();
 
     if (_surface_interactions.empty()) {
+        // Default to an identity-like interaction when none is explicitly provided.
         _surface_interactions.push_back(ColliderSurfaceInteraction<T> {});
     }
 
     Collider<T> collider(
         DeviceBuffer<Unit<T>>(_units.begin(), _units.end()),
         DeviceBuffer<ColliderSurfaceInteraction<T>>(_surface_interactions.begin(), _surface_interactions.end()));
+    // Clear builder-owned host buffers after transferring them into the collider.
     _units.clear();
     _surface_interactions.clear();
     return collider;

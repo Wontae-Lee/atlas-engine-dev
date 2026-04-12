@@ -65,6 +65,7 @@ ColliderSurfaceInteraction<T>::temperature() const noexcept {
 template <typename T>
 T
 ColliderSurfaceInteraction<T>::hashed_unit_interval(const Vector3<T>& seed, const T salt) noexcept {
+    // A deterministic hash is enough here because the goal is decorrelated scattering directions.
     const T phase = seed.x * T(12.9898) + seed.y * T(78.233) + seed.z * T(37.719) + salt;
     const T value = std::sin(phase) * T(43758.5453);
     return value - std::floor(value);
@@ -74,6 +75,7 @@ template <typename T>
 Vector3<T>
 ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
                                           const Vector3<T>& normal) const noexcept {
+    // Start from the purely specular answer and optionally blend toward diffuse.
     const Vector3<T> specular_dir = atlas::math::reflected(incident, normal);
 
     if (_tmac <= T(0)) {
@@ -85,11 +87,13 @@ ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
 
     Vector3<T> diffuse_dir {};
     if (_diffuse_sampling == DiffuseSampling::CosineWeighted) {
+        // Cosine weighting approximates Lambertian-like scattering.
         diffuse_dir = atlas::sampling::sample_cosine_hemisphere(normal, u1, u2);
     } else {
         diffuse_dir = atlas::sampling::sample_uniform_hemisphere(normal, u1, u2);
     }
 
+    // Use a second deterministic draw to choose between specular and diffuse.
     const T mix              = hashed_unit_interval(incident + normal * T(17), T(2.41));
     const Vector3<T> out_dir = (mix < _tmac) ? diffuse_dir : specular_dir;
     return out_dir * _restitution_coeff;
@@ -128,6 +132,7 @@ ColliderSurfaceInteraction<T>
 ColliderSurfaceInteraction<T>::Builder::build() const {
     validate();
 
+    // Build through setters so validation rules stay centralized in one place.
     ColliderSurfaceInteraction<T> interaction {};
     interaction.set_diffuse_sampling(_diffuse_sampling);
     interaction.set_restitution(_restitution);

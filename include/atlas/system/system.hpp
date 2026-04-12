@@ -24,6 +24,7 @@ System<T>::System(FluidHostPtr<T> fluid)
         throw std::runtime_error("System: fluid must not be null.");
     }
 
+    // Build the canonical particle probe immediately because most stages depend on it.
     _particle_probe = _fluid->make_device_probe();
 }
 
@@ -52,13 +53,16 @@ System<T>::System(FluidHostPtr<T> fluid,
         throw std::runtime_error("System: fluid must not be null.");
     }
 
+    // Fluid probe is always required, even when the optional subsystems are absent.
     _particle_probe = _fluid->make_device_probe();
 
     if (_domain) {
+        // Domain availability enables search and codec classification paths.
         _searcher       = atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain);
         _domain_probe   = _domain->make_device_probe();
         _searcher_probe = _searcher->make_device_probe();
         if (!_codec) {
+            // Fall back to a pass-through codec when no custom codec is supplied.
             _codec = atlas::make_host_shared<SingleCodec<T>>(_domain);
         }
     }
@@ -73,6 +77,7 @@ void
 System<T>::update() {
     atlas::logger::info() << "System::update: begin";
 
+    // Keep the full runtime step ordering centralized in one place.
     emit();
     search();
     classify();
@@ -122,6 +127,7 @@ System<T>::classify() {
         return;
     }
 
+    // Codec update is the hook where encode/decode-style classification happens.
     _codec->update(_particle_probe, _domain_probe, _searcher_probe, _codec_probe);
 
     atlas::logger::info() << "System::classify: end";
@@ -171,6 +177,7 @@ System<T>::collide() {
         _collider->update(_dt);
         _collider->collide(_particle_probe, _dt);
     } else {
+        // With no collider, advance particles by free-flight integration only.
         time_integration();
     }
 
@@ -200,6 +207,7 @@ System<T>::time_integration() {
     const auto probe = _particle_probe;
     const T dt       = _dt;
 
+    // This is the minimal advection fallback when no collision stage is active.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.particle_count,
@@ -245,10 +253,12 @@ System<T>::set_domain(const DomainHostPtr<T>& domain) {
     }
 
     _domain         = domain;
+    // Domain replacement invalidates the search structure and its probes.
     _searcher       = atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain);
     _domain_probe   = _domain->make_device_probe();
     _searcher_probe = _searcher->make_device_probe();
     if (!_codec || _codec->type() == CodecType::single) {
+        // Preserve custom codecs, but rebuild the default codec against the new domain.
         _codec       = atlas::make_host_shared<SingleCodec<T>>(_domain);
         _codec_probe = _codec->make_device_probe();
     }
@@ -509,6 +519,7 @@ template <typename T>
 System<T>
 System<T>::Builder::build() {
     validate();
+    // Construction is delegated to the full constructor so probe setup stays centralized.
     return System<T>(
         _fluid,
         _dt,

@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file unit.h
+ * @brief Declares a geometry instance together with its pose and kinematics.
+ *
+ * A Unit combines a geometry operator with a rigid transform and optional
+ * linear/angular motion state. It is the basic movable scene object used by
+ * sources, sinks, colliders, and visualization.
+ */
+
 #include <atlas/geometry/geometry.h>
 #include <atlas/geometry/geometry_operator.h>
 #include <atlas/math/math.h>
@@ -9,6 +18,11 @@
 
 namespace atlas::system {
 
+/**
+ * @brief Couples geometry, pose, and optional rigid-body kinematics.
+ *
+ * @tparam T Floating-point scalar used by the simulation.
+ */
 template <typename T>
 class Unit final {
     static_assert(std::is_floating_point_v<T>, "Unit requires a floating-point T");
@@ -84,17 +98,12 @@ private:
     friend class Builder;
 
 private:
-    atlas::GeometryOperator<T> _geometry_operator;
-
-    SyncOperator<T> _sync_operator;
-
-    std::optional<Vector<T, 3>> _velocity;
-
-    std::optional<Vector<T, 3>> _acceleration;
-
-    std::optional<Vector<T, 3>> _angular_velocity;
-
-    std::optional<Vector<T, 3>> _angular_acceleration;
+    atlas::GeometryOperator<T> _geometry_operator; ///< Geometry queried in local space.
+    SyncOperator<T> _sync_operator; ///< Local-to-world rigid transform.
+    std::optional<Vector<T, 3>> _velocity; ///< Optional linear velocity.
+    std::optional<Vector<T, 3>> _acceleration; ///< Optional linear acceleration.
+    std::optional<Vector<T, 3>> _angular_velocity; ///< Optional angular velocity axis vector.
+    std::optional<Vector<T, 3>> _angular_acceleration; ///< Optional angular acceleration.
 };
 
 template <typename T>
@@ -150,6 +159,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::Unit.
+ */
 template <typename T>
 using Unit = atlas::system::Unit<T>;
 

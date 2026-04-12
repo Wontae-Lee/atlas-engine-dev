@@ -22,6 +22,7 @@ MaxwellSigmaGenerator<T>::MaxwellSigmaGenerator(const T sigma,
 template <typename T>
 Vector3<T>
 MaxwellSigmaGenerator<T>::generate() const {
+    // Reuse the backend-portable operator so host and device semantics stay aligned.
     return _operator.generate(_sigma);
 }
 

@@ -1,5 +1,13 @@
 #pragma once
 
+/**
+ * @file generator.h
+ * @brief Declares the abstract particle-velocity generator interface.
+ *
+ * Generators produce particle velocities on the host side and can export a
+ * backend-portable GenerateOperator that Source uses during device emission.
+ */
+
 #include <atlas/generator/generate_operator.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
@@ -8,6 +16,15 @@
 
 namespace atlas::system {
 
+/**
+ * @brief Abstract base class for host-side particle generators.
+ *
+ * Concrete generators expose their runtime parameters, produce sample
+ * velocities on the host, and provide a GenerateOperator suitable for
+ * backend-side emission code.
+ *
+ * @tparam T Floating-point scalar used by the simulation.
+ */
 template <typename T>
 class Generator {
     static_assert(std::is_floating_point_v<T>, "Generator requires a floating-point T");
@@ -48,6 +65,9 @@ public:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::Generator.
+ */
 template <typename T>
 using Generator = atlas::system::Generator<T>;
 

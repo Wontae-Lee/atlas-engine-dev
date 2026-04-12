@@ -3,6 +3,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/domain/domain.h>
 #include <atlas/fluid/fluid.h>
+#include <atlas/measure/measure.h>
 #include <atlas/measure/thermometer/thermometer_type.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 
@@ -13,7 +14,8 @@ struct VarianceThermometerOperator final {
     ATLAS_HOST ATLAS_FORCE_INLINE void
     measure(const DomainDeviceProbe<T>& domain,
             const SpatialHashingProbe<T>& searcher,
-            const FluidDeviceProbe<T>& particle) const;
+            const FluidDeviceProbe<T>& particle,
+            MeasureModeType measure_mode = MeasureModeType::All) const;
 };
 
 template <typename T>
@@ -21,7 +23,8 @@ struct AverageThermometerOperator final {
     ATLAS_HOST ATLAS_FORCE_INLINE void
     measure(const DomainDeviceProbe<T>& domain,
             const SpatialHashingProbe<T>& searcher,
-            const FluidDeviceProbe<T>& particle) const;
+            const FluidDeviceProbe<T>& particle,
+            MeasureModeType measure_mode = MeasureModeType::All) const;
 };
 
 template <typename T>
@@ -53,7 +56,8 @@ struct ThermometerOperator final {
     ATLAS_HOST ATLAS_FORCE_INLINE void
     measure(const DomainDeviceProbe<T>& domain,
             const SpatialHashingProbe<T>& searcher,
-            const FluidDeviceProbe<T>& particle) const;
+            const FluidDeviceProbe<T>& particle,
+            MeasureModeType measure_mode = MeasureModeType::All) const;
 
 private:
     ATLAS_HOST ATLAS_FORCE_INLINE void

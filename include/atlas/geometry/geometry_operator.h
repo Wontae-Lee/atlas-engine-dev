@@ -1,5 +1,13 @@
 #pragma once
 
+/**
+ * @file geometry_operator.h
+ * @brief Declares the backend-portable tagged-union geometry operator.
+ *
+ * GeometryOperator erases concrete geometry type into a value object that can
+ * be copied into kernels and other device-friendly runtime structures.
+ */
+
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/circle.h>
 #include <atlas/geometry/cylinder.h>
@@ -11,18 +19,23 @@
 
 namespace atlas::geometry {
 
+/**
+ * @brief Tagged-union wrapper over all supported geometry operators.
+ *
+ * @tparam T Floating-point scalar used by the simulation.
+ */
 template <typename T>
 struct GeometryOperator {
-    GeometryType type = GeometryType::Sphere;
+    GeometryType type = GeometryType::Sphere; ///< Active geometry variant.
 
     union {
-        BoxGeometryOperator<T> box;
-        CircleGeometryOperator<T> circle;
-        CylinderGeometryOperator<T> cylinder;
-        PlaneGeometryOperator<T> plane;
-        SphereGeometryOperator<T> sphere;
-        TriangleGeometryOperator<T> triangle;
-        TriangleMeshGeometryOperator<T> triangle_mesh;
+        BoxGeometryOperator<T> box; ///< Box operator.
+        CircleGeometryOperator<T> circle; ///< Circle operator.
+        CylinderGeometryOperator<T> cylinder; ///< Cylinder operator.
+        PlaneGeometryOperator<T> plane; ///< Plane operator.
+        SphereGeometryOperator<T> sphere; ///< Sphere operator.
+        TriangleGeometryOperator<T> triangle; ///< Triangle operator.
+        TriangleMeshGeometryOperator<T> triangle_mesh; ///< Triangle-mesh operator.
     };
 
     ATLAS_ALL_DEVICE
@@ -41,6 +54,9 @@ struct GeometryOperator {
     ATLAS_ALL_DEVICE explicit GeometryOperator(const TriangleGeometryOperator<T>& op);
     ATLAS_ALL_DEVICE explicit GeometryOperator(const TriangleMeshGeometryOperator<T>& op);
 
+    /**
+     * @brief Dispatches the closest-point query to the active geometry variant.
+     */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
 

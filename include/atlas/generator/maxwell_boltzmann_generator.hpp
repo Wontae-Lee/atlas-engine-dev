@@ -26,6 +26,7 @@ MaxwellBoltzmannGenerator<T>::MaxwellBoltzmannGenerator(const T temperature,
 template <typename T>
 Vector3<T>
 MaxwellBoltzmannGenerator<T>::generate() const {
+    // Reuse the backend-portable operator so host and device semantics stay aligned.
     return _operator.generate(_temperature, _molecular_mass);
 }
 

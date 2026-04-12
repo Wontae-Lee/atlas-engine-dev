@@ -8,6 +8,12 @@
 
 namespace atlas::system {
 
+enum class MeasureModeType : int {
+    Field,
+    Fluid,
+    All
+};
+
 template <typename T>
 class Measure {
 public:
@@ -22,6 +28,8 @@ public:
 }
 
 namespace atlas {
+
+using MeasureModeType = atlas::system::MeasureModeType;
 
 template <typename T>
 using Measure = atlas::system::Measure<T>;

@@ -20,6 +20,10 @@ class Thermometer : public Measure<T> {
 public:
     Thermometer() = default;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit Thermometer(MeasureModeType measure_mode) noexcept
+        : _measure_mode(measure_mode) {
+    }
+
     ~Thermometer() override = default;
 
 
@@ -32,6 +36,19 @@ public:
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual ThermometerType
     type() const noexcept = 0;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_measure_mode(MeasureModeType measure_mode) noexcept {
+        _measure_mode = measure_mode;
+    }
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE MeasureModeType
+    measure_mode() const noexcept {
+        return _measure_mode;
+    }
+
+private:
+    MeasureModeType _measure_mode { MeasureModeType::All };
 };
 
 }

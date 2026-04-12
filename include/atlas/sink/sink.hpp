@@ -37,6 +37,7 @@ Sink<T>::update(const T dt) {
 
     auto* units = atlas::raw_pointer_cast(_units.data());
 
+    // Keep all sink units in sync before evaluating particle removal.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         static_cast<int>(_units.size()),
@@ -67,6 +68,7 @@ Sink<T>::sink(FluidDeviceProbe<T>& particle_probe) {
         atlas::make_tuple(pos, vel, temperature, species));
     auto zip_end = zip_begin + particle_probe.particle_count;
 
+    // Compact the active prefix in-place by removing particles that should despawn.
     auto new_end = atlas::remove_if(
         atlas::device,
         zip_begin,
@@ -81,6 +83,7 @@ Sink<T>::sink(FluidDeviceProbe<T>& particle_probe) {
                 const auto& geometry_op = unit.geometry_operator();
                 const int despawn_operator_index
                     = (despawn_operator_count == 1 || i >= despawn_operator_count) ? 0 : i;
+                // Evaluate despawn rules in unit-local space.
                 const Vector3<T> local_p = sync_op.sync_to_local(p);
 
                 if (despawn_operators[despawn_operator_index].despawn(geometry_op, local_p, tol)) {
@@ -231,6 +234,7 @@ Sink<T>::Builder::build() {
     auto despawn_types = _despawn_types;
     auto despawn_operators = _despawn_operators;
 
+    // Copy host-side builder state into backend-native buffers in one place.
     return Sink<T>(
         DeviceBuffer<Unit<T>>(_units.begin(), _units.end()),
         DeviceBuffer<DespawnType>(despawn_types.begin(), despawn_types.end()),

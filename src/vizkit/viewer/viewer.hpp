@@ -158,6 +158,10 @@ Viewer<T>::main_loop() {
 
         _cam.handle(_win);
 
+        if (_system) {
+            _system->update();
+        }
+
         int fbw = 1;
         int fbh = 1;
         glfwGetFramebufferSize(_win, &fbw, &fbh);

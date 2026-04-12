@@ -1,26 +1,33 @@
 #pragma once
+
+/**
+ * @file axis_aligned_bounding_box.h
+ * @brief Declares an axis-aligned bounding box and related intersection helpers.
+ */
 #include <atlas/math/math.h>
 #include <atlas/spatial/ray.h>
 #include <limits>
 
 namespace atlas::spatial {
 
+/**
+ * @brief Stores the result of tracing a ray against an AABB.
+ */
 template <typename T>
 struct AxisAlignedBoundingBoxRayIntersection {
-
-    bool is_intersecting = false;
-
-    T enter = T(0);
-
-    T exit = std::numeric_limits<T>::max();
+    bool is_intersecting = false; ///< Whether the ray overlaps the box interval.
+    T enter = T(0); ///< Parametric entry distance along the ray.
+    T exit = std::numeric_limits<T>::max(); ///< Parametric exit distance along the ray.
 };
 
+/**
+ * @brief Axis-aligned bounding box used for broad-phase spatial tests.
+ */
 template <typename T>
 class AxisAlignedBoundingBox final {
 public:
-    Vector3<T> lower_corner;
-
-    Vector3<T> upper_corner;
+    Vector3<T> lower_corner; ///< Minimum corner.
+    Vector3<T> upper_corner; ///< Maximum corner.
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     AxisAlignedBoundingBox() noexcept;
@@ -118,6 +125,9 @@ merge_aabb(const AxisAlignedBoundingBox<T>& a,
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::spatial::AxisAlignedBoundingBox.
+ */
 template <typename T>
 using AxisAlignedBoundingBox = atlas::spatial::AxisAlignedBoundingBox<T>;
 

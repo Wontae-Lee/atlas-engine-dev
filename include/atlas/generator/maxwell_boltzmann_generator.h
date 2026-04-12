@@ -1,11 +1,19 @@
 #pragma once
 
+/**
+ * @file maxwell_boltzmann_generator.h
+ * @brief Declares a host-side Maxwell-Boltzmann velocity generator.
+ */
+
 #include <atlas/generator/generator.h>
 
 #include <optional>
 
 namespace atlas::system {
 
+/**
+ * @brief Host-side generator for Maxwell-Boltzmann-distributed velocities.
+ */
 template <typename T>
 class MaxwellBoltzmannGenerator final : public Generator<T> {
 public:
@@ -40,11 +48,11 @@ public:
     type() const noexcept override;
 
 private:
-    T _temperature;
-    T _molecular_mass;
-    Vector3<T> _bulk_velocity;
-    unsigned int _seed;
-    GenerateOperator<T> _operator;
+    T _temperature; ///< Thermal temperature.
+    T _molecular_mass; ///< Molecular mass.
+    Vector3<T> _bulk_velocity; ///< Mean drift velocity.
+    unsigned int _seed; ///< Deterministic seed.
+    GenerateOperator<T> _operator; ///< Cached backend-portable operator.
 };
 
 template <typename T>
@@ -85,6 +93,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::MaxwellBoltzmannGenerator.
+ */
 template <typename T>
 using MaxwellBoltzmannGenerator = atlas::system::MaxwellBoltzmannGenerator<T>;
 

@@ -15,6 +15,7 @@ template <typename T>
 SingleCodec<T>::SingleCodec(const DomainHostPtr<T>& domain)
     : Codec<T>(domain) {
 
+    // Explicitly reset so the concrete codec starts from a clean state.
     this->reset();
 }
 
@@ -24,6 +25,7 @@ SingleCodec<T>::encode(const FluidDeviceProbe<T>&,
                        const DomainDeviceProbe<T>&,
                        const SpatialHashingProbe<T>&,
                        CodecDeviceProbe<T>&) {
+    // SingleCodec keeps the simulation in its direct representation.
 }
 
 template <typename T>
@@ -32,6 +34,7 @@ SingleCodec<T>::decode(const FluidDeviceProbe<T>&,
                        const DomainDeviceProbe<T>&,
                        const SpatialHashingProbe<T>&,
                        CodecDeviceProbe<T>&) {
+    // No reconstruction step is required for the single-state codec.
 }
 
 template <typename T>
@@ -45,6 +48,7 @@ template <typename T>
 typename SingleCodec<T>::Builder&
 SingleCodec<T>::Builder::with_domain(DomainHostPtr<T> domain) noexcept {
 
+    // Builders take ownership of dependencies until construction.
     _domain = std::move(domain);
     return *this;
 }

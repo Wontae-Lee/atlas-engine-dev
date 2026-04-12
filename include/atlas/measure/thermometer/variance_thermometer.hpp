@@ -12,14 +12,18 @@ VarianceThermometer<T>::builder() noexcept {
 
 template <typename T>
 VarianceThermometer<T>::VarianceThermometer(
-    const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept
-    : _thermometer_operator(thermometer_operator) {
+    const atlas::system::ThermometerOperator<T>& thermometer_operator,
+    const MeasureModeType measure_mode) noexcept
+    : Thermometer<T>(measure_mode)
+    , _thermometer_operator(thermometer_operator) {
 }
 
 template <typename T>
 VarianceThermometer<T>::VarianceThermometer(
-    const atlas::system::VarianceThermometerOperator<T>& thermometer_operator) noexcept
-    : _thermometer_operator(thermometer_operator) {
+    const atlas::system::VarianceThermometerOperator<T>& thermometer_operator,
+    const MeasureModeType measure_mode) noexcept
+    : Thermometer<T>(measure_mode)
+    , _thermometer_operator(thermometer_operator) {
 }
 
 template <typename T>
@@ -33,7 +37,7 @@ VarianceThermometer<T>::measure(DomainDeviceProbe<T> domain,
         throw std::runtime_error("VarianceThermometer: measure() is forbidden when the domain type is isothermal.");
     }
 
-    _thermometer_operator.measure(domain, searcher, particle);
+    _thermometer_operator.measure(domain, searcher, particle, this->measure_mode());
 }
 
 template <typename T>
@@ -63,6 +67,13 @@ VarianceThermometer<T>::thermometer_operator() const noexcept {
 
 template <typename T>
 typename VarianceThermometer<T>::Builder&
+VarianceThermometer<T>::Builder::with_measure_mode(const MeasureModeType measure_mode) noexcept {
+    _measure_mode = measure_mode;
+    return *this;
+}
+
+template <typename T>
+typename VarianceThermometer<T>::Builder&
 VarianceThermometer<T>::Builder::with_thermometer_operator(
     const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept {
     _thermometer_operator = thermometer_operator;
@@ -80,7 +91,7 @@ VarianceThermometer<T>::Builder::with_thermometer_operator(
 template <typename T>
 VarianceThermometer<T>
 VarianceThermometer<T>::Builder::build() const {
-    return VarianceThermometer<T>(_thermometer_operator);
+    return VarianceThermometer<T>(_thermometer_operator, _measure_mode);
 }
 
 template <typename T>

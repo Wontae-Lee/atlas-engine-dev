@@ -22,14 +22,17 @@ Domain<T>::Domain(const Vector3<T>& lower_corner,
         << "upper_corner=(" << _upper_corner.x << "," << _upper_corner.y << "," << _upper_corner.z << "), "
         << "cell_size=" << _cell_size;
 
+    // Cache geometric invariants once so runtime stages can reuse them cheaply.
     _cell_volume = _cell_size * _cell_size * _cell_size;
     _inv_h       = T(1) / _cell_size;
 
+    // The grid is inclusive of both bounds, so each axis gets a +1 cell offset.
     _grid_size = math::cast_to<int>(
         math::floor((_upper_corner - _lower_corner) * _inv_h) + Vector3<T> { T(1), T(1), T(1) });
 
     _num_of_cells = _grid_size.x * _grid_size.y * _grid_size.z;
 
+    // Isothermal domains start prefilled with their prescribed temperature.
     const T initial_temperature = (_type == DomainType::isothermal && _isothermal_field_temperature.has_value())
         ? *_isothermal_field_temperature
         : T(0);
@@ -50,6 +53,7 @@ Domain<T>::make_device_probe() noexcept {
 
     ++_probe_count;
 
+    // System owns the single authoritative domain probe for the runtime.
     ATLAS_ERROR_IF(_probe_count > 1)
         << "\n"
         << "The domain device probe must be generated only by the system, "
@@ -58,6 +62,7 @@ Domain<T>::make_device_probe() noexcept {
 
     DomainDeviceProbe<T> probe;
 
+    // Only raw device pointers and POD metadata are exported to backend code.
     probe.type              = _type;
     probe.field_temperature = atlas::raw_pointer_cast(d_field_temperature.data());
     probe.field_force       = d_field_force.empty() ? nullptr : atlas::raw_pointer_cast(d_field_force.data());
@@ -111,6 +116,7 @@ template <typename T>
 void
 Domain<T>::set_field_force(DeviceBuffer<Vector3<T>> field_force) noexcept {
 
+    // Replace the optional per-cell force field in one move.
     d_field_force = std::move(field_force);
 }
 
@@ -196,6 +202,7 @@ template <typename T>
 typename Domain<T>::Builder&
 Domain<T>::Builder::with_geometry(const GeometryHostPtr<T>& geometry) noexcept {
 
+    // Reuse the geometry operator's bounding box to seed domain bounds.
     auto op       = geometry->make_geometry_operator();
     auto bound    = op.bound();
     _lower_corner = bound.lower_corner;
@@ -264,6 +271,7 @@ Domain<T>::Builder::validate() const {
         << "upper=(" << _upper_corner.x << "," << _upper_corner.y << "," << _upper_corner.z << ")";
 
     const T inv_h         = T(1) / _cell_size;
+    // Mirror constructor grid sizing to catch invalid bounds before allocation.
     const Vector3<int> gs = math::cast_to<int>(
         math::floor((_upper_corner - _lower_corner) * inv_h) + Vector3<T> { T(1), T(1), T(1) });
 
@@ -281,6 +289,7 @@ Domain<T>::Builder::validate() const {
 
     const long long cells64 = nx * ny * nz;
 
+    // Keep total cell count representable by the int-based runtime probe.
     atlas::check<std::invalid_argument>(
         cells64 > 0 && cells64 <= static_cast<long long>(std::numeric_limits<int>::max()))
         << "Domain::Builder validation failed: number_of_cells overflow/invalid. "

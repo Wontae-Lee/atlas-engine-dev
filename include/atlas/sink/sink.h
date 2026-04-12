@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file sink.h
+ * @brief Declares particle removal logic and sink builder utilities.
+ *
+ * A Sink evaluates configured despawn rules against particle positions and
+ * compacts the active particle prefix by removing particles that satisfy the
+ * selected criteria.
+ */
+
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/fluid/fluid.h>
@@ -16,6 +25,15 @@
 
 namespace atlas::system {
 
+/**
+ * @brief Removes particles that satisfy configured despawn conditions.
+ *
+ * Sink holds one or more units together with despawn operators and types. It
+ * updates unit motion, evaluates particle positions in local space, and uses
+ * remove_if semantics to compact surviving particles in-place.
+ *
+ * @tparam T Floating-point scalar used by the simulation.
+ */
 template <typename T>
 class Sink final {
     static_assert(std::is_floating_point_v<T>, "Sink requires a floating-point T");
@@ -98,11 +116,11 @@ public:
     empty() const noexcept;
 
 private:
-    DeviceBuffer<Unit<T>> _units;
-    DeviceBuffer<DespawnType> _despawn_types;
-    DeviceBuffer<DespawnOperator<T>> _despawn_operators;
-    bool _flip   = false;
-    T _tolerance = T(0);
+    DeviceBuffer<Unit<T>> _units; ///< Despawn units.
+    DeviceBuffer<DespawnType> _despawn_types; ///< Despawn type configuration.
+    DeviceBuffer<DespawnOperator<T>> _despawn_operators; ///< Despawn rules.
+    bool _flip   = false; ///< Whether despawn decisions are inverted.
+    T _tolerance = T(0); ///< Geometric tolerance used during despawn tests.
 };
 
 template <typename T>
@@ -150,6 +168,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::Sink.
+ */
 template <typename T>
 using Sink = atlas::system::Sink<T>;
 

@@ -3,7 +3,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 #include <atlas/random/default_random_engine.h>
-#include <atlas/solve/solve.h>
+#include <atlas/solver/solver.h>
 
 #include <cstdint>
 #include <type_traits>
@@ -11,17 +11,17 @@
 namespace atlas::system {
 
 enum class DsmcModelType : int {
-    hard_sphere,
+    hs,
     vhs,
     vss
 };
 
 template <typename T>
-struct HardSphereDsmcOperator final {
+struct DsmcHsKernel final {
     T probability_scale { T(1) };
     unsigned int seed = 0u;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit HardSphereDsmcOperator(
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit DsmcHsKernel(
         T probability_scale = T(1),
         unsigned int seed   = 0u) noexcept;
 
@@ -31,12 +31,12 @@ struct HardSphereDsmcOperator final {
 };
 
 template <typename T>
-struct VhsDsmcOperator final {
+struct DsmcVhsKernel final {
     T reference_temperature { T(273.15) };
     T probability_scale { T(1) };
     unsigned int seed = 0u;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit VhsDsmcOperator(
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit DsmcVhsKernel(
         T reference_temperature = T(273.15),
         T probability_scale     = T(1),
         unsigned int seed       = 0u) noexcept;
@@ -50,12 +50,12 @@ struct VhsDsmcOperator final {
 };
 
 template <typename T>
-struct VssDsmcOperator final {
+struct DsmcVssKernel final {
     T reference_temperature { T(273.15) };
     T probability_scale { T(1) };
     unsigned int seed = 0u;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit VssDsmcOperator(
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit DsmcVssKernel(
         T reference_temperature = T(273.15),
         T probability_scale     = T(1),
         unsigned int seed       = 0u) noexcept;
@@ -70,41 +70,41 @@ struct VssDsmcOperator final {
 };
 
 template <typename T>
-struct DsmcOperator final {
-    static_assert(std::is_floating_point_v<T>, "DsmcOperator requires a floating-point T");
+struct DsmcKernel final {
+    static_assert(std::is_floating_point_v<T>, "DsmcKernel requires a floating-point T");
 
-    DsmcModelType type = DsmcModelType::hard_sphere;
+    DsmcModelType type = DsmcModelType::hs;
     union {
-        HardSphereDsmcOperator<T> hard_sphere;
-        VhsDsmcOperator<T> vhs;
-        VssDsmcOperator<T> vss;
+        DsmcHsKernel<T> hard_sphere;
+        DsmcVhsKernel<T> vhs;
+        DsmcVssKernel<T> vss;
     };
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    DsmcOperator() noexcept;
+    DsmcKernel() noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    DsmcOperator(DsmcModelType type,
-                 T param0          = T(273.15),
-                 T probability     = T(1),
-                 unsigned int seed = 0u) noexcept;
+    DsmcKernel(DsmcModelType type,
+                       T param0          = T(273.15),
+                       T probability     = T(1),
+                       unsigned int seed = 0u) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    DsmcOperator(const DsmcOperator& other) noexcept;
+    DsmcKernel(const DsmcKernel& other) noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE DsmcOperator&
-    operator=(const DsmcOperator& other) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE DsmcKernel&
+    operator=(const DsmcKernel& other) noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~DsmcOperator() noexcept;
-
-    ATLAS_HOST
-    DsmcOperator(const HardSphereDsmcOperator<T>& op);
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~DsmcKernel() noexcept;
 
     ATLAS_HOST
-    DsmcOperator(const VhsDsmcOperator<T>& op);
+    DsmcKernel(const DsmcHsKernel<T>& op);
 
     ATLAS_HOST
-    DsmcOperator(const VssDsmcOperator<T>& op);
+    DsmcKernel(const DsmcVhsKernel<T>& op);
+
+    ATLAS_HOST
+    DsmcKernel(const DsmcVssKernel<T>& op);
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     should_collide(T effective_collision_diameter,
@@ -119,7 +119,6 @@ struct DsmcOperator final {
     scatter_relative_velocity(T effective_scattering_parameter,
                               const Vector3<T>& relative_velocity,
                               std::uint64_t pair_id) const noexcept;
-
 
 private:
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE T
@@ -137,7 +136,7 @@ private:
     destroy_active() noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    copy_from(const DsmcOperator& other) noexcept;
+    copy_from(const DsmcKernel& other) noexcept;
 };
 
 }
@@ -145,19 +144,19 @@ private:
 namespace atlas {
 
 template <typename T>
-using DsmcOperator = atlas::system::DsmcOperator<T>;
+using DsmcOperator = atlas::system::DsmcKernel<T>;
 
 template <typename T>
-using HardSphereDsmcOperator = atlas::system::HardSphereDsmcOperator<T>;
+using HardSphereDsmcOperator = atlas::system::DsmcHsKernel<T>;
 
 template <typename T>
-using VhsDsmcOperator = atlas::system::VhsDsmcOperator<T>;
+using VhsDsmcOperator = atlas::system::DsmcVhsKernel<T>;
 
 template <typename T>
-using VssDsmcOperator = atlas::system::VssDsmcOperator<T>;
+using VssDsmcOperator = atlas::system::DsmcVssKernel<T>;
 
 using DsmcModelType = atlas::system::DsmcModelType;
 
 }
 
-#include <atlas/solve/dsmc/dsmc_operator.hpp>
+#include <atlas/solver/dsmc/dsmc_kernel.hpp>

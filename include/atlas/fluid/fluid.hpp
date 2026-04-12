@@ -17,6 +17,7 @@ Fluid<T>::builder() noexcept {
 template <typename T>
 Fluid<T>::Fluid(const size_t buffer_size)
     : _buffer_size(buffer_size) {
+    // Allocate all particle SoA buffers to the same capacity.
     d_pos.resize(buffer_size);
     d_vel.resize(buffer_size);
     d_temperature.resize(buffer_size);
@@ -77,6 +78,7 @@ FluidDeviceProbe<T>
 Fluid<T>::make_device_probe() noexcept {
     ++_probe_count;
 
+    // System owns the single authoritative fluid probe for the runtime.
     ATLAS_ERROR_IF(_probe_count > 1)
         << "\n"
         << "The fluid device probe must be generated only by the system, "
@@ -84,6 +86,7 @@ Fluid<T>::make_device_probe() noexcept {
         << "\n";
 
     FluidDeviceProbe<T> probe {};
+    // Export only raw device pointers and capacity metadata to backend code.
     probe.particle_property = atlas::raw_pointer_cast(_particle_properties.data());
     probe.pos            = atlas::raw_pointer_cast(d_pos.data());
     probe.vel            = atlas::raw_pointer_cast(d_vel.data());
@@ -137,10 +140,12 @@ Fluid<T>::Builder::build() const {
     validate();
 
     Fluid<T> f {};
+    // Copy builder-side species metadata into backend-native buffers.
     f._particle_properties      = DeviceBuffer<MatrialProperties<T>>(_particles.begin(), _particles.end());
     f._mole_fractions = DeviceBuffer<T>(_mole_fractions.begin(), _mole_fractions.end());
     f._generators     = DeviceBuffer<GenerateOperator<T>>(_generators.begin(), _generators.end());
     f._buffer_size    = _buffer_size;
+    // Allocate particle arrays for the configured active-capacity ceiling.
     f.d_pos.resize(_buffer_size);
     f.d_vel.resize(_buffer_size);
     f.d_temperature.resize(_buffer_size);
@@ -174,6 +179,7 @@ typename Fluid<T>::Builder&
 Fluid<T>::Builder::add_species(const MatrialProperties<T>& p,
                                T mole_fraction,
                                GeneratorHostPtr<T> generator) {
+    // Store species metadata in parallel arrays so indices stay aligned.
     _particles.push_back(p);
     _mole_fractions.push_back(mole_fraction);
     _generators.push_back(generator ? generator->make_generate_operator() : GenerateOperator<T> {});
@@ -201,6 +207,7 @@ Fluid<T>::Builder::add_species(MatrialPropertiesHostPtr<T> p,
         throw std::runtime_error(
             "Fluid::Builder: null particle pointer encountered.");
     }
+    // Null pointers are optionally mapped to a default-initialized material.
     _particles.push_back(p ? *p : MatrialProperties<T> {});
     _mole_fractions.push_back(mole_fraction);
     _generators.push_back(generator ? generator->make_generate_operator() : GenerateOperator<T> {});
@@ -238,6 +245,7 @@ Fluid<T>::Builder::add_species_bulk(
             "Fluid::Builder::add_species_bulk(values, mole_fractions, generators): size mismatch.");
     }
 
+    // Reuse the scalar add_species path so all validation stays centralized.
     for (int i = 0; i < n; ++i) {
         add_species(ps[i], mole_fractions[i], generators[i]);
     }
@@ -276,6 +284,7 @@ Fluid<T>::Builder::add_species_bulk(
             "Fluid::Builder::add_species_bulk(ptrs, mole_fractions, generators): size mismatch.");
     }
 
+    // Reuse the scalar add_species path so all validation stays centralized.
     for (int i = 0; i < n; ++i) {
         add_species(ps[i], mole_fractions[i], generators[i]);
     }
@@ -328,6 +337,7 @@ Fluid<T>::Builder::validate() const {
     }
 
     if (n > 0 && sum > T(0)) {
+        // Normalize once in the builder so runtime code sees a valid composition.
         HostBuffer<T> normalized = mole_fractions_host;
         for (int i = 0; i < n; ++i) {
             normalized[i] /= sum;

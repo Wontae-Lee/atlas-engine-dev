@@ -18,12 +18,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # =====================================================
 # User-configurable options
 # =====================================================
-option(ATLAS_USE_CUDA "Enable CUDA tasking backend" OFF)
-option(ATLAS_USE_TBB "Enable TBB tasking backend" ON)
+option(ATLAS_USE_CUDA "Enable CUDA tasking backend" ON)
+option(ATLAS_USE_TBB "Enable TBB tasking backend" OFF)
 option(ATLAS_USE_VIZKIT "Build vizkit-based visualization modules" ON)
 option(ATLAS_LOGGING "Enable logging functionality" ON)
-option(ATLAS_GOOGLE_TEST "Build GoogleTest-based C++ tests" ON)
-option(ATLAS_CUDA_TEST "Build CUDA-specific tests" OFF)
+option(ATLAS_GOOGLE_TEST "Build GoogleTest-based C++ tests" OFF)
+option(ATLAS_CUDA_TEST "Build CUDA-specific tests" ON)
 option(ATLAS_BENCHMARKS "Build and enable benchmarks" OFF)
 
 # =====================================================
@@ -73,7 +73,6 @@ add_library(atlas::core ALIAS atlas-core)
 target_compile_options(atlas-core INTERFACE
         "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CXX_COMPILER_ID:MSVC>>:/std:c++20>"
         "$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CXX_COMPILER_ID:MSVC>>>:-std=c++20>"
-        "$<$<COMPILE_LANGUAGE:CUDA>:--std=c++20>"
 )
 
 target_include_directories(atlas-core
@@ -96,9 +95,6 @@ if (ATLAS_USE_CUDA)
     enable_language(CUDA)
 
     # Use a shared CUDA language standard for all CUDA targets in this build.
-    set(CMAKE_CUDA_STANDARD 17)
-    set(CMAKE_CUDA_STANDARD_REQUIRED OFF)
-
     # Choose your default arch
     set(CMAKE_CUDA_ARCHITECTURES 86)
 
@@ -214,6 +210,7 @@ endif ()
 # =====================================================
 add_subdirectory(examples/solver)
 add_subdirectory(examples/dynamic)
+add_subdirectory(examples/overview)
 
 # =====================================================
 # Summary

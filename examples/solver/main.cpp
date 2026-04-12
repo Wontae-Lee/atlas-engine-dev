@@ -80,7 +80,13 @@ main() {
                                   HostBuffer<system::ColliderSurfaceInteraction<sim_t>> { *interaction })
                               .make_host_shared();
 
-    const auto solver = atlas::make_host_shared<Orchestrator<sim_t>>();
+    const auto dsmc_ntc_solver = system::DsmcNtcSolver<sim_t>::builder()
+                                     .with_fluid(fluid)
+                                     .make_host_shared();
+
+    const auto solver = system::Orchestrator<sim_t>::builder()
+                            .with_solver(dsmc_ntc_solver)
+                            .make_host_shared();
 
     const auto sim_system = system::System<sim_t>::builder()
                                 .with_fluid(fluid)

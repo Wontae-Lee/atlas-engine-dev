@@ -1,11 +1,19 @@
 #pragma once
 
+/**
+ * @file maxwell_sigma_generator.h
+ * @brief Declares a host-side Gaussian velocity generator parameterized by sigma.
+ */
+
 #include <atlas/generator/generator.h>
 
 #include <optional>
 
 namespace atlas::system {
 
+/**
+ * @brief Host-side generator for a Gaussian velocity distribution with shared sigma.
+ */
 template <typename T>
 class MaxwellSigmaGenerator final : public Generator<T> {
 public:
@@ -37,9 +45,9 @@ public:
     type() const noexcept override;
 
 private:
-    T _sigma;
-    unsigned int _seed;
-    GenerateOperator<T> _operator;
+    T _sigma; ///< Shared standard deviation.
+    unsigned int _seed; ///< Deterministic seed.
+    GenerateOperator<T> _operator; ///< Cached backend-portable operator.
 };
 
 template <typename T>
@@ -72,6 +80,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::system::MaxwellSigmaGenerator.
+ */
 template <typename T>
 using MaxwellSigmaGenerator = atlas::system::MaxwellSigmaGenerator<T>;
 

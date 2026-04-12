@@ -20,6 +20,7 @@ UniformGenerateOperator<T>::generate(const T min_value,
 
     atlas::uniform_real_distribution<T> dist(min_value, max_value);
 
+    // Sample each component independently from the same interval.
     return Vector3<T>(
         dist(engine),
         dist(engine),
@@ -39,6 +40,7 @@ MaxwellSigmaGenerateOperator<T>::generate(const T sigma) const {
         return Vector3<T>(T(0), T(0), T(0));
     }
 
+    // Draw three independent standard-normal components and scale them by sigma.
     return Vector3<T>(
         sigma * atlas::sampling::generate_standard_normal<T>(engine),
         sigma * atlas::sampling::generate_standard_normal<T>(engine),
@@ -62,6 +64,7 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
         return Vector3<T>(T(0), T(0), T(0));
     }
 
+    // Thermal speed variance follows sigma^2 = k_B T / m.
     const T sigma = std::sqrt(static_cast<T>(atlas::boltzmann_constant) * temperature / molecular_mass);
     return Vector3<T>(
                sigma * atlas::sampling::generate_standard_normal<T>(engine),
@@ -74,6 +77,7 @@ template <typename T>
 GenerateOperator<T>::GenerateOperator() noexcept
     : type(GenerateType::uniform) {
 
+    // Default to a simple uniform generator so the union is always initialized.
     new (&uniform) UniformGenerateOperator<T> {};
 }
 
@@ -110,6 +114,7 @@ GenerateOperator<T>&
 GenerateOperator<T>::operator=(const GenerateOperator& other) noexcept {
     if (this == &other) return *this;
 
+    // Rebuild the active union member when the type changes.
     destroy_active();
     type = other.type;
     copy_from(other);
@@ -125,6 +130,7 @@ template <typename T>
 void
 GenerateOperator<T>::destroy_active() noexcept {
 
+    // Destroy only the currently active union member.
     switch (type) {
     case GenerateType::uniform:
         uniform.~UniformGenerateOperator<T>();
@@ -145,6 +151,7 @@ template <typename T>
 void
 GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
 
+    // Copy-construct the currently active union member.
     switch (type) {
     case GenerateType::uniform:
         new (&uniform) UniformGenerateOperator<T>(other.uniform);
@@ -185,6 +192,7 @@ Vector3<T>
 GenerateOperator<T>::generate(const T param0,
                               const T param1) const {
 
+    // Interpret param0/param1 according to the active generation law.
     switch (type) {
     case GenerateType::uniform:
         return uniform.generate(param0, param1);

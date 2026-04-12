@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @file sphere.h
+ * @brief Declares sphere geometry and its runtime operator.
+ */
+
 #include <atlas/geometry/geometry.h>
 #include <atlas/spatial/ray.h>
 
@@ -7,10 +12,13 @@
 
 namespace atlas::geometry {
 
+/**
+ * @brief Runtime query operator for a sphere.
+ */
 template <typename T>
 struct SphereGeometryOperator {
-    const atlas::math::Vector<T, 3>* center = nullptr;
-    const T* radius                         = nullptr;
+    const atlas::math::Vector<T, 3>* center = nullptr; ///< Sphere center.
+    const T* radius                         = nullptr; ///< Sphere radius.
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
@@ -43,6 +51,9 @@ struct SphereGeometryOperator {
     operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
 };
 
+/**
+ * @brief Sphere geometry.
+ */
 template <typename T>
 class Sphere final : public Geometry<T> {
     static_assert(std::is_floating_point_v<T>, "Sphere requires a floating-point T");
@@ -51,9 +62,8 @@ public:
     class Builder;
 
 public:
-    Vector3<T> center { T(0), T(0), T(0) };
-
-    T radius { T(1) };
+    Vector3<T> center { T(0), T(0), T(0) }; ///< Sphere center.
+    T radius { T(1) }; ///< Sphere radius.
 
     ATLAS_HOST ATLAS_FORCE_INLINE
     Sphere() noexcept;
@@ -114,7 +124,7 @@ private:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     bind_operator() noexcept;
 
-    mutable SphereGeometryOperator<T> _operator {};
+    mutable SphereGeometryOperator<T> _operator {}; ///< Cached runtime operator.
 };
 
 template <typename T>
@@ -148,6 +158,9 @@ private:
 
 namespace atlas {
 
+/**
+ * @brief Convenience alias for atlas::geometry::Sphere.
+ */
 template <typename T>
 using Sphere = geometry::Sphere<T>;
 

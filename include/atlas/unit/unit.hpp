@@ -34,6 +34,7 @@ Unit<T>::Unit(
         angular_velocity,
         angular_acceleration);
 
+    // Store a normalized kinematic state so update() can assume paired terms exist.
     _velocity             = std::move(velocity);
     _acceleration         = std::move(acceleration);
     _angular_velocity     = std::move(angular_velocity);
@@ -118,7 +119,7 @@ Unit<T>::update(T dt) noexcept {
     if (!dynamic()) return;
 
     if (_velocity.has_value()) {
-
+        // Integrate linear motion with optional constant acceleration.
         if (_acceleration.has_value()) {
             *_velocity += (*_acceleration) * dt;
         }
@@ -126,7 +127,7 @@ Unit<T>::update(T dt) noexcept {
     }
 
     if (_angular_velocity.has_value()) {
-
+        // Integrate angular motion with optional constant angular acceleration.
         if (_angular_acceleration.has_value()) {
             *_angular_velocity += (*_angular_acceleration) * dt;
         }
@@ -155,6 +156,7 @@ Unit<T>::rotate(const atlas::math::Vector<T, 3>& axis_world, T angle_rad) noexce
 
     if (axis_len2 <= T(0)) return;
 
+    // Normalize the axis before constructing the incremental rotation quaternion.
     axis *= (T(1) / static_cast<T>(std::sqrt(axis_len2)));
 
     const T half = angle_rad * T(0.5);
@@ -178,7 +180,7 @@ Unit<T>::canonicalize_kinematics(std::optional<Vector<T, 3>>& velocity,
                                  std::optional<Vector<T, 3>>& acceleration,
                                  std::optional<Vector<T, 3>>& angular_velocity,
                                  std::optional<Vector<T, 3>>& angular_acceleration) noexcept {
-
+    // Promote missing paired terms to zero so runtime integration stays branch-light.
     if (acceleration.has_value() && !velocity.has_value()) {
         velocity = Vector<T, 3>(T(0), T(0), T(0));
     }
@@ -208,6 +210,7 @@ Unit<T>::Builder::with_geometry(const atlas::GeometryHostPtr<T>& geometry) {
 
     _geometry = geometry;
 
+    // Cache the geometry operator so runtime queries do not dereference host pointers.
     _geometry_operator = geometry->make_geometry_operator();
     return *this;
 }
@@ -222,6 +225,7 @@ Unit<T>::Builder::with_sync(const SyncHostPtr<T>& sync) {
         throw std::runtime_error("Unit::Builder: sync must not be null.");
     }
 
+    // Snapshot the current transform into a value-type operator.
     _sync_operator = sync->make_sync_operator();
     return *this;
 }
@@ -276,6 +280,7 @@ Unit<T>::Builder::build() {
         angular_velocity,
         angular_acceleration);
 
+    // Materialize a value-type unit so the builder can release its temporary state.
     Unit<T> u {};
 
     u._geometry_operator = std::move(*_geometry_operator);
