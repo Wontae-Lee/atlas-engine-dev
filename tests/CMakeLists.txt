@@ -57,31 +57,25 @@ if (ATLAS_GOOGLE_TEST)
 endif ()
 
 if (ATLAS_CUDA_TEST)
-    file(GLOB_RECURSE ATLAS_CUDA_TEST_HEADERS
-            CONFIGURE_DEPENDS
-            "*.cuh"
+    set(ATLAS_CUDA_TEST_SOURCES
+            cuda/cuda_tests.cu
+            buffer/device_buffer_tests.cu
+            buffer/host_buffer_tests.cu
+            unit/unit_tests.cu
+            collider/collider_surface_interaction_tests.cu
+            collider/collider_tests.cu
+            measure/measure_tests.cu
+            sampling/sampling_tests.cu
+            source/source_tests.cu
+            source/spawn_operator_tests/surface_spawn_operator_tests.cu
+            source/spawn_operator_tests/volume_spawn_operator_tests.cu
+            system/system_tests.cu
+            transform/transform_reduce_tests.cu
     )
 
     if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cuda/cuda_tests.cu")
-        add_library(atlas_cuda_test_lib INTERFACE)
-
-        target_sources(atlas_cuda_test_lib
-                INTERFACE
-                ${ATLAS_CUDA_TEST_HEADERS}
-        )
-
-        target_include_directories(atlas_cuda_test_lib
-                INTERFACE
-                "${CMAKE_CURRENT_SOURCE_DIR}"
-        )
-
-        target_link_libraries(atlas_cuda_test_lib
-                INTERFACE
-                atlas::core
-        )
-
         add_executable(atlas_cuda_tests
-                cuda/cuda_tests.cu
+                ${ATLAS_CUDA_TEST_SOURCES}
         )
 
         set_target_properties(atlas_cuda_tests PROPERTIES
@@ -89,9 +83,14 @@ if (ATLAS_CUDA_TEST)
                 CUDA_STANDARD_REQUIRED OFF
         )
 
+        target_include_directories(atlas_cuda_tests
+                PRIVATE
+                "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+
         target_link_libraries(atlas_cuda_tests
                 PRIVATE
-                atlas_cuda_test_lib
+                atlas::core
         )
 
         add_test(NAME atlas_cuda_tests COMMAND atlas_cuda_tests)

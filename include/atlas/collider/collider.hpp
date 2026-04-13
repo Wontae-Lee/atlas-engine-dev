@@ -176,9 +176,6 @@ Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
     // lambda capture remains compact and device-friendly.
     const int unit_count        = static_cast<int>(_units.size());
     const int interaction_count = static_cast<int>(_surface_interactions.size());
-    const T far                 = static_cast<T>(atlas::far);
-    const T epsilon             = static_cast<T>(atlas::eps);
-    const T tolerance           = epsilon;
 
     // Process particle sweeps independently in parallel.
     //
@@ -191,7 +188,7 @@ Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         particle_probe.particle_count,
-        [particle_probe, dt, units, surface_interactions, unit_count, interaction_count, far, epsilon, tolerance] ATLAS_DEVICE(const int i) {
+        [particle_probe, dt, units, surface_interactions, unit_count, interaction_count] ATLAS_DEVICE(const int i) {
             // Read the particle's current world-space position.
             const Vector3<T> p0 = particle_probe.pos[i];
 
@@ -209,7 +206,7 @@ Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
             //
             // Such particles do not define a meaningful sweep segment and
             // therefore cannot contribute to this segment-based trace.
-            if (segment_length <= tolerance) {
+            if (segment_length <= atlas::tol) {
                 return;
             }
 
@@ -217,7 +214,7 @@ Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
             bool any_hit = false;
 
             // Track the closest valid hit distance found so far along the sweep.
-            T best_t = far;
+            T best_t = atlas::far;
 
             // Store the best hit position in world space.
             Vector3<T> best_pos {};
@@ -301,7 +298,7 @@ Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
             //
             // This small offset helps avoid immediate re-collision caused by
             // numerical precision issues or exact surface re-entry on the next step.
-            particle_probe.pos[i] = best_pos + best_norm * epsilon;
+            particle_probe.pos[i] = best_pos + best_norm * static_cast<T>(atlas::eps);
 
             // Apply the configured surface-interaction model to compute the
             // post-collision velocity from the incoming velocity and surface normal.

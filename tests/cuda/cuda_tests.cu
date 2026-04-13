@@ -1,6 +1,6 @@
-#include <unit/unit_tests.cuh>
+#include <cuda/cuda_macros.cuh>
 
 int
 main() {
-    return run_unit_cuda_tests();
+    return CUDA_RUN_ALL_TESTS();
 }
