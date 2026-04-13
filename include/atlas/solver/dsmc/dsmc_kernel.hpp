@@ -8,14 +8,14 @@ namespace atlas::system {
 
 template <typename T>
 DsmcHsKernel<T>::DsmcHsKernel(const T probability_scale,
-                                                  const unsigned int seed) noexcept
+                              const unsigned int seed) noexcept
     : probability_scale(probability_scale)
     , seed(seed) { }
 
 template <typename T>
 T
 DsmcHsKernel<T>::collision_kernel(const T effective_collision_diameter,
-                                            const T relative_speed) const noexcept {
+                                  const T relative_speed) const noexcept {
     if (!(effective_collision_diameter > T(0)) || !(relative_speed > T(0))) {
         return T(0);
     }
@@ -24,8 +24,8 @@ DsmcHsKernel<T>::collision_kernel(const T effective_collision_diameter,
 
 template <typename T>
 DsmcVhsKernel<T>::DsmcVhsKernel(const T reference_temperature,
-                                    const T probability_scale,
-                                    const unsigned int seed) noexcept
+                                const T probability_scale,
+                                const unsigned int seed) noexcept
     : reference_temperature(reference_temperature)
     , probability_scale(probability_scale)
     , seed(seed) { }
@@ -33,10 +33,10 @@ DsmcVhsKernel<T>::DsmcVhsKernel(const T reference_temperature,
 template <typename T>
 T
 DsmcVhsKernel<T>::collision_kernel(const T effective_collision_diameter,
-                                     const T reduced_mass,
-                                     const T effective_viscosity_index,
-                                     const T local_temperature,
-                                     const T relative_speed) const noexcept {
+                                   const T reduced_mass,
+                                   const T effective_viscosity_index,
+                                   const T local_temperature,
+                                   const T relative_speed) const noexcept {
     const T temperature = (local_temperature > T(0)) ? local_temperature : reference_temperature;
     if (!(effective_collision_diameter > T(0)) || !(relative_speed > T(0)) || !(reduced_mass > T(0)) || !(temperature > T(0))) {
         return T(0);
@@ -51,8 +51,8 @@ DsmcVhsKernel<T>::collision_kernel(const T effective_collision_diameter,
 
 template <typename T>
 DsmcVssKernel<T>::DsmcVssKernel(const T reference_temperature,
-                                    const T probability_scale,
-                                    const unsigned int seed) noexcept
+                                const T probability_scale,
+                                const unsigned int seed) noexcept
     : reference_temperature(reference_temperature)
     , probability_scale(probability_scale)
     , seed(seed) { }
@@ -60,11 +60,11 @@ DsmcVssKernel<T>::DsmcVssKernel(const T reference_temperature,
 template <typename T>
 T
 DsmcVssKernel<T>::collision_kernel(const T effective_collision_diameter,
-                                     const T reduced_mass,
-                                     const T effective_viscosity_index,
-                                     const T effective_scattering_parameter,
-                                     const T local_temperature,
-                                     const T relative_speed) const noexcept {
+                                   const T reduced_mass,
+                                   const T effective_viscosity_index,
+                                   const T effective_scattering_parameter,
+                                   const T local_temperature,
+                                   const T relative_speed) const noexcept {
     if (!(effective_scattering_parameter > T(0))) {
         return T(0);
     }
@@ -89,9 +89,9 @@ DsmcKernel<T>::DsmcKernel() noexcept
 
 template <typename T>
 DsmcKernel<T>::DsmcKernel(const DsmcModelType type,
-                                          const T param0,
-                                          const T probability,
-                                          const unsigned int seed) noexcept
+                          const T param0,
+                          const T probability,
+                          const unsigned int seed) noexcept
     : type(type) {
     switch (type) {
     case DsmcModelType::hs:
@@ -152,11 +152,11 @@ DsmcKernel<T>::DsmcKernel(const DsmcVssKernel<T>& op)
 template <typename T>
 T
 DsmcKernel<T>::collision_kernel(const T effective_collision_diameter,
-                                        const T reduced_mass,
-                                        const T effective_viscosity_index,
-                                        const T effective_scattering_parameter,
-                                        const T local_temperature,
-                                        const T relative_speed) const noexcept {
+                                const T reduced_mass,
+                                const T effective_viscosity_index,
+                                const T effective_scattering_parameter,
+                                const T local_temperature,
+                                const T relative_speed) const noexcept {
     switch (type) {
     case DsmcModelType::hs:
         return hard_sphere.collision_kernel(effective_collision_diameter, relative_speed);
@@ -198,12 +198,12 @@ DsmcKernel<T>::base_seed() const noexcept {
 template <typename T>
 bool
 DsmcKernel<T>::should_collide(const T effective_collision_diameter,
-                                      const T reduced_mass,
-                                      const T effective_viscosity_index,
-                                      const T effective_scattering_parameter,
-                                      const T local_temperature,
-                                      const Vector3<T>& relative_velocity,
-                                      const std::uint64_t pair_id) const noexcept {
+                              const T reduced_mass,
+                              const T effective_viscosity_index,
+                              const T effective_scattering_parameter,
+                              const T local_temperature,
+                              const Vector3<T>& relative_velocity,
+                              const std::uint64_t pair_id) const noexcept {
     const T relative_speed = relative_velocity.length();
     const T kernel         = collision_kernel(
         effective_collision_diameter,
@@ -225,8 +225,8 @@ DsmcKernel<T>::should_collide(const T effective_collision_diameter,
 template <typename T>
 Vector3<T>
 DsmcKernel<T>::scatter_relative_velocity(const T effective_scattering_parameter,
-                                                 const Vector3<T>& relative_velocity,
-                                                 const std::uint64_t pair_id) const noexcept {
+                                         const Vector3<T>& relative_velocity,
+                                         const std::uint64_t pair_id) const noexcept {
     const T relative_speed = relative_velocity.length();
     if (!(relative_speed > T(0))) {
         return Vector3<T>(T(0), T(0), T(0));

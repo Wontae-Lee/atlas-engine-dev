@@ -25,10 +25,10 @@ SphSolver<T>::builder() noexcept {
 
 template <typename T>
 void
-SphSolver<T>::solve(DomainDeviceProbe<T> domain,
-              SpatialHashingProbe<T> searcher,
-              FluidDeviceProbe<T> particle,
-              CodecDeviceProbe<T>) {
+SphSolver<T>::solve(DomainDeviceProbe<T>& domain,
+              SpatialHashingProbe<T>& searcher,
+              FluidDeviceProbe<T>& particle,
+              CodecDeviceProbe<T>&) {
     if (particle.particle_count <= 0 || particle.pos == nullptr || particle.vel == nullptr || particle.species == nullptr) {
         return;
     }

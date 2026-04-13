@@ -24,10 +24,10 @@ DsmcNtcSolver<T>::builder() noexcept {
 
 template <typename T>
 void
-DsmcNtcSolver<T>::solve(DomainDeviceProbe<T> domain,
-                        SpatialHashingProbe<T> searcher,
-                        FluidDeviceProbe<T> particle,
-                        CodecDeviceProbe<T>) {
+DsmcNtcSolver<T>::solve(DomainDeviceProbe<T>& domain,
+                        SpatialHashingProbe<T>& searcher,
+                        FluidDeviceProbe<T>& particle,
+                        CodecDeviceProbe<T>&) {
     if (particle.particle_count <= 0 || particle.particle_property == nullptr || particle.vel == nullptr || particle.species == nullptr) {
         return;
     }

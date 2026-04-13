@@ -24,10 +24,10 @@ public:
     ~DsmcSolver() override = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    solve(DomainDeviceProbe<T> domain,
-          SpatialHashingProbe<T> searcher,
-          FluidDeviceProbe<T> particle,
-          CodecDeviceProbe<T> codec) override = 0;
+    solve(DomainDeviceProbe<T>& domain,
+          SpatialHashingProbe<T>& searcher,
+          FluidDeviceProbe<T>& particle,
+          CodecDeviceProbe<T>& codec) override = 0;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_operator(DsmcKernel<T> op) noexcept;

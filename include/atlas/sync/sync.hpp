@@ -164,7 +164,7 @@ template <typename T>
 typename Sync<T>::Builder&
 Sync<T>::Builder::with_sync_operator(const atlas::system::SyncOperator<T>& op) noexcept {
 
-    _op_storage        = op;
+    _operator        = op;
     _has_sync_operator = true;
     return *this;
 }
@@ -173,9 +173,9 @@ template <typename T>
 void
 Sync<T>::Builder::validate() const {
 
-    const Vector3<T>& translation = _has_sync_operator ? _op_storage.translation : _translation;
+    const Vector3<T>& translation = _has_sync_operator ? _operator.translation : _translation;
 
-    const Quaternion<T>& orientation = _has_sync_operator ? _op_storage.orientation : _orientation;
+    const Quaternion<T>& orientation = _has_sync_operator ? _operator.orientation : _orientation;
 
     if (!std::isfinite(translation.x)
         || !std::isfinite(translation.y)
@@ -232,7 +232,7 @@ Sync<T>::Builder::build() const {
 
     if (_has_sync_operator) {
         // Reuse the caller-provided operator verbatim when one is supplied.
-        s.sync_operator = _op_storage;
+        s.sync_operator = _operator;
     } else {
         // Otherwise build the operator from the stored rigid pose.
         s.sync_operator = atlas::system::SyncOperator<T>(_translation, _orientation);

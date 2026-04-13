@@ -30,10 +30,10 @@ public:
     builder() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    solve(DomainDeviceProbe<T> domain,
-          SpatialHashingProbe<T> searcher,
-          FluidDeviceProbe<T> particle,
-          CodecDeviceProbe<T> codec) override;
+    solve(DomainDeviceProbe<T>& domain,
+          SpatialHashingProbe<T>& searcher,
+          FluidDeviceProbe<T>& particle,
+          CodecDeviceProbe<T>& codec) override;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_operator(SphKernel<T> op) noexcept;
