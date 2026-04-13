@@ -5,6 +5,16 @@
 namespace atlas::system {
 
 template <typename T>
+struct VarianceThermometerOperator final {
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    measure(const DomainDeviceProbe<T>& domain,
+            const SpatialHashingProbe<T>& searcher,
+            const FluidDeviceProbe<T>& particle,
+            MeasureModeType measure_mode = MeasureModeType::All) const;
+};
+
+
+template <typename T>
 class VarianceThermometer final : public Thermometer<T> {
 public:
     class Builder;
@@ -70,7 +80,6 @@ private:
 
     atlas::system::ThermometerOperator<T> _thermometer_operator { ThermometerType::Variance };
 };
-
 }
 
 namespace atlas {

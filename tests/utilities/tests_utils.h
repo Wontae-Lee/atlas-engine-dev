@@ -172,6 +172,11 @@ public:
         ++call_count;
     }
 
+    ATLAS_NODISCARD system::MeasureModeType
+    measure_mode() const noexcept override {
+        return system::MeasureModeType::All;
+    }
+
     int call_count = 0;
 };
 

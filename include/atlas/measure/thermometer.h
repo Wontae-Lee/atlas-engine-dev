@@ -4,7 +4,6 @@
 #include <atlas/domain/domain.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/measure/measure.h>
-#include <atlas/measure/thermometer/thermometer_operator.h>
 #include <atlas/measure/thermometer/thermometer_type.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
@@ -12,6 +11,9 @@
 #include <type_traits>
 
 namespace atlas::system {
+
+template <typename T>
+struct ThermometerOperator;
 
 template <typename T>
 class Thermometer : public Measure<T> {
@@ -43,7 +45,7 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE MeasureModeType
-    measure_mode() const noexcept {
+    measure_mode() const noexcept override {
         return _measure_mode;
     }
 

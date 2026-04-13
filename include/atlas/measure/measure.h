@@ -23,6 +23,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     measure(DomainDeviceProbe<T> domain, SpatialHashingProbe<T> searcher, FluidDeviceProbe<T> particle)
         = 0;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual MeasureModeType
+    measure_mode() const noexcept = 0;
 };
 
 }

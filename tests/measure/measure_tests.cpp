@@ -12,6 +12,7 @@ TEST(Measure, AliasHostPointerCanStoreDerivedMeasure) {
     atlas::MeasureHostPtr<double> base = measure;
 
     ASSERT_NE(base, nullptr);
+    EXPECT_EQ(base->measure_mode(), atlas::system::MeasureModeType::All);
     base->measure({}, {}, {});
     EXPECT_EQ(measure->call_count, 1);
 }
@@ -28,4 +29,5 @@ TEST(Measure, SystemBuilderAllowsMeasuresForIsothermalDomain) {
 
     EXPECT_EQ(sim_system.domain(), domain);
     EXPECT_EQ(sim_system.measure(), measure);
+    EXPECT_EQ(sim_system.measure()->measure_mode(), atlas::system::MeasureModeType::All);
 }

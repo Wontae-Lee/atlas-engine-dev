@@ -3,6 +3,14 @@
 #include <atlas/measure/thermometer.h>
 
 namespace atlas::system {
+template <typename T>
+struct AverageThermometerOperator final {
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    measure(const DomainDeviceProbe<T>& domain,
+            const SpatialHashingProbe<T>& searcher,
+            const FluidDeviceProbe<T>& particle,
+            MeasureModeType measure_mode = MeasureModeType::All) const;
+};
 
 template <typename T>
 class AverageThermometer final : public Thermometer<T> {
@@ -74,6 +82,9 @@ private:
 }
 
 namespace atlas {
+
+template <typename T>
+using AverageThermometerOperator = atlas::system::AverageThermometerOperator<T>;
 
 template <typename T>
 using AverageThermometer = atlas::system::AverageThermometer<T>;
