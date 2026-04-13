@@ -37,7 +37,6 @@ SphereLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
     T r          = *s.radius;
     if (r <= T(0)) return;
 
-    const T pi     = static_cast<T>(3.14159265358979323846);
     const T two_pi = static_cast<T>(2) * pi;
 
     auto sphere_point = [&](int stack, int slice) -> Vector3<T> {
