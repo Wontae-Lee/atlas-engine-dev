@@ -1,7 +1,6 @@
 #pragma once
 
 #ifdef ATLAS_ENABLE_VIZKIT
-#include <atlas/math/math.h>
 
 #include <vizkit/macros/macros.h>
 

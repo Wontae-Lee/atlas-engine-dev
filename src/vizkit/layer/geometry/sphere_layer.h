@@ -2,7 +2,6 @@
 
 #ifdef ATLAS_ENABLE_VIZKIT
 
-#include <atlas/core/macros.h>
 #include <atlas/unit/unit.h>
 #include <vizkit/layer/geometry/geometry_layer.h>
 

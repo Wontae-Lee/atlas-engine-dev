@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cmath>
-
 namespace atlas::system {
 
 template <typename T>

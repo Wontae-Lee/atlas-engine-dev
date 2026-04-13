@@ -1,8 +1,6 @@
 #pragma once
 
 #include <atlas/core/macros.h>
-#include <atlas/math/math.h>
-#include <atlas/solver/solver.h>
 
 #include <type_traits>
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/geometry/geometry_operator.h>
 #include <atlas/math/math.h>
 
 namespace atlas::system {

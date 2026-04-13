@@ -66,7 +66,6 @@
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/core/macros.h>
 #include <atlas/generator/generator.h>
-#include <atlas/logging/logging.h>
 #include <atlas/material/matrial_properties.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>

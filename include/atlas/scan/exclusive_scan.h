@@ -60,8 +60,6 @@
  */
 
 #include <atlas/parallel/parallel_for.h>
-#include <functional>
-#include <iterator>
 
 namespace atlas {
 

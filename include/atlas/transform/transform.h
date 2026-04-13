@@ -306,7 +306,6 @@ transform(InputIt1 first1, InputIt1 last1,
 #else
 
 #include <iterator>
-#include <tbb/tbb.h>
 #include <type_traits>
 
 namespace detail {

@@ -1,6 +1,7 @@
 #pragma once
 #include <atlas/logging/logging.h>
-
+#include <atlas/memory/memory.h>
+#include <atlas/memory/raw_pointer_cast.h>
 namespace atlas::system {
 
 template <typename T>

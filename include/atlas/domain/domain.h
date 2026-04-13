@@ -65,11 +65,9 @@
  */
 
 #include <atlas/buffer/device_buffer.h>
-#include <atlas/buffer/host_buffer.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
-#include <atlas/memory/raw_pointer_cast.h>
 
 #include <optional>
 

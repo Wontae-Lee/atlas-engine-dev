@@ -44,7 +44,6 @@
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/container/container.h>
 #include <atlas/memory/memory.h>
-#include <atlas/spatial/bounding_volume_hierarchy/node.h>
 
 namespace atlas::geometry {
 

@@ -1,5 +1,4 @@
 #include "../../utilities/tests_utils.h"
-#include <atlas/math/math.h>
 #include <cmath>
 #include <cstddef>
 #include <gtest/gtest.h>

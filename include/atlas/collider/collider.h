@@ -58,7 +58,6 @@
 #include <atlas/collider/collider_surface_interaction.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
-#include <atlas/sync/sync.h>
 #include <atlas/unit/unit.h>
 
 #include <type_traits>

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/generator/generate_operator.h>
 #include <atlas/logging/logging.h>
 #include <atlas/sampling/sampling.h>
 

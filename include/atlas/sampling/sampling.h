@@ -1,14 +1,9 @@
 #pragma once
 #include <atlas/buffer/device_buffer.h>
-#include <atlas/buffer/host_buffer.h>
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
-#include <atlas/memory/copy.h>
-#include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/parallel/parallel_for.h>
 #include <atlas/random/default_random_engine.h>
 #include <atlas/random/uniform_real_distribution.h>
-#include <atlas/scan/exclusive_scan.h>
 #include <cmath>
 
 namespace atlas::sampling {

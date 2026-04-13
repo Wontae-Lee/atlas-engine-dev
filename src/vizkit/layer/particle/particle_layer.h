@@ -4,7 +4,6 @@
 
 #include <atlas/core/macros.h>
 #include <atlas/math/vector/vector4.h>
-#include <atlas/memory/copy.h>
 #include <atlas/system/system.h>
 
 #include <vizkit/layer/layer.h>

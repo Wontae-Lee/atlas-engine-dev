@@ -483,7 +483,7 @@ SpatialHashingSearcher<T>::build_cell_ranges(int alive) {
         -1);
     ///< Initialize every cell end entry to "empty".
 
-    const std::uint32_t* keys = atlas::raw_pointer_cast<std::uint32_t>(d_keys_ptr);
+    const std::uint32_t* keys = atlas::raw_pointer_cast<std::uint32_t>(this->d_keys_ptr);
     ///< Raw pointer to the sorted cell-key array.
 
     int* cell_start           = atlas::raw_pointer_cast(d_cell_start_ptr);

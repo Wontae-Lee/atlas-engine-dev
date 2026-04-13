@@ -3,8 +3,6 @@
 #include <atlas/atlas.h>
 #include <gtest/gtest.h>
 
-#include <stdexcept>
-
 using namespace atlas;
 
 TEST(Measure, AliasHostPointerCanStoreDerivedMeasure) {

@@ -111,8 +111,6 @@ System<T>::System(FluidHostPtr<T> fluid,
 template <typename T>
 void
 System<T>::update() {
-    atlas::logger::info() << "System::update: begin";
-
     // Execute one full system step in the canonical order.
     //
     // Stage ordering:
@@ -126,6 +124,8 @@ System<T>::update() {
     //
     // Keeping the ordering centralized here ensures all update semantics
     // remain explicit and easy to audit.
+    atlas::logger::info() << "System::update: begin";
+
     emit();
     search();
     classify();

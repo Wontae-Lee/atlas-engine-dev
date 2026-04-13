@@ -179,7 +179,6 @@ transform_reduce(InputIt first, InputIt last,
 #else
 
 #include <iterator>
-#include <tbb/tbb.h>
 #include <type_traits>
 
 namespace detail {

@@ -1,10 +1,8 @@
 #pragma once
 
 #include <atlas/buffer/device_buffer.h>
-#include <atlas/buffer/host_buffer.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/indexer/device_pair_indexer.h>
-#include <atlas/logging/logging.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 #include <atlas/solver/solver.h>
 

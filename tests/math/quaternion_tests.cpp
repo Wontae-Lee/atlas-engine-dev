@@ -1,5 +1,4 @@
 #include "../utilities/tests_utils.h"
-#include <atlas/math/math.h>
 #include <cmath>
 #include <gtest/gtest.h>
 #include <type_traits>

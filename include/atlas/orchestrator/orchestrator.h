@@ -8,9 +8,6 @@
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/solver/solver.h>
 
-#include <stdexcept>
-#include <utility>
-
 namespace atlas::system {
 
 template <typename T>

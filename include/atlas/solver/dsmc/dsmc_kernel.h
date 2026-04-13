@@ -2,8 +2,6 @@
 
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
-#include <atlas/random/default_random_engine.h>
-#include <atlas/solver/solver.h>
 
 #include <cstdint>
 #include <type_traits>
