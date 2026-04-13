@@ -85,9 +85,9 @@ struct DsmcKernel final {
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     DsmcKernel(DsmcModelType type,
-                       T param0          = T(273.15),
-                       T probability     = T(1),
-                       unsigned int seed = 0u) noexcept;
+               T param0          = T(273.15),
+               T probability     = T(1),
+               unsigned int seed = 0u) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     DsmcKernel(const DsmcKernel& other) noexcept;

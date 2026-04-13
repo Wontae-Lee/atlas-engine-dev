@@ -28,7 +28,6 @@
       <config projectName="atlas-engine-dev" targetName="gtest_main" />
       <config projectName="atlas-engine-dev" targetName="benchmark_min_time_flag_iters_test" />
       <config projectName="atlas-engine-dev" targetName="repetitions_test" />
-      <config projectName="atlas-engine-dev" targetName="atlas_cuda_tests" />
       <config projectName="atlas-engine-dev" targetName="benchmark_gtest" />
       <config projectName="atlas-engine-dev" targetName="NightlyMemoryCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="locale_impermeability_test" />
@@ -71,6 +70,7 @@
       <config projectName="atlas-engine-dev" targetName="profiler_manager_test" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalCoverage" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="ContinuousBuild" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests" />
       <config projectName="atlas-engine-dev" targetName="solver" />
       <config projectName="atlas-engine-dev" targetName="min_time_parse_gtest" />
       <config projectName="atlas-engine-dev" targetName="memory_results_gtest" />
@@ -140,30 +140,15 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactory Colliders and Tests.">
-      <change afterPath="$PROJECT_DIR$/tests/buffer/device_buffer_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/buffer/host_buffer_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/collider/collider_surface_interaction_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/collider/collider_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/cuda/cuda_macros.cuh" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/measure/measure_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/sampling/sampling_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/source/source_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/source/spawn_operator_tests/surface_spawn_operator_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/source/spawn_operator_tests/volume_spawn_operator_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/system/system_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/transform/transform_reduce_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/unit/unit_tests.cu" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/utilities/tests_utils.cuh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/ctestState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ctestState.xml" afterDir="false" />
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="added test files for CUDA.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/transform/transform_reduce.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/transform/transform_reduce.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/cuda/cuda_tests.cu" beforeDir="false" afterPath="$PROJECT_DIR$/tests/cuda/cuda_tests.cu" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/unit/unit_tests.cuh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/utilities/tests_utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/tests/utilities/tests_utils.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/parallel/parallel_for.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/parallel/parallel_for.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sampling/sampling.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sampling/sampling.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_kernel.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_kernel.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/sampling/sampling_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/sampling/sampling_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/source/spawn_operator_tests/surface_spawn_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/source/spawn_operator_tests/surface_spawn_operator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/source/spawn_operator_tests/volume_spawn_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/source/spawn_operator_tests/volume_spawn_operator_tests.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -186,7 +171,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="326" />
+    <option name="cachedIndexableFilesCount" value="338" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -206,7 +191,7 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/examples/dynamic/main.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/examples/dynamic/main.cu" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/examples/dynamic/main.cu" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/examples/solver/main.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/core/macros.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/domain/domain.h" root0="FORCE_HIGHLIGHTING" />
@@ -255,6 +240,7 @@
     "CMake Application.atlas_cuda_tests.executor": "Run",
     "CMake Application.atlas_unit_cuda_tests.executor": "Run",
     "CMake Application.dynamic.executor": "Run",
+    "CMake Application.overview.executor": "Run",
     "CMake Application.solver.executor": "Run",
     "CMake Application.visualization.executor": "Run",
     "Google Test.All in atlas_tests.executor": "Run",
@@ -309,7 +295,7 @@
       <recent name="$PROJECT_DIR$/tests/measure" />
     </key>
   </component>
-  <component name="RunManager" selected="CMake Application.atlas_cuda_tests">
+  <component name="RunManager" selected="Google Test.All in atlas_tests">
     <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="CLION.EXTERNAL.BUILD" enabled="true" />
@@ -466,11 +452,6 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="atlas_cuda_tests" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_cuda_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_cuda_tests">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="dynamic" type="CMakeRunConfiguration" factoryName="Application" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="dynamic" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="dynamic">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -602,7 +583,6 @@
       <item itemvalue="CMake Application.solver" />
       <item itemvalue="CMake Application.tinyobjloader" />
       <item itemvalue="CMake Application.uninstall" />
-      <item itemvalue="CMake Application.atlas_cuda_tests" />
       <item itemvalue="CTest Application.All CTest" />
       <item itemvalue="Google Test.All in atlas_tests" />
       <item itemvalue="Python.generate_headers" />
@@ -681,7 +661,9 @@
       <workItem from="1775830483547" duration="2955000" />
       <workItem from="1775833463278" duration="2375000" />
       <workItem from="1776062158498" duration="8362000" />
-      <workItem from="1776070534044" duration="3088000" />
+      <workItem from="1776070534044" duration="3346000" />
+      <workItem from="1776074235038" duration="77000" />
+      <workItem from="1776074366306" duration="1395000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
@@ -827,7 +809,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775818206508</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="added test files for CUDA.">
+      <option name="closed" value="true" />
+      <created>1776073654477</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1776073654477</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -899,7 +889,8 @@
     <MESSAGE value="Reset comments." />
     <MESSAGE value="added the lagacy sketches." />
     <MESSAGE value="Refactory Colliders and Tests." />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactory Colliders and Tests." />
+    <MESSAGE value="added test files for CUDA." />
+    <option name="LAST_COMMIT_MESSAGE" value="added test files for CUDA." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

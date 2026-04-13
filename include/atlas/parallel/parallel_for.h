@@ -304,7 +304,7 @@ namespace detail {
     ATLAS_FORCE_INLINE void
     parallel_for_host_impl(IndexType start, IndexType end, const Function& func) {
         if (start >= end) return;
-        tbb::parallel_for(start, end, IndexType(1), [&](IndexType i) { func(i); });
+        tbb::parallel_for(start, end, func);
     }
 
     /**
@@ -327,7 +327,7 @@ namespace detail {
     ATLAS_FORCE_INLINE void
     parallel_for_device_impl(IndexType start, IndexType end, const Function& func) {
         if (start >= end) return;
-        tbb::parallel_for(start, end, IndexType(1), [&](IndexType i) { func(i); });
+        tbb::parallel_for(start, end, func);
     }
 
     /**
