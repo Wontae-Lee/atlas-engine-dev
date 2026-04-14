@@ -57,44 +57,5 @@ if (ATLAS_GOOGLE_TEST)
 endif ()
 
 if (ATLAS_CUDA_TEST)
-    set(ATLAS_CUDA_TEST_SOURCES
-            cuda/cuda_tests.cu
-            buffer/device_buffer_tests.cu
-            buffer/host_buffer_tests.cu
-            unit/unit_tests.cu
-            collider/collider_surface_interaction_tests.cu
-            collider/collider_tests.cu
-            measure/measure_tests.cu
-            sampling/sampling_tests.cu
-            source/source_tests.cu
-            source/spawn_operator_tests/surface_spawn_operator_tests.cu
-            source/spawn_operator_tests/volume_spawn_operator_tests.cu
-            system/system_tests.cu
-            transform/transform_reduce_tests.cu
-    )
-
-    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cuda/cuda_tests.cu")
-        add_executable(atlas_cuda_tests
-                ${ATLAS_CUDA_TEST_SOURCES}
-        )
-
-        set_target_properties(atlas_cuda_tests PROPERTIES
-                CUDA_STANDARD 17
-                CUDA_STANDARD_REQUIRED OFF
-        )
-
-        target_include_directories(atlas_cuda_tests
-                PRIVATE
-                "${CMAKE_CURRENT_SOURCE_DIR}"
-        )
-
-        target_link_libraries(atlas_cuda_tests
-                PRIVATE
-                atlas::core
-        )
-
-        add_test(NAME atlas_cuda_tests COMMAND atlas_cuda_tests)
-    else ()
-        message(WARNING "[ATLAS][TEST] CUDA test source not found: cuda/cuda_tests.cu")
-    endif ()
+    message(WARNING "[ATLAS][TEST] Cuda Tests are not supported yet.")
 endif ()

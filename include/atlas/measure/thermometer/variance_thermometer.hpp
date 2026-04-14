@@ -8,112 +8,11 @@
 
 namespace atlas::system {
 
-template <typename T>
-void
-VarianceThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
-                                        const SpatialHashingProbe<T>& searcher,
-                                        const FluidDeviceProbe<T>& particle,
-                                        const MeasureModeType measure_mode) const {
-    DeviceBuffer<T> scratch_field {};
-    T* field = nullptr;
-
-    if (measure_mode == MeasureModeType::Field || measure_mode == MeasureModeType::All) {
-        field = domain.field_temperature;
-    } else {
-        scratch_field.resize(static_cast<std::size_t>(domain.num_of_cells));
-        field = atlas::raw_pointer_cast(scratch_field.data());
-    }
-
-    const Vector3<T>* const position                    = particle.pos;
-    const Vector3<T>* const velocity                    = particle.vel;
-    const MatrialProperties<T>* const particle_property = particle.particle_property;
-    T* const particle_temperature                       = particle.temperature;
-    const size_t* const species                         = particle.species;
-    const int* const indices                            = searcher.indices;
-    const int* const cell_start                         = searcher.cell_start;
-    const int* const cell_end                           = searcher.cell_end;
-    const Vector3<int> grid_size                        = domain.grid_size;
-    const Vector3<T> lower_corner                       = domain.lower_corner;
-    const T inv_h                                       = domain.inv_h;
-    const int num_of_cells                              = domain.num_of_cells;
-    const int particle_count                            = particle.particle_count;
-
-    const bool update_fluid = measure_mode == MeasureModeType::Fluid || measure_mode == MeasureModeType::All;
-
-    if (field == nullptr || position == nullptr || velocity == nullptr || particle_property == nullptr
-        || species == nullptr || indices == nullptr || cell_start == nullptr || cell_end == nullptr
-        || num_of_cells <= 0 || particle_count < 0 || (update_fluid && particle_temperature == nullptr)) {
-        return;
-    }
-
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        num_of_cells,
-        [=] ATLAS_DEVICE(const int cell) {
-            const int begin = cell_start[cell];
-            if (begin < 0) {
-                field[cell] = T(0);
-                return;
-            }
-
-            const int end = cell_end[cell];
-            Vector3<T> mean_velocity { T(0), T(0), T(0) };
-            T momentum_weight_sum = T(0);
-            int count             = 0;
-
-            for (int k = begin; k < end; ++k) {
-                const int particle_index = indices[k];
-                if (particle_index < 0 || particle_index >= particle_count) continue;
-                const size_t species_index = species[particle_index];
-                const T mass               = particle_property[species_index].mass;
-                mean_velocity += velocity[particle_index] * mass;
-                momentum_weight_sum += mass;
-                ++count;
-            }
-
-            if (count <= 0 || !(momentum_weight_sum > T(0))) {
-                field[cell] = T(0);
-                return;
-            }
-
-            mean_velocity /= momentum_weight_sum;
-
-            T thermal_energy_sum = T(0);
-            for (int k = begin; k < end; ++k) {
-                const int particle_index = indices[k];
-                if (particle_index < 0 || particle_index >= particle_count) continue;
-
-                const size_t species_index = species[particle_index];
-                const T mass               = particle_property[species_index].mass;
-                const Vector3<T> dv        = velocity[particle_index] - mean_velocity;
-                thermal_energy_sum += mass * (dv.x * dv.x + dv.y * dv.y + dv.z * dv.z);
-            }
-
-            field[cell] = thermal_energy_sum
-                / (static_cast<T>(3) * static_cast<T>(atlas::boltzmann_constant) * static_cast<T>(count));
-        });
-
-    if (update_fluid) {
-        const Vector3<int> hi = grid_size - Vector3<int> { 1, 1, 1 };
-        const Vector3<int> lo { 0, 0, 0 };
-
-        atlas::parallel_for<ExecutionPolicy::device>(
-            0,
-            particle_count,
-            [=] ATLAS_DEVICE(const int i) {
-                const Vector3<T> rel = (position[i] - lower_corner) * inv_h;
-                Vector3<int> ijk     = atlas::math::floor(rel).template cast_to<int>();
-                ijk                  = atlas::math::clamp(ijk, lo, hi);
-
-                const int cell          = ijk.x + ijk.y * grid_size.x + ijk.z * grid_size.x * grid_size.y;
-                particle_temperature[i] = field[cell];
-            });
-    }
-}
 
 template <typename T>
 typename VarianceThermometer<T>::Builder
 VarianceThermometer<T>::builder() noexcept {
+    // Return a fresh builder for staged VarianceThermometer construction.
     return Builder {};
 }
 
@@ -123,6 +22,8 @@ VarianceThermometer<T>::VarianceThermometer(
     const MeasureModeType measure_mode) noexcept
     : Thermometer<T>(measure_mode)
     , _thermometer_operator(thermometer_operator) {
+    // Construct a VarianceThermometer from a generic thermometer operator wrapper
+    // together with the selected measurement mode.
 }
 
 template <typename T>
@@ -131,6 +32,8 @@ VarianceThermometer<T>::VarianceThermometer(
     const MeasureModeType measure_mode) noexcept
     : Thermometer<T>(measure_mode)
     , _thermometer_operator(thermometer_operator) {
+    // Construct a VarianceThermometer directly from a specialized
+    // VarianceThermometerOperator together with the selected measurement mode.
 }
 
 template <typename T>
@@ -138,24 +41,38 @@ void
 VarianceThermometer<T>::measure(DomainDeviceProbe<T> domain,
                                 SpatialHashingProbe<T> searcher,
                                 FluidDeviceProbe<T> particle) {
+    // Reject measurement on isothermal domains.
+    //
+    // Rationale:
+    // - an isothermal domain has a prescribed fixed temperature field
+    // - variance-based measurement would attempt to infer temperature dynamically
+    // - that would violate the isothermal-domain contract
     if (domain.type == DomainType::isothermal) {
         atlas::logger::error()
             << "VarianceThermometer: measure() is forbidden when the domain type is isothermal.";
-        throw std::runtime_error("VarianceThermometer: measure() is forbidden when the domain type is isothermal.");
+        throw std::runtime_error(
+            "VarianceThermometer: measure() is forbidden when the domain type is isothermal.");
     }
 
+    // Delegate the actual work to the stored thermometer operator using the
+    // active measurement mode configured in the Thermometer<T> base class.
     _thermometer_operator.measure(domain, searcher, particle, this->measure_mode());
 }
 
 template <typename T>
 bool
 VarianceThermometer<T>::is_valid() const noexcept {
+    // This implementation treats the thermometer as always valid.
+    //
+    // Unlike tag-based validity checks, this returns true unconditionally because
+    // the stored operator is assumed to be valid once the object is constructed.
     return true;
 }
 
 template <typename T>
 ThermometerType
 VarianceThermometer<T>::type() const noexcept {
+    // Return the runtime type tag for this concrete thermometer.
     return ThermometerType::Variance;
 }
 
@@ -163,18 +80,22 @@ template <typename T>
 void
 VarianceThermometer<T>::set_thermometer_operator(
     const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept {
+    // Replace the currently stored generic thermometer operator.
     _thermometer_operator = thermometer_operator;
 }
 
 template <typename T>
 const atlas::system::ThermometerOperator<T>&
 VarianceThermometer<T>::thermometer_operator() const noexcept {
+    // Return the currently stored generic thermometer operator.
     return _thermometer_operator;
 }
 
 template <typename T>
 typename VarianceThermometer<T>::Builder&
-VarianceThermometer<T>::Builder::with_measure_mode(const MeasureModeType measure_mode) noexcept {
+VarianceThermometer<T>::Builder::with_measure_mode(
+    const MeasureModeType measure_mode) noexcept {
+    // Stage the selected measurement mode inside the builder.
     _measure_mode = measure_mode;
     return *this;
 }
@@ -183,6 +104,7 @@ template <typename T>
 typename VarianceThermometer<T>::Builder&
 VarianceThermometer<T>::Builder::with_thermometer_operator(
     const atlas::system::ThermometerOperator<T>& thermometer_operator) noexcept {
+    // Stage a generic thermometer operator inside the builder.
     _thermometer_operator = thermometer_operator;
     return *this;
 }
@@ -191,20 +113,28 @@ template <typename T>
 typename VarianceThermometer<T>::Builder&
 VarianceThermometer<T>::Builder::with_thermometer_operator(
     const atlas::system::VarianceThermometerOperator<T>& thermometer_operator) noexcept {
-    _thermometer_operator = atlas::system::ThermometerOperator<T>(thermometer_operator);
+    // Stage a specialized variance thermometer operator inside the builder.
+    //
+    // It is wrapped into the generic ThermometerOperator<T> holder immediately.
+    _thermometer_operator =
+        atlas::system::ThermometerOperator<T>(thermometer_operator);
     return *this;
 }
 
 template <typename T>
 VarianceThermometer<T>
 VarianceThermometer<T>::Builder::build() const {
+    // Build the final VarianceThermometer from the staged operator and
+    // staged measurement mode.
     return VarianceThermometer<T>(_thermometer_operator, _measure_mode);
 }
 
 template <typename T>
 atlas::host_shared_ptr<VarianceThermometer<T>>
 VarianceThermometer<T>::Builder::make_host_shared() const {
+    // Convenience helper that builds the thermometer and stores it in
+    // host-shared memory.
     return atlas::make_host_shared<VarianceThermometer<T>>(build());
 }
 
-}
+} // namespace atlas::system

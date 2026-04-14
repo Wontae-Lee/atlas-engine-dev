@@ -8,13 +8,13 @@ Thermometer<T>::Thermometer(MeasureModeType measure_mode) noexcept
 }
 
 template <typename T>
- void
+void
 Thermometer<T>::set_measure_mode(MeasureModeType measure_mode) noexcept {
     _measure_mode = measure_mode;
 }
 
 template <typename T>
- MeasureModeType
+MeasureModeType
 Thermometer<T>::measure_mode() const noexcept {
     return _measure_mode;
 }

@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="3" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="10" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
@@ -142,45 +142,32 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/examples/solver/dsmc/intake/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/solver/dsmc_tests.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cu" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/measure.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/measure.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/average_thermometer.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/average_thermometer.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_type.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_type.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_kernel.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_kernel.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/measure/measure_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measure/measure_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/measure/measure_tests.cu" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measure/measure_tests.cu" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/measure/thermometer/average_thermometer_tests.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/searcher/spatial_hashing_searcher_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/searcher/spatial_hashing_searcher_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/solve/dsmc_tests.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/solve/sph_tests.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/utilities/tests_utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/tests/utilities/tests_utils.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/buffer/device_buffer_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/buffer/host_buffer_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/collider/collider_surface_interaction_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/collider/collider_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/cuda/cuda_macros.cuh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/cuda/cuda_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/measure/measure_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/sampling/sampling_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/source/source_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/source/spawn_operator_tests/surface_spawn_operator_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/source/spawn_operator_tests/volume_spawn_operator_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/system/system_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/unit/unit_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/utilities/tests_utils.cuh" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -336,6 +323,11 @@
     </key>
   </component>
   <component name="RunManager" selected="Google Test.All in atlas_tests">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -625,11 +617,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.remove_comments" />
+        <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.generate_headers" />
-        <item itemvalue="Python.remove_comments" />
-        <item itemvalue="Python.remove_comments" />
       </list>
     </recent_temporary>
   </component>
