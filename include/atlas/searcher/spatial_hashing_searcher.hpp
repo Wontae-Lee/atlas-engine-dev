@@ -12,211 +12,12 @@
 namespace atlas::system {
 
 template <typename T>
-bool
-SpatialHashingProbe<T>::is_valid_cell(const int ix, const int iy, const int iz) const noexcept {
-    /**
-     * @brief Check whether a 3D integer cell coordinate lies inside the search grid.
-     *
-     * @param ix Cell index along the x-axis.
-     * @param iy Cell index along the y-axis.
-     * @param iz Cell index along the z-axis.
-     * @return `true` if the cell coordinate is inside `[0, grid_size)` on all axes.
-     *
-     * @details
-     * The spatial hash grid is stored as a dense axis-aligned 3D lattice.
-     * A cell is valid only when each component is inside the inclusive/exclusive range:
-     * - `0 <= ix < grid_size.x`
-     * - `0 <= iy < grid_size.y`
-     * - `0 <= iz < grid_size.z`
-     */
-    return (ix >= 0 && ix < grid_size.x && iy >= 0 && iy < grid_size.y && iz >= 0 && iz < grid_size.z);
-}
-
-template <typename T>
-int
-SpatialHashingProbe<T>::cell_index(const int ix, const int iy, const int iz) const noexcept {
-    /**
-     * @brief Convert a 3D cell coordinate into a flattened linear cell index.
-     *
-     * @param ix Cell index along the x-axis.
-     * @param iy Cell index along the y-axis.
-     * @param iz Cell index along the z-axis.
-     * @return Flattened row-major cell index.
-     *
-     * @details
-     * The 3D grid is flattened with x as the fastest-varying dimension:
-     * @code
-     * index = ix + iy * grid_size.x + iz * grid_size.x * grid_size.y
-     * @endcode
-     *
-     * This layout matches the storage convention used for:
-     * - `cell_start`
-     * - `cell_end`
-     * - other cell-indexed arrays in the spatial hashing pipeline.
-     */
-    return ix + iy * grid_size.x + iz * grid_size.x * grid_size.y;
-}
-
-template <typename T>
-template <typename Func>
-void
-SpatialHashingProbe<T>::for_each_neighbor(int p, const Vector3<T>* pos, Func&& func) const {
-    /**
-     * @brief Visit neighboring particle indices for one particle.
-     *
-     * @tparam Func Callable type accepting a neighbor particle index.
-     * @param p Index of the query particle.
-     * @param pos Pointer to particle positions.
-     * @param func Callback invoked for each accepted neighbor index.
-     *
-     * @details
-     * This routine supports two neighborhood modes controlled by @ref range:
-     *
-     * - @ref NeighborSearchRange::single
-     *   - only the hash cell containing particle `p` is searched,
-     *   - every particle in that cell except `p` itself is reported.
-     *
-     * - otherwise
-     *   - a 3D neighborhood of cells overlapping a sphere/cube of radius
-     *     `0.5 * cell_size` around particle `p` is searched,
-     *   - an explicit squared-distance check is used to keep only particles
-     *     within that radius.
-     *
-     * Early exit:
-     * - if `func(q)` returns `true`, iteration stops immediately.
-     */
-    const Vector3<T> xp = pos[p];
-    ///< Position of the query particle.
-
-    const Vector3<int> lo { 0, 0, 0 };
-    ///< Minimum valid cell coordinate.
-
-    const Vector3<int> hi = grid_size - Vector3<int> { 1, 1, 1 };
-    ///< Maximum valid cell coordinate.
-
-    if (range == NeighborSearchRange::single) {
-        /**
-         * @brief Single-cell neighbor search path.
-         *
-         * @details
-         * The particle position is mapped into one grid cell, clamped to valid
-         * domain bounds, and only particles in that exact cell are traversed.
-         */
-        const Vector3<T> rel = (xp - lower_corner) * inv_h;
-        ///< Query position expressed in cell-space coordinates.
-
-        Vector3<int> ijk = atlas::math::floor(rel).template cast_to<int>();
-        ///< Integer cell coordinate before clamping.
-
-        ijk = atlas::math::clamp(ijk, lo, hi);
-        ///< Integer cell coordinate clamped into the valid grid range.
-
-        const int cell = cell_index(ijk.x, ijk.y, ijk.z);
-        ///< Flattened cell index of the query particle.
-
-        const int begin = cell_start[cell];
-        ///< First particle slot in this cell inside the sorted particle index array.
-
-        if (begin < 0) return;
-        ///< Empty cell: no neighbors to visit.
-
-        const int end = cell_end[cell];
-        ///< One-past-the-last particle slot for this cell.
-
-        for (int k = begin; k < end; ++k) {
-            const int q = indices[k];
-            ///< Candidate neighbor particle index recovered from the sorted index array.
-
-            if (q == p) continue;
-            ///< Skip self-neighboring.
-
-            if (func(q)) return;
-            ///< Allow the caller to terminate iteration early.
-        }
-        return;
-    }
-
-    /**
-     * @brief Radius-filtered neighborhood search path.
-     *
-     * @details
-     * A local neighborhood of cells is derived from the query point expanded by
-     * `r = 0.5 * cell_size` in all directions. Every particle in those cells is
-     * then tested with an explicit Euclidean distance check.
-     */
-    const T r = T(0.5) * cell_size;
-    ///< Search radius used for local neighbor filtering.
-
-    const T r2 = r * r;
-    ///< Squared search radius used to avoid repeated square roots.
-
-    const Vector3<T> rel_min = (xp - Vector3<T> { r, r, r } - lower_corner) * inv_h;
-    ///< Lower bound of the neighborhood box in cell-space coordinates.
-
-    const Vector3<T> rel_max = (xp + Vector3<T> { r, r, r } - lower_corner) * inv_h;
-    ///< Upper bound of the neighborhood box in cell-space coordinates.
-
-    Vector3<int> ijk_min = atlas::math::floor(rel_min).template cast_to<int>();
-    ///< Lower integer cell bound before clamping.
-
-    Vector3<int> ijk_max = atlas::math::floor(rel_max).template cast_to<int>();
-    ///< Upper integer cell bound before clamping.
-
-    ijk_min = atlas::math::clamp(ijk_min, lo, hi);
-    ///< Lower integer cell bound clamped to valid grid indices.
-
-    ijk_max = atlas::math::clamp(ijk_max, lo, hi);
-    ///< Upper integer cell bound clamped to valid grid indices.
-
-    for (int iz = ijk_min.z; iz <= ijk_max.z; ++iz) {
-        for (int iy = ijk_min.y; iy <= ijk_max.y; ++iy) {
-            for (int ix = ijk_min.x; ix <= ijk_max.x; ++ix) {
-                const int cell = cell_index(ix, iy, iz);
-                ///< Flattened index of the current candidate cell.
-
-                const int begin = cell_start[cell];
-                ///< First sorted particle slot for the current cell.
-
-                if (begin < 0) continue;
-                ///< Empty cell: skip immediately.
-
-                const int end = cell_end[cell];
-                ///< One-past-the-last sorted particle slot for the current cell.
-
-                for (int k = begin; k < end; ++k) {
-                    const int q = indices[k];
-                    ///< Candidate neighbor particle index.
-
-                    if (q == p) continue;
-                    ///< Skip self-neighboring.
-
-                    const Vector3<T> dx = pos[q] - xp;
-                    ///< Relative displacement from the query particle to the candidate.
-
-                    const T dist2 = dx.x * dx.x + dx.y * dx.y + dx.z * dx.z;
-                    ///< Squared Euclidean distance between particles.
-
-                    if (dist2 <= r2) {
-                        ///< Accept only particles inside the prescribed radius.
-                        if (func(q)) return;
-                        ///< Allow early termination by the caller.
-                    }
-                }
-            }
-        }
-    }
-}
-
-template <typename T>
-SpatialHashingSearcher<T>::SpatialHashingSearcher(DomainHostPtr<T> domain,
-                                                  const NeighborSearchRange range)
-    : _domain(std::move(domain))
-    , _range(range) {
+SpatialHashingSearcher<T>::SpatialHashingSearcher(DomainHostPtr<T> domain)
+    : _domain(std::move(domain)) {
     /**
      * @brief Construct a spatial hashing searcher for a domain.
      *
      * @param domain Domain defining the spatial grid geometry.
-     * @param range Neighbor-search mode used by generated probes.
      *
      * @details
      * The domain is mandatory because the searcher derives:
@@ -257,8 +58,7 @@ SpatialHashingSearcher<T>::reset() noexcept {
      * - resizes cell-range arrays to the domain cell count,
      * - refreshes cached raw pointers into the device buffers.
      *
-     * It does not remove the associated domain or change the configured
-     * neighbor-search range.
+     * It does not remove the associated domain.
      */
     d_keys.resize(0);
     ///< Clear the per-particle cell-key array.
@@ -355,7 +155,7 @@ SpatialHashingSearcher<T>::init_indices_iota(int n_active) {
      * sorting so that sorted cell membership can still be mapped back to the
      * original particle indices.
      */
-    int* indices_ptr = d_indices_ptr;
+    auto* indices_ptr = atlas::raw_pointer_cast(this->d_indices.data());
     ///< Raw pointer to the per-particle index buffer.
 
     atlas::parallel_for<ExecutionPolicy::device>(
@@ -386,10 +186,10 @@ SpatialHashingSearcher<T>::compute_keys(int alive, const Vector3<T>* pos) {
     const atlas::device_ptr<std::uint32_t> keys_ptr(d_keys_ptr);
     ///< Device pointer wrapper around the key buffer.
 
-    const Vector3<T> lc   = _domain->lower_corner();
+    const Vector3<T> lc = _domain->lower_corner();
     ///< Domain lower corner.
 
-    const T inv_h         = _domain->inverse_cell_size();
+    const T inv_h = _domain->inverse_cell_size();
     ///< Reciprocal of the grid cell size.
 
     const Vector3<int> gs = _domain->grid_size();
@@ -483,16 +283,16 @@ SpatialHashingSearcher<T>::build_cell_ranges(int alive) {
         -1);
     ///< Initialize every cell end entry to "empty".
 
-    const std::uint32_t* keys = atlas::raw_pointer_cast<std::uint32_t>(this->d_keys_ptr);
+    const auto* keys = atlas::raw_pointer_cast<std::uint32_t>(this->d_keys_ptr);
     ///< Raw pointer to the sorted cell-key array.
 
-    int* cell_start           = atlas::raw_pointer_cast(d_cell_start_ptr);
+    auto* cell_start = atlas::raw_pointer_cast(this->d_cell_start_ptr);
     ///< Raw pointer to the cell-start array.
 
-    int* cell_end             = atlas::raw_pointer_cast(d_cell_end_ptr);
+    auto* cell_end = atlas::raw_pointer_cast(this->d_cell_end_ptr);
     ///< Raw pointer to the cell-end array.
 
-    const int count           = alive;
+    const int count = alive;
     ///< Cached active-particle count for device lambda capture.
 
     atlas::parallel_for<ExecutionPolicy::device>(
@@ -571,7 +371,6 @@ SpatialHashingSearcher<T>::make_device_probe() noexcept {
      * - grid size,
      * - inverse cell size,
      * - cell size,
-     * - neighbor-search range,
      * - raw pointers to sorted indices and cell ranges.
      */
     ++_probe_count;
@@ -592,25 +391,22 @@ SpatialHashingSearcher<T>::make_device_probe() noexcept {
     probe.lower_corner = _domain->lower_corner();
     ///< Export the grid origin.
 
-    probe.grid_size    = _domain->grid_size();
+    probe.grid_size = _domain->grid_size();
     ///< Export the grid resolution.
 
-    probe.inv_h        = _domain->inverse_cell_size();
+    probe.inv_h = _domain->inverse_cell_size();
     ///< Export reciprocal cell size.
 
-    probe.cell_size    = _domain->cell_size();
+    probe.cell_size = _domain->cell_size();
     ///< Export direct cell size.
 
-    probe.range = _range;
-    ///< Export the configured neighbor-search mode.
-
-    probe.indices    = atlas::raw_pointer_cast(d_indices_ptr);
+    probe.indices = atlas::raw_pointer_cast(d_indices_ptr);
     ///< Export raw pointer to sorted particle indices.
 
     probe.cell_start = atlas::raw_pointer_cast(d_cell_start_ptr);
     ///< Export raw pointer to per-cell start offsets.
 
-    probe.cell_end   = atlas::raw_pointer_cast(d_cell_end_ptr);
+    probe.cell_end = atlas::raw_pointer_cast(d_cell_end_ptr);
     ///< Export raw pointer to per-cell end offsets.
 
     return probe;
@@ -626,19 +422,6 @@ SpatialHashingSearcher<T>::Builder::with_domain(DomainHostPtr<T> domain) noexcep
      * @return Reference to the builder.
      */
     _domain = std::move(domain);
-    return *this;
-}
-
-template <typename T>
-typename SpatialHashingSearcher<T>::Builder&
-SpatialHashingSearcher<T>::Builder::with_range(const NeighborSearchRange range) noexcept {
-    /**
-     * @brief Store the neighbor-search mode in the builder.
-     *
-     * @param range Neighbor-search mode to use in the constructed searcher.
-     * @return Reference to the builder.
-     */
-    _range = range;
     return *this;
 }
 
@@ -665,7 +448,7 @@ SpatialHashingSearcher<T>::Builder::build() const {
      * @return Constructed spatial hashing searcher.
      */
     validate();
-    return SpatialHashingSearcher<T>(_domain, _range);
+    return SpatialHashingSearcher<T>(_domain);
 }
 
 template <typename T>
@@ -677,7 +460,7 @@ SpatialHashingSearcher<T>::Builder::make_host_shared() const {
      * @return Host-shared pointer to the constructed searcher.
      */
     validate();
-    return atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain, _range);
+    return atlas::make_host_shared<SpatialHashingSearcher<T>>(_domain);
 }
 
 } // namespace atlas::system

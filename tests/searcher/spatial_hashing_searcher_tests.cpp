@@ -19,7 +19,6 @@ TEST(SpatialHashingSearcher, BuilderMakeHostSharedPreservesConfiguredProbeProper
 
     auto searcher = atlas::SpatialHashingSearcher<float>::builder()
                         .with_domain(domain)
-                        .with_range(system::NeighborSearchRange::multiple)
                         .make_host_shared();
 
     ASSERT_NE(searcher, nullptr);
@@ -32,7 +31,6 @@ TEST(SpatialHashingSearcher, BuilderMakeHostSharedPreservesConfiguredProbeProper
     EXPECT_EQ(probe.grid_size.z, domain->grid_size().z);
     EXPECT_FLOAT_EQ(probe.inv_h, domain->inverse_cell_size());
     EXPECT_FLOAT_EQ(probe.cell_size, domain->cell_size());
-    EXPECT_EQ(probe.range, system::NeighborSearchRange::multiple);
 }
 
 TEST(SpatialHashingSearcher, BuildPopulatesSortedIndicesAndCellRanges) {
@@ -43,7 +41,6 @@ TEST(SpatialHashingSearcher, BuildPopulatesSortedIndicesAndCellRanges) {
 
     auto searcher = atlas::SpatialHashingSearcher<float>::builder()
                         .with_domain(domain)
-                        .with_range(system::NeighborSearchRange::single)
                         .build();
 
     system::Fluid<float> particle_data(3);

@@ -768,7 +768,7 @@ make_isothermal_domain_ptr(T temperature = T(300)) {
 }
 
 /**
- * @brief Create a single-range spatial hashing searcher bound to a domain.
+ * @brief Create a spatial hashing searcher bound to a domain.
  *
  * @param domain Associated domain.
  * @return Configured spatial hashing searcher value.
@@ -780,7 +780,6 @@ ATLAS_FORCE_INLINE system::SpatialHashingSearcher<T>
 make_single_range_searcher(const atlas::DomainHostPtr<T>& domain) {
     return atlas::SpatialHashingSearcher<T>::builder()
         .with_domain(domain)
-        .with_range(system::NeighborSearchRange::single)
         .build();
 }
 

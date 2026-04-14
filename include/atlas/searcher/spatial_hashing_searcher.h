@@ -6,8 +6,6 @@
  *
  * @details
  * This header defines:
- * - @ref atlas::system::NeighborSearchRange, which selects the neighborhood
- *   stencil used during spatial search,
  * - @ref atlas::system::SpatialHashingProbe, a compact device-facing view of
  *   spatial hashing data,
  * - @ref atlas::system::SpatialHashingSearcher, the host-side runtime object
@@ -43,24 +41,15 @@
  * Since backend kernels should not carry host-side ownership state, the searcher
  * can export a lightweight @ref SpatialHashingProbe containing:
  * - grid metadata,
- * - search-range mode,
  * - raw pointers to the index and cell-range arrays.
  *
  * The system runtime typically owns the single authoritative probe for the live
  * search structure and reuses it across multiple stages.
  *
- * ## Search range
- * The searcher supports at least two neighborhood policies:
- * - @ref NeighborSearchRange::single
- * - @ref NeighborSearchRange::multiple
- *
- * The exact neighborhood stencil associated with each mode is defined in the
- * implementation in `spatial_hashing_searcher.hpp`.
- *
  * ## Construction
  * A spatial hashing searcher may be:
  * - default-constructed,
- * - directly constructed from a domain and search-range mode,
+ * - directly constructed from a domain,
  * - configured through the nested fluent @ref Builder.
  *
  * ---
@@ -74,23 +63,6 @@
 namespace atlas::system {
 
 /**
- * @brief Selects the neighborhood stencil used for particle search.
- *
- * @details
- * This enum controls how broadly neighboring cells are examined when iterating
- * candidate neighbors around a particle.
- *
- * The exact interpretation of each mode is implementation-defined, but a common
- * pattern is:
- * - @ref single : search only the immediately relevant local stencil,
- * - @ref multiple : search a larger stencil spanning more surrounding cells.
- */
-enum class NeighborSearchRange : int {
-    single,  ///< Use a compact local neighborhood search range.
-    multiple ///< Use an expanded neighborhood search range.
-};
-
-/**
  * @brief Lightweight device-facing view of spatial hashing state.
  *
  * @details
@@ -99,15 +71,8 @@ enum class NeighborSearchRange : int {
  *
  * It contains:
  * - domain/grid metadata needed to map positions to cells,
- * - the selected neighbor-search mode,
  * - raw pointers to the cell-indexing arrays that describe which particles fall
  *   into which cells.
- *
- * ## Query semantics
- * The probe provides helper functions for:
- * - validating integer cell coordinates,
- * - converting 3D cell coordinates to a linear cell index,
- * - iterating over neighboring particles for a given particle.
  *
  * ## Ownership
  * All pointer fields are non-owning. The arrays they reference must remain valid
@@ -152,15 +117,6 @@ struct SpatialHashingProbe {
     T cell_size = T(1);
 
     /**
-     * @brief Neighborhood-search mode.
-     *
-     * @details
-     * Controls how broadly neighboring cells are traversed in
-     * @ref for_each_neighbor.
-     */
-    NeighborSearchRange range = NeighborSearchRange::single;
-
-    /**
      * @brief Pointer to the sorted particle-index array.
      *
      * @details
@@ -185,56 +141,6 @@ struct SpatialHashingProbe {
      * for that cell, or an implementation-defined sentinel when empty.
      */
     const int* cell_end {};
-
-    /**
-     * @brief Return whether integer cell coordinates are valid for this grid.
-     *
-     * @param ix Cell coordinate along x.
-     * @param iy Cell coordinate along y.
-     * @param iz Cell coordinate along z.
-     * @return `true` if the cell lies within the valid grid bounds; otherwise `false`.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_valid_cell(int ix, int iy, int iz) const noexcept;
-
-    /**
-     * @brief Convert integer cell coordinates to a linear cell index.
-     *
-     * @details
-     * The exact row-major/axis-ordering convention is implementation-defined in
-     * `spatial_hashing_searcher.hpp`, but it is expected to be consistent with
-     * the arrays referenced by @ref cell_start and @ref cell_end.
-     *
-     * @param ix Cell coordinate along x.
-     * @param iy Cell coordinate along y.
-     * @param iz Cell coordinate along z.
-     * @return Linearized cell index.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE int
-    cell_index(int ix, int iy, int iz) const noexcept;
-
-    /**
-     * @brief Visit neighboring particles associated with a given particle.
-     *
-     * @details
-     * This helper maps particle @p p into the hashed grid using the supplied
-     * position array and then traverses particles stored in the relevant neighbor
-     * cells according to @ref range.
-     *
-     * For each candidate neighbor, the supplied callable @p func is invoked.
-     *
-     * The exact callable contract and neighborhood stencil are implementation-defined
-     * in `spatial_hashing_searcher.hpp`.
-     *
-     * @param p Particle index whose neighborhood should be traversed.
-     * @param pos Pointer to particle positions.
-     * @param func Callable invoked for candidate neighbors.
-     *
-     * @tparam Func Callable type used during neighbor iteration.
-     */
-    template <typename Func>
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    for_each_neighbor(int p, const Vector3<T>* pos, Func&& func) const;
 };
 
 /**
@@ -270,7 +176,6 @@ struct SpatialHashingProbe {
  * ## Ownership model
  * The searcher stores:
  * - the associated domain,
- * - the selected neighborhood mode,
  * - the device buffers that back the runtime search structure,
  * - cached raw pointers to those buffers for fast probe creation.
  *
@@ -286,8 +191,7 @@ public:
      *        @ref SpatialHashingSearcher.
      *
      * @details
-     * The builder stages the associated domain and neighborhood-search mode,
-     * validates them, and constructs either:
+     * The builder stages the associated domain, validates it, and constructs either:
      * - a searcher by value, or
      * - a host-owned shared pointer to a searcher.
      */
@@ -297,19 +201,17 @@ public:
      * @brief Default constructor.
      *
      * @details
-     * Constructs an empty searcher with no associated domain and default search mode.
+     * Constructs an empty searcher with no associated domain.
      */
     SpatialHashingSearcher() = default;
 
     /**
-     * @brief Construct a searcher from a domain and search-range mode.
+     * @brief Construct a searcher from a domain.
      *
      * @param domain Associated simulation domain.
-     * @param range Neighborhood-search mode.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE explicit SpatialHashingSearcher(
-        DomainHostPtr<T> domain,
-        NeighborSearchRange range = NeighborSearchRange::single);
+        DomainHostPtr<T> domain);
 
     /**
      * @brief Default destructor.
@@ -436,11 +338,6 @@ private:
     DomainHostPtr<T> _domain {};
 
     /**
-     * @brief Configured neighborhood-search mode.
-     */
-    NeighborSearchRange _range = NeighborSearchRange::single;
-
-    /**
      * @brief Device-resident spatial hash keys.
      *
      * @details
@@ -492,15 +389,12 @@ private:
  *
  * @details
  * The builder provides a controlled construction path for the spatial hashing
- * searcher by staging:
- * - the associated domain,
- * - the neighborhood-search mode.
+ * searcher by staging the associated domain.
  *
  * ## Typical usage
  * @code
  * auto searcher = atlas::SpatialHashingSearcher<float>::builder()
  *     .with_domain(domain)
- *     .with_range(atlas::system::NeighborSearchRange::single)
  *     .build();
  * @endcode
  *
@@ -508,8 +402,7 @@ private:
  * `validate()` is invoked by @ref build and @ref make_host_shared. Typical checks
  * may include:
  * - a valid domain is present,
- * - the domain grid metadata is usable for hashing,
- * - the staged search mode is internally consistent with the runtime expectations.
+ * - the domain grid metadata is usable for hashing.
  *
  * The exact validation rules are implementation-defined in
  * `spatial_hashing_searcher.hpp`.
@@ -525,7 +418,7 @@ public:
      * @brief Default constructor.
      *
      * @details
-     * Creates a builder with no associated domain and the default search mode.
+     * Creates a builder with no associated domain.
      */
     Builder() = default;
 
@@ -537,15 +430,6 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_domain(DomainHostPtr<T> domain) noexcept;
-
-    /**
-     * @brief Set the neighborhood-search mode.
-     *
-     * @param range Search-range mode to stage.
-     * @return `*this` for fluent chaining.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_range(NeighborSearchRange range) noexcept;
 
     /**
      * @brief Build a configured @ref SpatialHashingSearcher by value after validation.
@@ -568,7 +452,7 @@ private:
      * @brief Validate staged builder state before construction.
      *
      * @details
-     * Performs pre-construction checks on the staged domain and search-range mode.
+     * Performs pre-construction checks on the staged domain.
      */
     void
     validate() const;
@@ -578,11 +462,6 @@ private:
      * @brief Pending associated domain.
      */
     DomainHostPtr<T> _domain {};
-
-    /**
-     * @brief Pending search-range mode.
-     */
-    NeighborSearchRange _range = NeighborSearchRange::single;
 };
 
 } // namespace atlas::system

@@ -56,7 +56,6 @@
 #include <atlas/math/vector/vector_statistics.h>
 #include <atlas/measure/measure.h>
 #include <atlas/measure/thermometer.h>
-#include <atlas/measure/thermometer/average_thermometer.h>
 #include <atlas/measure/thermometer/thermometer_operator.h>
 #include <atlas/measure/thermometer/thermometer_type.h>
 #include <atlas/measure/thermometer/variance_thermometer.h>
@@ -77,13 +76,10 @@
 #include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
-#include <atlas/solver/dsmc/dsmc_disjoint_pair_solver.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 #include <atlas/solver/dsmc/dsmc_ntc_solver.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 #include <atlas/solver/solver.h>
-#include <atlas/solver/sph/sph_kernel.h>
-#include <atlas/solver/sph/sph_solver.h>
 #include <atlas/source/source.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>

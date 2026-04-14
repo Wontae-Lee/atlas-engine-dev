@@ -1,24 +1,34 @@
 #pragma once
 
-#include <atlas/measure/thermometer/average_thermometer.h>
+#include <atlas/core/macros.h>
+#include <atlas/domain/domain.h>
+#include <atlas/fluid/fluid.h>
+#include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/measure/thermometer/thermometer_type.h>
-#include <atlas/measure/thermometer/variance_thermometer.h>
 
 namespace atlas::system {
 
 template <typename T>
+struct VarianceThermometerOperator final {
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    measure(const DomainDeviceProbe<T>& domain,
+            const SpatialHashingProbe<T>& searcher,
+            const FluidDeviceProbe<T>& particle,
+            MeasureModeType measure_mode = MeasureModeType::All) const;
+};
+
+template <typename T>
 struct ThermometerOperator final {
-    ThermometerType type = ThermometerType::Average;
+    ThermometerType type = ThermometerType::Variance;
 
     union {
         VarianceThermometerOperator<T> variance;
-        AverageThermometerOperator<T> average;
     };
 
     ATLAS_HOST ATLAS_FORCE_INLINE
     ThermometerOperator() noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit ThermometerOperator(ThermometerType type) noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit ThermometerOperator(ThermometerType type_) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
     ThermometerOperator(const ThermometerOperator& other) noexcept;
@@ -29,8 +39,6 @@ struct ThermometerOperator final {
     ATLAS_HOST ATLAS_FORCE_INLINE ~ThermometerOperator() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE explicit ThermometerOperator(const VarianceThermometerOperator<T>& op) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit ThermometerOperator(const AverageThermometerOperator<T>& op) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     measure(const DomainDeviceProbe<T>& domain,

@@ -4,8 +4,8 @@ namespace atlas::system {
 
 template <typename T>
 ThermometerOperator<T>::ThermometerOperator() noexcept
-    : type(ThermometerType::Average) {
-    new (&average) AverageThermometerOperator<T> {};
+    : type(ThermometerType::Variance) {
+    new (&variance) VarianceThermometerOperator<T> {};
 }
 
 template <typename T>
@@ -15,12 +15,8 @@ ThermometerOperator<T>::ThermometerOperator(const ThermometerType type_) noexcep
     case ThermometerType::Variance:
         new (&variance) VarianceThermometerOperator<T> {};
         return;
-    case ThermometerType::Average:
-        new (&average) AverageThermometerOperator<T> {};
-        return;
     default:
-        type = ThermometerType::Average;
-        new (&average) AverageThermometerOperator<T> {};
+        atlas::logger::error() << "Invalid ThermometerType: " << static_cast<int>(type);
         return;
     }
 }
@@ -53,12 +49,6 @@ ThermometerOperator<T>::ThermometerOperator(const VarianceThermometerOperator<T>
 }
 
 template <typename T>
-ThermometerOperator<T>::ThermometerOperator(const AverageThermometerOperator<T>& op) noexcept
-    : type(ThermometerType::Average) {
-    new (&average) AverageThermometerOperator<T>(op);
-}
-
-template <typename T>
 void
 ThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
                                 const SpatialHashingProbe<T>& searcher,
@@ -68,14 +58,11 @@ ThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
     case ThermometerType::Variance:
         variance.measure(domain, searcher, particle, measure_mode);
         return;
-    case ThermometerType::Average:
-        average.measure(domain, searcher, particle, measure_mode);
+    default:
+        atlas::logger::error() << "Invalid ThermometerType: " << static_cast<int>(type);
         return;
     }
-
-    average.measure(domain, searcher, particle, measure_mode);
 }
-
 template <typename T>
 void
 ThermometerOperator<T>::destroy_active() noexcept {
@@ -83,12 +70,10 @@ ThermometerOperator<T>::destroy_active() noexcept {
     case ThermometerType::Variance:
         variance.~VarianceThermometerOperator<T>();
         return;
-    case ThermometerType::Average:
-        average.~AverageThermometerOperator<T>();
+    default:
+        atlas::logger::error() << "Invalid ThermometerType: " << static_cast<int>(type);
         return;
     }
-
-    average.~AverageThermometerOperator<T>();
 }
 
 template <typename T>
@@ -98,14 +83,10 @@ ThermometerOperator<T>::copy_from(const ThermometerOperator& other) noexcept {
     case ThermometerType::Variance:
         new (&variance) VarianceThermometerOperator<T>(other.variance);
         return;
-    case ThermometerType::Average:
-        new (&average) AverageThermometerOperator<T>(other.average);
-        return;
+
     default:
-        type = ThermometerType::Average;
-        new (&average) AverageThermometerOperator<T>(other.average);
+        atlas::logger::error() << "Invalid ThermometerType: " << static_cast<int>(type);
         return;
     }
 }
-
 }

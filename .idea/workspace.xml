@@ -141,32 +141,46 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Validate() functions are going to be moved from Builder to source classes.">
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/examples/solver/dsmc/intake/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/solver/dsmc_tests.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/box_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/circle_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/circle_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/circle_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/circle_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/cylinder_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/plane_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/sphere_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/triangle_mesh_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/particle/particle_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/particle/particle_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/particle/particle_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/particle/particle_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/shader/shader_program.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/shader/shader_program.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/shader/shader_program.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/shader/shader_program.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/viewer/viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/viewer/viewer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/viewer/viewer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/average_thermometer.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/average_thermometer.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_type.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_type.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_kernel.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_kernel.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/measure/measure_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measure/measure_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/measure/measure_tests.cu" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measure/measure_tests.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/measure/thermometer/average_thermometer_tests.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/searcher/spatial_hashing_searcher_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/searcher/spatial_hashing_searcher_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solve/dsmc_tests.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solve/sph_tests.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/utilities/tests_utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/tests/utilities/tests_utils.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -189,10 +203,17 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="338" />
+    <option name="cachedIndexableFilesCount" value="332" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="CMakeLists.txt" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
@@ -208,9 +229,8 @@
     <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/examples/dynamic/main.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/examples/dynamic/main.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/examples/dynamic/main.cu" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/examples/solver/main.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/core/macros.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/domain/domain.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" root0="FORCE_HIGHLIGHTING" />
@@ -308,17 +328,14 @@
       <recent name="$PROJECT_DIR$/include/atlas/shuffle" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/examples/solver/dsmc/intake" />
+      <recent name="$PROJECT_DIR$/examples/solver/dsmc" />
       <recent name="$PROJECT_DIR$/include/atlas/solver/dsmc" />
       <recent name="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel" />
       <recent name="$PROJECT_DIR$/tests/measure" />
     </key>
   </component>
   <component name="RunManager" selected="Google Test.All in atlas_tests">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -682,7 +699,9 @@
       <workItem from="1776070534044" duration="3346000" />
       <workItem from="1776074235038" duration="77000" />
       <workItem from="1776074366306" duration="1395000" />
-      <workItem from="1776087357835" duration="7728000" />
+      <workItem from="1776087357835" duration="8166000" />
+      <workItem from="1776150283094" duration="6989000" />
+      <workItem from="1776160938640" duration="342000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

@@ -1,18 +1,9 @@
 #pragma once
 
 #include <atlas/measure/thermometer.h>
+#include <atlas/measure/thermometer/thermometer_operator.h>
 
 namespace atlas::system {
-
-template <typename T>
-struct VarianceThermometerOperator final {
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    measure(const DomainDeviceProbe<T>& domain,
-            const SpatialHashingProbe<T>& searcher,
-            const FluidDeviceProbe<T>& particle,
-            MeasureModeType measure_mode = MeasureModeType::All) const;
-};
-
 
 template <typename T>
 class VarianceThermometer final : public Thermometer<T> {
@@ -52,7 +43,7 @@ public:
     thermometer_operator() const noexcept;
 
 private:
-    atlas::system::ThermometerOperator<T> _thermometer_operator { ThermometerType::Variance };
+    atlas::system::ThermometerOperator<T> _thermometer_operator {};
 };
 
 template <typename T>
@@ -78,7 +69,7 @@ public:
 private:
     MeasureModeType _measure_mode { MeasureModeType::All };
 
-    atlas::system::ThermometerOperator<T> _thermometer_operator { ThermometerType::Variance };
+    atlas::system::ThermometerOperator<T> _thermometer_operator {};
 };
 }
 

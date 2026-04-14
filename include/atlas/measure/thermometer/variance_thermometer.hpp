@@ -150,7 +150,7 @@ VarianceThermometer<T>::measure(DomainDeviceProbe<T> domain,
 template <typename T>
 bool
 VarianceThermometer<T>::is_valid() const noexcept {
-    return _thermometer_operator.type == ThermometerType::Variance;
+    return true;
 }
 
 template <typename T>

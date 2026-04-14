@@ -346,10 +346,10 @@ Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
     shuffle_species(total_count);
 
     // Extract raw pointers for device-side execution.
-    const auto* units      = atlas::raw_pointer_cast(_units.data());
+    const auto* units      = atlas::raw_pointer_cast(this->_units.data());
     const auto* generators = atlas::raw_pointer_cast(generators_buf.data());
     const auto* particles  = atlas::raw_pointer_cast(particles_buf.data());
-    const auto* species    = atlas::raw_pointer_cast(_shuffled_species.data());
+    const auto* species    = atlas::raw_pointer_cast(this->_shuffled_species.data());
     const T temperature    = _temperature;
 
     // Track offsets into species array and destination buffer.
