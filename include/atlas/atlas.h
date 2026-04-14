@@ -59,6 +59,7 @@
 #include <atlas/measure/thermometer/thermometer_operator.h>
 #include <atlas/measure/thermometer/thermometer_type.h>
 #include <atlas/measure/thermometer/variance_thermometer.h>
+#include <atlas/measure/velocimeter.h>
 #include <atlas/memory/copy.h>
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>
@@ -68,6 +69,7 @@
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/parallel/parallel_sort.h>
 #include <atlas/random/default_random_engine.h>
+#include <atlas/random/seed.h>
 #include <atlas/random/uniform_real_distribution.h>
 #include <atlas/remove/remove.h>
 #include <atlas/sampling/sampling.h>

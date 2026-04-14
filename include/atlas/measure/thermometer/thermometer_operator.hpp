@@ -8,266 +8,259 @@ VarianceThermometerOperator<T>::measure(const DomainDeviceProbe<T>& domain,
                                         const SpatialHashingProbe<T>& searcher,
                                         const FluidDeviceProbe<T>& particle,
                                         const MeasureModeType measure_mode) const {
-    // Prepare an optional temporary field buffer.
+
+    // Cache the total number of cells in the domain.
     //
-    // Why this is needed:
-    // - MeasureModeType::Field or MeasureModeType::All updates the domain field directly
-    // - MeasureModeType::Fluid needs a field-like temperature source only as an intermediate
-    // - in Fluid-only mode, writing into the real domain field would be an unwanted side effect
-    DeviceBuffer<T> scratch_field {};
+    // This value defines:
+    // - how many field-temperature slots exist
+    // - how many independent cell-wise variance-temperature computations
+    //   will be launched below
+    const auto num_of_cells = domain.num_of_cells;
 
-    // Pointer to the field-temperature buffer that this operator will use.
+    // ---------------------------------------------------------------------
+    // Pass 1:
+    // Compute one temperature value per cell from the velocity variance of
+    // the particles assigned to that cell.
     //
-    // It points to:
-    // - domain.field_temperature when field updates are allowed
-    // - scratch_field when only particle temperatures should be updated
-    T* field = nullptr;
-
-    // Reuse the real domain field only when the selected mode explicitly allows
-    // field-side temperature updates.
-    if (measure_mode == MeasureModeType::Field || measure_mode == MeasureModeType::All) {
-        field = domain.field_temperature;
-    } else {
-        // In Fluid-only mode, allocate a temporary per-cell buffer so the cell
-        // temperatures can still be computed and sampled by particles without
-        // mutating the domain state.
-        scratch_field.resize(static_cast<std::size_t>(domain.num_of_cells));
-        field = atlas::raw_pointer_cast(scratch_field.data());
-    }
-
-    // Cache the particle position array pointer for repeated device access.
-    const Vector3<T>* const position = particle.pos;
-
-    // Cache the particle velocity array pointer.
+    // Conceptually, for each cell we compute:
     //
-    // Variance-based temperature is derived from velocity fluctuations relative
-    // to the local mean velocity.
-    const Vector3<T>* const velocity = particle.vel;
-
-    // Cache the particle property table pointer.
+    //   1) mass-weighted mean velocity
+    //        u = [sum_i m_i v_i] / [sum_i m_i]
     //
-    // This is used to read species-dependent particle mass values.
-    const MatrialProperties<T>* const particle_property = particle.particle_property;
-
-    // Cache the particle temperature array pointer.
+    //   2) thermal fluctuation energy
+    //        E_th = sum_i m_i |v_i - u|^2
     //
-    // This is only required when particle-side temperatures must be written.
-    T* const particle_temperature = particle.temperature;
-
-    // Cache the per-particle species-index array.
+    //   3) temperature estimate
+    //        T_cell = E_th / (3 k_B N)
     //
-    // Each particle refers to a species entry in particle_property.
-    const size_t* const species = particle.species;
-
-    // Cache the searcher's sorted particle-index array.
+    // where:
+    // - m_i is the mass of particle i
+    // - v_i is the velocity of particle i
+    // - N   is the number of valid particles in the cell
+    // - k_B is the Boltzmann constant
     //
-    // For each cell range [cell_start[cell], cell_end[cell]), this array stores
-    // the indices of the particles belonging to that cell.
-    const int* const indices = searcher.indices;
-
-    // Cache the array storing the first sorted-particle slot for each cell.
-    const int* const cell_start = searcher.cell_start;
-
-    // Cache the array storing the one-past-the-end sorted-particle slot for each cell.
-    const int* const cell_end = searcher.cell_end;
-
-    // Cache grid resolution for repeated coordinate-to-cell mapping.
-    const Vector3<int> grid_size = domain.grid_size;
-
-    // Cache domain lower corner used to convert world-space particle positions
-    // into grid-relative coordinates.
-    const Vector3<T> lower_corner = domain.lower_corner;
-
-    // Cache inverse cell size.
-    //
-    // Multiplying by inv_h converts world-space distance into cell-space distance.
-    const T inv_h = domain.inv_h;
-
-    // Cache total number of cells in the domain.
-    const int num_of_cells = domain.num_of_cells;
-
-    // Cache number of active particles.
-    const int particle_count = particle.particle_count;
-
-    // Precompute whether particle temperatures should be updated after the
-    // per-cell variance temperature has been computed.
-    const bool update_fluid = measure_mode == MeasureModeType::Fluid || measure_mode == MeasureModeType::All;
-
-    // Validate all essential runtime pointers and counts before launching any device work.
-    //
-    // Conditions checked:
-    // - field buffer must exist
-    // - particle position / velocity / property data must exist
-    // - species array and searcher arrays must exist
-    // - cell count must be positive
-    // - particle count must not be negative
-    // - particle temperature output array must exist when fluid update is requested
-    if (field == nullptr || position == nullptr || velocity == nullptr || particle_property == nullptr
-        || species == nullptr || indices == nullptr || cell_start == nullptr || cell_end == nullptr
-        || num_of_cells <= 0 || particle_count < 0
-        || (update_fluid && particle_temperature == nullptr)) {
-        return;
-    }
-
-    // Compute one temperature value per cell from the local velocity variance.
-    //
-    // High-level workflow per cell:
-    // 1. gather all particles belonging to the cell
-    // 2. compute the mass-weighted mean velocity
-    // 3. accumulate thermal kinetic energy around that mean
-    // 4. convert that thermal energy into temperature
+    // Each cell is processed independently, so this maps naturally to a
+    // device-side parallel_for over the cell index range.
+    // ---------------------------------------------------------------------
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
-            // Read the first particle slot belonging to this cell.
-            const int begin = cell_start[cell];
-
-            // A negative begin index means that the cell is empty.
+            // Read the first slot in the searcher's sorted particle-index array
+            // that belongs to this cell.
             //
-            // In that case, define the cell temperature as zero.
-            if (begin < 0) {
-                field[cell] = T(0);
-                return;
-            }
+            // Interpretation:
+            // - searcher.cell_start[cell] gives the inclusive begin position
+            //   of the particle range for this cell
+            // - a negative value typically means the cell is empty
+            const int begin = searcher.cell_start[cell];
 
-            // Read the one-past-the-end slot for this cell.
-            const int end = cell_end[cell];
+            // Read the one-past-the-end slot of this cell's particle range.
+            //
+            // The valid entries for this cell therefore lie in:
+            //   [begin, end)
+            const int end = searcher.cell_end[cell];
 
             // Accumulate the numerator of the mass-weighted mean velocity:
+            //
             //   sum_i (m_i * v_i)
+            //
+            // This is stored as a full 3D vector because velocity is vector-valued.
             Vector3<T> mean_velocity { T(0), T(0), T(0) };
 
             // Accumulate the denominator of the mass-weighted mean velocity:
+            //
             //   sum_i m_i
+            //
+            // This must be strictly positive before dividing.
             T momentum_weight_sum = T(0);
 
-            // Count valid particles in the cell.
+            // Count the number of valid particles that actually contribute to
+            // the cell statistics.
+            //
+            // This count is used later in the temperature normalization.
             int count = 0;
 
-            // First pass over the particles in the cell:
-            // - validate particle indices
-            // - read each particle mass from its species entry
+            // -------------------------------------------------------------
+            // First pass over all particles assigned to this cell.
+            //
+            // Goals of this pass:
+            // - validate indices
+            // - read each particle's species
+            // - read the corresponding mass
             // - accumulate mass-weighted velocity
             // - accumulate total mass
             // - count contributors
+            // -------------------------------------------------------------
             for (int k = begin; k < end; ++k) {
-                // Recover the original particle index from the searcher.
-                const int particle_index = indices[k];
 
-                // Skip any invalid or stale particle indices defensively.
-                if (particle_index < 0 || particle_index >= particle_count) continue;
+                // Recover the original particle index from the searcher's
+                // cell-sorted particle index array.
+                //
+                // The searcher stores particle indices indirectly so that
+                // particles can be grouped by cell without rearranging the
+                // particle storage itself.
+                const int particle_index = searcher.indices[k];
 
-                // Read the species index of the current particle.
-                const size_t species_index = species[particle_index];
+                // Defensively skip invalid indices.
+                //
+                // This protects against:
+                // - negative sentinel values
+                // - stale indices beyond the current active particle count
+                if (particle_index < 0 || particle_index >= particle.particle_count) continue;
 
-                // Read the species mass used for momentum weighting.
-                const T mass = particle_property[species_index].mass;
+                // Read the species id of the current particle.
+                //
+                // Each particle refers to one species entry in the particle
+                // property table.
+                const size_t species_index = particle.species[particle_index];
 
-                // Accumulate mass-weighted velocity.
-                mean_velocity += velocity[particle_index] * mass;
+                // Read the particle mass from the species property table.
+                //
+                // Variance temperature uses mass-weighted statistics, so mass
+                // is required for both the mean velocity and fluctuation energy.
+                const T mass = particle.particle_property[species_index].mass;
 
-                // Accumulate total mass.
+                // Accumulate mass-weighted velocity contribution:
+                //
+                //   mean_velocity_numerator += m_i * v_i
+                mean_velocity += particle.vel[particle_index] * mass;
+
+                // Accumulate total mass:
+                //
+                //   momentum_weight_sum += m_i
                 momentum_weight_sum += mass;
 
-                // Count one more valid particle.
+                // Record one additional valid contributing particle.
                 ++count;
             }
 
-            // If the cell has no valid particles, or total mass is not positive,
-            // no variance temperature can be computed.
+            // If there are no valid particles in the cell, or if total mass is
+            // not positive, then no meaningful variance temperature can be formed.
+            //
+            // In that case, define the field temperature for this cell as zero.
             if (count <= 0 || !(momentum_weight_sum > T(0))) {
-                field[cell] = T(0);
+                domain.field_temperature[cell] = T(0);
                 return;
             }
 
             // Finish the mass-weighted mean velocity computation:
+            //
             //   u = [sum_i m_i v_i] / [sum_i m_i]
+            //
+            // After this line, mean_velocity stores the cell's bulk velocity.
             mean_velocity /= momentum_weight_sum;
 
-            // Accumulate thermal kinetic energy relative to the local mean velocity:
+            // Accumulate the thermal fluctuation energy relative to the local
+            // mean velocity:
+            //
             //   sum_i m_i |v_i - u|^2
+            //
+            // This quantity measures the random kinetic motion around the bulk
+            // flow, which is the part interpreted as thermal energy.
             T thermal_energy_sum = T(0);
 
-            // Second pass over the particles in the cell:
-            // - compute each particle's fluctuating velocity
-            // - accumulate its mass-weighted squared fluctuation
+            // -------------------------------------------------------------
+            // Second pass over the particles in this cell.
+            //
+            // Goals of this pass:
+            // - compute fluctuating velocity relative to the cell mean
+            // - accumulate mass-weighted squared fluctuation
+            // -------------------------------------------------------------
             for (int k = begin; k < end; ++k) {
-                // Recover the original particle index from the searcher.
-                const int particle_index = indices[k];
 
-                // Skip invalid or stale particle indices defensively.
-                if (particle_index < 0 || particle_index >= particle_count) continue;
+                // Recover the original particle index from the searcher's
+                // cell-sorted index array.
+                const int particle_index = searcher.indices[k];
 
-                // Read the particle's species index.
-                const size_t species_index = species[particle_index];
+                // Again, skip invalid or stale indices defensively.
+                if (particle_index < 0 || particle_index >= particle.particle_count) continue;
+
+                // Read the particle's species id.
+                const size_t species_index = particle.species[particle_index];
 
                 // Read the corresponding species mass.
-                const T mass = particle_property[species_index].mass;
+                const T mass = particle.particle_property[species_index].mass;
 
-                // Compute velocity fluctuation relative to the cell mean.
-                const Vector3<T> dv = velocity[particle_index] - mean_velocity;
+                // Compute the particle's fluctuating velocity relative to the
+                // cell's mass-weighted mean velocity:
+                //
+                //   dv = v_i - u
+                const Vector3<T> dv = particle.vel[particle_index] - mean_velocity;
 
-                // Accumulate mass-weighted squared fluctuation:
-                //   m * (dv_x^2 + dv_y^2 + dv_z^2)
+                // Accumulate the mass-weighted squared fluctuation:
+                //
+                //   thermal_energy_sum += m_i * (dv_x^2 + dv_y^2 + dv_z^2)
+                //
+                // This corresponds to the total translational thermal energy-like
+                // contribution in the cell.
                 thermal_energy_sum += mass * (dv.x * dv.x + dv.y * dv.y + dv.z * dv.z);
             }
 
-            // Convert thermal kinetic energy into temperature.
+            // Convert the accumulated fluctuation energy into temperature.
             //
             // Formula used:
+            //
             //   T_cell = [sum_i m_i |v_i - u|^2] / [3 * k_B * N]
             //
-            // where:
-            // - u   is the mass-weighted mean velocity in the cell
-            // - k_B is the Boltzmann constant
-            // - N   is the number of valid particles in the cell
-            field[cell] = thermal_energy_sum
+            // Interpretation of factors:
+            // - numerator   : total mass-weighted velocity fluctuation energy
+            // - 3           : three translational degrees of freedom
+            // - k_B         : Boltzmann constant
+            // - N           : number of contributing particles
+            //
+            // The result is stored directly into the domain field-temperature array.
+            domain.field_temperature[cell] = thermal_energy_sum
                 / (static_cast<T>(3)
                    * static_cast<T>(atlas::boltzmann_constant)
                    * static_cast<T>(count));
         });
 
-    // If the selected mode requires particle-side temperature updates,
-    // sample the computed cell temperature back into each particle.
-    if (update_fluid) {
-        // Precompute the valid upper grid index used for clamping.
-        const Vector3<int> hi = grid_size - Vector3<int> { 1, 1, 1 };
+    // ---------------------------------------------------------------------
+    // Pass 2:
+    // If the selected mode requests particle-side temperature updates,
+    // propagate each cell's computed field temperature back to the particles
+    // belonging to that cell.
+    //
+    // Current behavior:
+    // - this branch executes only for MeasureModeType::Fluid
+    // - it does not execute for MeasureModeType::All in this implementation
+    //
+    // Important indexing note:
+    // - the loop variable k iterates over entries in searcher.indices
+    // - the correct particle slot is searcher.indices[k]
+    // - the code below writes particle.temperature[k], which assumes that
+    //   the searcher ordering and particle storage ordering coincide
+    // ---------------------------------------------------------------------
+    if (measure_mode == MeasureModeType::Fluid || measure_mode == MeasureModeType::All) {
 
-        // Precompute the valid lower grid index used for clamping.
-        const Vector3<int> lo { 0, 0, 0 };
-
-        // Process all particles independently.
-        //
-        // For each particle:
-        // 1. map world position into cell-space coordinates
-        // 2. floor to integer grid coordinates
-        // 3. clamp to valid domain bounds
-        // 4. flatten the 3D cell index into a linear index
-        // 5. copy the corresponding cell temperature into the particle
+        // Iterate over all cells again so each cell can broadcast its already
+        // computed field temperature to the particles assigned to it.
         atlas::parallel_for<ExecutionPolicy::device>(
             0,
-            particle_count,
-            [=] ATLAS_DEVICE(const int i) {
-                // Convert particle position from world space into relative cell-space coordinates.
-                const Vector3<T> rel = (position[i] - lower_corner) * inv_h;
+            num_of_cells,
+            [=] ATLAS_DEVICE(const int cell) {
+                // Read the first slot in the searcher's sorted particle-index
+                // array that belongs to this cell.
+                const int begin = searcher.cell_start[cell];
 
-                // Convert continuous cell-space coordinates into integer grid coordinates.
-                Vector3<int> ijk = atlas::math::floor(rel).template cast_to<int>();
+                // Read the one-past-the-end slot for this cell.
+                const int end = searcher.cell_end[cell];
 
-                // Clamp the grid coordinates so particles slightly outside the
-                // domain still map to the nearest valid cell.
-                ijk = atlas::math::clamp(ijk, lo, hi);
+                // Iterate over all searcher entries belonging to the current cell.
+                for (int k = begin; k < end; ++k) {
 
-                // Flatten the 3D grid coordinate into the field array index.
-                const int cell = ijk.x + ijk.y * grid_size.x + ijk.z * grid_size.x * grid_size.y;
-
-                // Assign the sampled cell temperature to the particle.
-                particle_temperature[i] = field[cell];
+                    // Assign the cell temperature to the particle-temperature array.
+                    //
+                    // Intended meaning:
+                    // - every particle in this cell receives the same temperature,
+                    //   namely the variance-derived temperature of the cell
+                    const int particle_index             = searcher.indices[k];
+                    particle.temperature[particle_index] = domain.field_temperature[cell];
+                }
             });
     }
 }
-
 template <typename T>
 ThermometerOperator<T>::ThermometerOperator() noexcept
     : type(ThermometerType::Variance) {

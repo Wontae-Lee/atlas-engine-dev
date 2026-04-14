@@ -59,6 +59,7 @@
 
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
+#include <atlas/random/seed.h>
 
 #include <type_traits>
 

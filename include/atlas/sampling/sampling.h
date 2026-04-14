@@ -3,6 +3,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 #include <atlas/random/default_random_engine.h>
+#include <atlas/random/seed.h>
 #include <atlas/random/uniform_real_distribution.h>
 #include <cmath>
 
@@ -334,5 +335,79 @@ sample_axis_count(T lower, T upper, T spacing) noexcept {
     return static_cast<int>(std::floor(extent / spacing)) + 1;
 }
 
+/**
+ * @brief Deterministically map a 3D seed and salt to the unit interval.
+ *
+ * @tparam T Floating-point scalar type.
+ *
+ * @param seed Three-dimensional input seed used to generate the hashed value.
+ * @param salt Additional scalar perturbation used to decorrelate repeated queries
+ *             derived from the same geometric seed.
+ * @return Deterministic pseudo-random scalar in the interval [0, 1).
+ *
+ * @details
+ * This utility provides a lightweight hash-like mapping from geometric input
+ * data to a scalar sample in the unit interval. It is intended for situations
+ * where:
+ * - a small amount of pseudo-random variation is needed,
+ * - maintaining explicit random-engine state is undesirable,
+ * - reproducibility for identical inputs is required.
+ *
+ * The implementation is intentionally inexpensive and follows a common
+ * "hash via trigonometric scrambling" pattern:
+ * @f[
+ * \phi = c_x x + c_y y + c_z z + s
+ * @f]
+ * @f[
+ * v = \sin(\phi)\,k
+ * @f]
+ * @f[
+ * u = v - \lfloor v \rfloor
+ * @f]
+ *
+ * where:
+ * - `(x, y, z)` are the components of @p seed,
+ * - `s` is @p salt,
+ * - `c_x`, `c_y`, `c_z`, and `k` are fixed scrambling constants.
+ *
+ * This function is deterministic rather than statistically rigorous. It should
+ * therefore be viewed as a convenient pseudo-random hashing utility, not as a
+ * substitute for a high-quality random number generator in Monte Carlo or
+ * numerically sensitive stochastic simulation.
+ *
+ * Typical use cases include:
+ * - generating reproducible hemisphere-sampling inputs from geometric state,
+ * - selecting between deterministic mixed interaction modes,
+ * - introducing inexpensive decorrelated variation without RNG storage.
+ *
+ * @note
+ * The output is designed to lie in [0, 1) under normal finite inputs.
+ *
+ * @warning
+ * This routine does not provide formal guarantees about randomness quality,
+ * independence, or low-discrepancy behavior.
+ */
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+sample_hashed_unit_interval(const Vector3<T>& seed, const T salt) noexcept {
+    /// Combine the spatial seed and salt into a single scalar phase.
+    ///
+    /// The constants are chosen only to scramble the input coordinates and to
+    /// reduce obvious linear structure in the mapped result.
+    const T phase = seed.x * T(atlas::seed::random_hash_phase_coeff_x)
+        + seed.y * T(atlas::seed::random_hash_phase_coeff_y)
+        + seed.z * T(atlas::seed::random_hash_phase_coeff_z)
+        + salt;
+
+    /// Apply a nonlinear transform so nearby seeds do not map linearly.
+    ///
+    /// Multiplication by a large constant expands the transformed value before
+    /// extracting its fractional component.
+    const T value = std::sin(phase) * T(atlas::seed::random_hash_value_scale);
+
+    /// Keep only the fractional part, which yields a deterministic value in
+    /// the unit interval for ordinary finite inputs.
+    return value - std::floor(value);
+}
 
 } // namespace atlas::sampling

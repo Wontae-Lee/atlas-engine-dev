@@ -79,7 +79,7 @@ struct MaxwellBoltzmannGenerateOperator final {
      * @details
      * This seed controls the reproducibility of the generated velocity samples.
      */
-    unsigned int seed = 0u;
+    unsigned int seed = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed);
 
     /**
      * @brief Mean drift velocity added to the sampled thermal fluctuation.
@@ -109,7 +109,7 @@ struct MaxwellBoltzmannGenerateOperator final {
      * @param bulk_velocity Mean drift velocity of the generated distribution.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit MaxwellBoltzmannGenerateOperator(
-        unsigned int seed               = 0u,
+        unsigned int seed               = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed),
         const Vector3<T>& bulk_velocity = Vector3<T>(T(0), T(0), T(0))) noexcept;
 
     /**
@@ -202,7 +202,7 @@ public:
     MaxwellBoltzmannGenerator(T temperature,
                               T molecular_mass,
                               const Vector3<T>& bulk_velocity = Vector3<T>(T(0), T(0), T(0)),
-                              unsigned int seed               = 0u) noexcept;
+                              unsigned int seed               = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed)) noexcept;
 
     /**
      * @brief Generate a Maxwell-Boltzmann-distributed velocity sample on the host.
@@ -441,7 +441,7 @@ private:
     /**
      * @brief Pending deterministic random seed.
      */
-    unsigned int _seed = 0u;
+    unsigned int _seed = atlas::seed::default_unsigned_int_seed;
 };
 
 } // namespace atlas::system

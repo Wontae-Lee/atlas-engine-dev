@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file variance_thermometer_operator.h
+ * @file thermometer_operator.h
  * @brief Declares a variance-based thermometer operator and its tagged wrapper for runtime measurement dispatch.
  *
  * @details

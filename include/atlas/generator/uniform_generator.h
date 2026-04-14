@@ -74,7 +74,7 @@ struct UniformGenerateOperator final {
     /**
      * @brief Deterministic seed used to initialize the random engine.
      */
-    unsigned int seed = 0u;
+    unsigned int seed = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed);
 
     /**
      * @brief Internal pseudo-random engine used for sampling.
@@ -90,7 +90,8 @@ struct UniformGenerateOperator final {
      *
      * @param seed Deterministic seed for reproducible sampling.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit UniformGenerateOperator(unsigned int seed = 0u) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit UniformGenerateOperator(
+        unsigned int seed = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed)) noexcept;
 
     /**
      * @brief Generate a velocity sample with uniformly distributed components.
@@ -172,7 +173,10 @@ public:
      * @param seed Deterministic random seed.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
-    UniformGenerator(T min_value, T max_value, unsigned int seed = 0u) noexcept;
+    UniformGenerator(
+        T min_value,
+        T max_value,
+        unsigned int seed = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed)) noexcept;
 
     /**
      * @brief Generate a uniformly distributed velocity sample on the host.
@@ -346,7 +350,7 @@ private:
     /**
      * @brief Pending deterministic seed.
      */
-    unsigned int _seed = 0u;
+    unsigned int _seed = atlas::seed::default_unsigned_int_seed;
 };
 
 } // namespace atlas::system

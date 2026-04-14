@@ -30,8 +30,15 @@ MatrialProperties<T>::Builder::build() const {
     // Otherwise fall back to `MaterialType::Molecule` as the default.
     p.type = _type.value_or(MaterialType::Molecule);
 
-    // Mass is mandatory and validated before reaching this point.
-    p.mass = *_mass;
+    // Mass or molecular mass and statistical weight must be provided
+    if (!_mass.has_value() && (_molecular_mass.has_value() && _statistical_weight.has_value())) {
+        p.mass = *_molecular_mass * *_statistical_weight;
+    } else {
+        p.mass = *_mass;
+    }
+
+    // Copy the molecular mass when provided.
+    p.molecular_mass = _molecular_mass;
 
     // Copy statistical or weighting metadata.
     p.statistical_weight = _statistical_weight;
@@ -91,6 +98,21 @@ MatrialProperties<T>::Builder::with_mass(T m) {
 
     // Store the validated mass in the builder.
     _mass = m;
+    return *this;
+}
+
+template <typename T>
+typename MatrialProperties<T>::Builder&
+MatrialProperties<T>::Builder::with_molecular_mass(T m) {
+    // Reject non-positive molecular mass immediately because it must be
+    // physically meaningful when provided.
+    if (!(m > T(0))) {
+        throw std::invalid_argument(
+            "MatrialProperties::Builder: molecular_mass must be > 0.");
+    }
+
+    // Store the validated molecular mass in the builder.
+    _molecular_mass = m;
     return *this;
 }
 
@@ -212,9 +234,15 @@ MatrialProperties<T>::Builder::validate() const {
     // Mass is the only mandatory parameter in the current builder contract.
     //
     // Without it, the material-properties object is considered incomplete.
-    if (!_mass.has_value()) {
+    if ((!_mass.has_value()) || (!_molecular_mass.has_value() && !_statistical_weight.has_value())) {
         throw std::invalid_argument(
-            "MatrialProperties::Builder: mass is required.");
+            "MatrialProperties::Builder: either mass or molecular_mass and statistical_weight must be provided.");
+    }
+
+    if (_molecular_mass.has_value() && _statistical_weight.has_value()
+        && (*_molecular_mass * *_statistical_weight != *_mass)) {
+        throw std::invalid_argument(
+            "MatrialProperties::Builder: mass must equal molecular_mass * statistical_weight.");
     }
 }
 

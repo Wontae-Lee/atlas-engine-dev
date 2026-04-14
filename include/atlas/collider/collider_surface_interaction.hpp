@@ -95,28 +95,6 @@ ColliderSurfaceInteraction<T>::temperature() const noexcept {
 }
 
 template <typename T>
-T
-ColliderSurfaceInteraction<T>::hashed_unit_interval(const Vector3<T>& seed, const T salt) noexcept {
-    // Map the input seed and salt deterministically into the unit interval [0, 1).
-    //
-    // Design intent:
-    // - produce inexpensive pseudo-random variation without maintaining RNG state
-    // - generate decorrelated values from geometric inputs such as directions
-    // - keep the result deterministic for identical inputs
-    //
-    // The specific constants are chosen only to scramble the input phase space;
-    // they do not imply any rigorous statistical guarantee.
-    const T phase = seed.x * T(12.9898) + seed.y * T(78.233) + seed.z * T(37.719) + salt;
-
-    // Apply a nonlinear transform so nearby seeds do not map linearly.
-    const T value = std::sin(phase) * T(43758.5453);
-
-    // Remove the integer part and keep only the fractional component,
-    // yielding a value in [0, 1).
-    return value - std::floor(value);
-}
-
-template <typename T>
 Vector3<T>
 ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
                                           const Vector3<T>& normal) const noexcept {
@@ -138,8 +116,10 @@ ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
     // geometric state. These values drive hemisphere sampling.
     //
     // `u1` and `u2` serve as canonical random inputs for diffuse-direction samplers.
-    const T u1 = hashed_unit_interval(incident, T(0.31));
-    const T u2 = hashed_unit_interval(normal + incident, T(1.73));
+    const T u1 = atlas::sampling::sample_hashed_unit_interval(incident,
+                                                              T(atlas::seed::random_hash_salt_diffuse_u1));
+    const T u2 = atlas::sampling::sample_hashed_unit_interval(normal + incident,
+                                                              T(atlas::seed::random_hash_salt_diffuse_u2));
 
     Vector3<T> diffuse_dir {};
 
@@ -162,7 +142,9 @@ ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
     // Interpretation:
     // - probability of diffuse event  = `_tmac`
     // - probability of specular event = `1 - _tmac`
-    const T mix = hashed_unit_interval(incident + normal * T(17), T(2.41));
+    const T mix = atlas::sampling::sample_hashed_unit_interval(
+        incident + normal * T(atlas::seed::random_hash_normal_scale_for_mix),
+        T(atlas::seed::random_hash_salt_mix));
 
     // Select the outgoing direction according to the accommodation coefficient.
     const Vector3<T> out_dir = (mix < _tmac) ? diffuse_dir : specular_dir;

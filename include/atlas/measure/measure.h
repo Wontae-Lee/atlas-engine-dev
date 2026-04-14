@@ -199,5 +199,4 @@ using MeasureHostPtr = atlas::host_shared_ptr<atlas::system::Measure<T>>;
  */
 template <typename T>
 using MeasureDevicePtr = atlas::device_shared_ptr<atlas::system::Measure<T>>;
-
 } // namespace atlas

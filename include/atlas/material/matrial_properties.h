@@ -186,6 +186,15 @@ public:
     T mass {};
 
     /**
+     * @brief Optional molecular mass.
+     *
+     * @details
+     * May represent the mass of a single physical molecule or particle represented
+     * by the material record.
+     */
+    std::optional<T> molecular_mass;
+
+    /**
      * @brief Optional statistical weight.
      *
      * @details
@@ -403,6 +412,15 @@ public:
     with_mass(T m);
 
     /**
+     * @brief Set the molecular mass.
+     *
+     * @param m Molecular mass value to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_molecular_mass(T m);
+
+    /**
      * @brief Set the statistical weight.
      *
      * @param w Statistical weight to stage.
@@ -548,6 +566,11 @@ private:
      * @brief Pending material mass.
      */
     std::optional<T> _mass;
+
+    /**
+     * @brief Pending molecular mass.
+     */
+    std::optional<T> _molecular_mass;
 
     /**
      * @brief Pending statistical weight.

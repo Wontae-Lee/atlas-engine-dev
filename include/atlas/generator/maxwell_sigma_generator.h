@@ -71,7 +71,7 @@ struct MaxwellSigmaGenerateOperator final {
      * @details
      * Controls reproducibility of generated samples.
      */
-    unsigned int seed = 0u;
+    unsigned int seed = atlas::seed::default_unsigned_int_seed;
 
     /**
      * @brief Internal pseudo-random engine used for velocity sampling.
@@ -90,7 +90,8 @@ struct MaxwellSigmaGenerateOperator final {
      *
      * @param seed Deterministic seed used for reproducible sampling.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit MaxwellSigmaGenerateOperator(unsigned int seed = 0u) noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit MaxwellSigmaGenerateOperator(
+        unsigned int seed = atlas::seed::default_unsigned_int_seed) noexcept;
 
     /**
      * @brief Generate a velocity sample using the supplied shared sigma.
@@ -170,7 +171,9 @@ public:
      * @param seed Deterministic random seed.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
-    MaxwellSigmaGenerator(T sigma, unsigned int seed = 0u) noexcept;
+    MaxwellSigmaGenerator(
+        T sigma,
+        unsigned int seed = atlas::seed::default_unsigned_int_seed) noexcept;
 
     /**
      * @brief Generate a Maxwell-sigma-distributed velocity sample on the host.
@@ -361,7 +364,7 @@ private:
     /**
      * @brief Pending deterministic random seed.
      */
-    unsigned int _seed = 0u;
+    unsigned int _seed = atlas::seed::default_unsigned_int_seed;
 };
 
 } // namespace atlas::system

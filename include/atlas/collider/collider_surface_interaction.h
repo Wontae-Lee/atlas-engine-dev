@@ -279,29 +279,6 @@ public:
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     operator()(const Vector3<T>& incident, const Vector3<T>& normal) const noexcept;
 
-    /**
-     * @brief Generate a deterministic pseudo-random scalar in \f$[0,1)\f$.
-     *
-     * @details
-     * This helper produces a repeatable pseudo-random value from a vector seed
-     * and an additional scalar salt.
-     *
-     * It is intended for use in backend-safe scattering logic where:
-     * - shared RNG state is undesirable,
-     * - reproducibility is important,
-     * - low-cost stateless randomness is sufficient.
-     *
-     * Typical inputs may include position, velocity, surface normal, or a
-     * collision-specific salt so that repeated evaluations remain decorrelated
-     * enough for diffuse sampling.
-     *
-     * @param seed Vector-valued seed used to derive the hashed value.
-     * @param salt Additional scalar perturbation to decorrelate samples.
-     * @return Deterministic pseudo-random scalar in \f$[0,1)\f$.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    hashed_unit_interval(const Vector3<T>& seed, T salt) noexcept;
-
 private:
     /**
      * @brief Speed scaling applied after the outgoing direction is chosen.
