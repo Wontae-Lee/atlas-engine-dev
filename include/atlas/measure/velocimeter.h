@@ -18,12 +18,14 @@ public:
     ~Velocimeter() override = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    measure(DomainDeviceProbe<T> domain,
+    measure(Universe<T>& domain,
             SpatialHashingProbe<T> searcher,
-            FluidDeviceProbe<T> particle) override = 0;
+            FluidDeviceProbe<T> particle) override
+        = 0;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
-    is_valid() const noexcept = 0;
+    is_valid() const noexcept
+        = 0;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_measure_mode(MeasureModeType measure_mode) noexcept;
@@ -35,7 +37,7 @@ protected:
     MeasureModeType _measure_mode { MeasureModeType::All };
 };
 
-} // namespace atlas::system
+}
 
 namespace atlas {
 
@@ -48,6 +50,6 @@ using VelocimeterHostPtr = atlas::host_shared_ptr<atlas::system::Velocimeter<T>>
 template <typename T>
 using VelocimeterDevicePtr = atlas::device_shared_ptr<atlas::system::Velocimeter<T>>;
 
-} // namespace atlas
+}
 
 #include <atlas/measure/velocimeter.hpp>

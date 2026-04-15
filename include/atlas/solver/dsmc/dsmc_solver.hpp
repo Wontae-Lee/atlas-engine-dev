@@ -50,7 +50,7 @@ DsmcSolver<T>::collision_operator() noexcept {
 
 template <typename T>
 void
-DsmcSolver<T>::apply_field_force(DomainDeviceProbe<T> domain,
+DsmcSolver<T>::apply_field_force(Universe<T>& domain,
                                  FluidDeviceProbe<T> particle) const {
     if (domain.field_force == nullptr || particle.pos == nullptr || particle.vel == nullptr || particle.particle_count <= 0) {
         return;

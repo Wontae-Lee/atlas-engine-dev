@@ -24,11 +24,10 @@ DsmcNtcSolver<T>::builder() noexcept {
 
 template <typename T>
 void
-DsmcNtcSolver<T>::solve(DomainDeviceProbe<T>& domain,
+DsmcNtcSolver<T>::solve(Universe<T>& domain,
                         SpatialHashingProbe<T>& searcher,
                         FluidDeviceProbe<T>& particle,
                         CodecDeviceProbe<T>&) {
-
 }
 
 template <typename T>

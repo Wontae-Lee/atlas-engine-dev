@@ -2,10 +2,10 @@
 
 #include <atlas/codec/codec.h>
 #include <atlas/core/macros.h>
-#include <atlas/domain/domain.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/universe/universe.h>
 
 namespace atlas::system {
 
@@ -16,7 +16,7 @@ public:
     virtual ~Solver() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    solve(DomainDeviceProbe<T>& domain,
+    solve(Universe<T>& domain,
           SpatialHashingProbe<T>& searcher,
           FluidDeviceProbe<T>& particle,
           CodecDeviceProbe<T>& codec)

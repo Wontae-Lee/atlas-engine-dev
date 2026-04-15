@@ -30,4 +30,4 @@ def remove_comments_in_directory(directory):
 
 
 if __name__ == "__main__":
-    remove_comments_in_directory('../temp')
+    remove_comments_in_directory('../include/atlas')

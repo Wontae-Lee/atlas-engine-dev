@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas::physics {
 
 template <typename T>
 constexpr Sync<T>::Sync() noexcept
@@ -20,7 +20,7 @@ constexpr Sync<T>::Sync(const Vector3<T>& translation_,
 }
 
 template <typename T>
-Sync<T>::Sync(const atlas::system::SyncOperator<T>& op) noexcept
+Sync<T>::Sync(const atlas::physics::SyncOperator<T>& op) noexcept
 
     : sync_operator(op) {
 }
@@ -35,7 +35,6 @@ template <typename T>
 Vector3<T>
 Sync<T>::sync_to_world(const Vector3<T>& local_point) const noexcept {
 
-    // Return-by-value convenience wrapper over the in-place operator API.
     Vector3<T> out;
     sync_operator.sync_to_world(local_point, out);
     return out;
@@ -45,7 +44,6 @@ template <typename T>
 Vector3<T>
 Sync<T>::sync_to_local(const Vector3<T>& world_point) const noexcept {
 
-    // Return-by-value convenience wrapper over the in-place operator API.
     Vector3<T> out;
     sync_operator.sync_to_local(world_point, out);
     return out;
@@ -55,7 +53,6 @@ template <typename T>
 Vector3<T>
 Sync<T>::sync_dir_to_world(const Vector3<T>& local_dir) const noexcept {
 
-    // Direction transforms ignore translation and rotate only.
     Vector3<T> out;
     sync_operator.sync_dir_to_world(local_dir, out);
     return out;
@@ -65,7 +62,6 @@ template <typename T>
 Vector3<T>
 Sync<T>::sync_dir_to_local(const Vector3<T>& world_dir) const noexcept {
 
-    // Direction transforms ignore translation and rotate only.
     Vector3<T> out;
     sync_operator.sync_dir_to_local(world_dir, out);
     return out;
@@ -136,14 +132,14 @@ Sync<T>::set_pose(const Vector3<T>& translation_,
 }
 
 template <typename T>
-const atlas::system::SyncOperator<T>&
+const atlas::physics::SyncOperator<T>&
 Sync<T>::sync() const noexcept {
 
     return sync_operator;
 }
 
 template <typename T>
-atlas::system::SyncOperator<T>
+atlas::physics::SyncOperator<T>
 Sync<T>::make_sync_operator() const noexcept {
 
     return sync_operator;
@@ -162,9 +158,9 @@ Sync<T>::Builder::with_rigid_pose(const Vector3<T>& translation_,
 
 template <typename T>
 typename Sync<T>::Builder&
-Sync<T>::Builder::with_sync_operator(const atlas::system::SyncOperator<T>& op) noexcept {
+Sync<T>::Builder::with_sync_operator(const atlas::physics::SyncOperator<T>& op) noexcept {
 
-    _operator        = op;
+    _operator          = op;
     _has_sync_operator = true;
     return *this;
 }
@@ -215,7 +211,6 @@ Sync<T>::Builder::validate() const {
         + orientation.y * orientation.y
         + orientation.z * orientation.z);
 
-    // Non-unit quaternions are still accepted, but the caller gets an explicit warning.
     if (std::abs(norm - T(1)) > T(1e-3)) {
         atlas::logger::warn()
             << "Sync::Builder: quaternion not normalized.";
@@ -231,14 +226,13 @@ Sync<T>::Builder::build() const {
     Sync<T> s {};
 
     if (_has_sync_operator) {
-        // Reuse the caller-provided operator verbatim when one is supplied.
+
         s.sync_operator = _operator;
     } else {
-        // Otherwise build the operator from the stored rigid pose.
-        s.sync_operator = atlas::system::SyncOperator<T>(_translation, _orientation);
+
+        s.sync_operator = atlas::physics::SyncOperator<T>(_translation, _orientation);
     }
 
-    // Ensure cached matrices match the final pose before the Sync is returned.
     s.rebuild_matrices();
     return s;
 }

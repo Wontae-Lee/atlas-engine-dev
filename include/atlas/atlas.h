@@ -10,7 +10,6 @@
 #include <atlas/collider/collider_surface_interaction.h>
 #include <atlas/container/container.h>
 #include <atlas/core/macros.h>
-#include <atlas/domain/domain.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/generator/generate_operator.h>
 #include <atlas/generator/generator.h>
@@ -97,3 +96,4 @@
 #include <atlas/transform/transform_reduce.h>
 #include <atlas/tuple/tuple.h>
 #include <atlas/unit/unit.h>
+#include <atlas/universe/universe.h>

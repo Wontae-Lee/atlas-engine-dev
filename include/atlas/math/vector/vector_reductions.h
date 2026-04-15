@@ -83,7 +83,7 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     auto
     dot(const EA& a, const EB& b) noexcept {
     using T             = std::common_type_t<expr_value_t<EA>,
-                                 expr_value_t<EB>>;
+                                             expr_value_t<EB>>;
     const auto& x       = a();
     const auto& y       = b();
     const std::size_t n = x.size();

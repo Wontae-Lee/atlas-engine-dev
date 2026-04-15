@@ -368,7 +368,7 @@ public:
      */
     void
     encode(const system::FluidDeviceProbe<T>&,
-           const system::DomainDeviceProbe<T>&,
+           const system::Universe<T>&,
            const system::SpatialHashingProbe<T>&,
            system::CodecDeviceProbe<T>&) override {
         encode_called = true;
@@ -379,7 +379,7 @@ public:
      */
     void
     decode(const system::FluidDeviceProbe<T>&,
-           const system::DomainDeviceProbe<T>&,
+           const system::Universe<T>&,
            const system::SpatialHashingProbe<T>&,
            system::CodecDeviceProbe<T>&) override {
         decode_called = true;
@@ -418,7 +418,7 @@ public:
      * @brief Increment the invocation counter.
      */
     void
-    measure(system::DomainDeviceProbe<T>, system::SpatialHashingProbe<T>, system::FluidDeviceProbe<T>) override {
+    measure(system::Universe<T>&, system::SpatialHashingProbe<T>, system::FluidDeviceProbe<T>) override {
         ++call_count;
     }
 

@@ -19,4 +19,4 @@ Velocimeter<T>::measure_mode() const noexcept {
     return _measure_mode;
 }
 
-} // namespace atlas::system
+}

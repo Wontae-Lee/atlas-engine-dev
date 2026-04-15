@@ -22,7 +22,7 @@ public:
     builder() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    solve(DomainDeviceProbe<T>& domain,
+    solve(Universe<T>& domain,
           SpatialHashingProbe<T>& searcher,
           FluidDeviceProbe<T>& particle,
           CodecDeviceProbe<T>& codec) override;

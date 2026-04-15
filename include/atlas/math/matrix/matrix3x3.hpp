@@ -11,10 +11,6 @@ constexpr Matrix<T, 3, 3>::Matrix() noexcept
     , m20(T(0))
     , m21(T(0))
     , m22(T(0)) {
-    // Default-construct to the 3x3 zero matrix.
-    // [ 0 0 0 ]
-    // [ 0 0 0 ]
-    // [ 0 0 0 ]
 }
 template <typename T>
 constexpr Matrix<T, 3, 3>::Matrix(T s) noexcept
@@ -27,10 +23,6 @@ constexpr Matrix<T, 3, 3>::Matrix(T s) noexcept
     , m20(T(0))
     , m21(T(0))
     , m22(s) {
-    // Diagonal constructor: builds s * I.
-    // [ s 0 0 ]
-    // [ 0 s 0 ]
-    // [ 0 0 s ]
 }
 template <typename T>
 constexpr Matrix<T, 3, 3>::Matrix(
@@ -46,15 +38,10 @@ constexpr Matrix<T, 3, 3>::Matrix(
     , m20(a20)
     , m21(a21)
     , m22(a22) {
-    // Explicit element constructor in row-major order:
-    // [ a00 a01 a02 ]
-    // [ a10 a11 a12 ]
-    // [ a20 a21 a22 ]
 }
 template <typename T>
 Matrix<T, 3, 3>::Matrix(std::initializer_list<T> list) noexcept {
-    // Initialize from { ... } in row-major order.
-    // Missing values default to 0; extra values are ignored.
+
     const T* it = list.begin();
     m00         = (it != list.end()) ? *it++ : T(0);
     m01         = (it != list.end()) ? *it++ : T(0);
@@ -69,8 +56,7 @@ Matrix<T, 3, 3>::Matrix(std::initializer_list<T> list) noexcept {
 template <typename T>
 template <typename Expression>
 Matrix<T, 3, 3>::Matrix(const MatrixExpression<T, Expression>& expr) noexcept {
-    // Expression-template materialization:
-    // Evaluates a lazy matrix expression into this concrete 3x3 storage.
+
     const Expression& e = expr();
     m00                 = static_cast<T>(e(0, 0));
     m01                 = static_cast<T>(e(0, 1));
@@ -85,77 +71,73 @@ Matrix<T, 3, 3>::Matrix(const MatrixExpression<T, Expression>& expr) noexcept {
 template <typename T>
 std::size_t
 Matrix<T, 3, 3>::rows() noexcept {
-    // Compile-time fixed shape query.
+
     return 3;
 }
 template <typename T>
 std::size_t
 Matrix<T, 3, 3>::cols() noexcept {
-    // Compile-time fixed shape query.
+
     return 3;
 }
 template <typename T>
 std::size_t
 Matrix<T, 3, 3>::size() noexcept {
-    // Total element count: rows * cols.
+
     return 9;
 }
 template <typename T>
 const T*
 Matrix<T, 3, 3>::data() const noexcept {
-    // Returns a pointer to the contiguous storage (m00..m22).
-    // Layout in memory is row-major:
-    //   [m00 m01 m02 m10 m11 m12 m20 m21 m22]
+
     return &m00;
 }
 template <typename T>
 T*
 Matrix<T, 3, 3>::data() noexcept {
-    // Mutable pointer to contiguous storage.
+
     return &m00;
 }
 template <typename T>
 const T&
 Matrix<T, 3, 3>::operator[](std::size_t i) const noexcept {
-    // Flat indexing (no bounds check), row-major.
+
     return (&m00)[i];
 }
 template <typename T>
 T&
 Matrix<T, 3, 3>::operator[](std::size_t i) noexcept {
-    // Mutable flat indexing.
+
     return (&m00)[i];
 }
 template <typename T>
 const T&
 Matrix<T, 3, 3>::at(std::size_t r, std::size_t c) const noexcept {
-    // 2D access mapped to row-major linear index:
-    // idx = r * 3 + c.
-    // (No bounds check in this implementation.)
+
     return (&m00)[r * 3 + c];
 }
 template <typename T>
 T&
 Matrix<T, 3, 3>::at(std::size_t r, std::size_t c) noexcept {
-    // Mutable 2D access in row-major layout.
+
     return (&m00)[r * 3 + c];
 }
 template <typename T>
 const T&
 Matrix<T, 3, 3>::operator()(std::size_t r, std::size_t c) const noexcept {
-    // Operator form of 2D access. Same mapping as at(r,c).
+
     return (&m00)[r * 3 + c];
 }
 template <typename T>
 T&
 Matrix<T, 3, 3>::operator()(std::size_t r, std::size_t c) noexcept {
-    // Mutable operator form of 2D access.
+
     return (&m00)[r * 3 + c];
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::set_zero() noexcept {
-    // Set all entries to zero.
+
     m00 = m01 = m02 = T(0);
     m10 = m11 = m12 = T(0);
     m20 = m21 = m22 = T(0);
@@ -163,10 +145,7 @@ Matrix<T, 3, 3>::set_zero() noexcept {
 template <typename T>
 void
 Matrix<T, 3, 3>::set_identity() noexcept {
-    // Set to identity matrix I:
-    // [ 1 0 0 ]
-    // [ 0 1 0 ]
-    // [ 0 0 1 ]
+
     m00 = T(1);
     m01 = T(0);
     m02 = T(0);
@@ -183,7 +162,7 @@ Matrix<T, 3, 3>::set(
     T a00, T a01, T a02,
     T a10, T a11, T a12,
     T a20, T a21, T a22) noexcept {
-    // Overwrite all entries explicitly (row-major).
+
     m00 = a00;
     m01 = a01;
     m02 = a02;
@@ -197,94 +176,86 @@ Matrix<T, 3, 3>::set(
 template <typename T>
 void
 Matrix<T, 3, 3>::add(T s) noexcept {
-    // Element-wise scalar add:
-    // A_ij += s
+
     for (int i = 0; i < 9; ++i) (&m00)[i] += s;
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::sub(T s) noexcept {
-    // Element-wise scalar subtract:
-    // A_ij -= s
+
     for (int i = 0; i < 9; ++i) (&m00)[i] -= s;
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::mul(T s) noexcept {
-    // Element-wise scalar multiply:
-    // A_ij *= s
+
     for (int i = 0; i < 9; ++i) (&m00)[i] *= s;
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::div(T s) noexcept {
-    // Element-wise scalar divide using a reciprocal:
-    // A_ij /= s  ==>  A_ij *= (1/s)
-    // Caller must ensure s != 0.
+
     const T inv = T(1) / s;
     for (int i = 0; i < 9; ++i) (&m00)[i] *= inv;
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::add(const Matrix& m) noexcept {
-    // Element-wise matrix addition (Hadamard sum):
-    // A_ij += M_ij
+
     for (int i = 0; i < 9; ++i) (&m00)[i] += (&m.m00)[i];
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::sub(const Matrix& m) noexcept {
-    // Element-wise matrix subtraction:
-    // A_ij -= M_ij
+
     for (int i = 0; i < 9; ++i) (&m00)[i] -= (&m.m00)[i];
 }
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator+=(T s) noexcept {
-    // In-place scalar add.
+
     add(s);
     return *this;
 }
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator-=(T s) noexcept {
-    // In-place scalar subtract.
+
     sub(s);
     return *this;
 }
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator*=(T s) noexcept {
-    // In-place scalar multiply.
+
     mul(s);
     return *this;
 }
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator/=(T s) noexcept {
-    // In-place scalar divide.
+
     div(s);
     return *this;
 }
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator+=(const Matrix& m) noexcept {
-    // In-place element-wise add.
+
     add(m);
     return *this;
 }
 template <typename T>
 Matrix<T, 3, 3>&
 Matrix<T, 3, 3>::operator-=(const Matrix& m) noexcept {
-    // In-place element-wise subtract.
+
     sub(m);
     return *this;
 }
 template <typename T>
 bool
 Matrix<T, 3, 3>::operator==(const Matrix& o) const noexcept {
-    // Exact component-wise equality.
-    // For floating point, prefer approximate comparisons at higher level.
+
     for (int i = 0; i < 9; ++i)
         if ((&m00)[i] != (&o.m00)[i]) return false;
     return true;
@@ -292,25 +263,13 @@ Matrix<T, 3, 3>::operator==(const Matrix& o) const noexcept {
 template <typename T>
 bool
 Matrix<T, 3, 3>::operator!=(const Matrix& o) const noexcept {
-    // Logical negation of exact equality.
+
     return !(*this == o);
 }
 template <typename T>
 T
 Matrix<T, 3, 3>::determinant() const noexcept {
-    // ------------------------------------------------------------
-    // Algorithm: 3x3 determinant via cofactor expansion (first row)
-    //
-    // For:
-    //   [a b c]
-    //   [d e f]
-    //   [g h i]
-    //
-    // det = a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g)
-    //
-    // Uses FMA for floating point to reduce rounding error:
-    //   fma(a, ei_fh, fma(-b, di_fg, c*dh_eg))
-    // ------------------------------------------------------------
+
     const T a = m00, b = m01, c = m02;
     const T d = m10, e = m11, f = m12;
     const T g = m20, h = m21, i = m22;
@@ -326,13 +285,13 @@ Matrix<T, 3, 3>::determinant() const noexcept {
 template <typename T>
 T
 Matrix<T, 3, 3>::trace() const noexcept {
-    // Trace of a 3x3: tr(A) = a00 + a11 + a22.
+
     return m00 + m11 + m22;
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::transpose() noexcept {
-    // In-place transpose: swap symmetric off-diagonal entries.
+
     std::swap(m01, m10);
     std::swap(m02, m20);
     std::swap(m12, m21);
@@ -340,8 +299,7 @@ Matrix<T, 3, 3>::transpose() noexcept {
 template <typename T>
 Matrix<T, 3, 3>
 Matrix<T, 3, 3>::transposed() const noexcept {
-    // Return a transposed copy:
-    // out(r,c) = this(c,r)
+
     return Matrix(
         m00,
         m10,
@@ -356,23 +314,7 @@ Matrix<T, 3, 3>::transposed() const noexcept {
 template <typename T>
 void
 Matrix<T, 3, 3>::inverse() noexcept {
-    // ------------------------------------------------------------
-    // Algorithm: 3x3 inverse via adjugate / cofactors
-    //
-    // Compute cofactors Cij, then:
-    //   adj(A) = C^T
-    //   A^{-1} = (1/det(A)) * adj(A)
-    //
-    // Here:
-    //   - C00..C22 are the signed 2x2 minors (cofactor matrix)
-    //   - det is computed from first row and cofactors:
-    //       det = a*C00 + b*C01 + c*C02
-    //
-    // Output assignment writes adj(A)/det (note the transpose):
-    //   inv.m00 = C00/det, inv.m01 = C10/det, inv.m02 = C20/det, ...
-    //
-    // Caller must ensure det != 0 (or accept inf/NaN for floats).
-    // ------------------------------------------------------------
+
     const T a = m00, b = m01, c = m02;
     const T d = m10, e = m11, f = m12;
     const T g = m20, h = m21, i = m22;
@@ -387,21 +329,21 @@ Matrix<T, 3, 3>::inverse() noexcept {
     const T C22    = (a * e - b * d);
     const T det    = a * C00 + b * C01 + c * C02;
     const T invDet = T(1) / det;
-    // Multiply adjugate by 1/det (adjugate is the transpose of cofactor matrix).
-    m00            = C00 * invDet;
-    m01            = C10 * invDet;
-    m02            = C20 * invDet;
-    m10            = C01 * invDet;
-    m11            = C11 * invDet;
-    m12            = C21 * invDet;
-    m20            = C02 * invDet;
-    m21            = C12 * invDet;
-    m22            = C22 * invDet;
+
+    m00 = C00 * invDet;
+    m01 = C10 * invDet;
+    m02 = C20 * invDet;
+    m10 = C01 * invDet;
+    m11 = C11 * invDet;
+    m12 = C21 * invDet;
+    m20 = C02 * invDet;
+    m21 = C12 * invDet;
+    m22 = C22 * invDet;
 }
 template <typename T>
 Matrix<T, 3, 3>
 Matrix<T, 3, 3>::inversed() const noexcept {
-    // Return an inverted copy (delegates to the in-place inverse()).
+
     Matrix A = *this;
     A.inverse();
     return A;
@@ -409,15 +351,7 @@ Matrix<T, 3, 3>::inversed() const noexcept {
 template <typename T>
 bool
 Matrix<T, 3, 3>::try_inverse(Matrix& out, T eps) const noexcept {
-    // ------------------------------------------------------------
-    // Algorithm: Inverse with singularity check
-    //
-    // Same cofactor/adjugate approach as inverse(), but:
-    //   - computes det and rejects if |det| <= eps
-    //   - writes the inverse into 'out' on success
-    //
-    // Useful to avoid inf/NaN for ill-conditioned matrices.
-    // ------------------------------------------------------------
+
     const T a = m00, b = m01, c = m02;
     const T d = m10, e = m11, f = m12;
     const T g = m20, h = m21, i = m22;
@@ -447,20 +381,13 @@ Matrix<T, 3, 3>::try_inverse(Matrix& out, T eps) const noexcept {
 template <typename T>
 bool
 Matrix<T, 3, 3>::is_invertible(T eps) const noexcept {
-    // Quick singularity check based on determinant magnitude.
+
     return std::abs(determinant()) > eps;
 }
 template <typename T>
 Matrix<T, 3, 3>
 Matrix<T, 3, 3>::mul(const Matrix& r) const noexcept {
-    // ------------------------------------------------------------
-    // Algorithm: 3x3 matrix multiplication (row-by-column dot products)
-    //
-    // out(r,k) = sum_c A(r,c) * R(c,k)
-    //
-    // Floating-point path uses chained FMAs to reduce rounding error and
-    // encourage fused multiply-add codegen.
-    // ------------------------------------------------------------
+
     const Matrix& a = *this;
     Matrix out;
     if constexpr (std::is_floating_point_v<T>) {
@@ -489,16 +416,7 @@ Matrix<T, 3, 3>::mul(const Matrix& r) const noexcept {
 template <typename T>
 Vector<T, 3>
 Matrix<T, 3, 3>::mul(const Vector<T, 3>& v) const noexcept {
-    // ------------------------------------------------------------
-    // Algorithm: 3x3 matrix-vector multiplication (three dot products)
-    //
-    // y = A * v
-    // y0 = a00*v0 + a01*v1 + a02*v2
-    // y1 = a10*v0 + a11*v1 + a12*v2
-    // y2 = a20*v0 + a21*v1 + a22*v2
-    //
-    // Floating-point path uses FMAs for better numerical behavior.
-    // ------------------------------------------------------------
+
     if constexpr (std::is_floating_point_v<T>) {
         return Vector<T, 3>(
             std::fma(m01, v[1], std::fma(m02, v[2], m00 * v[0])),
@@ -514,26 +432,14 @@ Matrix<T, 3, 3>::mul(const Vector<T, 3>& v) const noexcept {
 template <typename T>
 Vector<T, 3>
 Matrix<T, 3, 3>::solved(const Vector<T, 3>& b) const noexcept {
-    // ------------------------------------------------------------
-    // Algorithm: Solve 3x3 linear system via explicit inverse
-    //
-    // Computes x = A^{-1} * b.
-    // This is convenient but more expensive than specialized solvers
-    // and can be less stable for ill-conditioned A.
-    // ------------------------------------------------------------
+
     Matrix inv = inversed();
     return inv.mul(b);
 }
 template <typename T>
 bool
 Matrix<T, 3, 3>::solve(const Vector<T, 3>& b, Vector<T, 3>& x, T eps) const noexcept {
-    // ------------------------------------------------------------
-    // Algorithm: Checked solve using inverse-with-epsilon
-    //
-    // Attempts to invert A with a determinant threshold:
-    //   - if |det(A)| <= eps -> treat as singular and fail
-    //   - else x = A^{-1} b
-    // ------------------------------------------------------------
+
     Matrix inv;
     if (!try_inverse(inv, eps)) return false;
     x = inv.mul(b);
@@ -542,13 +448,13 @@ Matrix<T, 3, 3>::solve(const Vector<T, 3>& b, Vector<T, 3>& x, T eps) const noex
 template <typename T>
 Matrix<T, 3, 3>
 identity3x3() noexcept {
-    // Helper: return 3x3 identity matrix.
+
     return Matrix<T, 3, 3>(T(1));
 }
 template <typename T>
 Matrix<T, 3, 3>
 zero3x3() noexcept {
-    // Helper: return 3x3 zero matrix.
+
     return Matrix<T, 3, 3>(
         T(0),
         T(0),
@@ -563,25 +469,25 @@ zero3x3() noexcept {
 template <typename T>
 Matrix<T, 3, 3>
 transpose(const Matrix<T, 3, 3>& m) noexcept {
-    // Free-function transpose wrapper (returns a transposed copy).
+
     return m.transposed();
 }
 template <typename T>
 T
 determinant(const Matrix<T, 3, 3>& m) noexcept {
-    // Free-function determinant wrapper.
+
     return m.determinant();
 }
 template <typename T>
 Matrix<T, 3, 3>
 inverse(const Matrix<T, 3, 3>& m) noexcept {
-    // Free-function inverse wrapper (returns a new inverted matrix).
+
     return m.inversed();
 }
 template <typename T>
 Matrix<T, 3, 3>
 operator+(const Matrix<T, 3, 3>& a, const Matrix<T, 3, 3>& b) {
-    // Element-wise addition (not matmul).
+
     Matrix<T, 3, 3> out;
     for (int i = 0; i < 9; ++i) (&out.m00)[i] = (&a.m00)[i] + (&b.m00)[i];
     return out;
@@ -589,7 +495,7 @@ operator+(const Matrix<T, 3, 3>& a, const Matrix<T, 3, 3>& b) {
 template <typename T>
 Matrix<T, 3, 3>
 operator-(const Matrix<T, 3, 3>& a, const Matrix<T, 3, 3>& b) {
-    // Element-wise subtraction (not matmul).
+
     Matrix<T, 3, 3> out;
     for (int i = 0; i < 9; ++i) (&out.m00)[i] = (&a.m00)[i] - (&b.m00)[i];
     return out;
@@ -597,7 +503,7 @@ operator-(const Matrix<T, 3, 3>& a, const Matrix<T, 3, 3>& b) {
 template <typename T>
 Matrix<T, 3, 3>
 operator*(const Matrix<T, 3, 3>& a, T s) {
-    // Scalar scale (uniform multiply of every entry).
+
     Matrix<T, 3, 3> out;
     for (int i = 0; i < 9; ++i) (&out.m00)[i] = (&a.m00)[i] * s;
     return out;
@@ -605,39 +511,38 @@ operator*(const Matrix<T, 3, 3>& a, T s) {
 template <typename T>
 Matrix<T, 3, 3>
 operator*(T s, const Matrix<T, 3, 3>& a) {
-    // Commutative scalar scale convenience.
+
     return a * s;
 }
 template <typename T>
 Matrix<T, 3, 3>
 operator/(const Matrix<T, 3, 3>& a, T s) {
-    // Scalar division implemented as multiply by reciprocal.
-    // Caller must ensure s != 0.
+
     const T inv = T(1) / s;
     return a * inv;
 }
 template <typename T>
 Matrix<T, 3, 3>
 operator*(const Matrix<T, 3, 3>& a, const Matrix<T, 3, 3>& b) {
-    // Matrix multiplication overload: delegates to mul().
+
     return a.mul(b);
 }
 template <typename T>
 Vector<T, 3>
 operator*(const Matrix<T, 3, 3>& a, const Vector<T, 3>& v) {
-    // Matrix-vector multiplication overload: delegates to mul().
+
     return a.mul(v);
 }
 template <typename T>
 bool
 solve(const Matrix<T, 3, 3>& A, const Vector<T, 3>& b, Vector<T, 3>& x, T eps) noexcept {
-    // Free-function wrapper for the checked solve().
+
     return A.solve(b, x, eps);
 }
 template <typename T>
 Vector<T, 3>
 solve(const Matrix<T, 3, 3>& A, const Vector<T, 3>& b) noexcept {
-    // Free-function wrapper for the unchecked solve() returning a vector.
+
     return A.solved(b);
 }
-} // namespace atlas::math
+}
