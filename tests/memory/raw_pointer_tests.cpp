@@ -1,10 +1,7 @@
 #include "../utilities/tests_utils.h"
 
-#include <atlas/atlas.h>
-
+#include <atlas/memory/raw_pointer_cast.h>
 #include <gtest/gtest.h>
-
-#if !defined(ATLAS_TASKING_CUDA)
 
 TEST(RawPointerCast_CPU, DevicePtrIsRawPointerAlias) {
     EXPECT_TRUE((std::is_same_v<atlas::device_ptr<int>, int*>));
@@ -43,11 +40,3 @@ TEST(RawPointerCast_CPU, RawPointerCastWorksWithDevicePtrAlias) {
     EXPECT_EQ(rp, &x);
     EXPECT_EQ(*rp, -5);
 }
-
-#else
-
-TEST(RawPointerCast_CPU, SkippedBecauseCudaBackend) {
-    GTEST_SKIP() << "CPU-only raw_pointer_cast overloads are not active when ATLAS_TASKING_CUDA is enabled.";
-}
-
-#endif

@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 typename MatrialProperties<T>::Builder

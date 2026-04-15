@@ -1,12 +1,10 @@
 #include "../utilities/tests_utils.h"
 
-#include <atlas/atlas.h>
+#include <atlas/memory/copy.h>
 
 #include <array>
 #include <cstddef>
 #include <gtest/gtest.h>
-
-#if defined(ATLAS_TASKING_TBB)
 
 TEST(Copy_TBB, CopyHostToDevice_RawPointersCopiesBytes) {
     std::array<int, 8> src {};
@@ -66,10 +64,3 @@ TEST(Copy_TBB, CopyDeviceToHost_CountZeroDoesNotTouchDestination) {
     }
 }
 
-#else
-
-TEST(Copy_TBB, SkippedBecauseNotTBBBackend) {
-    GTEST_SKIP() << "ATLAS_TASKING_TBB is not enabled.";
-}
-
-#endif

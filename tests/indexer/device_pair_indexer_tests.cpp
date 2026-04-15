@@ -1,6 +1,6 @@
 #include "../utilities/tests_utils.h"
 
-#include <atlas/atlas.h>
+#include <atlas/indexer/device_pair_indexer.h>
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <type_traits>

@@ -5,9 +5,7 @@
 namespace atlas::fluid {
 
 enum class SpawnType : int {
-
     Surface,
-
     Volume
 };
 
@@ -35,9 +33,7 @@ struct SpawnOperator final {
     SpawnType type = SpawnType::Surface;
 
     union {
-
         SurfaceSpawnOperator<T> surface;
-
         VolumeSpawnOperator<T> volume;
     };
 

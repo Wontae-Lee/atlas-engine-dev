@@ -115,7 +115,6 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     rebuild_cache() noexcept;
 
-private:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     shuffle_species(std::size_t count);
 

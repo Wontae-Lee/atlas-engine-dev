@@ -4,7 +4,7 @@
 
 #include <optional>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 struct MaterialType final {
 
@@ -175,16 +175,16 @@ private:
 
 namespace atlas {
 
-using MaterialType = system::MaterialType;
+using MaterialType = fluid::MaterialType;
 
 template <typename T>
-using MatrialProperties = system::MatrialProperties<T>;
+using MatrialProperties = fluid::MatrialProperties<T>;
 
 template <typename T>
-using MatrialPropertiesHostPtr = atlas::host_shared_ptr<system::MatrialProperties<T>>;
+using MatrialPropertiesHostPtr = atlas::host_shared_ptr<fluid::MatrialProperties<T>>;
 
 template <typename T>
-using MatrialPropertiesDevicePtr = atlas::device_shared_ptr<system::MatrialProperties<T>>;
+using MatrialPropertiesDevicePtr = atlas::device_shared_ptr<fluid::MatrialProperties<T>>;
 
 }
 

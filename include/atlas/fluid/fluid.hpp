@@ -1,8 +1,7 @@
 #pragma once
 
-#include <atlas/memory/raw_pointer_cast.h>
-
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 namespace atlas::system {
@@ -17,58 +16,7 @@ Fluid<T>::builder() noexcept {
 template <typename T>
 Fluid<T>::Fluid(const size_t buffer_size)
     : _buffer_size(buffer_size) {
-
-    d_pos.resize(buffer_size);
-
-    d_vel.resize(buffer_size);
-
-    d_temperature.resize(buffer_size);
-
-    d_species.resize(buffer_size);
-
-    d_active.resize(buffer_size);
-}
-
-template <typename T>
-int
-Fluid<T>::size() const noexcept {
-
-    return static_cast<int>(_particle_properties.size());
-}
-
-template <typename T>
-bool
-Fluid<T>::empty() const noexcept {
-
-    return size() == 0;
-}
-
-template <typename T>
-const DeviceBuffer<MatrialProperties<T>>&
-Fluid<T>::particles() const noexcept {
-
-    return _particle_properties;
-}
-
-template <typename T>
-DeviceBuffer<MatrialProperties<T>>&
-Fluid<T>::particles() noexcept {
-
-    return _particle_properties;
-}
-
-template <typename T>
-const DeviceBuffer<T>&
-Fluid<T>::mole_fractions() const noexcept {
-
-    return _mole_fractions;
-}
-
-template <typename T>
-DeviceBuffer<T>&
-Fluid<T>::mole_fractions() noexcept {
-
-    return _mole_fractions;
+    emplace_state<ParticleState<T>>(buffer_size);
 }
 
 template <typename T>
@@ -86,73 +34,77 @@ Fluid<T>::generators() noexcept {
 }
 
 template <typename T>
-FluidDeviceProbe<T>
-Fluid<T>::make_device_probe() noexcept {
-
-    ++_probe_count;
-
-    ATLAS_ERROR_IF(_probe_count > 1)
-        << "\n"
-        << "The fluid device probe must be generated only by the system, "
-        << "and the total number of device probes must be exactly one."
-        << "\n";
-
-    FluidDeviceProbe<T> probe {};
-
-    probe.particle_property = atlas::raw_pointer_cast(_particle_properties.data());
-
-    probe.pos         = atlas::raw_pointer_cast(d_pos.data());
-    probe.vel         = atlas::raw_pointer_cast(d_vel.data());
-    probe.temperature = atlas::raw_pointer_cast(d_temperature.data());
-    probe.species     = atlas::raw_pointer_cast(d_species.data());
-    probe.active      = atlas::raw_pointer_cast(d_active.data());
-
-    probe.particle_count = 0;
-
-    probe.buffer_size = _buffer_size;
-
-    return probe;
+template <typename StateT, typename... Args>
+StateT&
+Fluid<T>::emplace_state(Args&&... args) {
+    static_assert(std::is_base_of_v<FluidState, StateT>, "StateT must derive from atlas::system::FluidState.");
+    auto state = std::make_unique<StateT>(std::forward<Args>(args)...);
+    auto* ptr  = state.get();
+    _states.insert_or_assign(typeid(StateT), std::move(state));
+    return *ptr;
 }
 
 template <typename T>
-DeviceBuffer<Vector3<T>>&
-Fluid<T>::positions() noexcept {
+template <typename StateT>
+void
+Fluid<T>::set_state(std::unique_ptr<StateT> state) {
 
-    return d_pos;
+    static_assert(std::is_base_of_v<FluidState, StateT>, "StateT must derive from atlas::system::FluidState.");
+    if (state == nullptr) {
+        throw std::invalid_argument("Fluid::set_state failed: state must not be null.");
+    }
+
+    _states.insert_or_assign(typeid(StateT), std::move(state));
 }
 
 template <typename T>
-DeviceBuffer<Vector3<T>>&
-Fluid<T>::velocities() noexcept {
+template <typename StateT>
+StateT*
+Fluid<T>::state() noexcept {
 
-    return d_vel;
+    static_assert(std::is_base_of_v<FluidState, StateT>, "StateT must derive from atlas::system::FluidState.");
+
+    auto it = _states.find(typeid(StateT));
+    return it == _states.end() ? nullptr : static_cast<StateT*>(it->second.get());
 }
 
 template <typename T>
-DeviceBuffer<T>&
-Fluid<T>::temperatures() noexcept {
+template <typename StateT>
+const StateT*
+Fluid<T>::state() const noexcept {
 
-    return d_temperature;
+    static_assert(std::is_base_of_v<FluidState, StateT>, "StateT must derive from atlas::system::FluidState.");
+
+    auto it = _states.find(typeid(StateT));
+    return it == _states.end() ? nullptr : static_cast<const StateT*>(it->second.get());
 }
 
 template <typename T>
-DeviceBuffer<size_t>&
-Fluid<T>::species_ids() noexcept {
+template <typename StateT>
+bool
+Fluid<T>::has_state() const noexcept {
 
-    return d_species;
+    static_assert(std::is_base_of_v<FluidState, StateT>, "StateT must derive from atlas::system::FluidState.");
+    return _states.contains(typeid(StateT));
 }
 
 template <typename T>
-DeviceBuffer<int>&
-Fluid<T>::active() noexcept {
-
-    return d_active;
+template <typename StateT>
+std::unique_ptr<StateT>
+Fluid<T>::remove_state() {
+    static_assert(std::is_base_of_v<FluidState, StateT>, "StateT must derive from atlas::system::FluidState.");
+    auto it = _states.find(typeid(StateT));
+    if (it == _states.end()) {
+        return nullptr;
+    }
+    auto state = std::unique_ptr<StateT>(static_cast<StateT*>(it->second.release()));
+    _states.erase(it);
+    return state;
 }
 
 template <typename T>
 size_t
 Fluid<T>::buffer_size() const noexcept {
-
     return _buffer_size;
 }
 
@@ -161,175 +113,35 @@ Fluid<T>
 Fluid<T>::Builder::build() const {
 
     validate();
-
     Fluid<T> f {};
-
     f._particle_properties = DeviceBuffer<MatrialProperties<T>>(_particles.begin(), _particles.end());
-
-    f._mole_fractions = DeviceBuffer<T>(_mole_fractions.begin(), _mole_fractions.end());
-
-    f._generators = DeviceBuffer<GenerateOperator<T>>(_generators.begin(), _generators.end());
-
-    f._buffer_size = _buffer_size;
-
-    f.d_pos.resize(_buffer_size);
-    f.d_vel.resize(_buffer_size);
-    f.d_temperature.resize(_buffer_size);
-    f.d_species.resize(_buffer_size);
-    f.d_active.resize(_buffer_size);
-
+    f._generators          = DeviceBuffer<GenerateOperator<T>>(_generators.begin(), _generators.end());
+    f._buffer_size         = _buffer_size;
+    f.emplace_state<ParticleState<T>>(_buffer_size);
     return f;
 }
 
 template <typename T>
 atlas::host_shared_ptr<Fluid<T>>
 Fluid<T>::Builder::make_host_shared() const {
-
     auto f = build();
-
     return atlas::make_host_shared<Fluid<T>>(std::move(f));
 }
 
 template <typename T>
 typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species(const MatrialProperties<T>& p) {
-
-    return add_species(p, T(1));
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species(const MatrialProperties<T>& p, T mole_fraction) {
-
-    return add_species(p, mole_fraction, nullptr);
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species(const MatrialProperties<T>& p,
-                               T mole_fraction,
-                               GeneratorHostPtr<T> generator) {
-
-    _particles.push_back(p);
-
-    _mole_fractions.push_back(mole_fraction);
-
-    _generators.push_back(generator ? generator->make_generate_operator() : GenerateOperator<T> {});
-
+Fluid<T>::Builder::with_properties(const HostBuffer<MatrialProperties<T>>& properties) {
+    _particles = DeviceBuffer<MatrialProperties<T>>(properties.begin(), properties.end());
     return *this;
 }
 
 template <typename T>
 typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species(MatrialPropertiesHostPtr<T> p) {
-
-    return add_species(std::move(p), T(1));
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species(MatrialPropertiesHostPtr<T> p, T mole_fraction) {
-
-    return add_species(std::move(p), mole_fraction, nullptr);
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species(MatrialPropertiesHostPtr<T> p,
-                               T mole_fraction,
-                               GeneratorHostPtr<T> generator) {
-
-    if (_reject_null_particles && !p) {
-        throw std::runtime_error(
-            "Fluid::Builder: null particle pointer encountered.");
-    }
-
-    _particles.push_back(p ? *p : MatrialProperties<T> {});
-
-    _mole_fractions.push_back(mole_fraction);
-
-    _generators.push_back(generator ? generator->make_generate_operator() : GenerateOperator<T> {});
-
-    return *this;
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species_bulk(const HostBuffer<MatrialProperties<T>>& ps) {
-
-    const int n = static_cast<int>(ps.size());
+Fluid<T>::Builder::with_generators(const HostBuffer<GeneratorHostPtr<T>>& generators) {
+    _generators.clear();
+    const int n = static_cast<int>(generators.size());
     for (int i = 0; i < n; ++i) {
-        add_species(ps[i], T(1));
-    }
-    return *this;
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species_bulk(
-    const HostBuffer<MatrialProperties<T>>& ps,
-    const HostBuffer<T>& mole_fractions) {
-
-    const HostBuffer<GeneratorHostPtr<T>> generators(ps.size(), nullptr);
-    return add_species_bulk(ps, mole_fractions, generators);
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species_bulk(
-    const HostBuffer<MatrialProperties<T>>& ps,
-    const HostBuffer<T>& mole_fractions,
-    const HostBuffer<GeneratorHostPtr<T>>& generators) {
-    const int n = static_cast<int>(ps.size());
-
-    if (static_cast<int>(mole_fractions.size()) != n || static_cast<int>(generators.size()) != n) {
-        throw std::runtime_error(
-            "Fluid::Builder::add_species_bulk(values, mole_fractions, generators): size mismatch.");
-    }
-
-    for (int i = 0; i < n; ++i) {
-        add_species(ps[i], mole_fractions[i], generators[i]);
-    }
-    return *this;
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species_bulk(
-    const HostBuffer<MatrialPropertiesHostPtr<T>>& ps) {
-
-    const int n = static_cast<int>(ps.size());
-    for (int i = 0; i < n; ++i) {
-        add_species(ps[i], T(1));
-    }
-    return *this;
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species_bulk(
-    const HostBuffer<MatrialPropertiesHostPtr<T>>& ps,
-    const HostBuffer<T>& mole_fractions) {
-
-    const HostBuffer<GeneratorHostPtr<T>> generators(ps.size(), nullptr);
-    return add_species_bulk(ps, mole_fractions, generators);
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::add_species_bulk(
-    const HostBuffer<MatrialPropertiesHostPtr<T>>& ps,
-    const HostBuffer<T>& mole_fractions,
-    const HostBuffer<GeneratorHostPtr<T>>& generators) {
-    const int n = static_cast<int>(ps.size());
-
-    if (static_cast<int>(mole_fractions.size()) != n || static_cast<int>(generators.size()) != n) {
-        throw std::runtime_error(
-            "Fluid::Builder::add_species_bulk(ptrs, mole_fractions, generators): size mismatch.");
-    }
-
-    for (int i = 0; i < n; ++i) {
-        add_species(ps[i], mole_fractions[i], generators[i]);
+        _generators.push_back(generators[i] ? generators[i]->make_generate_operator() : GenerateOperator<T> {});
     }
     return *this;
 }
@@ -337,69 +149,16 @@ Fluid<T>::Builder::add_species_bulk(
 template <typename T>
 typename Fluid<T>::Builder&
 Fluid<T>::Builder::with_buffer_size(const size_t buffer_size) noexcept {
-
     _buffer_size = buffer_size;
-    return *this;
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::require_non_empty(bool on) noexcept {
-
-    _require_non_empty = on;
-    return *this;
-}
-
-template <typename T>
-typename Fluid<T>::Builder&
-Fluid<T>::Builder::reject_null_particles(bool on) noexcept {
-
-    _reject_null_particles = on;
     return *this;
 }
 
 template <typename T>
 void
 Fluid<T>::Builder::validate() const {
-
-    if (_particles.size() != _mole_fractions.size() || _particles.size() != _generators.size()) {
+    if (_particles.size() != _generators.size()) {
         throw std::runtime_error(
-            "Fluid::Builder: particles/mole_fractions/generators size mismatch.");
-    }
-
-    if (_require_non_empty && _particles.empty()) {
-        throw std::runtime_error(
-            "Fluid::Builder: fluid must contain at least one species.");
-    }
-
-    const HostBuffer<T> mole_fractions_host(_mole_fractions.begin(), _mole_fractions.end());
-
-    T sum       = T(0);
-    const int n = static_cast<int>(mole_fractions_host.size());
-
-    for (int i = 0; i < n; ++i) {
-
-        if (!std::isfinite(mole_fractions_host[i]) || mole_fractions_host[i] < T(0)) {
-            throw std::runtime_error(
-                "Fluid::Builder: mole fractions must be finite and non-negative.");
-        }
-
-        sum += mole_fractions_host[i];
-    }
-
-    if (n > 0 && sum > T(0)) {
-
-        HostBuffer<T> normalized = mole_fractions_host;
-        for (int i = 0; i < n; ++i) {
-            normalized[i] /= sum;
-        }
-
-        auto& mole_fractions = const_cast<DeviceBuffer<T>&>(_mole_fractions);
-        mole_fractions       = DeviceBuffer<T>(normalized.begin(), normalized.end());
-    } else if (n > 0) {
-
-        throw std::runtime_error(
-            "Fluid::Builder: mole fractions sum to zero.");
+            "Fluid::Builder: particles/generators size mismatch.");
     }
 }
 
