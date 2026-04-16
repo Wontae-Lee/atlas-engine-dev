@@ -148,7 +148,15 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactory tests." />
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactory fluid and states.">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -170,7 +178,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="266" />
+    <option name="cachedIndexableFilesCount" value="267" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -736,6 +744,8 @@
       <workItem from="1776248063993" duration="4356000" />
       <workItem from="1776252594161" duration="169000" />
       <workItem from="1776326715285" duration="8668000" />
+      <workItem from="1776353735307" duration="968000" />
+      <workItem from="1776354728626" duration="1150000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

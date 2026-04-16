@@ -4,6 +4,8 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/parallel/parallel_sort.h>
+#include <atlas/sampling/sampling.h>
+#include <atlas/shuffle/shuffle_operator.h>
 
 #include <cmath>
 #include <stdexcept>
@@ -64,8 +66,9 @@ Source<T>::rebuild_cache() noexcept {
         return;
     }
 
-    if (_units.empty() || _spawn_types.empty() || _spawn_operators.empty() || !_fluid || _fluid->empty()) {
+    if (_units.empty() || _spawn_types.empty() || _spawn_operators.empty() || !_fluid || _fluid->generators().empty()) {
         _local_positions.clear();
+        _local_particle_count = 0;
         _species_cache.clear();
         _shuffled_species.clear();
         _shuffle_keys.clear();
@@ -74,10 +77,11 @@ Source<T>::rebuild_cache() noexcept {
         return;
     }
 
-    const auto& mole_fractions = _fluid->mole_fractions();
+    const auto& generators = _fluid->generators();
 
-    if (mole_fractions.empty()) {
+    if (generators.empty()) {
         _local_positions.clear();
+        _local_particle_count = 0;
         _species_cache.clear();
         _shuffled_species.clear();
         _shuffle_keys.clear();
@@ -143,6 +147,7 @@ Source<T>::rebuild_cache() noexcept {
     _species_cache.clear();
     _shuffled_species.clear();
     _shuffle_keys.clear();
+    _local_particle_count = total_count;
 
     if (total_count == 0) {
 
@@ -156,28 +161,14 @@ Source<T>::rebuild_cache() noexcept {
     _shuffle_keys.resize(total_count);
 
     const int count         = static_cast<int>(total_count);
-    const int species_count = static_cast<int>(mole_fractions.size());
-    const auto* fractions   = atlas::raw_pointer_cast(mole_fractions.data());
+    const int species_count = static_cast<int>(generators.size());
     auto* cache             = atlas::raw_pointer_cast(this->_species_cache.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         count,
         [=] ATLAS_DEVICE(const int i) {
-            const T fraction = static_cast<T>(i) / static_cast<T>(count);
-
-            T sum          = T(0);
-            size_t species = 0;
-
-            for (int s = 0; s < species_count; ++s) {
-                sum += fractions[s];
-                if (fraction < sum) {
-                    species = static_cast<size_t>(s);
-                    break;
-                }
-            }
-
-            cache[i] = species;
+            cache[i] = static_cast<std::size_t>(i % species_count);
         });
 
     _shuffle_seed         = 0;
@@ -216,50 +207,29 @@ Source<T>::shuffle_species(const std::size_t count) {
 
 template <typename T>
 void
-Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
+Source<T>::emit() {
 
     rebuild_cache();
 
-    if (_units.empty() || !_fluid || _fluid->empty() || _local_positions.empty()) {
-        return;
-    }
-
+    auto& positions_buf        = _fluid->template state<FluidPositionState<T>>()->data();
+    auto& velocities_buf       = _fluid->template state<FluidVelocityState<T>>()->data();
+    auto& species_buf          = _fluid->template state<FluidSpeciesState<T>>()->data();
+    auto& active_buf           = _fluid->template state<FluidActiveState<T>>()->data();
     const auto& generators_buf = _fluid->generators();
-    const auto& particles_buf  = _fluid->particles();
 
-    if (generators_buf.empty() || particles_buf.empty()) {
-        return;
-    }
-
-    std::size_t total_count = 0;
-    for (const auto& positions : _local_positions) {
-        total_count += positions.size();
-    }
-
-    if (total_count == 0) {
-        return;
-    }
-
-    const int begin = particle_probe.particle_count;
-    const int end   = begin + static_cast<int>(total_count);
-
-    if (end > static_cast<int>(particle_probe.buffer_size)) {
-        atlas::logger::warn()
-            << "Source::emit: insufficient space. Required: " << end
-            << ", Available: " << particle_probe.buffer_size;
-        return;
-    }
-
-    shuffle_species(total_count);
+    shuffle_species(_local_particle_count);
 
     const auto* units      = atlas::raw_pointer_cast(this->_units.data());
     const auto* generators = atlas::raw_pointer_cast(generators_buf.data());
-    const auto* particles  = atlas::raw_pointer_cast(particles_buf.data());
     const auto* species    = atlas::raw_pointer_cast(this->_shuffled_species.data());
+    auto* positions_out    = atlas::raw_pointer_cast(positions_buf.data());
+    auto* velocities_out   = atlas::raw_pointer_cast(velocities_buf.data());
+    auto* species_out      = atlas::raw_pointer_cast(species_buf.data());
+    auto* active_out       = atlas::raw_pointer_cast(active_buf.data());
     const T temperature    = _temperature;
 
     std::size_t species_offset = 0;
-    int dst_offset             = begin;
+    int dst_offset             = _fluid->particle_count();
 
     for (std::size_t unit_index = 0; unit_index < _local_positions.size(); ++unit_index) {
 
@@ -284,24 +254,15 @@ Source<T>::emit(FluidDeviceProbe<T>& particle_probe) {
                 Vector3<T> world_pos;
                 units[unit_index].sync_operator().sync_to_world(local_positions[i], world_pos);
 
-                particle_probe.pos[dst] = world_pos;
-
-                particle_probe.vel[dst] = generators[sid].generate(temperature, particles[sid].mass);
-
-                particle_probe.temperature[dst] = temperature;
-
-                particle_probe.species[dst] = sid;
+                positions_out[dst]  = world_pos;
+                velocities_out[dst] = generators[sid].generate(temperature);
+                species_out[dst]    = sid;
+                active_out[dst]     = 1;
             });
 
         species_offset += positions.size();
-
         dst_offset += count;
     }
-
-    particle_probe.particle_count = end;
-
-    atlas::logger::info() << "\n"
-                          << "Source::emit: emitted " << total_count << " particles.";
 }
 template <typename T>
 void

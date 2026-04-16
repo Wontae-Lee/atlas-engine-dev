@@ -3,10 +3,13 @@
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/fluid/fluid.h>
+#include <atlas/generator/generate_operator.h>
+#include <atlas/logging/logging.h>
 #include <atlas/memory/memory.h>
-#include <atlas/source/spawn_operator.h>
 #include <atlas/unit/unit.h>
+#include <atlas/source/spawn_operator.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <type_traits>
 
@@ -41,7 +44,7 @@ public:
     update(T dt);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    emit(FluidDeviceProbe<T>& particle_probe);
+    emit();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_units(DeviceBuffer<Unit<T>> units) noexcept;
@@ -137,9 +140,11 @@ private:
 
     HostBuffer<DeviceBuffer<Vector3<T>>> _local_positions;
 
-    DeviceBuffer<size_t> _species_cache;
+    std::size_t _local_particle_count = 0;
 
-    DeviceBuffer<size_t> _shuffled_species;
+    DeviceBuffer<std::size_t> _species_cache;
+
+    DeviceBuffer<std::size_t> _shuffled_species;
 
     DeviceBuffer<std::uint64_t> _shuffle_keys;
 
@@ -193,7 +198,7 @@ private:
 private:
     HostBuffer<Unit<T>> _units;
 
-    atlas::host_shared_ptr<atlas::Fluid<T>> _fluid;
+    FluidHostPtr<T> _fluid;
 
     HostBuffer<SpawnType> _spawn_types;
 

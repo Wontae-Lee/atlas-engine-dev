@@ -76,6 +76,10 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE size_t
     buffer_size() const noexcept;
 
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE size_t
+    particle_count() const noexcept;
+
 private:
     friend class Builder;
 
@@ -85,6 +89,8 @@ private:
     DeviceBuffer<std::size_t> _keep;
     DeviceBuffer<std::size_t> _offsets;
     DeviceBuffer<std::size_t> _compact_indices;
+
+    size_t _particle_count = 0;
 
     size_t _buffer_size = 0;
 

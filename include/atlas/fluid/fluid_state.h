@@ -4,6 +4,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 
+#include <any>
 #include <cstddef>
 
 namespace atlas::fluid {
@@ -34,12 +35,15 @@ public:
     compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept)
         = 0;
 
-protected:
+public:
     template <typename Buffer>
-    ATLAS_HOST ATLAS_FORCE_INLINE static void
+    ATLAS_HOST ATLAS_FORCE_INLINE void
     compact_buffer(Buffer& buffer,
                    const DeviceBuffer<std::size_t>& compact_indices,
                    std::size_t kept);
+
+public:
+    std::any _compacted;
 };
 
 template <typename T>

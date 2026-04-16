@@ -18,7 +18,12 @@ FluidState::compact_buffer(Buffer& buffer,
 
     using value_type = typename Buffer::value_type;
 
-    DeviceBuffer<value_type> compacted(kept);
+    if (!_compacted.has_value() || _compacted.type() != typeid(DeviceBuffer<value_type>)) {
+        _compacted.emplace<DeviceBuffer<value_type>>();
+    }
+
+    auto& compacted = std::any_cast<DeviceBuffer<value_type>&>(_compacted);
+    compacted.resize(kept);
 
     auto* dst          = atlas::raw_pointer_cast(compacted.data());
     auto* src          = atlas::raw_pointer_cast(buffer.data());

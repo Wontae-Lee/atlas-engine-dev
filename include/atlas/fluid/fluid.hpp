@@ -44,6 +44,12 @@ Fluid<T>::generators() noexcept {
 }
 
 template <typename T>
+size_t
+Fluid<T>::particle_count() const noexcept {
+    return _particle_count;
+}
+
+template <typename T>
 void
 Fluid<T>::remove_particles() {
     auto* active_state = state<FluidActiveState<T>>();
