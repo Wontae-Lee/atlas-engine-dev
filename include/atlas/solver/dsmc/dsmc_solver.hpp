@@ -10,7 +10,7 @@
 namespace atlas::system {
 
 template <typename T>
-DsmcSolver<T>::DsmcSolver(FluidHostPtr<T> fluid,
+DsmcSolver<T>::DsmcSolver(atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
                           DsmcOperator<T> op)
     : _fluid(std::move(fluid))
     , _operator(std::move(op)) {
@@ -25,13 +25,13 @@ DsmcSolver<T>::set_operator(DsmcOperator<T> op) noexcept {
 
 template <typename T>
 void
-DsmcSolver<T>::set_fluid(FluidHostPtr<T> fluid) {
+DsmcSolver<T>::set_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) {
     _fluid = std::move(fluid);
     rebuild_pair_tables();
 }
 
 template <typename T>
-const FluidHostPtr<T>&
+const atlas::host_shared_ptr<atlas::Fluid<T>>&
 DsmcSolver<T>::fluid() const noexcept {
     return _fluid;
 }

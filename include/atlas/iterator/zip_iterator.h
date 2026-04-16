@@ -2,6 +2,7 @@
 
 #ifdef ATLAS_TASKING_CUDA
 #include <atlas/core/macros.h>
+#include <cstddef>
 #include <iterator>
 #include <thrust/iterator/zip_iterator.h>
 #include <tuple>
@@ -33,6 +34,7 @@ zip_get(Tuple&& t) {
 
 #else
 
+#include <cstddef>
 #include <iterator>
 #include <tuple>
 
@@ -46,6 +48,10 @@ public:
     using value_type = std::tuple<typename std::iterator_traits<Iterators>::value_type...>;
 
     using reference = std::tuple<typename std::iterator_traits<Iterators>::reference...>;
+
+    using difference_type = std::ptrdiff_t;
+
+    using pointer = void;
 
     using iterator_category = std::forward_iterator_tag;
 

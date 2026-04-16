@@ -6,7 +6,7 @@
 
 #include <optional>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 struct MaxwellSigmaGenerateOperator final {
@@ -94,10 +94,10 @@ private:
 namespace atlas {
 
 template <typename T>
-using MaxwellSigmaGenerateOperator = atlas::system::MaxwellSigmaGenerateOperator<T>;
+using MaxwellSigmaGenerateOperator = atlas::fluid::MaxwellSigmaGenerateOperator<T>;
 
 template <typename T>
-using MaxwellSigmaGenerator = atlas::system::MaxwellSigmaGenerator<T>;
+using MaxwellSigmaGenerator = atlas::fluid::MaxwellSigmaGenerator<T>;
 
 }
 

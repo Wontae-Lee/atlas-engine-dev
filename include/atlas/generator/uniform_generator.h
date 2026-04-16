@@ -7,7 +7,7 @@
 
 #include <atlas/generator/generator.h>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 struct UniformGenerateOperator final {
@@ -104,10 +104,10 @@ private:
 namespace atlas {
 
 template <typename T>
-using UniformGenerateOperator = atlas::system::UniformGenerateOperator<T>;
+using UniformGenerateOperator = atlas::fluid::UniformGenerateOperator<T>;
 
 template <typename T>
-using UniformGenerator = atlas::system::UniformGenerator<T>;
+using UniformGenerator = atlas::fluid::UniformGenerator<T>;
 
 }
 

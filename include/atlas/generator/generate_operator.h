@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 enum class GenerateType : int {
     maxwell_sigma,
@@ -16,7 +16,7 @@ enum class GenerateType : int {
 #include <atlas/generator/maxwell_sigma_generator.h>
 #include <atlas/generator/uniform_generator.h>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 struct GenerateOperator final {
@@ -73,9 +73,9 @@ private:
 namespace atlas {
 
 template <typename T>
-using GenerateOperator = atlas::system::GenerateOperator<T>;
+using GenerateOperator = atlas::fluid::GenerateOperator<T>;
 
-using GenerateType = atlas::system::GenerateType;
+using GenerateType = atlas::fluid::GenerateType;
 
 }
 

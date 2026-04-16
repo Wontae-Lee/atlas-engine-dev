@@ -12,7 +12,7 @@
 #include <typeindex>
 #include <unordered_map>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 class Fluid final {
@@ -45,6 +45,9 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<GenerateOperator<T>>&
     generators() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    remove_particles();
 
     template <typename StateT, typename... Args>
     ATLAS_HOST ATLAS_FORCE_INLINE StateT&
@@ -79,6 +82,9 @@ private:
 private:
     DeviceBuffer<MatrialProperties<T>> _particle_properties;
     DeviceBuffer<GenerateOperator<T>> _generators;
+    DeviceBuffer<std::size_t> _keep;
+    DeviceBuffer<std::size_t> _offsets;
+    DeviceBuffer<std::size_t> _compact_indices;
 
     size_t _buffer_size = 0;
 
@@ -121,10 +127,13 @@ private:
 namespace atlas {
 
 template <typename T>
-using Fluid = system::Fluid<T>;
+using Fluid = fluid::Fluid<T>;
 
 template <typename T>
-using FluidHostPtr = atlas::host_shared_ptr<system::Fluid<T>>;
+using FluidHostPtr = host_shared_ptr<fluid::Fluid<T>>;
+
+template <typename T>
+using FluidDevicePtr = device_shared_ptr<fluid::Fluid<T>>;
 
 }
 

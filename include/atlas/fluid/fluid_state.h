@@ -5,11 +5,11 @@
 #include <atlas/math/math.h>
 
 #include <cstddef>
-#include <utility>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
-struct FluidState {
+class FluidState {
+public:
     FluidState() = default;
 
     FluidState(const FluidState&) = delete;
@@ -25,57 +25,148 @@ struct FluidState {
     FluidState&
     operator=(FluidState&&) noexcept
         = default;
+
+    ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
+    size() const noexcept
+        = 0;
+
+    ATLAS_HOST virtual void
+    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept)
+        = 0;
+
+protected:
+    template <typename Buffer>
+    ATLAS_HOST ATLAS_FORCE_INLINE static void
+    compact_buffer(Buffer& buffer,
+                   const DeviceBuffer<std::size_t>& compact_indices,
+                   std::size_t kept);
 };
 
 template <typename T>
-struct ParticleState final : FluidState {
-    ParticleState() = default;
+class FluidPositionState final : public FluidState {
+public:
+    FluidPositionState() = default;
 
-    explicit ParticleState(const std::size_t buffer_size)
-        : position(buffer_size)
-        , velocity(buffer_size)
-        , species(buffer_size)
-        , active(buffer_size) { }
+    ATLAS_HOST explicit FluidPositionState(std::size_t buffer_size);
 
-    ParticleState(DeviceBuffer<Vector3<T>> position_,
-                  DeviceBuffer<Vector3<T>> velocity_,
-                  DeviceBuffer<std::size_t> species_,
-                  DeviceBuffer<int> active_) noexcept
-        : position(std::move(position_))
-        , velocity(std::move(velocity_))
-        , species(std::move(species_))
-        , active(std::move(active_)) { }
+    ATLAS_HOST explicit FluidPositionState(DeviceBuffer<Vector3<T>> position) noexcept;
 
-    DeviceBuffer<Vector3<T>> position;
-    DeviceBuffer<Vector3<T>> velocity;
-    DeviceBuffer<std::size_t> species;
-    DeviceBuffer<int> active;
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
 
+    ATLAS_HOST void
+    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3<T>>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3<T>>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<Vector3<T>> _position;
 };
 
 template <typename T>
-struct FluidTemperatureState final : FluidState {
+class FluidVelocityState final : public FluidState {
+public:
+    FluidVelocityState() = default;
+
+    ATLAS_HOST explicit FluidVelocityState(std::size_t buffer_size);
+
+    ATLAS_HOST explicit FluidVelocityState(DeviceBuffer<Vector3<T>> velocity) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST void
+    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3<T>>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3<T>>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<Vector3<T>> _velocity;
+};
+
+template <typename T>
+class FluidSpeciesState final : public FluidState {
+public:
+    FluidSpeciesState() = default;
+
+    ATLAS_HOST explicit FluidSpeciesState(std::size_t buffer_size);
+
+    ATLAS_HOST explicit FluidSpeciesState(DeviceBuffer<std::size_t> species) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST void
+    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<std::size_t>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<std::size_t>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<std::size_t> _species;
+};
+
+template <typename T>
+class FluidActiveState final : public FluidState {
+public:
+    FluidActiveState() = default;
+
+    ATLAS_HOST explicit FluidActiveState(std::size_t buffer_size);
+
+    ATLAS_HOST explicit FluidActiveState(DeviceBuffer<int> active) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST void
+    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<int>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<int>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<int> _active;
+};
+
+template <typename T>
+class FluidTemperatureState final : public FluidState {
+public:
     FluidTemperatureState() = default;
 
-    explicit FluidTemperatureState(const std::size_t buffer_size)
-        : temperature(buffer_size) { }
+    ATLAS_HOST explicit FluidTemperatureState(std::size_t buffer_size);
 
-    explicit FluidTemperatureState(DeviceBuffer<T> temperature_) noexcept
-        : temperature(std::move(temperature_)) { }
+    ATLAS_HOST explicit FluidTemperatureState(DeviceBuffer<T> temperature) noexcept;
 
-    DeviceBuffer<T> temperature;
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST void
+    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<T> _temperature;
 };
 
 }
 
-namespace atlas {
-
-using FluidState = atlas::system::FluidState;
-
-template <typename T>
-using ParticleState = atlas::system::ParticleState<T>;
-
-template <typename T>
-using FluidTemperatureState = atlas::system::FluidTemperatureState<T>;
-
-}
+#include <atlas/fluid/fluid_state.hpp>

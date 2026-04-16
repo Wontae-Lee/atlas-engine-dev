@@ -24,10 +24,10 @@ public:
     class Builder;
 
 public:
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit System(FluidHostPtr<T> fluid);
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit System(atlas::host_shared_ptr<atlas::Fluid<T>> fluid);
 
     ATLAS_HOST ATLAS_FORCE_INLINE
-    System(FluidHostPtr<T> fluid,
+    System(atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
            T dt,
            DomainHostPtr<T> domain,
            CodecHostPtr<T> codec,
@@ -70,7 +70,7 @@ public:
     time_integration();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_fluid(FluidHostPtr<T> fluid);
+    set_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_dt(T dt);
@@ -99,7 +99,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_solver(const OrchestratorHostPtr<T>& solver);
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidHostPtr<T>
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE atlas::host_shared_ptr<atlas::Fluid<T>>
     fluid() const noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE FluidDeviceProbe<T>&
@@ -168,7 +168,7 @@ public:
 private:
     T _dt { static_cast<T>(0.01) };
 
-    FluidHostPtr<T> _fluid {};
+    atlas::host_shared_ptr<atlas::Fluid<T>> _fluid {};
 
     DomainHostPtr<T> _domain {};
 
@@ -199,7 +199,7 @@ public:
     Builder() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_fluid(FluidHostPtr<T> fluid) noexcept;
+    with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_dt(T dt) noexcept;
@@ -241,7 +241,7 @@ private:
 private:
     T _dt { static_cast<T>(0.01) };
 
-    FluidHostPtr<T> _fluid {};
+    atlas::host_shared_ptr<atlas::Fluid<T>> _fluid {};
 
     DomainHostPtr<T> _domain {};
 

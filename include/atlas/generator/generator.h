@@ -6,7 +6,7 @@
 
 #include <type_traits>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 enum class GenerateType : int;
 
@@ -62,13 +62,13 @@ public:
 namespace atlas {
 
 template <typename T>
-using Generator = atlas::system::Generator<T>;
+using Generator = atlas::fluid::Generator<T>;
 
 template <typename T>
-using GeneratorHostPtr = atlas::host_shared_ptr<atlas::system::Generator<T>>;
+using GeneratorHostPtr = atlas::host_shared_ptr<atlas::fluid::Generator<T>>;
 
 template <typename T>
-using GeneratorDevicePtr = atlas::device_shared_ptr<atlas::system::Generator<T>>;
+using GeneratorDevicePtr = atlas::device_shared_ptr<atlas::fluid::Generator<T>>;
 
 }
 

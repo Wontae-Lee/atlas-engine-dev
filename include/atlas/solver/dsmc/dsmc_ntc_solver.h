@@ -13,7 +13,7 @@ public:
     DsmcNtcSolver() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
-    DsmcNtcSolver(FluidHostPtr<T> fluid,
+    DsmcNtcSolver(atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
                   DsmcKernel<T> op = DsmcKernel<T> {});
 
     ~DsmcNtcSolver() override = default;
@@ -38,7 +38,7 @@ public:
     Builder() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_fluid(FluidHostPtr<T> fluid) noexcept;
+    with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_operator(const DsmcKernel<T>& op) noexcept;
@@ -54,7 +54,7 @@ private:
     validate() const;
 
 private:
-    FluidHostPtr<T> _fluid {};
+    atlas::host_shared_ptr<atlas::Fluid<T>> _fluid {};
     DsmcKernel<T> _operator {};
 };
 

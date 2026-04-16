@@ -6,7 +6,7 @@
 #include <atlas/generator/generator.h>
 #include <optional>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 struct MaxwellBoltzmannGenerateOperator final {
@@ -113,10 +113,10 @@ private:
 namespace atlas {
 
 template <typename T>
-using MaxwellBoltzmannGenerateOperator = atlas::system::MaxwellBoltzmannGenerateOperator<T>;
+using MaxwellBoltzmannGenerateOperator = atlas::fluid::MaxwellBoltzmannGenerateOperator<T>;
 
 template <typename T>
-using MaxwellBoltzmannGenerator = atlas::system::MaxwellBoltzmannGenerator<T>;
+using MaxwellBoltzmannGenerator = atlas::fluid::MaxwellBoltzmannGenerator<T>;
 
 }
 

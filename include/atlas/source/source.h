@@ -28,7 +28,7 @@ public:
     Source(DeviceBuffer<Unit<T>> units,
            DeviceBuffer<SpawnType> spawn_types,
            DeviceBuffer<SpawnOperator<T>> spawn_operators,
-           FluidHostPtr<T> fluid,
+           atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
            bool flip     = false,
            T spacing     = T(0.1),
            T tolerance   = T(0),
@@ -50,7 +50,7 @@ public:
     set_units(const HostBuffer<Unit<T>>& units);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_fluid(FluidHostPtr<T> fluid) noexcept;
+    set_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_spawn_types(DeviceBuffer<SpawnType> spawn_types) noexcept;
@@ -82,7 +82,7 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<Unit<T>>&
     units() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const FluidHostPtr<T>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::host_shared_ptr<atlas::Fluid<T>>&
     fluid() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<SpawnType>&
@@ -125,7 +125,7 @@ private:
 
     DeviceBuffer<SpawnOperator<T>> _spawn_operators;
 
-    FluidHostPtr<T> _fluid;
+    atlas::host_shared_ptr<atlas::Fluid<T>> _fluid;
 
     bool _flip = false;
 
@@ -163,7 +163,7 @@ public:
     with_units(const HostBuffer<Unit<T>>& units);
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_fluid(FluidHostPtr<T> fluid) noexcept;
+    with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_spawn_types(const HostBuffer<SpawnType>& spawn_types);
@@ -193,7 +193,7 @@ private:
 private:
     HostBuffer<Unit<T>> _units;
 
-    FluidHostPtr<T> _fluid;
+    atlas::host_shared_ptr<atlas::Fluid<T>> _fluid;
 
     HostBuffer<SpawnType> _spawn_types;
 

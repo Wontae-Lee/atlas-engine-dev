@@ -7,7 +7,7 @@
 
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 MaxwellBoltzmannGenerateOperator<T>::MaxwellBoltzmannGenerateOperator(

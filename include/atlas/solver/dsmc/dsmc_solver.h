@@ -18,7 +18,7 @@ public:
     DsmcSolver() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
-    DsmcSolver(FluidHostPtr<T> fluid,
+    DsmcSolver(atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
                DsmcKernel<T> op = DsmcKernel<T> {});
 
     ~DsmcSolver() override = default;
@@ -34,9 +34,9 @@ public:
     set_operator(DsmcKernel<T> op) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_fluid(FluidHostPtr<T> fluid);
+    set_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid);
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const FluidHostPtr<T>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::host_shared_ptr<atlas::Fluid<T>>&
     fluid() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DsmcKernel<T>&
@@ -53,7 +53,7 @@ public:
     rebuild_pair_tables();
 
 protected:
-    FluidHostPtr<T> _fluid {};
+    atlas::host_shared_ptr<atlas::Fluid<T>> _fluid {};
 
     DsmcKernel<T> _operator {};
 

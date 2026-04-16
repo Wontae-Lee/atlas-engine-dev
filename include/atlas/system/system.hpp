@@ -17,7 +17,7 @@ System<T>::builder() noexcept {
 }
 
 template <typename T>
-System<T>::System(FluidHostPtr<T> fluid)
+System<T>::System(atlas::host_shared_ptr<atlas::Fluid<T>> fluid)
     : _fluid(std::move(fluid)) {
 
     if (!_fluid) {
@@ -30,7 +30,7 @@ System<T>::System(FluidHostPtr<T> fluid)
 }
 
 template <typename T>
-System<T>::System(FluidHostPtr<T> fluid,
+System<T>::System(atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
                   const T dt,
                   DomainHostPtr<T> domain,
                   CodecHostPtr<T> codec,
@@ -233,7 +233,7 @@ System<T>::time_integration() {
 
 template <typename T>
 void
-System<T>::set_fluid(FluidHostPtr<T> fluid) {
+System<T>::set_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) {
 
     if (!fluid) {
         atlas::logger::error()
@@ -338,7 +338,7 @@ System<T>::set_solver(const OrchestratorHostPtr<T>& solver) {
 }
 
 template <typename T>
-FluidHostPtr<T>
+atlas::host_shared_ptr<atlas::Fluid<T>>
 System<T>::fluid() const noexcept {
 
     return _fluid;
@@ -493,7 +493,7 @@ System<T>::clear_solver() noexcept {
 
 template <typename T>
 typename System<T>::Builder&
-System<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
+System<T>::Builder::with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept {
 
     _fluid = std::move(fluid);
     return *this;

@@ -12,7 +12,7 @@
 namespace atlas::system {
 
 template <typename T>
-DsmcNtcSolver<T>::DsmcNtcSolver(FluidHostPtr<T> fluid,
+DsmcNtcSolver<T>::DsmcNtcSolver(atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
                                 DsmcKernel<T> op)
     : DsmcSolver<T>(std::move(fluid), std::move(op)) { }
 
@@ -32,7 +32,7 @@ DsmcNtcSolver<T>::solve(Universe<T>& domain,
 
 template <typename T>
 typename DsmcNtcSolver<T>::Builder&
-DsmcNtcSolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
+DsmcNtcSolver<T>::Builder::with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept {
     _fluid = std::move(fluid);
     return *this;
 }

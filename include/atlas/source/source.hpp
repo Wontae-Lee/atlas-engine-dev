@@ -15,7 +15,7 @@ template <typename T>
 Source<T>::Source(DeviceBuffer<Unit<T>> units,
                   DeviceBuffer<SpawnType> spawn_types,
                   DeviceBuffer<SpawnOperator<T>> spawn_operators,
-                  FluidHostPtr<T> fluid,
+                  atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
                   const bool flip,
                   const T spacing,
                   const T tolerance,
@@ -327,7 +327,7 @@ Source<T>::set_units(const HostBuffer<Unit<T>>& units) {
 
 template <typename T>
 void
-Source<T>::set_fluid(FluidHostPtr<T> fluid) noexcept {
+Source<T>::set_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept {
 
     _fluid                = std::move(fluid);
     _is_invalidated_cache = true;
@@ -423,7 +423,7 @@ Source<T>::units() const noexcept {
 }
 
 template <typename T>
-const FluidHostPtr<T>&
+const atlas::host_shared_ptr<atlas::Fluid<T>>&
 Source<T>::fluid() const noexcept {
 
     return _fluid;
@@ -532,7 +532,7 @@ Source<T>::Builder::with_units(const HostBuffer<Unit<T>>& units) {
 
 template <typename T>
 typename Source<T>::Builder&
-Source<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
+Source<T>::Builder::with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept {
 
     _fluid = std::move(fluid);
     return *this;

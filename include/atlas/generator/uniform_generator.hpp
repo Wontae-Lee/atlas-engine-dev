@@ -5,7 +5,7 @@
 
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 UniformGenerateOperator<T>::UniformGenerateOperator(const unsigned int seed) noexcept
