@@ -37,10 +37,6 @@ BoltzmanMeasurer<T>::BoltzmanMeasurer(UniverseHostPtr<T> universe,
             this->_universe->template emplace_state<atlas::universe::UniverseBulkVelocityState<T>>(number_of_cells);
         }
 
-        if (!this->_universe->template has_state<atlas::universe::UniverseMomentumWeightState<T>>()) {
-            this->_universe->template emplace_state<atlas::universe::UniverseMomentumWeightState<T>>(number_of_cells);
-        }
-
         if (!this->_universe->template has_state<atlas::universe::UniverseThermalEnergyState<T>>()) {
             this->_universe->template emplace_state<atlas::universe::UniverseThermalEnergyState<T>>(number_of_cells);
         }
@@ -76,15 +72,12 @@ BoltzmanMeasurer<T>::measure() {
     // These states represent:
     // - temperature      : cell temperature
     // - bulk velocity    : average particle velocity in the cell
-    // - momentum weight  : current implementation uses a unit weight per particle
-    // - thermal energy   : sum of squared thermal velocity fluctuations
     // - number particle  : number of particles assigned to the cell
+    // - thermal energy   : sum of squared thermal velocity fluctuations
     auto* universe_temperature
         = this->_universe->template state<atlas::universe::UniverseTemperatureState<T>>();
     auto* universe_bulk_velocity
         = this->_universe->template state<atlas::universe::UniverseBulkVelocityState<T>>();
-    auto* universe_momentum_weight
-        = this->_universe->template state<atlas::universe::UniverseMomentumWeightState<T>>();
     auto* universe_thermal_energy
         = this->_universe->template state<atlas::universe::UniverseThermalEnergyState<T>>();
     auto* universe_number_particle
@@ -105,8 +98,7 @@ BoltzmanMeasurer<T>::measure() {
     // If any mandatory state is missing, stop early rather than partially
     // updating only some outputs.
     if (universe_temperature == nullptr || universe_bulk_velocity == nullptr
-        || universe_momentum_weight == nullptr || universe_thermal_energy == nullptr
-        || universe_number_particle == nullptr
+        || universe_thermal_energy == nullptr || universe_number_particle == nullptr
         || fluid_velocity == nullptr) {
         return;
     }
@@ -114,7 +106,6 @@ BoltzmanMeasurer<T>::measure() {
     // Bind references to the underlying field buffers for readability.
     auto& field_temperature = universe_temperature->data();
     auto& bulk_velocity     = universe_bulk_velocity->data();
-    auto& momentum_weight   = universe_momentum_weight->data();
     auto& thermal_energy    = universe_thermal_energy->data();
     auto& number_particle   = universe_number_particle->data();
     auto& particle_velocity = fluid_velocity->data();
@@ -127,7 +118,6 @@ BoltzmanMeasurer<T>::measure() {
     // over the flattened particle-index array `indices_ptr`.
     auto* field_temperature_ptr    = atlas::raw_pointer_cast(field_temperature.data());
     auto* bulk_velocity_ptr        = atlas::raw_pointer_cast(bulk_velocity.data());
-    auto* momentum_weight_ptr      = atlas::raw_pointer_cast(momentum_weight.data());
     auto* thermal_energy_ptr       = atlas::raw_pointer_cast(thermal_energy.data());
     auto* number_particle_ptr      = atlas::raw_pointer_cast(number_particle.data());
     auto* particle_temperature_ptr = fluid_temperature != nullptr
@@ -160,13 +150,6 @@ BoltzmanMeasurer<T>::measure() {
             // After normalization, it becomes the cell bulk velocity.
             Vector3<T> mean_velocity { T(0), T(0), T(0) };
 
-            // This is named momentum weight, but in the current implementation
-            // each particle contributes a unit weight of 1.
-            //
-            // Therefore, it is numerically equivalent to the number of valid
-            // particles that contributed to this cell.
-            T momentum_weight_sum = T(0);
-
             // Count the number of valid particles contributing to this cell.
             int count = 0;
 
@@ -180,16 +163,13 @@ BoltzmanMeasurer<T>::measure() {
                 if (particle_index < 0 || particle_index >= particle_count) continue;
 
                 mean_velocity += velocity_ptr[particle_index];
-                momentum_weight_sum += T(1);
-
                 ++count;
             }
 
             // If the cell contains no valid particles, explicitly reset all
             // output quantities to zero so stale values do not remain.
-            if (count <= 0 || !(momentum_weight_sum > T(0))) {
+            if (count <= 0) {
                 bulk_velocity_ptr[cell]     = Vector3<T> { T(0), T(0), T(0) };
-                momentum_weight_ptr[cell]   = T(0);
                 thermal_energy_ptr[cell]    = T(0);
                 number_particle_ptr[cell]   = T(0);
                 field_temperature_ptr[cell] = T(0);
@@ -200,9 +180,8 @@ BoltzmanMeasurer<T>::measure() {
             //
             // Physically, this is the average particle velocity in the cell and
             // represents the macroscopic drift motion.
-            mean_velocity /= momentum_weight_sum;
+            mean_velocity /= static_cast<T>(count);
             bulk_velocity_ptr[cell]   = mean_velocity;
-            momentum_weight_ptr[cell] = momentum_weight_sum;
 
             T thermal_energy_sum = T(0);
 

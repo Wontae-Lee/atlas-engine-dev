@@ -43,7 +43,6 @@ TEST(BoltzmanMeasurer, ConstructorCreatesRequiredUniverseAndFluidStates) {
 
     ASSERT_FALSE(universe->has_state<atlas::universe::UniverseTemperatureState<T>>());
     ASSERT_FALSE(universe->has_state<atlas::universe::UniverseBulkVelocityState<T>>());
-    ASSERT_FALSE(universe->has_state<atlas::universe::UniverseMomentumWeightState<T>>());
     ASSERT_FALSE(universe->has_state<atlas::universe::UniverseThermalEnergyState<T>>());
     ASSERT_FALSE(fluid->has_state<atlas::fluid::FluidTemperatureState<T>>());
 
@@ -52,12 +51,10 @@ TEST(BoltzmanMeasurer, ConstructorCreatesRequiredUniverseAndFluidStates) {
     EXPECT_EQ(measurer.measure_mode(), atlas::MeasureModeType::All);
     ASSERT_TRUE(universe->has_state<atlas::universe::UniverseTemperatureState<T>>());
     ASSERT_TRUE(universe->has_state<atlas::universe::UniverseBulkVelocityState<T>>());
-    ASSERT_TRUE(universe->has_state<atlas::universe::UniverseMomentumWeightState<T>>());
     ASSERT_TRUE(universe->has_state<atlas::universe::UniverseThermalEnergyState<T>>());
     ASSERT_TRUE(fluid->has_state<atlas::fluid::FluidTemperatureState<T>>());
     EXPECT_EQ(universe->state<atlas::universe::UniverseTemperatureState<T>>()->size(), 8u);
     EXPECT_EQ(universe->state<atlas::universe::UniverseBulkVelocityState<T>>()->size(), 8u);
-    EXPECT_EQ(universe->state<atlas::universe::UniverseMomentumWeightState<T>>()->size(), 8u);
     EXPECT_EQ(universe->state<atlas::universe::UniverseThermalEnergyState<T>>()->size(), 8u);
     EXPECT_EQ(fluid->state<atlas::fluid::FluidTemperatureState<T>>()->size(), 4u);
 }

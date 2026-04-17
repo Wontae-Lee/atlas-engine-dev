@@ -20,7 +20,7 @@ namespace atlas::system {
  *
  * The measurement process computes, for each universe cell:
  * - bulk velocity,
- * - momentum weight,
+ * - particle count,
  * - thermal energy,
  * - temperature derived from the particle velocity distribution.
  *
@@ -73,7 +73,7 @@ public:
     /**
      * @brief Performs the measurement process.
      *
-     * This function computes cell-wise bulk velocity, momentum weight, thermal
+     * This function computes cell-wise bulk velocity, particle count, thermal
      * energy, and temperature from the current fluid particle velocities. When
      * enabled by the measure mode, it also writes cell temperatures back to
      * particle temperature state.

@@ -24,7 +24,7 @@ using TypeId = std::type_index;
  * @brief Abstract base class for all universe-side field states.
  *
  * A UniverseState represents one cell-based attribute field stored in device
- * memory, such as temperature, bulk velocity, momentum weight, thermal energy,
+ * memory, such as temperature, bulk velocity, particle count, thermal energy,
  * or material composition.
  *
  * Concrete derived states own a typed device buffer and expose:
@@ -190,61 +190,6 @@ private:
      * @brief Device buffer storing one bulk velocity vector per cell.
      */
     DeviceBuffer<Vector3<T>> _bulk_velocity;
-};
-
-/**
- * @brief Universe state storing cell-wise momentum weights.
- *
- * @tparam T Floating-point scalar type used for weight values.
- */
-template <typename T>
-class UniverseMomentumWeightState final : public UniverseState {
-public:
-    UniverseMomentumWeightState() = default;
-
-    /**
-     * @brief Constructs a momentum-weight state with storage for the given number of cells.
-     *
-     * @param number_of_cells Number of cell entries to allocate.
-     */
-    ATLAS_HOST explicit UniverseMomentumWeightState(std::size_t number_of_cells);
-
-    /**
-     * @brief Constructs a momentum-weight state from an existing device buffer.
-     *
-     * @param momentum_weight Device buffer containing cell-wise momentum weights.
-     */
-    ATLAS_HOST explicit UniverseMomentumWeightState(DeviceBuffer<T> momentum_weight) noexcept;
-
-    /**
-     * @brief Returns the number of stored momentum-weight entries.
-     *
-     * @return Number of cell momentum-weight values.
-     */
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
-    size() const noexcept override;
-
-    /**
-     * @brief Returns mutable access to the underlying momentum-weight buffer.
-     *
-     * @return Reference to the momentum-weight device buffer.
-     */
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
-    data() noexcept;
-
-    /**
-     * @brief Returns read-only access to the underlying momentum-weight buffer.
-     *
-     * @return Const reference to the momentum-weight device buffer.
-     */
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
-    data() const noexcept;
-
-private:
-    /**
-     * @brief Device buffer storing one momentum-weight value per cell.
-     */
-    DeviceBuffer<T> _momentum_weight;
 };
 
 /**

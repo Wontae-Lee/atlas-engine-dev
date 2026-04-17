@@ -33,15 +33,6 @@ TEST(UniverseState, BulkVelocityStateStoresVectorData) {
     EXPECT_TRUE(atlas::test::vec_near(state.data()[0], Vec3(1, 2, 3), kEps));
 }
 
-TEST(UniverseState, MomentumWeightStateStoresScalarData) {
-    atlas::universe::UniverseMomentumWeightState<T> state(2);
-
-    state.data()[0] = 3.0f;
-
-    EXPECT_EQ(state.size(), 2u);
-    EXPECT_NEAR(state.data()[0], 3.0f, kEps);
-}
-
 TEST(UniverseState, ThermalEnergyStateStoresScalarData) {
     atlas::universe::UniverseThermalEnergyState<T> state(2);
 
@@ -49,6 +40,15 @@ TEST(UniverseState, ThermalEnergyStateStoresScalarData) {
 
     EXPECT_EQ(state.size(), 2u);
     EXPECT_NEAR(state.data()[1], 4.0f, kEps);
+}
+
+TEST(UniverseState, NumberParticleStateStoresScalarData) {
+    atlas::universe::UniverseNumberParticleState<T> state(2);
+
+    state.data()[0] = 3.0f;
+
+    EXPECT_EQ(state.size(), 2u);
+    EXPECT_NEAR(state.data()[0], 3.0f, kEps);
 }
 
 TEST(UniverseState, MaterialRatioStateStoresVectorData) {

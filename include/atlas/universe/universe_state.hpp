@@ -65,37 +65,6 @@ UniverseBulkVelocityState<T>::data() const noexcept {
 }
 
 template <typename T>
-UniverseMomentumWeightState<T>::UniverseMomentumWeightState(const std::size_t number_of_cells)
-    // Allocate one momentum-weight entry per universe cell.
-    : _momentum_weight(number_of_cells) { }
-
-template <typename T>
-UniverseMomentumWeightState<T>::UniverseMomentumWeightState(DeviceBuffer<T> momentum_weight) noexcept
-    // Take ownership of an existing momentum-weight buffer.
-    : _momentum_weight(std::move(momentum_weight)) { }
-
-template <typename T>
-std::size_t
-UniverseMomentumWeightState<T>::size() const noexcept {
-    // Return the number of stored momentum-weight entries.
-    return _momentum_weight.size();
-}
-
-template <typename T>
-DeviceBuffer<T>&
-UniverseMomentumWeightState<T>::data() noexcept {
-    // Provide mutable access to the underlying momentum-weight storage.
-    return _momentum_weight;
-}
-
-template <typename T>
-const DeviceBuffer<T>&
-UniverseMomentumWeightState<T>::data() const noexcept {
-    // Provide read-only access to the underlying momentum-weight storage.
-    return _momentum_weight;
-}
-
-template <typename T>
 UniverseThermalEnergyState<T>::UniverseThermalEnergyState(const std::size_t number_of_cells)
     // Allocate one thermal energy entry per universe cell.
     : _thermal_energy(number_of_cells) { }
