@@ -6,10 +6,10 @@
  *
  * @details
  * This header defines:
- * - @ref atlas::system::MaxwellSigmaGenerateOperator, a lightweight backend-portable
+ * - @ref atlas::fluid::MaxwellSigmaGenerateOperator, a lightweight backend-portable
  *   operator for sampling velocity vectors from a Maxwell-style distribution with
  *   a shared standard deviation parameter, and
- * - @ref atlas::system::MaxwellSigmaGenerator, a host-side polymorphic generator
+ * - @ref atlas::fluid::MaxwellSigmaGenerator, a host-side polymorphic generator
  *   that owns the corresponding runtime parameters and can export a portable
  *   @ref GenerateOperator.
  *
@@ -43,7 +43,7 @@
 
 #include <optional>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 /**
  * @brief Backend-portable operator for sampling Maxwell-style velocities with a shared sigma.
@@ -71,7 +71,7 @@ struct MaxwellSigmaGenerateOperator final {
      * @details
      * Controls reproducibility of generated samples.
      */
-    unsigned int seed = atlas::seed::default_unsigned_int_seed;
+    unsigned int seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED;
 
     /**
      * @brief Internal pseudo-random engine used for velocity sampling.
@@ -91,7 +91,7 @@ struct MaxwellSigmaGenerateOperator final {
      * @param seed Deterministic seed used for reproducible sampling.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit MaxwellSigmaGenerateOperator(
-        unsigned int seed = atlas::seed::default_unsigned_int_seed) noexcept;
+        unsigned int seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
     /**
      * @brief Generate a velocity sample using the supplied shared sigma.
@@ -173,7 +173,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     MaxwellSigmaGenerator(
         T sigma,
-        unsigned int seed = atlas::seed::default_unsigned_int_seed) noexcept;
+        unsigned int seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
     /**
      * @brief Generate a Maxwell-sigma-distributed velocity sample on the host.
@@ -364,28 +364,28 @@ private:
     /**
      * @brief Pending deterministic random seed.
      */
-    unsigned int _seed = atlas::seed::default_unsigned_int_seed;
+    unsigned int _seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED;
 };
 
-} // namespace atlas::system
+} // namespace atlas::fluid
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for @ref atlas::system::MaxwellSigmaGenerateOperator.
+ * @brief Convenience alias for @ref atlas::fluid::MaxwellSigmaGenerateOperator.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MaxwellSigmaGenerateOperator = atlas::system::MaxwellSigmaGenerateOperator<T>;
+using MaxwellSigmaGenerateOperator = atlas::fluid::MaxwellSigmaGenerateOperator<T>;
 
 /**
- * @brief Convenience alias for @ref atlas::system::MaxwellSigmaGenerator.
+ * @brief Convenience alias for @ref atlas::fluid::MaxwellSigmaGenerator.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MaxwellSigmaGenerator = atlas::system::MaxwellSigmaGenerator<T>;
+using MaxwellSigmaGenerator = atlas::fluid::MaxwellSigmaGenerator<T>;
 
 } // namespace atlas
 

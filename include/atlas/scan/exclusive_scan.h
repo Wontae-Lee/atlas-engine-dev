@@ -4,6 +4,7 @@
 
 #include <functional>
 #include <iterator>
+#include <numeric>
 
 namespace atlas {
 
@@ -94,70 +95,7 @@ exclusive_scan_host_impl(InputIt first, InputIt last,
         return result;
     }
 
-    static_assert(is_random_access_iterator<InputIt>::value,
-                  "atlas::exclusive_scan (TBB backend) requires a random-access iterator.");
-
-    using diff_t   = typename std::iterator_traits<InputIt>::difference_type;
-    const diff_t n = std::distance(first, last);
-
-    struct ScanBody {
-        InputIt first;
-
-        OutputIt result;
-
-        BinaryOp binary_op;
-
-        T init;
-
-        T sum;
-
-        ScanBody(InputIt f, OutputIt r, BinaryOp op, T init_val)
-            : first(f)
-            , result(r)
-            , binary_op(op)
-            , init(init_val)
-            , sum(init_val) { }
-
-        ScanBody(ScanBody& other, tbb::split)
-            : first(other.first)
-            , result(other.result)
-            , binary_op(other.binary_op)
-            , init(other.init)
-            , sum(other.init) { }
-
-        void
-        operator()(const tbb::blocked_range<diff_t>& r, tbb::pre_scan_tag) {
-            T temp = sum;
-            for (diff_t i = r.begin(); i != r.end(); ++i) {
-                temp = binary_op(temp, first[i]);
-            }
-            sum = temp;
-        }
-
-        void
-        operator()(const tbb::blocked_range<diff_t>& r, tbb::final_scan_tag) {
-            for (diff_t i = r.begin(); i != r.end(); ++i) {
-                T temp    = sum;
-                sum       = binary_op(sum, first[i]);
-                result[i] = temp;
-            }
-        }
-
-        void
-        reverse_join(ScanBody& rhs) {
-            sum = binary_op(rhs.sum, sum);
-        }
-
-        void
-        assign(ScanBody& rhs) {
-            sum = rhs.sum;
-        }
-    };
-
-    ScanBody body(first, result, binary_op, init);
-    tbb::parallel_scan(tbb::blocked_range<diff_t>(0, n), body);
-
-    return result + n;
+    return std::exclusive_scan(first, last, result, init, binary_op);
 }
 
 template <typename InputIt, typename OutputIt, typename T, typename BinaryOp>

@@ -15,21 +15,150 @@
 #include <type_traits>
 
 namespace atlas::system {
+
 template <typename T>
-class System {
+class System final {
     static_assert(std::is_floating_point_v<T>, "System requires a floating-point T");
 
 public:
     class Builder;
 
 public:
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit System(atlas::host_shared_ptr<atlas::Fluid<T>> fluid);
+    System() = default;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    System(FluidHostPtr<T> fluid,
+           UniverseHostPtr<T> universe,
+           CodecHostPtr<T> codec,
+           MeasureHostPtr<T> measure,
+           SourceHostPtr<T> source,
+           SinkHostPtr<T> sink,
+           ColliderHostPtr<T> collider,
+           OrchestratorHostPtr<T> orchestrator,
+           T dt = static_cast<T>(0.01));
+
+    ~System() = default;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE static Builder
+    builder() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    update();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    emit();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    search();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    classify();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    measure();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    solve();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    advect();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    remove();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    time_integration();
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
+    dt() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const FluidHostPtr<T>&
+    fluid() const noexcept;
 
 private:
-    T _dt { static_cast<T>(0.01) };
+    FluidHostPtr<T> _fluid {};
 
+    UniverseHostPtr<T> _universe {};
+
+    SpatialHashingSearcherHostPtr<T> _searcher {};
+
+    CodecHostPtr<T> _codec {};
+
+    MeasureHostPtr<T> _measure {};
+
+    SourceHostPtr<T> _source {};
+
+    SinkHostPtr<T> _sink {};
+
+    ColliderHostPtr<T> _collider {};
+
+    OrchestratorHostPtr<T> _orchestrator {};
+
+    T _dt { static_cast<T>(0.01) };
 };
+
+template <typename T>
+class System<T>::Builder final {
+public:
+    Builder() = default;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fluid(const FluidHostPtr<T>& fluid) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_domain(const UniverseHostPtr<T>& universe) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_codec(const CodecHostPtr<T>& codec) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_measure(const MeasureHostPtr<T>& measure) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_source(const SourceHostPtr<T>& source) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_sink(const SinkHostPtr<T>& sink) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_collider(const ColliderHostPtr<T>& collider) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_solver(const OrchestratorHostPtr<T>& orchestrator) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_dt(T dt) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE System<T>
+    build() const;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<System<T>>
+    make_host_shared() const;
+
+private:
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    validate() const;
+
+private:
+    FluidHostPtr<T> _fluid {};
+
+    UniverseHostPtr<T> _universe {};
+
+    CodecHostPtr<T> _codec {};
+
+    MeasureHostPtr<T> _measure {};
+
+    SourceHostPtr<T> _source {};
+
+    SinkHostPtr<T> _sink {};
+
+    ColliderHostPtr<T> _collider {};
+
+    OrchestratorHostPtr<T> _orchestrator {};
+
+    T _dt { static_cast<T>(0.01) };
+};
+
 }
 
 namespace atlas {

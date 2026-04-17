@@ -14,12 +14,13 @@ public:
     SpatialHashingSearcher() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE explicit SpatialHashingSearcher(
-        UniverseHostPtr<T> universe);
+        UniverseHostPtr<T> universe,
+        FluidHostPtr<T> fluid);
 
     ~SpatialHashingSearcher() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    build(const FluidHostPtr<T>& fluid);
+    build();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     reset() noexcept;
@@ -69,6 +70,8 @@ public:
 private:
     UniverseHostPtr<T> _universe {};
 
+    FluidHostPtr<T> _fluid {};
+
     DeviceBuffer<std::uint32_t> d_keys;
 
     DeviceBuffer<int> d_indices;
@@ -86,6 +89,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_universe(UniverseHostPtr<T> universe) noexcept;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fluid(FluidHostPtr<T> fluid) noexcept;
+
     ATLAS_HOST ATLAS_FORCE_INLINE SpatialHashingSearcher<T>
     build() const;
 
@@ -98,6 +104,8 @@ private:
 
 private:
     UniverseHostPtr<T> _universe {};
+
+    FluidHostPtr<T> _fluid {};
 };
 
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 GenerateOperator<T>::GenerateOperator() noexcept
@@ -217,4 +217,4 @@ GenerateOperator<T>::generate(const T param0,
     }
 }
 
-} // namespace atlas::system
+} // namespace atlas::fluid

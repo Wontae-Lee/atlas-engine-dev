@@ -31,12 +31,17 @@ Source<T>::Source(DeviceBuffer<Unit<T>> units,
     , _tolerance(tolerance)
     , _temperature(temperature)
     , _is_invalidated_cache(true) {
+    // Store all source configuration and mark the cache as invalid.
+    //
+    // The actual spawn-position cache is built lazily on demand in emit()
+    // through rebuild_cache().
 }
 
 template <typename T>
 typename Source<T>::Builder
 Source<T>::builder() noexcept {
 
+    // Return a default-initialized builder for fluent Source construction.
     return Builder {};
 }
 
@@ -44,12 +49,17 @@ template <typename T>
 void
 Source<T>::update(const T dt) {
 
+    // No update is needed when there are no units or the time step is invalid.
     if (_units.empty() || !(dt > T(0))) {
         return;
     }
 
     auto* units = atlas::raw_pointer_cast(_units.data());
 
+    // Advance every source unit independently on the device.
+    //
+    // A unit may internally update its transform, activation schedule,
+    // animation state, or other time-dependent emission properties.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         static_cast<int>(_units.size()),
@@ -62,10 +72,14 @@ template <typename T>
 void
 Source<T>::rebuild_cache() noexcept {
 
+    // Reuse the cached local emission layout until the source configuration
+    // changes and explicitly invalidates it.
     if (!_is_invalidated_cache) {
         return;
     }
 
+    // If the source is not in a usable state, clear every cache-dependent buffer
+    // and leave the cache in a valid empty state.
     if (_units.empty() || _spawn_types.empty() || _spawn_operators.empty() || !_fluid || _fluid->generators().empty()) {
         _local_positions.clear();
         _local_particle_count = 0;
@@ -78,6 +92,9 @@ Source<T>::rebuild_cache() noexcept {
     }
 
     const auto& generators = _fluid->generators();
+
+    // Copy units and spawn operators to host memory because cache generation
+    // below is performed with host-side iteration over bounds and candidate samples.
     const HostBuffer<Unit<T>> units(_units.begin(), _units.end());
     const HostBuffer<SpawnOperator<T>> spawn_operators(
         _spawn_operators.begin(),
@@ -89,6 +106,10 @@ Source<T>::rebuild_cache() noexcept {
     std::size_t total_count                = 0;
     const std::size_t spawn_operator_count = spawn_operators.size();
 
+    // Build a local candidate-position list for each source unit.
+    //
+    // The positions are stored in the unit's local space and transformed into
+    // world space later during emit().
     for (std::size_t i = 0; i < units.size(); ++i) {
         const auto& geometry = units[i].geometry_operator();
 
@@ -97,8 +118,13 @@ Source<T>::rebuild_cache() noexcept {
         const auto& lower = bounds.lower_corner;
         const auto& upper = bounds.upper_corner;
 
+        // Support either:
+        // - one shared spawn operator for all units, or
+        // - one spawn operator per unit
         const auto& spawn_op = spawn_operators[(spawn_operator_count == 1) ? 0 : i];
 
+        // Determine how many regularly spaced samples fit along each axis of the
+        // unit's bounding box.
         const int nx = atlas::sampling::sample_axis_count(lower.x, upper.x, _spacing);
         const int ny = atlas::sampling::sample_axis_count(lower.y, upper.y, _spacing);
         const int nz = atlas::sampling::sample_axis_count(lower.z, upper.z, _spacing);
@@ -109,6 +135,11 @@ Source<T>::rebuild_cache() noexcept {
             positions.reserve(
                 static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny) * static_cast<std::size_t>(nz));
 
+            // Sample a regular grid over the unit bounds and let the spawn
+            // operator decide whether each point is accepted.
+            //
+            // The flip flag inverts the acceptance result so the same spawn
+            // operator can be reused for complement-style emission regions.
             for (int iz = 0; iz < nz; ++iz) {
                 for (int iy = 0; iy < ny; ++iy) {
                     for (int ix = 0; ix < nx; ++ix) {
@@ -129,9 +160,11 @@ Source<T>::rebuild_cache() noexcept {
 
         total_count += positions.size();
 
+        // Upload the accepted local-space emission positions for this unit.
         _local_positions[i] = DeviceBuffer<Vector3<T>>(positions.begin(), positions.end());
     }
 
+    // Reset species-related caches before rebuilding them.
     _species_cache.clear();
     _shuffled_species.clear();
     _shuffle_keys.clear();
@@ -139,6 +172,7 @@ Source<T>::rebuild_cache() noexcept {
 
     if (total_count == 0) {
 
+        // Nothing will be emitted, so keep the cache valid but empty.
         _shuffle_seed         = 0;
         _is_invalidated_cache = false;
         return;
@@ -152,6 +186,11 @@ Source<T>::rebuild_cache() noexcept {
     const int species_count = static_cast<int>(generators.size());
     auto* cache             = atlas::raw_pointer_cast(this->_species_cache.data());
 
+    // Build a deterministic base species sequence by cycling through all
+    // available generator/species indices.
+    //
+    // This ensures that every cached spawn slot has an initial species
+    // assignment before the sequence is shuffled later.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         count,
@@ -167,12 +206,15 @@ template <typename T>
 void
 Source<T>::shuffle_species(const std::size_t count) {
 
+    // Keep the shuffled species buffer empty when there is nothing to emit.
     if (count == 0) {
         _shuffled_species.clear();
         _shuffle_keys.clear();
         return;
     }
 
+    // Start from the deterministic cached species sequence and permute it using
+    // a per-emission shuffle key set.
     _shuffled_species = _species_cache;
 
     const std::uint64_t seed = _shuffle_seed++;
@@ -180,6 +222,7 @@ Source<T>::shuffle_species(const std::size_t count) {
     auto* keys = atlas::raw_pointer_cast(this->_shuffle_keys.data());
     const ShuffleOperator shuffle {};
 
+    // Generate one sortable pseudo-random key per particle slot.
     atlas::parallel_for<ExecutionPolicy::device>(
         static_cast<std::size_t>(0),
         count,
@@ -187,6 +230,8 @@ Source<T>::shuffle_species(const std::size_t count) {
             keys[i] = shuffle(static_cast<int>(i), seed);
         });
 
+    // Sort the species buffer by the generated shuffle keys to obtain a
+    // reproducibly shuffled species order.
     atlas::parallel_sort_by_key<ExecutionPolicy::device>(
         _shuffle_keys.begin(),
         _shuffle_keys.end(),
@@ -197,6 +242,7 @@ template <typename T>
 void
 Source<T>::emit() {
 
+    // Ensure local emission positions and species caches are ready.
     rebuild_cache();
 
     auto& positions_buf        = _fluid->template state<FluidPositionState<T>>()->data();
@@ -205,6 +251,7 @@ Source<T>::emit() {
     auto& active_buf           = _fluid->template state<FluidActiveState<T>>()->data();
     const auto& generators_buf = _fluid->generators();
 
+    // Randomize species assignment order for this emission pass.
     shuffle_species(_local_particle_count);
 
     const auto* units      = atlas::raw_pointer_cast(this->_units.data());
@@ -219,6 +266,12 @@ Source<T>::emit() {
     std::size_t species_offset = 0;
     int dst_offset             = _fluid->particle_count();
 
+    // Emit cached local positions unit by unit.
+    //
+    // For each accepted local-space sample:
+    // 1. transform it into world space
+    // 2. generate an initial velocity from the assigned species generator
+    // 3. write species id and active flag
     for (std::size_t unit_index = 0; unit_index < _local_positions.size(); ++unit_index) {
 
         const auto& positions = _local_positions[unit_index];
@@ -257,6 +310,8 @@ template <typename T>
 Source<T>
 Source<T>::Builder::build() {
 
+    // Validate all structural and numeric builder parameters before constructing
+    // the final source object.
     validate();
 
     return Source<T>(
@@ -274,6 +329,7 @@ template <typename T>
 atlas::host_shared_ptr<Source<T>>
 Source<T>::Builder::make_host_shared() {
 
+    // Construct a value object first, then move it into shared host ownership.
     return atlas::make_host_shared<Source<T>>(build());
 }
 
@@ -287,6 +343,8 @@ Source<T>::Builder::with_units(const HostBuffer<Unit<T>>& units) {
         throw std::runtime_error("Source::Builder: units must not be empty.");
     }
 
+    // Append source units rather than replacing them, allowing the builder to
+    // accumulate multiple emission units incrementally.
     _units.insert(_units.end(), units.begin(), units.end());
     return *this;
 }
@@ -295,6 +353,7 @@ template <typename T>
 typename Source<T>::Builder&
 Source<T>::Builder::with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept {
 
+    // Store the target fluid that will receive emitted particles.
     _fluid = std::move(fluid);
     return *this;
 }
@@ -309,6 +368,7 @@ Source<T>::Builder::with_spawn_types(const HostBuffer<SpawnType>& spawn_types) {
         throw std::runtime_error("Source::Builder: spawn types must not be empty.");
     }
 
+    // Append spawn-type configuration entries.
     _spawn_types.insert(_spawn_types.end(), spawn_types.begin(), spawn_types.end());
     return *this;
 }
@@ -317,6 +377,7 @@ template <typename T>
 typename Source<T>::Builder&
 Source<T>::Builder::with_spawn_operator(const SpawnOperator<T>& spawn_operator) noexcept {
 
+    // Add a single spawn operator entry.
     _spawn_operators.push_back(spawn_operator);
     return *this;
 }
@@ -331,6 +392,7 @@ Source<T>::Builder::with_spawn_operators(const HostBuffer<SpawnOperator<T>>& spa
         throw std::runtime_error("Source::Builder: spawn operators must not be empty.");
     }
 
+    // Append spawn operators rather than replacing them.
     _spawn_operators.insert(_spawn_operators.end(), spawn_operators.begin(), spawn_operators.end());
     return *this;
 }
@@ -339,6 +401,7 @@ template <typename T>
 typename Source<T>::Builder&
 Source<T>::Builder::with_tolerance(const T tolerance) noexcept {
 
+    // Store the geometric acceptance tolerance used by spawn operators.
     _tolerance = tolerance;
     return *this;
 }
@@ -347,6 +410,7 @@ template <typename T>
 typename Source<T>::Builder&
 Source<T>::Builder::with_flip(const bool flip) noexcept {
 
+    // Invert spawn acceptance when enabled.
     _flip = flip;
     return *this;
 }
@@ -355,6 +419,7 @@ template <typename T>
 typename Source<T>::Builder&
 Source<T>::Builder::with_spacing(const T spacing) noexcept {
 
+    // Store the regular sampling grid spacing used when building emission positions.
     _spacing = spacing;
     return *this;
 }
@@ -363,6 +428,7 @@ template <typename T>
 typename Source<T>::Builder&
 Source<T>::Builder::with_temperature(const T temperature) noexcept {
 
+    // Store the temperature parameter forwarded to the velocity generators at emit time.
     _temperature = temperature;
     return *this;
 }
@@ -395,6 +461,9 @@ Source<T>::Builder::validate() const {
         throw std::runtime_error("Source::Builder: spawn operators must not be empty.");
     }
 
+    // Spawn type configuration must be either:
+    // - shared by all units with exactly one entry, or
+    // - specified per unit with matching unit count.
     if (_spawn_types.size() != 1 && _spawn_types.size() != _units.size()) {
 
         atlas::logger::error()
@@ -403,6 +472,7 @@ Source<T>::Builder::validate() const {
             "Source::Builder: spawn types must have size 1 or match unit count.");
     }
 
+    // The same cardinality rule applies to spawn operators.
     if (_spawn_operators.size() != 1 && _spawn_operators.size() != _units.size()) {
 
         atlas::logger::error()

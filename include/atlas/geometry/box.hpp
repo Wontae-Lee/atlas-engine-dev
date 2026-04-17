@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/logging/logging.h>
 
 #include <stdexcept>
 #include <utility>

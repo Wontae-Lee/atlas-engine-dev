@@ -63,8 +63,11 @@ TEST(Plane, ClassificationCentroidBoundAndTraceWork) {
     const auto geometry_operator = plane.make_geometry_operator();
     const auto hit = plane.make_geometry_operator().trace(atlas::spatial::Ray<T>(Vec3(0, 5, 0), Vec3(0, -1, 0)));
 
-    EXPECT_TRUE(atlas::test::vec_near(center, Vec3(0, 2, 0), kEps));
+    EXPECT_TRUE(atlas::test::vec_near(center, Vec3(0, 0, 0), kEps));
     EXPECT_EQ(plane.type(), geometry_operator.type);
     EXPECT_TRUE(hit.is_intersecting);
+    EXPECT_NEAR(hit.distance, 3.0f, kEps);
+    EXPECT_TRUE(atlas::test::vec_near(hit.point, Vec3(0, 2, 0), kEps));
+    EXPECT_TRUE(atlas::test::vec_near(hit.normal, Vec3(0, 1, 0), kEps));
     EXPECT_TRUE(bounds.is_valid());
 }

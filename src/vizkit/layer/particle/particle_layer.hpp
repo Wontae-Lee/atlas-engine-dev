@@ -181,18 +181,23 @@ ParticleLayer<T>::update(GLFWwindow* window, Camera& camera, T dt) {
     // - system is missing
     if (!_program || !_vao || !_vbo || !_system) return;
 
-    // Read the current particle probe from the simulation system.
-    const auto& particle = _system->particle_probe();
+    const auto& fluid = _system->fluid();
 
-    // Abort if particle data is unavailable or there are no active particles.
-    if (particle.pos == nullptr || particle.particle_count <= 0) return;
+    if (!fluid) return;
+
+    const auto* position_state = fluid->template state<atlas::fluid::FluidPositionState<T>>();
+
+    if (position_state == nullptr || fluid->particle_count() == 0) return;
+
+    const auto* particle_pos = atlas::raw_pointer_cast(position_state->data().data());
+    const auto particle_count = fluid->particle_count();
 
     // Clamp the active particle count to the preallocated visualization capacity.
     //
     // This prevents overrunning the VBO when the runtime particle count exceeds
     // the buffer size known during initialization.
     const std::size_t active_count = std::min<std::size_t>(
-        static_cast<std::size_t>(particle.particle_count),
+        static_cast<std::size_t>(particle_count),
         _capacity);
 
     // If nothing remains after clamping, there is nothing to draw.
@@ -219,7 +224,7 @@ ParticleLayer<T>::update(GLFWwindow* window, Camera& camera, T dt) {
     // Perform device-to-device copy only if the mapping succeeded and the mapped
     // buffer is large enough.
     if (mapped_buffer != nullptr && mapped_bytes >= required_bytes) {
-        cudaMemcpy(mapped_buffer, particle.pos, required_bytes, cudaMemcpyDeviceToDevice);
+        cudaMemcpy(mapped_buffer, particle_pos, required_bytes, cudaMemcpyDeviceToDevice);
     }
 
     // Unmap the graphics resource so OpenGL can use the updated VBO contents.
@@ -227,7 +232,7 @@ ParticleLayer<T>::update(GLFWwindow* window, Camera& camera, T dt) {
 #else
     // In non-CUDA mode, copy active particle positions from device memory to a
     // host staging buffer first.
-    atlas::copy_device_to_host(particle.pos, _host_positions.data(), active_count);
+    atlas::copy_device_to_host(particle_pos, _host_positions.data(), active_count);
 
     // Bind the VBO so its contents can be updated from host memory.
     glBindBuffer(GL_ARRAY_BUFFER, _vbo);

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 bool

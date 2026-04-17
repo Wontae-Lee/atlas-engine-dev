@@ -5,7 +5,7 @@
  * @brief Declares a backend-portable tagged-union wrapper for particle generation laws.
  *
  * @details
- * This header defines @ref atlas::system::GenerateOperator, a lightweight
+ * This header defines @ref atlas::fluid::GenerateOperator, a lightweight
  * device-friendly wrapper that stores one of the supported particle-generation
  * operators behind a runtime type tag.
  *
@@ -56,7 +56,7 @@
 
 #include <type_traits>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 /**
  * @brief Identifies the concrete generation law stored in @ref GenerateOperator.
@@ -76,13 +76,13 @@ enum class GenerateType : int {
     uniform            ///< Generator based on a uniform distribution law.
 };
 
-} // namespace atlas::system
+} // namespace atlas::fluid
 
 #include <atlas/generator/maxwell_boltzmann_generator.h>
 #include <atlas/generator/maxwell_sigma_generator.h>
 #include <atlas/generator/uniform_generator.h>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 /**
  * @brief Tagged-union wrapper over all supported particle generation operators.
@@ -302,22 +302,22 @@ private:
     copy_from(const GenerateOperator& other) noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas::fluid
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for @ref atlas::system::GenerateOperator.
+ * @brief Convenience alias for @ref atlas::fluid::GenerateOperator.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using GenerateOperator = atlas::system::GenerateOperator<T>;
+using GenerateOperator = atlas::fluid::GenerateOperator<T>;
 
 /**
- * @brief Convenience alias for @ref atlas::system::GenerateType.
+ * @brief Convenience alias for @ref atlas::fluid::GenerateType.
  */
-using GenerateType = atlas::system::GenerateType;
+using GenerateType = atlas::fluid::GenerateType;
 
 } // namespace atlas
 

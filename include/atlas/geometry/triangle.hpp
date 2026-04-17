@@ -3,6 +3,7 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <stdexcept>
 #include <utility>
+#include <atlas/logging/logging.h>
 
 namespace atlas::geometry {
 

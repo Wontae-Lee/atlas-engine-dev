@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file remove_if.h
+ * @file remove.h
  * @brief Declares a backend-portable `remove_if` utility and its lightweight execution-policy tag.
  *
  * @details

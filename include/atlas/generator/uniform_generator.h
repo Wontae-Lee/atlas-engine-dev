@@ -6,9 +6,9 @@
  *
  * @details
  * This header defines:
- * - @ref atlas::system::UniformGenerateOperator, a backend-portable operator for
+ * - @ref atlas::fluid::UniformGenerateOperator, a backend-portable operator for
  *   sampling velocity vectors with independently uniform components, and
- * - @ref atlas::system::UniformGenerator, a host-side polymorphic generator that
+ * - @ref atlas::fluid::UniformGenerator, a host-side polymorphic generator that
  *   owns the corresponding runtime parameters and exports a portable
  *   @ref GenerateOperator.
  *
@@ -48,7 +48,7 @@
 
 #include <atlas/generator/generator.h>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 /**
  * @brief Backend-portable operator for uniform velocity sampling.
@@ -74,7 +74,7 @@ struct UniformGenerateOperator final {
     /**
      * @brief Deterministic seed used to initialize the random engine.
      */
-    unsigned int seed = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed);
+    unsigned int seed = static_cast<unsigned int>(atlas::seed::DEFAULT_UNSIGNED_INT_SEED);
 
     /**
      * @brief Internal pseudo-random engine used for sampling.
@@ -91,7 +91,7 @@ struct UniformGenerateOperator final {
      * @param seed Deterministic seed for reproducible sampling.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit UniformGenerateOperator(
-        unsigned int seed = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed)) noexcept;
+        unsigned int seed = static_cast<unsigned int>(atlas::seed::DEFAULT_UNSIGNED_INT_SEED)) noexcept;
 
     /**
      * @brief Generate a velocity sample with uniformly distributed components.
@@ -176,7 +176,7 @@ public:
     UniformGenerator(
         T min_value,
         T max_value,
-        unsigned int seed = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed)) noexcept;
+        unsigned int seed =atlas::seed::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
     /**
      * @brief Generate a uniformly distributed velocity sample on the host.
@@ -350,24 +350,24 @@ private:
     /**
      * @brief Pending deterministic seed.
      */
-    unsigned int _seed = atlas::seed::default_unsigned_int_seed;
+    unsigned int _seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED;
 };
 
-} // namespace atlas::system
+} // namespace atlas::fluid
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for @ref atlas::system::UniformGenerateOperator.
+ * @brief Convenience alias for @ref atlas::fluid::UniformGenerateOperator.
  */
 template <typename T>
-using UniformGenerateOperator = atlas::system::UniformGenerateOperator<T>;
+using UniformGenerateOperator = atlas::fluid::UniformGenerateOperator<T>;
 
 /**
- * @brief Convenience alias for @ref atlas::system::UniformGenerator.
+ * @brief Convenience alias for @ref atlas::fluid::UniformGenerator.
  */
 template <typename T>
-using UniformGenerator = atlas::system::UniformGenerator<T>;
+using UniformGenerator = atlas::fluid::UniformGenerator<T>;
 
 } // namespace atlas
 

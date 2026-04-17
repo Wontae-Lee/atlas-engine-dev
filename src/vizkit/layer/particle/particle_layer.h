@@ -99,7 +99,6 @@ namespace atlas::vizkit {
  * ## System dependency
  * The bound system is expected to provide:
  * - a valid fluid subsystem,
- * - a valid particle/device probe,
  * - particle positions stored in a buffer accessible through the configured
  *   backend.
  *

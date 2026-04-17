@@ -1,6 +1,12 @@
 #pragma once
 
+/**
+ * @file universe_state.h
+ * @brief Declares universe-side field state types used to store cell-based data.
+ */
+
 #include <atlas/buffer/device_buffer.h>
+#include <atlas/core/macros.h>
 #include <atlas/math/vector/vector.h>
 
 #include <cstddef>
@@ -9,91 +15,351 @@
 
 namespace atlas::universe {
 
+/**
+ * @brief Type identifier used to index universe states by concrete type.
+ */
 using TypeId = std::type_index;
 
-struct UniverseState {
+/**
+ * @brief Abstract base class for all universe-side field states.
+ *
+ * A UniverseState represents one cell-based attribute field stored in device
+ * memory, such as temperature, bulk velocity, momentum weight, thermal energy,
+ * or material composition.
+ *
+ * Concrete derived states own a typed device buffer and expose:
+ * - the number of stored cell entries through size()
+ * - access to the underlying storage through data()
+ *
+ * This polymorphic base allows Universe to store heterogeneous field states in
+ * a single type-erased registry keyed by concrete type.
+ */
+class UniverseState {
+public:
+    /**
+     * @brief Default constructor.
+     */
     UniverseState() = default;
 
+    /**
+     * @brief Copy construction is disabled.
+     */
     UniverseState(const UniverseState&) = delete;
 
+    /**
+     * @brief Move constructor.
+     */
     UniverseState(UniverseState&&) noexcept = default;
 
+    /**
+     * @brief Virtual destructor.
+     */
     virtual ~UniverseState() = default;
 
+    /**
+     * @brief Copy assignment is disabled.
+     *
+     * @return Reference to this object.
+     */
     UniverseState&
     operator=(const UniverseState&)
         = delete;
 
+    /**
+     * @brief Move assignment operator.
+     *
+     * @return Reference to this object.
+     */
     UniverseState&
-    operator=(UniverseState&&) noexcept
-        = default;
+    operator=(UniverseState&&) noexcept = default;
+
+    /**
+     * @brief Returns the number of cell entries stored in this state.
+     *
+     * @return Number of entries in the underlying buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
+    size() const noexcept = 0;
 };
 
+/**
+ * @brief Universe state storing cell-wise temperature values.
+ *
+ * @tparam T Floating-point scalar type used for temperature values.
+ */
 template <typename T>
-struct UniverseTemperatureState final : UniverseState {
+class UniverseTemperatureState final : public UniverseState {
+public:
     UniverseTemperatureState() = default;
 
-    explicit UniverseTemperatureState(const std::size_t number_of_cells)
-        : temperature(number_of_cells) { }
+    /**
+     * @brief Constructs a temperature state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseTemperatureState(std::size_t number_of_cells);
 
-    explicit UniverseTemperatureState(DeviceBuffer<T> temperature) noexcept
-        : temperature(std::move(temperature)) { }
+    /**
+     * @brief Constructs a temperature state from an existing device buffer.
+     *
+     * @param temperature Device buffer containing cell-wise temperature values.
+     */
+    ATLAS_HOST explicit UniverseTemperatureState(DeviceBuffer<T> temperature) noexcept;
 
-    DeviceBuffer<T> temperature;
+    /**
+     * @brief Returns the number of stored temperature entries.
+     *
+     * @return Number of cell temperature values.
+     */
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    /**
+     * @brief Returns mutable access to the underlying temperature buffer.
+     *
+     * @return Reference to the temperature device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    /**
+     * @brief Returns read-only access to the underlying temperature buffer.
+     *
+     * @return Const reference to the temperature device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing one temperature value per cell.
+     */
+    DeviceBuffer<T> _temperature;
 };
 
+/**
+ * @brief Universe state storing cell-wise bulk velocity vectors.
+ *
+ * @tparam T Floating-point scalar type used by the vector components.
+ */
 template <typename T>
-struct UniverseBulkVelocityState final : UniverseState {
+class UniverseBulkVelocityState final : public UniverseState {
+public:
     UniverseBulkVelocityState() = default;
 
-    explicit UniverseBulkVelocityState(const std::size_t number_of_cells)
-        : bulk_velocity(number_of_cells) { }
+    /**
+     * @brief Constructs a bulk velocity state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseBulkVelocityState(std::size_t number_of_cells);
 
-    explicit UniverseBulkVelocityState(DeviceBuffer<Vector3<T>> bulk_velocity_) noexcept
-        : bulk_velocity(std::move(bulk_velocity_)) { }
+    /**
+     * @brief Constructs a bulk velocity state from an existing device buffer.
+     *
+     * @param bulk_velocity Device buffer containing cell-wise bulk velocity vectors.
+     */
+    ATLAS_HOST explicit UniverseBulkVelocityState(DeviceBuffer<Vector3<T>> bulk_velocity) noexcept;
 
-    DeviceBuffer<Vector3<T>> bulk_velocity;
+    /**
+     * @brief Returns the number of stored bulk velocity entries.
+     *
+     * @return Number of cell bulk velocity values.
+     */
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    /**
+     * @brief Returns mutable access to the underlying bulk velocity buffer.
+     *
+     * @return Reference to the bulk velocity device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3<T>>&
+    data() noexcept;
+
+    /**
+     * @brief Returns read-only access to the underlying bulk velocity buffer.
+     *
+     * @return Const reference to the bulk velocity device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3<T>>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing one bulk velocity vector per cell.
+     */
+    DeviceBuffer<Vector3<T>> _bulk_velocity;
 };
 
+/**
+ * @brief Universe state storing cell-wise momentum weights.
+ *
+ * @tparam T Floating-point scalar type used for weight values.
+ */
 template <typename T>
-struct UniverseMomentumWeightState final : UniverseState {
+class UniverseMomentumWeightState final : public UniverseState {
+public:
     UniverseMomentumWeightState() = default;
 
-    explicit UniverseMomentumWeightState(const std::size_t number_of_cells)
-        : momentum_weight(number_of_cells) { }
+    /**
+     * @brief Constructs a momentum-weight state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseMomentumWeightState(std::size_t number_of_cells);
 
-    explicit UniverseMomentumWeightState(DeviceBuffer<T> momentum_weight_) noexcept
-        : momentum_weight(std::move(momentum_weight_)) { }
+    /**
+     * @brief Constructs a momentum-weight state from an existing device buffer.
+     *
+     * @param momentum_weight Device buffer containing cell-wise momentum weights.
+     */
+    ATLAS_HOST explicit UniverseMomentumWeightState(DeviceBuffer<T> momentum_weight) noexcept;
 
-    DeviceBuffer<T> momentum_weight;
+    /**
+     * @brief Returns the number of stored momentum-weight entries.
+     *
+     * @return Number of cell momentum-weight values.
+     */
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    /**
+     * @brief Returns mutable access to the underlying momentum-weight buffer.
+     *
+     * @return Reference to the momentum-weight device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    /**
+     * @brief Returns read-only access to the underlying momentum-weight buffer.
+     *
+     * @return Const reference to the momentum-weight device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing one momentum-weight value per cell.
+     */
+    DeviceBuffer<T> _momentum_weight;
 };
 
+/**
+ * @brief Universe state storing cell-wise thermal energy values.
+ *
+ * @tparam T Floating-point scalar type used for thermal energy values.
+ */
 template <typename T>
-struct UniverseThermalEnergyState final : UniverseState {
+class UniverseThermalEnergyState final : public UniverseState {
+public:
     UniverseThermalEnergyState() = default;
 
-    explicit UniverseThermalEnergyState(const std::size_t number_of_cells)
-        : thermal_energy(number_of_cells) { }
+    /**
+     * @brief Constructs a thermal energy state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseThermalEnergyState(std::size_t number_of_cells);
 
-    explicit UniverseThermalEnergyState(DeviceBuffer<T> thermal_energy_) noexcept
-        : thermal_energy(std::move(thermal_energy_)) { }
+    /**
+     * @brief Constructs a thermal energy state from an existing device buffer.
+     *
+     * @param thermal_energy Device buffer containing cell-wise thermal energy values.
+     */
+    ATLAS_HOST explicit UniverseThermalEnergyState(DeviceBuffer<T> thermal_energy) noexcept;
 
-    DeviceBuffer<T> thermal_energy;
+    /**
+     * @brief Returns the number of stored thermal energy entries.
+     *
+     * @return Number of cell thermal energy values.
+     */
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    /**
+     * @brief Returns mutable access to the underlying thermal energy buffer.
+     *
+     * @return Reference to the thermal energy device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    /**
+     * @brief Returns read-only access to the underlying thermal energy buffer.
+     *
+     * @return Const reference to the thermal energy device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing one thermal energy value per cell.
+     */
+    DeviceBuffer<T> _thermal_energy;
 };
 
+/**
+ * @brief Universe state storing cell-wise material ratio vectors.
+ *
+ * @tparam T Floating-point scalar type used by the ratio vector components.
+ * @tparam N Dimension of the material-ratio vector.
+ */
 template <typename T, std::size_t N>
-struct UniverseMaterialRatioState final : UniverseState {
+class UniverseMaterialRatioState final : public UniverseState {
+public:
     static_assert(N >= 1, "UniverseMaterialRatioState dimension must be >= 1.");
 
     UniverseMaterialRatioState() = default;
 
-    explicit UniverseMaterialRatioState(const std::size_t number_of_cells)
-        : material_ratio(number_of_cells) { }
+    /**
+     * @brief Constructs a material-ratio state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseMaterialRatioState(std::size_t number_of_cells);
 
-    explicit UniverseMaterialRatioState(DeviceBuffer<Vector<T, N>> material_ratio_) noexcept
-        : material_ratio(std::move(material_ratio_)) { }
+    /**
+     * @brief Constructs a material-ratio state from an existing device buffer.
+     *
+     * @param material_ratio Device buffer containing cell-wise material-ratio vectors.
+     */
+    ATLAS_HOST explicit UniverseMaterialRatioState(DeviceBuffer<Vector<T, N>> material_ratio) noexcept;
 
-    DeviceBuffer<Vector<T, N>> material_ratio;
+    /**
+     * @brief Returns the number of stored material-ratio entries.
+     *
+     * @return Number of cell material-ratio vectors.
+     */
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    /**
+     * @brief Returns mutable access to the underlying material-ratio buffer.
+     *
+     * @return Reference to the material-ratio device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector<T, N>>&
+    data() noexcept;
+
+    /**
+     * @brief Returns read-only access to the underlying material-ratio buffer.
+     *
+     * @return Const reference to the material-ratio device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector<T, N>>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing one material-ratio vector per cell.
+     */
+    DeviceBuffer<Vector<T, N>> _material_ratio;
 };
 
-}
+} // namespace atlas::universe
+
+#include <atlas/universe/universe_state.hpp>

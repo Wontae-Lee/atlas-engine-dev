@@ -5,7 +5,7 @@
 
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 MaxwellSigmaGenerateOperator<T>::MaxwellSigmaGenerateOperator(const unsigned int seed) noexcept
@@ -175,4 +175,4 @@ MaxwellSigmaGenerator<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::system
+} // namespace atlas::fluid

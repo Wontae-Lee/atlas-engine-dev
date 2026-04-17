@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/codec/codec.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>

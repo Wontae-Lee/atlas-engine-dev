@@ -8,6 +8,7 @@
     <inspection_tool class="CppFinalFunctionInFinalClass" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="CppFinalNonOverridingVirtualFunction" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="CppHeaderHasBeenAlreadyIncluded" enabled="false" level="HINT" enabled_by_default="false" />
+    <inspection_tool class="CppJoinDeclarationAndAssignment" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="CppLocalVariableMayBeConst" enabled="false" level="HINT" enabled_by_default="false" />
     <inspection_tool class="CppNonExplicitConvertingConstructor" enabled="false" level="HINT" enabled_by_default="false" />
     <inspection_tool class="CppParameterMayBeConst" enabled="false" level="HINT" enabled_by_default="false" />

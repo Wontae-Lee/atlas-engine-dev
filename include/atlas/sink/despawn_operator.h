@@ -2,7 +2,7 @@
 
 #include <atlas/math/math.h>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 enum class DespawnType : int {
 

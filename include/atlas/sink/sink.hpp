@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 Sink<T>::Sink(DeviceBuffer<Unit<T>> units,

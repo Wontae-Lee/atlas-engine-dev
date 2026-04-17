@@ -7,7 +7,7 @@
 
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 MaxwellBoltzmannGenerateOperator<T>::MaxwellBoltzmannGenerateOperator(
@@ -101,7 +101,7 @@ MaxwellBoltzmannGenerator<T>::MaxwellBoltzmannGenerator(const T temperature,
     // Maxwell-Boltzmann generate operator.
     //
     // This keeps the public generator interface aligned with the generic
-    // backend-portable operator abstraction used elsewhere in the system.
+    // backend-portable operator abstraction used elsewhere in the fluid.
 }
 
 template <typename T>
@@ -242,4 +242,4 @@ MaxwellBoltzmannGenerator<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::system
+} // namespace atlas::fluid

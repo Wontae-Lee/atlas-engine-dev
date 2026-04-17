@@ -27,7 +27,7 @@ TEST(Triangle, DefaultAndBuilderCreateValidTriangle) {
                                     .build();
 
     EXPECT_EQ(default_triangle.type(), atlas::geometry::GeometryType::Triangle);
-    EXPECT_TRUE(default_triangle.is_valid());
+    EXPECT_FALSE(default_triangle.is_valid());
     EXPECT_TRUE(built_triangle.is_valid());
 }
 

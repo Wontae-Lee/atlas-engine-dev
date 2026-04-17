@@ -9,7 +9,7 @@
 
 #include <type_traits>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 class Sink final {
@@ -109,7 +109,7 @@ private:
 namespace atlas {
 
 template <typename T>
-using Sink = atlas::system::Sink<T>;
+using Sink = atlas::fluid::Sink<T>;
 
 template <typename T>
 using SinkHostPtr = atlas::host_shared_ptr<Sink<T>>;

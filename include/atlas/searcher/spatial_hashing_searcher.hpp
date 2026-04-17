@@ -12,11 +12,15 @@
 namespace atlas::system {
 
 template <typename T>
-SpatialHashingSearcher<T>::SpatialHashingSearcher(UniverseHostPtr<T> universe)
-    : _universe(std::move(universe)) {
+SpatialHashingSearcher<T>::SpatialHashingSearcher(UniverseHostPtr<T> universe,
+                                                  FluidHostPtr<T> fluid)
+    : _universe(std::move(universe))
+    , _fluid(std::move(fluid)) {
 
     atlas::check<std::invalid_argument>(static_cast<bool>(_universe))
         << "SpatialHashingSearcher: universe must not be null.";
+    atlas::check<std::invalid_argument>(static_cast<bool>(_fluid))
+        << "SpatialHashingSearcher: fluid must not be null.";
 
     reset();
 }
@@ -136,11 +140,9 @@ SpatialHashingSearcher<T>::build_cell_ranges(int alive) {
         atlas::raw_pointer_cast(d_cell_end.data()) + static_cast<std::ptrdiff_t>(num_of_cells),
         -1);
 
-    const auto* keys = atlas::raw_pointer_cast(d_keys.data());
-
-    auto* cell_start = atlas::raw_pointer_cast(d_cell_start.data());
-
-    auto* cell_end = atlas::raw_pointer_cast(d_cell_end.data());
+    const auto* keys = atlas::raw_pointer_cast(this->d_keys.data());
+    auto* cell_start = atlas::raw_pointer_cast(this->d_cell_start.data());
+    auto* cell_end = atlas::raw_pointer_cast(this->d_cell_end.data());
 
     const int count = alive;
 
@@ -158,15 +160,15 @@ SpatialHashingSearcher<T>::build_cell_ranges(int alive) {
 
 template <typename T>
 void
-SpatialHashingSearcher<T>::build(const FluidHostPtr<T>& fluid) {
+SpatialHashingSearcher<T>::build() {
 
-    if (!fluid) {
+    if (!_fluid) {
 
         reset();
         return;
     }
 
-    const auto* position_state = fluid->template state<atlas::fluid::FluidPositionState<T>>();
+    const auto* position_state = _fluid->template state<atlas::fluid::FluidPositionState<T>>();
 
     if (!position_state) {
 
@@ -174,7 +176,7 @@ SpatialHashingSearcher<T>::build(const FluidHostPtr<T>& fluid) {
         return;
     }
 
-    const int alive = static_cast<int>(fluid->particle_count());
+    const int alive = static_cast<int>(_fluid->particle_count());
 
     if (alive <= 0) {
 
@@ -254,11 +256,21 @@ SpatialHashingSearcher<T>::Builder::with_universe(UniverseHostPtr<T> universe) n
 }
 
 template <typename T>
+typename SpatialHashingSearcher<T>::Builder&
+SpatialHashingSearcher<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
+
+    _fluid = std::move(fluid);
+    return *this;
+}
+
+template <typename T>
 void
 SpatialHashingSearcher<T>::Builder::validate() const {
 
     atlas::check<std::invalid_argument>(static_cast<bool>(_universe))
         << "SpatialHashingSearcher::Builder: universe must not be null.";
+    atlas::check<std::invalid_argument>(static_cast<bool>(_fluid))
+        << "SpatialHashingSearcher::Builder: fluid must not be null.";
 }
 
 template <typename T>
@@ -266,7 +278,7 @@ SpatialHashingSearcher<T>
 SpatialHashingSearcher<T>::Builder::build() const {
 
     validate();
-    return SpatialHashingSearcher<T>(_universe);
+    return SpatialHashingSearcher<T>(_universe, _fluid);
 }
 
 template <typename T>
@@ -274,7 +286,7 @@ atlas::host_shared_ptr<SpatialHashingSearcher<T>>
 SpatialHashingSearcher<T>::Builder::make_host_shared() const {
 
     validate();
-    return atlas::make_host_shared<SpatialHashingSearcher<T>>(_universe);
+    return atlas::make_host_shared<SpatialHashingSearcher<T>>(_universe, _fluid);
 }
 
 }

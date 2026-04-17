@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/geometry/triangle.h>
 #include <atlas/parallel/parallel.h>
 #include <cmath>
 #include <limits>

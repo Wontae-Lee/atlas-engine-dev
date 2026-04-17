@@ -78,18 +78,13 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     EXPECT_EQ(*properties.charge, 2);
 }
 
-TEST(MatrialProperties, BuilderDerivesMassFromMolecularMassAndStatisticalWeight) {
-    const auto properties = atlas::system::MatrialProperties<T>::builder()
-                                .with_molecular_mass(2.5f)
-                                .with_statistical_weight(4.0f)
-                                .build();
-
-    EXPECT_EQ(properties.type, atlas::system::MaterialType::Molecule);
-    EXPECT_NEAR(properties.mass, 10.0f, kEps);
-    ASSERT_TRUE(properties.molecular_mass.has_value());
-    ASSERT_TRUE(properties.statistical_weight.has_value());
-    EXPECT_NEAR(*properties.molecular_mass, 2.5f, kEps);
-    EXPECT_NEAR(*properties.statistical_weight, 4.0f, kEps);
+TEST(MatrialProperties, BuilderRequiresExplicitMassEvenWhenDerivedFieldsExist) {
+    EXPECT_THROW(
+        atlas::system::MatrialProperties<T>::builder()
+            .with_molecular_mass(2.5f)
+            .with_statistical_weight(4.0f)
+            .build(),
+        std::invalid_argument);
 }
 
 TEST(MatrialProperties, MakeHostSharedReturnsUsableRecord) {

@@ -5,7 +5,7 @@
 
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 template <typename T>
 UniformGenerateOperator<T>::UniformGenerateOperator(const unsigned int seed) noexcept
@@ -70,7 +70,7 @@ UniformGenerator<T>::UniformGenerator(const T min_value,
     // concrete uniform generator implementation.
     //
     // This keeps the high-level generator API aligned with the portable
-    // operator abstraction used by the rest of the system.
+    // operator abstraction used by the rest of the fluid.
 }
 
 template <typename T>
@@ -190,4 +190,4 @@ UniformGenerator<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::system
+} // namespace atlas::fluid

@@ -6,10 +6,10 @@
  *
  * @details
  * This header defines:
- * - @ref atlas::system::MaxwellBoltzmannGenerateOperator, a backend-portable
+ * - @ref atlas::fluid::MaxwellBoltzmannGenerateOperator, a backend-portable
  *   operator that samples particle velocities according to a Maxwell-Boltzmann
  *   distribution, and
- * - @ref atlas::system::MaxwellBoltzmannGenerator, a host-side generator class
+ * - @ref atlas::fluid::MaxwellBoltzmannGenerator, a host-side generator class
  *   that owns the corresponding runtime parameters and can export a portable
  *   @ref GenerateOperator.
  *
@@ -45,7 +45,7 @@
 #include <atlas/generator/generator.h>
 #include <optional>
 
-namespace atlas::system {
+namespace atlas::fluid {
 
 /**
  * @brief Backend-portable operator for sampling Maxwell-Boltzmann-distributed velocities.
@@ -79,7 +79,7 @@ struct MaxwellBoltzmannGenerateOperator final {
      * @details
      * This seed controls the reproducibility of the generated velocity samples.
      */
-    unsigned int seed = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed);
+    unsigned int seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED;
 
     /**
      * @brief Mean drift velocity added to the sampled thermal fluctuation.
@@ -109,7 +109,7 @@ struct MaxwellBoltzmannGenerateOperator final {
      * @param bulk_velocity Mean drift velocity of the generated distribution.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit MaxwellBoltzmannGenerateOperator(
-        unsigned int seed               = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed),
+        unsigned int seed               = atlas::seed::DEFAULT_UNSIGNED_INT_SEED,
         const Vector3<T>& bulk_velocity = Vector3<T>(T(0), T(0), T(0))) noexcept;
 
     /**
@@ -146,7 +146,7 @@ struct MaxwellBoltzmannGenerateOperator final {
  * - bulk velocity,
  * - random seed.
  *
- * It also caches a backend-portable @ref GenerateOperator so runtime systems can
+ * It also caches a backend-portable @ref GenerateOperator so runtime fluids can
  * export the generation law for device-side emission without reconstructing it
  * repeatedly.
  *
@@ -202,7 +202,7 @@ public:
     MaxwellBoltzmannGenerator(T temperature,
                               T molecular_mass,
                               const Vector3<T>& bulk_velocity = Vector3<T>(T(0), T(0), T(0)),
-                              unsigned int seed               = static_cast<unsigned int>(atlas::seed::default_unsigned_int_seed)) noexcept;
+                              unsigned int seed               = atlas::seed::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
     /**
      * @brief Generate a Maxwell-Boltzmann-distributed velocity sample on the host.
@@ -441,28 +441,28 @@ private:
     /**
      * @brief Pending deterministic random seed.
      */
-    unsigned int _seed = atlas::seed::default_unsigned_int_seed;
+    unsigned int _seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED;
 };
 
-} // namespace atlas::system
+} // namespace atlas::fluid
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for @ref atlas::system::MaxwellBoltzmannGenerateOperator.
+ * @brief Convenience alias for @ref atlas::fluid::MaxwellBoltzmannGenerateOperator.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MaxwellBoltzmannGenerateOperator = atlas::system::MaxwellBoltzmannGenerateOperator<T>;
+using MaxwellBoltzmannGenerateOperator = atlas::fluid::MaxwellBoltzmannGenerateOperator<T>;
 
 /**
- * @brief Convenience alias for @ref atlas::system::MaxwellBoltzmannGenerator.
+ * @brief Convenience alias for @ref atlas::fluid::MaxwellBoltzmannGenerator.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MaxwellBoltzmannGenerator = atlas::system::MaxwellBoltzmannGenerator<T>;
+using MaxwellBoltzmannGenerator = atlas::fluid::MaxwellBoltzmannGenerator<T>;
 
 } // namespace atlas
 
