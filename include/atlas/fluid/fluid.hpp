@@ -41,6 +41,9 @@ Fluid<T>::Fluid(const size_t buffer_size)
     emplace_state<FluidVelocityState<T>>(buffer_size);
     emplace_state<FluidSpeciesState<T>>(buffer_size);
     emplace_state<FluidActiveState<T>>(buffer_size);
+    _keep.resize(buffer_size);
+    _offsets.resize(buffer_size);
+    _compact_indices.resize(buffer_size);
 }
 
 template <typename T>
@@ -85,6 +88,23 @@ Fluid<T>::remove_particles() {
 
     auto& active     = active_state->data();
     const auto count = _buffer_size;
+
+    if (count == 0) {
+        _particle_count = 0;
+        return;
+    }
+
+    if (_keep.size() != count) {
+        _keep.resize(count);
+    }
+
+    if (_offsets.size() != count) {
+        _offsets.resize(count);
+    }
+
+    if (_compact_indices.size() != count) {
+        _compact_indices.resize(count);
+    }
 
     // Build a 0/1 keep mask from the active state:
     //   active == 0 -> remove this particle
@@ -353,6 +373,9 @@ Fluid<T>::Builder::build() const {
 
     // Set the fixed particle capacity of the created Fluid.
     f._buffer_size = _buffer_size;
+    f._keep.resize(_buffer_size);
+    f._offsets.resize(_buffer_size);
+    f._compact_indices.resize(_buffer_size);
 
     // Install the default runtime states required by the simulation.
     //

@@ -1,0 +1,174 @@
+#include "../utilities/tests_utils.h"
+
+#include <atlas/fluid/fluid.h>
+#include <atlas/generator/generate_operator.h>
+#include <atlas/geometry/box.h>
+#include <atlas/source/source.h>
+#include <atlas/sync/sync.h>
+#include <atlas/unit/unit.h>
+
+#include <gtest/gtest.h>
+
+namespace {
+
+using T = float;
+using Vec3 = atlas::Vector3<T>;
+
+atlas::FluidHostPtr<T>
+make_fluid() {
+    return atlas::fluid::Fluid<T>::builder()
+        .with_buffer_size(8)
+        .make_host_shared();
+}
+
+atlas::Unit<T>
+make_unit() {
+    const auto geometry = atlas::geometry::Box<T>::builder()
+                              .with_lower_corner(Vec3(-1, -1, -1))
+                              .with_upper_corner(Vec3(1, 1, 1))
+                              .make_host_shared();
+
+    const auto sync = atlas::physics::Sync<T>::builder()
+                          .make_host_shared();
+
+    return atlas::physics::Unit<T>::builder()
+        .with_geometry(geometry)
+        .with_sync(sync)
+        .build();
+}
+
+atlas::fluid::SpawnOperator<T>
+make_spawn_operator() {
+    return atlas::fluid::SpawnOperator<T>(atlas::fluid::SpawnType::Surface);
+}
+
+} // namespace
+
+TEST(Source, BuilderConstructsUsableSource) {
+    const auto fluid = make_fluid();
+
+    auto source = atlas::fluid::Source<T>::builder()
+                      .with_units(atlas::HostBuffer<atlas::Unit<T>> { make_unit() })
+                      .with_fluid(fluid)
+                      .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Surface })
+                      .with_spawn_operator(make_spawn_operator())
+                      .with_spacing(0.5f)
+                      .with_tolerance(0.1f)
+                      .with_temperature(300.0f)
+                      .with_flip(true)
+                      .build();
+
+    EXPECT_NO_THROW(source.update(0.1f));
+    EXPECT_NO_THROW(source.rebuild_cache());
+    EXPECT_NO_THROW(source.emit());
+}
+
+TEST(Source, BuilderRejectsMissingDependencies) {
+    const auto fluid = make_fluid();
+
+    EXPECT_THROW(
+        atlas::fluid::Source<T>::builder()
+            .with_fluid(fluid)
+            .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Surface })
+            .with_spawn_operator(make_spawn_operator())
+            .build(),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        atlas::fluid::Source<T>::builder()
+            .with_units(atlas::HostBuffer<atlas::Unit<T>> { make_unit() })
+            .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Surface })
+            .with_spawn_operator(make_spawn_operator())
+            .build(),
+        std::runtime_error);
+}
+
+TEST(Source, BuilderRejectsMismatchedSpawnConfigurationSizes) {
+    const auto fluid = make_fluid();
+
+    EXPECT_THROW(
+        atlas::fluid::Source<T>::builder()
+            .with_units(atlas::HostBuffer<atlas::Unit<T>> { make_unit(), make_unit() })
+            .with_fluid(fluid)
+            .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Surface, atlas::fluid::SpawnType::Volume, atlas::fluid::SpawnType::Surface })
+            .with_spawn_operator(make_spawn_operator())
+            .build(),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        atlas::fluid::Source<T>::builder()
+            .with_units(atlas::HostBuffer<atlas::Unit<T>> { make_unit(), make_unit() })
+            .with_fluid(fluid)
+            .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Surface })
+            .with_spawn_operators(atlas::HostBuffer<atlas::fluid::SpawnOperator<T>> { make_spawn_operator(), make_spawn_operator(), make_spawn_operator() })
+            .build(),
+        std::runtime_error);
+}
+
+TEST(Source, BuilderRejectsInvalidImmediateInputs) {
+    EXPECT_THROW(
+        atlas::fluid::Source<T>::builder()
+            .with_units(atlas::HostBuffer<atlas::Unit<T>> {}),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        atlas::fluid::Source<T>::builder()
+            .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> {}),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        atlas::fluid::Source<T>::builder()
+            .with_spawn_operators(atlas::HostBuffer<atlas::fluid::SpawnOperator<T>> {}),
+        std::runtime_error);
+}
+
+TEST(Source, BuilderRejectsInvalidNumericConfiguration) {
+    const auto fluid = make_fluid();
+
+    EXPECT_THROW(
+        atlas::fluid::Source<T>::builder()
+            .with_units(atlas::HostBuffer<atlas::Unit<T>> { make_unit() })
+            .with_fluid(fluid)
+            .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Surface })
+            .with_spawn_operator(make_spawn_operator())
+            .with_spacing(0.0f)
+            .build(),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        atlas::fluid::Source<T>::builder()
+            .with_units(atlas::HostBuffer<atlas::Unit<T>> { make_unit() })
+            .with_fluid(fluid)
+            .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Surface })
+            .with_spawn_operator(make_spawn_operator())
+            .with_tolerance(std::numeric_limits<T>::infinity())
+            .build(),
+        std::runtime_error);
+}
+
+TEST(Source, MakeHostSharedBuildsSource) {
+    const auto fluid = make_fluid();
+
+    const auto source = atlas::fluid::Source<T>::builder()
+                            .with_units(atlas::HostBuffer<atlas::Unit<T>> { make_unit() })
+                            .with_fluid(fluid)
+                            .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Surface })
+                            .with_spawn_operator(make_spawn_operator())
+                            .make_host_shared();
+
+    ASSERT_NE(source, nullptr);
+    EXPECT_NO_THROW(source->update(0.1f));
+}
+
+TEST(Source, UpdateIgnoresNonPositiveDt) {
+    const auto fluid = make_fluid();
+
+    auto source = atlas::fluid::Source<T>::builder()
+                      .with_units(atlas::HostBuffer<atlas::Unit<T>> { make_unit() })
+                      .with_fluid(fluid)
+                      .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Surface })
+                      .with_spawn_operator(make_spawn_operator())
+                      .build();
+
+    EXPECT_NO_THROW(source.update(0.0f));
+}
