@@ -6,14 +6,14 @@
  */
 
 #include <atlas/core/macros.h>
-#include <atlas/measure/measure.h>
+#include <atlas/measure/measurer.h>
 
 namespace atlas::system {
 
 /**
  * @brief Measures bulk velocity, thermal energy, and temperature fields from fluid particles.
  *
- * This measurer derives from Measure<T> and uses:
+ * This measurer derives from Measurer<T> and uses:
  * - a universe storing cell-based field states,
  * - a fluid storing particle states,
  * - a spatial hashing searcher providing cell-to-particle mapping.
@@ -30,7 +30,7 @@ namespace atlas::system {
  * @tparam T Floating-point scalar type used by the simulation.
  */
 template <typename T>
-class BoltzmanMeasurer final : public Measure<T> {
+class BoltzmanMeasurer final : public Measurer<T> {
 public:
     /**
      * @brief Builder for configuring and constructing BoltzmanMeasurer instances.

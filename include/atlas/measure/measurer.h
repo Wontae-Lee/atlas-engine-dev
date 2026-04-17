@@ -15,16 +15,16 @@ enum class MeasureModeType : int {
 };
 
 template <typename T>
-class Measure {
+class Measurer {
 public:
-    Measure() = default;
+    Measurer() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
-    Measure(UniverseHostPtr<T> universe,
-            FluidHostPtr<T> fluid,
-            SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+    Measurer(UniverseHostPtr<T> universe,
+             FluidHostPtr<T> fluid,
+             SpatialHashingSearcherHostPtr<T> searcher) noexcept;
 
-    virtual ~Measure() = default;
+    virtual ~Measurer() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     measure()
@@ -47,13 +47,13 @@ namespace atlas {
 using MeasureModeType = atlas::system::MeasureModeType;
 
 template <typename T>
-using Measure = atlas::system::Measure<T>;
+using Measurer = atlas::system::Measurer<T>;
 
 template <typename T>
-using MeasureHostPtr = atlas::host_shared_ptr<atlas::system::Measure<T>>;
+using MeasurerHostPtr = atlas::host_shared_ptr<atlas::system::Measurer<T>>;
 
 template <typename T>
-using MeasureDevicePtr = atlas::device_shared_ptr<atlas::system::Measure<T>>;
+using MeasurerDevicePtr = atlas::device_shared_ptr<atlas::system::Measurer<T>>;
 }
 
-#include <atlas/measure/measure.hpp>
+#include <atlas/measure/measurer.hpp>

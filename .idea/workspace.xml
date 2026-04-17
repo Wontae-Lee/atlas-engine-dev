@@ -28,6 +28,7 @@
       <config projectName="atlas-engine-dev" targetName="benchmark" />
       <config projectName="atlas-engine-dev" targetName="gtest_main" />
       <config projectName="atlas-engine-dev" targetName="benchmark_min_time_flag_iters_test" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_measurer" />
       <config projectName="atlas-engine-dev" targetName="repetitions_test" />
       <config projectName="atlas-engine-dev" targetName="benchmark_gtest" />
       <config projectName="atlas-engine-dev" targetName="NightlyMemoryCheck" folderName="CTestDashboardTargets" />
@@ -74,7 +75,6 @@
       <config projectName="atlas-engine-dev" targetName="atlas_tests_indexer" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_remove" />
       <config projectName="atlas-engine-dev" targetName="string_util_gtest" />
-      <config projectName="atlas-engine-dev" targetName="atlas_tests_measure" />
       <config projectName="atlas-engine-dev" targetName="user_counters_thousands_test" />
       <config projectName="atlas-engine-dev" targetName="commandlineflags_gtest" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalTest" folderName="CTestDashboardTargets" />
@@ -135,6 +135,7 @@
       <config projectName="atlas-engine-dev" targetName="multiple_ranges_test" />
       <config projectName="atlas-engine-dev" targetName="NightlyBuild" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="NightlySubmit" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_solver_dsmc" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_transform" />
       <config projectName="atlas-engine-dev" targetName="ContinuousCoverage" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_solver" />
@@ -147,6 +148,7 @@
       <config projectName="atlas-engine-dev" targetName="map_test" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalStart" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_sink" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_solver_sph" />
       <config projectName="atlas-engine-dev" targetName="NightlyTest" folderName="CTestDashboardTargets" />
     </generated>
   </component>
@@ -173,33 +175,19 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_kernel.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_kernel.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/hard_sphere_kernel.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/hard_sphere_kernel.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/variable_hard_sphere_kernel.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/variable_hard_sphere_kernel.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/variable_soft_sphere_kernel.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/variable_soft_sphere_kernel.hpp" afterDir="false" />
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactor System class.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/boltzman_measurer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/boltzman_measurer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/boltzman_measurer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/boltzman_measurer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/measure.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/measure.hpp" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/system/system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/universe/universe_state.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/universe/universe_state.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/universe/universe_state.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/universe/universe_state.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/measure/boltzman_measurer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measurer/boltzman_measurer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/measure/measure_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measurer/measurer_tests.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -448,7 +436,7 @@
         <option name="BeforeTestRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="atlas_tests_measure" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_measure" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_measure" TEST_MODE="SUITE_TEST">
+    <configuration name="atlas_tests_measurer" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_measurer" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_measurer" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
         <option name="BeforeTestRunTask" enabled="true" />
@@ -870,7 +858,7 @@
       <item itemvalue="Google Test.atlas_tests_math" />
       <item itemvalue="Google Test.atlas_tests_math_matrix" />
       <item itemvalue="Google Test.atlas_tests_math_vector" />
-      <item itemvalue="Google Test.atlas_tests_measure" />
+      <item itemvalue="Google Test.atlas_tests_measurer" />
       <item itemvalue="Google Test.atlas_tests_memory" />
       <item itemvalue="Google Test.atlas_tests_parallel" />
       <item itemvalue="Google Test.atlas_tests_random" />
@@ -985,7 +973,7 @@
       <workItem from="1776409863285" duration="9170000" />
       <workItem from="1776424888190" duration="2804000" />
       <workItem from="1776432159381" duration="2388000" />
-      <workItem from="1776434876345" duration="5161000" />
+      <workItem from="1776434876345" duration="6110000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
@@ -1179,7 +1167,23 @@
       <option name="project" value="LOCAL" />
       <updated>1776432105939</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Implemented the DSMC solver along with the required universe state and test files.">
+      <option name="closed" value="true" />
+      <created>1776440168408</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1776440168408</updated>
+    </task>
+    <task id="LOCAL-00026" summary="Refactor System class.">
+      <option name="closed" value="true" />
+      <created>1776440916277</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1776440916277</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -1257,7 +1261,9 @@
     <MESSAGE value="Refactory tests." />
     <MESSAGE value="Added comments." />
     <MESSAGE value="Added Knudsen codec and its tests." />
-    <option name="LAST_COMMIT_MESSAGE" value="Added Knudsen codec and its tests." />
+    <MESSAGE value="Implemented the DSMC solver along with the required universe state and test files." />
+    <MESSAGE value="Refactor System class." />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor System class." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

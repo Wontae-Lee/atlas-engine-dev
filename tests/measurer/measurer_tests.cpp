@@ -1,8 +1,8 @@
 #include "../utilities/tests_utils.h"
 
-#include <atlas/measure/measure.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/generator/generate_operator.h>
+#include <atlas/measure/measurer.h>
+#include <atlas/searcher/spatial_hashing_searcher.h>
 
 #include <gtest/gtest.h>
 
@@ -10,13 +10,13 @@ namespace {
 
 using T = float;
 
-class DummyMeasure final : public atlas::system::Measure<T> {
+class DummyMeasure final : public atlas::system::Measurer<T> {
 public:
     DummyMeasure(atlas::UniverseHostPtr<T> universe,
                  atlas::FluidHostPtr<T> fluid,
                  atlas::SpatialHashingSearcherHostPtr<T> searcher,
                  atlas::MeasureModeType measure_mode) noexcept
-        : atlas::system::Measure<T>(std::move(universe), std::move(fluid), std::move(searcher))
+        : atlas::system::Measurer<T>(std::move(universe), std::move(fluid), std::move(searcher))
         , _measure_mode(measure_mode) {}
 
     void
@@ -24,7 +24,7 @@ public:
         ++measure_calls;
     }
 
-    atlas::MeasureModeType
+    ATLAS_NODISCARD atlas::MeasureModeType
     measure_mode() const noexcept override {
         return _measure_mode;
     }

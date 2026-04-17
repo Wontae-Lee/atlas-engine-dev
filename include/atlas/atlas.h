@@ -54,7 +54,7 @@
 #include <atlas/math/vector/vector_reductions.h>
 #include <atlas/math/vector/vector_statistics.h>
 #include <atlas/measure/boltzman_measurer.h>
-#include <atlas/measure/measure.h>
+#include <atlas/measure/measurer.h>
 #include <atlas/memory/copy.h>
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>

@@ -8,7 +8,9 @@
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/codec/codec.h>
 #include <atlas/core/macros.h>
+#include <atlas/measure/measurer.h>
 #include <atlas/memory/memory.h>
+#include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/solver/solver.h>
 
 namespace atlas::system {
@@ -17,11 +19,13 @@ namespace atlas::system {
  * @brief Coordinates execution of a sequence of solvers, optionally with a codec.
  *
  * An Orchestrator stores:
+ * - an optional searcher,
  * - an optional codec,
+ * - an optional measure,
  * - an ordered list of solver objects.
  *
- * Its primary responsibility is to invoke solvers in sequence according to the
- * current orchestration mode:
+ * Its primary responsibility is to run the search -> classify -> measure ->
+ * solve pipeline according to the current orchestration mode:
  * - if no codec is configured, each solver is invoked with solve(dt)
  * - if a codec is configured, each solver is invoked with solve(allocated_solver, index, dt)
  *
@@ -50,14 +54,30 @@ public:
     ~Orchestrator() = default;
 
     /**
-     * @brief Constructs an orchestrator from a codec and solver list.
+     * @brief Constructs an orchestrator from pipeline dependencies and solver list.
      *
+     * @param searcher Optional host-side shared pointer to a spatial searcher.
      * @param codec Optional host-side shared pointer to a codec.
+     * @param measure Optional host-side shared pointer to a measurer.
      * @param solvers Ordered list of host-side shared solver pointers.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
-    Orchestrator(CodecHostPtr<T> codec,
+    Orchestrator(SpatialHashingSearcherHostPtr<T> searcher,
+                 CodecHostPtr<T> codec,
+                 MeasurerHostPtr<T> measurer,
                  HostBuffer<SolveHostPtr<T>> solvers) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    search();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    classify();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    measure();
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    solve(T dt);
 
     /**
      * @brief Creates a Builder instance.
@@ -79,12 +99,28 @@ public:
     orchestrate(T dt);
 
     /**
+     * @brief Sets or replaces the searcher.
+     *
+     * @param searcher Host-side shared pointer to the searcher.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+
+    /**
      * @brief Sets or replaces the codec.
      *
      * @param codec Host-side shared pointer to the codec.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_codec(CodecHostPtr<T> codec) noexcept;
+
+    /**
+     * @brief Sets or replaces the measure.
+     *
+     * @param measure Host-side shared pointer to the measure.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_measurer(MeasurerHostPtr<T> measurer) noexcept;
 
     /**
      * @brief Appends a solver to the orchestration list.
@@ -94,6 +130,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     add_solver(SolveHostPtr<T> solver) noexcept;
 
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SpatialHashingSearcherHostPtr<T>&
+    searcher() const noexcept;
+
     /**
      * @brief Returns the configured codec.
      *
@@ -101,6 +140,9 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const CodecHostPtr<T>&
     codec() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const MeasurerHostPtr<T>&
+    measurer() const noexcept;
 
     /**
      * @brief Returns the configured solver list.
@@ -111,10 +153,14 @@ public:
     solvers() const noexcept;
 
 private:
+    SpatialHashingSearcherHostPtr<T> _searcher {};
+
     /**
      * @brief Optional codec used to control codec-aware solver execution.
      */
     CodecHostPtr<T> _codec {};
+
+    MeasurerHostPtr<T> _measurer {};
 
     /**
      * @brief Ordered list of solvers managed by this orchestrator.
@@ -141,6 +187,9 @@ public:
      */
     Builder() = default;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+
     /**
      * @brief Sets the codec used by the orchestrator.
      *
@@ -149,6 +198,9 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_codec(CodecHostPtr<T> codec) noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_measurer(MeasurerHostPtr<T> measurer) noexcept;
 
     /**
      * @brief Appends a solver to the orchestrator configuration.
@@ -189,10 +241,14 @@ private:
     validate() const;
 
 private:
+    SpatialHashingSearcherHostPtr<T> _searcher {};
+
     /**
      * @brief Codec collected by the builder.
      */
     CodecHostPtr<T> _codec {};
+
+    MeasurerHostPtr<T> _measurer {};
 
     /**
      * @brief Solver list collected by the builder.

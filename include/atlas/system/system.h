@@ -1,13 +1,10 @@
 #pragma once
 
-#include <atlas/codec/codec.h>
 #include <atlas/collider/collider.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
-#include <atlas/measure/measure.h>
 #include <atlas/memory/memory.h>
 #include <atlas/orchestrator/orchestrator.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/sink/sink.h>
 #include <atlas/source/source.h>
 #include <atlas/universe/universe.h>
@@ -29,8 +26,6 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     System(FluidHostPtr<T> fluid,
            UniverseHostPtr<T> universe,
-           CodecHostPtr<T> codec,
-           MeasureHostPtr<T> measure,
            SourceHostPtr<T> source,
            SinkHostPtr<T> sink,
            ColliderHostPtr<T> collider,
@@ -49,16 +44,7 @@ public:
     emit();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    search();
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    classify();
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    measure();
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    solve();
+    orchestrate();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     advect();
@@ -79,12 +65,6 @@ private:
     FluidHostPtr<T> _fluid {};
 
     UniverseHostPtr<T> _universe {};
-
-    SpatialHashingSearcherHostPtr<T> _searcher {};
-
-    CodecHostPtr<T> _codec {};
-
-    MeasureHostPtr<T> _measure {};
 
     SourceHostPtr<T> _source {};
 
@@ -107,12 +87,6 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_domain(const UniverseHostPtr<T>& universe) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_codec(const CodecHostPtr<T>& codec) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_measure(const MeasureHostPtr<T>& measure) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_source(const SourceHostPtr<T>& source) noexcept;
@@ -143,10 +117,6 @@ private:
     FluidHostPtr<T> _fluid {};
 
     UniverseHostPtr<T> _universe {};
-
-    CodecHostPtr<T> _codec {};
-
-    MeasureHostPtr<T> _measure {};
 
     SourceHostPtr<T> _source {};
 

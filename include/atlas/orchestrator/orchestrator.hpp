@@ -1,17 +1,19 @@
 #pragma once
 
-#include <atlas/memory/raw_pointer_cast.h>
-
 #include <stdexcept>
 
 namespace atlas::system {
 
 template <typename T>
-Orchestrator<T>::Orchestrator(CodecHostPtr<T> codec,
+Orchestrator<T>::Orchestrator(SpatialHashingSearcherHostPtr<T> searcher,
+                              CodecHostPtr<T> codec,
+                              MeasurerHostPtr<T> measurer,
                               HostBuffer<SolveHostPtr<T>> solvers) noexcept
-    : _codec(std::move(codec))
+    : _searcher(std::move(searcher))
+    , _codec(std::move(codec))
+    , _measurer(std::move(measurer))
     , _solvers(std::move(solvers)) {
-    // Store the optional codec and the ordered solver list.
+    // Store the optional pipeline dependencies and the ordered solver list.
 }
 
 template <typename T>
@@ -24,7 +26,34 @@ Orchestrator<T>::builder() noexcept {
 
 template <typename T>
 void
-Orchestrator<T>::orchestrate(const T dt) {
+Orchestrator<T>::search() {
+
+    if (_searcher) {
+        _searcher->build();
+    }
+}
+
+template <typename T>
+void
+Orchestrator<T>::classify() {
+
+    if (_codec) {
+        _codec->update();
+    }
+}
+
+template <typename T>
+void
+Orchestrator<T>::measure() {
+
+    if (_measurer) {
+        _measurer->measure();
+    }
+}
+
+template <typename T>
+void
+Orchestrator<T>::solve(const T dt) {
 
     // If there are no solvers, there is nothing to execute.
     if (_solvers.empty()) {
@@ -66,10 +95,34 @@ Orchestrator<T>::orchestrate(const T dt) {
 
 template <typename T>
 void
+Orchestrator<T>::orchestrate(const T dt) {
+
+    search();
+    classify();
+    measure();
+    solve(dt);
+}
+
+template <typename T>
+void
+Orchestrator<T>::set_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+
+    _searcher = std::move(searcher);
+}
+
+template <typename T>
+void
 Orchestrator<T>::set_codec(CodecHostPtr<T> codec) noexcept {
 
     // Replace the current codec with the supplied one.
     _codec = std::move(codec);
+}
+
+template <typename T>
+void
+Orchestrator<T>::set_measurer(MeasurerHostPtr<T> measurer) noexcept {
+
+    _measurer = std::move(measurer);
 }
 
 template <typename T>
@@ -81,11 +134,25 @@ Orchestrator<T>::add_solver(SolveHostPtr<T> solver) noexcept {
 }
 
 template <typename T>
+const SpatialHashingSearcherHostPtr<T>&
+Orchestrator<T>::searcher() const noexcept {
+
+    return _searcher;
+}
+
+template <typename T>
 const CodecHostPtr<T>&
 Orchestrator<T>::codec() const noexcept {
 
     // Return the currently configured codec.
     return _codec;
+}
+
+template <typename T>
+const MeasurerHostPtr<T>&
+Orchestrator<T>::measurer() const noexcept {
+
+    return _measurer;
 }
 
 template <typename T>
@@ -98,10 +165,26 @@ Orchestrator<T>::solvers() const noexcept {
 
 template <typename T>
 typename Orchestrator<T>::Builder&
+Orchestrator<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+
+    _searcher = std::move(searcher);
+    return *this;
+}
+
+template <typename T>
+typename Orchestrator<T>::Builder&
 Orchestrator<T>::Builder::with_codec(CodecHostPtr<T> codec) noexcept {
 
     // Store the codec to be used by the constructed orchestrator.
     _codec = std::move(codec);
+    return *this;
+}
+
+template <typename T>
+typename Orchestrator<T>::Builder&
+Orchestrator<T>::Builder::with_measurer(MeasurerHostPtr<T> measurer) noexcept {
+
+    _measurer = std::move(measurer);
     return *this;
 }
 
@@ -133,7 +216,7 @@ Orchestrator<T>::Builder::build() const {
 
     // Validate builder state before constructing the value object.
     validate();
-    return Orchestrator<T>(_codec, _solvers);
+    return Orchestrator<T>(_searcher, _codec, _measurer, _solvers);
 }
 
 template <typename T>
@@ -142,7 +225,7 @@ Orchestrator<T>::Builder::make_host_shared() const {
 
     // Validate builder state before constructing the shared object.
     validate();
-    return atlas::make_host_shared<Orchestrator<T>>(_codec, _solvers);
+    return atlas::make_host_shared<Orchestrator<T>>(_searcher, _codec, _measurer, _solvers);
 }
 
 } // namespace atlas::system

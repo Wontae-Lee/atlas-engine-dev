@@ -11,8 +11,6 @@ namespace atlas::system {
 template <typename T>
 System<T>::System(FluidHostPtr<T> fluid,
                   UniverseHostPtr<T> universe,
-                  CodecHostPtr<T> codec,
-                  MeasureHostPtr<T> measure,
                   SourceHostPtr<T> source,
                   SinkHostPtr<T> sink,
                   ColliderHostPtr<T> collider,
@@ -20,21 +18,11 @@ System<T>::System(FluidHostPtr<T> fluid,
                   const T dt)
     : _fluid(std::move(fluid))
     , _universe(std::move(universe))
-    , _codec(std::move(codec))
-    , _measure(std::move(measure))
     , _source(std::move(source))
     , _sink(std::move(sink))
     , _collider(std::move(collider))
     , _orchestrator(std::move(orchestrator))
-    , _dt(dt) {
-
-    if (_universe) {
-        _searcher = SpatialHashingSearcher<T>::builder()
-                        .with_universe(_universe)
-                        .with_fluid(_fluid)
-                        .make_host_shared();
-    }
-}
+    , _dt(dt) { }
 
 template <typename T>
 typename System<T>::Builder
@@ -48,10 +36,7 @@ void
 System<T>::update() {
 
     emit();
-    search();
-    classify();
-    measure();
-    solve();
+    orchestrate();
     advect();
     remove();
 }
@@ -68,34 +53,7 @@ System<T>::emit() {
 
 template <typename T>
 void
-System<T>::search() {
-
-    if (_searcher) {
-        _searcher->build();
-    }
-}
-
-template <typename T>
-void
-System<T>::classify() {
-
-    if (_codec) {
-        _codec->update();
-    }
-}
-
-template <typename T>
-void
-System<T>::measure() {
-
-    if (_measure) {
-        _measure->measure();
-    }
-}
-
-template <typename T>
-void
-System<T>::solve() {
+System<T>::orchestrate() {
 
     if (_orchestrator) {
         _orchestrator->orchestrate(_dt);
@@ -191,22 +149,6 @@ System<T>::Builder::with_domain(const UniverseHostPtr<T>& universe) noexcept {
 
 template <typename T>
 typename System<T>::Builder&
-System<T>::Builder::with_codec(const CodecHostPtr<T>& codec) noexcept {
-
-    _codec = codec;
-    return *this;
-}
-
-template <typename T>
-typename System<T>::Builder&
-System<T>::Builder::with_measure(const MeasureHostPtr<T>& measure) noexcept {
-
-    _measure = measure;
-    return *this;
-}
-
-template <typename T>
-typename System<T>::Builder&
 System<T>::Builder::with_source(const SourceHostPtr<T>& source) noexcept {
 
     _source = source;
@@ -263,7 +205,7 @@ System<T>
 System<T>::Builder::build() const {
 
     validate();
-    return System<T>(_fluid, _universe, _codec, _measure, _source, _sink, _collider, _orchestrator, _dt);
+    return System<T>(_fluid, _universe, _source, _sink, _collider, _orchestrator, _dt);
 }
 
 template <typename T>
@@ -274,8 +216,6 @@ System<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<System<T>>(
         _fluid,
         _universe,
-        _codec,
-        _measure,
         _source,
         _sink,
         _collider,

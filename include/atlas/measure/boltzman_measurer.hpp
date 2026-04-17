@@ -22,7 +22,7 @@ BoltzmanMeasurer<T>::BoltzmanMeasurer(UniverseHostPtr<T> universe,
                                       FluidHostPtr<T> fluid,
                                       SpatialHashingSearcherHostPtr<T> searcher,
                                       const MeasureModeType measure_mode) noexcept
-    : Measure<T>(std::move(universe), std::move(fluid), std::move(searcher))
+    : Measurer<T>(std::move(universe), std::move(fluid), std::move(searcher))
     , _measure_mode(measure_mode) {
     // Store the measurement mode together with the inherited universe/fluid/searcher dependencies.
 
