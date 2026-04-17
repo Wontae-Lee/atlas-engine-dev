@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlas/buffer/device_buffer.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
@@ -18,7 +19,7 @@ public:
     solve() { }
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    solve(int allocated_solver) { }
+    solve(const DeviceBuffer<int>* allocated_solver, const int index) { }
 };
 
 }
