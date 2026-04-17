@@ -76,6 +76,13 @@ Fluid<T>::particle_count() const noexcept {
 }
 
 template <typename T>
+T
+Fluid<T>::statistical_weight() const noexcept {
+    // Return the statistical weight of the fluid.
+    return _statistical_weight;
+}
+
+template <typename T>
 void
 Fluid<T>::remove_particles() {
     // The active state determines whether each particle slot is currently used.
@@ -372,7 +379,8 @@ Fluid<T>::Builder::build() const {
     f._generators = DeviceBuffer<GenerateOperator<T>>(_generators.begin(), _generators.end());
 
     // Set the fixed particle capacity of the created Fluid.
-    f._buffer_size = _buffer_size;
+    f._buffer_size        = _buffer_size;
+    f._statistical_weight = _statistical_weight;
     f._keep.resize(_buffer_size);
     f._offsets.resize(_buffer_size);
     f._compact_indices.resize(_buffer_size);
@@ -443,6 +451,13 @@ Fluid<T>::Builder::with_buffer_size(const size_t buffer_size) noexcept {
 }
 
 template <typename T>
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::with_statistical_weight(const T statistical_weight) noexcept {
+    _statistical_weight = statistical_weight;
+    return *this;
+}
+
+template <typename T>
 void
 Fluid<T>::Builder::validate() const {
     // The builder currently requires a one-to-one correspondence between
@@ -453,6 +468,23 @@ Fluid<T>::Builder::validate() const {
     if (_particles.size() != _generators.size()) {
         throw std::runtime_error(
             "Fluid::Builder: particles/generators size mismatch.");
+    }
+
+    if (!(_statistical_weight > T(0))) {
+        throw std::runtime_error(
+            "Fluid::Builder: statistical_weight must be positive.");
+    }
+
+    for (const auto& particle_property : _particles) {
+        if (!(particle_property.molecular_mass > T(0))) {
+            throw std::runtime_error(
+                "Fluid::Builder: molecular_mass must be positive.");
+        }
+
+        if (particle_property.mass != particle_property.molecular_mass * _statistical_weight) {
+            throw std::runtime_error(
+                "Fluid::Builder: particle mass does not match statistical weight.");
+        }
     }
 }
 

@@ -10,7 +10,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/generator/generator.h>
-#include <atlas/material/matrial_properties.h>
+#include <atlas/material/material_properties.h>
 #include <atlas/memory/memory.h>
 
 #include <memory>
@@ -168,6 +168,14 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE size_t
     particle_count() const noexcept;
 
+    /**
+     * @brief Gets the fluid-level statistical weight.
+     *
+     * @return Statistical weight.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
+    statistical_weight() const noexcept;
+
 private:
     friend class Builder;
 
@@ -205,6 +213,11 @@ private:
      * @brief Maximum capacity of the particle buffer.
      */
     size_t _buffer_size = 0;
+
+    /**
+     * @brief Statistical weight shared across this fluid.
+     */
+    T _statistical_weight = T(1);
 
     /**
      * @brief Map storing simulation states indexed by type.
@@ -267,6 +280,15 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_buffer_size(size_t buffer_size) noexcept;
 
+    /**
+     * @brief Sets the fluid-level statistical weight.
+     *
+     * @param statistical_weight Statistical weight value.
+     * @return Reference to this Builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_statistical_weight(T statistical_weight) noexcept;
+
 private:
     /**
      * @brief Validates builder configuration.
@@ -280,6 +302,7 @@ private:
     DeviceBuffer<MatrialProperties<T>> _particles;
     DeviceBuffer<GenerateOperator<T>> _generators;
     size_t _buffer_size = 0;
+    T _statistical_weight = T(1.0);
 };
 
 } // namespace atlas::fluid

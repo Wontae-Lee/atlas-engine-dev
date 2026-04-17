@@ -1,6 +1,6 @@
 #include "../utilities/tests_utils.h"
 
-#include <atlas/material/matrial_properties.h>
+#include <atlas/material/material_properties.h>
 
 #include <gtest/gtest.h>
 
@@ -13,22 +13,20 @@ constexpr T kEps = static_cast<T>(1e-6);
 } // namespace
 
 TEST(MatrialProperties, DefaultConstructionLeavesOptionalsEmpty) {
-    const atlas::system::MatrialProperties<T> properties;
+    const atlas::system::MaterialProperties<T> properties;
 
     EXPECT_EQ(properties.type, atlas::system::MaterialType::Molecule);
     EXPECT_NEAR(properties.mass, 0.0f, kEps);
-    EXPECT_FALSE(properties.molecular_mass.has_value());
-    EXPECT_FALSE(properties.statistical_weight.has_value());
+    EXPECT_NEAR(properties.molecular_mass, 0.0f, kEps);
     EXPECT_FALSE(properties.translational_energy.has_value());
     EXPECT_FALSE(properties.charge.has_value());
 }
 
 TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
-    const auto properties = atlas::system::MatrialProperties<T>::builder()
+    const auto properties = atlas::system::MaterialProperties<T>::builder()
                                 .with_type(atlas::system::MaterialType::Ion)
                                 .with_mass(10.0f)
                                 .with_molecular_mass(2.0f)
-                                .with_statistical_weight(5.0f)
                                 .with_translational_energy(1.0f)
                                 .with_rotational_energy(2.0f)
                                 .with_vibrational_energy(3.0f)
@@ -46,8 +44,6 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
 
     EXPECT_EQ(properties.type, atlas::system::MaterialType::Ion);
     EXPECT_NEAR(properties.mass, 10.0f, kEps);
-    ASSERT_TRUE(properties.molecular_mass.has_value());
-    ASSERT_TRUE(properties.statistical_weight.has_value());
     ASSERT_TRUE(properties.translational_energy.has_value());
     ASSERT_TRUE(properties.rotational_energy.has_value());
     ASSERT_TRUE(properties.vibrational_energy.has_value());
@@ -61,8 +57,7 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     ASSERT_TRUE(properties.smoothing_length.has_value());
     ASSERT_TRUE(properties.electronic_energy.has_value());
     ASSERT_TRUE(properties.charge.has_value());
-    EXPECT_NEAR(*properties.molecular_mass, 2.0f, kEps);
-    EXPECT_NEAR(*properties.statistical_weight, 5.0f, kEps);
+    EXPECT_NEAR(properties.molecular_mass, 2.0f, kEps);
     EXPECT_NEAR(*properties.translational_energy, 1.0f, kEps);
     EXPECT_NEAR(*properties.rotational_energy, 2.0f, kEps);
     EXPECT_NEAR(*properties.vibrational_energy, 3.0f, kEps);
@@ -78,20 +73,18 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     EXPECT_EQ(*properties.charge, 2);
 }
 
-TEST(MatrialProperties, BuilderRequiresExplicitMassEvenWhenDerivedFieldsExist) {
+TEST(MatrialProperties, BuilderRequiresExplicitMass) {
     EXPECT_THROW(
-        atlas::system::MatrialProperties<T>::builder()
+        atlas::system::MaterialProperties<T>::builder()
             .with_molecular_mass(2.5f)
-            .with_statistical_weight(4.0f)
             .build(),
         std::invalid_argument);
 }
 
 TEST(MatrialProperties, MakeHostSharedReturnsUsableRecord) {
-    const auto properties = atlas::system::MatrialProperties<T>::builder()
+    const auto properties = atlas::system::MaterialProperties<T>::builder()
                                 .with_mass(3.0f)
                                 .with_molecular_mass(1.0f)
-                                .with_statistical_weight(3.0f)
                                 .make_host_shared();
 
     ASSERT_NE(properties, nullptr);
@@ -100,28 +93,26 @@ TEST(MatrialProperties, MakeHostSharedReturnsUsableRecord) {
 
 TEST(MatrialProperties, BuilderRejectsInvalidMassInputsImmediately) {
     EXPECT_THROW(
-        atlas::system::MatrialProperties<T>::builder()
+        atlas::system::MaterialProperties<T>::builder()
             .with_mass(0.0f),
         std::invalid_argument);
 
     EXPECT_THROW(
-        atlas::system::MatrialProperties<T>::builder()
+        atlas::system::MaterialProperties<T>::builder()
             .with_molecular_mass(0.0f),
         std::invalid_argument);
 }
 
 TEST(MatrialProperties, BuilderRejectsMissingOrInconsistentMassConfiguration) {
     EXPECT_THROW(
-        atlas::system::MatrialProperties<T>::builder()
+        atlas::system::MaterialProperties<T>::builder()
             .with_mass(5.0f)
             .build(),
         std::invalid_argument);
 
     EXPECT_THROW(
-        atlas::system::MatrialProperties<T>::builder()
-            .with_mass(9.0f)
+        atlas::system::MaterialProperties<T>::builder()
             .with_molecular_mass(2.0f)
-            .with_statistical_weight(5.0f)
             .build(),
         std::invalid_argument);
 }

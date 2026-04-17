@@ -27,6 +27,7 @@ atlas::FluidHostPtr<T>
 make_fluid() {
     return atlas::fluid::Fluid<T>::builder()
         .with_buffer_size(8)
+        .with_statistical_weight(2.0f)
         .make_host_shared();
 }
 
@@ -119,4 +120,43 @@ TEST(KnudsenCodec, UpdateComputesKnudsenNumberAndAllocatesSolverBuckets) {
     EXPECT_GE(knudsen_number->data()[2], static_cast<T>(0));
     EXPECT_LE(codec.allocated_solver()[0], codec.allocated_solver()[1]);
     EXPECT_LE(codec.allocated_solver()[1], codec.allocated_solver()[2]);
+}
+
+TEST(KnudsenCodec, EncodeUsesFluidStatisticalWeightForNumberDensity) {
+    const auto universe = make_universe();
+    const auto fluid = atlas::fluid::Fluid<T>::builder()
+                           .with_buffer_size(8)
+                           .with_statistical_weight(4.0f)
+                           .make_host_shared();
+    const auto searcher = make_searcher(universe, fluid);
+
+    auto& temperature = universe->emplace_state<atlas::universe::UniverseTemperatureState<T>>(
+        static_cast<std::size_t>(universe->number_of_cells()));
+    auto& number_particle = universe->emplace_state<atlas::universe::UniverseNumberParticleState<T>>(
+        static_cast<std::size_t>(universe->number_of_cells()));
+
+    temperature.data()[0] = 300.0f;
+    number_particle.data()[0] = 2.0f;
+
+    auto codec = atlas::system::KnudsenCodec<T>::builder()
+                     .with_domain(universe)
+                     .with_fluid(fluid)
+                     .with_searcher(searcher)
+                     .with_characteristic_length(2.0f)
+                     .build();
+
+    codec.update();
+
+    const auto* knudsen_number
+        = universe->state<atlas::universe::UniverseKnudsenNumberState<T>>();
+
+    ASSERT_NE(knudsen_number, nullptr);
+
+    const T expected_number_density = number_particle.data()[0] * fluid->statistical_weight() / universe->cell_volume();
+    const T expected_knudsen_number
+        = static_cast<T>(atlas::boltzmann_constant) * temperature.data()[0]
+        / expected_number_density
+        / 2.0f;
+
+    EXPECT_NEAR(knudsen_number->data()[0], expected_knudsen_number, static_cast<T>(1e-12));
 }

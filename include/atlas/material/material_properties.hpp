@@ -6,10 +6,10 @@
 namespace atlas::system {
 
 template <typename T>
-typename MatrialProperties<T>::Builder
-MatrialProperties<T>::builder() noexcept {
+typename MaterialProperties<T>::Builder
+MaterialProperties<T>::builder() noexcept {
     // Return a fresh builder object for staged construction of
-    // `MatrialProperties<T>`.
+    // `MaterialProperties<T>`.
     //
     // The builder path is useful when material parameters are supplied
     // progressively and validated before the final object is created.
@@ -17,31 +17,24 @@ MatrialProperties<T>::builder() noexcept {
 }
 
 template <typename T>
-MatrialProperties<T>
-MatrialProperties<T>::Builder::build() const {
+MaterialProperties<T>
+MaterialProperties<T>::Builder::build() const {
     // Validate the staged builder state before constructing
     // the final material-properties object.
     validate();
 
     // Start from a default-constructed material-properties instance.
-    MatrialProperties<T> p {};
+    MaterialProperties<T> p {};
 
     // Use the explicitly configured material type when present.
     // Otherwise fall back to `MaterialType::Molecule` as the default.
     p.type = _type.value_or(MaterialType::Molecule);
 
-    // Mass or molecular mass and statistical weight must be provided
-    if (!_mass.has_value() && (_molecular_mass.has_value() && _statistical_weight.has_value())) {
-        p.mass = *_molecular_mass * *_statistical_weight;
-    } else {
-        p.mass = *_mass;
-    }
+    // Mass must be provided explicitly.
+    p.mass = *_mass;
 
-    // Copy the molecular mass when provided.
+    // Copy the molecular mass.
     p.molecular_mass = _molecular_mass;
-
-    // Copy statistical or weighting metadata.
-    p.statistical_weight = _statistical_weight;
 
     // Copy energy-related material properties.
     p.translational_energy = _translational_energy;
@@ -69,31 +62,31 @@ MatrialProperties<T>::Builder::build() const {
 }
 
 template <typename T>
-atlas::host_shared_ptr<MatrialProperties<T>>
-MatrialProperties<T>::Builder::make_host_shared() const {
+atlas::host_shared_ptr<MaterialProperties<T>>
+MaterialProperties<T>::Builder::make_host_shared() const {
     // Build the validated material-properties object by value first.
     auto p = build();
 
     // Move the built object into host-shared managed storage.
-    return atlas::make_host_shared<MatrialProperties<T>>(std::move(p));
+    return atlas::make_host_shared<MaterialProperties<T>>(std::move(p));
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_type(const MaterialType::Value t) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_type(const MaterialType::Value t) {
     // Store the material type in the builder's staged state.
     _type = t;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_mass(T m) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_mass(T m) {
     // Reject non-positive mass immediately because mass is a required
     // physical parameter and must be strictly greater than zero.
     if (!(m > T(0))) {
         throw std::invalid_argument(
-            "MatrialProperties::Builder: mass must be > 0.");
+            "MaterialProperties::Builder: mass must be > 0.");
     }
 
     // Store the validated mass in the builder.
@@ -102,13 +95,13 @@ MatrialProperties<T>::Builder::with_mass(T m) {
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_molecular_mass(T m) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_molecular_mass(T m) {
     // Reject non-positive molecular mass immediately because it must be
     // physically meaningful when provided.
     if (!(m > T(0))) {
         throw std::invalid_argument(
-            "MatrialProperties::Builder: molecular_mass must be > 0.");
+            "MaterialProperties::Builder: molecular_mass must be > 0.");
     }
 
     // Store the validated molecular mass in the builder.
@@ -117,112 +110,104 @@ MatrialProperties<T>::Builder::with_molecular_mass(T m) {
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_statistical_weight(T w) {
-    // Store the statistical weight used by the material model.
-    _statistical_weight = w;
-    return *this;
-}
-
-template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_translational_energy(T e) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_translational_energy(T e) {
     // Store translational energy metadata.
     _translational_energy = e;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_rotational_energy(T e) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rotational_energy(T e) {
     // Store rotational energy metadata.
     _rotational_energy = e;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_vibrational_energy(T e) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_vibrational_energy(T e) {
     // Store vibrational energy metadata.
     _vibrational_energy = e;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_species_id(int id) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_species_id(int id) {
     // Store the species identifier used to classify this material.
     _species_id = id;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_collision_diameter(T d_ref) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_collision_diameter(T d_ref) {
     // Store the reference collision diameter.
     _collision_diameter = d_ref;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_viscosity_index(T omega) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_viscosity_index(T omega) {
     // Store the viscosity index or related transport exponent.
     _viscosity_index = omega;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_scattering_parameter(T alpha) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_scattering_parameter(T alpha) {
     // Store the scattering parameter used by the interaction model.
     _scattering_parameter = alpha;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_rest_density(T rho0) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rest_density(T rho0) {
     // Store the reference or rest density.
     _rest_density = rho0;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_pressure_coefficient(T k) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_pressure_coefficient(T k) {
     // Store the pressure-law coefficient.
     _pressure_coefficient = k;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_dynamic_viscosity(T mu) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_dynamic_viscosity(T mu) {
     // Store the dynamic viscosity.
     _dynamic_viscosity = mu;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_smoothing_length(T h) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_smoothing_length(T h) {
     // Store the smoothing length used by kernel- or particle-based models.
     _smoothing_length = h;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_electronic_energy(T e) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_electronic_energy(T e) {
     // Store electronic energy metadata.
     _electronic_energy = e;
     return *this;
 }
 
 template <typename T>
-typename MatrialProperties<T>::Builder&
-MatrialProperties<T>::Builder::with_charge(int q) {
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_charge(int q) {
     // Store the material or particle charge state.
     _charge = q;
     return *this;
@@ -230,19 +215,16 @@ MatrialProperties<T>::Builder::with_charge(int q) {
 
 template <typename T>
 void
-MatrialProperties<T>::Builder::validate() const {
-    // Mass is the only mandatory parameter in the current builder contract.
-    //
-    // Without it, the material-properties object is considered incomplete.
-    if ((!_mass.has_value()) || (!_molecular_mass.has_value() && !_statistical_weight.has_value())) {
+MaterialProperties<T>::Builder::validate() const {
+    // Mass and molecular_mass are mandatory parameters in the current builder contract.
+    if (!_mass.has_value()) {
         throw std::invalid_argument(
-            "MatrialProperties::Builder: either mass or molecular_mass and statistical_weight must be provided.");
+            "MaterialProperties::Builder: mass must be provided.");
     }
 
-    if (_molecular_mass.has_value() && _statistical_weight.has_value()
-        && (*_molecular_mass * *_statistical_weight != *_mass)) {
+    if (!(_molecular_mass > T(0))) {
         throw std::invalid_argument(
-            "MatrialProperties::Builder: mass must equal molecular_mass * statistical_weight.");
+            "MaterialProperties::Builder: molecular_mass must be provided.");
     }
 }
 

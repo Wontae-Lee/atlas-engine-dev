@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file matrail_properties.h
+ * @file material_properties.h
  * @brief Declares material classification tags, material-property storage, and builder utilities.
  *
  * @details
@@ -45,7 +45,7 @@
  * - return either a value instance or a host-owned shared pointer.
  *
  * ## Naming note
- * The type name is spelled `MatrialProperties` in the current API and is kept as-is
+ * The type name is spelled `MaterialProperties` in the current API and is kept as-is
  * for compatibility with the surrounding codebase.
  *
  * ---
@@ -155,7 +155,7 @@ struct MaterialType final {
  * @tparam T Floating-point scalar type used for physical quantities.
  */
 template <typename T>
-class MatrialProperties final {
+class MaterialProperties final {
 public:
     /**
      * @brief Fluent builder for configuring and constructing @ref MatrialProperties.
@@ -186,22 +186,13 @@ public:
     T mass {};
 
     /**
-     * @brief Optional molecular mass.
+     * @brief Molecular mass.
      *
      * @details
-     * May represent the mass of a single physical molecule or particle represented
+     * Represents the mass of a single physical molecule or particle represented
      * by the material record.
      */
-    std::optional<T> molecular_mass;
-
-    /**
-     * @brief Optional statistical weight.
-     *
-     * @details
-     * May be used to represent the number of physical particles represented by a
-     * simulation particle or sample.
-     */
-    std::optional<T> statistical_weight;
+    T molecular_mass {};
 
     /**
      * @brief Optional translational energy.
@@ -315,7 +306,7 @@ public:
      * Constructs a material-property record with default-initialized required
      * fields and all optional fields disengaged.
      */
-    MatrialProperties() = default;
+    MaterialProperties() = default;
 
     /**
      * @brief Builder entry point.
@@ -366,7 +357,7 @@ public:
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-class MatrialProperties<T>::Builder final {
+class MaterialProperties<T>::Builder final {
 public:
     /**
      * @brief Default constructor.
@@ -382,7 +373,7 @@ public:
      *
      * @return Constructed material-property record.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE MatrialProperties<T>
+    ATLAS_HOST ATLAS_FORCE_INLINE MaterialProperties<T>
     build() const;
 
     /**
@@ -390,7 +381,7 @@ public:
      *
      * @return `atlas::host_shared_ptr<MatrialProperties<T>>` owning the constructed record.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<MatrialProperties<T>>
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<MaterialProperties<T>>
     make_host_shared() const;
 
     /**
@@ -419,15 +410,6 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_molecular_mass(T m);
-
-    /**
-     * @brief Set the statistical weight.
-     *
-     * @param w Statistical weight to stage.
-     * @return `*this` for fluent chaining.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_statistical_weight(T w);
 
     /**
      * @brief Set the translational energy.
@@ -570,12 +552,7 @@ private:
     /**
      * @brief Pending molecular mass.
      */
-    std::optional<T> _molecular_mass;
-
-    /**
-     * @brief Pending statistical weight.
-     */
-    std::optional<T> _statistical_weight;
+    T _molecular_mass {};
 
     /**
      * @brief Pending translational energy.
@@ -658,7 +635,7 @@ using MaterialType = system::MaterialType;
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MatrialProperties = system::MatrialProperties<T>;
+using MatrialProperties = system::MaterialProperties<T>;
 
 /**
  * @brief Convenience alias for a host-owned shared pointer to
@@ -667,7 +644,7 @@ using MatrialProperties = system::MatrialProperties<T>;
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MatrialPropertiesHostPtr = atlas::host_shared_ptr<system::MatrialProperties<T>>;
+using MatrialPropertiesHostPtr = atlas::host_shared_ptr<system::MaterialProperties<T>>;
 
 /**
  * @brief Convenience alias for a device-owned shared pointer to
@@ -676,8 +653,8 @@ using MatrialPropertiesHostPtr = atlas::host_shared_ptr<system::MatrialPropertie
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MatrialPropertiesDevicePtr = atlas::device_shared_ptr<system::MatrialProperties<T>>;
+using MatrialPropertiesDevicePtr = atlas::device_shared_ptr<system::MaterialProperties<T>>;
 
 } // namespace atlas
 
-#include <atlas/material/matrial_properties.hpp>
+#include <atlas/material/material_properties.hpp>

@@ -38,17 +38,21 @@ TEST(Fluid, SizedConstructorRegistersDefaultStates) {
 }
 
 TEST(Fluid, BuilderConstructsConfiguredFluid) {
-    atlas::HostBuffer<atlas::system::MatrialProperties<T>> properties(1);
+    atlas::HostBuffer<atlas::system::MaterialProperties<T>> properties(1);
     atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(1);
+    properties[0].mass = 10.0f;
+    properties[0].molecular_mass = 2.0f;
 
     const auto fluid = atlas::fluid::Fluid<T>::builder()
                            .with_buffer_size(16)
+                           .with_statistical_weight(5.0f)
                            .with_properties(properties)
                            .with_generators(generators)
                            .build();
 
     EXPECT_EQ(fluid.buffer_size(), 16u);
     EXPECT_EQ(fluid.generators().size(), 1u);
+    EXPECT_FLOAT_EQ(fluid.statistical_weight(), 5.0f);
     EXPECT_TRUE(fluid.has_state<atlas::fluid::FluidPositionState<T>>());
     EXPECT_TRUE(fluid.has_state<atlas::fluid::FluidVelocityState<T>>());
     EXPECT_TRUE(fluid.has_state<atlas::fluid::FluidSpeciesState<T>>());
@@ -56,12 +60,42 @@ TEST(Fluid, BuilderConstructsConfiguredFluid) {
 }
 
 TEST(Fluid, BuilderRejectsMismatchedPropertiesAndGenerators) {
-    atlas::HostBuffer<atlas::system::MatrialProperties<T>> properties(1);
+    atlas::HostBuffer<atlas::system::MaterialProperties<T>> properties(1);
     atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(0);
 
     EXPECT_THROW(
         atlas::fluid::Fluid<T>::builder()
             .with_buffer_size(4)
+            .with_properties(properties)
+            .with_generators(generators)
+            .build(),
+        std::runtime_error);
+}
+
+TEST(Fluid, BuilderRejectsNonPositiveStatisticalWeight) {
+    atlas::HostBuffer<atlas::system::MaterialProperties<T>> properties(0);
+    atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(0);
+
+    EXPECT_THROW(
+        atlas::fluid::Fluid<T>::builder()
+            .with_buffer_size(4)
+            .with_statistical_weight(0.0f)
+            .with_properties(properties)
+            .with_generators(generators)
+            .build(),
+        std::runtime_error);
+}
+
+TEST(Fluid, BuilderRejectsMassThatDoesNotMatchStatisticalWeight) {
+    atlas::HostBuffer<atlas::system::MaterialProperties<T>> properties(1);
+    atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(1);
+    properties[0].mass = 9.0f;
+    properties[0].molecular_mass = 2.0f;
+
+    EXPECT_THROW(
+        atlas::fluid::Fluid<T>::builder()
+            .with_buffer_size(4)
+            .with_statistical_weight(5.0f)
             .with_properties(properties)
             .with_generators(generators)
             .build(),

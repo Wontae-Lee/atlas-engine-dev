@@ -49,6 +49,9 @@ KnudsenCodec<T>::KnudsenCodec(UniverseHostPtr<T> domain,
 template <typename T>
 void
 KnudsenCodec<T>::encode() {
+    if (!this->_fluid) {
+        return;
+    }
 
     // Encode requires:
     // - cell temperature
@@ -77,6 +80,7 @@ KnudsenCodec<T>::encode() {
     const int num_of_cells          = this->_universe->number_of_cells();
     const T cell_volume             = this->_universe->cell_volume();
     const T characteristic_length   = _characteristic_length;
+    const T statistical_weight      = this->_fluid->statistical_weight();
 
     // For each cell, estimate the mean free path from temperature and number density,
     // then normalize it by the configured characteristic length to obtain the
@@ -86,7 +90,7 @@ KnudsenCodec<T>::encode() {
         num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
             const T number_density = cell_volume > T(0)
-                ? number_particle_ptr[cell] / cell_volume
+                ? number_particle_ptr[cell] * statistical_weight / cell_volume
                 : T(0);
 
             // If the required physical quantities are invalid or degenerate,

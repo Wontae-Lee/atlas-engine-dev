@@ -30,7 +30,7 @@
 #include <atlas/iterator/counting_iterator.h>
 #include <atlas/iterator/zip_iterator.h>
 #include <atlas/logging/logging.h>
-#include <atlas/material/matrial_properties.h>
+#include <atlas/material/material_properties.h>
 #include <atlas/math/constants.h>
 #include <atlas/math/detail/config.h>
 #include <atlas/math/detail/ops.h>
