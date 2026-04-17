@@ -5,7 +5,6 @@
  * @brief Declares sampling utility functions for random directions, hemispheres, and hashed scalar generation.
  */
 
-#include <atlas/buffer/device_buffer.h>
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 #include <atlas/random/default_random_engine.h>
