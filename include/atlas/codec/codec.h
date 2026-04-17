@@ -40,7 +40,7 @@ public:
     allocated_solver() const noexcept;
 
 protected:
-    UniverseHostPtr<T> _domain {};
+    UniverseHostPtr<T> _universe {};
 
     FluidHostPtr<T> _fluid {};
 

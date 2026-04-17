@@ -2,7 +2,7 @@
 
 /**
  * @file knudsen_codec.h
- * @brief Declares the KnudsenCodec class for Knudsen-number-related encoding over a simulation domain.
+ * @brief Declares the KnudsenCodec class for encoding and decoding cell-wise Knudsen-number information.
  */
 
 #include <atlas/buffer/device_buffer.h>
@@ -12,19 +12,20 @@
 namespace atlas::system {
 
 /**
- * @brief Codec specialization for Knudsen-number-related field encoding.
+ * @brief Codec specialization for Knudsen-number-based field classification.
  *
  * This class derives from Codec<T> and binds together:
  * - a universe/domain object,
  * - a fluid object,
  * - a spatial hashing searcher,
- * - a characteristic length scale used in Knudsen-number interpretation.
+ * - a characteristic length scale used to normalize mean free path.
  *
- * The class owns a device buffer of per-cell Knudsen-related values, intended
- * to store domain-discretized results associated with the codec.
+ * The codec performs two main operations:
+ * - encode(): computes a cell-wise Knudsen number field from measured universe states
+ * - decode(): maps each cell's Knudsen number to a solver allocation index
  *
- * In the current implementation, encode() and decode() are declared and defined
- * but do not yet perform any computation.
+ * The resulting Knudsen-number information can be used to select different
+ * solver regions or numerical models depending on the local rarefaction regime.
  *
  * @tparam T Scalar type used by the associated simulation objects.
  */
@@ -45,8 +46,8 @@ public:
      * @brief Constructs a KnudsenCodec from its required dependencies.
      *
      * The constructor forwards the provided universe, fluid, and searcher to the
-     * base Codec<T>, stores the characteristic length, validates it, and
-     * allocates per-cell device storage for Knudsen-related values.
+     * base Codec<T>, stores the characteristic length, ensures that a
+     * UniverseKnudsenNumberState exists, and initializes the Knudsen split thresholds.
      *
      * @param domain Host-side shared pointer to the universe/domain object.
      * @param fluid Host-side shared pointer to the fluid object.
@@ -65,19 +66,24 @@ public:
     ~KnudsenCodec() override = default;
 
     /**
-     * @brief Encodes Knudsen-related information into the codec buffer.
+     * @brief Encodes cell-wise Knudsen numbers into the universe state.
      *
-     * This override is currently present as an extension point and performs no
-     * work in the current implementation.
+     * This function reads:
+     * - universe temperature,
+     * - universe particle count,
+     *
+     * and computes a Knudsen number for each cell using the configured
+     * characteristic length.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     encode() override;
 
     /**
-     * @brief Decodes Knudsen-related information from the codec buffer.
+     * @brief Decodes Knudsen numbers into per-cell solver allocation indices.
      *
-     * This override is currently present as an extension point and performs no
-     * work in the current implementation.
+     * This function compares each cell's Knudsen number against the configured
+     * split thresholds and writes the resulting allocation index into the codec's
+     * allocated solver buffer.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     decode() override;
@@ -92,19 +98,17 @@ public:
 
 private:
     /**
-     * @brief Characteristic length scale used by the codec.
-     *
-     * This value is expected to be strictly positive and is typically used in
-     * Knudsen-number-related normalization or interpretation.
+     * @brief Characteristic length scale used to normalize mean free path.
      */
     T _characteristic_length = T(1);
 
     /**
-     * @brief Device buffer storing per-cell Knudsen-related values.
+     * @brief Device buffer storing Knudsen split thresholds.
      *
-     * The buffer is sized to the number of cells in the associated universe.
+     * These thresholds define region boundaries used during decode() to map
+     * Knudsen numbers to solver allocation indices.
      */
-    DeviceBuffer<T> d_knudsen_values {};
+    DeviceBuffer<T> d_kn_split {};
 };
 
 /**
@@ -203,24 +207,9 @@ private:
     validate() const;
 
 private:
-    /**
-     * @brief Universe/domain dependency used by the codec.
-     */
     UniverseHostPtr<T> _domain {};
-
-    /**
-     * @brief Fluid dependency used by the codec.
-     */
     FluidHostPtr<T> _fluid {};
-
-    /**
-     * @brief Spatial hashing searcher dependency used by the codec.
-     */
     SpatialHashingSearcherHostPtr<T> _searcher {};
-
-    /**
-     * @brief Characteristic length scale used to construct the codec.
-     */
     T _characteristic_length = T(1);
 };
 
@@ -228,27 +217,12 @@ private:
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::system::KnudsenCodec.
- *
- * @tparam T Scalar type used by the codec.
- */
 template <typename T>
 using KnudsenCodec = system::KnudsenCodec<T>;
 
-/**
- * @brief Host-side shared pointer alias for KnudsenCodec.
- *
- * @tparam T Scalar type used by the codec.
- */
 template <typename T>
 using KnudsenCodecHostPtr = atlas::host_shared_ptr<system::KnudsenCodec<T>>;
 
-/**
- * @brief Device-side shared pointer alias for KnudsenCodec.
- *
- * @tparam T Scalar type used by the codec.
- */
 template <typename T>
 using KnudsenCodecDevicePtr = atlas::device_shared_ptr<system::KnudsenCodec<T>>;
 

@@ -303,6 +303,125 @@ private:
 };
 
 /**
+/**
+ * @brief Universe state storing cell-wise particle-count values.
+ *
+ * Each entry corresponds to the number of particles assigned to one universe cell.
+ *
+ * @tparam T Floating-point scalar type used for particle-count values.
+ */
+template <typename T>
+class UniverseNumberParticleState final : public UniverseState {
+public:
+    UniverseNumberParticleState() = default;
+
+    /**
+     * @brief Constructs a particle-count state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseNumberParticleState(std::size_t number_of_cells);
+
+    /**
+     * @brief Constructs a particle-count state from an existing device buffer.
+     *
+     * Ownership of the provided buffer is transferred to this state.
+     *
+     * @param number_particle Device buffer containing cell-wise particle-count values.
+     */
+    ATLAS_HOST explicit UniverseNumberParticleState(DeviceBuffer<T> number_particle) noexcept;
+
+    /**
+     * @brief Returns the number of stored particle-count entries.
+     *
+     * @return Number of cell particle-count values.
+     */
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    /**
+     * @brief Returns mutable access to the underlying particle-count buffer.
+     *
+     * @return Reference to the particle-count device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    /**
+     * @brief Returns read-only access to the underlying particle-count buffer.
+     *
+     * @return Const reference to the particle-count device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing one particle-count value per cell.
+     */
+    DeviceBuffer<T> _number_particle;
+};
+
+/**
+ * @brief Universe state storing cell-wise Knudsen number values.
+ *
+ * Each entry corresponds to the Knudsen number associated with one universe cell.
+ *
+ * @tparam T Floating-point scalar type used for Knudsen number values.
+ */
+template <typename T>
+class UniverseKnudsenNumberState final : public UniverseState {
+public:
+    UniverseKnudsenNumberState() = default;
+
+    /**
+     * @brief Constructs a Knudsen-number state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseKnudsenNumberState(std::size_t number_of_cells);
+
+    /**
+     * @brief Constructs a Knudsen-number state from an existing device buffer.
+     *
+     * Ownership of the provided buffer is transferred to this state.
+     *
+     * @param knudsen_number Device buffer containing cell-wise Knudsen number values.
+     */
+    ATLAS_HOST explicit UniverseKnudsenNumberState(DeviceBuffer<T> knudsen_number) noexcept;
+
+    /**
+     * @brief Returns the number of stored Knudsen-number entries.
+     *
+     * @return Number of cell Knudsen-number values.
+     */
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    /**
+     * @brief Returns mutable access to the underlying Knudsen-number buffer.
+     *
+     * @return Reference to the Knudsen-number device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    /**
+     * @brief Returns read-only access to the underlying Knudsen-number buffer.
+     *
+     * @return Const reference to the Knudsen-number device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing one Knudsen number value per cell.
+     */
+    DeviceBuffer<T> _knudsen_number;
+};
+
+/**
  * @brief Universe state storing cell-wise material ratio vectors.
  *
  * @tparam T Floating-point scalar type used by the ratio vector components.

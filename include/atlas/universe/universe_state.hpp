@@ -126,6 +126,68 @@ UniverseThermalEnergyState<T>::data() const noexcept {
     return _thermal_energy;
 }
 
+template <typename T>
+UniverseNumberParticleState<T>::UniverseNumberParticleState(const std::size_t number_of_cells)
+    // Allocate one particle-count entry per universe cell.
+    : _number_particle(number_of_cells) { }
+
+template <typename T>
+UniverseNumberParticleState<T>::UniverseNumberParticleState(DeviceBuffer<T> number_particle) noexcept
+    // Take ownership of an existing particle-count buffer.
+    : _number_particle(std::move(number_particle)) { }
+
+template <typename T>
+std::size_t
+UniverseNumberParticleState<T>::size() const noexcept {
+    // Return the number of stored particle-count entries.
+    return _number_particle.size();
+}
+
+template <typename T>
+DeviceBuffer<T>&
+UniverseNumberParticleState<T>::data() noexcept {
+    // Provide mutable access to the underlying particle-count storage.
+    return _number_particle;
+}
+
+template <typename T>
+const DeviceBuffer<T>&
+UniverseNumberParticleState<T>::data() const noexcept {
+    // Provide read-only access to the underlying particle-count storage.
+    return _number_particle;
+}
+
+template <typename T>
+UniverseKnudsenNumberState<T>::UniverseKnudsenNumberState(const std::size_t number_of_cells)
+    // Allocate one Knudsen number entry per universe cell.
+    : _knudsen_number(number_of_cells) { }
+
+template <typename T>
+UniverseKnudsenNumberState<T>::UniverseKnudsenNumberState(DeviceBuffer<T> knudsen_number) noexcept
+    // Take ownership of an existing Knudsen-number buffer.
+    : _knudsen_number(std::move(knudsen_number)) { }
+
+template <typename T>
+std::size_t
+UniverseKnudsenNumberState<T>::size() const noexcept {
+    // Return the number of stored Knudsen-number entries.
+    return _knudsen_number.size();
+}
+
+template <typename T>
+DeviceBuffer<T>&
+UniverseKnudsenNumberState<T>::data() noexcept {
+    // Provide mutable access to the underlying Knudsen-number storage.
+    return _knudsen_number;
+}
+
+template <typename T>
+const DeviceBuffer<T>&
+UniverseKnudsenNumberState<T>::data() const noexcept {
+    // Provide read-only access to the underlying Knudsen-number storage.
+    return _knudsen_number;
+}
+
 template <typename T, std::size_t N>
 UniverseMaterialRatioState<T, N>::UniverseMaterialRatioState(const std::size_t number_of_cells)
     // Allocate one N-dimensional material-ratio vector per universe cell.

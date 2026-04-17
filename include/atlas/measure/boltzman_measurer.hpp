@@ -44,6 +44,10 @@ BoltzmanMeasurer<T>::BoltzmanMeasurer(UniverseHostPtr<T> universe,
         if (!this->_universe->template has_state<atlas::universe::UniverseThermalEnergyState<T>>()) {
             this->_universe->template emplace_state<atlas::universe::UniverseThermalEnergyState<T>>(number_of_cells);
         }
+
+        if (!this->_universe->template has_state<atlas::universe::UniverseNumberParticleState<T>>()) {
+            this->_universe->template emplace_state<atlas::universe::UniverseNumberParticleState<T>>(number_of_cells);
+        }
     }
 
     if (this->_fluid != nullptr
@@ -74,6 +78,7 @@ BoltzmanMeasurer<T>::measure() {
     // - bulk velocity    : average particle velocity in the cell
     // - momentum weight  : current implementation uses a unit weight per particle
     // - thermal energy   : sum of squared thermal velocity fluctuations
+    // - number particle  : number of particles assigned to the cell
     auto* universe_temperature
         = this->_universe->template state<atlas::universe::UniverseTemperatureState<T>>();
     auto* universe_bulk_velocity
@@ -82,6 +87,8 @@ BoltzmanMeasurer<T>::measure() {
         = this->_universe->template state<atlas::universe::UniverseMomentumWeightState<T>>();
     auto* universe_thermal_energy
         = this->_universe->template state<atlas::universe::UniverseThermalEnergyState<T>>();
+    auto* universe_number_particle
+        = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
 
     // Retrieve the fluid-side states used during measurement.
     //
@@ -99,6 +106,7 @@ BoltzmanMeasurer<T>::measure() {
     // updating only some outputs.
     if (universe_temperature == nullptr || universe_bulk_velocity == nullptr
         || universe_momentum_weight == nullptr || universe_thermal_energy == nullptr
+        || universe_number_particle == nullptr
         || fluid_velocity == nullptr) {
         return;
     }
@@ -108,6 +116,7 @@ BoltzmanMeasurer<T>::measure() {
     auto& bulk_velocity     = universe_bulk_velocity->data();
     auto& momentum_weight   = universe_momentum_weight->data();
     auto& thermal_energy    = universe_thermal_energy->data();
+    auto& number_particle   = universe_number_particle->data();
     auto& particle_velocity = fluid_velocity->data();
 
     // Convert all container-backed storage into raw pointers so the device
@@ -120,6 +129,7 @@ BoltzmanMeasurer<T>::measure() {
     auto* bulk_velocity_ptr        = atlas::raw_pointer_cast(bulk_velocity.data());
     auto* momentum_weight_ptr      = atlas::raw_pointer_cast(momentum_weight.data());
     auto* thermal_energy_ptr       = atlas::raw_pointer_cast(thermal_energy.data());
+    auto* number_particle_ptr      = atlas::raw_pointer_cast(number_particle.data());
     auto* particle_temperature_ptr = fluid_temperature != nullptr
         ? atlas::raw_pointer_cast(fluid_temperature->data().data())
         : nullptr;
@@ -129,7 +139,6 @@ BoltzmanMeasurer<T>::measure() {
     const auto* cell_end_ptr       = this->_searcher->cell_end();
     const int particle_count       = static_cast<int>(this->_fluid->particle_count());
     const auto num_of_cells        = this->_universe->number_of_cells();
-
     // First pass:
     // Compute cell-wise macroscopic quantities from the particle velocities.
     //
@@ -182,6 +191,7 @@ BoltzmanMeasurer<T>::measure() {
                 bulk_velocity_ptr[cell]     = Vector3<T> { T(0), T(0), T(0) };
                 momentum_weight_ptr[cell]   = T(0);
                 thermal_energy_ptr[cell]    = T(0);
+                number_particle_ptr[cell]   = T(0);
                 field_temperature_ptr[cell] = T(0);
                 return;
             }
@@ -219,6 +229,9 @@ BoltzmanMeasurer<T>::measure() {
 
             // Store the accumulated fluctuation energy proxy for the cell.
             thermal_energy_ptr[cell] = thermal_energy_sum;
+
+            // Store the number of valid particles assigned to this cell.
+            number_particle_ptr[cell] = static_cast<T>(count);
 
             // Convert the fluctuation sum into temperature using a Boltzmann-style relation.
             //

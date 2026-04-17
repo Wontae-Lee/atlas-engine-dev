@@ -73,7 +73,9 @@
 #include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
+#include <atlas/solver/dsmc/dsmc_solver.h>
 #include <atlas/solver/solver.h>
+#include <atlas/solver/sph/sph_solver.h>
 #include <atlas/source/source.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
