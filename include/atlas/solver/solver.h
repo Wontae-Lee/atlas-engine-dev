@@ -16,11 +16,10 @@ public:
     virtual ~Solver() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    solve(Universe<T>& domain,
-          SpatialHashingProbe<T>& searcher,
-          FluidDeviceProbe<T>& particle,
-          CodecDeviceProbe<T>& codec)
-        = 0;
+    solve() { }
+
+    ATLAS_HOST ATLAS_FORCE_INLINE virtual void
+    solve(int allocated_solver) { }
 };
 
 }

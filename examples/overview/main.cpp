@@ -21,10 +21,6 @@ main() {
                             .with_cell_size(0.02f)
                             .make_host_shared();
 
-    const auto codec = system::SingleCodec<sim_t>::builder()
-                           .with_domain(domain)
-                           .make_host_shared();
-
     const auto nitrogen = MatrialProperties<sim_t>::builder()
                               .with_mass(4.65e-26f)
                               .make_host_shared();
@@ -32,6 +28,16 @@ main() {
     const auto fluid = system::Fluid<sim_t>::builder()
                            .with_buffer_size(200000)
                            .add_species(nitrogen)
+                           .make_host_shared();
+
+    const auto searcher = system::SpatialHashingSearcher<sim_t>::builder()
+                              .with_domain(domain)
+                              .make_host_shared();
+
+    const auto codec = system::SingleCodec<sim_t>::builder()
+                           .with_domain(domain)
+                           .with_fluid(fluid)
+                           .with_searcher(searcher)
                            .make_host_shared();
 
     const auto fixed_sync = system::Sync<sim_t>::builder()
@@ -72,7 +78,10 @@ main() {
                           .with_flip(true)
                           .make_host_shared();
 
-    const auto measure = system::VarianceThermometer<sim_t>::builder()
+    const auto measure = system::BoltzmanMeasurer<sim_t>::builder()
+                             .with_universe(domain)
+                             .with_fluid(fluid)
+                             .with_searcher(searcher)
                              .with_measure_mode(system::MeasureModeType::All)
                              .make_host_shared();
 

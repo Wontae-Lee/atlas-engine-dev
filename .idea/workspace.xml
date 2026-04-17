@@ -11,6 +11,7 @@
     <option name="/Default/Housekeeping/OptionsDialog/SelectedPageId/@EntryValue" value="CppFormatterOtherPage" type="string" />
     <option name="/Default/Housekeeping/RefactoringsMru/CppRenameRefactoring/DoRenameRelatedFiles/@EntryValue" value="false" type="bool" />
     <option name="/Default/Housekeeping/RefactoringsMru/RenameRefactoring/DoRenameType/@EntryValue" value="false" type="bool" />
+    <option name="/Default/Housekeeping/RefactoringsMru/RenameRefactoring/DoSearchForTextInStrings/@EntryValue" value="true" type="bool" />
     <option name="/Default/RiderDebugger/RiderRestoreDecompile/RestoreDecompileSetting/@EntryValue" value="false" type="bool" />
   </component>
   <component name="CMakePresetLoader">{
@@ -149,13 +150,72 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactory fluid and states.">
+      <change afterPath="$PROJECT_DIR$/include/atlas/measure/boltzman_measurer.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/measure/boltzman_measurer.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/measure/measure.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/overview/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/overview/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/overview/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/overview/main.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cu" beforeDir="false" afterPath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/buffer/device_buffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/buffer/device_buffer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/buffer/host_buffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/buffer/host_buffer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/codec.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/codec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/single_codec.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/single_codec.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/container/container.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/container/container.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/container/container.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/container/container.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/generator/generate_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/generate_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/generator/generate_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/generate_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/detail/config.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/measure.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/measure.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_operator.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/thermometer_type.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/thermometer/variance_thermometer.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/velocimeter.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/velocimeter.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/random/seed.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/random/seed.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sampling/sampling.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sampling/sampling.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scan/exclusive_scan.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/scan/exclusive_scan.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scan/exclusive_scan.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_kernel.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_kernel.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/source/source.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/universe/universe_state.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/universe/universe_state.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -178,7 +238,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="267" />
+    <option name="cachedIndexableFilesCount" value="262" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -284,7 +344,7 @@
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.LLMThirdPartyAiProvidersConfigurable&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -304,14 +364,19 @@
       <recent name="$PROJECT_DIR$/tests/collider" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/include/atlas/measure" />
       <recent name="$PROJECT_DIR$/include/atlas" />
       <recent name="$PROJECT_DIR$/examples/solver/dsmc/intake" />
       <recent name="$PROJECT_DIR$/examples/solver/dsmc" />
       <recent name="$PROJECT_DIR$/include/atlas/solver/dsmc" />
-      <recent name="$PROJECT_DIR$/include/atlas/solver/dsmc/kernel" />
     </key>
   </component>
-  <component name="RunManager" selected="Google Test.All in atlas_tests">
+  <component name="RunManager" selected="Python.generate_headers">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -506,11 +571,6 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="atlas-logging" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-logging" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -648,6 +708,7 @@
       <item itemvalue="CMake Application.tinyobjloader" />
       <item itemvalue="CMake Application.uninstall" />
       <item itemvalue="CTest Application.All CTest" />
+      <item itemvalue="Google Test.All in atlas_tests" />
       <item itemvalue="Google Test.atlas_tests_buffer" />
       <item itemvalue="Google Test.atlas_tests_container" />
       <item itemvalue="Google Test.atlas_tests_indexer" />
@@ -656,14 +717,13 @@
       <item itemvalue="Google Test.atlas_tests_math_matrix" />
       <item itemvalue="Google Test.atlas_tests_math_vector" />
       <item itemvalue="Google Test.atlas_tests_memory" />
-      <item itemvalue="Google Test.All in atlas_tests" />
       <item itemvalue="Python.generate_headers" />
       <item itemvalue="Python.remove_comments" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.generate_headers" />
+        <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.generate_headers" />
         <item itemvalue="Python.remove_comments" />
         <item itemvalue="Python.generate_headers" />
@@ -746,6 +806,8 @@
       <workItem from="1776326715285" duration="8668000" />
       <workItem from="1776353735307" duration="968000" />
       <workItem from="1776354728626" duration="1150000" />
+      <workItem from="1776409723799" duration="70000" />
+      <workItem from="1776409863285" duration="9170000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

@@ -1,12 +1,10 @@
 #pragma once
 
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/codec/codec.h>
 #include <atlas/core/macros.h>
-#include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/solver/solver.h>
-#include <atlas/universe/universe.h>
 
 namespace atlas::system {
 
@@ -20,31 +18,41 @@ public:
 
     ~Orchestrator() = default;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit Orchestrator(SolveHostPtr<T> solver) noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Orchestrator(CodecHostPtr<T> codec,
+                 HostBuffer<SolveHostPtr<T>> solvers) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    solve(Universe<T>& domain,
-          SpatialHashingProbe<T>& searcher,
-          FluidDeviceProbe<T>& particle,
-          CodecDeviceProbe<T>& codec);
+    orchestrate();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_solver(SolveHostPtr<T> solver) noexcept;
+    set_codec(CodecHostPtr<T> codec) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SolveHostPtr<T>&
-    solver() const noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    add_solver(SolveHostPtr<T> solver) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const CodecHostPtr<T>&
+    codec() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<SolveHostPtr<T>>&
+    solvers() const noexcept;
 
 private:
-    SolveHostPtr<T> _solver {};
+    CodecHostPtr<T> _codec {};
+
+    HostBuffer<SolveHostPtr<T>> _solvers {};
 };
 
 template <typename T>
 class Orchestrator<T>::Builder final {
 public:
     Builder() = default;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_codec(CodecHostPtr<T> codec) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_solver(SolveHostPtr<T> solver) noexcept;
@@ -60,7 +68,9 @@ private:
     validate() const;
 
 private:
-    SolveHostPtr<T> _solver {};
+    CodecHostPtr<T> _codec {};
+
+    HostBuffer<SolveHostPtr<T>> _solvers {};
 };
 
 }

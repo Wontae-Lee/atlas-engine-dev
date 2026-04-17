@@ -25,46 +25,25 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE
     Collider(DeviceBuffer<Unit<T>> units,
-             DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions) noexcept;
+             DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions,
+             atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_units(DeviceBuffer<Unit<T>> units) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_units(const HostBuffer<Unit<T>>& units);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_surface_interactions(DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_surface_interactions(const HostBuffer<ColliderSurfaceInteraction<T>>& surface_interactions);
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<Unit<T>>&
-    units() noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<Unit<T>>&
-    units() const noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<ColliderSurfaceInteraction<T>>&
-    surface_interactions() noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<ColliderSurfaceInteraction<T>>&
-    surface_interactions() const noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
     update(T dt);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    collide(FluidDeviceProbe<T>& particle_probe, T dt) const;
+    collide(T dt) const;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     empty() const noexcept;
 
 private:
     DeviceBuffer<Unit<T>> _units;
+
+    FluidHostPtr<T> _fluid;
 
     DeviceBuffer<ColliderSurfaceInteraction<T>> _surface_interactions;
 };
@@ -76,6 +55,9 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_units(const HostBuffer<Unit<T>>& units);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_surface_interactions(const HostBuffer<ColliderSurfaceInteraction<T>>& surface_interactions);
@@ -92,6 +74,8 @@ private:
 
 private:
     HostBuffer<Unit<T>> _units;
+
+    FluidHostPtr<T> _fluid;
 
     HostBuffer<ColliderSurfaceInteraction<T>> _surface_interactions;
 };

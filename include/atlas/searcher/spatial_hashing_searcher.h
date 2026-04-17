@@ -1,27 +1,10 @@
 #pragma once
 
 #include <atlas/buffer/device_buffer.h>
+#include <atlas/fluid/fluid.h>
 #include <atlas/universe/universe.h>
 
 namespace atlas::system {
-
-template <typename T>
-struct SpatialHashingProbe {
-
-    Vector3<T> lower_corner {};
-
-    Vector3<int> grid_size { 0, 0, 0 };
-
-    T inv_h = T(1);
-
-    T cell_size = T(1);
-
-    const int* indices {};
-
-    const int* cell_start {};
-
-    const int* cell_end {};
-};
 
 template <typename T>
 class SpatialHashingSearcher final {
@@ -31,15 +14,12 @@ public:
     SpatialHashingSearcher() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE explicit SpatialHashingSearcher(
-        DomainHostPtr<T> domain);
+        UniverseHostPtr<T> universe);
 
     ~SpatialHashingSearcher() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    build(const system::FluidDeviceProbe<T>& particle_probe);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE SpatialHashingProbe<T>
-    make_device_probe() noexcept;
+    build(const FluidHostPtr<T>& fluid);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     reset() noexcept;
@@ -62,13 +42,32 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build_cell_ranges(int alive);
 
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    lower_corner() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<int>
+    grid_size() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
+    inverse_cell_size() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
+    cell_size() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const int*
+    indices() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const int*
+    cell_start() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const int*
+    cell_end() const noexcept;
+
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static std::uint32_t
     linear_key(int ix, int iy, int iz, const Vector3<int>& gs) noexcept;
 
 private:
-    std::uint64_t _probe_count = 0;
-
-    DomainHostPtr<T> _domain {};
+    UniverseHostPtr<T> _universe {};
 
     DeviceBuffer<std::uint32_t> d_keys;
 
@@ -77,14 +76,6 @@ private:
     DeviceBuffer<int> d_cell_start;
 
     DeviceBuffer<int> d_cell_end;
-
-    std::uint32_t* d_keys_ptr = nullptr;
-
-    int* d_indices_ptr = nullptr;
-
-    int* d_cell_start_ptr = nullptr;
-
-    int* d_cell_end_ptr = nullptr;
 };
 
 template <typename T>
@@ -93,7 +84,7 @@ public:
     Builder() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_domain(DomainHostPtr<T> domain) noexcept;
+    with_universe(UniverseHostPtr<T> universe) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE SpatialHashingSearcher<T>
     build() const;
@@ -106,7 +97,7 @@ private:
     validate() const;
 
 private:
-    DomainHostPtr<T> _domain {};
+    UniverseHostPtr<T> _universe {};
 };
 
 }

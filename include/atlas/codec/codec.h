@@ -7,65 +7,46 @@
 
 namespace atlas::system {
 
-enum class CodecType : int {
-    single,
-    knudsen,
-    deep_learning,
-};
-
-template <typename T>
-struct CodecDeviceProbe {
-
-    CodecType type;
-
-    int* allocated_system;
-};
-
 template <typename T>
 class Codec {
 public:
     Codec() = default;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit Codec(DomainHostPtr<T> domain);
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Codec(UniverseHostPtr<T> domain,
+          FluidHostPtr<T> fluid,
+          SpatialHashingSearcherHostPtr<T> searcher);
 
     virtual ~Codec() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    update(const FluidDeviceProbe<T>& particle_probe,
-           const Universe<T>& domain_probe,
-           const SpatialHashingProbe<T>& searcher_probe,
-           CodecDeviceProbe<T>& codec_probe);
+    update();
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    encode(const FluidDeviceProbe<T>& particle_probe,
-           const Universe<T>& domain_probe,
-           const SpatialHashingProbe<T>& searcher_probe,
-           CodecDeviceProbe<T>& codec_probe)
+    encode()
         = 0;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    decode(const FluidDeviceProbe<T>& particle_probe,
-           const Universe<T>& domain_probe,
-           const SpatialHashingProbe<T>& searcher_probe,
-           CodecDeviceProbe<T>& codec_probe)
+    decode()
         = 0;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE CodecDeviceProbe<T>
-    make_device_probe() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     reset() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual CodecType
-    type() const noexcept
-        = 0;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<int>&
+    allocated_solver() noexcept;
 
-private:
-    std::uint64_t _probe_count = 0;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<int>&
+    allocated_solver() const noexcept;
 
-    DomainHostPtr<T> _domain {};
+protected:
+    UniverseHostPtr<T> _domain {};
 
-    DeviceBuffer<int> d_allocated_system;
+    FluidHostPtr<T> _fluid {};
+
+    SpatialHashingSearcherHostPtr<T> _searcher {};
+
+    DeviceBuffer<int> d_allocated_solver;
 };
 
 }

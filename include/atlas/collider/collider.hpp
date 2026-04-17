@@ -12,8 +12,10 @@ namespace atlas::system {
 
 template <typename T>
 Collider<T>::Collider(DeviceBuffer<Unit<T>> units,
-                      DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions) noexcept
+                      DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions,
+                      atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept
     : _units(std::move(units))
+    , _fluid(std::move(fluid))
     , _surface_interactions(std::move(surface_interactions)) {
 }
 
@@ -24,75 +26,6 @@ Collider<T>::builder() noexcept {
     return Builder {};
 }
 
-template <typename T>
-void
-Collider<T>::set_units(DeviceBuffer<Unit<T>> units) noexcept {
-
-    _units = std::move(units);
-}
-
-template <typename T>
-void
-Collider<T>::set_units(const HostBuffer<Unit<T>>& units) {
-
-    if (units.empty()) {
-        atlas::logger::error()
-            << "Collider: units must not be empty.";
-        throw std::runtime_error("Collider: units must not be empty.");
-    }
-
-    _units = DeviceBuffer<Unit<T>>(units.begin(), units.end());
-}
-
-template <typename T>
-void
-Collider<T>::set_surface_interactions(DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions) noexcept {
-
-    _surface_interactions = std::move(surface_interactions);
-}
-
-template <typename T>
-void
-Collider<T>::set_surface_interactions(const HostBuffer<ColliderSurfaceInteraction<T>>& surface_interactions) {
-
-    if (surface_interactions.empty()) {
-        atlas::logger::error()
-            << "Collider: surface interactions must not be empty.";
-        throw std::runtime_error("Collider: surface interactions must not be empty.");
-    }
-
-    _surface_interactions = DeviceBuffer<ColliderSurfaceInteraction<T>>(
-        surface_interactions.begin(),
-        surface_interactions.end());
-}
-
-template <typename T>
-DeviceBuffer<Unit<T>>&
-Collider<T>::units() noexcept {
-
-    return _units;
-}
-
-template <typename T>
-const DeviceBuffer<Unit<T>>&
-Collider<T>::units() const noexcept {
-
-    return _units;
-}
-
-template <typename T>
-DeviceBuffer<ColliderSurfaceInteraction<T>>&
-Collider<T>::surface_interactions() noexcept {
-
-    return _surface_interactions;
-}
-
-template <typename T>
-const DeviceBuffer<ColliderSurfaceInteraction<T>>&
-Collider<T>::surface_interactions() const noexcept {
-
-    return _surface_interactions;
-}
 
 template <typename T>
 void
@@ -114,25 +47,43 @@ Collider<T>::update(const T dt) {
 
 template <typename T>
 void
-Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
+Collider<T>::collide(const T dt) const {
 
-    if (particle_probe.particle_count <= 0 || !(dt > T(0)) || empty()) {
+    if (!_fluid || !(dt > T(0)) || empty()) {
+        return;
+    }
+
+    auto* position_state = _fluid->template state<atlas::fluid::FluidPositionState<T>>();
+    auto* velocity_state = _fluid->template state<atlas::fluid::FluidVelocityState<T>>();
+
+    if (position_state == nullptr || velocity_state == nullptr) {
+        return;
+    }
+
+    auto& positions  = position_state->data();
+    auto& velocities = velocity_state->data();
+
+    if (positions.empty() || velocities.empty() || _fluid->particle_count() <= 0) {
         return;
     }
 
     const auto* units                = atlas::raw_pointer_cast(_units.data());
     const auto* surface_interactions = atlas::raw_pointer_cast(_surface_interactions.data());
+    auto* positions_ptr              = atlas::raw_pointer_cast(positions.data());
+    auto* velocities_ptr             = atlas::raw_pointer_cast(velocities.data());
 
     const int unit_count        = static_cast<int>(_units.size());
     const int interaction_count = static_cast<int>(_surface_interactions.size());
+    const int particle_count    = static_cast<int>(_fluid->particle_count());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
-        particle_probe.particle_count,
-        [particle_probe, dt, units, surface_interactions, unit_count, interaction_count] ATLAS_DEVICE(const int i) {
-            const Vector3<T> p0 = particle_probe.pos[i];
+        particle_count,
+        [positions_ptr, velocities_ptr, dt, units, surface_interactions, unit_count, interaction_count] ATLAS_DEVICE(
+            const int i) {
+            const Vector3<T> p0 = positions_ptr[i];
 
-            const Vector3<T> velocity = particle_probe.vel[i];
+            const Vector3<T> velocity = velocities_ptr[i];
 
             const Vector3<T> direction = velocity * dt;
 
@@ -182,16 +133,16 @@ Collider<T>::collide(FluidDeviceProbe<T>& particle_probe, const T dt) const {
 
             if (!any_hit || best_index < 0) {
 
-                particle_probe.pos[i] = p0 + direction;
-                particle_probe.vel[i] = velocity;
+                positions_ptr[i]  = p0 + direction;
+                velocities_ptr[i] = velocity;
                 return;
             }
 
             const int interaction_index = (interaction_count == 1 || best_index >= interaction_count) ? 0 : best_index;
 
-            particle_probe.pos[i] = best_pos + best_norm * static_cast<T>(atlas::eps);
+            positions_ptr[i] = best_pos + best_norm * static_cast<T>(atlas::eps);
 
-            particle_probe.vel[i] = surface_interactions[interaction_index](velocity, best_norm);
+            velocities_ptr[i] = surface_interactions[interaction_index](velocity, best_norm);
         });
 }
 
@@ -199,7 +150,7 @@ template <typename T>
 bool
 Collider<T>::empty() const noexcept {
 
-    return _units.empty() || _surface_interactions.empty();
+    return _units.empty() || _surface_interactions.empty() || !_fluid;
 }
 
 template <typename T>
@@ -213,6 +164,14 @@ Collider<T>::Builder::with_units(const HostBuffer<Unit<T>>& units) {
     }
 
     _units = units;
+    return *this;
+}
+
+template <typename T>
+typename Collider<T>::Builder&
+Collider<T>::Builder::with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept {
+
+    _fluid = std::move(fluid);
     return *this;
 }
 
@@ -244,9 +203,11 @@ Collider<T>::Builder::build() {
 
     Collider<T> collider(
         DeviceBuffer<Unit<T>>(_units.begin(), _units.end()),
-        DeviceBuffer<ColliderSurfaceInteraction<T>>(_surface_interactions.begin(), _surface_interactions.end()));
+        DeviceBuffer<ColliderSurfaceInteraction<T>>(_surface_interactions.begin(), _surface_interactions.end()),
+        _fluid);
 
     _units.clear();
+    _fluid.reset();
     _surface_interactions.clear();
 
     return collider;
@@ -262,6 +223,12 @@ Collider<T>::Builder::make_host_shared() {
 template <typename T>
 void
 Collider<T>::Builder::validate() const {
+
+    if (!_fluid) {
+        atlas::logger::error()
+            << "Collider::Builder: fluid must not be null.";
+        throw std::runtime_error("Collider::Builder: fluid must not be null.");
+    }
 
     if (_units.empty()) {
         atlas::logger::error()

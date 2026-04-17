@@ -19,17 +19,25 @@ class Measure {
 public:
     Measure() = default;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Measure(UniverseHostPtr<T> universe,
+            FluidHostPtr<T> fluid,
+            SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+
     virtual ~Measure() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    measure(Universe<T>& domain,
-            SpatialHashingProbe<T> searcher,
-            FluidDeviceProbe<T> particle)
+    measure()
         = 0;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual MeasureModeType
-    measure_mode() const noexcept
-        = 0;
+    measure_mode() const noexcept = 0;
+
+protected:
+    UniverseHostPtr<T> _universe {};
+    FluidHostPtr<T> _fluid {};
+    SpatialHashingSearcherHostPtr<T> _searcher {};
+
 };
 
 }
@@ -47,3 +55,5 @@ using MeasureHostPtr = atlas::host_shared_ptr<atlas::system::Measure<T>>;
 template <typename T>
 using MeasureDevicePtr = atlas::device_shared_ptr<atlas::system::Measure<T>>;
 }
+
+#include <atlas/measure/measure.hpp>

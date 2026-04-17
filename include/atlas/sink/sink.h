@@ -27,6 +27,7 @@ public:
     Sink(DeviceBuffer<Unit<T>> units,
          DeviceBuffer<DespawnType> despawn_types,
          DeviceBuffer<DespawnOperator<T>> despawn_operators,
+         atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
          bool flip   = false,
          T tolerance = T(0)) noexcept;
 
@@ -37,61 +38,7 @@ public:
     update(T dt);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    sink(FluidDeviceProbe<T>& particle_probe);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_units(DeviceBuffer<Unit<T>> units) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_units(const HostBuffer<Unit<T>>& units);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_despawn_operators(DeviceBuffer<DespawnOperator<T>> despawn_operators) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_despawn_operators(const HostBuffer<DespawnOperator<T>>& despawn_operators);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_despawn_types(DeviceBuffer<DespawnType> despawn_types) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_despawn_types(const HostBuffer<DespawnType>& despawn_types);
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_despawn_operator(const DespawnOperator<T>& despawn_operator) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_tolerance(T tolerance) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_flip(bool flip) noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<Unit<T>>&
-    units() noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<Unit<T>>&
-    units() const noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<DespawnOperator<T>>&
-    despawn_operators() noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<DespawnOperator<T>>&
-    despawn_operators() const noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<DespawnType>&
-    despawn_types() noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<DespawnType>&
-    despawn_types() const noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
-    tolerance() const noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    flip() const noexcept;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    empty() const noexcept;
+    sink();
 
 private:
     DeviceBuffer<Unit<T>> _units;
@@ -99,6 +46,8 @@ private:
     DeviceBuffer<DespawnType> _despawn_types;
 
     DeviceBuffer<DespawnOperator<T>> _despawn_operators;
+
+    atlas::host_shared_ptr<atlas::Fluid<T>> _fluid;
 
     bool _flip = false;
 
@@ -118,6 +67,9 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_units(const HostBuffer<Unit<T>>& units);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_despawn_types(const HostBuffer<DespawnType>& despawn_types);
@@ -140,6 +92,8 @@ private:
 
 private:
     HostBuffer<Unit<T>> _units;
+
+    FluidHostPtr<T> _fluid;
 
     HostBuffer<DespawnType> _despawn_types;
 

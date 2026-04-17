@@ -3,45 +3,29 @@
 namespace atlas::system {
 
 template <typename T>
-Codec<T>::Codec(DomainHostPtr<T> domain)
-    : _domain(domain) {
+Codec<T>::Codec(UniverseHostPtr<T> domain,
+                FluidHostPtr<T> fluid,
+                SpatialHashingSearcherHostPtr<T> searcher)
+    : _domain(std::move(domain))
+    , _fluid(std::move(fluid))
+    , _searcher(std::move(searcher)) {
 
     atlas::check<std::invalid_argument>(static_cast<bool>(_domain))
         << "Codec: universe must not be null.";
+    atlas::check<std::invalid_argument>(static_cast<bool>(_fluid))
+        << "Codec: fluid must not be null.";
+    atlas::check<std::invalid_argument>(static_cast<bool>(_searcher))
+        << "Codec: searcher must not be null.";
 
     reset();
 }
 
 template <typename T>
 void
-Codec<T>::update(const FluidDeviceProbe<T>& particle_probe,
-                 const Universe<T>& domain_probe,
-                 const SpatialHashingProbe<T>& searcher_probe,
-                 CodecDeviceProbe<T>& codec_probe) {
+Codec<T>::update() {
 
-    this->encode(particle_probe, domain_probe, searcher_probe, codec_probe);
-    this->decode(particle_probe, domain_probe, searcher_probe, codec_probe);
-}
-
-template <typename T>
-CodecDeviceProbe<T>
-Codec<T>::make_device_probe() noexcept {
-
-    ++_probe_count;
-
-    ATLAS_ERROR_IF(_probe_count > 1)
-        << "\n"
-        << "The universe device probe must be generated only by the system, "
-        << "and the total number of device probes must be exactly one."
-        << "\n";
-
-    CodecDeviceProbe<T> probe {};
-
-    probe.allocated_system = atlas::raw_pointer_cast(d_allocated_system.data());
-
-    probe.type = this->type();
-
-    return probe;
+    this->encode();
+    this->decode();
 }
 
 template <typename T>
@@ -50,7 +34,21 @@ Codec<T>::reset() noexcept {
 
     const auto num_of_cells = _domain->number_of_cells();
 
-    d_allocated_system.resize(num_of_cells, 0);
+    d_allocated_solver.resize(num_of_cells, 0);
+}
+
+template <typename T>
+DeviceBuffer<int>&
+Codec<T>::allocated_solver() noexcept {
+
+    return d_allocated_solver;
+}
+
+template <typename T>
+const DeviceBuffer<int>&
+Codec<T>::allocated_solver() const noexcept {
+
+    return d_allocated_solver;
 }
 
 }
