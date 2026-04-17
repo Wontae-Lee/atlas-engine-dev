@@ -65,6 +65,37 @@ UniverseBulkVelocityState<T>::data() const noexcept {
 }
 
 template <typename T>
+UniverseMaxRelativeSpeedState<T>::UniverseMaxRelativeSpeedState(const std::size_t number_of_cells)
+    // Allocate one maximum-relative-speed entry per universe cell.
+    : _max_relative_speed(number_of_cells) { }
+
+template <typename T>
+UniverseMaxRelativeSpeedState<T>::UniverseMaxRelativeSpeedState(DeviceBuffer<T> max_relative_speed) noexcept
+    // Take ownership of an existing maximum-relative-speed buffer.
+    : _max_relative_speed(std::move(max_relative_speed)) { }
+
+template <typename T>
+std::size_t
+UniverseMaxRelativeSpeedState<T>::size() const noexcept {
+    // Return the number of stored maximum-relative-speed entries.
+    return _max_relative_speed.size();
+}
+
+template <typename T>
+DeviceBuffer<T>&
+UniverseMaxRelativeSpeedState<T>::data() noexcept {
+    // Provide mutable access to the underlying maximum-relative-speed storage.
+    return _max_relative_speed;
+}
+
+template <typename T>
+const DeviceBuffer<T>&
+UniverseMaxRelativeSpeedState<T>::data() const noexcept {
+    // Provide read-only access to the underlying maximum-relative-speed storage.
+    return _max_relative_speed;
+}
+
+template <typename T>
 UniverseThermalEnergyState<T>::UniverseThermalEnergyState(const std::size_t number_of_cells)
     // Allocate one thermal energy entry per universe cell.
     : _thermal_energy(number_of_cells) { }
@@ -124,6 +155,37 @@ const DeviceBuffer<T>&
 UniverseNumberParticleState<T>::data() const noexcept {
     // Provide read-only access to the underlying particle-count storage.
     return _number_particle;
+}
+
+template <typename T>
+UniverseCollisionCountState<T>::UniverseCollisionCountState(const std::size_t number_of_cells)
+    // Allocate one collision-count entry per universe cell.
+    : _collision_count(number_of_cells) { }
+
+template <typename T>
+UniverseCollisionCountState<T>::UniverseCollisionCountState(DeviceBuffer<T> collision_count) noexcept
+    // Take ownership of an existing collision-count buffer.
+    : _collision_count(std::move(collision_count)) { }
+
+template <typename T>
+std::size_t
+UniverseCollisionCountState<T>::size() const noexcept {
+    // Return the number of stored collision-count entries.
+    return _collision_count.size();
+}
+
+template <typename T>
+DeviceBuffer<T>&
+UniverseCollisionCountState<T>::data() noexcept {
+    // Provide mutable access to the underlying collision-count storage.
+    return _collision_count;
+}
+
+template <typename T>
+const DeviceBuffer<T>&
+UniverseCollisionCountState<T>::data() const noexcept {
+    // Provide read-only access to the underlying collision-count storage.
+    return _collision_count;
 }
 
 template <typename T>

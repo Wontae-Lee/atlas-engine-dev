@@ -115,11 +115,11 @@ SpatialHashingSearcher<T>::compute_keys(int alive, const Vector3<T>* pos) {
 
 template <typename T>
 void
-SpatialHashingSearcher<T>::sort_by_key(const int active) const {
+SpatialHashingSearcher<T>::sort_by_key(const int active) {
 
-    const unsigned* keys_begin(atlas::raw_pointer_cast(d_keys.data()));
-    const unsigned* keys_end = keys_begin + active;
-    const int* idx_begin(atlas::raw_pointer_cast(d_indices.data()));
+    auto* keys_begin = atlas::raw_pointer_cast(d_keys.data());
+    auto* keys_end   = keys_begin + active;
+    auto* idx_begin  = atlas::raw_pointer_cast(d_indices.data());
 
     atlas::parallel_sort_by_key<ExecutionPolicy::device>(keys_begin, keys_end, idx_begin);
 }

@@ -22,8 +22,8 @@ namespace atlas::system {
  *
  * Its primary responsibility is to invoke solvers in sequence according to the
  * current orchestration mode:
- * - if no codec is configured, each solver is invoked with solve()
- * - if a codec is configured, each solver is invoked with solve(allocated_solver)
+ * - if no codec is configured, each solver is invoked with solve(dt)
+ * - if a codec is configured, each solver is invoked with solve(allocated_solver, index, dt)
  *
  * This allows the solver pipeline to adapt its behavior depending on whether
  * a codec-aware execution path is available.
@@ -70,13 +70,13 @@ public:
     /**
      * @brief Executes the configured solver sequence.
      *
-     * If no codec is present, each non-null solver is invoked with solve().
+     * If no codec is present, each non-null solver is invoked with solve(dt).
      * If a codec is present, each non-null solver is invoked with
-     * solve(allocated_solver), where allocated_solver points to the codec-owned
+     * solve(allocated_solver, index, dt), where allocated_solver points to the codec-owned
      * device buffer.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    orchestrate();
+    orchestrate(T dt);
 
     /**
      * @brief Sets or replaces the codec.

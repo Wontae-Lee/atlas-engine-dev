@@ -24,7 +24,7 @@ Orchestrator<T>::builder() noexcept {
 
 template <typename T>
 void
-Orchestrator<T>::orchestrate() {
+Orchestrator<T>::orchestrate(const T dt) {
 
     // If there are no solvers, there is nothing to execute.
     if (_solvers.empty()) {
@@ -32,14 +32,14 @@ Orchestrator<T>::orchestrate() {
     }
 
     // When no codec is configured, execute each non-null solver through the
-    // plain solve() entry point with no codec-side orchestration context.
+    // plain solve(dt) entry point with no codec-side orchestration context.
     if (!_codec) {
 
         for (const auto& solver : _solvers) {
 
             if (!solver) continue;
 
-            solver->solve();
+            solver->solve(dt);
         }
 
         return;
@@ -60,7 +60,7 @@ Orchestrator<T>::orchestrate() {
         // Parameters:
         // - allocated_solver : codec-owned solver allocation/context
         // - i                : current solver index in execution order
-        _solvers[i]->solve(allocated_solver, i);
+        _solvers[i]->solve(allocated_solver, i, dt);
     }
 }
 

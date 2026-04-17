@@ -38,7 +38,7 @@ public:
     compute_keys(int alive, const Vector3<T>* pos);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    sort_by_key(int active) const;
+    sort_by_key(int active);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build_cell_ranges(int alive);

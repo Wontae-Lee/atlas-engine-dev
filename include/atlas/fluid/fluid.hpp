@@ -66,6 +66,24 @@ Fluid<T>::generators() noexcept {
 }
 
 template <typename T>
+const DeviceBuffer<MatrialProperties<T>>&
+Fluid<T>::particle_properties() const noexcept {
+
+    // Expose the particle-property buffer so kinetic solvers can access
+    // per-species physical parameters such as mass and collision diameter.
+    return _particle_properties;
+}
+
+template <typename T>
+DeviceBuffer<MatrialProperties<T>>&
+Fluid<T>::particle_properties() noexcept {
+
+    // Mutable overload of particle_properties() for callers that need to
+    // update the installed material table after construction.
+    return _particle_properties;
+}
+
+template <typename T>
 size_t
 Fluid<T>::particle_count() const noexcept {
     // Return the current number of logically active particles.

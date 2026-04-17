@@ -193,6 +193,33 @@ private:
 };
 
 /**
+ * @brief Universe state storing cell-wise maximum relative speed values.
+ *
+ * @tparam T Floating-point scalar type used for speed values.
+ */
+template <typename T>
+class UniverseMaxRelativeSpeedState final : public UniverseState {
+public:
+    UniverseMaxRelativeSpeedState() = default;
+
+    ATLAS_HOST explicit UniverseMaxRelativeSpeedState(std::size_t number_of_cells);
+
+    ATLAS_HOST explicit UniverseMaxRelativeSpeedState(DeviceBuffer<T> max_relative_speed) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<T> _max_relative_speed;
+};
+
+/**
  * @brief Universe state storing cell-wise thermal energy values.
  *
  * @tparam T Floating-point scalar type used for thermal energy values.
@@ -305,6 +332,33 @@ private:
      * @brief Device buffer storing one particle-count value per cell.
      */
     DeviceBuffer<T> _number_particle;
+};
+
+/**
+ * @brief Universe state storing cell-wise collision candidate counts.
+ *
+ * @tparam T Integer-like scalar type used for collision counts.
+ */
+template <typename T>
+class UniverseCollisionCountState final : public UniverseState {
+public:
+    UniverseCollisionCountState() = default;
+
+    ATLAS_HOST explicit UniverseCollisionCountState(std::size_t number_of_cells);
+
+    ATLAS_HOST explicit UniverseCollisionCountState(DeviceBuffer<T> collision_count) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<T> _collision_count;
 };
 
 /**

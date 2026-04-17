@@ -12,14 +12,30 @@ namespace atlas::system {
 template <typename T>
 class Solver {
 public:
-    Solver()          = default;
+    Solver() = default;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Solver(UniverseHostPtr<T> universe,
+           FluidHostPtr<T> fluid,
+           SpatialHashingSearcherHostPtr<T> searcher) noexcept
+        : _universe(std::move(universe))
+        , _fluid(std::move(fluid))
+        , _searcher(std::move(searcher)) { }
+
     virtual ~Solver() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    solve() { }
+    solve(const T dt) { }
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    solve(const DeviceBuffer<int>* allocated_solver, const int index) { }
+    solve(const DeviceBuffer<int>* allocated_solver, const int index, const T dt) { }
+
+protected:
+    UniverseHostPtr<T> _universe {};
+
+    FluidHostPtr<T> _fluid {};
+
+    SpatialHashingSearcherHostPtr<T> _searcher {};
 };
 
 }

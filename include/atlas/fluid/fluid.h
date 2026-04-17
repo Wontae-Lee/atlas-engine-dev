@@ -83,6 +83,22 @@ public:
     generators() noexcept;
 
     /**
+     * @brief Gets the particle material/property buffer (const).
+     *
+     * @return Const reference to device buffer of particle properties.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<MatrialProperties<T>>&
+    particle_properties() const noexcept;
+
+    /**
+     * @brief Gets the particle material/property buffer.
+     *
+     * @return Reference to device buffer of particle properties.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<MatrialProperties<T>>&
+    particle_properties() noexcept;
+
+    /**
      * @brief Removes all particles from the fluid.
      *
      * This resets the particle count but does not necessarily deallocate buffers.

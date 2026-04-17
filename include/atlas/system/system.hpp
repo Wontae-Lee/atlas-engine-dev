@@ -98,7 +98,7 @@ void
 System<T>::solve() {
 
     if (_orchestrator) {
-        _orchestrator->orchestrate();
+        _orchestrator->orchestrate(_dt);
     }
 }
 
