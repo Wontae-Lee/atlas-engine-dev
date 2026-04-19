@@ -10,7 +10,7 @@
 #include <atlas/geometry/triangle.h>
 #include <atlas/geometry/triangle_mesh.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

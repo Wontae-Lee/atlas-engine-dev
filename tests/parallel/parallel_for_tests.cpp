@@ -1,8 +1,9 @@
 #include "../utilities/tests_utils.h"
 
+#include <atlas/memory/copy.h>
 #include <atlas/parallel/parallel_for.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 #include <atomic>
 #include <vector>
@@ -34,6 +35,22 @@ TEST(ParallelFor, HostIndexRangeVisitsEveryElement) {
 }
 
 TEST(ParallelFor, DeviceIndexRangeVisitsEveryElement) {
+#if defined(ATLAS_TASKING_CUDA)
+    thrust::device_vector<int> values(4, 0);
+    int* values_ptr = thrust::raw_pointer_cast(values.data());
+
+    atlas::parallel_for<atlas::ExecutionPolicy::device>(
+        0,
+        static_cast<int>(values.size()),
+        [values_ptr] ATLAS_DEVICE(int i) {
+            values_ptr[static_cast<std::size_t>(i)] = 10 - i;
+        });
+
+    std::vector<int> host_values(values.size(), 0);
+    atlas::copy_device_to_host(values, host_values.data(), host_values.size());
+
+    EXPECT_EQ(host_values, (std::vector<int> { 10, 9, 8, 7 }));
+#else
     std::vector<int> values(4, 0);
 
     atlas::parallel_for<atlas::ExecutionPolicy::device>(
@@ -44,6 +61,7 @@ TEST(ParallelFor, DeviceIndexRangeVisitsEveryElement) {
         });
 
     EXPECT_EQ(values, (std::vector<int> { 10, 9, 8, 7 }));
+#endif
 }
 
 TEST(ParallelFor, IteratorRangeVisitsEveryElement) {

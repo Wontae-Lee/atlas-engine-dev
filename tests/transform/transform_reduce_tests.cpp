@@ -2,7 +2,7 @@
 
 #include <atlas/transform/transform_reduce.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 #include <functional>
 #include <vector>

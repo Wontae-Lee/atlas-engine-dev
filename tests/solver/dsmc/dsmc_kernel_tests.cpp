@@ -3,7 +3,7 @@
 #include <atlas/material/material_properties.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

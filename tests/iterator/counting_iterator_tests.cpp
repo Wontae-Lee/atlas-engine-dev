@@ -2,7 +2,7 @@
 
 #include <atlas/iterator/counting_iterator.h>
 #include <cstddef>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 #include <type_traits>
 
 TEST(CountingIterator, DefaultConstructStartsAtZero) {

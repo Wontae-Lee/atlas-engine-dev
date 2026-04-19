@@ -2,7 +2,7 @@
 
 #include <atlas/container/container.h>
 #include <cstddef>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 #include <type_traits>
 #include <utility>
 

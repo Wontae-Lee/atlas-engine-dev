@@ -3,7 +3,7 @@
 #include <atlas/generator/generate_operator.h>
 #include <atlas/generator/generator.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

@@ -26,7 +26,7 @@ Most of the engine lives under [`include/atlas/`](/home/wontae/CLionProjects/atl
 - Builder-based construction for most public types
 - Portable host/device abstractions such as `DeviceBuffer<T>`, `HostBuffer<T>`, and `device_shared_ptr<T>`
 - Optional visualization through Vizkit
-- In-tree tests and benchmarks for the CPU/TBB configuration
+- In-tree test coverage for both GoogleTest and CUDA-oriented test flows
 
 ## Design Overview
 
@@ -131,7 +131,8 @@ atlas-engine-dev/
 ├── src/vizkit/                        # Optional OpenGL visualization layer
 ├── examples/solver/                   # Canonical engine setup example
 ├── examples/dynamic/                  # Dynamic/Vizkit example
-├── tests/                             # GoogleTest-based CPU test suite
+├── src/testkit/                       # Shared testkit headers (GoogleTest shim + cudatest)
+├── tests/                             # C++ and CUDA test sources
 ├── benchmarks/                        # Benchmark targets
 ├── external/                          # In-tree third-party dependencies
 └── tools/                             # Maintenance/codegen helpers
@@ -152,8 +153,9 @@ atlas-engine-dev/
 
 | Dependency | Notes |
 |---|---|
-| CUDA Toolkit 12.x | Presets currently point at `/usr/local/cuda-12.9/bin/nvcc` |
-| GPU architecture support | Default preset architecture is `86` |
+| CUDA Toolkit 12.x | `nvcc` is auto-detected from `PATH`, `CUDACXX`, or common install paths |
+| NVIDIA driver | Runtime must support the generated toolkit/PTX combination |
+| GPU architecture support | Root CMake auto-detects compute capability with `nvidia-smi` and prefers native SASS builds |
 
 ### Required for Vizkit
 
@@ -194,6 +196,8 @@ Atlas ships with CMake presets in [CMakePresets.json](/home/wontae/CLionProjects
 | `cuda-relwithdebinfo` | `RelWithDebInfo` | ON | ON | OFF | OFF |
 | `cuda-debug-headless` | `Debug` | OFF | ON | OFF | OFF |
 | `cuda-release-headless` | `Release` | OFF | ON | OFF | OFF |
+
+Current CUDA presets keep tests disabled. To build `atlas_all_cuda_test`, use manual configuration with `ATLAS_CUDA_TEST=ON`.
 
 ## Quick Start
 
@@ -238,7 +242,8 @@ cmake -S . -B build/tbb-manual \
   -DATLAS_USE_CUDA=OFF \
   -DATLAS_USE_VIZKIT=ON \
   -DATLAS_LOGGING=ON \
-  -DATLAS_TESTS=ON \
+  -DATLAS_GOOGLE_TEST=ON \
+  -DATLAS_CUDA_TEST=OFF \
   -DATLAS_BENCHMARKS=ON
 ```
 
@@ -252,11 +257,19 @@ cmake -S . -B build/cuda-manual \
   -DATLAS_USE_CUDA=ON \
   -DATLAS_USE_VIZKIT=OFF \
   -DATLAS_LOGGING=ON \
-  -DATLAS_TESTS=OFF \
-  -DATLAS_BENCHMARKS=OFF \
-  -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.9/bin/nvcc \
-  -DCMAKE_CUDA_ARCHITECTURES=86
+  -DATLAS_GOOGLE_TEST=OFF \
+  -DATLAS_CUDA_TEST=ON \
+  -DATLAS_BENCHMARKS=OFF
 ```
+
+The root CMake will try to:
+
+- find `nvcc` from `CUDACXX`, `PATH`, `/usr/bin`, or `/usr/local/cuda/bin`
+- query `nvidia-smi` for compute capability and driver CUDA runtime support
+- choose a native `CMAKE_CUDA_ARCHITECTURES` value when possible
+- warn when the CUDA toolkit is newer than the installed driver runtime
+
+You can still override both `CMAKE_CUDA_COMPILER` and `CMAKE_CUDA_ARCHITECTURES` explicitly when needed.
 
 ## Important CMake Options
 
@@ -266,13 +279,15 @@ cmake -S . -B build/cuda-manual \
 | `ATLAS_USE_CUDA` | Enable the CUDA backend |
 | `ATLAS_USE_VIZKIT` | Enable the OpenGL visualization layer |
 | `ATLAS_LOGGING` | Enable the logging library and logging macros |
-| `ATLAS_TESTS` | Build test targets |
+| `ATLAS_GOOGLE_TEST` | Build GoogleTest-based C++ test targets |
+| `ATLAS_CUDA_TEST` | Build the aggregated CUDA test executable |
 | `ATLAS_BENCHMARKS` | Build benchmark targets |
 
 Notes:
 
 - `ATLAS_USE_TBB` and `ATLAS_USE_CUDA` are mutually exclusive.
-- CUDA presets automatically disable tests and benchmarks.
+- `ATLAS_GOOGLE_TEST` is automatically disabled when `ATLAS_USE_CUDA=ON`.
+- Current CUDA presets automatically disable tests and benchmarks.
 - The CUDA branch still links TBB because Thrust host-side integration is configured with TBB.
 
 ## Usage Example
@@ -433,7 +448,18 @@ Use this when exploring the Vizkit/OpenGL integration path.
 
 ## Tests
 
-Tests are currently CPU/TBB-oriented and live under [`tests/`](/home/wontae/CLionProjects/atlas-engine-dev/tests).
+Tests live under [`tests/`](/home/wontae/CLionProjects/atlas-engine-dev/tests) and include both C++ `*.cpp` tests and CUDA `*.cu` test wrappers.
+
+The shared include is:
+
+```cpp
+#include <testkit/testkit.h>
+```
+
+`testkit` routes to:
+
+- GoogleTest for C++ test builds
+- the in-tree `cudatest` implementation for CUDA test builds
 
 Examples of covered areas:
 
@@ -444,7 +470,7 @@ Examples of covered areas:
 - sync operators and transforms
 - domains, units, codecs, tuples, iterators, and memory helpers
 
-Run them with:
+GoogleTest/TBB runs:
 
 ```bash
 cmake --preset tbb-debug
@@ -457,6 +483,28 @@ CTest presets are also provided:
 ```bash
 ctest --preset ctest-tbb-debug
 ```
+
+CUDA test build:
+
+```bash
+cmake -S . -B build/cuda-tests -G Ninja \
+  -DATLAS_USE_CUDA=ON \
+  -DATLAS_USE_TBB=OFF \
+  -DATLAS_USE_VIZKIT=OFF \
+  -DATLAS_LOGGING=ON \
+  -DATLAS_GOOGLE_TEST=OFF \
+  -DATLAS_CUDA_TEST=ON \
+  -DATLAS_BENCHMARKS=OFF
+
+cmake --build build/cuda-tests --target atlas_all_cuda_test -j$(nproc)
+./build/cuda-tests/atlas_all_cuda_test --gtest_list_tests
+```
+
+Notes:
+
+- CUDA test discovery is done in the root [`CMakeLists.txt`](/home/wontae/CLionProjects/atlas-engine-dev/CMakeLists.txt), not a separate `tests/CMakeLists.txt`.
+- `atlas_all_cuda_test` is a single executable driven by [`tests/cuda/main.cu`](/home/wontae/CLionProjects/atlas-engine-dev/tests/cuda/main.cu).
+- Some known CUDA-incompatible test wrappers are excluded explicitly from the aggregated CUDA target.
 
 ## Benchmarks
 
@@ -520,11 +568,11 @@ Logging is optional at configure time. When enabled, the compiled implementation
 
 ## Known Configuration Constraints
 
-- Tests are not currently enabled for CUDA builds.
 - Benchmarks are not currently enabled for CUDA builds.
 - Plane geometry is infinite, so any finite visualization or spawn/sampling behavior must define an explicit finite patch.
 - `TriangleMesh` support depends on `tinyobjloader` for OBJ loading.
-- CUDA presets currently assume a CUDA 12.9 installation path.
+- Some CUDA test wrappers are still excluded from `atlas_all_cuda_test` due to NVCC/CUDA compatibility issues in specific algorithms or test patterns.
+- CUDA presets in [`CMakePresets.json`](/home/wontae/CLionProjects/atlas-engine-dev/CMakePresets.json) still pin explicit compiler/architecture values and may override the root auto-detection logic.
 
 ## License
 

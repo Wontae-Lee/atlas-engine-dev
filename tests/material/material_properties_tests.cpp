@@ -2,7 +2,7 @@
 
 #include <atlas/material/material_properties.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

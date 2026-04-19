@@ -2,7 +2,7 @@
 
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

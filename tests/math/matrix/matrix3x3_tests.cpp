@@ -1,7 +1,7 @@
 #include "../../utilities/tests_utils.h"
 #include <cmath>
 #include <cstddef>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 TEST(Matrix3x3, DefaultConstructorIsZero) {
     const atlas::math::Matrix<double, 3, 3> m;

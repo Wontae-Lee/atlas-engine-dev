@@ -2,7 +2,7 @@
 
 #include <atlas/shuffle/shuffle_operator.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 TEST(ShuffleOperator, CallOperatorMatchesShuffleKey) {
     const atlas::ShuffleOperator shuffle;

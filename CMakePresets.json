@@ -85,7 +85,7 @@
 
     {
       "name": "cuda-debug",
-      "displayName": "Atlas CUDA Debug (Thrust host=TBB, TBB linked)",
+      "displayName": "Atlas CUDA Debug (Auto-detect CUDA toolchain/arch)",
       "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -97,15 +97,12 @@
 
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "OFF",
-
-        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
-        "CMAKE_CUDA_ARCHITECTURES": "86"
+        "ATLAS_BENCHMARKS": "OFF"
       }
     },
     {
       "name": "cuda-release",
-      "displayName": "Atlas CUDA Release (Thrust host=TBB, TBB linked)",
+      "displayName": "Atlas CUDA Release (Auto-detect CUDA toolchain/arch)",
       "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -117,15 +114,12 @@
 
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "OFF",
-
-        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
-        "CMAKE_CUDA_ARCHITECTURES": "86"
+        "ATLAS_BENCHMARKS": "OFF"
       }
     },
     {
       "name": "cuda-relwithdebinfo",
-      "displayName": "Atlas CUDA RelWithDebInfo (Thrust host=TBB, TBB linked)",
+      "displayName": "Atlas CUDA RelWithDebInfo (Auto-detect CUDA toolchain/arch)",
       "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
@@ -137,17 +131,14 @@
 
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "OFF",
-
-        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
-        "CMAKE_CUDA_ARCHITECTURES": "86"
+        "ATLAS_BENCHMARKS": "OFF"
       }
     },
 
 
     {
       "name": "cuda-debug-headless",
-      "displayName": "Atlas CUDA Debug Headless (No Vizkit)",
+      "displayName": "Atlas CUDA Debug Headless (Auto-detect CUDA toolchain/arch)",
       "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -159,15 +150,12 @@
 
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "OFF",
-
-        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
-        "CMAKE_CUDA_ARCHITECTURES": "86"
+        "ATLAS_BENCHMARKS": "OFF"
       }
     },
     {
       "name": "cuda-release-headless",
-      "displayName": "Atlas CUDA Release Headless (No Vizkit)",
+      "displayName": "Atlas CUDA Release Headless (Auto-detect CUDA toolchain/arch)",
       "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -179,10 +167,22 @@
 
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "OFF",
-
-        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.9/bin/nvcc",
-        "CMAKE_CUDA_ARCHITECTURES": "86"
+        "ATLAS_BENCHMARKS": "OFF"
+      }
+    },
+    {
+      "name": "cuda-debug-tests-headless",
+      "displayName": "Atlas CUDA Debug Tests Headless (atlas_all_cuda_test)",
+      "inherits": "base-ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ATLAS_USE_CUDA": "ON",
+        "ATLAS_USE_TBB": "OFF",
+        "ATLAS_USE_VIZKIT": "OFF",
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_GOOGLE_TEST": "OFF",
+        "ATLAS_CUDA_TEST": "ON",
+        "ATLAS_BENCHMARKS": "OFF"
       }
     }
   ],
@@ -197,7 +197,8 @@
     { "name": "build-cuda-relwithdebinfo", "displayName": "Build CUDA RelWithDebInfo", "configurePreset": "cuda-relwithdebinfo", "jobs": 0 },
 
     { "name": "build-cuda-debug-headless", "displayName": "Build CUDA Debug Headless", "configurePreset": "cuda-debug-headless", "jobs": 0 },
-    { "name": "build-cuda-release-headless", "displayName": "Build CUDA Release Headless", "configurePreset": "cuda-release-headless", "jobs": 0 }
+    { "name": "build-cuda-release-headless", "displayName": "Build CUDA Release Headless", "configurePreset": "cuda-release-headless", "jobs": 0 },
+    { "name": "build-cuda-debug-tests-headless", "displayName": "Build CUDA Debug Tests Headless", "configurePreset": "cuda-debug-tests-headless", "jobs": 0 }
   ],
 
   "testPresets": [

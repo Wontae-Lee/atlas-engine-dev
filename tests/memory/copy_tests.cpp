@@ -4,7 +4,7 @@
 
 #include <array>
 #include <cstddef>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 TEST(Copy_TBB, CopyHostToDevice_RawPointersCopiesBytes) {
     std::array<int, 8> src {};

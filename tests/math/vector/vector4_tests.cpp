@@ -1,7 +1,7 @@
 #include "../../utilities/tests_utils.h"
 #include <cmath>
 #include <cstddef>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 TEST(Vector4, DefaultConstructorIsZero) {
     const atlas::math::Vector<double, 4> v;

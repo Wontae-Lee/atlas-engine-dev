@@ -2,7 +2,7 @@
 
 #include <atlas/random/seed.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 TEST(Seed, HashConstantsRemainStable) {
     EXPECT_DOUBLE_EQ(atlas::seed::RANDOM_HASH_PHASE_COEFF_X, 12.9898);

@@ -359,64 +359,58 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Ensure flattened query data exists before forwarding the query.
-    ensure_query_cache();
+    // The owning mesh may lazily build caches on the host, but device code must
+    // use the already-materialized operator view.
     return _operator.closest_point(p);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Ensure flattened query data exists before forwarding the query.
-    ensure_query_cache();
+    // Host code can build caches lazily; device code can only consume them.
     return _operator.closest_normal(p);
 }
 
 template <typename T>
 T
 TriangleMesh<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Ensure flattened query data exists before forwarding the query.
-    ensure_query_cache();
+    // Host code can build caches lazily; device code can only consume them.
     return _operator.signed_distance(p);
 }
 
 template <typename T>
 bool
 TriangleMesh<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Ensure flattened query data exists before forwarding the query.
-    ensure_query_cache();
+    // Host code can build caches lazily; device code can only consume them.
     return _operator.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
 TriangleMesh<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Ensure flattened query data exists before forwarding the query.
-    ensure_query_cache();
+    // Host code can build caches lazily; device code can only consume them.
+
     return _operator.is_on_surface(p, tolerance);
 }
 
 template <typename T>
 atlas::math::Vector<T, 3>
 TriangleMesh<T>::centroid() const noexcept {
-    // Ensure flattened query data exists before forwarding the query.
-    ensure_query_cache();
+    // Host code can build caches lazily; device code can only consume them.
     return _operator.centroid();
 }
 
 template <typename T>
 atlas::spatial::AxisAlignedBoundingBox<T>
 TriangleMesh<T>::bound() const noexcept {
-    // Ensure flattened query data exists before forwarding the query.
-    ensure_query_cache();
+    // Host code can build caches lazily; device code can only consume them.
     return _operator.bound();
 }
 
 template <typename T>
 bool
 TriangleMesh<T>::is_valid() const noexcept {
-    // Ensure flattened query data exists before forwarding the query.
-    ensure_query_cache();
+    // Host code can build caches lazily; device code can only consume them.
     return _operator.is_valid();
 }
 

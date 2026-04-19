@@ -2,7 +2,7 @@
 
 #include <atlas/indexer/device_pair_indexer.h>
 #include <cstddef>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 #include <type_traits>
 
 TEST(DevicePairIndexer, MappingMatchesUpperTriangularExample) {

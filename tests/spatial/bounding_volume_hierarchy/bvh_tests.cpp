@@ -3,7 +3,7 @@
 #include <atlas/geometry/triangle_mesh.h>
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

@@ -119,14 +119,22 @@ Important options:
 - `ATLAS_USE_TBB`
 - `ATLAS_USE_VIZKIT`
 - `ATLAS_LOGGING`
-- `ATLAS_TESTS`
+- `ATLAS_GOOGLE_TEST`
+- `ATLAS_CUDA_TEST`
 - `ATLAS_BENCHMARKS`
 
 ## Tests
 
-- Framework: GoogleTest from `external/googletest/`
-- Test discovery: recursive `*_tests.cpp` glob in `tests/`
-- Single test binary: `atlas_tests`
+- Shared test include: `src/testkit/testkit.h`
+- C++ tests use GoogleTest through `testkit` when `ATLAS_GOOGLE_TEST=ON`
+- CUDA tests use the in-tree `cudatest` implementation through `testkit` when `ATLAS_CUDA_TEST=ON`
+- Test discovery: recursive `tests/*.cpp` and `tests/*.cu` glob from the root `CMakeLists.txt`
+- C++ test binaries:
+  - aggregate binary: `atlas_tests`
+  - per-directory binaries: `atlas_tests_<directory>`
+- CUDA test binary: `atlas_all_cuda_test`
+- CUDA test entry point: `tests/cuda/main.cu`
+- Some CUDA-incompatible `*.cu` wrappers may be excluded explicitly in the root `CMakeLists.txt`
 - Common helpers: `tests/utilities/tests_utils.h`
 - `particle_count`-sensitive tests must set the active prefix explicitly instead of assuming it matches capacity
 - `System` behavior coverage now lives in `tests/system/system_tests.cpp`
@@ -137,6 +145,7 @@ Important options:
 - Use `#pragma once` in headers.
 - Do not hand-edit generated umbrella headers such as `include/atlas/atlas.h`; use `tools/generate_headers.py`.
 - CUDA translation units use `.cu`; CPU translation units use `.cpp`.
+- Test sources should include `<testkit/testkit.h>` rather than including GoogleTest headers directly.
 - Public APIs are expected to keep Doxygen-style comments where the surrounding file already uses them.
 
 ## Dependencies

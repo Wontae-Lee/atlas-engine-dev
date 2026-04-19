@@ -2,7 +2,7 @@
 
 #include <atlas/parallel/parallel_sort.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 #include <string>
 #include <vector>

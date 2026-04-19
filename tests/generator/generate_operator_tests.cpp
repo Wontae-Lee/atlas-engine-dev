@@ -2,7 +2,7 @@
 
 #include <atlas/generator/generate_operator.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

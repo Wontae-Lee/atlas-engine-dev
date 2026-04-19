@@ -2,7 +2,7 @@
 
 #include <atlas/solver/sph/sph_solver.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 TEST(SphSolver, HeaderCompiles) {
     SUCCEED();

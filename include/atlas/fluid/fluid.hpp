@@ -493,7 +493,9 @@ Fluid<T>::Builder::validate() const {
             "Fluid::Builder: statistical_weight must be positive.");
     }
 
-    for (const auto& particle_property : _particles) {
+    for (std::size_t i = 0; i < _particles.size(); ++i) {
+        const MatrialProperties<T> particle_property = _particles[i];
+
         if (!(particle_property.molecular_mass > T(0))) {
             throw std::runtime_error(
                 "Fluid::Builder: molecular_mass must be positive.");

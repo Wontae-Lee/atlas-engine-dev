@@ -13,6 +13,8 @@ Unit<T>::Unit(
 
     : _geometry_operator(std::move(geometry_operator))
     , _sync_operator(std::move(sync_operator)) {
+    // No kinematic quantities are initialized here.
+    // The unit starts as a non-dynamic unit unless velocities are later assigned.
 }
 
 template <typename T>
@@ -27,6 +29,8 @@ Unit<T>::Unit(
     : _geometry_operator(std::move(geometry_operator))
     , _sync_operator(std::move(sync_operator)) {
 
+    // Normalize the optional kinematic state so each velocity/acceleration
+    // pair remains internally consistent.
     Unit<T>::canonicalize_kinematics(
         velocity,
         acceleration,
@@ -106,6 +110,7 @@ template <typename T>
 bool
 Unit<T>::dynamic() const noexcept {
 
+    // The unit is considered dynamic if either linear motion or angular motion exists.
     return _velocity.has_value() || _angular_velocity.has_value();
 }
 
@@ -113,12 +118,15 @@ template <typename T>
 void
 Unit<T>::update(T dt) noexcept {
 
+    // Reject non-positive time steps to avoid invalid integration.
     if (!(dt > T(0))) return;
 
+    // Skip all work if the unit has no dynamic state.
     if (!dynamic()) return;
 
     if (_velocity.has_value()) {
 
+        // First update linear velocity from acceleration, then integrate position.
         if (_acceleration.has_value()) {
             *_velocity += (*_acceleration) * dt;
         }
@@ -128,11 +136,14 @@ Unit<T>::update(T dt) noexcept {
 
     if (_angular_velocity.has_value()) {
 
+        // First update angular velocity from angular acceleration.
         if (_angular_acceleration.has_value()) {
             *_angular_velocity += (*_angular_acceleration) * dt;
         }
 
         const T omega = _angular_velocity->length();
+
+        // Only rotate if the angular speed is non-zero.
         if (omega > T(0)) {
             rotate(*_angular_velocity, omega * dt);
         }
@@ -143,6 +154,7 @@ template <typename T>
 void
 Unit<T>::move(const atlas::math::Vector<T, 3>& delta_world) noexcept {
 
+    // Apply translation directly in world space.
     _sync_operator.translation += delta_world;
 }
 
@@ -153,22 +165,28 @@ Unit<T>::rotate(const atlas::math::Vector<T, 3>& axis_world, T angle_rad) noexce
     atlas::math::Vector<T, 3> axis = axis_world;
     const T axis_len2              = axis.length_squared();
 
+    // Ignore invalid rotation axes.
     if (axis_len2 <= T(0)) return;
 
+    // Normalize the rotation axis before quaternion construction.
     axis *= (T(1) / static_cast<T>(std::sqrt(axis_len2)));
 
     const T half = angle_rad * T(0.5);
     const T s    = static_cast<T>(std::sin(static_cast<double>(half)));
     const T c    = static_cast<T>(std::cos(static_cast<double>(half)));
 
+    // Construct the incremental rotation quaternion.
     const atlas::math::Quaternion<T> dq(
         c,
         axis.x * s,
         axis.y * s,
         axis.z * s);
 
+    // Pre-multiply to apply the world-space rotation and normalize
+    // to reduce accumulated numerical drift.
     _sync_operator.orientation = (dq * _sync_operator.orientation).normalized();
 
+    // Rebuild dependent matrices so the sync state remains coherent.
     _sync_operator.rebuild_matrices();
 }
 
@@ -179,23 +197,21 @@ Unit<T>::canonicalize_kinematics(std::optional<Vector<T, 3>>& velocity,
                                  std::optional<Vector<T, 3>>& angular_velocity,
                                  std::optional<Vector<T, 3>>& angular_acceleration) noexcept {
 
+    // Ensure linear velocity and acceleration always appear as a valid pair.
     if (acceleration.has_value() && !velocity.has_value()) {
-
         velocity = Vector<T, 3>(T(0), T(0), T(0));
     }
 
     if (velocity.has_value() && !acceleration.has_value()) {
-
         acceleration = Vector<T, 3>(T(0), T(0), T(0));
     }
 
+    // Ensure angular velocity and angular acceleration always appear as a valid pair.
     if (angular_acceleration.has_value() && !angular_velocity.has_value()) {
-
         angular_velocity = Vector<T, 3>(T(0), T(0), T(0));
     }
 
     if (angular_velocity.has_value() && !angular_acceleration.has_value()) {
-
         angular_acceleration = Vector<T, 3>(T(0), T(0), T(0));
     }
 }
@@ -212,6 +228,7 @@ Unit<T>::Builder::with_geometry(const atlas::GeometryHostPtr<T>& geometry) {
 
     _geometry = geometry;
 
+    // Cache the operator immediately so build() can remain lightweight.
     _geometry_operator = geometry->make_geometry_operator();
     return *this;
 }
@@ -226,6 +243,7 @@ Unit<T>::Builder::with_sync(const SyncHostPtr<T>& sync) {
         throw std::runtime_error("Unit::Builder: sync must not be null.");
     }
 
+    // Cache the sync operator immediately so the builder owns all required runtime state.
     _sync_operator = sync->make_sync_operator();
     return *this;
 }
@@ -274,6 +292,7 @@ Unit<T>::Builder::build() {
     auto angular_velocity     = _angular_velocity;
     auto angular_acceleration = _angular_acceleration;
 
+    // Normalize optional kinematic values before assigning them to the final object.
     Unit<T>::canonicalize_kinematics(
         velocity,
         acceleration,
@@ -290,6 +309,8 @@ Unit<T>::Builder::build() {
     u._angular_velocity     = std::move(angular_velocity);
     u._angular_acceleration = std::move(angular_acceleration);
 
+    // Reset the builder state after a successful build so it does not
+    // accidentally retain stale ownership or kinematic configuration.
     _geometry.reset();
     _geometry_operator.reset();
     _sync_operator.reset();
@@ -332,6 +353,7 @@ Unit<T>::Builder::validate() const {
         throw std::runtime_error("Unit::Builder: sync operator is not initialized.");
     }
 
+    // Enforce explicit linear kinematic consistency at validation time.
     if (_acceleration.has_value() && !_velocity.has_value()) {
 
         atlas::logger::error()
@@ -339,6 +361,7 @@ Unit<T>::Builder::validate() const {
         throw std::runtime_error("Unit::Builder: acceleration is set but velocity is missing.");
     }
 
+    // Enforce explicit angular kinematic consistency at validation time.
     if (_angular_acceleration.has_value() && !_angular_velocity.has_value()) {
 
         atlas::logger::error()

@@ -2,7 +2,7 @@
 
 #include <atlas/scan/exclusive_scan.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 #include <functional>
 #include <vector>

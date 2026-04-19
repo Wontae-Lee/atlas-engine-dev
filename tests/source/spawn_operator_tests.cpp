@@ -4,7 +4,7 @@
 #include <atlas/geometry/geometry_operator.h>
 #include <atlas/source/spawn_operator.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

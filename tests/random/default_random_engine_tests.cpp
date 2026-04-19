@@ -2,7 +2,7 @@
 
 #include <atlas/random/default_random_engine.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 #include <type_traits>
 

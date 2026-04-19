@@ -7,7 +7,7 @@
 #include <atlas/universe/universe.h>
 #include <atlas/universe/universe_state.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

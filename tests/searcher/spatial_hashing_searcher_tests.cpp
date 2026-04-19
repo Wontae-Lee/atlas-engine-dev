@@ -3,7 +3,7 @@
 #include <atlas/generator/generate_operator.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

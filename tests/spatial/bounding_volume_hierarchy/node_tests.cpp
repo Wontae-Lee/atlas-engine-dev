@@ -2,7 +2,7 @@
 
 #include <atlas/spatial/bounding_volume_hierarchy/node.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

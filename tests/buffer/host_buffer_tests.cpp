@@ -1,7 +1,7 @@
 #include "../utilities/tests_utils.h"
 
 #include <atlas/buffer/host_buffer.h>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 using namespace atlas;
 

@@ -1,7 +1,7 @@
 #include "../../utilities/tests_utils.h"
 
 #include <cstddef>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 TEST(MatrixRC, DefaultConstructorIsZero) {
     using M = atlas::math::Matrix<double, 2, 3>;

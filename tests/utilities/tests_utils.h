@@ -48,7 +48,24 @@
 #include <type_traits>
 #include <vector>
 
+#if defined(ATLAS_TASKING_CUDA)
+#include <thrust/device_reference.h>
+#endif
+
 namespace atlas::test {
+
+template <typename T>
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+template <typename V>
+static ATLAS_FORCE_INLINE std::size_t
+vec_size(const V& v) {
+    if constexpr (requires { remove_cvref_t<V>::size(); }) {
+        return remove_cvref_t<V>::size();
+    } else {
+        return v.size();
+    }
+}
 
 /**
  * @brief Compare two scalar values for approximate equality.
@@ -97,10 +114,8 @@ near(T a, T b, T eps) {
 template <typename V>
 static ATLAS_FORCE_INLINE bool
 is_finite_vec(const V& v) {
-    using T = decltype(v[0]);
-
-    if constexpr (std::is_floating_point_v<T>) {
-        for (std::size_t i = 0; i < V::size(); ++i) {
+    if constexpr (std::is_convertible_v<decltype(v[0]), double>) {
+        for (std::size_t i = 0; i < vec_size(v); ++i) {
             if (!std::isfinite(static_cast<double>(v[i]))) return false;
         }
     }
@@ -119,16 +134,56 @@ is_finite_vec(const V& v) {
  * @tparam T Scalar type.
  * @tparam N Vector dimension.
  */
-template <typename T, std::size_t N>
+template <typename A, typename B, typename Eps>
 static ATLAS_FORCE_INLINE bool
-vec_near(const atlas::Vector<T, N>& a,
-         const atlas::Vector<T, N>& b,
-         T eps) {
-    for (std::size_t i = 0; i < N; ++i) {
-        if (!near<T>(a[i], b[i], eps)) return false;
+vec_near(const A& a,
+         const B& b,
+         Eps eps) {
+    if constexpr (!std::is_same_v<remove_cvref_t<A>, remove_cvref_t<B>>
+                  && (std::is_convertible_v<A, remove_cvref_t<B>>
+                      || std::is_constructible_v<remove_cvref_t<B>, A>)) {
+        return vec_near(static_cast<remove_cvref_t<B>>(a), b, eps);
+    } else if constexpr (!std::is_same_v<remove_cvref_t<A>, remove_cvref_t<B>>
+                         && (std::is_convertible_v<B, remove_cvref_t<A>>
+                             || std::is_constructible_v<remove_cvref_t<A>, B>)) {
+        return vec_near(a, static_cast<remove_cvref_t<A>>(b), eps);
+    }
+
+    const std::size_t n = vec_size(b);
+
+    for (std::size_t i = 0; i < n; ++i) {
+        using T = std::common_type_t<remove_cvref_t<decltype(a[i])>,
+                                     remove_cvref_t<decltype(b[i])>,
+                                     remove_cvref_t<Eps>>;
+
+        if (!near<T>(static_cast<T>(a[i]),
+                     static_cast<T>(b[i]),
+                     static_cast<T>(eps))) {
+            return false;
+        }
     }
 
     return true;
 }
+
+#if defined(ATLAS_TASKING_CUDA)
+template <typename T, std::size_t N, typename B, typename Eps>
+static ATLAS_FORCE_INLINE bool
+vec_near(const thrust::device_reference<atlas::Vector<T, N>>& a,
+         const B& b,
+         Eps eps) {
+    const atlas::Vector<T, N> lhs = a;
+    return vec_near(lhs, b, eps);
+}
+
+template <typename A, typename T, std::size_t N, typename Eps>
+static ATLAS_FORCE_INLINE bool
+vec_near(const A& a,
+         const thrust::device_reference<atlas::Vector<T, N>>& b,
+         Eps eps) {
+    const atlas::Vector<T, N> rhs = b;
+    return vec_near(a, rhs, eps);
+}
+#endif
 
 } // namespace atlas::test

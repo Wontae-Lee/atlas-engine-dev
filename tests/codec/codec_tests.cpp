@@ -6,7 +6,7 @@
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/universe/universe.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

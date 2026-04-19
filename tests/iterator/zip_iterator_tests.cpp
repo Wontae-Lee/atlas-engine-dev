@@ -1,7 +1,7 @@
 #include "../utilities/tests_utils.h"
 
 #include <atlas/iterator/zip_iterator.h>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 #include <cstddef>
 #include <tuple>

@@ -2,7 +2,7 @@
 
 #include <atlas/parallel/parallel.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 TEST(Parallel, UmbrellaHeaderExposesExecutionPolicy) {
     constexpr auto host_policy = atlas::ExecutionPolicy::host;

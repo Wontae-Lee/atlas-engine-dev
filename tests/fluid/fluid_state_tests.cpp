@@ -2,7 +2,7 @@
 
 #include <atlas/fluid/fluid_state.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

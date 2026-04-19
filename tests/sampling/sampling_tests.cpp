@@ -1,9 +1,11 @@
 #include "../utilities/tests_utils.h"
 
+#include <atlas/memory/copy.h>
+#include <atlas/parallel/parallel_for.h>
 #include <atlas/random/default_random_engine.h>
 #include <atlas/sampling/sampling.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 #include <cmath>
 
@@ -26,10 +28,31 @@ TEST(Sampling, GenerateStandardNormalReturnsFiniteValue) {
 
 TEST(Sampling, BuildOrthonormalBasisProducesOrthogonalVectors) {
     const Vec3 normal = atlas::math::normalize(Vec3(1, 2, 3));
+#if defined(ATLAS_TASKING_CUDA)
+    thrust::device_vector<Vec3> basis(2);
+    Vec3* basis_ptr = thrust::raw_pointer_cast(basis.data());
+
+    atlas::parallel_for<atlas::ExecutionPolicy::device>(
+        0,
+        1,
+        [normal, basis_ptr] ATLAS_DEVICE(int) {
+            Vec3 tangent;
+            Vec3 bitangent;
+            atlas::sampling::build_orthonormal_basis(normal, tangent, bitangent);
+            basis_ptr[0] = tangent;
+            basis_ptr[1] = bitangent;
+        });
+
+    std::vector<Vec3> host_basis(2);
+    atlas::copy_device_to_host(basis, host_basis.data(), host_basis.size());
+    const Vec3 tangent = host_basis[0];
+    const Vec3 bitangent = host_basis[1];
+#else
     Vec3 tangent;
     Vec3 bitangent;
 
     atlas::sampling::build_orthonormal_basis(normal, tangent, bitangent);
+#endif
 
     EXPECT_NEAR(atlas::math::dot(normal, tangent), 0.0f, 1e-3f);
     EXPECT_NEAR(atlas::math::dot(normal, bitangent), 0.0f, 1e-3f);
@@ -39,7 +62,22 @@ TEST(Sampling, BuildOrthonormalBasisProducesOrthogonalVectors) {
 
 TEST(Sampling, UniformHemisphereSampleIsUnitLengthAndInHemisphere) {
     const Vec3 normal(0, 0, 1);
+#if defined(ATLAS_TASKING_CUDA)
+    thrust::device_vector<Vec3> device_sample(1);
+    Vec3* sample_ptr = thrust::raw_pointer_cast(device_sample.data());
+
+    atlas::parallel_for<atlas::ExecutionPolicy::device>(
+        0,
+        1,
+        [normal, sample_ptr] ATLAS_DEVICE(int) {
+            sample_ptr[0] = atlas::sampling::sample_uniform_hemisphere(normal, 0.25f, 0.5f);
+        });
+
+    Vec3 sample;
+    atlas::copy_device_to_host(device_sample, &sample, 1);
+#else
     const auto sample = atlas::sampling::sample_uniform_hemisphere(normal, 0.25f, 0.5f);
+#endif
 
     EXPECT_NEAR(sample.length(), 1.0f, 1e-3f);
     EXPECT_GE(atlas::math::dot(sample, normal), 0.0f);
@@ -47,7 +85,22 @@ TEST(Sampling, UniformHemisphereSampleIsUnitLengthAndInHemisphere) {
 
 TEST(Sampling, CosineHemisphereSampleIsUnitLengthAndInHemisphere) {
     const Vec3 normal(0, 1, 0);
+#if defined(ATLAS_TASKING_CUDA)
+    thrust::device_vector<Vec3> device_sample(1);
+    Vec3* sample_ptr = thrust::raw_pointer_cast(device_sample.data());
+
+    atlas::parallel_for<atlas::ExecutionPolicy::device>(
+        0,
+        1,
+        [normal, sample_ptr] ATLAS_DEVICE(int) {
+            sample_ptr[0] = atlas::sampling::sample_cosine_hemisphere(normal, 0.25f, 0.5f);
+        });
+
+    Vec3 sample;
+    atlas::copy_device_to_host(device_sample, &sample, 1);
+#else
     const auto sample = atlas::sampling::sample_cosine_hemisphere(normal, 0.25f, 0.5f);
+#endif
 
     EXPECT_NEAR(sample.length(), 1.0f, 1e-3f);
     EXPECT_GE(atlas::math::dot(sample, normal), 0.0f);

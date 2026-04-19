@@ -1,6 +1,6 @@
 #include "../utilities/tests_utils.h"
 #include <cmath>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 #include <type_traits>
 
 TEST(Quaternion, DefaultConstructorIsIdentity) {

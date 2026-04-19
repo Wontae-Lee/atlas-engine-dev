@@ -4,7 +4,7 @@
 #include <atlas/measure/measurer.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 
@@ -24,7 +24,7 @@ public:
         ++measure_calls;
     }
 
-    ATLAS_NODISCARD atlas::MeasureModeType
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD atlas::MeasureModeType
     measure_mode() const noexcept override {
         return _measure_mode;
     }

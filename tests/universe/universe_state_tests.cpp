@@ -2,7 +2,7 @@
 
 #include <atlas/universe/universe_state.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 
@@ -57,6 +57,5 @@ TEST(UniverseState, MaterialRatioStateStoresVectorData) {
     state.data()[0] = atlas::Vector<T, 2>(T(0.25), T(0.75));
 
     EXPECT_EQ(state.size(), 2u);
-    EXPECT_NEAR(state.data()[0][0], 0.25f, kEps);
-    EXPECT_NEAR(state.data()[0][1], 0.75f, kEps);
+    EXPECT_TRUE(atlas::test::vec_near(state.data()[0], atlas::Vector<T, 2>(T(0.25), T(0.75)), kEps));
 }

@@ -3,7 +3,7 @@
 #include <atlas/logging/logging.h>
 #include <atlas/sync/sync_operator.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

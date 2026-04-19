@@ -2,7 +2,7 @@
 
 #include <atlas/solver/solver.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 

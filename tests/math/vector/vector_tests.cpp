@@ -1,7 +1,7 @@
 #include "../../utilities/tests_utils.h"
 #include <cmath>
 #include <cstddef>
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 #include <type_traits>
 
 using namespace atlas;

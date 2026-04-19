@@ -6,7 +6,7 @@
 #include <atlas/sync/sync.h>
 #include <atlas/unit/unit.h>
 
-#include <gtest/gtest.h>
+#include <testkit/testkit.h>
 
 namespace {
 
