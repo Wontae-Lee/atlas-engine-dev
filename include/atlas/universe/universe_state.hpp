@@ -65,6 +65,37 @@ UniverseBulkVelocityState<T>::data() const noexcept {
 }
 
 template <typename T>
+UniverseFieldForceState<T>::UniverseFieldForceState(const std::size_t number_of_cells)
+    // Allocate one field-force vector per universe cell.
+    : _field_force(number_of_cells) { }
+
+template <typename T>
+UniverseFieldForceState<T>::UniverseFieldForceState(DeviceBuffer<Vector3<T>> field_force) noexcept
+    // Take ownership of an existing field-force buffer.
+    : _field_force(std::move(field_force)) { }
+
+template <typename T>
+std::size_t
+UniverseFieldForceState<T>::size() const noexcept {
+    // Return the number of stored field-force entries.
+    return _field_force.size();
+}
+
+template <typename T>
+DeviceBuffer<Vector3<T>>&
+UniverseFieldForceState<T>::data() noexcept {
+    // Provide mutable access to the underlying field-force storage.
+    return _field_force;
+}
+
+template <typename T>
+const DeviceBuffer<Vector3<T>>&
+UniverseFieldForceState<T>::data() const noexcept {
+    // Provide read-only access to the underlying field-force storage.
+    return _field_force;
+}
+
+template <typename T>
 UniverseMaxRelativeSpeedState<T>::UniverseMaxRelativeSpeedState(const std::size_t number_of_cells)
     // Allocate one maximum-relative-speed entry per universe cell.
     : _max_relative_speed(number_of_cells) { }

@@ -12,6 +12,7 @@
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/solver/solver.h>
+#include <atlas/universe/universe.h>
 
 namespace atlas::system {
 
@@ -19,6 +20,8 @@ namespace atlas::system {
  * @brief Coordinates execution of a sequence of solvers, optionally with a codec.
  *
  * An Orchestrator stores:
+ * - an optional universe,
+ * - an optional fluid,
  * - an optional searcher,
  * - an optional codec,
  * - an optional measure,
@@ -56,13 +59,17 @@ public:
     /**
      * @brief Constructs an orchestrator from pipeline dependencies and solver list.
      *
+     * @param universe Optional host-side shared pointer to a universe.
+     * @param fluid Optional host-side shared pointer to a fluid.
      * @param searcher Optional host-side shared pointer to a spatial searcher.
      * @param codec Optional host-side shared pointer to a codec.
-     * @param measure Optional host-side shared pointer to a measurer.
+     * @param measurer Optional host-side shared pointer to a measurer.
      * @param solvers Ordered list of host-side shared solver pointers.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
-    Orchestrator(SpatialHashingSearcherHostPtr<T> searcher,
+    Orchestrator(UniverseHostPtr<T> universe,
+                 FluidHostPtr<T> fluid,
+                 SpatialHashingSearcherHostPtr<T> searcher,
                  CodecHostPtr<T> codec,
                  MeasurerHostPtr<T> measurer,
                  HostBuffer<SolveHostPtr<T>> solvers) noexcept;
@@ -78,6 +85,25 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     solve(T dt);
+
+    /**
+     * @brief Applies a cell-wise field force to particle velocities when available.
+     *
+     * If the universe exposes a @ref atlas::universe::UniverseFieldForceState and
+     * the orchestrator has the universe, fluid, and searcher dependencies needed
+     * to map particles into cells, this function updates particle velocity using:
+     *
+     * @code
+     * v += dt * (F / m)
+     * @endcode
+     *
+     * where @c F is the force vector stored for the particle's current cell and
+     * @c m is the particle mass obtained from its species material properties.
+     *
+     * @param dt Time step used for the explicit velocity update.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    apply_field_force(T dt);
 
     /**
      * @brief Creates a Builder instance.
@@ -99,6 +125,22 @@ public:
     orchestrate(T dt);
 
     /**
+     * @brief Sets or replaces the universe dependency.
+     *
+     * @param universe Host-side shared pointer to the universe.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_universe(UniverseHostPtr<T> universe) noexcept;
+
+    /**
+     * @brief Sets or replaces the fluid dependency.
+     *
+     * @param fluid Host-side shared pointer to the fluid.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_fluid(FluidHostPtr<T> fluid) noexcept;
+
+    /**
      * @brief Sets or replaces the searcher.
      *
      * @param searcher Host-side shared pointer to the searcher.
@@ -117,7 +159,7 @@ public:
     /**
      * @brief Sets or replaces the measure.
      *
-     * @param measure Host-side shared pointer to the measure.
+     * @param measurer Host-side shared pointer to the measure.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_measurer(MeasurerHostPtr<T> measurer) noexcept;
@@ -132,6 +174,22 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SpatialHashingSearcherHostPtr<T>&
     searcher() const noexcept;
+
+    /**
+     * @brief Returns the configured universe.
+     *
+     * @return Const reference to the universe shared pointer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const UniverseHostPtr<T>&
+    universe() const noexcept;
+
+    /**
+     * @brief Returns the configured fluid.
+     *
+     * @return Const reference to the fluid shared pointer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const FluidHostPtr<T>&
+    fluid() const noexcept;
 
     /**
      * @brief Returns the configured codec.
@@ -153,6 +211,16 @@ public:
     solvers() const noexcept;
 
 private:
+    /**
+     * @brief Optional universe used to access cell-wise field states.
+     */
+    UniverseHostPtr<T> _universe {};
+
+    /**
+     * @brief Optional fluid used to access particle states updated by orchestration.
+     */
+    FluidHostPtr<T> _fluid {};
+
     SpatialHashingSearcherHostPtr<T> _searcher {};
 
     /**
@@ -186,6 +254,24 @@ public:
      * @brief Default constructor.
      */
     Builder() = default;
+
+    /**
+     * @brief Sets the universe used by the orchestrator.
+     *
+     * @param universe Host-side shared pointer to the universe.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_universe(UniverseHostPtr<T> universe) noexcept;
+
+    /**
+     * @brief Sets the fluid used by the orchestrator.
+     *
+     * @param fluid Host-side shared pointer to the fluid.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
@@ -241,6 +327,16 @@ private:
     validate() const;
 
 private:
+    /**
+     * @brief Universe collected by the builder.
+     */
+    UniverseHostPtr<T> _universe {};
+
+    /**
+     * @brief Fluid collected by the builder.
+     */
+    FluidHostPtr<T> _fluid {};
+
     SpatialHashingSearcherHostPtr<T> _searcher {};
 
     /**

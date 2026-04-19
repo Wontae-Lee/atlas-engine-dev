@@ -18,6 +18,10 @@
       <file path="$PROJECT_DIR$/.venv" />
       <file path="$PROJECT_DIR$/build" />
       <file path="$PROJECT_DIR$/external" />
+      <file path="$PROJECT_DIR$/external/googlebenchmark" />
+      <file path="$PROJECT_DIR$/external/googletest" />
+      <file path="$PROJECT_DIR$/external/lyra" />
+      <file path="$PROJECT_DIR$/external/tinyobj" />
     </excludeRoots>
   </component>
 </project>

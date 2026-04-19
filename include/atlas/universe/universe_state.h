@@ -193,6 +193,67 @@ private:
 };
 
 /**
+ * @brief Universe state storing cell-wise force vectors.
+ *
+ * Each entry represents the net field force applied to particles belonging to
+ * one universe cell.
+ *
+ * @tparam T Floating-point scalar type used by the vector components.
+ */
+template <typename T>
+class UniverseFieldForceState final : public UniverseState {
+public:
+    /**
+     * @brief Default constructor.
+     */
+    UniverseFieldForceState() = default;
+
+    /**
+     * @brief Constructs a field-force state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseFieldForceState(std::size_t number_of_cells);
+
+    /**
+     * @brief Constructs a field-force state from an existing device buffer.
+     *
+     * @param field_force Device buffer containing cell-wise force vectors.
+     */
+    ATLAS_HOST explicit UniverseFieldForceState(DeviceBuffer<Vector3<T>> field_force) noexcept;
+
+    /**
+     * @brief Returns the number of stored field-force entries.
+     *
+     * @return Number of cell force vectors.
+     */
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    /**
+     * @brief Returns mutable access to the underlying field-force buffer.
+     *
+     * @return Reference to the field-force device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3<T>>&
+    data() noexcept;
+
+    /**
+     * @brief Returns read-only access to the underlying field-force buffer.
+     *
+     * @return Const reference to the field-force device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3<T>>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing one field-force vector per cell.
+     */
+    DeviceBuffer<Vector3<T>> _field_force;
+};
+
+/**
  * @brief Universe state storing cell-wise maximum relative speed values.
  *
  * @tparam T Floating-point scalar type used for speed values.

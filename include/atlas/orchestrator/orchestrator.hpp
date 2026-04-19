@@ -1,19 +1,28 @@
 #pragma once
 
+#include <atlas/fluid/fluid_state.h>
+#include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/parallel/parallel_for.h>
+#include <atlas/universe/universe_state.h>
+
 #include <stdexcept>
 
 namespace atlas::system {
 
 template <typename T>
-Orchestrator<T>::Orchestrator(SpatialHashingSearcherHostPtr<T> searcher,
+Orchestrator<T>::Orchestrator(UniverseHostPtr<T> universe,
+                              FluidHostPtr<T> fluid,
+                              SpatialHashingSearcherHostPtr<T> searcher,
                               CodecHostPtr<T> codec,
                               MeasurerHostPtr<T> measurer,
                               HostBuffer<SolveHostPtr<T>> solvers) noexcept
-    : _searcher(std::move(searcher))
+    : _universe(std::move(universe))
+    , _fluid(std::move(fluid))
+    , _searcher(std::move(searcher))
     , _codec(std::move(codec))
     , _measurer(std::move(measurer))
     , _solvers(std::move(solvers)) {
-    // Store the optional pipeline dependencies and the ordered solver list.
+    // Store the optional universe/fluid dependencies and the ordered solver list.
 }
 
 template <typename T>
@@ -95,12 +104,102 @@ Orchestrator<T>::solve(const T dt) {
 
 template <typename T>
 void
+Orchestrator<T>::apply_field_force(const T dt) {
+
+    // Applying a cell-wise force requires the universe field state, the fluid
+    // velocity/species states, and the searcher-generated cell-to-particle map.
+    if (!_universe || !_fluid || !_searcher || !(dt != T(0))) {
+        return;
+    }
+
+    auto* field_force_state = _universe->template state<atlas::universe::UniverseFieldForceState<T>>();
+    auto* velocity_state    = _fluid->template state<atlas::fluid::FluidVelocityState<T>>();
+    auto* species_state     = _fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
+
+    if (field_force_state == nullptr || velocity_state == nullptr || species_state == nullptr) {
+        return;
+    }
+
+    auto& field_force         = field_force_state->data();
+    auto& velocity            = velocity_state->data();
+    auto& species             = species_state->data();
+    auto& particle_properties = _fluid->particle_properties();
+
+    const int particle_count   = static_cast<int>(_fluid->particle_count());
+    const int num_of_cells     = static_cast<int>(field_force.size());
+    const int num_of_species   = static_cast<int>(particle_properties.size());
+    const auto* indices_ptr    = _searcher->indices();
+    const auto* cell_start_ptr = _searcher->cell_start();
+    const auto* cell_end_ptr   = _searcher->cell_end();
+
+    if (particle_count <= 0 || num_of_cells <= 0 || num_of_species <= 0 || indices_ptr == nullptr
+        || cell_start_ptr == nullptr || cell_end_ptr == nullptr) {
+        return;
+    }
+
+    auto* force_ptr         = atlas::raw_pointer_cast(field_force.data());
+    auto* velocity_ptr      = atlas::raw_pointer_cast(velocity.data());
+    const auto* species_ptr = atlas::raw_pointer_cast(species.data());
+    const auto* props_ptr   = atlas::raw_pointer_cast(particle_properties.data());
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        num_of_cells,
+        [=] ATLAS_DEVICE(const int cell) {
+            const int start = cell_start_ptr[cell];
+            const int end   = cell_end_ptr[cell];
+
+            if (start < 0 || end <= start) {
+                return;
+            }
+
+            const Vector3<T> force = force_ptr[cell];
+
+            for (int sorted_index = start; sorted_index < end; ++sorted_index) {
+                const int particle_index = indices_ptr[sorted_index];
+
+                if (particle_index < 0 || particle_index >= particle_count) {
+                    continue;
+                }
+
+                const std::size_t species_index = species_ptr[particle_index];
+                if (species_index >= static_cast<std::size_t>(num_of_species)) {
+                    continue;
+                }
+
+                const T mass = props_ptr[species_index].mass;
+                if (!(mass > T(0))) {
+                    continue;
+                }
+
+                velocity_ptr[particle_index] += force * (dt / mass);
+            }
+        });
+}
+
+template <typename T>
+void
 Orchestrator<T>::orchestrate(const T dt) {
 
     search();
     classify();
     measure();
+    apply_field_force(dt);
     solve(dt);
+}
+
+template <typename T>
+void
+Orchestrator<T>::set_universe(UniverseHostPtr<T> universe) noexcept {
+
+    _universe = std::move(universe);
+}
+
+template <typename T>
+void
+Orchestrator<T>::set_fluid(FluidHostPtr<T> fluid) noexcept {
+
+    _fluid = std::move(fluid);
 }
 
 template <typename T>
@@ -141,6 +240,20 @@ Orchestrator<T>::searcher() const noexcept {
 }
 
 template <typename T>
+const UniverseHostPtr<T>&
+Orchestrator<T>::universe() const noexcept {
+
+    return _universe;
+}
+
+template <typename T>
+const FluidHostPtr<T>&
+Orchestrator<T>::fluid() const noexcept {
+
+    return _fluid;
+}
+
+template <typename T>
 const CodecHostPtr<T>&
 Orchestrator<T>::codec() const noexcept {
 
@@ -161,6 +274,22 @@ Orchestrator<T>::solvers() const noexcept {
 
     // Return the ordered solver sequence.
     return _solvers;
+}
+
+template <typename T>
+typename Orchestrator<T>::Builder&
+Orchestrator<T>::Builder::with_universe(UniverseHostPtr<T> universe) noexcept {
+
+    _universe = std::move(universe);
+    return *this;
+}
+
+template <typename T>
+typename Orchestrator<T>::Builder&
+Orchestrator<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
+
+    _fluid = std::move(fluid);
+    return *this;
 }
 
 template <typename T>
@@ -216,7 +345,7 @@ Orchestrator<T>::Builder::build() const {
 
     // Validate builder state before constructing the value object.
     validate();
-    return Orchestrator<T>(_searcher, _codec, _measurer, _solvers);
+    return Orchestrator<T>(_universe, _fluid, _searcher, _codec, _measurer, _solvers);
 }
 
 template <typename T>
@@ -225,7 +354,7 @@ Orchestrator<T>::Builder::make_host_shared() const {
 
     // Validate builder state before constructing the shared object.
     validate();
-    return atlas::make_host_shared<Orchestrator<T>>(_searcher, _codec, _measurer, _solvers);
+    return atlas::make_host_shared<Orchestrator<T>>(_universe, _fluid, _searcher, _codec, _measurer, _solvers);
 }
 
 } // namespace atlas::system
