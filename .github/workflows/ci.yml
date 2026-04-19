@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  tbb-headless:
+    name: TBB Headless
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libtbb-dev
+
+      - name: Configure
+        run: cmake --preset tbb-debug-headless
+
+      - name: Build
+        run: cmake --build --preset build-tbb-debug-headless
+
+      - name: Test
+        run: ctest --preset ctest-tbb-debug-headless

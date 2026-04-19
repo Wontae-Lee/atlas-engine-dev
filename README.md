@@ -1,5 +1,7 @@
 # Atlas Engine Dev
 
+[![CI](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/ci.yml)
+
 Atlas is a C++20 particle-simulation engine with a header-only core and dual tasking backends:
 
 - `TBB` for CPU execution
@@ -186,6 +188,7 @@ Atlas ships with CMake presets in [CMakePresets.json](/home/wontae/CLionProjects
 | `tbb-release` | `Release` | ON | ON | ON | ON |
 | `tbb-relwithdebinfo` | `RelWithDebInfo` | ON | ON | ON | ON |
 | `tbb-debug-make` | `Debug` | ON | ON | ON | ON |
+| `tbb-debug-headless` | `Debug` | OFF | ON | ON | OFF |
 
 ### CUDA / GPU presets
 
@@ -197,35 +200,68 @@ Atlas ships with CMake presets in [CMakePresets.json](/home/wontae/CLionProjects
 | `cuda-debug-headless` | `Debug` | OFF | ON | OFF | OFF |
 | `cuda-release-headless` | `Release` | OFF | ON | OFF | OFF |
 
-Current CUDA presets keep tests disabled. To build `atlas_all_cuda_test`, use manual configuration with `ATLAS_CUDA_TEST=ON`.
+Current CUDA presets keep tests disabled except for `cuda-debug-tests-headless`, which enables `atlas_all_cuda_test` without Vizkit.
+
+## Continuous Integration
+
+GitHub Actions CI is defined in [`.github/workflows/ci.yml`](/home/wontae/CLionProjects/atlas-engine-dev/.github/workflows/ci.yml).
+
+The current CI job runs a headless Linux TBB build to avoid OpenGL/Vizkit package requirements on hosted runners:
+
+```bash
+cmake --preset tbb-debug-headless
+cmake --build --preset build-tbb-debug-headless
+ctest --preset ctest-tbb-debug-headless
+```
+
+The workflow installs:
+
+- `ninja-build`
+- `libtbb-dev`
 
 ## Quick Start
 
-### 1. Configure and build a CPU/TBB build
+### 1. Configure and build the recommended headless CPU/TBB build
 
 ```bash
-cmake --preset tbb-debug
-cmake --build build/tbb-debug -j$(nproc)
+cmake --preset tbb-debug-headless
+cmake --build --preset build-tbb-debug-headless
 ```
 
 ### 2. Run tests
 
 ```bash
-ctest --test-dir build/tbb-debug --output-on-failure
+ctest --preset ctest-tbb-debug-headless
+```
+
+If you want the local Vizkit-enabled developer build instead:
+
+```bash
+cmake --preset tbb-debug
+cmake --build --preset build-tbb-debug
+ctest --preset ctest-tbb-debug
 ```
 
 ### 3. Configure and build a CUDA build
 
 ```bash
 cmake --preset cuda-debug
-cmake --build build/cuda-debug -j$(nproc)
+cmake --build --preset build-cuda-debug
 ```
 
 ### 4. Headless CUDA build for servers
 
 ```bash
 cmake --preset cuda-debug-headless
-cmake --build build/cuda-debug-headless -j$(nproc)
+cmake --build --preset build-cuda-debug-headless
+```
+
+### 5. CUDA test build
+
+```bash
+cmake --preset cuda-debug-tests-headless
+cmake --build --preset build-cuda-debug-tests-headless
+./build/cuda-debug-tests-headless/atlas_all_cuda_test --gtest_list_tests
 ```
 
 ## Manual CMake Configuration
@@ -470,34 +506,27 @@ Examples of covered areas:
 - sync operators and transforms
 - domains, units, codecs, tuples, iterators, and memory helpers
 
-GoogleTest/TBB runs:
+Recommended GoogleTest/TBB run:
 
 ```bash
-cmake --preset tbb-debug
-cmake --build build/tbb-debug -j$(nproc)
-ctest --test-dir build/tbb-debug --output-on-failure
+cmake --preset tbb-debug-headless
+cmake --build --preset build-tbb-debug-headless
+ctest --preset ctest-tbb-debug-headless
 ```
 
 CTest presets are also provided:
 
 ```bash
 ctest --preset ctest-tbb-debug
+ctest --preset ctest-tbb-debug-headless
 ```
 
 CUDA test build:
 
 ```bash
-cmake -S . -B build/cuda-tests -G Ninja \
-  -DATLAS_USE_CUDA=ON \
-  -DATLAS_USE_TBB=OFF \
-  -DATLAS_USE_VIZKIT=OFF \
-  -DATLAS_LOGGING=ON \
-  -DATLAS_GOOGLE_TEST=OFF \
-  -DATLAS_CUDA_TEST=ON \
-  -DATLAS_BENCHMARKS=OFF
-
-cmake --build build/cuda-tests --target atlas_all_cuda_test -j$(nproc)
-./build/cuda-tests/atlas_all_cuda_test --gtest_list_tests
+cmake --preset cuda-debug-tests-headless
+cmake --build --preset build-cuda-debug-tests-headless
+./build/cuda-debug-tests-headless/atlas_all_cuda_test --gtest_list_tests
 ```
 
 Notes:
@@ -527,7 +556,7 @@ It depends on the host OpenGL toolchain:
 - `GLU`
 - `GLUT`
 
-If you are building on a headless machine, prefer one of the `cuda-*-headless` presets or disable Vizkit manually.
+If you are building on a headless machine, prefer `tbb-debug-headless`, one of the `cuda-*-headless` presets, or disable Vizkit manually.
 
 ## Development Notes
 
@@ -572,7 +601,7 @@ Logging is optional at configure time. When enabled, the compiled implementation
 - Plane geometry is infinite, so any finite visualization or spawn/sampling behavior must define an explicit finite patch.
 - `TriangleMesh` support depends on `tinyobjloader` for OBJ loading.
 - Some CUDA test wrappers are still excluded from `atlas_all_cuda_test` due to NVCC/CUDA compatibility issues in specific algorithms or test patterns.
-- CUDA presets in [`CMakePresets.json`](/home/wontae/CLionProjects/atlas-engine-dev/CMakePresets.json) still pin explicit compiler/architecture values and may override the root auto-detection logic.
+- CUDA configuration attempts to auto-detect `nvcc`, driver runtime support, and `CMAKE_CUDA_ARCHITECTURES`; override those values manually only when detection is unsuitable for your environment.
 
 ## License
 

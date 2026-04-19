@@ -82,6 +82,21 @@
         "ATLAS_BENCHMARKS": "ON"
       }
     },
+    {
+      "name": "tbb-debug-headless",
+      "displayName": "Atlas TBB Debug Headless (Logging+GoogleTest)",
+      "inherits": "base-ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ATLAS_USE_CUDA": "OFF",
+        "ATLAS_USE_TBB": "ON",
+        "ATLAS_USE_VIZKIT": "OFF",
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_GOOGLE_TEST": "ON",
+        "ATLAS_CUDA_TEST": "OFF",
+        "ATLAS_BENCHMARKS": "OFF"
+      }
+    },
 
     {
       "name": "cuda-debug",
@@ -191,6 +206,7 @@
     { "name": "build-tbb-debug", "displayName": "Build TBB Debug", "configurePreset": "tbb-debug", "jobs": 0 },
     { "name": "build-tbb-release", "displayName": "Build TBB Release", "configurePreset": "tbb-release", "jobs": 0 },
     { "name": "build-tbb-relwithdebinfo", "displayName": "Build TBB RelWithDebInfo", "configurePreset": "tbb-relwithdebinfo", "jobs": 0 },
+    { "name": "build-tbb-debug-headless", "displayName": "Build TBB Debug Headless", "configurePreset": "tbb-debug-headless", "jobs": 0 },
 
     { "name": "build-cuda-debug", "displayName": "Build CUDA Debug", "configurePreset": "cuda-debug", "jobs": 0 },
     { "name": "build-cuda-release", "displayName": "Build CUDA Release", "configurePreset": "cuda-release", "jobs": 0 },
@@ -213,6 +229,13 @@
       "name": "ctest-tbb-release",
       "displayName": "CTest (TBB Release)",
       "configurePreset": "tbb-release",
+      "execution": { "noTestsAction": "error" },
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ctest-tbb-debug-headless",
+      "displayName": "CTest (TBB Debug Headless)",
+      "configurePreset": "tbb-debug-headless",
       "execution": { "noTestsAction": "error" },
       "output": { "outputOnFailure": true }
     }
