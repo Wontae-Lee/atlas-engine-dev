@@ -104,6 +104,13 @@ Orchestrator<T>::solve(const T dt) {
 
 template <typename T>
 void
+Orchestrator<T>::update(const T dt) {
+
+    orchestrate(dt);
+}
+
+template <typename T>
+void
 Orchestrator<T>::apply_field_force(const T dt) {
 
     // Applying a cell-wise force requires the universe field state, the fluid
@@ -180,6 +187,10 @@ Orchestrator<T>::apply_field_force(const T dt) {
 template <typename T>
 void
 Orchestrator<T>::orchestrate(const T dt) {
+
+    if (_searcher) {
+        _searcher->invalidate();
+    }
 
     search();
     classify();

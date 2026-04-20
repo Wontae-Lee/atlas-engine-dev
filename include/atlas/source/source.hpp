@@ -66,6 +66,8 @@ Source<T>::update(const T dt) {
         [units, dt] ATLAS_DEVICE(const int i) {
             units[i].update(dt);
         });
+
+    emit();
 }
 
 template <typename T>
@@ -265,37 +267,41 @@ Source<T>::emit() {
     }
 
     const std::size_t current_particle_count = _fluid->particle_count();
-    const std::size_t available_slots = current_particle_count < _fluid->buffer_size()
-        ? (_fluid->buffer_size() - current_particle_count)
-        : std::size_t { 0 };
+    const std::size_t available_slots        = current_particle_count < _fluid->buffer_size()
+               ? (_fluid->buffer_size() - current_particle_count)
+               : std::size_t { 0 };
 
     const std::size_t emit_count = _local_particle_count < available_slots
         ? _local_particle_count
         : available_slots;
 
     if (emit_count == 0) {
+        atlas::logger::warn() << "\n"
+                              << "Source emission skipped: no available slots for "
+                              << _local_particle_count
+                              << " particles\n";
         return;
     }
 
     // Randomize species assignment order for this emission pass.
     shuffle_species(emit_count);
 
-    const auto* units = atlas::raw_pointer_cast(this->_units.data());
-    const auto* generators = atlas::raw_pointer_cast(generators_buf.data());
-    const auto* properties = atlas::raw_pointer_cast(properties_buf.data());
-    const auto* species = atlas::raw_pointer_cast(this->_shuffled_species.data());
-    auto* positions_out = atlas::raw_pointer_cast(positions_buf.data());
-    auto* velocities_out = atlas::raw_pointer_cast(velocities_buf.data());
-    auto* species_out = atlas::raw_pointer_cast(species_buf.data());
-    auto* active_out = atlas::raw_pointer_cast(active_buf.data());
-    const T temperature = _temperature;
+    const auto* units        = atlas::raw_pointer_cast(this->_units.data());
+    const auto* generators   = atlas::raw_pointer_cast(generators_buf.data());
+    const auto* properties   = atlas::raw_pointer_cast(properties_buf.data());
+    const auto* species      = atlas::raw_pointer_cast(this->_shuffled_species.data());
+    auto* positions_out      = atlas::raw_pointer_cast(positions_buf.data());
+    auto* velocities_out     = atlas::raw_pointer_cast(velocities_buf.data());
+    auto* species_out        = atlas::raw_pointer_cast(species_buf.data());
+    auto* active_out         = atlas::raw_pointer_cast(active_buf.data());
+    const T temperature      = _temperature;
     const int property_count = static_cast<int>(properties_buf.size());
     const ShuffleOperator shuffle {};
     const std::uint64_t emission_seed = _shuffle_seed;
 
     std::size_t species_offset = 0;
-    std::size_t emitted_count = 0;
-    int dst_offset = static_cast<int>(current_particle_count);
+    std::size_t emitted_count  = 0;
+    int dst_offset             = static_cast<int>(current_particle_count);
 
     // Emit cached local positions unit by unit.
     //
@@ -305,7 +311,7 @@ Source<T>::emit() {
     // 3. write species id and active flag
     for (std::size_t unit_index = 0; unit_index < _local_positions.size(); ++unit_index) {
 
-        const auto& positions = _local_positions[unit_index];
+        const auto& positions       = _local_positions[unit_index];
         const std::size_t remaining = emit_count - emitted_count;
 
         if (remaining == 0) {
@@ -384,8 +390,6 @@ typename Source<T>::Builder&
 Source<T>::Builder::with_units(const HostBuffer<Unit<T>>& units) {
 
     if (units.empty()) {
-        atlas::logger::error()
-            << "Source::Builder: units must not be empty.";
         throw std::runtime_error("Source::Builder: units must not be empty.");
     }
 
@@ -409,8 +413,6 @@ typename Source<T>::Builder&
 Source<T>::Builder::with_spawn_types(const HostBuffer<SpawnType>& spawn_types) {
 
     if (spawn_types.empty()) {
-        atlas::logger::error()
-            << "Source::Builder: spawn types must not be empty.";
         throw std::runtime_error("Source::Builder: spawn types must not be empty.");
     }
 
@@ -433,8 +435,6 @@ typename Source<T>::Builder&
 Source<T>::Builder::with_spawn_operators(const HostBuffer<SpawnOperator<T>>& spawn_operators) {
 
     if (spawn_operators.empty()) {
-        atlas::logger::error()
-            << "Source::Builder: spawn operators must not be empty.";
         throw std::runtime_error("Source::Builder: spawn operators must not be empty.");
     }
 
@@ -484,26 +484,18 @@ void
 Source<T>::Builder::validate() const {
 
     if (_units.empty()) {
-        atlas::logger::error()
-            << "Source::Builder: units must not be empty.";
         throw std::runtime_error("Source::Builder: units must not be empty.");
     }
 
     if (!_fluid) {
-        atlas::logger::error()
-            << "Source::Builder: fluid must be provided.";
         throw std::runtime_error("Source::Builder: fluid must be provided.");
     }
 
     if (_spawn_types.empty()) {
-        atlas::logger::error()
-            << "Source::Builder: spawn types must not be empty.";
         throw std::runtime_error("Source::Builder: spawn types must not be empty.");
     }
 
     if (_spawn_operators.empty()) {
-        atlas::logger::error()
-            << "Source::Builder: spawn operators must not be empty.";
         throw std::runtime_error("Source::Builder: spawn operators must not be empty.");
     }
 
@@ -511,40 +503,25 @@ Source<T>::Builder::validate() const {
     // - shared by all units with exactly one entry, or
     // - specified per unit with matching unit count.
     if (_spawn_types.size() != 1 && _spawn_types.size() != _units.size()) {
-
-        atlas::logger::error()
-            << "Source::Builder: spawn types must have size 1 or match unit count.";
         throw std::runtime_error(
             "Source::Builder: spawn types must have size 1 or match unit count.");
     }
 
     // The same cardinality rule applies to spawn operators.
     if (_spawn_operators.size() != 1 && _spawn_operators.size() != _units.size()) {
-
-        atlas::logger::error()
-            << "Source::Builder: spawn operators must have size 1 or match unit count.";
         throw std::runtime_error(
             "Source::Builder: spawn operators must have size 1 or match unit count.");
     }
 
     if (!std::isfinite(_spacing) || _spacing <= T(0)) {
-
-        atlas::logger::error()
-            << "Source::Builder: spacing must be finite and positive.";
         throw std::runtime_error("Source::Builder: spacing must be finite and positive.");
     }
 
     if (!std::isfinite(_tolerance)) {
-
-        atlas::logger::error()
-            << "Source::Builder: tolerance must be finite.";
         throw std::runtime_error("Source::Builder: tolerance must be finite.");
     }
 
     if (!std::isfinite(_temperature)) {
-
-        atlas::logger::error()
-            << "Source::Builder: temperature must be finite.";
         throw std::runtime_error("Source::Builder: temperature must be finite.");
     }
 }

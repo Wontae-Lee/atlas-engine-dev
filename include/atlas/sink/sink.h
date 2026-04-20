@@ -2,7 +2,8 @@
 
 /**
  * @file sink.h
- * @brief Declares the Sink class used to remove particles from a fluid according to configured sink units.
+ * @brief Declares the Sink class used to remove particles from a fluid according
+ *        to configured sink units and despawn policies.
  */
 
 #include <atlas/buffer/device_buffer.h>
@@ -17,17 +18,27 @@
 namespace atlas::fluid {
 
 /**
- * @brief Particle removal sink for a fluid.
+ * @brief Removes particles from a target fluid according to configured sink units.
  *
- * A Sink manages one or more sink units and removes particles from an
- * associated Fluid instance according to configured despawn rules.
+ * A Sink combines:
+ * - geometric sink units,
+ * - despawn operators describing the removal rule,
+ * - a target fluid whose particles are tested and possibly removed.
  *
  * Its responsibilities include:
- * - storing sink units and despawn policies,
- * - updating time-dependent sink units,
- * - testing fluid particles against sink geometry,
- * - marking particles as inactive,
- * - triggering particle compaction through the target fluid.
+ * - advancing time-dependent sink units,
+ * - testing active particles against sink geometry,
+ * - deciding whether each particle should survive or be removed,
+ * - updating the active-state mask,
+ * - compacting all registered fluid states so surviving particles occupy a dense prefix.
+ *
+ * Sink supports two common despawn configuration modes:
+ * - one shared despawn rule for all sink units,
+ * - one despawn rule per sink unit.
+ *
+ * It also supports a @ref flip mode that inverts the survival logic:
+ * - normal mode: matching particles are removed,
+ * - flipped mode: matching particles are kept and non-matching particles are removed.
  *
  * @tparam T Floating-point scalar type used by the sink and fluid.
  */
@@ -37,13 +48,16 @@ class Sink final {
 
 public:
     /**
-     * @brief Builder for configuring and constructing Sink objects.
+     * @brief Builder for validated Sink construction.
      */
     class Builder;
 
 public:
     /**
      * @brief Default constructor.
+     *
+     * Constructs an empty sink with no units, no despawn configuration,
+     * and no target fluid.
      */
     Sink() = default;
 
@@ -53,10 +67,10 @@ public:
     ~Sink() = default;
 
     /**
-     * @brief Constructs a sink from fully prepared buffers and configuration.
+     * @brief Constructs a sink from prepared device buffers and runtime parameters.
      *
      * @param units Device buffer containing sink units.
-     * @param despawn_types Device buffer containing despawn type configuration.
+     * @param despawn_types Device buffer containing despawn type tags.
      * @param despawn_operators Device buffer containing despawn operators.
      * @param fluid Host shared pointer to the target fluid.
      * @param flip Whether despawn acceptance should be inverted.
@@ -73,18 +87,20 @@ public:
     /**
      * @brief Creates a Builder instance.
      *
-     * @return Builder object for fluent Sink construction.
+     * @return Newly created builder object.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
     /**
-     * @brief Updates all sink units with the given time step.
+     * @brief Advances sink units and then applies sink processing for the given step.
      *
-     * This function is typically used to advance time-dependent unit state
-     * before sink processing.
+     * The default update flow is:
+     * 1. update all sink units using Unit::update(dt),
+     * 2. test fluid particles against the sink,
+     * 3. compact fluid storage after marking removed particles inactive.
      *
-     * @param dt Time step.
+     * @param dt Positive simulation time step.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update(T dt);
@@ -92,26 +108,58 @@ public:
     /**
      * @brief Applies sink logic to the target fluid.
      *
-     * This function tests active particles against the configured sink units
-     * and despawn operators, marks matching particles as inactive, and then
-     * compacts the fluid storage.
+     * This function:
+     * - reads particle positions and active flags,
+     * - evaluates each active particle against all sink units,
+     * - writes updated active flags,
+     * - compacts the fluid so surviving particles occupy a dense prefix.
+     *
+     * Removal is controlled by:
+     * - the configured despawn operators,
+     * - the sink-unit transforms and geometry,
+     * - the optional flip flag,
+     * - the configured geometric tolerance.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     sink();
 
+    /**
+     * @brief Compacts the target fluid so surviving particles occupy a dense prefix.
+     *
+     * This compaction step is driven by the fluid's active-state mask.
+     * The method performs the following steps:
+     * 1. convert active flags into a binary keep mask,
+     * 2. exclusive-scan the keep mask into destination offsets,
+     * 3. build a compacted destination-to-source index map,
+     * 4. compact every registered fluid state using the same index map,
+     * 5. clear the inactive tail and update the logical particle count.
+     *
+     * This helper is public only because of NVCC limitations around certain
+     * lambda/device contexts in private member functions.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    compact_fluid_particles();
+
 private:
     /**
-     * @brief Sink units defining sink geometry and transforms.
+     * @brief Sink units defining geometry and transforms used for despawn tests.
      */
     DeviceBuffer<Unit<T>> _units;
 
     /**
-     * @brief Despawn type configuration associated with the sink units.
+     * @brief Runtime despawn-type tags associated with the sink configuration.
+     *
+     * This buffer is kept as part of the sink configuration surface even though
+     * current despawn dispatch primarily uses @ref _despawn_operators.
      */
     DeviceBuffer<DespawnType> _despawn_types;
 
     /**
      * @brief Despawn operators used to decide whether particles should be removed.
+     *
+     * This may contain:
+     * - exactly one shared operator for all units,
+     * - or one operator per unit.
      */
     DeviceBuffer<DespawnOperator<T>> _despawn_operators;
 
@@ -122,27 +170,66 @@ private:
 
     /**
      * @brief Whether despawn acceptance should be inverted.
+     *
+     * When false:
+     * - despawn match => particle removed
+     * - no match      => particle kept
+     *
+     * When true:
+     * - despawn match => particle kept
+     * - no match      => particle removed
      */
     bool _flip = false;
 
     /**
-     * @brief Geometric tolerance used for despawn tests.
+     * @brief Geometric tolerance passed to despawn tests.
      */
     T _tolerance = T(0);
+
+    /**
+     * @brief Scratch keep-mask buffer used during sink-driven compaction.
+     *
+     * Each entry is:
+     * - 1 if the particle survives,
+     * - 0 if the particle is removed.
+     */
+    DeviceBuffer<std::size_t> _keep;
+
+    /**
+     * @brief Scratch prefix-offset buffer used during sink-driven compaction.
+     *
+     * This buffer stores the exclusive scan of @ref _keep and provides the
+     * destination index of each surviving particle in the compacted layout.
+     */
+    DeviceBuffer<std::size_t> _offsets;
+
+    /**
+     * @brief Scratch destination-to-source index map used during sink-driven compaction.
+     *
+     * After construction, entry k stores the original particle index that should
+     * be moved into compacted destination slot k.
+     */
+    DeviceBuffer<std::size_t> _compact_indices;
 };
 
 /**
- * @brief Builder for Sink.
+ * @brief Builder for validated Sink construction.
  *
- * This builder collects sink units, despawn configuration, target fluid, and
- * sink parameters before constructing a validated Sink object.
+ * The builder collects:
+ * - sink units,
+ * - the target fluid,
+ * - despawn types,
+ * - despawn operators,
+ * - sink tolerance,
+ * - optional flip behavior.
  *
  * Validation ensures that:
  * - a target fluid is provided,
- * - at least one sink unit exists,
+ * - at least one sink unit is present,
  * - despawn types are non-empty,
  * - despawn operators are non-empty,
- * - despawn types and operators either have size 1 or match the unit count,
+ * - despawn types either have size 1 or match the unit count,
+ * - despawn operators either have size 1 or match the unit count,
  * - tolerance is finite.
  *
  * @tparam T Floating-point scalar type used by the sink and fluid.
@@ -156,21 +243,21 @@ public:
     Builder() = default;
 
     /**
-     * @brief Builds a validated Sink object.
+     * @brief Validates the current builder configuration and constructs a Sink object.
      *
      * @return Constructed Sink object.
      *
-     * @throw std::runtime_error Thrown if the builder configuration is invalid.
+     * @throw std::runtime_error Thrown if validation fails.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Sink<T>
     build();
 
     /**
-     * @brief Builds a host-side shared Sink object.
+     * @brief Builds a Sink object and wraps it in host-managed shared storage.
      *
-     * @return Host shared pointer to a constructed Sink object.
+     * @return Host shared pointer to the constructed Sink object.
      *
-     * @throw std::runtime_error Thrown if the builder configuration is invalid.
+     * @throw std::runtime_error Thrown if validation fails.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Sink<T>>
     make_host_shared();
@@ -187,7 +274,7 @@ public:
     with_units(const HostBuffer<Unit<T>>& units);
 
     /**
-     * @brief Sets the target fluid.
+     * @brief Sets the target fluid processed by the sink.
      *
      * @param fluid Host shared pointer to the target fluid.
      * @return Reference to this builder.
@@ -196,10 +283,11 @@ public:
     with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     /**
-     * @brief Appends despawn type configuration entries.
+     * @brief Appends despawn-type configuration entries.
      *
-     * Despawn types must either contain exactly one entry shared by all units or
-     * one entry per unit.
+     * Despawn types must contain either:
+     * - one shared entry for all units,
+     * - or one entry per unit.
      *
      * @param despawn_types Host buffer containing despawn type entries.
      * @return Reference to this builder.
@@ -221,8 +309,9 @@ public:
     /**
      * @brief Appends multiple despawn operators.
      *
-     * Despawn operators must either contain exactly one entry shared by all
-     * units or one entry per unit.
+     * Despawn operators must contain either:
+     * - one shared entry for all units,
+     * - or one entry per unit.
      *
      * @param despawn_operators Host buffer containing despawn operators.
      * @return Reference to this builder.
@@ -235,7 +324,7 @@ public:
     /**
      * @brief Sets the geometric tolerance used during despawn tests.
      *
-     * @param tolerance Tolerance used for despawn checks.
+     * @param tolerance Tolerance passed to despawn queries.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -244,7 +333,7 @@ public:
     /**
      * @brief Sets whether despawn acceptance should be inverted.
      *
-     * @param flip Whether despawn acceptance is flipped.
+     * @param flip Whether the normal despawn/keep interpretation is inverted.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -254,7 +343,7 @@ private:
     /**
      * @brief Validates the current builder state.
      *
-     * @throw std::runtime_error Thrown if validation fails.
+     * @throw std::runtime_error Thrown if any required invariant is violated.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     validate() const;
@@ -286,7 +375,7 @@ private:
     bool _flip = false;
 
     /**
-     * @brief Tolerance used during geometric despawn checks.
+     * @brief Tolerance used by geometric despawn tests.
      */
     T _tolerance = T(0);
 };
@@ -298,7 +387,7 @@ namespace atlas {
 /**
  * @brief Alias for atlas::fluid::Sink.
  *
- * @tparam T Floating-point scalar type used by the sink.
+ * @tparam T Floating-point scalar type.
  */
 template <typename T>
 using Sink = atlas::fluid::Sink<T>;
@@ -306,7 +395,7 @@ using Sink = atlas::fluid::Sink<T>;
 /**
  * @brief Host-side shared pointer alias for Sink.
  *
- * @tparam T Floating-point scalar type used by the sink.
+ * @tparam T Floating-point scalar type.
  */
 template <typename T>
 using SinkHostPtr = atlas::host_shared_ptr<Sink<T>>;
@@ -314,7 +403,7 @@ using SinkHostPtr = atlas::host_shared_ptr<Sink<T>>;
 /**
  * @brief Device-side shared pointer alias for Sink.
  *
- * @tparam T Floating-point scalar type used by the sink.
+ * @tparam T Floating-point scalar type.
  */
 template <typename T>
 using SinkDevicePtr = atlas::device_shared_ptr<Sink<T>>;

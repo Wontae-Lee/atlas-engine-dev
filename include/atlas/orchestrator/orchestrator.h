@@ -87,6 +87,17 @@ public:
     solve(T dt);
 
     /**
+     * @brief Runs the full orchestrator pipeline for one simulation step.
+     *
+     * This is the high-level entry point used by @ref atlas::system::System so
+     * the system does not need to invoke the individual orchestration stages directly.
+     *
+     * @param dt Time step forwarded to field-force and solver stages.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    update(T dt);
+
+    /**
      * @brief Applies a cell-wise field force to particle velocities when available.
      *
      * If the universe exposes a @ref atlas::universe::UniverseFieldForceState and
@@ -113,14 +124,6 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    /**
-     * @brief Executes the configured solver sequence.
-     *
-     * If no codec is present, each non-null solver is invoked with solve(dt).
-     * If a codec is present, each non-null solver is invoked with
-     * solve(allocated_solver, index, dt), where allocated_solver points to the codec-owned
-     * device buffer.
-     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     orchestrate(T dt);
 

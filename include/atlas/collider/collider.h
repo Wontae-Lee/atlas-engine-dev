@@ -2,7 +2,8 @@
 
 /**
  * @file collider.h
- * @brief Declares the Collider class used to resolve particle collisions against collider units.
+ * @brief Declares the Collider class used to resolve particle collisions
+ *        against time-varying collider units.
  */
 
 #include <atlas/buffer/device_buffer.h>
@@ -17,19 +18,32 @@
 namespace atlas::system {
 
 /**
- * @brief Particle collider for fluid particles and geometric units.
+ * @brief Resolves particle collisions between a fluid and a collection of collider units.
  *
- * A Collider stores:
- * - collider units defining collision geometry and transforms,
- * - surface interaction models describing post-collision response,
- * - a target fluid whose particles are tested against the collider geometry.
+ * A Collider owns three essential resources:
+ * - a device buffer of collider units,
+ * - a device buffer of surface interaction models,
+ * - a host-side fluid object whose particles are tested and updated.
  *
- * During collision resolution, each particle is advanced over a segment defined
- * by its current velocity and the given time step. The collider finds the
- * closest valid hit among all configured units and applies the corresponding
- * surface interaction model to update particle position and velocity.
+ * Each collider unit typically combines:
+ * - a geometry operator used to query intersections,
+ * - a sync operator used to transform between local and world spaces,
+ * - optional kinematic state that can move or rotate the collider over time.
  *
- * @tparam T Floating-point scalar type used by the collider and fluid.
+ * During collision processing for a time step @p dt:
+ * 1. each particle motion is approximated by a world-space segment
+ *    from its current position to position + velocity * dt,
+ * 2. this motion segment is tested against every collider unit,
+ * 3. the closest valid hit is selected,
+ * 4. the hit point and normal are transformed back to world space,
+ * 5. the particle is slightly offset along the normal to reduce re-penetration,
+ * 6. a surface interaction model computes the post-collision velocity.
+ *
+ * Surface interaction models may be configured in two ways:
+ * - one shared model for all collider units,
+ * - one model per collider unit.
+ *
+ * @tparam T Floating-point scalar type used for all geometric and physical quantities.
  */
 template <typename T>
 class Collider final {
@@ -37,13 +51,16 @@ class Collider final {
 
 public:
     /**
-     * @brief Builder for configuring and constructing Collider instances.
+     * @brief Builder used for validated host-side Collider construction.
      */
     class Builder;
 
 public:
     /**
      * @brief Default constructor.
+     *
+     * Constructs an empty collider with no units, no fluid, and no surface interactions.
+     * Such an object is not useful until properly initialized.
      */
     Collider() = default;
 
@@ -53,11 +70,14 @@ public:
     ~Collider() = default;
 
     /**
-     * @brief Constructs a collider from prepared units, interactions, and a fluid.
+     * @brief Constructs a collider from prepared units, interaction models, and a target fluid.
+     *
+     * This constructor assumes the provided buffers and pointers already represent
+     * a semantically valid collider configuration.
      *
      * @param units Device buffer containing collider units.
-     * @param surface_interactions Device buffer containing surface interaction models.
-     * @param fluid Host shared pointer to the target fluid.
+     * @param surface_interactions Device buffer containing post-collision surface interaction models.
+     * @param fluid Host shared pointer to the target fluid whose particles will be processed.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Collider(DeviceBuffer<Unit<T>> units,
@@ -65,80 +85,92 @@ public:
              atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     /**
-     * @brief Creates a Builder instance.
+     * @brief Creates a fluent Builder instance for Collider construction.
      *
-     * @return Builder object for fluent Collider construction.
+     * @return Newly created builder object.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
     /**
-     * @brief Updates all collider units with the given time step.
+     * @brief Advances collider unit state and resolves particle collisions for one time step.
      *
-     * This function is typically used to advance time-dependent state of the
-     * collider units before collision processing.
+     * The default update flow is:
+     * 1. advance all collider units using Unit::update(dt),
+     * 2. resolve collisions between the updated units and the target fluid.
      *
-     * @param dt Time step.
+     * @param dt Positive simulation time step.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update(T dt);
 
     /**
-     * @brief Resolves collisions for all active particles in the target fluid.
+     * @brief Resolves collisions between the configured collider units and the target fluid.
      *
-     * For each particle, the collider tests the motion segment implied by
-     * velocity * dt against all configured units, chooses the closest valid hit,
-     * and applies the corresponding surface interaction model.
+     * For each particle, the function builds a world-space motion segment based on
+     * the particle's current velocity and the provided time step. The segment is then
+     * tested against all collider units. The closest valid hit is selected and used
+     * to update particle position and velocity.
      *
-     * @param dt Time step used to define the particle motion segment.
+     * This function does not advance collider unit motion by itself; it only performs
+     * collision resolution against the units' current states.
+     *
+     * @param dt Positive simulation time step used to define the particle motion segment.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     collide(T dt) const;
 
     /**
-     * @brief Returns whether the collider is effectively empty.
+     * @brief Returns whether this collider lacks the minimum required configuration.
      *
-     * A collider is considered empty when it has no units, no valid fluid, or
-     * no surface interaction configuration available.
+     * A collider is considered effectively empty if any of the following are true:
+     * - no collider units are present,
+     * - no surface interaction model is available,
+     * - no target fluid is attached.
      *
-     * @return True if collision processing cannot meaningfully proceed.
+     * @return True if collision processing cannot be meaningfully performed.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     empty() const noexcept;
 
 private:
     /**
-     * @brief Collider units providing geometry and transform information.
+     * @brief Device buffer containing collider units.
+     *
+     * Each unit provides geometry, transform information, and optional kinematic behavior.
      */
     DeviceBuffer<Unit<T>> _units;
 
     /**
-     * @brief Target fluid whose particles are processed by this collider.
+     * @brief Host-side target fluid whose particle states are modified by collision processing.
      */
     FluidHostPtr<T> _fluid;
 
     /**
-     * @brief Surface interaction models applied after collision.
+     * @brief Device buffer containing surface interaction models.
      *
-     * This buffer may contain either:
-     * - one shared interaction used for all units, or
-     * - one interaction per unit.
+     * The allowed layouts are:
+     * - size == 1: one shared model for all collider units,
+     * - size == number of units: one interaction model per unit.
      */
     DeviceBuffer<ColliderSurfaceInteraction<T>> _surface_interactions;
 };
 
 /**
- * @brief Builder for Collider.
+ * @brief Builder for validated Collider construction.
  *
- * This builder collects collider units, the target fluid, and surface
- * interaction models before constructing a validated Collider object.
+ * This builder collects host-side collider units, a target fluid, and optional
+ * surface interaction models before producing a device-backed Collider instance.
  *
- * Validation ensures that:
- * - a target fluid is provided,
- * - at least one collider unit exists,
- * - surface interaction count is either 1 or matches the unit count.
+ * Validation rules:
+ * - a valid fluid must be provided,
+ * - at least one collider unit must be provided,
+ * - the number of surface interaction models must be:
+ *   - zero, meaning a default one will be inserted during build(),
+ *   - one, meaning shared across all units,
+ *   - or exactly equal to the number of units.
  *
- * @tparam T Floating-point scalar type used by the collider and fluid.
+ * @tparam T Floating-point scalar type used by the collider.
  */
 template <typename T>
 class Collider<T>::Builder final {
@@ -151,6 +183,9 @@ public:
     /**
      * @brief Sets the collider units.
      *
+     * The supplied units are stored in host memory inside the builder and later copied
+     * into a device buffer during build().
+     *
      * @param units Host buffer containing collider units.
      * @return Reference to this builder.
      *
@@ -160,7 +195,7 @@ public:
     with_units(const HostBuffer<Unit<T>>& units);
 
     /**
-     * @brief Sets the target fluid.
+     * @brief Sets the target fluid whose particles will be collision-processed.
      *
      * @param fluid Host shared pointer to the target fluid.
      * @return Reference to this builder.
@@ -171,9 +206,12 @@ public:
     /**
      * @brief Sets the surface interaction models.
      *
-     * The interaction count must be either:
-     * - exactly 1, to share a single interaction across all units, or
-     * - equal to the number of units.
+     * Valid counts are:
+     * - 1: shared by all units,
+     * - number of units: one interaction per collider unit.
+     *
+     * An empty interaction set is not accepted here; omitting this call entirely
+     * is the intended way to request automatic insertion of a default interaction.
      *
      * @param surface_interactions Host buffer containing surface interaction models.
      * @return Reference to this builder.
@@ -184,24 +222,24 @@ public:
     with_surface_interactions(const HostBuffer<ColliderSurfaceInteraction<T>>& surface_interactions);
 
     /**
-     * @brief Builds a validated Collider object.
+     * @brief Validates the configuration and builds a Collider value object.
      *
-     * If no surface interaction models were explicitly provided, a default
-     * interaction is inserted automatically.
+     * If no surface interaction model was explicitly provided, a single default
+     * interaction model is inserted automatically.
      *
      * @return Constructed Collider object.
      *
-     * @throw std::runtime_error Thrown if the builder configuration is invalid.
+     * @throw std::runtime_error Thrown if validation fails.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Collider<T>
     build();
 
     /**
-     * @brief Builds a host-side shared Collider object.
+     * @brief Builds a Collider and stores it in host-managed shared memory.
      *
-     * @return Host shared pointer to a constructed Collider object.
+     * @return Host shared pointer to the constructed collider.
      *
-     * @throw std::runtime_error Thrown if the builder configuration is invalid.
+     * @throw std::runtime_error Thrown if validation fails.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Collider<T>>
     make_host_shared();
@@ -210,7 +248,10 @@ private:
     /**
      * @brief Validates the current builder state.
      *
-     * @throw std::runtime_error Thrown if validation fails.
+     * @throw std::runtime_error Thrown if:
+     * - no fluid is set,
+     * - no units are set,
+     * - the number of surface interaction models is neither 0, 1, nor equal to unit count.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     validate() const;
@@ -239,23 +280,23 @@ namespace atlas {
 /**
  * @brief Alias for atlas::system::Collider.
  *
- * @tparam T Floating-point scalar type used by the collider.
+ * @tparam T Floating-point scalar type.
  */
 template <typename T>
 using Collider = atlas::system::Collider<T>;
 
 /**
- * @brief Host-side shared pointer alias for Collider.
+ * @brief Host shared pointer alias for Collider.
  *
- * @tparam T Floating-point scalar type used by the collider.
+ * @tparam T Floating-point scalar type.
  */
 template <typename T>
 using ColliderHostPtr = atlas::host_shared_ptr<Collider<T>>;
 
 /**
- * @brief Device-side shared pointer alias for Collider.
+ * @brief Device shared pointer alias for Collider.
  *
- * @tparam T Floating-point scalar type used by the collider.
+ * @tparam T Floating-point scalar type.
  */
 template <typename T>
 using ColliderDevicePtr = atlas::device_shared_ptr<Collider<T>>;

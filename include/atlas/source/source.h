@@ -30,9 +30,11 @@ namespace atlas::fluid {
  * - assigning and shuffling species indices,
  * - writing emitted particle data into fluid state buffers.
  *
- * Emission is typically performed in two stages:
- * 1. update(dt) advances time-dependent unit state,
- * 2. emit() writes particle attributes into the target fluid.
+ * Emission is typically performed through @ref update, which advances
+ * time-dependent unit state and then emits particles for the same step.
+ *
+ * The lower-level @ref emit function remains available when a caller wants to
+ * trigger emission directly after managing unit state separately.
  *
  * Cached local emission positions are rebuilt lazily through rebuild_cache()
  * when the source configuration becomes invalidated.
@@ -94,10 +96,10 @@ public:
     builder() noexcept;
 
     /**
-     * @brief Updates all source units with the given time step.
+     * @brief Updates source units and emits particles for the given time step.
      *
-     * This function is typically used to advance time-dependent state within
-     * each source unit before emission.
+     * This function advances time-dependent state within each source unit and
+     * then emits particles into the target fluid for the same simulation step.
      *
      * @param dt Time step.
      */
