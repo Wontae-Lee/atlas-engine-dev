@@ -89,14 +89,26 @@ This pattern is used heavily across geometry, simulation systems, fluids, units,
 Recent runtime systems follow the same builder style:
 
 ```cpp
-const auto generator = UniformGenerator<float>::builder()
-    .with_min_value(-1.0f)
-    .with_max_value(1.0f)
-    .with_seed(7u)
+atlas::HostBuffer<atlas::MatrialProperties<float>> properties(1);
+atlas::HostBuffer<atlas::GeneratorHostPtr<float>> generators(1);
+
+properties[0] = atlas::MatrialProperties<float>::builder()
+    .with_type(atlas::MaterialType::Molecule)
+    .with_molecular_mass(4.651734e-26f)
+    .with_collision_diameter(4.17e-10f)
+    .build();
+
+generators[0] = atlas::fluid::MaxwellBoltzmannGenerator<float>::builder()
+    .with_temperature(300.0f)
+    .with_molecular_mass(4.651734e-26f)
+    .with_bulk_velocity(atlas::Vector3<float>(0, 0, 0))
+    .with_seed(42u)
     .make_host_shared();
 
-const auto fluid = system::Fluid<float>::builder()
-    .add_particle(species_ptr, 1.0f, generator)
+const auto fluid = atlas::fluid::Fluid<float>::builder()
+    .with_buffer_size(200000)
+    .with_properties(properties)
+    .with_generators(generators)
     .make_host_shared();
 ```
 
@@ -131,8 +143,7 @@ atlas-engine-dev/
 │   └── unit/                          # Simulation units
 ├── src/logging/                       # Compiled logging implementation
 ├── src/vizkit/                        # Optional OpenGL visualization layer
-├── examples/solver/                   # Canonical engine setup example
-├── examples/dynamic/                  # Dynamic/Vizkit example
+├── examples/cylinder/                 # DSMC nitrogen + cylinder collision example
 ├── src/testkit/                       # Shared testkit headers (GoogleTest shim + cudatest)
 ├── tests/                             # C++ and CUDA test sources
 ├── benchmarks/                        # Benchmark targets
@@ -328,83 +339,94 @@ Notes:
 
 ## Usage Example
 
-The following mirrors the setup flow used in [`examples/solver/main.cpp`](/home/wontae/CLionProjects/atlas-engine-dev/examples/solver/main.cpp).
+The following mirrors the setup flow used in [`examples/cylinder/main.cpp`](/home/wontae/CLionProjects/atlas-engine-dev/examples/cylinder/main.cpp).
 
 ```cpp
 #include <atlas/atlas.h>
 
-using namespace atlas;
-
 int main() {
-    using sim_t = float;
+    using T = float;
 
-    const auto box_domain = geometry::Box<sim_t>::builder()
-        .with_lower_corner(Vector3<sim_t>{-1.0f, -1.0f, -1.0f})
-        .with_upper_corner(Vector3<sim_t>{ 1.0f,  1.0f,  1.0f})
+    const auto universe = atlas::Universe<T>::builder()
+        .with_lower_corner(atlas::Vector3<T>{-6.0f, -2.5f, -1.2f})
+        .with_upper_corner(atlas::Vector3<T>{ 6.0f,  2.5f,  1.2f})
+        .with_cell_size(0.25f)
         .make_host_shared();
 
-    const auto domain = system::Domain<sim_t>::builder()
-        .with_geometry(box_domain)
-        .with_cell_size(0.02f)
+    atlas::HostBuffer<atlas::MatrialProperties<T>> properties(1);
+    atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(1);
+
+    properties[0] = atlas::MatrialProperties<T>::builder()
+        .with_type(atlas::MaterialType::Molecule)
+        .with_mass(4.651734e-26f)
+        .with_molecular_mass(4.651734e-26f)
+        .with_species_id(0)
+        .with_collision_diameter(4.17e-10f)
+        .build();
+
+    generators[0] = atlas::fluid::MaxwellBoltzmannGenerator<T>::builder()
+        .with_temperature(300.0f)
+        .with_molecular_mass(4.651734e-26f)
+        .with_bulk_velocity(atlas::Vector3<T>(0, 0, 0))
+        .with_seed(42u)
         .make_host_shared();
 
-    const auto searcher = system::SpatialHashingSearcher<sim_t>::builder()
-        .with_domain(domain)
-        .with_range(system::NeighborSearchRange::single)
+    const auto fluid = atlas::fluid::Fluid<T>::builder()
+        .with_buffer_size(200000)
+        .with_properties(properties)
+        .with_generators(generators)
         .make_host_shared();
 
-    const auto codec = system::SingleCodec<sim_t>::builder()
-        .with_domain(domain)
+    const auto searcher = atlas::SpatialHashingSearcher<T>::builder()
+        .with_universe(universe)
+        .with_fluid(fluid)
         .make_host_shared();
 
-    const auto nitrogen = FluidicParticle<sim_t>::builder()
-        .with_molecular_mass(4.65e-26f)
+    const auto dsmc_solver = atlas::DsmcNtcSolver<T>::builder()
+        .with_universe(universe)
+        .with_fluid(fluid)
+        .with_searcher(searcher)
+        .with_kernel_type(atlas::system::DsmcKernelType::hard_sphere)
         .make_host_shared();
 
-    const auto fluid = system::Fluid<sim_t>::builder()
-        .add_particle(
-            nitrogen,
-            1.0f,
-            UniformGenerator<sim_t>::builder()
-                .with_min_value(-10.0f)
-                .with_max_value(10.0f)
-                .with_seed(7u)
-                .make_host_shared())
+    const auto orchestrator = atlas::Orchestrator<T>::builder()
+        .with_universe(universe)
+        .with_fluid(fluid)
+        .with_searcher(searcher)
+        .with_solver(dsmc_solver)
         .make_host_shared();
 
-    const auto obstacle_geometry = geometry::Box<sim_t>::builder()
-        .with_lower_corner(Vector3<sim_t>{-0.5f, -0.5f, -0.5f})
-        .with_upper_corner(Vector3<sim_t>{ 0.5f,  0.5f,  0.5f})
+    const auto cylinder = atlas::geometry::Cylinder<T>::builder()
+        .with_center(atlas::Vector3<T>(0, 0, 0))
+        .with_radius(0.9f)
+        .with_height(2.2f)
         .make_host_shared();
 
-    const auto sync = system::Sync<sim_t>::builder()
+    const auto sync = atlas::Sync<T>::builder()
         .make_host_shared();
 
-    const auto unit = system::Unit<sim_t>::builder()
-        .with_geometry(obstacle_geometry)
+    const auto unit = atlas::Unit<T>::builder()
+        .with_geometry(cylinder)
         .with_sync(sync)
         .make_host_shared();
 
-    auto source = system::Source<sim_t>::builder()
+    const auto source = atlas::Source<T>::builder()
         .with_unit(*unit)
-        .with_spawn_type(system::SpawnType::Volume)
-        .with_spacing(0.05f)
-        .with_tolerance(0.0f)
+        .with_spawn_type(atlas::system::SpawnType::Volume)
+        .with_spacing(0.18f)
         .with_fluid(fluid)
         .build();
 
-    auto sink = system::Sink<sim_t>::builder()
+    const auto sink = atlas::Sink<T>::builder()
         .with_unit(*unit)
-        .with_despawn_type(system::DespawnType::Surface)
+        .with_despawn_type(atlas::system::DespawnType::Volume)
         .with_tolerance(1e-4f)
+        .with_flip(true)
         .build();
 
-    (void)searcher;
-    (void)codec;
-    (void)fluid;
+    (void)orchestrator;
     (void)source;
     (void)sink;
-
     return 0;
 }
 ```
@@ -464,23 +486,23 @@ Atlas currently exposes several geometry and spatial building blocks:
 
 ## Examples
 
-### Solver example
+### Cylinder example
 
 Files:
 
-- [`examples/solver/main.cpp`](/home/wontae/CLionProjects/atlas-engine-dev/examples/solver/main.cpp)
-- [`examples/solver/main.cu`](/home/wontae/CLionProjects/atlas-engine-dev/examples/solver/main.cu)
+- [`examples/cylinder/main.cpp`](/home/wontae/CLionProjects/atlas-engine-dev/examples/cylinder/main.cpp)
+- [`examples/cylinder/main.cu`](/home/wontae/CLionProjects/atlas-engine-dev/examples/cylinder/main.cu)
+- [`examples/cylinder/CMakeLists.txt`](/home/wontae/CLionProjects/atlas-engine-dev/examples/cylinder/CMakeLists.txt)
 
-This is the best starting point for understanding the engine's object graph and builder flow.
+This example sets up:
 
-### Dynamic example
+- a rectangular domain with a central analytic cylinder
+- a thermal nitrogen source at `300 K`
+- sink removal outside the domain via `flip=true`
+- particle-particle DSMC collisions with the hard-sphere kernel
+- diffuse cylinder reflection and optional Vizkit rendering
 
-Files:
-
-- [`examples/dynamic/main.cpp`](/home/wontae/CLionProjects/atlas-engine-dev/examples/dynamic/main.cpp)
-- [`examples/dynamic/main.cu`](/home/wontae/CLionProjects/atlas-engine-dev/examples/dynamic/main.cu)
-
-Use this when exploring the Vizkit/OpenGL integration path.
+`main.cu` is a thin CUDA entry-point wrapper that reuses the same example logic as `main.cpp`, so the example builds under both `ATLAS_USE_TBB=ON` and `ATLAS_USE_CUDA=ON`.
 
 ## Tests
 
