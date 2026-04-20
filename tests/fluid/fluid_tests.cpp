@@ -102,6 +102,15 @@ TEST(Fluid, BuilderRejectsMassThatDoesNotMatchStatisticalWeight) {
         std::runtime_error);
 }
 
+TEST(Fluid, SetParticleCountTracksActivePrefix) {
+    atlas::fluid::Fluid<T> fluid(4);
+
+    EXPECT_NO_THROW(fluid.set_particle_count(3));
+    EXPECT_EQ(fluid.particle_count(), 3u);
+
+    EXPECT_THROW(fluid.set_particle_count(5), std::out_of_range);
+}
+
 TEST(Fluid, StateLifecycleSupportsInsertLookupReplaceAndRemove) {
     atlas::fluid::Fluid<T> fluid(4);
 

@@ -175,7 +175,7 @@ Collider<T>::collide(const T dt) const {
 
             // Place the particle slightly outside the hit surface to reduce the
             // risk of immediate re-penetration due to numerical precision.
-            positions_ptr[i] = best_pos + best_norm * static_cast<T>(atlas::eps);
+            positions_ptr[i] = best_pos + best_norm * static_cast<T>(atlas::tol);
 
             // Compute the post-collision velocity using the selected surface
             // interaction model.

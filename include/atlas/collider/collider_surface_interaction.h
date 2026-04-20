@@ -37,8 +37,8 @@ enum class DiffuseSampling {
 /**
  * @brief Surface interaction model for collider reflections.
  *
- * This class describes how an incident direction interacts with a surface
- * normal to produce an outgoing direction. The model supports:
+ * This class describes how an incident velocity interacts with a surface
+ * normal to produce an outgoing velocity. The model supports:
  * - purely specular reflection
  * - purely diffuse reflection
  * - stochastic mixing between specular and diffuse reflection
@@ -99,8 +99,10 @@ public:
     /**
      * @brief Sets the restitution coefficient.
      *
-     * The restitution coefficient scales the magnitude of the outgoing vector
-     * after the outgoing direction has been selected.
+ * The restitution coefficient scales the outgoing speed relative to the
+ * incident speed:
+ * - `0` removes all reflected speed,
+ * - `1` preserves the reflected speed magnitude.
      *
      * @param restitution_coeff Restitution coefficient.
      */
@@ -164,24 +166,27 @@ public:
     temperature() const noexcept;
 
     /**
-     * @brief Computes the outgoing direction resulting from surface interaction.
+     * @brief Computes the outgoing velocity resulting from surface interaction.
      *
-     * Given an incident direction and a surface normal, this operator produces
-     * an outgoing direction according to the configured reflection model.
+     * Given an incident velocity and a surface normal, this operator produces
+     * an outgoing velocity according to the configured reflection model.
      *
      * The exact behavior depends on the current interaction parameters such as
      * TMAC, restitution, and diffuse sampling mode.
      *
-     * @param incident Incident direction or velocity-like vector.
+     * The outgoing speed is `incident.length() * restitution()`, while the
+     * outgoing direction is selected by the configured specular/diffuse model.
+     *
+     * @param incident Incident velocity-like vector.
      * @param normal Surface normal defining the reflection hemisphere.
-     * @return Outgoing direction or velocity-like vector after interaction.
+     * @return Outgoing velocity-like vector after interaction.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     operator()(const Vector3<T>& incident, const Vector3<T>& normal) const noexcept;
 
 private:
     /**
-     * @brief Coefficient applied to scale the outgoing vector magnitude.
+     * @brief Coefficient applied to scale outgoing speed after reflection.
      */
     T _restitution_coeff { T(1) };
 

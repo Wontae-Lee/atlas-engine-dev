@@ -86,10 +86,13 @@ TEST(ColliderSurfaceInteraction, SpecularModeMatchesReflectedDirection) {
 
 TEST(ColliderSurfaceInteraction, DiffuseModeReturnsFiniteDirection) {
     atlas::system::ColliderSurfaceInteraction<T> interaction;
+    interaction.set_restitution(0.5f);
     interaction.set_tangential_momentum_accommodation(1.0f);
 
-    const Vec3 out = interaction(Vec3(1.0f, -1.0f, 0.5f), Vec3(0.0f, 1.0f, 0.0f));
+    const Vec3 incident(1.0f, -1.0f, 0.5f);
+    const Vec3 out = interaction(incident, Vec3(0.0f, 1.0f, 0.0f));
 
     EXPECT_TRUE(atlas::test::is_finite_vec(out));
     EXPECT_GT(out.length(), 0.0f);
+    EXPECT_NEAR(out.length(), incident.length() * 0.5f, 1e-4f);
 }

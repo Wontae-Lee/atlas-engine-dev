@@ -205,6 +205,14 @@ public:
     update(GLFWwindow* window, Camera& camera, T dt) override;
 
     /**
+     * @brief Set the RGBA render color used by this geometry layer.
+     *
+     * @param color Geometry color and opacity.
+     */
+    ATLAS_HOST void
+    set_color(const Vector4<T>& color) noexcept;
+
+    /**
      * @brief Release GPU resources owned by this layer.
      *
      * @details
@@ -310,6 +318,11 @@ protected:
      * @brief Cached shader uniform location for the render color.
      */
     GLint _u_color = -1;
+
+    /**
+     * @brief RGBA render color used when drawing the geometry.
+     */
+    Vector4<T> _color { T(0.90), T(0.95), T(1.00), T(1.00) };
 
     /**
      * @brief Owned shader program used to render the geometry layer.

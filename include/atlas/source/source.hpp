@@ -242,29 +242,60 @@ template <typename T>
 void
 Source<T>::emit() {
 
+    if (!_fluid) {
+        return;
+    }
+
     // Ensure local emission positions and species caches are ready.
     rebuild_cache();
+
+    if (_local_particle_count == 0) {
+        return;
+    }
 
     auto& positions_buf        = _fluid->template state<FluidPositionState<T>>()->data();
     auto& velocities_buf       = _fluid->template state<FluidVelocityState<T>>()->data();
     auto& species_buf          = _fluid->template state<FluidSpeciesState<T>>()->data();
     auto& active_buf           = _fluid->template state<FluidActiveState<T>>()->data();
     const auto& generators_buf = _fluid->generators();
+    const auto& properties_buf = _fluid->particle_properties();
+
+    if (generators_buf.empty() || properties_buf.empty()) {
+        return;
+    }
+
+    const std::size_t current_particle_count = _fluid->particle_count();
+    const std::size_t available_slots = current_particle_count < _fluid->buffer_size()
+        ? (_fluid->buffer_size() - current_particle_count)
+        : std::size_t { 0 };
+
+    const std::size_t emit_count = _local_particle_count < available_slots
+        ? _local_particle_count
+        : available_slots;
+
+    if (emit_count == 0) {
+        return;
+    }
 
     // Randomize species assignment order for this emission pass.
-    shuffle_species(_local_particle_count);
+    shuffle_species(emit_count);
 
-    const auto* units      = atlas::raw_pointer_cast(this->_units.data());
+    const auto* units = atlas::raw_pointer_cast(this->_units.data());
     const auto* generators = atlas::raw_pointer_cast(generators_buf.data());
-    const auto* species    = atlas::raw_pointer_cast(this->_shuffled_species.data());
-    auto* positions_out    = atlas::raw_pointer_cast(positions_buf.data());
-    auto* velocities_out   = atlas::raw_pointer_cast(velocities_buf.data());
-    auto* species_out      = atlas::raw_pointer_cast(species_buf.data());
-    auto* active_out       = atlas::raw_pointer_cast(active_buf.data());
-    const T temperature    = _temperature;
+    const auto* properties = atlas::raw_pointer_cast(properties_buf.data());
+    const auto* species = atlas::raw_pointer_cast(this->_shuffled_species.data());
+    auto* positions_out = atlas::raw_pointer_cast(positions_buf.data());
+    auto* velocities_out = atlas::raw_pointer_cast(velocities_buf.data());
+    auto* species_out = atlas::raw_pointer_cast(species_buf.data());
+    auto* active_out = atlas::raw_pointer_cast(active_buf.data());
+    const T temperature = _temperature;
+    const int property_count = static_cast<int>(properties_buf.size());
+    const ShuffleOperator shuffle {};
+    const std::uint64_t emission_seed = _shuffle_seed;
 
     std::size_t species_offset = 0;
-    int dst_offset             = _fluid->particle_count();
+    std::size_t emitted_count = 0;
+    int dst_offset = static_cast<int>(current_particle_count);
 
     // Emit cached local positions unit by unit.
     //
@@ -275,7 +306,13 @@ Source<T>::emit() {
     for (std::size_t unit_index = 0; unit_index < _local_positions.size(); ++unit_index) {
 
         const auto& positions = _local_positions[unit_index];
-        const int count       = static_cast<int>(positions.size());
+        const std::size_t remaining = emit_count - emitted_count;
+
+        if (remaining == 0) {
+            break;
+        }
+
+        const int count = static_cast<int>(positions.size() < remaining ? positions.size() : remaining);
 
         if (count == 0) {
             continue;
@@ -291,19 +328,28 @@ Source<T>::emit() {
                 const int dst = dst_offset + i;
 
                 const size_t sid = local_species[i];
+                if (sid >= static_cast<std::size_t>(property_count)) {
+                    return;
+                }
+
+                auto generator = generators[sid];
+                generator.reseed(static_cast<unsigned int>(shuffle(dst, emission_seed)));
 
                 Vector3<T> world_pos;
                 units[unit_index].sync_operator().sync_to_world(local_positions[i], world_pos);
 
                 positions_out[dst]  = world_pos;
-                velocities_out[dst] = generators[sid].generate(temperature);
+                velocities_out[dst] = generator.generate(temperature, properties[sid].molecular_mass);
                 species_out[dst]    = sid;
                 active_out[dst]     = 1;
             });
 
-        species_offset += positions.size();
+        species_offset += static_cast<std::size_t>(count);
+        emitted_count += static_cast<std::size_t>(count);
         dst_offset += count;
     }
+
+    _fluid->set_particle_count(current_particle_count + emitted_count);
 }
 
 template <typename T>

@@ -2,6 +2,7 @@
 
 #include <atlas/fluid/fluid.h>
 #include <atlas/generator/generate_operator.h>
+#include <atlas/generator/maxwell_boltzmann_generator.h>
 #include <atlas/geometry/box.h>
 #include <atlas/source/source.h>
 #include <atlas/sync/sync.h>
@@ -16,8 +17,28 @@ using Vec3 = atlas::Vector3<T>;
 
 atlas::FluidHostPtr<T>
 make_fluid() {
+    atlas::HostBuffer<atlas::MatrialProperties<T>> properties(1);
+    atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(1);
+
+    properties[0] = atlas::MatrialProperties<T>::builder()
+                        .with_type(atlas::MaterialType::Molecule)
+                        .with_mass(4.651734e-26f)
+                        .with_molecular_mass(4.651734e-26f)
+                        .with_species_id(0)
+                        .with_collision_diameter(4.17e-10f)
+                        .build();
+
+    generators[0] = atlas::fluid::MaxwellBoltzmannGenerator<T>::builder()
+                        .with_temperature(300.0f)
+                        .with_molecular_mass(4.651734e-26f)
+                        .with_bulk_velocity(Vec3(0, 0, 0))
+                        .with_seed(7u)
+                        .make_host_shared();
+
     return atlas::fluid::Fluid<T>::builder()
         .with_buffer_size(8)
+        .with_properties(properties)
+        .with_generators(generators)
         .make_host_shared();
 }
 
@@ -171,4 +192,22 @@ TEST(Source, UpdateIgnoresNonPositiveDt) {
                       .build();
 
     EXPECT_NO_THROW(source.update(0.0f));
+}
+
+TEST(Source, EmitIncreasesParticleCount) {
+    const auto fluid = make_fluid();
+
+    auto source = atlas::fluid::Source<T>::builder()
+                      .with_units(atlas::HostBuffer<atlas::Unit<T>> { make_unit() })
+                      .with_fluid(fluid)
+                      .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> { atlas::fluid::SpawnType::Volume })
+                      .with_spawn_operator(atlas::fluid::SpawnOperator<T>(atlas::fluid::SpawnType::Volume))
+                      .with_spacing(1.0f)
+                      .with_temperature(300.0f)
+                      .build();
+
+    source.emit();
+
+    EXPECT_GT(fluid->particle_count(), 0u);
+    EXPECT_LE(fluid->particle_count(), fluid->buffer_size());
 }

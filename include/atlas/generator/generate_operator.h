@@ -278,6 +278,14 @@ struct GenerateOperator final {
     generate(T param0,
              T param1 = T(1)) const;
 
+    /**
+     * @brief Reseeds the active generator payload.
+     *
+     * @param seed Seed value applied to the active generator engine.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    reseed(unsigned int seed) noexcept;
+
 private:
     /**
      * @brief Destroy the currently active union member.

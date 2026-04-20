@@ -51,7 +51,7 @@ Camera::scroll_callback(GLFWwindow* w, double xoffset, double yoffset) {
     //
     // This decouples input sampling from camera update,
     // allowing smoother integration in handle().
-    camera->pending_scroll_zoom -= static_cast<float>(yoffset) * 0.8f;
+    camera->pending_scroll_zoom -= static_cast<float>(yoffset) * camera->scroll_zoom_sensitivity;
 }
 
 inline void
@@ -82,8 +82,8 @@ Camera::handle(GLFWwindow* w) {
     if (left_pressed) {
         // Only apply rotation when dragging continuously.
         if (left_drag_active) {
-            yaw -= delta_x * 0.008f;   // horizontal rotation
-            pitch -= delta_y * 0.008f; // vertical rotation
+            yaw -= delta_x * orbit_sensitivity;   // horizontal rotation
+            pitch -= delta_y * orbit_sensitivity; // vertical rotation
         }
         left_drag_active = true;
     } else {
@@ -96,7 +96,7 @@ Camera::handle(GLFWwindow* w) {
 
     if (right_pressed) {
         if (right_drag_active) {
-            dist += delta_y * 0.05f; // zoom in/out
+            dist *= expf(delta_y * drag_zoom_sensitivity); // zoom in/out
         }
         right_drag_active = true;
     } else {
@@ -117,11 +117,11 @@ Camera::handle(GLFWwindow* w) {
     if (glfwGetKey(w, GLFW_KEY_S) == GLFW_PRESS) pitch -= 0.02f;
 
     // Zoom (distance)
-    if (glfwGetKey(w, GLFW_KEY_Q) == GLFW_PRESS) dist += 0.05f;
-    if (glfwGetKey(w, GLFW_KEY_E) == GLFW_PRESS) dist -= 0.05f;
+    if (glfwGetKey(w, GLFW_KEY_Q) == GLFW_PRESS) dist *= 1.01f;
+    if (glfwGetKey(w, GLFW_KEY_E) == GLFW_PRESS) dist *= 0.99f;
 
     // Apply accumulated scroll-based zoom.
-    dist += pending_scroll_zoom;
+    dist *= expf(pending_scroll_zoom);
 
     // Reset scroll accumulator after applying.
     pending_scroll_zoom = 0.0f;
@@ -130,7 +130,7 @@ Camera::handle(GLFWwindow* w) {
     pitch = fminf(fmaxf(pitch, -1.2f), 1.2f);
 
     // Clamp distance to maintain reasonable zoom bounds.
-    dist = fminf(fmaxf(dist, 2.0f), 100.0f);
+    dist = fminf(fmaxf(dist, min_dist), max_dist);
 }
 
 inline void
@@ -154,8 +154,18 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
         // Perspective projection scale factor.
         const float f = 1.0f / tanf(fov * 0.5f);
 
+        const float scene_scale = fmaxf(dist, 1.0e-6f);
+        const float z_near = fmaxf(scene_scale * 1.0e-3f, 1.0e-9f);
+        const float z_far = fmaxf(scene_scale * 50.0f, z_near * 10.0f);
+        const float inv_depth = 1.0f / (z_near - z_far);
+
         // Column-major projection matrix.
-        const float proj[16] = { f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, -1, -1, 0, 0, -0.2f, 0 };
+        const float proj[16] = {
+            f / aspect, 0, 0, 0,
+            0, f, 0, 0,
+            0, 0, (z_far + z_near) * inv_depth, -1,
+            0, 0, (2.0f * z_far * z_near) * inv_depth, 0
+        };
 
         // --- Camera position (orbit model) ---
         // Convert spherical coordinates (yaw, pitch, dist) into Cartesian.
@@ -164,10 +174,10 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
         const float ez = dist * sinf(pitch);
 
         // Eye position (camera position).
-        const Vector3F eye { -ex, -ey, ez };
+        const Vector3F eye { target.x - ex, target.y - ey, target.z + ez };
 
         // Target point the camera looks at.
-        const Vector3F center { 0, 0, 0.6f };
+        const Vector3F center = target;
 
         // Up direction.
         const Vector3F up { 0, 0, 1 };
@@ -193,6 +203,30 @@ Camera::build_mvp(int w, int h, float out_mvp[16]) const {
                     out_mvp[c * 4 + r] += proj[k * 4 + r] * view[c * 4 + k];
             }
     }
+}
+
+inline void
+Camera::fit_bounds(const Vector3F& lower, const Vector3F& upper) noexcept {
+    target = (lower + upper) * 0.5f;
+
+    const Vector3F extent = upper - lower;
+    const float diagonal = extent.length();
+    const float radius = fmaxf(diagonal * 0.5f, 1.0e-6f);
+
+    dist = radius * 2.4f;
+    min_dist = radius * 0.05f;
+    max_dist = radius * 40.0f;
+
+    const float normalized_scene_scale = fminf(fmaxf(radius, 1.0e-6f), 1.0f);
+    orbit_sensitivity = 0.0008f + 0.0012f * normalized_scene_scale;
+    drag_zoom_sensitivity = 0.0012f;
+    scroll_zoom_sensitivity = 0.06f;
+
+    if (!(min_dist > 0.0f)) min_dist = 1.0e-6f;
+    if (!(max_dist > min_dist)) max_dist = min_dist * 100.0f;
+
+    yaw = -0.9f;
+    pitch = 0.45f;
 }
 
 } // namespace atlas::vizkit

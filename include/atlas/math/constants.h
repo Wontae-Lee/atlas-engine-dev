@@ -50,7 +50,7 @@ constexpr double inf = std::numeric_limits<double>::infinity();
 
 // Generic double-precision tolerance used for tighter comparisons.
 // Often used in geometry_operator predicates where float epsilon is too loose.
-constexpr double tol = eps;
+constexpr double tol = 1e-6;
 
 constexpr double gravity = 9.80665;
 

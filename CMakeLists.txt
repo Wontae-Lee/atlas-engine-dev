@@ -879,9 +879,7 @@ endif ()
 # Keeping them in the default build helps ensure that public APIs
 # remain exercised by realistic consumer-style targets.
 # ============================================================
-add_subdirectory(examples/solver)
-add_subdirectory(examples/dynamic)
-add_subdirectory(examples/overview)
+add_subdirectory(examples)
 
 # ============================================================
 # Configuration summary

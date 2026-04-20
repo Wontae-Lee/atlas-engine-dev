@@ -217,4 +217,30 @@ GenerateOperator<T>::generate(const T param0,
     }
 }
 
+template <typename T>
+void
+GenerateOperator<T>::reseed(const unsigned int seed) noexcept {
+    // Reinitialize the active generator engine so per-particle sampling can use
+    // independent deterministic streams derived from a base seed.
+    switch (type) {
+    case GenerateType::uniform:
+        uniform.seed = seed;
+        uniform.engine = atlas::default_random_engine<T>(seed);
+        return;
+
+    case GenerateType::maxwell_sigma:
+        maxwell_sigma.seed = seed;
+        maxwell_sigma.engine = atlas::default_random_engine<T>(seed);
+        return;
+
+    case GenerateType::maxwell_boltzmann:
+        maxwell_boltzmann.seed = seed;
+        maxwell_boltzmann.engine = atlas::default_random_engine<T>(seed);
+        return;
+
+    default:
+        return;
+    }
+}
+
 } // namespace atlas::fluid

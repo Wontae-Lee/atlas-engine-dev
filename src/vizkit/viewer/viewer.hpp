@@ -68,6 +68,12 @@ Viewer<T>::system() const noexcept {
 }
 
 template <typename T>
+Camera&
+Viewer<T>::camera() noexcept {
+    return _cam;
+}
+
+template <typename T>
 int
 Viewer<T>::run() {
     // Execute the full viewer lifecycle.

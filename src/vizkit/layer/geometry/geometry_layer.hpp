@@ -212,8 +212,12 @@ GeometryLayer<T>::update(GLFWwindow* window, Camera& camera, T dt) {
 
     // Upload a default geometry color if the shader exposes the uniform.
     if (_u_color >= 0) {
-        glUniform4f(_u_color, 0.90f, 0.95f, 1.00f, 1.00f);
+        glUniform4f(_u_color, _color.x, _color.y, _color.z, _color.w);
     }
+
+    // Allow geometry layers to use alpha in the shared fragment shader.
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Bind the VAO containing vertex format + buffer binding state.
     glBindVertexArray(_vao);
@@ -223,6 +227,14 @@ GeometryLayer<T>::update(GLFWwindow* window, Camera& camera, T dt) {
 
     // Unbind VAO after drawing.
     glBindVertexArray(0);
+
+    glDisable(GL_BLEND);
+}
+
+template <typename T>
+void
+GeometryLayer<T>::set_color(const Vector4<T>& color) noexcept {
+    _color = color;
 }
 
 template <typename T>

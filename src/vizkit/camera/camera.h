@@ -101,6 +101,36 @@ struct Camera {
     float dist = 20.0f;
 
     /**
+     * @brief Orbit target / scene center in world space.
+     */
+    Vector3F target { 0.0f, 0.0f, 0.0f };
+
+    /**
+     * @brief Lower zoom clamp.
+     */
+    float min_dist = 1.0e-6f;
+
+    /**
+     * @brief Upper zoom clamp.
+     */
+    float max_dist = 100.0f;
+
+    /**
+     * @brief Per-pixel orbit sensitivity.
+     */
+    float orbit_sensitivity = 0.002f;
+
+    /**
+     * @brief Exponential zoom sensitivity for drag zoom.
+     */
+    float drag_zoom_sensitivity = 0.0015f;
+
+    /**
+     * @brief Exponential zoom sensitivity for scroll zoom.
+     */
+    float scroll_zoom_sensitivity = 0.08f;
+
+    /**
      * @brief Whether mouse input has been initialized.
      *
      * @details
@@ -176,6 +206,15 @@ struct Camera {
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build_mvp(int w, int h, float out_mvp[16]) const;
+
+    /**
+     * @brief Fit the camera target and distance to a scene AABB.
+     *
+     * @param lower Scene lower corner.
+     * @param upper Scene upper corner.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    fit_bounds(const Vector3F& lower, const Vector3F& upper) noexcept;
 
 private:
     /**

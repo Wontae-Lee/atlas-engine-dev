@@ -240,6 +240,14 @@ public:
     system() const noexcept;
 
     /**
+     * @brief Return mutable access to the viewer camera.
+     *
+     * @return Reference to the stored camera.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Camera&
+    camera() noexcept;
+
+    /**
      * @brief Execute the full viewer lifecycle.
      *
      * @details

@@ -107,6 +107,16 @@ public:
     remove_particles();
 
     /**
+     * @brief Sets the current number of active particles.
+     *
+     * @param particle_count Number of active particles in the dense prefix.
+     *
+     * @throw std::out_of_range Thrown if @p particle_count exceeds @ref buffer_size.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_particle_count(size_t particle_count);
+
+    /**
      * @brief Constructs and inserts a new state.
      *
      * @tparam StateT Type of the state.

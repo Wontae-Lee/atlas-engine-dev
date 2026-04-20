@@ -97,19 +97,23 @@ template <typename T>
 Vector3<T>
 ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
                                           const Vector3<T>& normal) const noexcept {
+    const T incident_speed = incident.length();
+    if (incident_speed <= T(atlas::tol)) {
+        return Vector3<T>(T(0), T(0), T(0));
+    }
 
     // Compute the ideal mirror-reflection direction around the surface normal.
     //
-    // This is the deterministic specular direction that would be used for a
-    // perfectly elastic mirror-like interaction before applying restitution.
+    // This preserves the incident speed and changes only direction.
     const Vector3<T> specular_dir = atlas::math::reflected(incident, normal);
+    const Vector3<T> specular_unit = atlas::math::normalize(specular_dir);
 
     // Fast path for purely specular reflection.
     //
-    // When TMAC is zero or negative, no diffuse scattering is introduced and the
-    // outgoing direction is simply the reflected direction scaled by restitution.
+    // When TMAC is zero or negative, no diffuse scattering is introduced.
+    // The outgoing speed is the incident speed scaled by restitution.
     if (_tmac <= T(0)) {
-        return specular_dir * _restitution_coeff;
+        return specular_unit * (incident_speed * _restitution_coeff);
     }
 
     // Generate two deterministic pseudo-random samples in [0, 1] from the input
@@ -147,15 +151,14 @@ ColliderSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
         incident + normal * T(atlas::seed::RANDOM_HASH_NORMAL_SCALE_FOR_MIX),
         T(atlas::seed::RANDOM_HASH_SALT_MIX));
 
-    // Select the final outgoing direction by stochastically mixing the diffuse
-    // and specular models according to TMAC.
-    const Vector3<T> out_dir = (mix < _tmac) ? diffuse_dir : specular_dir;
+    // Select the final outgoing unit direction by stochastically mixing the
+    // diffuse and specular models according to TMAC. Speed scaling is handled
+    // separately through restitution.
+    const Vector3<T> out_unit = (mix < _tmac)
+        ? atlas::math::normalize(diffuse_dir)
+        : specular_unit;
 
-    // Scale the chosen outgoing direction by the restitution coefficient.
-    //
-    // In other words, direction selection and post-collision magnitude scaling
-    // are handled separately.
-    return out_dir * _restitution_coeff;
+    return out_unit * (incident_speed * _restitution_coeff);
 }
 
 template <typename T>
@@ -172,7 +175,8 @@ template <typename T>
 typename ColliderSurfaceInteraction<T>::Builder&
 ColliderSurfaceInteraction<T>::Builder::with_restitution(const T restitution) noexcept {
 
-    // Configure the restitution coefficient that will scale outgoing velocity.
+    // Configure the restitution coefficient that scales outgoing speed relative
+    // to the incident speed.
     _restitution = restitution;
     return *this;
 }

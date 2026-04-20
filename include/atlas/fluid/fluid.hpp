@@ -267,6 +267,17 @@ Fluid<T>::remove_particles() {
 }
 
 template <typename T>
+void
+Fluid<T>::set_particle_count(const size_t particle_count) {
+    // The active prefix must remain within the allocated storage.
+    if (particle_count > _buffer_size) {
+        throw std::out_of_range("Fluid::set_particle_count: particle_count exceeds buffer_size.");
+    }
+
+    _particle_count = particle_count;
+}
+
+template <typename T>
 template <typename StateT, typename... Args>
 StateT&
 Fluid<T>::emplace_state(Args&&... args) {
