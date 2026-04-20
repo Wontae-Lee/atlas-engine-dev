@@ -85,7 +85,8 @@ namespace atlas::geometry {
  * The operator references:
  * - @ref center : cylinder center,
  * - @ref radius : cylinder radius,
- * - @ref height : cylinder height.
+ * - @ref height : cylinder height,
+ * - @ref open : whether the cylinder excludes top/bottom caps from surface queries.
  *
  * Since the stored pointers are non-owning, the referenced data must remain
  * valid for the duration of any use of the operator.
@@ -119,6 +120,16 @@ struct CylinderGeometryOperator {
      * Non-owning pointer to the axial extent along the z-axis.
      */
     const T* height = nullptr;
+
+    /**
+     * @brief Pointer to the open-ended flag.
+     *
+     * @details
+     * When non-null and `true`, only the lateral wall is considered part of the
+     * surface. The top and bottom caps are ignored by surface queries and ray
+     * tracing.
+     */
+    const bool* open = nullptr;
 
     /**
      * @brief Compute the closest point on the finite cylinder to a query point.
@@ -268,7 +279,8 @@ struct CylinderGeometryOperator {
  * It is defined by:
  * - @ref center : the geometric center of the cylinder,
  * - @ref radius : the radial extent in the x-y plane,
- * - @ref height : the axial extent along z.
+ * - @ref height : the axial extent along z,
+ * - @ref open : whether the cylinder excludes top and bottom caps.
  *
  * ## Geometric semantics
  * The cylinder is centered at @ref center and extends:
@@ -333,6 +345,16 @@ public:
      * Total axial extent along the z-axis.
      */
     T height = T(1);
+
+    /**
+     * @brief Whether the cylinder is open-ended.
+     *
+     * @details
+     * When `true`, only the lateral wall is treated as part of the cylinder
+     * surface. The top and bottom caps are excluded from closest-point,
+     * surface-classification, and ray-trace queries.
+     */
+    bool open = false;
 
     /**
      * @brief Default constructor.
@@ -616,6 +638,15 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_height(T height_) noexcept;
 
+    /**
+     * @brief Set whether the cylinder is open-ended.
+     *
+     * @param open_ Whether top and bottom caps should be excluded.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_open(bool open_) noexcept;
+
 private:
     /**
      * @brief Validate staged builder state before construction.
@@ -641,6 +672,11 @@ private:
      * @brief Pending height.
      */
     T _height = T(1);
+
+    /**
+     * @brief Pending open-ended flag.
+     */
+    bool _open = false;
 };
 
 } // namespace atlas::geometry

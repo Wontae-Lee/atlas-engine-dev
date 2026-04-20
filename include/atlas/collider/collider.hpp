@@ -13,10 +13,12 @@ namespace atlas::system {
 template <typename T>
 Collider<T>::Collider(DeviceBuffer<Unit<T>> units,
                       DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions,
+                      DeviceBuffer<std::uint8_t> flips,
                       atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept
     : _units(std::move(units))
     , _fluid(std::move(fluid))
-    , _surface_interactions(std::move(surface_interactions)) {
+    , _surface_interactions(std::move(surface_interactions))
+    , _flips(std::move(flips)) {
     // Store the fully prepared collider configuration.
     //
     // At this stage:
@@ -108,11 +110,13 @@ Collider<T>::collide(const T dt) const {
 
     const auto* units                = atlas::raw_pointer_cast(_units.data());
     const auto* surface_interactions = atlas::raw_pointer_cast(_surface_interactions.data());
+    const auto* flips                = atlas::raw_pointer_cast(_flips.data());
     auto* positions_ptr              = atlas::raw_pointer_cast(positions.data());
     auto* velocities_ptr             = atlas::raw_pointer_cast(velocities.data());
 
     const int unit_count        = static_cast<int>(_units.size());
     const int interaction_count = static_cast<int>(_surface_interactions.size());
+    const int flip_count        = static_cast<int>(_flips.size());
     const int particle_count    = static_cast<int>(_fluid->particle_count());
 
     // Process each particle independently on the device.
@@ -126,7 +130,7 @@ Collider<T>::collide(const T dt) const {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         particle_count,
-        [positions_ptr, velocities_ptr, dt, units, surface_interactions, unit_count, interaction_count] ATLAS_DEVICE(
+        [positions_ptr, velocities_ptr, dt, units, surface_interactions, flips, unit_count, interaction_count, flip_count] ATLAS_DEVICE(
             const int i) {
             // Current particle position at the beginning of the step.
             const Vector3<T> p0 = positions_ptr[i];
@@ -229,6 +233,9 @@ Collider<T>::collide(const T dt) const {
             // - if one interaction per unit exists, use the hit unit's interaction,
             // - if best_index exceeds interaction_count for any reason, fall back to 0.
             const int interaction_index = (interaction_count == 1 || best_index >= interaction_count) ? 0 : best_index;
+            const int flip_index        = (flip_count == 1 || best_index >= flip_count) ? 0 : best_index;
+            const bool flip_normal      = flip_count > 0 && flips[flip_index] != std::uint8_t { 0 };
+            const Vector3<T> hit_normal = flip_normal ? -best_norm : best_norm;
 
             // Reposition the particle slightly outside the surface.
             //
@@ -236,7 +243,7 @@ Collider<T>::collide(const T dt) const {
             // - immediate re-penetration,
             // - self-intersection on the next step,
             // - numerical sticking caused by finite precision.
-            positions_ptr[i] = best_pos + best_norm * static_cast<T>(atlas::tol);
+            positions_ptr[i] = best_pos + hit_normal * static_cast<T>(atlas::tol);
 
             // Compute the post-collision velocity using the chosen interaction model.
             //
@@ -245,7 +252,7 @@ Collider<T>::collide(const T dt) const {
             // - restitution,
             // - tangential damping,
             // - friction-like projection.
-            velocities_ptr[i] = surface_interactions[interaction_index](velocity, best_norm);
+            velocities_ptr[i] = surface_interactions[interaction_index](velocity, hit_normal);
         });
 }
 
@@ -302,6 +309,26 @@ Collider<T>::Builder::with_surface_interactions(
 }
 
 template <typename T>
+typename Collider<T>::Builder&
+Collider<T>::Builder::with_flip(const bool flip) noexcept {
+
+    _flips.assign(1, flip ? std::uint8_t { 1 } : std::uint8_t { 0 });
+    return *this;
+}
+
+template <typename T>
+typename Collider<T>::Builder&
+Collider<T>::Builder::with_flips(const HostBuffer<std::uint8_t>& flips) {
+
+    if (flips.empty()) {
+        throw std::runtime_error("Collider::Builder: flip flags must not be empty.");
+    }
+
+    _flips = flips;
+    return *this;
+}
+
+template <typename T>
 Collider<T>
 Collider<T>::Builder::build() {
 
@@ -316,10 +343,15 @@ Collider<T>::Builder::build() {
         _surface_interactions.push_back(ColliderSurfaceInteraction<T> {});
     }
 
+    if (_flips.empty()) {
+        _flips.push_back(std::uint8_t { 0 });
+    }
+
     // Transfer host-side builder data into device-backed buffers used by Collider.
     Collider<T> collider(
         DeviceBuffer<Unit<T>>(_units.begin(), _units.end()),
         DeviceBuffer<ColliderSurfaceInteraction<T>>(_surface_interactions.begin(), _surface_interactions.end()),
+        DeviceBuffer<std::uint8_t>(_flips.begin(), _flips.end()),
         _fluid);
 
     // Clear builder-owned state after successful construction.
@@ -329,6 +361,7 @@ Collider<T>::Builder::build() {
     _units.clear();
     _fluid.reset();
     _surface_interactions.clear();
+    _flips.clear();
 
     return collider;
 }
@@ -368,6 +401,10 @@ Collider<T>::Builder::validate() const {
         && _surface_interactions.size() != _units.size()) {
         throw std::runtime_error(
             "Collider::Builder: surface interaction count must be 1 or match unit count.");
+    }
+
+    if (!_flips.empty() && _flips.size() != 1 && _flips.size() != _units.size()) {
+        throw std::runtime_error("Collider::Builder: flip count must be 1 or match unit count.");
     }
 }
 

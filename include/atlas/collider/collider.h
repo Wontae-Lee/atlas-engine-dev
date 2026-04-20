@@ -13,6 +13,7 @@
 #include <atlas/memory/memory.h>
 #include <atlas/unit/unit.h>
 
+#include <cstdint>
 #include <type_traits>
 
 namespace atlas::system {
@@ -77,11 +78,13 @@ public:
      *
      * @param units Device buffer containing collider units.
      * @param surface_interactions Device buffer containing post-collision surface interaction models.
+     * @param flips Device buffer storing whether each collider unit should use flipped collision normals.
      * @param fluid Host shared pointer to the target fluid whose particles will be processed.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Collider(DeviceBuffer<Unit<T>> units,
              DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions,
+             DeviceBuffer<std::uint8_t> flips,
              atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     /**
@@ -154,6 +157,19 @@ private:
      * - size == number of units: one interaction model per unit.
      */
     DeviceBuffer<ColliderSurfaceInteraction<T>> _surface_interactions;
+
+    /**
+     * @brief Device buffer storing per-unit normal-flip flags.
+     *
+     * Each entry uses:
+     * - 0: use the geometry's outward normal as-is,
+     * - non-zero: invert the collision normal before resolving the response.
+     *
+     * Supported layouts are:
+     * - size == 1: one shared flag for all units,
+     * - size == number of units: one flag per unit.
+     */
+    DeviceBuffer<std::uint8_t> _flips;
 };
 
 /**
@@ -222,6 +238,34 @@ public:
     with_surface_interactions(const HostBuffer<ColliderSurfaceInteraction<T>>& surface_interactions);
 
     /**
+     * @brief Sets one shared flip flag for all collider units.
+     *
+     * @param flip Whether collision normals should be inverted before response.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_flip(bool flip) noexcept;
+
+    /**
+     * @brief Sets per-unit normal-flip flags.
+     *
+     * Valid counts are:
+     * - 1: shared by all units,
+     * - number of units: one flag per collider unit.
+     *
+     * Each value is interpreted as:
+     * - 0: use outward normals,
+     * - non-zero: use inward/flipped normals.
+     *
+     * @param flips Host buffer containing flip flags.
+     * @return Reference to this builder.
+     *
+     * @throw std::runtime_error Thrown if @p flips is empty.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_flips(const HostBuffer<std::uint8_t>& flips);
+
+    /**
      * @brief Validates the configuration and builds a Collider value object.
      *
      * If no surface interaction model was explicitly provided, a single default
@@ -251,7 +295,8 @@ private:
      * @throw std::runtime_error Thrown if:
      * - no fluid is set,
      * - no units are set,
-     * - the number of surface interaction models is neither 0, 1, nor equal to unit count.
+     * - the number of surface interaction models is neither 0, 1, nor equal to unit count,
+     * - the number of flip flags is neither 0, 1, nor equal to unit count.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     validate() const;
@@ -271,6 +316,11 @@ private:
      * @brief Host-side surface interaction models collected by the builder.
      */
     HostBuffer<ColliderSurfaceInteraction<T>> _surface_interactions;
+
+    /**
+     * @brief Host-side normal-flip flags collected by the builder.
+     */
+    HostBuffer<std::uint8_t> _flips;
 };
 
 } // namespace atlas::system
