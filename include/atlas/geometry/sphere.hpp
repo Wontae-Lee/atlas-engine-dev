@@ -236,8 +236,6 @@ Sphere<T>::Builder::validate() const {
 
     // Reject invalid staged parameters with both a log message and an exception.
     if (!op.is_valid()) {
-        atlas::logger::error()
-            << "Sphere::Builder validation failed: radius must be > 0; center must be finite.";
         throw std::runtime_error("Sphere::Builder: invalid parameters.");
     }
 }

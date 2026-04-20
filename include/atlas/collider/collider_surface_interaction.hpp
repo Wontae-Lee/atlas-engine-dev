@@ -236,8 +236,6 @@ ColliderSurfaceInteraction<T>::Builder::validate() const {
     // Negative restitution would invert the post-collision scaling semantics and
     // is therefore rejected.
     if (!std::isfinite(_restitution) || _restitution < T(0)) {
-        atlas::logger::error()
-            << "ColliderSurfaceInteraction::Builder: restitution must be finite and non-negative.";
         throw std::runtime_error(
             "ColliderSurfaceInteraction::Builder: restitution must be finite and non-negative.");
     }
@@ -248,8 +246,6 @@ ColliderSurfaceInteraction<T>::Builder::validate() const {
     // this range would not have a physically meaningful interpretation in the
     // current model.
     if (!std::isfinite(_tmac) || _tmac < T(0) || _tmac > T(1)) {
-        atlas::logger::error()
-            << "ColliderSurfaceInteraction::Builder: tmac must be finite and within [0, 1].";
         throw std::runtime_error(
             "ColliderSurfaceInteraction::Builder: tmac must be finite and within [0, 1].");
     }
@@ -260,8 +256,6 @@ ColliderSurfaceInteraction<T>::Builder::validate() const {
     // stored temperature, the builder still enforces a physically meaningful
     // domain for the parameter.
     if (!std::isfinite(_temperature) || _temperature < T(0)) {
-        atlas::logger::error()
-            << "ColliderSurfaceInteraction::Builder: temperature must be finite and non-negative.";
         throw std::runtime_error(
             "ColliderSurfaceInteraction::Builder: temperature must be finite and non-negative.");
     }

@@ -217,8 +217,6 @@ MaxwellBoltzmannGenerator<T>::Builder::validate() const {
     //
     // Without them, the thermal variance cannot be defined.
     if (!_temperature.has_value() || !_molecular_mass.has_value()) {
-        atlas::logger::error()
-            << "MaxwellBoltzmannGenerator::Builder: temperature and molecular_mass must be provided.";
         throw std::runtime_error("MaxwellBoltzmannGenerator::Builder: temperature and molecular_mass must be provided.");
     }
 
@@ -227,8 +225,6 @@ MaxwellBoltzmannGenerator<T>::Builder::validate() const {
     // Zero or negative temperature would make the thermal distribution
     // non-physical in this context.
     if (!(*_temperature > T(0))) {
-        atlas::logger::error()
-            << "MaxwellBoltzmannGenerator::Builder: temperature must be greater than zero.";
         throw std::runtime_error("MaxwellBoltzmannGenerator::Builder: temperature must be greater than zero.");
     }
 
@@ -236,8 +232,6 @@ MaxwellBoltzmannGenerator<T>::Builder::validate() const {
     //
     // Zero or negative mass would make the variance formula invalid.
     if (!(*_molecular_mass > T(0))) {
-        atlas::logger::error()
-            << "MaxwellBoltzmannGenerator::Builder: molecular_mass must be greater than zero.";
         throw std::runtime_error("MaxwellBoltzmannGenerator::Builder: molecular_mass must be greater than zero.");
     }
 }

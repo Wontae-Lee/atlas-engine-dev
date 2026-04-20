@@ -16,14 +16,6 @@ Universe<T>::Universe(const Vector3<T>& lower_corner,
     , _upper_corner(upper_corner)
     , _cell_size(cell_size) {
 
-    // Log the basic domain parameters for diagnostics and debugging.
-    atlas::logger::info()
-        << "\n"
-        << "Creating Domain: "
-        << "lower_corner=(" << _lower_corner.x << "," << _lower_corner.y << "," << _lower_corner.z << "), "
-        << "upper_corner=(" << _upper_corner.x << "," << _upper_corner.y << "," << _upper_corner.z << "), "
-        << "cell_size=" << _cell_size;
-
     // Precompute cell volume for repeated downstream field operations.
     _cell_volume = _cell_size * _cell_size * _cell_size;
 

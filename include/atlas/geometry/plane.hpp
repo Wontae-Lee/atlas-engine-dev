@@ -289,8 +289,6 @@ Plane<T>::Builder::validate() const {
 
     // Reject invalid staged parameters with both a log message and an exception.
     if (!op.is_valid()) {
-        atlas::logger::error()
-            << "Plane::Builder validation failed: normal must be finite and non-zero; offset must be finite.";
         throw std::runtime_error("Plane::Builder: invalid parameters.");
     }
 }

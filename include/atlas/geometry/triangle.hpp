@@ -362,8 +362,6 @@ Triangle<T>::Builder::validate() const {
 
     // Reject invalid staged geometry with both a log message and an exception.
     if (!op.is_valid()) {
-        atlas::logger::error()
-            << "Triangle::Builder validation failed: vertices must not be collinear or duplicated.";
         throw std::runtime_error("Triangle::Builder: invalid triangle.");
     }
 }

@@ -486,8 +486,6 @@ void
 TriangleMesh<T>::Builder::validate() const {
     // A triangle mesh must contain at least one triangle.
     if (_triangles.empty()) {
-        atlas::logger::error()
-            << "TriangleMesh::Builder validation failed: no triangles provided.";
         throw std::runtime_error("TriangleMesh::Builder validation failed: no triangles provided.");
     }
 }

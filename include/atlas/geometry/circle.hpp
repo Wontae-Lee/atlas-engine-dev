@@ -504,8 +504,6 @@ Circle<T>::Builder::validate() const {
 
     // Reject invalid circle parameters with both a log message and an exception.
     if (!op.is_valid()) {
-        atlas::logger::error()
-            << "Circle::Builder validation failed: center/normal must be finite, normal must be non-zero, radius must be > 0.";
         throw std::runtime_error("Circle::Builder: invalid parameters.");
     }
 }

@@ -205,9 +205,6 @@ Sync<T>::Builder::validate() const {
     if (!std::isfinite(translation.x)
         || !std::isfinite(translation.y)
         || !std::isfinite(translation.z)) {
-
-        atlas::logger::error()
-            << "Sync::Builder: translation contains non-finite values.";
         throw std::runtime_error(
             "Sync::Builder: translation contains non-finite values.");
     }
@@ -217,9 +214,6 @@ Sync<T>::Builder::validate() const {
         || !std::isfinite(orientation.x)
         || !std::isfinite(orientation.y)
         || !std::isfinite(orientation.z)) {
-
-        atlas::logger::error()
-            << "Sync::Builder: orientation contains non-finite values.";
         throw std::runtime_error(
             "Sync::Builder: orientation contains non-finite values.");
     }
@@ -229,9 +223,6 @@ Sync<T>::Builder::validate() const {
         && orientation.x == T(0)
         && orientation.y == T(0)
         && orientation.z == T(0)) {
-
-        atlas::logger::error()
-            << "Sync::Builder: zero quaternion is invalid.";
         throw std::runtime_error(
             "Sync::Builder: zero quaternion is invalid.");
     }
@@ -245,10 +236,6 @@ Sync<T>::Builder::validate() const {
         + orientation.y * orientation.y
         + orientation.z * orientation.z);
 
-    if (std::abs(norm - T(1)) > T(1e-3)) {
-        atlas::logger::warn()
-            << "Sync::Builder: quaternion not normalized.";
-    }
 }
 
 template <typename T>

@@ -65,7 +65,8 @@ public:
      * @return Reference to this object.
      */
     FluidState&
-    operator=(FluidState&&) noexcept = default;
+    operator=(FluidState&&) noexcept
+        = default;
 
     /**
      * @brief Returns the physical size of the underlying state buffer.
@@ -76,7 +77,8 @@ public:
      * @return Number of elements stored in the underlying buffer.
      */
     ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
-    size() const noexcept = 0;
+    size() const noexcept
+        = 0;
 
     /**
      * @brief Compacts the state buffer using a destination-to-source index map.

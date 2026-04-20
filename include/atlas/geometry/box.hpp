@@ -511,8 +511,6 @@ Box<T>::Builder::validate() const {
 
     // Reject invalid corner ordering with both a log entry and an exception.
     if (!op.is_valid()) {
-        atlas::logger::error()
-            << "Box::Builder validation failed: lower_corner must be <= upper_corner.";
         throw std::runtime_error("Box::Builder: invalid parameters.");
     }
 }

@@ -221,8 +221,6 @@ typename Unit<T>::Builder&
 Unit<T>::Builder::with_geometry(const atlas::GeometryHostPtr<T>& geometry) {
 
     if (!geometry) {
-        atlas::logger::error()
-            << "Unit::Builder: geometry must not be null.";
         throw std::runtime_error("Unit::Builder: geometry must not be null.");
     }
 
@@ -238,8 +236,6 @@ typename Unit<T>::Builder&
 Unit<T>::Builder::with_sync(const SyncHostPtr<T>& sync) {
 
     if (!sync) {
-        atlas::logger::error()
-            << "Unit::Builder: sync must not be null.";
         throw std::runtime_error("Unit::Builder: sync must not be null.");
     }
 
@@ -336,36 +332,24 @@ void
 Unit<T>::Builder::validate() const {
 
     if (!_geometry.has_value()) {
-        atlas::logger::error()
-            << "Unit::Builder validation failed: geometry owner is not initialized.";
         throw std::runtime_error("Unit::Builder: geometry owner is not initialized.");
     }
 
     if (!_geometry_operator.has_value()) {
-        atlas::logger::error()
-            << "Unit::Builder validation failed: geometry operator is not initialized.";
         throw std::runtime_error("Unit::Builder: geometry operator is not initialized.");
     }
 
     if (!_sync_operator.has_value()) {
-        atlas::logger::error()
-            << "Unit::Builder validation failed: sync operator is not initialized.";
         throw std::runtime_error("Unit::Builder: sync operator is not initialized.");
     }
 
     // Enforce explicit linear kinematic consistency at validation time.
     if (_acceleration.has_value() && !_velocity.has_value()) {
-
-        atlas::logger::error()
-            << "Unit::Builder validation failed: acceleration is set but velocity is missing.";
         throw std::runtime_error("Unit::Builder: acceleration is set but velocity is missing.");
     }
 
     // Enforce explicit angular kinematic consistency at validation time.
     if (_angular_acceleration.has_value() && !_angular_velocity.has_value()) {
-
-        atlas::logger::error()
-            << "Unit::Builder validation failed: angular_acceleration is set but angular_velocity is missing.";
         throw std::runtime_error("Unit::Builder: angular_acceleration is set but angular_velocity is missing.");
     }
 }

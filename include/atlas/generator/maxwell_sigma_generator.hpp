@@ -159,8 +159,6 @@ MaxwellSigmaGenerator<T>::Builder::validate() const {
     // `sigma` is mandatory because the Maxwell-sigma generator cannot define
     // its Gaussian distribution without it.
     if (!_sigma.has_value()) {
-        atlas::logger::error()
-            << "MaxwellSigmaGenerator::Builder: sigma must be provided.";
         throw std::runtime_error("MaxwellSigmaGenerator::Builder: sigma must be provided.");
     }
 
@@ -169,8 +167,6 @@ MaxwellSigmaGenerator<T>::Builder::validate() const {
     // A zero or negative standard deviation would make the Gaussian model
     // invalid for this generator.
     if (!(*_sigma > T(0))) {
-        atlas::logger::error()
-            << "MaxwellSigmaGenerator::Builder: sigma must be greater than zero.";
         throw std::runtime_error("MaxwellSigmaGenerator::Builder: sigma must be greater than zero.");
     }
 }

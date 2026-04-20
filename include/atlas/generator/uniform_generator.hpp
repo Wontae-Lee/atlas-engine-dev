@@ -174,8 +174,6 @@ UniformGenerator<T>::Builder::validate() const {
     // Both interval bounds must be explicitly provided before the
     // uniform generator can be constructed.
     if (!_min_value.has_value() || !_max_value.has_value()) {
-        atlas::logger::error()
-            << "UniformGenerator::Builder: min_value and max_value must be provided.";
         throw std::runtime_error("UniformGenerator::Builder: min_value and max_value must be provided.");
     }
 
@@ -184,8 +182,6 @@ UniformGenerator<T>::Builder::validate() const {
     // Equal or reversed bounds would make the interval invalid for the
     // intended uniform sampling behavior.
     if (!(*_min_value < *_max_value)) {
-        atlas::logger::error()
-            << "UniformGenerator::Builder: min_value must be less than max_value.";
         throw std::runtime_error("UniformGenerator::Builder: min_value must be less than max_value.");
     }
 }

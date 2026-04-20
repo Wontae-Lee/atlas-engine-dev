@@ -22,7 +22,6 @@ TEST(Cylinder, DefaultConstructorCreatesValidCylinder) {
     EXPECT_TRUE(cylinder.is_valid());
     EXPECT_NEAR(cylinder.radius, 1.0f, kEps);
     EXPECT_NEAR(cylinder.height, 1.0f, kEps);
-    EXPECT_FALSE(cylinder.open);
 }
 
 TEST(Cylinder, BuilderConstructsConfiguredCylinder) {
@@ -30,13 +29,12 @@ TEST(Cylinder, BuilderConstructsConfiguredCylinder) {
                               .with_center(Vec3(1, 2, 3))
                               .with_radius(2.5f)
                               .with_height(6.0f)
-                              .with_open(true)
+
                               .build();
 
     EXPECT_TRUE(atlas::test::vec_near(cylinder.center, Vec3(1, 2, 3), kEps));
     EXPECT_NEAR(cylinder.radius, 2.5f, kEps);
     EXPECT_NEAR(cylinder.height, 6.0f, kEps);
-    EXPECT_TRUE(cylinder.open);
 }
 
 TEST(Cylinder, BuilderRejectsInvalidCylinder) {

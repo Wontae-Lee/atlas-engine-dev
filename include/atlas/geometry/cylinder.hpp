@@ -264,8 +264,6 @@ Cylinder<T>::Builder::validate() const {
 
     // Reject invalid staged parameters with both a log message and an exception.
     if (!op.is_valid()) {
-        atlas::logger::error()
-            << "Cylinder::Builder validation failed: radius and height must be > 0, and values must be finite.";
         throw std::runtime_error("Cylinder::Builder: invalid parameters.");
     }
 }

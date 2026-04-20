@@ -106,12 +106,11 @@ Viewer<T>::run() {
 
         return 0;
     } catch (const std::exception& e) {
-        // Log the failure and perform best-effort cleanup before returning failure.
-        atlas::logger::error() << "Viewer failed: " << e.what();
-
+        // Perform best-effort cleanup before returning failure.
         shutdown_layers();
         cleanup_gl();
 
+        (void)e;
         return 1;
     }
 }
@@ -318,8 +317,6 @@ Viewer<T>::Builder::with_system(const SystemHostPtr<T>& system) {
     // - the main loop advances it
     // - layers may depend on it for rendering data
     if (!system) {
-        atlas::logger::error()
-            << "Viewer::Builder: system must not be null.";
         throw std::runtime_error("Viewer::Builder: system must not be null.");
     }
 
@@ -365,8 +362,6 @@ Viewer<T>::Builder::validate() const {
 
     // A viewer requires a simulation system.
     if (_system == nullptr) {
-        atlas::logger::error()
-            << "Viewer::Builder validation failed: system must not be null.";
         throw std::runtime_error("Viewer::Builder: system must not be null.");
     }
 
@@ -374,15 +369,11 @@ Viewer<T>::Builder::validate() const {
     //
     // Zero is allowed and interpreted later as "use monitor default".
     if ((_width < 0) || (_height < 0)) {
-        atlas::logger::error()
-            << "Viewer::Builder validation failed: width/height must be >= 0.";
         throw std::runtime_error("Viewer::Builder: width/height must be >= 0.");
     }
 
     // Title pointer must be valid after normalization.
     if (_title == nullptr) {
-        atlas::logger::error()
-            << "Viewer::Builder validation failed: title must not be null.";
         throw std::runtime_error("Viewer::Builder: title must not be null.");
     }
 }

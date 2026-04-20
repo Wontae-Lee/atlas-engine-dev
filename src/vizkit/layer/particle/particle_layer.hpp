@@ -347,16 +347,12 @@ ParticleLayer<T>::validate_system() const {
 
     // A system must be present.
     if (_system == nullptr) {
-        atlas::logger::error()
-            << "ParticleLayer: system must not be null.";
         throw std::runtime_error("ParticleLayer: system must not be null.");
     }
 
     // The system must expose a valid fluid object because visualization capacity
     // and particle storage are sourced from it.
     if (_system->fluid() == nullptr) {
-        atlas::logger::error()
-            << "ParticleLayer: system fluid must not be null.";
         throw std::runtime_error("ParticleLayer: system fluid must not be null.");
     }
 }
@@ -414,15 +410,11 @@ ParticleLayer<T>::Builder::validate() const {
 
     // A system must be provided.
     if (_system == nullptr) {
-        atlas::logger::error()
-            << "ParticleLayer::Builder: system must not be null.";
         throw std::runtime_error("ParticleLayer::Builder: system must not be null.");
     }
 
     // The system must expose a valid fluid object.
     if (_system->fluid() == nullptr) {
-        atlas::logger::error()
-            << "ParticleLayer::Builder: system fluid must not be null.";
         throw std::runtime_error("ParticleLayer::Builder: system fluid must not be null.");
     }
 }
