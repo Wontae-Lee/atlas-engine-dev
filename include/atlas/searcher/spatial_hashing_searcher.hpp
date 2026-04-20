@@ -79,6 +79,13 @@ SpatialHashingSearcher<T>::reset() noexcept {
     d_cell_start.resize(num_of_cells);
 
     d_cell_end.resize(num_of_cells);
+    _is_invalidated = true;
+}
+
+template <typename T>
+void
+SpatialHashingSearcher<T>::invalidate() noexcept {
+    _is_invalidated = true;
 }
 
 template <typename T>
@@ -308,6 +315,10 @@ template <typename T>
 void
 SpatialHashingSearcher<T>::build() {
 
+    if (!_is_invalidated) {
+        return;
+    }
+
     // If the fluid object is missing, no search structure can be built.
     //
     // Reset the internal buffers so the searcher remains in a safe, empty state.
@@ -341,10 +352,6 @@ SpatialHashingSearcher<T>::build() {
         return;
     }
 
-    // Emit a log message so build activity is visible during debugging or profiling.
-    atlas::logger::info() << "\n"
-                          << "Building SpatialHashingSearcher for " << alive << " particles.";
-
     // Step 1:
     // Ensure all required device buffers are sized appropriately.
     prepare_buffers(alive);
@@ -366,6 +373,7 @@ SpatialHashingSearcher<T>::build() {
     // Step 5:
     // Build per-cell [start, end) ranges over the sorted particle list.
     build_cell_ranges(alive);
+    _is_invalidated = false;
 }
 
 template <typename T>

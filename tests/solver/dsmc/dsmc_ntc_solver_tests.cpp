@@ -58,7 +58,6 @@ TEST(DsmcNtcSolver, ConstructorCreatesRequiredUniverseStates) {
 
     const atlas::system::DsmcNtcSolver<T> solver(universe, fluid, searcher);
 
-    EXPECT_FLOAT_EQ(solver.collision_rate_scale(), 1.0f);
     EXPECT_EQ(solver.kernel_type(), atlas::system::DsmcKernelType::hard_sphere);
     ASSERT_TRUE(universe->has_state<atlas::universe::UniverseNumberParticleState<T>>());
 }
@@ -73,11 +72,9 @@ TEST(DsmcNtcSolver, BuilderConstructsSolverWithKernelType) {
                             .with_fluid(fluid)
                             .with_searcher(searcher)
                             .with_kernel_type(atlas::system::DsmcKernelType::variable_hard_sphere)
-                            .with_collision_rate_scale(2.0f)
                             .build();
 
     EXPECT_EQ(solver.kernel_type(), atlas::system::DsmcKernelType::variable_hard_sphere);
-    EXPECT_FLOAT_EQ(solver.collision_rate_scale(), 2.0f);
 }
 
 TEST(DsmcNtcSolver, SolveIsSafeForEmptyFluid) {

@@ -20,8 +20,7 @@ public:
     DsmcSolver(UniverseHostPtr<T> universe,
                FluidHostPtr<T> fluid,
                SpatialHashingSearcherHostPtr<T> searcher,
-               DsmcKernelType kernel_type = DsmcKernelType::hard_sphere,
-               T collision_rate_scale = T(1)) noexcept;
+               DsmcKernelType kernel_type = DsmcKernelType::hard_sphere) noexcept;
 
     ~DsmcSolver() override = default;
 
@@ -30,9 +29,6 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     solve(const DeviceBuffer<int>* allocated_solver, int index, T dt) final;
-
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
-    collision_rate_scale() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DsmcKernelType
     kernel_type() const noexcept;
@@ -71,7 +67,6 @@ public:
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
     pair_ordinal_to_rhs(int count, int ordinal, int& lhs_local) noexcept;
 
-protected:
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     apply_collisions(const DeviceBuffer<int>* allocated_solver, int index, T dt)
         = 0;
@@ -85,7 +80,6 @@ protected:
 
     DeviceBuffer<int> _flattened_collision_cells {};
 
-    T _collision_rate_scale { T(1) };
 };
 
 } // namespace atlas::system

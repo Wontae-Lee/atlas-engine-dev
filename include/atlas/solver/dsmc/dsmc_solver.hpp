@@ -14,12 +14,10 @@ template <typename T>
 DsmcSolver<T>::DsmcSolver(UniverseHostPtr<T> universe,
                           FluidHostPtr<T> fluid,
                           SpatialHashingSearcherHostPtr<T> searcher,
-                          const DsmcKernelType kernel_type,
-                          const T collision_rate_scale) noexcept
+                          const DsmcKernelType kernel_type) noexcept
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher))
     , _kernel(DsmcKernel<T>(kernel_type))
-    , _kernel_type(kernel_type)
-    , _collision_rate_scale(collision_rate_scale) {
+    , _kernel_type(kernel_type) {
     ensure_universe_states();
 }
 
@@ -119,15 +117,15 @@ DsmcSolver<T>::build_collision_workload(const DeviceBuffer<int>* allocated_solve
         return false;
     }
 
-    if (!(dt > T(0)) || !(_collision_rate_scale > T(0))) {
-        throw std::invalid_argument("DsmcSolver: dt and collision_rate_scale must be positive.");
+    if (!(dt > T(0))) {
+        throw std::invalid_argument("DsmcSolver: dt must be positive.");
     }
 
     if (!measure_cell_collision_statistics(allocated_solver, index, dt)) {
         return false;
     }
 
-    return build_flattened_collision_workload();
+    return true;
 }
 
 template <typename T>
@@ -194,7 +192,6 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
     const int num_of_properties  = static_cast<int>(particle_properties.size());
     const T cell_volume          = this->_universe->cell_volume();
     const T statistical_weight   = this->_fluid->statistical_weight();
-    const T collision_scale      = _collision_rate_scale;
     const DsmcKernelType kernel_type = _kernel_type;
 
     if (particle_count < 2 || num_of_cells <= 0 || num_of_properties <= 0 || !(cell_volume > T(0))) {
@@ -224,23 +221,15 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
                 return;
             }
 
-            int count      = 0;
+            const int count = end - begin;
             T max_relative = T(0);
             T max_sigma_g  = T(0);
 
             for (int a = begin; a < end; ++a) {
                 const int particle_i = indices_ptr[a];
-                if (particle_i < 0 || particle_i >= particle_count) {
-                    continue;
-                }
-
-                ++count;
 
                 for (int b = a + 1; b < end; ++b) {
                     const int particle_j = indices_ptr[b];
-                    if (particle_j < 0 || particle_j >= particle_count) {
-                        continue;
-                    }
 
                     const std::size_t species_i = species_ptr[particle_i];
                     const std::size_t species_j = species_ptr[particle_j];
@@ -276,7 +265,7 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
             }
 
             const T pair_count = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
-            const T ntc_count  = pair_count * max_sigma_g * statistical_weight * dt * collision_scale / cell_volume;
+            const T ntc_count  = pair_count * max_sigma_g * statistical_weight * dt / cell_volume;
             int collisions      = static_cast<int>(std::floor(ntc_count));
             const int max_pairs = count * (count - 1) / 2;
 
@@ -354,21 +343,13 @@ DsmcSolver<T>::nth_valid_particle(const int nth,
                                   const int end,
                                   const int particle_count,
                                   const int* indices_ptr) noexcept {
-    int ordinal = 0;
-    for (int k = begin; k < end; ++k) {
-        const int particle_index = indices_ptr[k];
-        if (particle_index < 0 || particle_index >= particle_count) {
-            continue;
-        }
-
-        if (ordinal == nth) {
-            return particle_index;
-        }
-
-        ++ordinal;
+    const int sorted_index = begin + nth;
+    if (nth < 0 || sorted_index < begin || sorted_index >= end) {
+        return -1;
     }
 
-    return -1;
+    const int particle_index = indices_ptr[sorted_index];
+    return (particle_index >= 0 && particle_index < particle_count) ? particle_index : -1;
 }
 
 template <typename T>
@@ -386,12 +367,6 @@ DsmcSolver<T>::pair_ordinal_to_rhs(const int count, int ordinal, int& lhs_local)
     }
 
     return -1;
-}
-
-template <typename T>
-T
-DsmcSolver<T>::collision_rate_scale() const noexcept {
-    return _collision_rate_scale;
 }
 
 template <typename T>

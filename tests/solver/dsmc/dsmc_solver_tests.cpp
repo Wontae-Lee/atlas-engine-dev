@@ -65,10 +65,9 @@ TEST(DsmcSolver, BaseConstructorCreatesRequiredUniverseStates) {
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    const DummyDsmcSolver solver(universe, fluid, searcher, atlas::system::DsmcKernelType::variable_soft_sphere, 2.0f);
+    const DummyDsmcSolver solver(universe, fluid, searcher, atlas::system::DsmcKernelType::variable_soft_sphere);
 
     EXPECT_EQ(solver.kernel_type(), atlas::system::DsmcKernelType::variable_soft_sphere);
-    EXPECT_FLOAT_EQ(solver.collision_rate_scale(), 2.0f);
     ASSERT_TRUE(universe->has_state<atlas::universe::UniverseNumberParticleState<T>>());
     ASSERT_TRUE(universe->has_state<atlas::universe::UniverseMaxRelativeSpeedState<T>>());
     ASSERT_TRUE(universe->has_state<atlas::universe::UniverseCollisionCountState<int>>());

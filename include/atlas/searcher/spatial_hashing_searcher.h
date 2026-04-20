@@ -59,6 +59,15 @@ public:
     build();
 
     /**
+     * @brief Marks the search structure as stale so the next build recomputes it.
+     *
+     * This is useful when a higher-level runtime step knows particle positions
+     * or counts changed and wants to avoid redundant rebuilds within the same step.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    invalidate() noexcept;
+
+    /**
      * @brief Resets the searcher state and releases or clears internal buffers as needed.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
@@ -222,6 +231,11 @@ private:
      * @brief Device buffer storing the exclusive end index for each hash cell.
      */
     DeviceBuffer<int> d_cell_end;
+
+    /**
+     * @brief Tracks whether the current search structure must be rebuilt.
+     */
+    bool _is_invalidated { true };
 };
 
 /**
