@@ -2,7 +2,6 @@
 <project version="4">
   <component name="CidrCTestProjectState">
     <ctestState>
-      <lineNumber testId="path:CMakeLists.txt test:atlas_all_cuda_test" value="844" />
       <lineNumber testId="path:null test:atlas_cuda_tests" value="95" />
       <lineNumber testId="path:tests/unit/CMakeLists.txt test:atlas_unit_cuda_tests" value="15" />
     </ctestState>

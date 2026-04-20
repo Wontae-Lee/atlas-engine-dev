@@ -81,8 +81,8 @@
       <config projectName="atlas-engine-dev" targetName="time_unit_gtest" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_spatial" />
       <config projectName="atlas-engine-dev" targetName="skip_with_error_test" />
-      <config projectName="atlas-engine-dev" targetName="atlas_tests_math_vector" />
       <config projectName="atlas-engine-dev" targetName="cylinder" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_math_vector" />
       <config projectName="atlas-engine-dev" targetName="NightlyStart" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="spec_arg_test" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_shuffle" />
@@ -178,40 +178,62 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Changed github ci.yml">
-      <change afterPath="$PROJECT_DIR$/examples/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/cylinder/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/cylinder/main.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/cylinder/main.cu" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/ctestState.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ctestState.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/dynamic/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/dynamic/main.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/dynamic/main.cu" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/overview/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/overview/main.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/overview/main.cu" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/dsmc/intake/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/solver/dsmc/intake/main.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/cylinder/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/cylinder/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/cylinder/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/cylinder/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/codec.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/codec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/generate_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/generate_operator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/generate_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/generate_operator.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/constants.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/constants.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/generator/maxwell_boltzmann_generator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/maxwell_boltzmann_generator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/generator/maxwell_sigma_generator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/maxwell_sigma_generator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/generator/uniform_generator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/uniform_generator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/box.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/circle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/circle.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/cylinder.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/plane.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/sphere.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/geometry/triangle_mesh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/despawn_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/despawn_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/despawn_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/despawn_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/camera/camera.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/geometry/geometry_layer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vizkit/viewer/viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/viewer/viewer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/spawn_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/spawn_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/spawn_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/spawn_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sync/sync.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sync/sync.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/unit/unit.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/unit/unit.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/universe/universe.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/universe/universe.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vizkit/layer/particle/particle_layer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/layer/particle/particle_layer.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/vizkit/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/vizkit/viewer/viewer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/collider/collider_surface_interaction_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/collider/collider_surface_interaction_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/fluid/fluid_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/fluid/fluid_tests.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/geometry/cylinder_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/cylinder_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/source/source_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/source/source_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/sink/despawn_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/sink/despawn_operator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_disjoint_pair_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_disjoint_pair_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_ntc_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_ntc_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/source/spawn_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/source/spawn_operator_tests.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -370,7 +392,7 @@
       <recent name="$PROJECT_DIR$/tests" />
     </key>
   </component>
-  <component name="RunManager" selected="CMake Application.cylinder">
+  <component name="RunManager" selected="Google Test.All in atlas_tests">
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -695,7 +717,6 @@
       <item itemvalue="CMake Application.uninstall" />
       <item itemvalue="CMake Application.cylinder" />
       <item itemvalue="CTest Application.All CTest" />
-      <item itemvalue="Google Test.All in atlas_tests" />
       <item itemvalue="Google Test.atlas_tests_buffer" />
       <item itemvalue="Google Test.atlas_tests_codec" />
       <item itemvalue="Google Test.atlas_tests_collider" />
@@ -730,6 +751,7 @@
       <item itemvalue="Google Test.atlas_tests_tuple" />
       <item itemvalue="Google Test.atlas_tests_unit" />
       <item itemvalue="Google Test.atlas_tests_universe" />
+      <item itemvalue="Google Test.All in atlas_tests" />
       <item itemvalue="Google Test.Sink.BuilderRejectsMissingDependencies" />
       <item itemvalue="Python.generate_headers" />
       <item itemvalue="Python.remove_comments" />
@@ -832,7 +854,7 @@
       <workItem from="1776604321421" duration="10000" />
       <workItem from="1776668177001" duration="7178000" />
       <workItem from="1776683801333" duration="1744000" />
-      <workItem from="1776685561088" duration="2667000" />
+      <workItem from="1776685561088" duration="8892000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
