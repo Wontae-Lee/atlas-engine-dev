@@ -77,15 +77,8 @@ struct VolumeSpawnOperator final {
 /**
  * @brief Tagged spawn operator that dispatches between surface and volume policies.
  *
- * This type stores exactly one active spawn policy at a time and dispatches
- * spawn tests according to the runtime tag stored in @ref type.
- *
- * Internally, it manages a union of:
- * - SurfaceSpawnOperator<T>
- * - VolumeSpawnOperator<T>
- *
- * Because the active union member is selected dynamically, this type manually
- * manages construction, destruction, and copying of the active member.
+ * This type stores only the runtime tag and dispatches to the corresponding
+ * stateless spawn policy on demand.
  *
  * @tparam T Floating-point scalar type.
  */
@@ -97,29 +90,12 @@ struct SpawnOperator final {
     SpawnType type = SpawnType::Surface;
 
     /**
-     * @brief Storage for the active concrete spawn policy.
-     *
-     * Exactly one member is active at a time, as indicated by @ref type.
-     */
-    union {
-        /**
-         * @brief Surface-based spawn policy storage.
-         */
-        SurfaceSpawnOperator<T> surface;
-
-        /**
-         * @brief Volume-based spawn policy storage.
-         */
-        VolumeSpawnOperator<T> volume;
-    };
-
-    /**
      * @brief Default constructor.
      *
      * Initializes the operator with a surface-based spawn policy.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    SpawnOperator() noexcept;
+    SpawnOperator() noexcept = default;
 
     /**
      * @brief Constructs a spawn operator of the requested type.
@@ -131,30 +107,30 @@ struct SpawnOperator final {
     /**
      * @brief Copy constructor.
      *
-     * Copies the runtime tag and reconstructs the corresponding active policy.
+     * Copies the runtime tag.
      *
      * @param other Source operator to copy from.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    SpawnOperator(const SpawnOperator& other) noexcept;
+    SpawnOperator(const SpawnOperator& other) noexcept = default;
 
     /**
      * @brief Copy assignment operator.
      *
-     * Replaces the current active policy with a copy of the one stored in @p other.
+     * Replaces the current runtime tag with the one stored in @p other.
      *
      * @param other Source operator to copy from.
      * @return Reference to this object.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE SpawnOperator&
-    operator=(const SpawnOperator& other) noexcept;
+    operator=(const SpawnOperator& other) noexcept = default;
 
     /**
      * @brief Destructor.
      *
-     * Destroys the currently active concrete spawn policy.
+     * Uses the default trivial destruction behavior.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~SpawnOperator() noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~SpawnOperator() noexcept = default;
 
     /**
      * @brief Constructs the operator from a surface spawn policy.
@@ -191,23 +167,6 @@ struct SpawnOperator final {
           const Vector3<T>& particle,
           T tolerance = T(0)) const noexcept;
 
-private:
-    /**
-     * @brief Destroys the currently active concrete spawn policy.
-     */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    destroy_active() noexcept;
-
-    /**
-     * @brief Reconstructs the active policy from another operator.
-     *
-     * This function assumes that @ref type has already been set to the desired
-     * active tag before it is called.
-     *
-     * @param other Source operator providing the active policy to copy.
-     */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    copy_from(const SpawnOperator& other) noexcept;
 };
 
 } // namespace atlas::fluid

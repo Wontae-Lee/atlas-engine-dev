@@ -2,7 +2,8 @@
 
 /**
  * @file despawn_operator.h
- * @brief Declares despawn operator types used to decide whether particles should be removed.
+ * @brief Declares despawn operator policies used to decide whether particles
+ *        should be removed relative to queried geometry.
  */
 
 #include <atlas/math/math.h>
@@ -10,39 +11,45 @@
 namespace atlas::fluid {
 
 /**
- * @brief Runtime tag identifying the active despawn rule.
+ * @brief Runtime tag identifying which despawn rule is active.
+ *
+ * This tag is used by @ref DespawnOperator to dispatch at runtime between
+ * the available stateless despawn policies.
  */
 enum class DespawnType : int {
 
     /**
-     * @brief Remove particles located on the queried geometry surface.
+     * @brief Remove particles that lie on the queried geometry surface.
      */
     Surface,
 
     /**
-     * @brief Remove particles located inside the queried geometry volume or region.
+     * @brief Remove particles that lie inside the queried geometry region or volume.
      */
     Volume
 };
 
 /**
- * @brief Despawn policy that removes particles on a geometry surface.
+ * @brief Stateless despawn policy that removes particles on a geometry surface.
  *
- * This operator evaluates whether a candidate particle position lies on the
- * surface of the queried geometry within a specified tolerance.
+ * This policy evaluates whether a candidate particle position lies on the
+ * surface of the queried geometry within the specified tolerance.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Floating-point scalar type used for geometry queries.
  */
 template <typename T>
 struct SurfaceDespawnOperator final {
 
     /**
-     * @brief Tests whether a particle position should be removed based on surface membership.
+     * @brief Tests whether a particle should be removed based on surface membership.
      *
-     * @param query Geometry query operator.
-     * @param particle Candidate particle position.
-     * @param tolerance Surface tolerance.
-     * @return True if the particle is on the surface within tolerance.
+     * The particle is considered removable when it lies on the queried geometry
+     * surface within the provided tolerance.
+     *
+     * @param query Geometry query operator used to test spatial membership.
+     * @param particle Candidate particle position in query space.
+     * @param tolerance Surface-membership tolerance.
+     * @return True if the particle lies on the surface within tolerance.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
     despawn(const GeometryOperator<T>& query,
@@ -51,23 +58,26 @@ struct SurfaceDespawnOperator final {
 };
 
 /**
- * @brief Despawn policy that removes particles inside a geometry region.
+ * @brief Stateless despawn policy that removes particles inside a geometry region.
  *
- * This operator evaluates whether a candidate particle position lies inside
- * the queried geometry within a specified tolerance.
+ * This policy evaluates whether a candidate particle position lies inside
+ * the queried geometry volume or region within the specified tolerance.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Floating-point scalar type used for geometry queries.
  */
 template <typename T>
 struct VolumeDespawnOperator final {
 
     /**
-     * @brief Tests whether a particle position should be removed based on interior membership.
+     * @brief Tests whether a particle should be removed based on interior membership.
      *
-     * @param query Geometry query operator.
-     * @param particle Candidate particle position.
-     * @param tolerance Interior tolerance.
-     * @return True if the particle is inside within tolerance.
+     * The particle is considered removable when it lies inside the queried
+     * geometry region within the provided tolerance.
+     *
+     * @param query Geometry query operator used to test spatial membership.
+     * @param particle Candidate particle position in query space.
+     * @param tolerance Interior-membership tolerance.
+     * @return True if the particle lies inside within tolerance.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
     despawn(const GeometryOperator<T>& query,
@@ -76,19 +86,17 @@ struct VolumeDespawnOperator final {
 };
 
 /**
- * @brief Tagged despawn operator that dispatches between surface and volume policies.
+ * @brief Runtime-dispatched despawn operator that selects between stateless policies.
  *
- * This type stores exactly one active despawn policy at a time and dispatches
- * despawn tests according to the runtime tag stored in @ref type.
+ * This type stores only a runtime tag describing which despawn rule is active.
+ * Actual despawn logic is delegated to one of the stateless concrete policies:
+ * - @ref SurfaceDespawnOperator
+ * - @ref VolumeDespawnOperator
  *
- * Internally, it manages a union of:
- * - SurfaceDespawnOperator<T>
- * - VolumeDespawnOperator<T>
+ * Because the concrete policies are stateless, this wrapper only needs to store
+ * the runtime tag and does not need additional payload data.
  *
- * Because the active union member is selected dynamically, this type manually
- * manages construction, destruction, and copying of the active member.
- *
- * @tparam T Floating-point scalar type.
+ * @tparam T Floating-point scalar type used for geometry queries.
  */
 template <typename T>
 struct DespawnOperator final {
@@ -99,70 +107,53 @@ struct DespawnOperator final {
     DespawnType type = DespawnType::Surface;
 
     /**
-     * @brief Storage for the active concrete despawn policy.
-     *
-     * Exactly one member is active at a time, as indicated by @ref type.
-     */
-    union {
-
-        /**
-         * @brief Surface-based despawn policy storage.
-         */
-        SurfaceDespawnOperator<T> surface;
-
-        /**
-         * @brief Volume-based despawn policy storage.
-         */
-        VolumeDespawnOperator<T> volume;
-    };
-
-    /**
      * @brief Default constructor.
      *
-     * Initializes the operator with a surface-based despawn policy.
+     * Initializes the operator with the default surface-based despawn policy.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    DespawnOperator() noexcept;
+    DespawnOperator() noexcept = default;
 
     /**
-     * @brief Constructs a despawn operator of the requested type.
+     * @brief Constructs a despawn operator with the requested runtime policy type.
      *
-     * @param type Runtime despawn policy type to activate.
+     * @param type Runtime despawn policy tag to activate.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit DespawnOperator(DespawnType type) noexcept;
 
     /**
      * @brief Copy constructor.
      *
-     * Copies the runtime tag and reconstructs the corresponding active policy.
+     * Copies the runtime policy tag from another operator.
      *
-     * @param other Source operator to copy from.
+     * @param other Source operator.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    DespawnOperator(const DespawnOperator& other) noexcept;
+    DespawnOperator(const DespawnOperator& other) noexcept = default;
 
     /**
      * @brief Copy assignment operator.
      *
-     * Replaces the current active policy with a copy of the one stored in @p other.
+     * Replaces the current runtime policy tag with the one stored in @p other.
      *
-     * @param other Source operator to copy from.
-     * @return Reference to this object.
+     * @param other Source operator.
+     * @return Reference to this operator.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE DespawnOperator&
-    operator=(const DespawnOperator& other) noexcept;
+    operator=(const DespawnOperator& other) noexcept = default;
 
     /**
      * @brief Destructor.
      *
-     * Destroys the currently active concrete despawn policy.
+     * Uses the default trivial destruction behavior.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~DespawnOperator() noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~DespawnOperator() noexcept = default;
 
     /**
-     * @brief Constructs the operator from a surface despawn policy.
+     * @brief Constructs the runtime operator from a surface despawn policy.
      *
-     * The runtime tag is set to @ref DespawnType::Surface.
+     * Since the policy is stateless, constructing from it simply selects
+     * the @ref DespawnType::Surface runtime tag.
      *
      * @param op Concrete surface despawn policy.
      */
@@ -170,9 +161,10 @@ struct DespawnOperator final {
     DespawnOperator(const SurfaceDespawnOperator<T>& op);
 
     /**
-     * @brief Constructs the operator from a volume despawn policy.
+     * @brief Constructs the runtime operator from a volume despawn policy.
      *
-     * The runtime tag is set to @ref DespawnType::Volume.
+     * Since the policy is stateless, constructing from it simply selects
+     * the @ref DespawnType::Volume runtime tag.
      *
      * @param op Concrete volume despawn policy.
      */
@@ -180,37 +172,20 @@ struct DespawnOperator final {
     DespawnOperator(const VolumeDespawnOperator<T>& op);
 
     /**
-     * @brief Evaluates whether a candidate particle should be removed.
+     * @brief Evaluates whether a particle should be removed.
      *
-     * Dispatches the query to the currently active despawn policy.
+     * This function dispatches the query to the currently active concrete
+     * despawn policy based on the stored runtime tag.
      *
      * @param query Geometry query operator.
      * @param particle Candidate particle position.
-     * @param tolerance Tolerance used by the active despawn policy.
+     * @param tolerance Tolerance passed to the selected despawn policy.
      * @return True if the particle should be removed.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     despawn(const GeometryOperator<T>& query,
             const Vector3<T>& particle,
             T tolerance = T(0)) const noexcept;
-
-private:
-    /**
-     * @brief Destroys the currently active concrete despawn policy.
-     */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    destroy_active() noexcept;
-
-    /**
-     * @brief Reconstructs the active policy from another operator.
-     *
-     * This function assumes that @ref type has already been set to the desired
-     * active tag before it is called.
-     *
-     * @param other Source operator providing the active policy to copy.
-     */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    copy_from(const DespawnOperator& other) noexcept;
 };
 
 } // namespace atlas::fluid

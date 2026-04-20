@@ -13,10 +13,10 @@ using Vec3 = atlas::Vector3<T>;
 
 atlas::GeometryOperator<T>
 make_box_operator() {
-    const auto box = atlas::geometry::Box<T>::builder()
-                         .with_lower_corner(Vec3(-1, -1, -1))
-                         .with_upper_corner(Vec3(1, 1, 1))
-                         .build();
+    static const auto box = atlas::geometry::Box<T>::builder()
+                                .with_lower_corner(Vec3(-1, -1, -1))
+                                .with_upper_corner(Vec3(1, 1, 1))
+                                .build();
     return box.make_geometry_operator();
 }
 
