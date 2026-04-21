@@ -21,11 +21,13 @@ Source<T>::Source(DeviceBuffer<Unit<T>> units,
                   const bool flip,
                   const T spacing,
                   const T tolerance,
-                  const T temperature) noexcept
+                  const T temperature,
+                  ObserverHostPtr observer) noexcept
     : _units(std::move(units))
     , _spawn_types(std::move(spawn_types))
     , _spawn_operators(std::move(spawn_operators))
     , _fluid(std::move(fluid))
+    , _observer(std::move(observer))
     , _flip(flip)
     , _spacing(spacing)
     , _tolerance(tolerance)
@@ -244,7 +246,26 @@ template <typename T>
 void
 Source<T>::emit() {
 
+    const std::size_t step_index = _step_index++;
+    auto* source_sensor_matrics = _observer ? _observer->sensor_matrics<atlas::SourceSensorMatrics>() : nullptr;
+    HostBuffer<std::size_t> emitted_per_unit;
+
+    if (source_sensor_matrics != nullptr) {
+        emitted_per_unit = HostBuffer<std::size_t>(_units.size(), std::size_t { 0 });
+    }
+
+    const auto record_source_metrics = [&] {
+        if (source_sensor_matrics == nullptr) {
+            return;
+        }
+
+        for (std::size_t unit_index = 0; unit_index < emitted_per_unit.size(); ++unit_index) {
+            source_sensor_matrics->record(step_index, unit_index, emitted_per_unit[unit_index]);
+        }
+    };
+
     if (!_fluid) {
+        record_source_metrics();
         return;
     }
 
@@ -252,6 +273,7 @@ Source<T>::emit() {
     rebuild_cache();
 
     if (_local_particle_count == 0) {
+        record_source_metrics();
         return;
     }
 
@@ -263,6 +285,7 @@ Source<T>::emit() {
     const auto& properties_buf = _fluid->particle_properties();
 
     if (generators_buf.empty() || properties_buf.empty()) {
+        record_source_metrics();
         return;
     }
 
@@ -280,6 +303,7 @@ Source<T>::emit() {
                               << "Source emission skipped: no available slots for "
                               << _local_particle_count
                               << " particles\n";
+        record_source_metrics();
         return;
     }
 
@@ -324,6 +348,10 @@ Source<T>::emit() {
             continue;
         }
 
+        if (source_sensor_matrics != nullptr) {
+            emitted_per_unit[unit_index] = static_cast<std::size_t>(count);
+        }
+
         const auto* local_positions = atlas::raw_pointer_cast(positions.data());
         const auto* local_species   = species + species_offset;
 
@@ -356,6 +384,7 @@ Source<T>::emit() {
     }
 
     _fluid->set_particle_count(current_particle_count + emitted_count);
+    record_source_metrics();
 }
 
 template <typename T>
@@ -374,7 +403,8 @@ Source<T>::Builder::build() {
         _flip,
         _spacing,
         _tolerance,
-        _temperature);
+        _temperature,
+        _observer);
 }
 
 template <typename T>
@@ -405,6 +435,14 @@ Source<T>::Builder::with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) no
 
     // Store the target fluid that will receive emitted particles.
     _fluid = std::move(fluid);
+    return *this;
+}
+
+template <typename T>
+typename Source<T>::Builder&
+Source<T>::Builder::with_observer(ObserverHostPtr observer) noexcept {
+
+    _observer = std::move(observer);
     return *this;
 }
 

@@ -4,6 +4,7 @@
 #include <vizkit/vizkit.h>
 #endif
 
+#include <filesystem>
 #include <iostream>
 
 namespace {
@@ -45,6 +46,7 @@ namespace config {
 
     // Number of updates to execute when the example is built without Vizkit.
     constexpr int kHeadlessSteps = 1000;
+    constexpr std::size_t kObserverReserveCount = 4096;
 
     // Pipe geometry.
     const Vec3 kCylinderCenter(0, 0, 0);
@@ -88,6 +90,11 @@ namespace config {
 
 } // namespace config
 
+std::filesystem::path
+observer_output_path() {
+    return std::filesystem::path(__FILE__).parent_path() / "observer_output";
+}
+
 atlas::UnitHostPtr<T>
 make_unit(const atlas::GeometryHostPtr<T>& geometry) {
     // Units in this example are static world-space objects.
@@ -105,7 +112,7 @@ make_unit(const atlas::GeometryHostPtr<T>& geometry) {
 }
 
 atlas::FluidHostPtr<T>
-make_fluid() {
+make_fluid(const atlas::ObserverHostPtr& observer) {
     // Atlas fluids store:
     // - species/material properties
     // - host-configured generator models
@@ -144,6 +151,7 @@ make_fluid() {
         .with_buffer_size(config::kBufferSize)
         .with_properties(properties)
         .with_generators(generators)
+        .with_observer(observer)
         .make_host_shared();
 }
 
@@ -196,9 +204,14 @@ make_collider_interaction() {
 
 int
 main() {
+    const auto observer = atlas::Observer::builder()
+                              .with_source_sensor_matrics(config::kObserverReserveCount)
+                              .with_sink_sensor_matrics(config::kObserverReserveCount)
+                              .make_host_shared();
+
     // Create the particle container first because almost every other runtime
     // subsystem depends on it.
-    const auto fluid = make_fluid();
+    const auto fluid = make_fluid(observer);
 
     // Universe defines the simulation extents and regular cell grid.
     //
@@ -212,6 +225,7 @@ main() {
                               .with_lower_corner(bounds.lower_corner)
                               .with_upper_corner(bounds.upper_corner)
                               .with_cell_size(config::kCellSize)
+                              .with_observer(observer)
                               .make_host_shared();
 
     // SpatialHashingSearcher maps active particles into grid cells each step so
@@ -257,6 +271,7 @@ main() {
     const auto source = atlas::fluid::Source<T>::builder()
                             .with_units(atlas::HostBuffer<atlas::Unit<T>> { *source_unit })
                             .with_fluid(fluid)
+                            .with_observer(observer)
                             .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> {
                                 atlas::fluid::SpawnType::Surface,
                             })
@@ -269,6 +284,7 @@ main() {
     const auto sink = atlas::fluid::Sink<T>::builder()
                           .with_units(atlas::HostBuffer<atlas::Unit<T>> { *domain_unit })
                           .with_fluid(fluid)
+                          .with_observer(observer)
                           .with_despawn_types(atlas::HostBuffer<atlas::fluid::DespawnType> {
                               atlas::fluid::DespawnType::Volume,
                           })
@@ -339,7 +355,9 @@ main() {
     std::cout
         << "Nitrogen DSMC example: 300 K, zero bulk drift, circular source near +z, flow inside a finite cylinder.\n";
 
-    return viewer.run();
+    const int exit_code = viewer.run();
+    observer->export_csv(observer_output_path());
+    return exit_code;
 #else
     // Headless fallback for non-Vizkit builds.
     //
@@ -352,6 +370,7 @@ main() {
     std::cout
         << "Nitrogen DSMC example ran headlessly for " << config::kHeadlessSteps << " steps.\n"
         << "Active particles: " << fluid->particle_count() << '\n';
+    observer->export_csv(observer_output_path());
     return 0;
 #endif
 }

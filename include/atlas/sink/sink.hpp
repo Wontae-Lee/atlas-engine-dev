@@ -19,11 +19,13 @@ Sink<T>::Sink(DeviceBuffer<Unit<T>> units,
               DeviceBuffer<DespawnOperator<T>> despawn_operators,
               atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
               const bool flip,
-              const T tolerance) noexcept
+              const T tolerance,
+              ObserverHostPtr observer) noexcept
     : _units(std::move(units))
     , _despawn_types(std::move(despawn_types))
     , _despawn_operators(std::move(despawn_operators))
     , _fluid(std::move(fluid))
+    , _observer(std::move(observer))
     , _flip(flip)
     , _tolerance(tolerance) {
 
@@ -79,11 +81,30 @@ template <typename T>
 void
 Sink<T>::sink() {
 
+    const std::size_t step_index = _step_index++;
+    auto* sink_sensor_matrics = _observer ? _observer->sensor_matrics<atlas::SinkSensorMatrics>() : nullptr;
+    HostBuffer<std::size_t> removed_per_unit;
+
+    if (sink_sensor_matrics != nullptr) {
+        removed_per_unit = HostBuffer<std::size_t>(_units.size(), std::size_t { 0 });
+    }
+
+    const auto record_sink_metrics = [&] {
+        if (sink_sensor_matrics == nullptr) {
+            return;
+        }
+
+        for (std::size_t unit_index = 0; unit_index < removed_per_unit.size(); ++unit_index) {
+            sink_sensor_matrics->record(step_index, unit_index, removed_per_unit[unit_index]);
+        }
+    };
+
     // Sink processing requires:
     // - a valid fluid object,
     // - a position state, because particle locations are tested against geometry,
     // - an active state, because particles are marked alive/dead through that mask.
     if (!_fluid) {
+        record_sink_metrics();
         return;
     }
 
@@ -91,6 +112,7 @@ Sink<T>::sink() {
     auto* active_state   = _fluid->template state<atlas::fluid::FluidActiveState<T>>();
 
     if (position_state == nullptr || active_state == nullptr) {
+        record_sink_metrics();
         return;
     }
 
@@ -99,6 +121,7 @@ Sink<T>::sink() {
 
     // If the underlying buffers are empty, there is nothing to test or remove.
     if (positions.empty() || active.empty()) {
+        record_sink_metrics();
         return;
     }
 
@@ -112,6 +135,20 @@ Sink<T>::sink() {
     const std::size_t particle_count = _fluid->particle_count();
     const bool flip                  = _flip;
     const T tol                      = _tolerance;
+    int* despawned_unit_indices_ptr  = nullptr;
+
+    if (sink_sensor_matrics != nullptr) {
+        if (_despawned_unit_indices.size() != particle_count) {
+            _despawned_unit_indices.resize(particle_count);
+        }
+
+        despawned_unit_indices_ptr = atlas::raw_pointer_cast(_despawned_unit_indices.data());
+    }
+
+    if (particle_count == 0) {
+        record_sink_metrics();
+        return;
+    }
 
     // Process each particle independently on the device.
     //
@@ -127,11 +164,15 @@ Sink<T>::sink() {
         [=] ATLAS_DEVICE(const std::size_t i) {
             // Ignore particles that are already inactive.
             if (active_ptr[i] == 0) {
+                if (despawned_unit_indices_ptr != nullptr) {
+                    despawned_unit_indices_ptr[i] = -1;
+                }
                 return;
             }
 
             const Vector3<T>& p = positions_ptr[i];
             bool should_despawn = false;
+            int matched_unit_index = -1;
 
             // Test the particle against every configured sink unit.
             for (int unit_index = 0; unit_index < unit_count; ++unit_index) {
@@ -154,6 +195,7 @@ Sink<T>::sink() {
                 // Stop at the first unit that requests particle removal.
                 if (despawn_operators[despawn_operator_index].despawn(geometry_op, local_p, tol)) {
                     should_despawn = true;
+                    matched_unit_index = unit_index;
                     break;
                 }
             }
@@ -164,10 +206,37 @@ Sink<T>::sink() {
             //
             // Flipped behavior inverts that interpretation.
             const bool keep_particle = flip ? should_despawn : !should_despawn;
+            int recorded_unit_index  = matched_unit_index;
+
+            // In flipped mode, removal happens when a particle fails to match the
+            // keep-volume sink unit(s). For the common single-unit case used by
+            // the examples, attribute that removal back to the controlling unit
+            // so sink metrics reflect actual deletions.
+            if (!keep_particle && recorded_unit_index < 0 && flip && unit_count == 1) {
+                recorded_unit_index = 0;
+            }
 
             // Encode the survival result back into the active-state mask.
             active_ptr[i] = keep_particle ? 1 : 0;
+
+            if (despawned_unit_indices_ptr != nullptr) {
+                despawned_unit_indices_ptr[i] = keep_particle ? -1 : recorded_unit_index;
+            }
         });
+
+    if (sink_sensor_matrics != nullptr) {
+        const HostBuffer<int> removed_units(
+            _despawned_unit_indices.begin(),
+            _despawned_unit_indices.begin() + static_cast<std::ptrdiff_t>(particle_count));
+
+        for (const int unit_index : removed_units) {
+            if (unit_index >= 0 && static_cast<std::size_t>(unit_index) < removed_per_unit.size()) {
+                ++removed_per_unit[static_cast<std::size_t>(unit_index)];
+            }
+        }
+    }
+
+    record_sink_metrics();
 
     // Re-pack every registered fluid state so surviving particles occupy a dense prefix.
     compact_fluid_particles();
@@ -323,7 +392,8 @@ Sink<T>::Builder::build() {
         DeviceBuffer<DespawnOperator<T>>(despawn_operators.begin(), despawn_operators.end()),
         _fluid,
         _flip,
-        _tolerance);
+        _tolerance,
+        _observer);
 }
 
 template <typename T>
@@ -355,6 +425,14 @@ Sink<T>::Builder::with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noex
 
     // Store the target fluid whose particles will be tested and compacted by the sink.
     _fluid = std::move(fluid);
+    return *this;
+}
+
+template <typename T>
+typename Sink<T>::Builder&
+Sink<T>::Builder::with_observer(ObserverHostPtr observer) noexcept {
+
+    _observer = std::move(observer);
     return *this;
 }
 

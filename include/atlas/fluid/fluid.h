@@ -12,6 +12,7 @@
 #include <atlas/generator/generator.h>
 #include <atlas/material/material_properties.h>
 #include <atlas/memory/memory.h>
+#include <atlas/observer/observer.h>
 
 #include <memory>
 #include <typeindex>
@@ -264,6 +265,14 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     statistical_weight() const noexcept;
 
+    /**
+     * @brief Returns the optional observer used to record runtime metrics.
+     *
+     * @return Const reference to the observer shared pointer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const ObserverHostPtr&
+    observer() const noexcept;
+
 private:
     friend class Builder;
 
@@ -291,6 +300,11 @@ private:
      * @brief Statistical weight shared across this fluid.
      */
     T _statistical_weight = T(1);
+
+    /**
+     * @brief Optional observer used to record runtime metrics.
+     */
+    ObserverHostPtr _observer {};
 
     /**
      * @brief Registry of installed simulation states keyed by exact concrete type.
@@ -376,6 +390,15 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_statistical_weight(T statistical_weight) noexcept;
 
+    /**
+     * @brief Sets the optional observer used to record runtime metrics.
+     *
+     * @param observer Host shared pointer to the observer.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_observer(ObserverHostPtr observer) noexcept;
+
 private:
     /**
      * @brief Validates the current builder configuration.
@@ -403,6 +426,11 @@ private:
      * @brief Requested fluid-level statistical weight.
      */
     T _statistical_weight = T(1.0);
+
+    /**
+     * @brief Optional observer installed into the built fluid.
+     */
+    ObserverHostPtr _observer {};
 };
 
 } // namespace atlas::fluid

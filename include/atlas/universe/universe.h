@@ -8,6 +8,7 @@
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
+#include <atlas/observer/observer.h>
 #include <atlas/universe/universe_state.h>
 
 #include <memory>
@@ -223,6 +224,14 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
     inverse_cell_size() const noexcept;
 
+    /**
+     * @brief Returns the optional observer used to record runtime metrics.
+     *
+     * @return Const reference to the observer shared pointer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const ObserverHostPtr&
+    observer() const noexcept;
+
 private:
     /**
      * @brief Lower corner of the domain.
@@ -258,6 +267,11 @@ private:
      * @brief Total number of cells in the grid.
      */
     int _num_of_cells = 1;
+
+    /**
+     * @brief Optional observer used to record runtime metrics.
+     */
+    ObserverHostPtr _observer {};
 
     /**
      * @brief Registry of universe states indexed by concrete type.
@@ -344,6 +358,15 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_cell_size(T h) noexcept;
 
+    /**
+     * @brief Sets the optional observer used to record runtime metrics.
+     *
+     * @param observer Host shared pointer to the observer.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_observer(ObserverHostPtr observer) noexcept;
+
 private:
     /**
      * @brief Validates the current builder configuration.
@@ -368,6 +391,11 @@ private:
      * @brief Cell size configured for construction.
      */
     T _cell_size = T(1);
+
+    /**
+     * @brief Optional observer installed into the built universe.
+     */
+    ObserverHostPtr _observer {};
 };
 
 } // namespace atlas::universe

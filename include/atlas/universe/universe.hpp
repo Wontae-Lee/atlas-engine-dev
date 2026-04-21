@@ -188,13 +188,21 @@ Universe<T>::inverse_cell_size() const noexcept {
 }
 
 template <typename T>
+const ObserverHostPtr&
+Universe<T>::observer() const noexcept {
+    return _observer;
+}
+
+template <typename T>
 Universe<T>
 Universe<T>::Builder::build() const {
 
     // Validate builder parameters before constructing the final Universe object.
     validate();
 
-    return Universe<T>(_lower_corner, _upper_corner, _cell_size);
+    auto universe = Universe<T>(_lower_corner, _upper_corner, _cell_size);
+    universe._observer = _observer;
+    return universe;
 }
 
 template <typename T>
@@ -204,10 +212,8 @@ Universe<T>::Builder::make_host_shared() const {
     // Validate builder parameters before constructing a shared host-side instance.
     validate();
 
-    return atlas::make_host_shared<Universe<T>>(
-        _lower_corner,
-        _upper_corner,
-        _cell_size);
+    auto universe = build();
+    return atlas::make_host_shared<Universe<T>>(std::move(universe));
 }
 
 template <typename T>
@@ -246,6 +252,14 @@ Universe<T>::Builder::with_cell_size(T h) noexcept {
 
     // Set the cell size configured for construction.
     _cell_size = h;
+    return *this;
+}
+
+template <typename T>
+typename Universe<T>::Builder&
+Universe<T>::Builder::with_observer(ObserverHostPtr observer) noexcept {
+
+    _observer = std::move(observer);
     return *this;
 }
 

@@ -9,6 +9,7 @@
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
+#include <atlas/observer/observer.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/unit/unit.h>
 
@@ -85,7 +86,8 @@ public:
            bool flip     = false,
            T spacing     = T(0.1),
            T tolerance   = T(0),
-           T temperature = T(273.15)) noexcept;
+           T temperature = T(273.15),
+           ObserverHostPtr observer = nullptr) noexcept;
 
     /**
      * @brief Creates a Builder instance.
@@ -160,6 +162,11 @@ private:
     FluidHostPtr<T> _fluid;
 
     /**
+     * @brief Optional observer used to record source metrics.
+     */
+    ObserverHostPtr _observer {};
+
+    /**
      * @brief Whether spawn acceptance should be inverted.
      */
     bool _flip = false;
@@ -216,6 +223,11 @@ private:
      * @brief Indicates whether cached local emission data must be rebuilt.
      */
     bool _is_invalidated_cache = true;
+
+    /**
+     * @brief Monotonic source-step index used by source metric recording.
+     */
+    std::size_t _step_index = 0;
 };
 
 /**
@@ -280,6 +292,15 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
+
+    /**
+     * @brief Sets the optional observer used to record source metrics.
+     *
+     * @param observer Host shared pointer to the observer.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_observer(ObserverHostPtr observer) noexcept;
 
     /**
      * @brief Appends spawn type configuration entries.
@@ -373,6 +394,11 @@ private:
      * @brief Target fluid collected by the builder.
      */
     FluidHostPtr<T> _fluid;
+
+    /**
+     * @brief Optional observer collected by the builder.
+     */
+    ObserverHostPtr _observer {};
 
     /**
      * @brief Host-side spawn type configuration.

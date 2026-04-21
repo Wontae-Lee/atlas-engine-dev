@@ -94,6 +94,12 @@ Fluid<T>::statistical_weight() const noexcept {
 }
 
 template <typename T>
+const ObserverHostPtr&
+Fluid<T>::observer() const noexcept {
+    return _observer;
+}
+
+template <typename T>
 void
 Fluid<T>::set_particle_count(const size_t particle_count) {
 
@@ -265,6 +271,7 @@ Fluid<T>::Builder::build() const {
 
     // The sized constructor already installed default states and capacity.
     f._statistical_weight = _statistical_weight;
+    f._observer           = _observer;
 
     return f;
 }
@@ -332,6 +339,14 @@ Fluid<T>::Builder::with_statistical_weight(const T statistical_weight) noexcept 
 
     // Store the fluid-level statistical weight to be installed during build().
     _statistical_weight = statistical_weight;
+    return *this;
+}
+
+template <typename T>
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::with_observer(ObserverHostPtr observer) noexcept {
+
+    _observer = std::move(observer);
     return *this;
 }
 
