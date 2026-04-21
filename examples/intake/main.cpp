@@ -53,9 +53,17 @@ namespace config {
     // The OBJ export already uses meter-scale coordinates, so keep the mesh at
     // unit scale and only re-center it around the world origin.
     constexpr T kIntakeMeshScale = 1.0f;
-    constexpr T kDomainPadding   = 0.15f;
-    constexpr T kSourceInset     = 0.02f;
-    constexpr T kSourceRadiusPad = 0.08f;
+    const Vec3 kDomainPadding(0.55f, 0.45f, 1.90f);
+    constexpr T kSourceInset         = 0.10f;
+    constexpr T kSourceRadiusPad     = 0.18f;
+    constexpr T kSourceForwardOffset = 0.45f;
+
+    // Start the intake slightly tilted and keep it rotating slowly so collider
+    // motion is visible in both the simulation and Vizkit.
+    constexpr T kColliderTiltXRad = -0.18f;
+    constexpr T kColliderTiltZRad = 0.10f;
+    constexpr T kColliderSpinRate = 240.0f;
+    const Vec3 kColliderSpinAxis(0.0f, 1.0f, 0.25f);
 
     // The source emits a thermalized fluid with no prescribed bulk drift.
     const Vec3 kBulkVelocity(0.0f, 0.0f, 0.0f);
@@ -96,19 +104,33 @@ intake_mesh_path() {
 }
 
 atlas::UnitHostPtr<T>
-make_unit(const atlas::GeometryHostPtr<T>& geometry) {
-    // Units in this example are static world-space objects.
+make_unit(const atlas::GeometryHostPtr<T>& geometry,
+          const Vec3& translation = Vec3(0, 0, 0),
+          const atlas::Quaternion<T>& orientation = atlas::Quaternion<T>(1, 0, 0, 0),
+          const Vec3* angular_velocity = nullptr) {
+    // Units in this example are rigid world-space objects.
     //
-    // The geometry defines the local shape, while Sync supplies the rigid
-    // transform used by collider queries and Vizkit geometry layers.
+    // The geometry defines the local shape, while Sync and the optional angular
+    // velocity control pose and runtime motion.
     const auto sync = atlas::Sync<T>::builder()
-                          .with_rigid_pose(Vec3(0, 0, 0), atlas::Quaternion<T>(1, 0, 0, 0))
+                          .with_rigid_pose(translation, orientation)
                           .make_host_shared();
 
-    return atlas::Unit<T>::builder()
-        .with_geometry(geometry)
-        .with_sync(sync)
-        .make_host_shared();
+    auto builder = atlas::Unit<T>::builder();
+    builder.with_geometry(geometry).with_sync(sync);
+    if (angular_velocity != nullptr) {
+        builder.with_angular_velocity(*angular_velocity);
+    }
+
+    return builder.make_host_shared();
+}
+
+atlas::Quaternion<T>
+make_collider_orientation() {
+    return atlas::Quaternion<T>::from_euler_xyz(
+        config::kColliderTiltXRad,
+        T(0),
+        config::kColliderTiltZRad);
 }
 
 atlas::FluidHostPtr<T>
@@ -156,13 +178,13 @@ make_fluid() {
 
 atlas::GeometryHostPtr<T>
 make_source_geometry(const atlas::spatial::AxisAlignedBoundingBox<T>& bounds) {
-    // Emit from a disk slightly below the upper intake opening so particles
-    // start within the simulation bounds.
+    // Emit from a disk slightly below the upper opening and pulled forward
+    // toward the intake mouth.
     const Vec3 extents = bounds.extents();
     const T radius = std::max(
         T(0.05),
         T(0.5) * std::min(extents.x, extents.z) - config::kSourceRadiusPad);
-    const Vec3 center(0.0f, bounds.upper_corner.y - config::kSourceInset, 0.0f);
+    const Vec3 center(0.0f, bounds.upper_corner.y - config::kSourceInset, config::kSourceForwardOffset);
 
     return atlas::geometry::Circle<T>::builder()
         .with_center(center)
@@ -214,10 +236,8 @@ make_intake_geometry() {
 atlas::GeometryHostPtr<T>
 make_bound_geometry(const atlas::spatial::AxisAlignedBoundingBox<T>& geometry_bounds) {
     return atlas::geometry::Box<T>::builder()
-        .with_lower_corner(
-            geometry_bounds.lower_corner - Vec3(config::kDomainPadding, config::kDomainPadding, config::kDomainPadding))
-        .with_upper_corner(
-            geometry_bounds.upper_corner + Vec3(config::kDomainPadding, config::kDomainPadding, config::kDomainPadding))
+        .with_lower_corner(geometry_bounds.lower_corner - config::kDomainPadding)
+        .with_upper_corner(geometry_bounds.upper_corner + config::kDomainPadding)
         .make_host_shared();
 }
 
@@ -293,9 +313,16 @@ main() {
 
     // Wrap each geometry in a Unit so the same objects can be used by runtime
     // systems and by Vizkit layers.
+    const auto collider_orientation = make_collider_orientation();
+    const auto collider_spin        = config::kColliderSpinAxis * config::kColliderSpinRate;
+
     const auto domain_unit = make_unit(domain_geometry);
     const auto source_unit = make_unit(source_geometry);
-    const auto intake_unit = make_unit(intake_geometry);
+    const auto intake_unit = make_unit(
+        intake_geometry,
+        Vec3(0, 0, 0),
+        collider_orientation,
+        &collider_spin);
 
     // Source emits surface samples from the circular source at thermal equilibrium.
     const auto source = atlas::fluid::Source<T>::builder()
