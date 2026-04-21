@@ -58,6 +58,8 @@
 #include <atlas/memory/copy.h>
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/observer/observer.h>
+#include <atlas/observer/sensor_matrics.h>
 #include <atlas/orchestrator/orchestrator.h>
 #include <atlas/parallel/parallel.h>
 #include <atlas/parallel/parallel_fill.h>

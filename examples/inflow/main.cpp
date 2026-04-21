@@ -22,7 +22,7 @@ namespace config {
     // - collisions against the cylinder wall volume
     // - sink removal outside the cylinder's axis-aligned bounds
     constexpr T kTemperature           = 300.0f;
-    constexpr T kDt                    = 2.5e-6f;
+    constexpr T kDt                    = 2.5e-5f;
     constexpr std::size_t kBufferSize  = 200000;
     constexpr T kNitrogenMolecularMass = 4.651734e-26f;
     constexpr T kNitrogenDiameter      = 4.17e-10f;
@@ -36,7 +36,7 @@ namespace config {
     // emission points. Smaller values increase the number of emitted particles per
     // update, which makes the flow field visually denser but also more expensive.
     constexpr T kCellSize      = 0.25f;
-    constexpr T kSourceSpacing = 0.18f;
+    constexpr T kSourceSpacing = 0.15f;
 
     // Viewer-side presentation parameters.
     constexpr int kViewerWidth    = 1440;
@@ -54,7 +54,7 @@ namespace config {
     // Circular source placed near the +z side of the cylinder.
     const Vec3 kSourceCenter(0.0f, 0.0f, 3.6f);
     const Vec3 kSourceNormal(0.0f, 0.0f, 1.0f);
-    constexpr T kSourceRadius = 0.45f;
+    constexpr T kSourceRadius = 1.f;
 
     // The source emits a thermalized fluid with no prescribed bulk drift.
     const Vec3 kBulkVelocity(0.0f, 0.0f, 0.0f);
