@@ -26,7 +26,7 @@ namespace config {
     // - sink removal outside the cylinder's axis-aligned bounds
     constexpr T kTemperature           = 300.0f;
     constexpr T kDt                    = 2.5e-5f;
-    constexpr std::size_t kBufferSize  = 200000;
+    constexpr std::size_t kBufferSize  = 500000;
     constexpr T kNitrogenMolecularMass = 4.651734e-26f;
     constexpr T kNitrogenDiameter      = 4.17e-10f;
 
@@ -53,20 +53,23 @@ namespace config {
     // The OBJ export already uses meter-scale coordinates, so keep the mesh at
     // unit scale and only re-center it around the world origin.
     constexpr T kIntakeMeshScale = 1.0f;
-    const Vec3 kDomainPadding(0.55f, 0.45f, 1.90f);
+    const Vec3 kDomainPadding(.5f, 4.f, 2.f);
     constexpr T kSourceInset         = 0.10f;
     constexpr T kSourceRadiusPad     = 0.18f;
     constexpr T kSourceForwardOffset = 0.45f;
 
     // Start the intake slightly tilted and keep it rotating slowly so collider
     // motion is visible in both the simulation and Vizkit.
-    constexpr T kColliderTiltXRad = -0.18f;
-    constexpr T kColliderTiltZRad = 0.10f;
-    constexpr T kColliderSpinRate = 240.0f;
+    constexpr T kColliderTiltXRad   = -0.18f;
+    constexpr T kColliderTiltZRad   = 0.10f;
+    // Vizkit layer updates use the simulation dt, which is very small in this
+    // example, so the collider needs a much larger angular speed to look like
+    // it is actually rotating on screen.
+    constexpr T kColliderSpinRate   = 640.0f;
     const Vec3 kColliderSpinAxis(0.0f, 1.0f, 0.25f);
 
     // The source emits a thermalized fluid with no prescribed bulk drift.
-    const Vec3 kBulkVelocity(0.0f, 0.0f, 0.0f);
+    const Vec3 kBulkVelocity(0.0f, -5000.0f, 0.0f);
 
     // Surface-interaction settings for the cylinder.
     //
@@ -91,8 +94,8 @@ namespace config {
     constexpr atlas::MeasureModeType kMeasureMode = atlas::MeasureModeType::Field;
 
     // Simple visual styling for the particle cloud and window title.
-    const atlas::Vector4<T> kParticleColor(0.10f, 0.74f, 0.92f, 0.80f);
-    const atlas::Vector4<T> kColliderColor(0.92f, 0.96f, 0.98f, 0.28f);
+    const atlas::Vector4<T> kParticleColor(0.10f, 0.74f, 0.92f, 0.40f);
+    const atlas::Vector4<T> kColliderColor(0.92f, 0.96f, 0.98f, 0.8f);
     constexpr const char* kViewerTitle = "Atlas DSMC Nitrogen Intake Flow";
 
 } // namespace config
