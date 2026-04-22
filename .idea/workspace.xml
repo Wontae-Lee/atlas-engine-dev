@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="29" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="31" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
@@ -46,6 +46,7 @@
       <config projectName="atlas-engine-dev" targetName="absl_spinlock_wait" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_random_seed_sequences" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="profiler_manager_iterations_test" />
+      <config projectName="atlas-engine-dev" targetName="orchestrator" />
       <config projectName="atlas-engine-dev" targetName="diagnostics_test" />
       <config projectName="atlas-engine-dev" targetName="absl_log_internal_check_op" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_math_matrix" />
@@ -61,6 +62,7 @@
       <config projectName="atlas-engine-dev" targetName="templated_fixture_test" />
       <config projectName="atlas-engine-dev" targetName="basic_test" />
       <config projectName="atlas-engine-dev" targetName="libprotoc" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_orchestrator" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_container" />
       <config projectName="atlas-engine-dev" targetName="benchmark_setup_teardown_test" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_iterator" />
@@ -134,6 +136,7 @@
       <config projectName="atlas-engine-dev" targetName="Nightly" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalSubmit" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="absl_symbolize" folderName="Abseil" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_serialization" />
       <config projectName="atlas-engine-dev" targetName="absl_random_distributions" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_cordz_functions" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_random_seed_gen_exception" folderName="Abseil/internal" />
@@ -173,6 +176,7 @@
       <config projectName="atlas-engine-dev" targetName="absl_flags_program_name" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="absl_demangle_internal" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="absl_crc_cpu_detect" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="waterfall" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalTest" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_tuple" />
       <config projectName="atlas-engine-dev" targetName="libprotobuf-lite" />
@@ -263,34 +267,31 @@
       <configuration PROFILE_NAME="tbb-release" PROFILE_DISPLAY_NAME="Atlas TBB Release (Vizkit+Logging+GoogleTest+Benchmarks)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-release" />
       <configuration PROFILE_NAME="tbb-relwithdebinfo" PROFILE_DISPLAY_NAME="Atlas TBB RelWithDebInfo (Vizkit+Logging+GoogleTest+Benchmarks)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-relwithdebinfo" />
       <configuration PROFILE_NAME="tbb-debug-make" PROFILE_DISPLAY_NAME="Atlas TBB Debug (Unix Makefiles)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-debug-make" />
-      <configuration PROFILE_NAME="tbb-debug-headless" PROFILE_DISPLAY_NAME="Atlas TBB Debug Headless (Logging+GoogleTest)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-debug-headless" />
+      <configuration PROFILE_NAME="tbb-debug-core" PROFILE_DISPLAY_NAME="Atlas TBB Debug Core (Logging+GoogleTest)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-debug-core" />
+      <configuration PROFILE_NAME="tbb-release-core" PROFILE_DISPLAY_NAME="Atlas TBB Release Core (Logging+GoogleTest)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-release-core" />
       <configuration PROFILE_NAME="cuda-debug" PROFILE_DISPLAY_NAME="Atlas CUDA Debug (Auto-detect CUDA toolchain/arch)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug" />
       <configuration PROFILE_NAME="cuda-release" PROFILE_DISPLAY_NAME="Atlas CUDA Release (Auto-detect CUDA toolchain/arch)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-release" />
       <configuration PROFILE_NAME="cuda-relwithdebinfo" PROFILE_DISPLAY_NAME="Atlas CUDA RelWithDebInfo (Auto-detect CUDA toolchain/arch)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-relwithdebinfo" />
-      <configuration PROFILE_NAME="cuda-debug-headless" PROFILE_DISPLAY_NAME="Atlas CUDA Debug Headless (Auto-detect CUDA toolchain/arch)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug-headless" />
-      <configuration PROFILE_NAME="cuda-release-headless" PROFILE_DISPLAY_NAME="Atlas CUDA Release Headless (Auto-detect CUDA toolchain/arch)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-release-headless" />
-      <configuration PROFILE_NAME="cuda-debug-tests-headless" PROFILE_DISPLAY_NAME="Atlas CUDA Debug Tests Headless (atlas_all_cuda_test)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug-tests-headless" />
+      <configuration PROFILE_NAME="cuda-debug-core" PROFILE_DISPLAY_NAME="Atlas CUDA Debug Core (Auto-detect CUDA toolchain/arch)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug-core" />
+      <configuration PROFILE_NAME="cuda-release-core" PROFILE_DISPLAY_NAME="Atlas CUDA Release Core (Auto-detect CUDA toolchain/arch)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-release-core" />
+      <configuration PROFILE_NAME="cuda-debug-tests" PROFILE_DISPLAY_NAME="Atlas CUDA Debug Tests (atlas_all_cuda_test)" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug-tests" />
       <configuration PROFILE_NAME="tbb-debug - build-tbb-debug" PROFILE_DISPLAY_NAME="Build TBB Debug" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-debug" />
       <configuration PROFILE_NAME="tbb-release - build-tbb-release" PROFILE_DISPLAY_NAME="Build TBB Release" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-release" />
       <configuration PROFILE_NAME="tbb-relwithdebinfo - build-tbb-relwithdebinfo" PROFILE_DISPLAY_NAME="Build TBB RelWithDebInfo" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-relwithdebinfo" />
-      <configuration PROFILE_NAME="tbb-debug-headless - build-tbb-debug-headless" PROFILE_DISPLAY_NAME="Build TBB Debug Headless" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-debug-headless" />
+      <configuration PROFILE_NAME="tbb-debug-core - build-tbb-debug-core" PROFILE_DISPLAY_NAME="Build TBB Debug Core" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-debug-core" />
+      <configuration PROFILE_NAME="tbb-release-core - build-tbb-release-core" PROFILE_DISPLAY_NAME="Build TBB Release Core" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/tbb-release-core" />
       <configuration PROFILE_NAME="cuda-debug - build-cuda-debug" PROFILE_DISPLAY_NAME="Build CUDA Debug" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug" />
       <configuration PROFILE_NAME="cuda-release - build-cuda-release" PROFILE_DISPLAY_NAME="Build CUDA Release" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-release" />
       <configuration PROFILE_NAME="cuda-relwithdebinfo - build-cuda-relwithdebinfo" PROFILE_DISPLAY_NAME="Build CUDA RelWithDebInfo" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-relwithdebinfo" />
-      <configuration PROFILE_NAME="cuda-debug-headless - build-cuda-debug-headless" PROFILE_DISPLAY_NAME="Build CUDA Debug Headless" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug-headless" />
-      <configuration PROFILE_NAME="cuda-release-headless - build-cuda-release-headless" PROFILE_DISPLAY_NAME="Build CUDA Release Headless" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-release-headless" />
-      <configuration PROFILE_NAME="cuda-debug-tests-headless - build-cuda-debug-tests-headless" PROFILE_DISPLAY_NAME="Build CUDA Debug Tests Headless" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug-tests-headless" />
+      <configuration PROFILE_NAME="cuda-debug-core - build-cuda-debug-core" PROFILE_DISPLAY_NAME="Build CUDA Debug Core" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug-core" />
+      <configuration PROFILE_NAME="cuda-release-core - build-cuda-release-core" PROFILE_DISPLAY_NAME="Build CUDA Release Core" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-release-core" />
+      <configuration PROFILE_NAME="cuda-debug-tests - build-cuda-debug-tests" PROFILE_DISPLAY_NAME="Build CUDA Debug Tests" ENABLED="false" FROM_PRESET="true" GENERATION_DIR="$PROJECT_DIR$/build/cuda-debug-tests" />
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="add NODISCARD to Observer">
+    <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Updated comments.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/cylinder/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/cylinder/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/inflow/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/inflow/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/intake/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/intake/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/serialization/protobuf_snapshot.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/serialization/protobuf_snapshot.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -313,7 +314,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="412" />
+    <option name="cachedIndexableFilesCount" value="489" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -382,53 +383,57 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;CMake Application.atlas_all_cuda_test.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.atlas_cuda_tests.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.atlas_unit_cuda_tests.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.cylinder.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.dynamic.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.inflow.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.intake.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.overview.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.solver.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.visualization.executor&quot;: &quot;Run&quot;,
-    &quot;Google Test.All in atlas_tests.executor&quot;: &quot;Run&quot;,
-    &quot;Google Test.Sink.BuilderRejectsMissingDependencies.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.generate_headers.executor&quot;: &quot;Run&quot;,
-    &quot;Python.remove_comments.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.west.config.association.type.startup.service&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;cf.advertisement.text.overridden&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;ctest.advertisement.all.test.configuration.is.created&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;development&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/wontae/CLionProjects/atlas-engine-dev/examples/intake&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;project.propVCSSupport.DirectoryMappings&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "CMake Application.atlas_all_cuda_test.executor": "Run",
+    "CMake Application.atlas_cuda_tests.executor": "Run",
+    "CMake Application.atlas_unit_cuda_tests.executor": "Run",
+    "CMake Application.cube_gravity_inflow.executor": "Run",
+    "CMake Application.cylinder.executor": "Run",
+    "CMake Application.dynamic.executor": "Run",
+    "CMake Application.inflow.executor": "Run",
+    "CMake Application.intake.executor": "Run",
+    "CMake Application.lh2_waterfall.executor": "Run",
+    "CMake Application.orchestrator.executor": "Run",
+    "CMake Application.overview.executor": "Run",
+    "CMake Application.solver.executor": "Run",
+    "CMake Application.visualization.executor": "Run",
+    "CMake Application.waterfall.executor": "Run",
+    "Google Test.All in atlas_tests.executor": "Run",
+    "Google Test.Sink.BuilderRejectsMissingDependencies.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.generate_headers.executor": "Run",
+    "Python.remove_comments.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.RadMigrateCodeStyle": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "RunOnceActivity.west.config.association.type.startup.service": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cf.advertisement.text.overridden": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "ctest.advertisement.all.test.configuration.is.created": "true",
+    "git-widget-placeholder": "development",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/examples/orchestrator",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.first.attach.projects": "true",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "project.propVCSSupport.DirectoryMappings",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="main" />
@@ -438,11 +443,11 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/examples/orchestrator" />
+      <recent name="$PROJECT_DIR$/examples/waterfall" />
       <recent name="$PROJECT_DIR$/examples/intake" />
       <recent name="$PROJECT_DIR$/include/atlas/universe" />
       <recent name="$PROJECT_DIR$/include/atlas/measure" />
-      <recent name="$PROJECT_DIR$/include/atlas/solver/dsmc" />
-      <recent name="$PROJECT_DIR$/include/atlas/advector" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/cudatest" />
@@ -452,7 +457,7 @@
       <recent name="$PROJECT_DIR$/tests" />
     </key>
   </component>
-  <component name="RunManager" selected="CMake Application.intake">
+  <component name="RunManager" selected="CMake Application.orchestrator">
     <configuration default="true" type="UvRunConfigurationType" factoryName="UvRunConfigurationType">
       <option name="args">
         <list />
@@ -680,6 +685,12 @@
         <option name="BeforeTestRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="atlas_tests_orchestrator" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_orchestrator" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_orchestrator" TEST_MODE="SUITE_TEST">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="BeforeTestRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="atlas_tests_parallel" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_parallel" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_parallel" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -747,6 +758,12 @@
       </method>
     </configuration>
     <configuration name="atlas_tests_searcher" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_searcher" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_searcher" TEST_MODE="SUITE_TEST">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="BeforeTestRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="atlas_tests_serialization" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_serialization" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_serialization" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
         <option name="BeforeTestRunTask" enabled="true" />
@@ -1448,6 +1465,11 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="orchestrator" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="orchestrator" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="orchestrator">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="protoc-gen-upb" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="protoc-gen-upb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="protoc-gen-upb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -1494,6 +1516,11 @@
       </method>
     </configuration>
     <configuration name="utf8_validity" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="utf8_validity" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="waterfall" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="waterfall" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="waterfall">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -1724,6 +1751,8 @@
       <item itemvalue="CMake Application.cylinder" />
       <item itemvalue="CMake Application.inflow" />
       <item itemvalue="CMake Application.intake" />
+      <item itemvalue="CMake Application.orchestrator" />
+      <item itemvalue="CMake Application.waterfall" />
       <item itemvalue="CMake Application.libupb" />
       <item itemvalue="CMake Application.protoc" />
       <item itemvalue="CMake Application.protoc-gen-upb" />
@@ -1751,12 +1780,14 @@
       <item itemvalue="Google Test.atlas_tests_measurer" />
       <item itemvalue="Google Test.atlas_tests_memory" />
       <item itemvalue="Google Test.atlas_tests_observer" />
+      <item itemvalue="Google Test.atlas_tests_orchestrator" />
       <item itemvalue="Google Test.atlas_tests_parallel" />
       <item itemvalue="Google Test.atlas_tests_random" />
       <item itemvalue="Google Test.atlas_tests_remove" />
       <item itemvalue="Google Test.atlas_tests_sampling" />
       <item itemvalue="Google Test.atlas_tests_scan" />
       <item itemvalue="Google Test.atlas_tests_searcher" />
+      <item itemvalue="Google Test.atlas_tests_serialization" />
       <item itemvalue="Google Test.atlas_tests_shuffle" />
       <item itemvalue="Google Test.atlas_tests_sink" />
       <item itemvalue="Google Test.atlas_tests_solver" />
@@ -2128,7 +2159,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776848699088</updated>
     </task>
-    <option name="localTasksCounter" value="32" />
+    <task id="LOCAL-00032" summary="Updated comments.">
+      <option name="closed" value="true" />
+      <created>1776850901613</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1776850901613</updated>
+    </task>
+    <option name="localTasksCounter" value="33" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -2190,7 +2229,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/external/cudatest" />
     </ignored-roots>
-    <MESSAGE value="refactoring for simple solver structures." />
     <MESSAGE value="memory problems." />
     <MESSAGE value="changed the logging function." />
     <MESSAGE value="tmp" />
@@ -2215,7 +2253,8 @@
     <MESSAGE value="Added universe field force and modified orchestrator." />
     <MESSAGE value="Changed github ci.yml" />
     <MESSAGE value="add NODISCARD to Observer" />
-    <option name="LAST_COMMIT_MESSAGE" value="add NODISCARD to Observer" />
+    <MESSAGE value="Updated comments." />
+    <option name="LAST_COMMIT_MESSAGE" value="Updated comments." />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
