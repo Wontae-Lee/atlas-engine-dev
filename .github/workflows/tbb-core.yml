@@ -1,0 +1,64 @@
+name: TBB Core
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  tbb-core:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu TBB Debug
+            os: ubuntu-24.04
+            configure_preset: tbb-debug-core
+            build_preset: build-tbb-debug-core
+            test_command: ctest --preset ctest-tbb-debug-core
+          - name: Ubuntu TBB Release
+            os: ubuntu-24.04
+            configure_preset: tbb-release-core
+            build_preset: build-tbb-release-core
+            test_command: ctest --preset ctest-tbb-release-core
+          - name: macOS TBB Debug
+            os: macos-14
+            configure_preset: tbb-debug-core
+            build_preset: build-tbb-debug-core
+            test_command: ctest --preset ctest-tbb-debug-core
+          - name: macOS TBB Release
+            os: macos-14
+            configure_preset: tbb-release-core
+            build_preset: build-tbb-release-core
+            test_command: ctest --preset ctest-tbb-release-core
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == "Linux"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libtbb-dev
+
+      - name: Install dependencies (macOS)
+        if: runner.os == "macOS"
+        run: |
+          brew update
+          brew install ninja tbb
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.configure_preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.build_preset }}
+
+      - name: Test
+        run: ${{ matrix.test_command }}

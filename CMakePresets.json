@@ -83,11 +83,26 @@
       }
     },
     {
-      "name": "tbb-debug-headless",
-      "displayName": "Atlas TBB Debug Headless (Logging+GoogleTest)",
+      "name": "tbb-debug-core",
+      "displayName": "Atlas TBB Debug Core (Logging+GoogleTest)",
       "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
+        "ATLAS_USE_CUDA": "OFF",
+        "ATLAS_USE_TBB": "ON",
+        "ATLAS_USE_VIZKIT": "OFF",
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_GOOGLE_TEST": "ON",
+        "ATLAS_CUDA_TEST": "OFF",
+        "ATLAS_BENCHMARKS": "OFF"
+      }
+    },
+    {
+      "name": "tbb-release-core",
+      "displayName": "Atlas TBB Release Core (Logging+GoogleTest)",
+      "inherits": "base-ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
         "ATLAS_USE_CUDA": "OFF",
         "ATLAS_USE_TBB": "ON",
         "ATLAS_USE_VIZKIT": "OFF",
@@ -152,8 +167,8 @@
 
 
     {
-      "name": "cuda-debug-headless",
-      "displayName": "Atlas CUDA Debug Headless (Auto-detect CUDA toolchain/arch)",
+      "name": "cuda-debug-core",
+      "displayName": "Atlas CUDA Debug Core (Auto-detect CUDA toolchain/arch)",
       "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -169,8 +184,8 @@
       }
     },
     {
-      "name": "cuda-release-headless",
-      "displayName": "Atlas CUDA Release Headless (Auto-detect CUDA toolchain/arch)",
+      "name": "cuda-release-core",
+      "displayName": "Atlas CUDA Release Core (Auto-detect CUDA toolchain/arch)",
       "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -186,8 +201,8 @@
       }
     },
     {
-      "name": "cuda-debug-tests-headless",
-      "displayName": "Atlas CUDA Debug Tests Headless (atlas_all_cuda_test)",
+      "name": "cuda-debug-tests",
+      "displayName": "Atlas CUDA Debug Tests (atlas_all_cuda_test)",
       "inherits": "base-ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -206,15 +221,16 @@
     { "name": "build-tbb-debug", "displayName": "Build TBB Debug", "configurePreset": "tbb-debug", "jobs": 0 },
     { "name": "build-tbb-release", "displayName": "Build TBB Release", "configurePreset": "tbb-release", "jobs": 0 },
     { "name": "build-tbb-relwithdebinfo", "displayName": "Build TBB RelWithDebInfo", "configurePreset": "tbb-relwithdebinfo", "jobs": 0 },
-    { "name": "build-tbb-debug-headless", "displayName": "Build TBB Debug Headless", "configurePreset": "tbb-debug-headless", "jobs": 0 },
+    { "name": "build-tbb-debug-core", "displayName": "Build TBB Debug Core", "configurePreset": "tbb-debug-core", "jobs": 0 },
+    { "name": "build-tbb-release-core", "displayName": "Build TBB Release Core", "configurePreset": "tbb-release-core", "jobs": 0 },
 
     { "name": "build-cuda-debug", "displayName": "Build CUDA Debug", "configurePreset": "cuda-debug", "jobs": 0 },
     { "name": "build-cuda-release", "displayName": "Build CUDA Release", "configurePreset": "cuda-release", "jobs": 0 },
     { "name": "build-cuda-relwithdebinfo", "displayName": "Build CUDA RelWithDebInfo", "configurePreset": "cuda-relwithdebinfo", "jobs": 0 },
 
-    { "name": "build-cuda-debug-headless", "displayName": "Build CUDA Debug Headless", "configurePreset": "cuda-debug-headless", "jobs": 0 },
-    { "name": "build-cuda-release-headless", "displayName": "Build CUDA Release Headless", "configurePreset": "cuda-release-headless", "jobs": 0 },
-    { "name": "build-cuda-debug-tests-headless", "displayName": "Build CUDA Debug Tests Headless", "configurePreset": "cuda-debug-tests-headless", "jobs": 0 }
+    { "name": "build-cuda-debug-core", "displayName": "Build CUDA Debug Core", "configurePreset": "cuda-debug-core", "jobs": 0 },
+    { "name": "build-cuda-release-core", "displayName": "Build CUDA Release Core", "configurePreset": "cuda-release-core", "jobs": 0 },
+    { "name": "build-cuda-debug-tests", "displayName": "Build CUDA Debug Tests", "configurePreset": "cuda-debug-tests", "jobs": 0 }
   ],
 
   "testPresets": [
@@ -233,9 +249,16 @@
       "output": { "outputOnFailure": true }
     },
     {
-      "name": "ctest-tbb-debug-headless",
-      "displayName": "CTest (TBB Debug Headless)",
-      "configurePreset": "tbb-debug-headless",
+      "name": "ctest-tbb-debug-core",
+      "displayName": "CTest (TBB Debug Core)",
+      "configurePreset": "tbb-debug-core",
+      "execution": { "noTestsAction": "error" },
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ctest-tbb-release-core",
+      "displayName": "CTest (TBB Release Core)",
+      "configurePreset": "tbb-release-core",
       "execution": { "noTestsAction": "error" },
       "output": { "outputOnFailure": true }
     }

@@ -1,6 +1,7 @@
 # Atlas Engine Dev
 
-[![CI](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/ci.yml)
+[![TBB Core](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core.yml)
+[![TBB Vizkit](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit.yml)
 
 Atlas is a C++20 particle-simulation engine with a header-only core and dual tasking backends:
 
@@ -193,56 +194,64 @@ Atlas ships with CMake presets in [CMakePresets.json](/home/wontae/CLionProjects
 
 ### TBB / CPU presets
 
+Primary presets are organized around `Debug` and `Release`. The `*-core` presets keep Vizkit disabled for environments that only need the simulation/test stack.
+
 | Preset | Build Type | Vizkit | Logging | Tests | Benchmarks |
 |---|---|---|---|---|---|
 | `tbb-debug` | `Debug` | ON | ON | ON | ON |
 | `tbb-release` | `Release` | ON | ON | ON | ON |
+| `tbb-debug-core` | `Debug` | OFF | ON | ON | OFF |
+| `tbb-release-core` | `Release` | OFF | ON | ON | OFF |
 | `tbb-relwithdebinfo` | `RelWithDebInfo` | ON | ON | ON | ON |
 | `tbb-debug-make` | `Debug` | ON | ON | ON | ON |
-| `tbb-debug-headless` | `Debug` | OFF | ON | ON | OFF |
 
 ### CUDA / GPU presets
+
+Primary CUDA presets are also split into `Debug` and `Release`. The `*-core` variants disable Vizkit, and `cuda-debug-tests` enables the standalone CUDA test target.
 
 | Preset | Build Type | Vizkit | Logging | Tests | Benchmarks |
 |---|---|---|---|---|---|
 | `cuda-debug` | `Debug` | ON | ON | OFF | OFF |
 | `cuda-release` | `Release` | ON | ON | OFF | OFF |
+| `cuda-debug-core` | `Debug` | OFF | ON | OFF | OFF |
+| `cuda-release-core` | `Release` | OFF | ON | OFF | OFF |
+| `cuda-debug-tests` | `Debug` | OFF | ON | ON | OFF |
 | `cuda-relwithdebinfo` | `RelWithDebInfo` | ON | ON | OFF | OFF |
-| `cuda-debug-headless` | `Debug` | OFF | ON | OFF | OFF |
-| `cuda-release-headless` | `Release` | OFF | ON | OFF | OFF |
-
-Current CUDA presets keep tests disabled except for `cuda-debug-tests-headless`, which enables `atlas_all_cuda_test` without Vizkit.
 
 ## Continuous Integration
 
-GitHub Actions CI is defined in [`.github/workflows/ci.yml`](/home/wontae/CLionProjects/atlas-engine-dev/.github/workflows/ci.yml).
+GitHub Actions CI is split across:
 
-The current CI job runs a headless Linux TBB build to avoid OpenGL/Vizkit package requirements on hosted runners:
+- [`.github/workflows/tbb-core.yml`](/home/wontae/CLionProjects/atlas-engine-dev/.github/workflows/tbb-core.yml)
+- [`.github/workflows/tbb-vizkit.yml`](/home/wontae/CLionProjects/atlas-engine-dev/.github/workflows/tbb-vizkit.yml)
+
+`tbb-core.yml` covers the `Debug` and `Release` core test matrix:
 
 ```bash
-cmake --preset tbb-debug-headless
-cmake --build --preset build-tbb-debug-headless
-ctest --preset ctest-tbb-debug-headless
+cmake --preset tbb-debug-core
+cmake --build --preset build-tbb-debug-core
+ctest --preset ctest-tbb-debug-core
+
+cmake --preset tbb-release-core
+cmake --build --preset build-tbb-release-core
+ctest --preset ctest-tbb-release-core
 ```
 
-The workflow installs:
-
-- `ninja-build`
-- `libtbb-dev`
+`tbb-vizkit.yml` covers the Ubuntu Vizkit build matrix for both `tbb-debug` and `tbb-release`.
 
 ## Quick Start
 
-### 1. Configure and build the recommended headless CPU/TBB build
+### 1. Configure and build the recommended CPU/TBB debug build
 
 ```bash
-cmake --preset tbb-debug-headless
-cmake --build --preset build-tbb-debug-headless
+cmake --preset tbb-debug-core
+cmake --build --preset build-tbb-debug-core
 ```
 
 ### 2. Run tests
 
 ```bash
-ctest --preset ctest-tbb-debug-headless
+ctest --preset ctest-tbb-debug-core
 ```
 
 If you want the local Vizkit-enabled developer build instead:
@@ -260,19 +269,19 @@ cmake --preset cuda-debug
 cmake --build --preset build-cuda-debug
 ```
 
-### 4. Headless CUDA build for servers
+### 4. Core CUDA build
 
 ```bash
-cmake --preset cuda-debug-headless
-cmake --build --preset build-cuda-debug-headless
+cmake --preset cuda-debug-core
+cmake --build --preset build-cuda-debug-core
 ```
 
 ### 5. CUDA test build
 
 ```bash
-cmake --preset cuda-debug-tests-headless
-cmake --build --preset build-cuda-debug-tests-headless
-./build/cuda-debug-tests-headless/atlas_all_cuda_test --gtest_list_tests
+cmake --preset cuda-debug-tests
+cmake --build --preset build-cuda-debug-tests
+./build/cuda-debug-tests/atlas_all_cuda_test --gtest_list_tests
 ```
 
 ## Manual CMake Configuration
@@ -531,24 +540,26 @@ Examples of covered areas:
 Recommended GoogleTest/TBB run:
 
 ```bash
-cmake --preset tbb-debug-headless
-cmake --build --preset build-tbb-debug-headless
-ctest --preset ctest-tbb-debug-headless
+cmake --preset tbb-debug-core
+cmake --build --preset build-tbb-debug-core
+ctest --preset ctest-tbb-debug-core
 ```
 
 CTest presets are also provided:
 
 ```bash
 ctest --preset ctest-tbb-debug
-ctest --preset ctest-tbb-debug-headless
+ctest --preset ctest-tbb-debug-core
+ctest --preset ctest-tbb-release
+ctest --preset ctest-tbb-release-core
 ```
 
 CUDA test build:
 
 ```bash
-cmake --preset cuda-debug-tests-headless
-cmake --build --preset build-cuda-debug-tests-headless
-./build/cuda-debug-tests-headless/atlas_all_cuda_test --gtest_list_tests
+cmake --preset cuda-debug-tests
+cmake --build --preset build-cuda-debug-tests
+./build/cuda-debug-tests/atlas_all_cuda_test --gtest_list_tests
 ```
 
 Notes:
@@ -578,7 +589,7 @@ It depends on the host OpenGL toolchain:
 - `GLU`
 - `GLUT`
 
-If you are building on a headless machine, prefer `tbb-debug-headless`, one of the `cuda-*-headless` presets, or disable Vizkit manually.
+If you are building in an environment without OpenGL/Vizkit, prefer `tbb-debug-core`, `tbb-release-core`, `cuda-debug-core`, `cuda-release-core`, or disable Vizkit manually.
 
 ## Development Notes
 

@@ -113,28 +113,32 @@ ctest --test-dir build/tbb-debug --output-on-failure
 cmake --preset cuda-debug
 cmake --build build/cuda-debug -j$(nproc)
 
-cmake --preset tbb-debug-headless
-cmake --build build/tbb-debug-headless -j$(nproc)
-ctest --preset ctest-tbb-debug-headless
+cmake --preset tbb-debug-core
+cmake --build build/tbb-debug-core -j$(nproc)
+ctest --preset ctest-tbb-debug-core
 
-cmake --preset cuda-debug-headless
-cmake --build build/cuda-debug-headless -j$(nproc)
+cmake --preset tbb-release-core
+cmake --build build/tbb-release-core -j$(nproc)
+ctest --preset ctest-tbb-release-core
 
-cmake --preset cuda-debug-tests-headless
-cmake --build build/cuda-debug-tests-headless --target atlas_all_cuda_test -j$(nproc)
+cmake --preset cuda-debug-core
+cmake --build build/cuda-debug-core -j$(nproc)
+
+cmake --preset cuda-debug-tests
+cmake --build build/cuda-debug-tests --target atlas_all_cuda_test -j$(nproc)
 ```
 
 Available configure presets from `CMakePresets.json`:
-- TBB: `tbb-debug`, `tbb-release`, `tbb-relwithdebinfo`, `tbb-debug-make`, `tbb-debug-headless`
-- CUDA: `cuda-debug`, `cuda-release`, `cuda-relwithdebinfo`, `cuda-debug-headless`, `cuda-release-headless`, `cuda-debug-tests-headless`
+- TBB: `tbb-debug`, `tbb-release`, `tbb-debug-core`, `tbb-release-core`, `tbb-relwithdebinfo`, `tbb-debug-make`
+- CUDA: `cuda-debug`, `cuda-release`, `cuda-debug-core`, `cuda-release-core`, `cuda-debug-tests`, `cuda-relwithdebinfo`
 
 Available build presets:
-- `build-tbb-debug`, `build-tbb-release`, `build-tbb-relwithdebinfo`, `build-tbb-debug-headless`
+- `build-tbb-debug`, `build-tbb-release`, `build-tbb-debug-core`, `build-tbb-release-core`, `build-tbb-relwithdebinfo`
 - `build-cuda-debug`, `build-cuda-release`, `build-cuda-relwithdebinfo`
-- `build-cuda-debug-headless`, `build-cuda-release-headless`, `build-cuda-debug-tests-headless`
+- `build-cuda-debug-core`, `build-cuda-release-core`, `build-cuda-debug-tests`
 
 Available test presets:
-- `ctest-tbb-debug`, `ctest-tbb-release`, `ctest-tbb-debug-headless`
+- `ctest-tbb-debug`, `ctest-tbb-release`, `ctest-tbb-debug-core`, `ctest-tbb-release-core`
 
 Important options:
 - `ATLAS_USE_CUDA`
