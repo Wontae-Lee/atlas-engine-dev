@@ -179,6 +179,11 @@ atlas-engine-dev/
 | `GLEW` | OpenGL extension loading |
 | `OpenGL`, `GLU`, `GLUT` | Visualization stack |
 
+For the current CI environments, Vizkit dependencies are installed as:
+
+- Ubuntu: `libglfw3-dev`, `libglew-dev`, `libglu1-mesa-dev`, `freeglut3-dev`
+- macOS: `glfw`, `glew`, `freeglut`
+
 ### In-tree dependencies
 
 The project vendors several dependencies in [`external/`](external/):
@@ -225,7 +230,7 @@ GitHub Actions CI is split across:
 - [`.github/workflows/tbb-core.yml`](.github/workflows/tbb-core.yml)
 - [`.github/workflows/tbb-vizkit.yml`](.github/workflows/tbb-vizkit.yml)
 
-`tbb-core.yml` covers the `Debug` and `Release` core test matrix:
+`tbb-core.yml` covers the Ubuntu and macOS `Debug` and `Release` core test matrix:
 
 ```bash
 cmake --preset tbb-debug-core
@@ -237,7 +242,7 @@ cmake --build --preset build-tbb-release-core
 ctest --preset ctest-tbb-release-core
 ```
 
-`tbb-vizkit.yml` covers the Ubuntu Vizkit build matrix for both `tbb-debug` and `tbb-release`.
+`tbb-vizkit.yml` covers the Ubuntu and macOS Vizkit build matrix for both `tbb-debug` and `tbb-release`.
 
 ## Quick Start
 
