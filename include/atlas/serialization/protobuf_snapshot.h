@@ -21,13 +21,23 @@ class Universe;
 
 namespace atlas::serialization {
 
+/**
+ * @brief Serializable binary snapshot of a fluid instance.
+ *
+ * This structure stores core fluid metadata together with optional particle-state
+ * buffers that may or may not be present in the serialized file.
+ *
+ * @tparam T Scalar type used by the snapshot.
+ */
 template <typename T>
 struct FluidBinarySnapshot final {
-    std::size_t buffer_size = 0;
+    std::size_t buffer_size    = 0;
     std::size_t particle_count = 0;
-    T statistical_weight = T(1);
+    T statistical_weight       = T(1);
+
     HostBuffer<MatrialProperties<T>> properties;
     HostBuffer<fluid::GenerateOperator<T>> generators;
+
     std::optional<HostBuffer<Vector3<T>>> positions;
     std::optional<HostBuffer<Vector3<T>>> velocities;
     std::optional<HostBuffer<std::size_t>> species;
@@ -35,11 +45,20 @@ struct FluidBinarySnapshot final {
     std::optional<HostBuffer<T>> temperature;
 };
 
+/**
+ * @brief Serializable binary snapshot of a universe instance.
+ *
+ * This structure stores the geometric definition of the universe together with
+ * optional field/state buffers that may or may not be present in the snapshot.
+ *
+ * @tparam T Scalar type used by the snapshot.
+ */
 template <typename T>
 struct UniverseBinarySnapshot final {
     Vector3<T> lower_corner {};
     Vector3<T> upper_corner {};
     T cell_size = T(1);
+
     std::optional<HostBuffer<T>> temperature;
     std::optional<HostBuffer<Vector3<T>>> bulk_velocity;
     std::optional<HostBuffer<Vector3<T>>> field_force;
@@ -50,18 +69,46 @@ struct UniverseBinarySnapshot final {
     std::optional<HostBuffer<T>> knudsen_number;
 };
 
+/**
+ * @brief Serialize a fluid instance into a protobuf-based binary snapshot.
+ *
+ * @tparam T Scalar type of the fluid.
+ * @param fluid Fluid instance to serialize.
+ * @param path Output file path.
+ */
 template <typename T>
 void
 save_fluid_binary(const atlas::fluid::Fluid<T>& fluid, std::string_view path);
 
+/**
+ * @brief Load a protobuf-based binary snapshot into a fluid snapshot structure.
+ *
+ * @tparam T Requested scalar type.
+ * @param path Input file path.
+ * @return Decoded fluid snapshot payload.
+ */
 template <typename T>
 FluidBinarySnapshot<T>
 load_fluid_binary(std::string_view path);
 
+/**
+ * @brief Serialize a universe instance into a protobuf-based binary snapshot.
+ *
+ * @tparam T Scalar type of the universe.
+ * @param universe Universe instance to serialize.
+ * @param path Output file path.
+ */
 template <typename T>
 void
 save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_view path);
 
+/**
+ * @brief Load a protobuf-based binary snapshot into a universe snapshot structure.
+ *
+ * @tparam T Requested scalar type.
+ * @param path Input file path.
+ * @return Decoded universe snapshot payload.
+ */
 template <typename T>
 UniverseBinarySnapshot<T>
 load_universe_binary(std::string_view path);

@@ -72,6 +72,7 @@
 #include <atlas/sampling/sampling.h>
 #include <atlas/scan/exclusive_scan.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>

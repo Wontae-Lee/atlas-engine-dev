@@ -105,13 +105,15 @@ public:
      * @brief Copy assignment is disabled.
      */
     Fluid&
-    operator=(const Fluid&) = delete;
+    operator=(const Fluid&)
+        = delete;
 
     /**
      * @brief Move assignment operator.
      */
     Fluid&
-    operator=(Fluid&&) noexcept = default;
+    operator=(Fluid&&) noexcept
+        = default;
 
     /**
      * @brief Returns the generator operator buffer as a const reference.

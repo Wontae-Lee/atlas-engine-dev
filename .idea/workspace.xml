@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="28" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="29" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
@@ -284,10 +284,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="add NODISCARD to Observer">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/external/googlebenchmark" beforeDir="false" afterPath="$PROJECT_DIR$/external/googlebenchmark" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/observer/observer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/observer/observer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/cylinder/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/cylinder/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/inflow/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/inflow/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/intake/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/intake/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/serialization/protobuf_snapshot.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/serialization/protobuf_snapshot.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -430,6 +433,7 @@
     <force-push-targets>
       <force-push-target remote-path="origin" branch="main" />
       <force-push-target remote-path="origin" branch="refactory" />
+      <force-push-target remote-path="origin" branch="development" />
     </force-push-targets>
   </component>
   <component name="RecentsManager">
@@ -2116,7 +2120,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776847701892</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="add NODISCARD to Observer">
+      <option name="closed" value="true" />
+      <created>1776848699088</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1776848699088</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
