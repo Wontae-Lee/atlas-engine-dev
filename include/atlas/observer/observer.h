@@ -133,13 +133,13 @@ public:
     /**
      * @brief Builds an Observer value.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE Observer
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Observer
     build() const;
 
     /**
      * @brief Builds an Observer in host-managed shared storage.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Observer>
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE atlas::host_shared_ptr<Observer>
     make_host_shared() const;
 
 private:
