@@ -15,6 +15,9 @@
 #include <atlas/observer/observer.h>
 
 #include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <typeindex>
 #include <unordered_map>
 
@@ -273,6 +276,14 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const ObserverHostPtr&
     observer() const noexcept;
 
+    /**
+     * @brief Saves the current fluid snapshot to a protobuf-backed binary file.
+     *
+     * @param path Destination file path.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    save(std::string_view path) const;
+
 private:
     friend class Builder;
 
@@ -399,6 +410,15 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_observer(ObserverHostPtr observer) noexcept;
 
+    /**
+     * @brief Loads a protobuf-backed fluid snapshot into the builder.
+     *
+     * @param path Snapshot file path.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_binary(const std::string& path);
+
 private:
     /**
      * @brief Validates the current builder configuration.
@@ -431,6 +451,36 @@ private:
      * @brief Optional observer installed into the built fluid.
      */
     ObserverHostPtr _observer {};
+
+    /**
+     * @brief Optional position state restored from a binary snapshot.
+     */
+    std::optional<DeviceBuffer<Vector3<T>>> _position_state;
+
+    /**
+     * @brief Optional velocity state restored from a binary snapshot.
+     */
+    std::optional<DeviceBuffer<Vector3<T>>> _velocity_state;
+
+    /**
+     * @brief Optional species state restored from a binary snapshot.
+     */
+    std::optional<DeviceBuffer<std::size_t>> _species_state;
+
+    /**
+     * @brief Optional active-mask state restored from a binary snapshot.
+     */
+    std::optional<DeviceBuffer<int>> _active_state;
+
+    /**
+     * @brief Optional temperature state restored from a binary snapshot.
+     */
+    std::optional<DeviceBuffer<T>> _temperature_state;
+
+    /**
+     * @brief Optional active particle count restored from a binary snapshot.
+     */
+    std::optional<std::size_t> _particle_count;
 };
 
 } // namespace atlas::fluid

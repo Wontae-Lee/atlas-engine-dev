@@ -6,6 +6,8 @@
 
 #include <testkit/testkit.h>
 
+#include <filesystem>
+
 namespace {
 
 using T = float;
@@ -98,4 +100,50 @@ TEST(Universe, SetStateRejectsNullOwnershipTransfer) {
     std::unique_ptr<atlas::universe::UniverseTemperatureState<T>> null_state;
 
     EXPECT_THROW(universe.set_state<atlas::universe::UniverseTemperatureState<T>>(std::move(null_state)), std::invalid_argument);
+}
+
+TEST(Universe, SaveAndReloadBinarySnapshot) {
+    namespace fs = std::filesystem;
+
+    auto universe = atlas::universe::Universe<T>::builder()
+                        .with_lower_corner(Vec3(-1.0f, -2.0f, -3.0f))
+                        .with_upper_corner(Vec3(1.0f, 2.0f, 3.0f))
+                        .with_cell_size(1.0f)
+                        .build();
+
+    universe.set_state<atlas::universe::UniverseTemperatureState<T>>(
+        std::make_unique<atlas::universe::UniverseTemperatureState<T>>(atlas::DeviceBuffer<T> { 300.0f, 325.0f, 350.0f }));
+    universe.set_state<atlas::universe::UniverseBulkVelocityState<T>>(
+        std::make_unique<atlas::universe::UniverseBulkVelocityState<T>>(atlas::DeviceBuffer<Vec3> {
+            Vec3(1.0f, 0.0f, 0.0f),
+            Vec3(0.0f, 1.0f, 0.0f),
+            Vec3(0.0f, 0.0f, 1.0f) }));
+    universe.set_state<atlas::universe::UniverseCollisionCountState<int>>(
+        std::make_unique<atlas::universe::UniverseCollisionCountState<int>>(atlas::DeviceBuffer<int> { 2, 4, 6 }));
+
+    const fs::path snapshot_path = fs::temp_directory_path() / "atlas_universe_snapshot_test.bin";
+    universe.save(snapshot_path.string());
+
+    const auto restored = atlas::universe::Universe<T>::builder()
+                              .with_binary(snapshot_path.string())
+                              .build();
+
+    EXPECT_TRUE(atlas::test::vec_near(restored.lower_corner(), Vec3(-1.0f, -2.0f, -3.0f), kEps));
+    EXPECT_TRUE(atlas::test::vec_near(restored.upper_corner(), Vec3(1.0f, 2.0f, 3.0f), kEps));
+    EXPECT_FLOAT_EQ(restored.cell_size(), 1.0f);
+
+    const auto* temperature = restored.state<atlas::universe::UniverseTemperatureState<T>>();
+    const auto* bulk_velocity = restored.state<atlas::universe::UniverseBulkVelocityState<T>>();
+    const auto* collision_count = restored.state<atlas::universe::UniverseCollisionCountState<int>>();
+
+    ASSERT_NE(temperature, nullptr);
+    ASSERT_NE(bulk_velocity, nullptr);
+    ASSERT_NE(collision_count, nullptr);
+
+    EXPECT_FLOAT_EQ(temperature->data()[1], 325.0f);
+    EXPECT_TRUE(atlas::test::vec_near(bulk_velocity->data()[2], Vec3(0.0f, 0.0f, 1.0f), kEps));
+    EXPECT_EQ(collision_count->data()[0], 2);
+    EXPECT_EQ(collision_count->data()[2], 6);
+
+    fs::remove(snapshot_path);
 }

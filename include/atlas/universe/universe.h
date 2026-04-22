@@ -12,6 +12,9 @@
 #include <atlas/universe/universe_state.h>
 
 #include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 
 namespace atlas::universe {
@@ -232,6 +235,30 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const ObserverHostPtr&
     observer() const noexcept;
 
+    /**
+     * @brief Returns the full state registry as a mutable reference.
+     *
+     * @return Mutable reference to the state registry.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unordered_map<TypeId, std::unique_ptr<UniverseState>>&
+    states() noexcept;
+
+    /**
+     * @brief Returns the full state registry as a const reference.
+     *
+     * @return Const reference to the state registry.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::unordered_map<TypeId, std::unique_ptr<UniverseState>>&
+    states() const noexcept;
+
+    /**
+     * @brief Saves the current universe snapshot to a protobuf-backed binary file.
+     *
+     * @param path Destination file path.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    save(std::string_view path) const;
+
 private:
     /**
      * @brief Lower corner of the domain.
@@ -367,6 +394,15 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_observer(ObserverHostPtr observer) noexcept;
 
+    /**
+     * @brief Loads a protobuf-backed universe snapshot into the builder.
+     *
+     * @param path Snapshot file path.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_binary(const std::string& path);
+
 private:
     /**
      * @brief Validates the current builder configuration.
@@ -396,6 +432,46 @@ private:
      * @brief Optional observer installed into the built universe.
      */
     ObserverHostPtr _observer {};
+
+    /**
+     * @brief Optional restored temperature state.
+     */
+    std::optional<DeviceBuffer<T>> _temperature_state;
+
+    /**
+     * @brief Optional restored bulk-velocity state.
+     */
+    std::optional<DeviceBuffer<Vector3<T>>> _bulk_velocity_state;
+
+    /**
+     * @brief Optional restored field-force state.
+     */
+    std::optional<DeviceBuffer<Vector3<T>>> _field_force_state;
+
+    /**
+     * @brief Optional restored maximum-relative-speed state.
+     */
+    std::optional<DeviceBuffer<T>> _max_relative_speed_state;
+
+    /**
+     * @brief Optional restored thermal-energy state.
+     */
+    std::optional<DeviceBuffer<T>> _thermal_energy_state;
+
+    /**
+     * @brief Optional restored number-particle state.
+     */
+    std::optional<DeviceBuffer<T>> _number_particle_state;
+
+    /**
+     * @brief Optional restored collision-count state.
+     */
+    std::optional<DeviceBuffer<int>> _collision_count_state;
+
+    /**
+     * @brief Optional restored Knudsen-number state.
+     */
+    std::optional<DeviceBuffer<T>> _knudsen_number_state;
 };
 
 } // namespace atlas::universe

@@ -1,0 +1,69 @@
+#pragma once
+
+#include <atlas/buffer/host_buffer.h>
+#include <atlas/generator/generate_operator.h>
+#include <atlas/material/material_properties.h>
+#include <atlas/math/math.h>
+
+#include <cstddef>
+#include <optional>
+#include <string_view>
+
+namespace atlas::fluid {
+template <typename T>
+class Fluid;
+}
+
+namespace atlas::universe {
+template <typename T>
+class Universe;
+}
+
+namespace atlas::serialization {
+
+template <typename T>
+struct FluidBinarySnapshot final {
+    std::size_t buffer_size = 0;
+    std::size_t particle_count = 0;
+    T statistical_weight = T(1);
+    HostBuffer<MatrialProperties<T>> properties;
+    HostBuffer<fluid::GenerateOperator<T>> generators;
+    std::optional<HostBuffer<Vector3<T>>> positions;
+    std::optional<HostBuffer<Vector3<T>>> velocities;
+    std::optional<HostBuffer<std::size_t>> species;
+    std::optional<HostBuffer<int>> active;
+    std::optional<HostBuffer<T>> temperature;
+};
+
+template <typename T>
+struct UniverseBinarySnapshot final {
+    Vector3<T> lower_corner {};
+    Vector3<T> upper_corner {};
+    T cell_size = T(1);
+    std::optional<HostBuffer<T>> temperature;
+    std::optional<HostBuffer<Vector3<T>>> bulk_velocity;
+    std::optional<HostBuffer<Vector3<T>>> field_force;
+    std::optional<HostBuffer<T>> max_relative_speed;
+    std::optional<HostBuffer<T>> thermal_energy;
+    std::optional<HostBuffer<T>> number_particle;
+    std::optional<HostBuffer<int>> collision_count;
+    std::optional<HostBuffer<T>> knudsen_number;
+};
+
+template <typename T>
+void
+save_fluid_binary(const atlas::fluid::Fluid<T>& fluid, std::string_view path);
+
+template <typename T>
+FluidBinarySnapshot<T>
+load_fluid_binary(std::string_view path);
+
+template <typename T>
+void
+save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_view path);
+
+template <typename T>
+UniverseBinarySnapshot<T>
+load_universe_binary(std::string_view path);
+
+} // namespace atlas::serialization

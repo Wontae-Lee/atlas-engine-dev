@@ -1,4 +1,5 @@
 #pragma once
+#include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/logging/logging.h>
 #include <atlas/memory/memory.h>
 
@@ -194,6 +195,24 @@ Universe<T>::observer() const noexcept {
 }
 
 template <typename T>
+std::unordered_map<TypeId, std::unique_ptr<UniverseState>>&
+Universe<T>::states() noexcept {
+    return _states;
+}
+
+template <typename T>
+const std::unordered_map<TypeId, std::unique_ptr<UniverseState>>&
+Universe<T>::states() const noexcept {
+    return _states;
+}
+
+template <typename T>
+void
+Universe<T>::save(const std::string_view path) const {
+    atlas::serialization::save_universe_binary(*this, path);
+}
+
+template <typename T>
 Universe<T>
 Universe<T>::Builder::build() const {
 
@@ -202,6 +221,47 @@ Universe<T>::Builder::build() const {
 
     auto universe = Universe<T>(_lower_corner, _upper_corner, _cell_size);
     universe._observer = _observer;
+
+    if (_temperature_state.has_value()) {
+        universe.template set_state<UniverseTemperatureState<T>>(std::make_unique<UniverseTemperatureState<T>>(
+            DeviceBuffer<T>(_temperature_state->begin(), _temperature_state->end())));
+    }
+
+    if (_bulk_velocity_state.has_value()) {
+        universe.template set_state<UniverseBulkVelocityState<T>>(std::make_unique<UniverseBulkVelocityState<T>>(
+            DeviceBuffer<Vector3<T>>(_bulk_velocity_state->begin(), _bulk_velocity_state->end())));
+    }
+
+    if (_field_force_state.has_value()) {
+        universe.template set_state<UniverseFieldForceState<T>>(std::make_unique<UniverseFieldForceState<T>>(
+            DeviceBuffer<Vector3<T>>(_field_force_state->begin(), _field_force_state->end())));
+    }
+
+    if (_max_relative_speed_state.has_value()) {
+        universe.template set_state<UniverseMaxRelativeSpeedState<T>>(std::make_unique<UniverseMaxRelativeSpeedState<T>>(
+            DeviceBuffer<T>(_max_relative_speed_state->begin(), _max_relative_speed_state->end())));
+    }
+
+    if (_thermal_energy_state.has_value()) {
+        universe.template set_state<UniverseThermalEnergyState<T>>(std::make_unique<UniverseThermalEnergyState<T>>(
+            DeviceBuffer<T>(_thermal_energy_state->begin(), _thermal_energy_state->end())));
+    }
+
+    if (_number_particle_state.has_value()) {
+        universe.template set_state<UniverseNumberParticleState<T>>(std::make_unique<UniverseNumberParticleState<T>>(
+            DeviceBuffer<T>(_number_particle_state->begin(), _number_particle_state->end())));
+    }
+
+    if (_collision_count_state.has_value()) {
+        universe.template set_state<UniverseCollisionCountState<int>>(std::make_unique<UniverseCollisionCountState<int>>(
+            DeviceBuffer<int>(_collision_count_state->begin(), _collision_count_state->end())));
+    }
+
+    if (_knudsen_number_state.has_value()) {
+        universe.template set_state<UniverseKnudsenNumberState<T>>(std::make_unique<UniverseKnudsenNumberState<T>>(
+            DeviceBuffer<T>(_knudsen_number_state->begin(), _knudsen_number_state->end())));
+    }
+
     return universe;
 }
 
@@ -260,6 +320,59 @@ typename Universe<T>::Builder&
 Universe<T>::Builder::with_observer(ObserverHostPtr observer) noexcept {
 
     _observer = std::move(observer);
+    return *this;
+}
+
+template <typename T>
+typename Universe<T>::Builder&
+Universe<T>::Builder::with_binary(const std::string& path) {
+    const auto snapshot = atlas::serialization::load_universe_binary<T>(path);
+
+    _lower_corner = snapshot.lower_corner;
+    _upper_corner = snapshot.upper_corner;
+    _cell_size = snapshot.cell_size;
+
+    _temperature_state.reset();
+    _bulk_velocity_state.reset();
+    _field_force_state.reset();
+    _max_relative_speed_state.reset();
+    _thermal_energy_state.reset();
+    _number_particle_state.reset();
+    _collision_count_state.reset();
+    _knudsen_number_state.reset();
+
+    if (snapshot.temperature.has_value()) {
+        _temperature_state = DeviceBuffer<T>(snapshot.temperature->begin(), snapshot.temperature->end());
+    }
+
+    if (snapshot.bulk_velocity.has_value()) {
+        _bulk_velocity_state = DeviceBuffer<Vector3<T>>(snapshot.bulk_velocity->begin(), snapshot.bulk_velocity->end());
+    }
+
+    if (snapshot.field_force.has_value()) {
+        _field_force_state = DeviceBuffer<Vector3<T>>(snapshot.field_force->begin(), snapshot.field_force->end());
+    }
+
+    if (snapshot.max_relative_speed.has_value()) {
+        _max_relative_speed_state = DeviceBuffer<T>(snapshot.max_relative_speed->begin(), snapshot.max_relative_speed->end());
+    }
+
+    if (snapshot.thermal_energy.has_value()) {
+        _thermal_energy_state = DeviceBuffer<T>(snapshot.thermal_energy->begin(), snapshot.thermal_energy->end());
+    }
+
+    if (snapshot.number_particle.has_value()) {
+        _number_particle_state = DeviceBuffer<T>(snapshot.number_particle->begin(), snapshot.number_particle->end());
+    }
+
+    if (snapshot.collision_count.has_value()) {
+        _collision_count_state = DeviceBuffer<int>(snapshot.collision_count->begin(), snapshot.collision_count->end());
+    }
+
+    if (snapshot.knudsen_number.has_value()) {
+        _knudsen_number_state = DeviceBuffer<T>(snapshot.knudsen_number->begin(), snapshot.knudsen_number->end());
+    }
+
     return *this;
 }
 

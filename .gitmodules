@@ -10,3 +10,6 @@
 [submodule "external/lyra"]
 	path = external/lyra
 	url = https://github.com/bfgroup/Lyra.git
+[submodule "external/protobuf"]
+	path = external/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git

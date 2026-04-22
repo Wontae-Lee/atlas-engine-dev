@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atlas/serialization/protobuf_snapshot.h>
+
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -91,6 +93,12 @@ Fluid<T>::statistical_weight() const noexcept {
 
     // Return the fluid-level statistical weight used by the simulation model.
     return _statistical_weight;
+}
+
+template <typename T>
+void
+Fluid<T>::save(const std::string_view path) const {
+    atlas::serialization::save_fluid_binary(*this, path);
 }
 
 template <typename T>
@@ -273,6 +281,35 @@ Fluid<T>::Builder::build() const {
     f._statistical_weight = _statistical_weight;
     f._observer           = _observer;
 
+    if (_position_state.has_value()) {
+        f.template set_state<FluidPositionState<T>>(std::make_unique<FluidPositionState<T>>(
+            DeviceBuffer<Vector3<T>>(_position_state->begin(), _position_state->end())));
+    }
+
+    if (_velocity_state.has_value()) {
+        f.template set_state<FluidVelocityState<T>>(std::make_unique<FluidVelocityState<T>>(
+            DeviceBuffer<Vector3<T>>(_velocity_state->begin(), _velocity_state->end())));
+    }
+
+    if (_species_state.has_value()) {
+        f.template set_state<FluidSpeciesState<T>>(std::make_unique<FluidSpeciesState<T>>(
+            DeviceBuffer<std::size_t>(_species_state->begin(), _species_state->end())));
+    }
+
+    if (_active_state.has_value()) {
+        f.template set_state<FluidActiveState<T>>(std::make_unique<FluidActiveState<T>>(
+            DeviceBuffer<int>(_active_state->begin(), _active_state->end())));
+    }
+
+    if (_temperature_state.has_value()) {
+        f.template set_state<FluidTemperatureState<T>>(std::make_unique<FluidTemperatureState<T>>(
+            DeviceBuffer<T>(_temperature_state->begin(), _temperature_state->end())));
+    }
+
+    if (_particle_count.has_value()) {
+        f.set_particle_count(*_particle_count);
+    }
+
     return f;
 }
 
@@ -347,6 +384,46 @@ typename Fluid<T>::Builder&
 Fluid<T>::Builder::with_observer(ObserverHostPtr observer) noexcept {
 
     _observer = std::move(observer);
+    return *this;
+}
+
+template <typename T>
+typename Fluid<T>::Builder&
+Fluid<T>::Builder::with_binary(const std::string& path) {
+    const auto snapshot = atlas::serialization::load_fluid_binary<T>(path);
+
+    _buffer_size = snapshot.buffer_size;
+    _particle_count = snapshot.particle_count;
+    _statistical_weight = snapshot.statistical_weight;
+    _particles = DeviceBuffer<MatrialProperties<T>>(snapshot.properties.begin(), snapshot.properties.end());
+    _generators = DeviceBuffer<GenerateOperator<T>>(snapshot.generators.begin(), snapshot.generators.end());
+
+    _position_state.reset();
+    _velocity_state.reset();
+    _species_state.reset();
+    _active_state.reset();
+    _temperature_state.reset();
+
+    if (snapshot.positions.has_value()) {
+        _position_state = DeviceBuffer<Vector3<T>>(snapshot.positions->begin(), snapshot.positions->end());
+    }
+
+    if (snapshot.velocities.has_value()) {
+        _velocity_state = DeviceBuffer<Vector3<T>>(snapshot.velocities->begin(), snapshot.velocities->end());
+    }
+
+    if (snapshot.species.has_value()) {
+        _species_state = DeviceBuffer<std::size_t>(snapshot.species->begin(), snapshot.species->end());
+    }
+
+    if (snapshot.active.has_value()) {
+        _active_state = DeviceBuffer<int>(snapshot.active->begin(), snapshot.active->end());
+    }
+
+    if (snapshot.temperature.has_value()) {
+        _temperature_state = DeviceBuffer<T>(snapshot.temperature->begin(), snapshot.temperature->end());
+    }
+
     return *this;
 }
 

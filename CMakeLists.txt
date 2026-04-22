@@ -306,6 +306,66 @@ endif ()
 add_subdirectory(external/tinyobj)
 
 # ============================================================
+# Protobuf runtime and code generation
+#
+# Atlas uses a vendored protobuf source tree under
+# `external/protobuf`. Both the protobuf C++ runtime and the
+# `protoc` compiler are built from that tree so no separate
+# prebuilt archive is required.
+# ============================================================
+unset(WITH_PROTOC CACHE)
+set(protobuf_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(protobuf_BUILD_CONFORMANCE OFF CACHE BOOL "" FORCE)
+set(protobuf_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(protobuf_BUILD_PROTOC_BINARIES ON CACHE BOOL "" FORCE)
+set(protobuf_BUILD_LIBPROTOC ON CACHE BOOL "" FORCE)
+set(protobuf_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(protobuf_INSTALL OFF CACHE BOOL "" FORCE)
+set(protobuf_USE_UNITY_BUILD OFF CACHE BOOL "" FORCE)
+set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
+
+add_subdirectory(external/protobuf EXCLUDE_FROM_ALL)
+
+set(ATLAS_PROTO_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/serialization/proto")
+set(ATLAS_PROTO_SCHEMA "${ATLAS_PROTO_SCHEMA_DIR}/atlas_snapshot.proto")
+set(ATLAS_PROTO_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(ATLAS_PROTO_SOURCES
+        "${ATLAS_PROTO_OUTPUT_DIR}/atlas_snapshot.pb.cc"
+        "${ATLAS_PROTO_OUTPUT_DIR}/atlas_snapshot.pb.h")
+
+file(MAKE_DIRECTORY "${ATLAS_PROTO_OUTPUT_DIR}")
+
+add_custom_command(
+        OUTPUT ${ATLAS_PROTO_SOURCES}
+        COMMAND protobuf::protoc
+        ARGS
+        "--proto_path=${ATLAS_PROTO_SCHEMA_DIR}"
+        "--cpp_out=${ATLAS_PROTO_OUTPUT_DIR}"
+        "atlas_snapshot.proto"
+        DEPENDS "${ATLAS_PROTO_SCHEMA}" protobuf::protoc
+        WORKING_DIRECTORY "${ATLAS_PROTO_SCHEMA_DIR}"
+        VERBATIM
+)
+
+add_library(atlas-serialization STATIC
+        ${ATLAS_PROTO_OUTPUT_DIR}/atlas_snapshot.pb.cc
+        src/serialization/protobuf_snapshot.cpp
+)
+add_library(atlas::serialization ALIAS atlas-serialization)
+
+target_include_directories(atlas-serialization
+        PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        PRIVATE
+        "${ATLAS_PROTO_OUTPUT_DIR}"
+)
+
+target_link_libraries(atlas-serialization
+        PUBLIC
+        protobuf::libprotobuf
+)
+
+# ============================================================
 # External package dependencies
 #
 # TBB is treated as a required package for all configurations.
@@ -352,6 +412,7 @@ target_include_directories(atlas-core
 # appears in the public header surface, it must be propagated as a
 # transitive dependency to downstream users of atlas-core.
 target_link_libraries(atlas-core INTERFACE tinyobjloader)
+target_link_libraries(atlas-core INTERFACE atlas::serialization)
 
 # ============================================================
 # Tasking backend selection
