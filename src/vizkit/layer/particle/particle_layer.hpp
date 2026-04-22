@@ -6,6 +6,7 @@
 #include <vizkit/shader/glsl.h>
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -14,9 +15,11 @@ namespace atlas::vizkit {
 
 template <typename T>
 ParticleLayer<T>::ParticleLayer(const atlas::SystemHostPtr<T>& system,
-                                const Vector4<T>& color)
+                                const Vector4<T>& color,
+                                const T point_size)
     : _system(system)
-    , _color(color) {
+    , _color(color)
+    , _point_size(point_size) {
     // Construct a particle visualization layer.
     //
     // Parameters:
@@ -130,6 +133,7 @@ ParticleLayer<T>::init(GLFWwindow* window, Camera& camera) {
     // "uColor": particle RGBA color
     _u_mvp   = _program->uniform_loc("MVP");
     _u_color = _program->uniform_loc("uColor");
+    _u_point_size = _program->uniform_loc("uPointSize");
 
 #if defined(ATLAS_TASKING_CUDA)
     // In CUDA mode, register the OpenGL VBO as a CUDA graphics resource.
@@ -286,6 +290,10 @@ ParticleLayer<T>::update(GLFWwindow* window, Camera& camera, T dt) {
             static_cast<float>(_color.w));
     }
 
+    if (_u_point_size >= 0) {
+        glUniform1f(_u_point_size, static_cast<float>(_point_size));
+    }
+
     // Bind the VAO containing particle vertex layout state.
     glBindVertexArray(_vao);
 
@@ -329,8 +337,9 @@ ParticleLayer<T>::shutdown() {
     }
 
     // Reset cached uniform locations.
-    _u_mvp   = -1;
-    _u_color = -1;
+    _u_mvp        = -1;
+    _u_color      = -1;
+    _u_point_size = -1;
 
     // Reset draw state.
     _draw_count = 0;
@@ -381,6 +390,13 @@ ParticleLayer<T>::Builder::with_color(const Vector4<T>& color) noexcept {
 
 template <typename T>
 typename ParticleLayer<T>::Builder&
+ParticleLayer<T>::Builder::with_point_size(const T point_size) noexcept {
+    _point_size = point_size;
+    return *this;
+}
+
+template <typename T>
+typename ParticleLayer<T>::Builder&
 ParticleLayer<T>::Builder::with_system(const atlas::SystemHostPtr<T>& system) noexcept {
     // Stage the simulation system that provides particle data.
     _system = system;
@@ -392,7 +408,7 @@ ParticleLayer<T>
 ParticleLayer<T>::Builder::build() const {
     // Validate staged inputs before constructing the final layer by value.
     validate();
-    return ParticleLayer<T>(_system, _color);
+    return ParticleLayer<T>(_system, _color, _point_size);
 }
 
 template <typename T>
@@ -400,7 +416,7 @@ std::shared_ptr<ParticleLayer<T>>
 ParticleLayer<T>::Builder::make_shared() const {
     // Validate staged inputs before constructing the final layer in shared storage.
     validate();
-    return std::make_shared<ParticleLayer<T>>(_system, _color);
+    return std::make_shared<ParticleLayer<T>>(_system, _color, _point_size);
 }
 
 template <typename T>
@@ -416,6 +432,10 @@ ParticleLayer<T>::Builder::validate() const {
     // The system must expose a valid fluid object.
     if (_system->fluid() == nullptr) {
         throw std::runtime_error("ParticleLayer::Builder: system fluid must not be null.");
+    }
+
+    if (!std::isfinite(_point_size) || _point_size <= T(0)) {
+        throw std::runtime_error("ParticleLayer::Builder: point_size must be finite and positive.");
     }
 }
 

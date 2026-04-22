@@ -143,13 +143,15 @@ public:
 
 public:
     /**
-     * @brief Construct a particle layer from a simulation system and an optional color.
+     * @brief Construct a particle layer from a simulation system, an optional color, and point size.
      *
      * @param system Host-side shared pointer to the simulation system providing particle data.
      * @param color RGBA color used when rendering particles.
+     * @param point_size OpenGL point size used to draw each particle.
      */
     ATLAS_HOST ParticleLayer(const atlas::SystemHostPtr<T>& system,
-                             const Vector4<T>& color = Vector4<T>(T(0.15), T(0.45), T(0.95), T(0.65)));
+                             const Vector4<T>& color = Vector4<T>(T(0.15), T(0.45), T(0.95), T(0.65)),
+                             T point_size = T(3.0));
 
     /**
      * @brief Create a fluent builder for @ref ParticleLayer.
@@ -284,6 +286,11 @@ private:
     GLint _u_color = -1;
 
     /**
+     * @brief Cached uniform location for particle point size.
+     */
+    GLint _u_point_size = -1;
+
+    /**
      * @brief Number of particles currently scheduled for drawing.
      *
      * @details
@@ -309,6 +316,11 @@ private:
      * component defines transparency.
      */
     Vector4<T> _color { T(0.15), T(0.45), T(0.95), T(0.65) };
+
+    /**
+     * @brief Point size used to draw each particle.
+     */
+    T _point_size = T(3.0);
 
     /**
      * @brief Owned shader program used to render the particle cloud.
@@ -397,6 +409,15 @@ public:
     with_color(const Vector4<T>& color) noexcept;
 
     /**
+     * @brief Set the particle point size.
+     *
+     * @param point_size OpenGL point size to stage for rendering.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_point_size(T point_size) noexcept;
+
+    /**
      * @brief Build a configured @ref ParticleLayer by value after validation.
      *
      * @return Constructed particle layer.
@@ -432,6 +453,11 @@ private:
      * @brief Pending particle render color.
      */
     Vector4<T> _color { T(0.15), T(0.45), T(0.95), T(0.65) };
+
+    /**
+     * @brief Pending particle point size.
+     */
+    T _point_size = T(3.0);
 };
 
 } // namespace atlas::vizkit

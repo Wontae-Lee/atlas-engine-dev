@@ -13,6 +13,7 @@
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/generator/generate_operator.h>
 #include <atlas/generator/generator.h>
+#include <atlas/generator/jittering_operator.h>
 #include <atlas/generator/maxwell_boltzmann_generator.h>
 #include <atlas/generator/maxwell_sigma_generator.h>
 #include <atlas/generator/uniform_generator.h>
@@ -24,6 +25,7 @@
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/geometry/plane.h>
 #include <atlas/geometry/sphere.h>
+#include <atlas/geometry/square.h>
 #include <atlas/geometry/triangle.h>
 #include <atlas/geometry/triangle_mesh.h>
 #include <atlas/indexer/device_pair_indexer.h>
@@ -84,7 +86,12 @@
 #include <atlas/solver/dsmc/variable_hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_soft_sphere_kernel.h>
 #include <atlas/solver/solver.h>
+#include <atlas/solver/sph/cubic_spline_sph_kernel.h>
+#include <atlas/solver/sph/sph_gateway_solver.h>
+#include <atlas/solver/sph/sph_kernel.h>
 #include <atlas/solver/sph/sph_solver.h>
+#include <atlas/solver/sph/standard_sph_kernel.h>
+#include <atlas/solver/sph/wendland_quintic_sph_kernel.h>
 #include <atlas/source/source.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>

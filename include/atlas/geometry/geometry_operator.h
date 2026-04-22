@@ -35,6 +35,7 @@
  * - cylinder,
  * - plane,
  * - sphere,
+ * - square,
  * - triangle,
  * - triangle mesh.
  *
@@ -70,6 +71,7 @@
 #include <atlas/geometry/cylinder.h>
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/geometry/plane.h>
+#include <atlas/geometry/square.h>
 #include <atlas/geometry/sphere.h>
 #include <atlas/geometry/triangle.h>
 #include <atlas/geometry/triangle_mesh.h>
@@ -161,6 +163,11 @@ struct GeometryOperator {
         SphereGeometryOperator<T> sphere;
 
         /**
+         * @brief Square geometry operator payload.
+         */
+        SquareGeometryOperator<T> square;
+
+        /**
          * @brief Triangle geometry operator payload.
          */
         TriangleGeometryOperator<T> triangle;
@@ -243,6 +250,13 @@ struct GeometryOperator {
      * @param op Sphere operator payload to store.
      */
     ATLAS_ALL_DEVICE explicit GeometryOperator(const SphereGeometryOperator<T>& op);
+
+    /**
+     * @brief Construct the wrapper from a square geometry operator.
+     *
+     * @param op Square operator payload to store.
+     */
+    ATLAS_ALL_DEVICE explicit GeometryOperator(const SquareGeometryOperator<T>& op);
 
     /**
      * @brief Construct the wrapper from a triangle geometry operator.

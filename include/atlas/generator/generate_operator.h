@@ -29,6 +29,7 @@
  * ## Supported generation laws
  * The operator currently supports:
  * - @ref GenerateType::uniform
+ * - @ref GenerateType::jittering
  * - @ref GenerateType::maxwell_sigma
  * - @ref GenerateType::maxwell_boltzmann
  *
@@ -71,6 +72,7 @@ namespace atlas::fluid {
  * - correctly manage union lifetime during copy and destruction.
  */
 enum class GenerateType : int {
+    jittering,         ///< Generator that jitters each velocity component around a shared base value.
     maxwell_sigma,     ///< Generator based on a Maxwell distribution parameterized by sigma-like input.
     maxwell_boltzmann, ///< Generator based on a Maxwell-Boltzmann distribution.
     uniform            ///< Generator based on a uniform distribution law.
@@ -78,6 +80,7 @@ enum class GenerateType : int {
 
 } // namespace atlas::fluid
 
+#include <atlas/generator/jittering_operator.h>
 #include <atlas/generator/maxwell_boltzmann_generator.h>
 #include <atlas/generator/maxwell_sigma_generator.h>
 #include <atlas/generator/uniform_generator.h>
@@ -154,6 +157,11 @@ struct GenerateOperator final {
          * @brief Uniform generation operator payload.
          */
         UniformGenerateOperator<T> uniform;
+
+        /**
+         * @brief Jittering generation operator payload.
+         */
+        JitteringGenerateOperator<T> jittering;
 
         /**
          * @brief Maxwell-sigma generation operator payload.
@@ -235,6 +243,18 @@ struct GenerateOperator final {
      */
     ATLAS_HOST
     GenerateOperator(const UniformGenerateOperator<T>& op);
+
+    /**
+     * @brief Construct the wrapper from a jittering generation operator.
+     *
+     * @details
+     * Activates the @ref jittering union member and sets @ref type to
+     * @ref GenerateType::jittering.
+     *
+     * @param op Concrete jittering operator to store.
+     */
+    ATLAS_HOST
+    GenerateOperator(const JitteringGenerateOperator<T>& op);
 
     /**
      * @brief Construct the wrapper from a Maxwell-sigma generation operator.

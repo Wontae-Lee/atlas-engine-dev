@@ -96,6 +96,32 @@ UniverseFieldForceState<T>::data() const noexcept {
 }
 
 template <typename T>
+UniverseGravityState<T>::UniverseGravityState(const std::size_t number_of_cells)
+    : _gravity(number_of_cells) { }
+
+template <typename T>
+UniverseGravityState<T>::UniverseGravityState(DeviceBuffer<Vector3<T>> gravity) noexcept
+    : _gravity(std::move(gravity)) { }
+
+template <typename T>
+std::size_t
+UniverseGravityState<T>::size() const noexcept {
+    return _gravity.size();
+}
+
+template <typename T>
+DeviceBuffer<Vector3<T>>&
+UniverseGravityState<T>::data() noexcept {
+    return _gravity;
+}
+
+template <typename T>
+const DeviceBuffer<Vector3<T>>&
+UniverseGravityState<T>::data() const noexcept {
+    return _gravity;
+}
+
+template <typename T>
 UniverseMaxRelativeSpeedState<T>::UniverseMaxRelativeSpeedState(const std::size_t number_of_cells)
     // Allocate one maximum-relative-speed entry per universe cell.
     : _max_relative_speed(number_of_cells) { }

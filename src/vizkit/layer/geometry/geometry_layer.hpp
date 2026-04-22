@@ -48,6 +48,7 @@ GeometryLayer<T>::init(GLFWwindow* window, Camera& camera) {
     // - BoxLayer
     // - CircleLayer
     // - CylinderLayer
+    // - future square-like geometry layers
     //
     // The result is stored in _local_positions.
     _local_positions.clear();

@@ -2,6 +2,7 @@
 
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/universe/universe_state.h>
 
@@ -186,6 +187,63 @@ Orchestrator<T>::apply_field_force(const T dt) {
 
 template <typename T>
 void
+Orchestrator<T>::apply_gravity(const T dt) {
+
+    if (!_universe || !_fluid || !_searcher || !(dt != T(0))) {
+        return;
+    }
+
+    auto* gravity_state  = _universe->template state<atlas::universe::UniverseGravityState<T>>();
+    auto* velocity_state = _fluid->template state<atlas::fluid::FluidVelocityState<T>>();
+
+    if (gravity_state == nullptr || velocity_state == nullptr) {
+        return;
+    }
+
+    auto& gravity  = gravity_state->data();
+    auto& velocity = velocity_state->data();
+
+    const int particle_count   = static_cast<int>(_fluid->particle_count());
+    const int num_of_cells     = static_cast<int>(gravity.size());
+    const auto* indices_ptr    = _searcher->indices();
+    const auto* cell_start_ptr = _searcher->cell_start();
+    const auto* cell_end_ptr   = _searcher->cell_end();
+
+    if (particle_count <= 0 || num_of_cells <= 0 || indices_ptr == nullptr || cell_start_ptr == nullptr
+        || cell_end_ptr == nullptr) {
+        return;
+    }
+
+    const auto* gravity_ptr = atlas::raw_pointer_cast(gravity.data());
+    auto* velocity_ptr      = atlas::raw_pointer_cast(velocity.data());
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        num_of_cells,
+        [=] ATLAS_DEVICE(const int cell) {
+            const int start = cell_start_ptr[cell];
+            const int end   = cell_end_ptr[cell];
+
+            if (start < 0 || end <= start) {
+                return;
+            }
+
+            const Vector3<T> cell_gravity = gravity_ptr[cell];
+
+            for (int sorted_index = start; sorted_index < end; ++sorted_index) {
+                const int particle_index = indices_ptr[sorted_index];
+
+                if (particle_index < 0 || particle_index >= particle_count) {
+                    continue;
+                }
+
+                velocity_ptr[particle_index] += cell_gravity * dt;
+            }
+        });
+}
+
+template <typename T>
+void
 Orchestrator<T>::orchestrate(const T dt) {
 
     if (_searcher) {
@@ -195,6 +253,7 @@ Orchestrator<T>::orchestrate(const T dt) {
     search();
     classify();
     measure();
+    apply_gravity(dt);
     apply_field_force(dt);
     solve(dt);
 }
@@ -330,6 +389,14 @@ Orchestrator<T>::Builder::with_measurer(MeasurerHostPtr<T> measurer) noexcept {
 
 template <typename T>
 typename Orchestrator<T>::Builder&
+Orchestrator<T>::Builder::with_gravity(const Vector3<T>& gravity) noexcept {
+
+    _gravity = gravity;
+    return *this;
+}
+
+template <typename T>
+typename Orchestrator<T>::Builder&
 Orchestrator<T>::Builder::with_solver(SolveHostPtr<T> solver) noexcept {
 
     // Append a solver to the builder's solver sequence.
@@ -351,11 +418,53 @@ Orchestrator<T>::Builder::validate() const {
 }
 
 template <typename T>
+void
+Orchestrator<T>::Builder::ensure_gravity_state() const {
+
+    if (!_universe || !_gravity.has_value()) {
+        return;
+    }
+
+    const std::size_t number_of_cells = _universe->number_of_cells();
+    if (number_of_cells == 0) {
+        return;
+    }
+
+    if (_universe->template has_state<atlas::universe::UniverseGravityState<T>>()) {
+        auto* gravity_state = _universe->template state<atlas::universe::UniverseGravityState<T>>();
+        if (gravity_state != nullptr) {
+            if (gravity_state->size() != number_of_cells) {
+                gravity_state->data().resize(number_of_cells);
+            }
+
+            atlas::parallel_fill<ExecutionPolicy::device>(
+                gravity_state->data().begin(),
+                gravity_state->data().end(),
+                *_gravity);
+        }
+        return;
+    }
+
+    _universe->template emplace_state<atlas::universe::UniverseGravityState<T>>(number_of_cells);
+
+    auto* gravity_state = _universe->template state<atlas::universe::UniverseGravityState<T>>();
+    if (gravity_state == nullptr) {
+        return;
+    }
+
+    atlas::parallel_fill<ExecutionPolicy::device>(
+        gravity_state->data().begin(),
+        gravity_state->data().end(),
+        *_gravity);
+}
+
+template <typename T>
 Orchestrator<T>
 Orchestrator<T>::Builder::build() const {
 
     // Validate builder state before constructing the value object.
     validate();
+    ensure_gravity_state();
     return Orchestrator<T>(_universe, _fluid, _searcher, _codec, _measurer, _solvers);
 }
 
@@ -365,6 +474,7 @@ Orchestrator<T>::Builder::make_host_shared() const {
 
     // Validate builder state before constructing the shared object.
     validate();
+    ensure_gravity_state();
     return atlas::make_host_shared<Orchestrator<T>>(_universe, _fluid, _searcher, _codec, _measurer, _solvers);
 }
 

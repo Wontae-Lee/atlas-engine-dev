@@ -33,6 +33,11 @@ GenerateOperator<T>::GenerateOperator(const GenerateType type,
         new (&uniform) UniformGenerateOperator<T>(seed);
         return;
 
+    case GenerateType::jittering:
+        // Activate the jittering generator variant.
+        new (&jittering) JitteringGenerateOperator<T>(seed);
+        return;
+
     case GenerateType::maxwell_sigma:
         // Activate the Maxwell-sigma generator variant.
         new (&maxwell_sigma) MaxwellSigmaGenerateOperator<T>(seed);
@@ -108,6 +113,11 @@ GenerateOperator<T>::destroy_active() noexcept {
         uniform.~UniformGenerateOperator<T>();
         return;
 
+    case GenerateType::jittering:
+        // Destroy the active jittering generator.
+        jittering.~JitteringGenerateOperator<T>();
+        return;
+
     case GenerateType::maxwell_sigma:
         // Destroy the active Maxwell-sigma generator.
         maxwell_sigma.~MaxwellSigmaGenerateOperator<T>();
@@ -143,6 +153,11 @@ GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
         new (&uniform) UniformGenerateOperator<T>(other.uniform);
         return;
 
+    case GenerateType::jittering:
+        // Reconstruct the jittering generator from the source object.
+        new (&jittering) JitteringGenerateOperator<T>(other.jittering);
+        return;
+
     case GenerateType::maxwell_sigma:
         // Reconstruct the Maxwell-sigma generator from the source object.
         new (&maxwell_sigma) MaxwellSigmaGenerateOperator<T>(other.maxwell_sigma);
@@ -167,6 +182,13 @@ GenerateOperator<T>::GenerateOperator(const UniformGenerateOperator<T>& op)
     : type(GenerateType::uniform) {
     // Construct this wrapper directly from an already prepared uniform generator.
     new (&uniform) UniformGenerateOperator<T>(op);
+}
+
+template <typename T>
+GenerateOperator<T>::GenerateOperator(const JitteringGenerateOperator<T>& op)
+    : type(GenerateType::jittering) {
+    // Construct this wrapper directly from an already prepared jittering generator.
+    new (&jittering) JitteringGenerateOperator<T>(op);
 }
 
 template <typename T>
@@ -199,6 +221,10 @@ GenerateOperator<T>::generate(const T param0,
         // Forward both parameters to the uniform generator.
         return uniform.generate(param0, param1);
 
+    case GenerateType::jittering:
+        // Forward both parameters to the jittering generator.
+        return jittering.generate(param0, param1);
+
     case GenerateType::maxwell_sigma:
         // Forward only the first parameter because this generator variant
         // expects a single effective input.
@@ -226,6 +252,11 @@ GenerateOperator<T>::reseed(const unsigned int seed) noexcept {
     case GenerateType::uniform:
         uniform.seed = seed;
         uniform.engine = atlas::default_random_engine<T>(seed);
+        return;
+
+    case GenerateType::jittering:
+        jittering.seed = seed;
+        jittering.engine = atlas::default_random_engine<T>(seed);
         return;
 
     case GenerateType::maxwell_sigma:

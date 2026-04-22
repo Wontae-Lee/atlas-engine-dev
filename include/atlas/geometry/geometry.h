@@ -24,6 +24,7 @@
  * derived primitives such as:
  * - boxes,
  * - circles,
+ * - squares,
  * - cylinders,
  * - and any other supported queryable geometry type.
  *

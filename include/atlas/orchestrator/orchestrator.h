@@ -14,6 +14,8 @@
 #include <atlas/solver/solver.h>
 #include <atlas/universe/universe.h>
 
+#include <optional>
+
 namespace atlas::system {
 
 /**
@@ -115,6 +117,17 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     apply_field_force(T dt);
+
+    /**
+     * @brief Applies a uniform gravity vector to all active particle velocities when configured.
+     *
+     * Gravity is read from @ref atlas::universe::UniverseGravityState. When the
+     * state is absent, this function does nothing.
+     *
+     * @param dt Time step used for the explicit velocity update.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    apply_gravity(T dt);
 
     /**
      * @brief Creates a Builder instance.
@@ -292,6 +305,18 @@ public:
     with_measurer(MeasurerHostPtr<T> measurer) noexcept;
 
     /**
+     * @brief Installs a uniform gravity vector on the bound universe.
+     *
+     * The gravity value is staged in the builder and materialized as a
+     * @ref atlas::universe::UniverseGravityState during build.
+     *
+     * @param gravity Gravity acceleration vector.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_gravity(const Vector3<T>& gravity) noexcept;
+
+    /**
      * @brief Appends a solver to the orchestrator configuration.
      *
      * @param solver Host-side shared pointer to the solver.
@@ -329,6 +354,9 @@ private:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     validate() const;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    ensure_gravity_state() const;
+
 private:
     /**
      * @brief Universe collected by the builder.
@@ -348,6 +376,8 @@ private:
     CodecHostPtr<T> _codec {};
 
     MeasurerHostPtr<T> _measurer {};
+
+    std::optional<Vector3<T>> _gravity {};
 
     /**
      * @brief Solver list collected by the builder.

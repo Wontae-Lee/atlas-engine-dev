@@ -83,6 +83,14 @@ enum class GeometryType : int {
     Sphere,
 
     /**
+     * @brief Square surface geometry.
+     *
+     * Represents an oriented finite square defined by a center, normal,
+     * and side length.
+     */
+    Square,
+
+    /**
      * @brief Triangle geometry.
      *
      * Represents a single triangular surface primitive defined by three vertices.

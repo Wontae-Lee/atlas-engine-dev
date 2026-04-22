@@ -53,6 +53,11 @@ GeometryOperator<T>::GeometryOperator(const GeometryOperator& other) noexcept
         sphere = other.sphere;
         return;
 
+    case GeometryType::Square:
+        // Copy the square operator when the source stores a square.
+        square = other.square;
+        return;
+
     case GeometryType::Triangle:
         // Copy the triangle operator when the source stores a triangle.
         triangle = other.triangle;
@@ -110,6 +115,11 @@ GeometryOperator<T>::operator=(const GeometryOperator& other) noexcept {
     case GeometryType::Sphere:
         // Assign the sphere operator payload.
         sphere = other.sphere;
+        return *this;
+
+    case GeometryType::Square:
+        // Assign the square operator payload.
+        square = other.square;
         return *this;
 
     case GeometryType::Triangle:
@@ -183,6 +193,13 @@ GeometryOperator<T>::GeometryOperator(const SphereGeometryOperator<T>& op)
 }
 
 template <typename T>
+GeometryOperator<T>::GeometryOperator(const SquareGeometryOperator<T>& op)
+    : type(GeometryType::Square)
+    , square(op) {
+    // Construct a generic geometry operator from a concrete square operator.
+}
+
+template <typename T>
 GeometryOperator<T>::GeometryOperator(const TriangleGeometryOperator<T>& op)
     : type(GeometryType::Triangle)
     , triangle(op) {
@@ -231,6 +248,10 @@ GeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noe
         // Forward to the sphere closest-point implementation.
         return sphere.closest_point(p);
 
+    case GeometryType::Square:
+        // Forward to the square closest-point implementation.
+        return square.closest_point(p);
+
     case GeometryType::Triangle:
         // Forward to the triangle closest-point implementation.
         return triangle.closest_point(p);
@@ -272,6 +293,10 @@ GeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const no
         // Forward to the sphere normal query.
         return sphere.closest_normal(p);
 
+    case GeometryType::Square:
+        // Forward to the square normal query.
+        return square.closest_normal(p);
+
     case GeometryType::Triangle:
         // Forward to the triangle normal query.
         return triangle.closest_normal(p);
@@ -312,6 +337,10 @@ GeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const n
     case GeometryType::Sphere:
         // Forward to the sphere signed-distance implementation.
         return sphere.signed_distance(p);
+
+    case GeometryType::Square:
+        // Forward to the square signed-distance implementation.
+        return square.signed_distance(p);
 
     case GeometryType::Triangle:
         // Forward to the triangle signed-distance implementation.
@@ -357,6 +386,10 @@ GeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T toler
         // Forward to the sphere inside test.
         return sphere.is_inside(p, tolerance);
 
+    case GeometryType::Square:
+        // Forward to the square inside test.
+        return square.is_inside(p, tolerance);
+
     case GeometryType::Triangle:
         // Forward to the triangle inside test.
         return triangle.is_inside(p, tolerance);
@@ -397,6 +430,10 @@ GeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T t
     case GeometryType::Sphere:
         // Forward to the sphere surface test.
         return sphere.is_on_surface(p, tolerance);
+
+    case GeometryType::Square:
+        // Forward to the square surface test.
+        return square.is_on_surface(p, tolerance);
 
     case GeometryType::Triangle:
         // Forward to the triangle surface test.
@@ -439,6 +476,10 @@ GeometryOperator<T>::centroid() const noexcept {
         // Forward to the sphere centroid implementation.
         return sphere.centroid();
 
+    case GeometryType::Square:
+        // Forward to the square centroid implementation.
+        return square.centroid();
+
     case GeometryType::Triangle:
         // Forward to the triangle centroid implementation.
         return triangle.centroid();
@@ -479,6 +520,10 @@ GeometryOperator<T>::bound() const noexcept {
     case GeometryType::Sphere:
         // Forward to the sphere bound computation.
         return sphere.bound();
+
+    case GeometryType::Square:
+        // Forward to the square bound computation.
+        return square.bound();
 
     case GeometryType::Triangle:
         // Forward to the triangle bound computation.
@@ -521,6 +566,10 @@ GeometryOperator<T>::is_valid() const noexcept {
         // Forward to the sphere validity test.
         return sphere.is_valid();
 
+    case GeometryType::Square:
+        // Forward to the square validity test.
+        return square.is_valid();
+
     case GeometryType::Triangle:
         // Forward to the triangle validity test.
         return triangle.is_valid();
@@ -561,6 +610,10 @@ GeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexcept {
     case GeometryType::Sphere:
         // Forward to the sphere ray-trace implementation.
         return sphere.trace(ray);
+
+    case GeometryType::Square:
+        // Forward to the square ray-trace implementation.
+        return square.trace(ray);
 
     case GeometryType::Triangle:
         // Forward to the triangle ray-trace implementation.

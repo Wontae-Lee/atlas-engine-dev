@@ -71,7 +71,8 @@ public:
      * @return Reference to this object.
      */
     UniverseState&
-    operator=(UniverseState&&) noexcept = default;
+    operator=(UniverseState&&) noexcept
+        = default;
 
     /**
      * @brief Returns the number of cell entries stored in this state.
@@ -79,7 +80,8 @@ public:
      * @return Number of entries in the underlying buffer.
      */
     ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
-    size() const noexcept = 0;
+    size() const noexcept
+        = 0;
 };
 
 /**
@@ -251,6 +253,47 @@ private:
      * @brief Device buffer storing one field-force vector per cell.
      */
     DeviceBuffer<Vector3<T>> _field_force;
+};
+
+/**
+ * @brief Universe state storing cell-wise gravity vectors.
+ *
+ * Gravity is represented as a universe state so higher-level runtime systems
+ * can discover and apply it through the same state-registry mechanism used for
+ * other field quantities.
+ *
+ * @tparam T Floating-point scalar type used by the gravity vector components.
+ */
+template <typename T>
+class UniverseGravityState final : public UniverseState {
+public:
+    UniverseGravityState() = default;
+
+    /**
+     * @brief Constructs a gravity state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseGravityState(std::size_t number_of_cells);
+
+    /**
+     * @brief Constructs a gravity state from an existing device buffer.
+     *
+     * @param gravity Device buffer containing cell-wise gravity vectors.
+     */
+    ATLAS_HOST explicit UniverseGravityState(DeviceBuffer<Vector3<T>> gravity) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3<T>>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3<T>>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<Vector3<T>> _gravity;
 };
 
 /**
