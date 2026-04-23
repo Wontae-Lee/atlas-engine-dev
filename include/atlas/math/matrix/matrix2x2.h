@@ -13,12 +13,17 @@ namespace math {
      *
      * @details
      * This is a partial specialization of `Matrix<T, R, C>` for `R = 2` and `C = 2`.
-     * It stores elements as named scalars:
+     * It exposes elements through named scalar fields while also keeping a
+     * contiguous row-major storage view:
      * - `m00 m01`
      * - `m10 m11`
      *
-     * This layout avoids dynamic indexing overhead and enables highly optimized small-matrix
-     * operations such as determinant, transpose, inverse, and solving 2×2 linear systems.
+     * The named-field view and contiguous storage alias the same underlying
+     * memory, so indexed access and field access stay consistent.
+     *
+     * This layout avoids dynamic indexing overhead and enables highly optimized
+     * small-matrix operations such as determinant, transpose, inverse, and
+     * solving 2×2 linear systems.
      *
      * Element access follows row-major semantics:
      * \f[
@@ -45,8 +50,13 @@ namespace math {
         static_assert(std::is_trivially_copyable_v<T>, "T must be trivially copyable");
 
     public:
-        T m00, m01;
-        T m10, m11;
+        union {
+            struct {
+                T m00, m01;
+                T m10, m11;
+            };
+            T _data[4];
+        };
         /**
          * @brief Default constructor.
          *
@@ -107,14 +117,14 @@ namespace math {
         /**
          * @brief Returns a pointer to the contiguous storage (const).
          *
-         * @return Pointer to `m00` followed by `m01`, `m10`, `m11`.
+         * @return Pointer to the row-major contiguous storage view.
          */
         ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const T*
         data() const noexcept;
         /**
          * @brief Returns a pointer to the contiguous storage (mutable).
          *
-         * @return Pointer to `m00` followed by `m01`, `m10`, `m11`.
+         * @return Pointer to the row-major contiguous storage view.
          */
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T*
         data() noexcept;

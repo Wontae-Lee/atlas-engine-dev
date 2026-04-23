@@ -85,6 +85,10 @@ enum class GenerateType : int {
 #include <atlas/generator/maxwell_sigma_generator.h>
 #include <atlas/generator/uniform_generator.h>
 
+#if defined(ATLAS_TASKING_CUDA)
+#include <thrust/type_traits/is_trivially_relocatable.h>
+#endif
+
 namespace atlas::fluid {
 
 /**
@@ -348,5 +352,14 @@ using GenerateOperator = atlas::fluid::GenerateOperator<T>;
 using GenerateType = atlas::fluid::GenerateType;
 
 } // namespace atlas
+
+#if defined(ATLAS_TASKING_CUDA)
+namespace thrust {
+
+template <typename T>
+struct proclaim_trivially_relocatable<atlas::fluid::GenerateOperator<T>> : true_type { };
+
+} // namespace thrust
+#endif
 
 #include <atlas/generator/generate_operator.hpp>

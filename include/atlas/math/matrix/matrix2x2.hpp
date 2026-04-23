@@ -75,26 +75,26 @@ Matrix<T, 2, 2>::data() const noexcept {
     // Returns a pointer to the contiguous storage (m00..m11).
     // Layout in memory is row-major:
     //   [m00, m01, m10, m11]
-    return &m00;
+    return _data;
 }
 template <typename T>
 T*
 Matrix<T, 2, 2>::data() noexcept {
     // Mutable pointer to contiguous storage.
-    return &m00;
+    return _data;
 }
 template <typename T>
 const T&
 Matrix<T, 2, 2>::operator[](std::size_t i) const noexcept {
     // Flat indexing (no bounds check):
     // i=0->m00, 1->m01, 2->m10, 3->m11.
-    return (&m00)[i];
+    return _data[i];
 }
 template <typename T>
 T&
 Matrix<T, 2, 2>::operator[](std::size_t i) noexcept {
     // Mutable flat indexing.
-    return (&m00)[i];
+    return _data[i];
 }
 template <typename T>
 const T&
@@ -102,25 +102,25 @@ Matrix<T, 2, 2>::at(std::size_t r, std::size_t c) const noexcept {
     // 2D access mapped to row-major linear index:
     // idx = r * 2 + c.
     // (No bounds check in this implementation.)
-    return (&m00)[r * 2 + c];
+    return _data[r * 2 + c];
 }
 template <typename T>
 T&
 Matrix<T, 2, 2>::at(std::size_t r, std::size_t c) noexcept {
     // Mutable 2D access in row-major layout.
-    return (&m00)[r * 2 + c];
+    return _data[r * 2 + c];
 }
 template <typename T>
 const T&
 Matrix<T, 2, 2>::operator()(std::size_t r, std::size_t c) const noexcept {
     // Operator form of 2D access. Same mapping as at(r,c).
-    return (&m00)[r * 2 + c];
+    return _data[r * 2 + c];
 }
 template <typename T>
 T&
 Matrix<T, 2, 2>::operator()(std::size_t r, std::size_t c) noexcept {
     // Mutable operator form of 2D access.
-    return (&m00)[r * 2 + c];
+    return _data[r * 2 + c];
 }
 template <typename T>
 void
@@ -257,7 +257,9 @@ bool
 Matrix<T, 2, 2>::operator==(const Matrix& other) const noexcept {
     // Exact component-wise equality.
     // For floating point, prefer approximate comparisons at higher level.
-    return m00 == other.m00 && m01 == other.m01 && m10 == other.m10 && m11 == other.m11;
+    for (int i = 0; i < 4; ++i)
+        if (_data[i] != other._data[i]) return false;
+    return true;
 }
 template <typename T>
 bool

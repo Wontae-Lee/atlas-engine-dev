@@ -1,0 +1,31 @@
+name: TBB Vizkit macOS
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  vizkit-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS TBB Debug Vizkit Build
+            configure_preset: tbb-debug
+            build_preset: build-tbb-debug
+          - name: macOS TBB Release Vizkit Build
+            configure_preset: tbb-release
+            build_preset: build-tbb-release
+    name: ${{ matrix.name }}
+    uses: ./.github/workflows/tbb-common.yml
+    with:
+      runner: macos-14
+      run_tests: false
+      install_command: |
+        brew update
+        brew install ninja tbb glfw glew
+      configure_preset: ${{ matrix.configure_preset }}
+      build_preset: ${{ matrix.build_preset }}

@@ -1,0 +1,34 @@
+name: TBB Core Linux
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  core-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu TBB Debug
+            configure_preset: tbb-debug-core
+            build_preset: build-tbb-debug-core
+            test_command: ctest --preset ctest-tbb-debug-core
+          - name: Ubuntu TBB Release
+            configure_preset: tbb-release-core
+            build_preset: build-tbb-release-core
+            test_command: ctest --preset ctest-tbb-release-core
+    name: ${{ matrix.name }}
+    uses: ./.github/workflows/tbb-common.yml
+    with:
+      runner: ubuntu-24.04
+      run_tests: true
+      install_command: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build libtbb-dev
+      configure_preset: ${{ matrix.configure_preset }}
+      build_preset: ${{ matrix.build_preset }}
+      test_command: ${{ matrix.test_command }}

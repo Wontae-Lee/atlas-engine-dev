@@ -106,25 +106,25 @@ Matrix<T, 3, 3>::data() const noexcept {
     // Returns a pointer to the contiguous storage (m00..m22).
     // Layout in memory is row-major:
     //   [m00 m01 m02 m10 m11 m12 m20 m21 m22]
-    return &m00;
+    return _data;
 }
 template <typename T>
 T*
 Matrix<T, 3, 3>::data() noexcept {
     // Mutable pointer to contiguous storage.
-    return &m00;
+    return _data;
 }
 template <typename T>
 const T&
 Matrix<T, 3, 3>::operator[](std::size_t i) const noexcept {
     // Flat indexing (no bounds check), row-major.
-    return (&m00)[i];
+    return _data[i];
 }
 template <typename T>
 T&
 Matrix<T, 3, 3>::operator[](std::size_t i) noexcept {
     // Mutable flat indexing.
-    return (&m00)[i];
+    return _data[i];
 }
 template <typename T>
 const T&
@@ -132,25 +132,25 @@ Matrix<T, 3, 3>::at(std::size_t r, std::size_t c) const noexcept {
     // 2D access mapped to row-major linear index:
     // idx = r * 3 + c.
     // (No bounds check in this implementation.)
-    return (&m00)[r * 3 + c];
+    return _data[r * 3 + c];
 }
 template <typename T>
 T&
 Matrix<T, 3, 3>::at(std::size_t r, std::size_t c) noexcept {
     // Mutable 2D access in row-major layout.
-    return (&m00)[r * 3 + c];
+    return _data[r * 3 + c];
 }
 template <typename T>
 const T&
 Matrix<T, 3, 3>::operator()(std::size_t r, std::size_t c) const noexcept {
     // Operator form of 2D access. Same mapping as at(r,c).
-    return (&m00)[r * 3 + c];
+    return _data[r * 3 + c];
 }
 template <typename T>
 T&
 Matrix<T, 3, 3>::operator()(std::size_t r, std::size_t c) noexcept {
     // Mutable operator form of 2D access.
-    return (&m00)[r * 3 + c];
+    return _data[r * 3 + c];
 }
 template <typename T>
 void
@@ -199,21 +199,21 @@ void
 Matrix<T, 3, 3>::add(T s) noexcept {
     // Element-wise scalar add:
     // A_ij += s
-    for (int i = 0; i < 9; ++i) (&m00)[i] += s;
+    for (int i = 0; i < 9; ++i) _data[i] += s;
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::sub(T s) noexcept {
     // Element-wise scalar subtract:
     // A_ij -= s
-    for (int i = 0; i < 9; ++i) (&m00)[i] -= s;
+    for (int i = 0; i < 9; ++i) _data[i] -= s;
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::mul(T s) noexcept {
     // Element-wise scalar multiply:
     // A_ij *= s
-    for (int i = 0; i < 9; ++i) (&m00)[i] *= s;
+    for (int i = 0; i < 9; ++i) _data[i] *= s;
 }
 template <typename T>
 void
@@ -222,21 +222,21 @@ Matrix<T, 3, 3>::div(T s) noexcept {
     // A_ij /= s  ==>  A_ij *= (1/s)
     // Caller must ensure s != 0.
     const T inv = T(1) / s;
-    for (int i = 0; i < 9; ++i) (&m00)[i] *= inv;
+    for (int i = 0; i < 9; ++i) _data[i] *= inv;
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::add(const Matrix& m) noexcept {
     // Element-wise matrix addition (Hadamard sum):
     // A_ij += M_ij
-    for (int i = 0; i < 9; ++i) (&m00)[i] += (&m.m00)[i];
+    for (int i = 0; i < 9; ++i) _data[i] += m._data[i];
 }
 template <typename T>
 void
 Matrix<T, 3, 3>::sub(const Matrix& m) noexcept {
     // Element-wise matrix subtraction:
     // A_ij -= M_ij
-    for (int i = 0; i < 9; ++i) (&m00)[i] -= (&m.m00)[i];
+    for (int i = 0; i < 9; ++i) _data[i] -= m._data[i];
 }
 template <typename T>
 Matrix<T, 3, 3>&
@@ -286,7 +286,7 @@ Matrix<T, 3, 3>::operator==(const Matrix& o) const noexcept {
     // Exact component-wise equality.
     // For floating point, prefer approximate comparisons at higher level.
     for (int i = 0; i < 9; ++i)
-        if ((&m00)[i] != (&o.m00)[i]) return false;
+        if (_data[i] != o._data[i]) return false;
     return true;
 }
 template <typename T>

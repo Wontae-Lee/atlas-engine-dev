@@ -13,10 +13,14 @@ namespace math {
      *
      * @details
      * This is a partial specialization of `Matrix<T, R, C>` for `R = 3` and `C = 3`.
-     * It stores elements as named scalars:
+     * It exposes elements through named scalar fields while also keeping a
+     * contiguous row-major storage view:
      * - row 0: `m00 m01 m02`
      * - row 1: `m10 m11 m12`
      * - row 2: `m20 m21 m22`
+     *
+     * The named-field view and contiguous storage alias the same underlying
+     * memory, so indexed access and field access stay consistent.
      *
      * The specialization provides efficient implementations for common 3×3 operations
      * (determinant, transpose, inverse, and solving 3×3 linear systems) while remaining
@@ -47,9 +51,14 @@ namespace math {
         static_assert(std::is_trivially_copyable_v<T>, "T must be trivially copyable");
 
     public:
-        T m00, m01, m02;
-        T m10, m11, m12;
-        T m20, m21, m22;
+        union {
+            struct {
+                T m00, m01, m02;
+                T m10, m11, m12;
+                T m20, m21, m22;
+            };
+            T _data[9];
+        };
         /**
          * @brief Default constructor.
          *
@@ -118,14 +127,14 @@ namespace math {
         /**
          * @brief Returns a pointer to contiguous storage (const).
          *
-         * @return Pointer to the first element (`m00`) followed by row-major order.
+         * @return Pointer to the row-major contiguous storage view.
          */
         ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const T*
         data() const noexcept;
         /**
          * @brief Returns a pointer to contiguous storage (mutable).
          *
-         * @return Pointer to the first element (`m00`) followed by row-major order.
+         * @return Pointer to the row-major contiguous storage view.
          */
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T*
         data() noexcept;

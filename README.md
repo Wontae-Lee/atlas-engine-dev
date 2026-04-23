@@ -1,7 +1,9 @@
 # Atlas Engine Dev
 
-[![TBB Core](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core.yml)
-[![TBB Vizkit](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit.yml)
+[![TBB Core Linux](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-linux.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-linux.yml)
+[![TBB Vizkit Linux](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-linux.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-linux.yml)
+[![TBB Core macOS](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-macos.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-macos.yml)
+[![TBB Vizkit macOS](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-macos.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-macos.yml)
 
 Atlas is a C++20 particle-simulation engine with a header-only core and dual tasking backends:
 
@@ -177,12 +179,12 @@ atlas-engine-dev/
 |---|---|
 | `glfw3` | Windowing |
 | `GLEW` | OpenGL extension loading |
-| `OpenGL`, `GLU`, `GLUT` | Visualization stack |
+| `OpenGL` | Core rendering API |
 
 For the current CI environments, Vizkit dependencies are installed as:
 
-- Ubuntu: `libglfw3-dev`, `libglew-dev`, `libglu1-mesa-dev`, `freeglut3-dev`
-- macOS: `glfw`, `glew`, `freeglut`
+- Ubuntu: `libglfw3-dev`, `libglew-dev`
+- macOS: `glfw`, `glew`
 
 ### In-tree dependencies
 
@@ -227,33 +229,87 @@ Primary CUDA presets are also split into `Debug` and `Release`. The `*-core` var
 
 GitHub Actions CI is split across:
 
-- [`.github/workflows/tbb-core.yml`](.github/workflows/tbb-core.yml)
-- [`.github/workflows/tbb-vizkit.yml`](.github/workflows/tbb-vizkit.yml)
+- [`.github/workflows/tbb-common.yml`](.github/workflows/tbb-common.yml) reusable workflow
+- [`.github/workflows/tbb-core-linux.yml`](.github/workflows/tbb-core-linux.yml)
+- [`.github/workflows/tbb-core-macos.yml`](.github/workflows/tbb-core-macos.yml)
+- [`.github/workflows/tbb-vizkit-linux.yml`](.github/workflows/tbb-vizkit-linux.yml)
+- [`.github/workflows/tbb-vizkit-macos.yml`](.github/workflows/tbb-vizkit-macos.yml)
 
-`tbb-core.yml` covers the Ubuntu and macOS `Debug` and `Release` core test matrix:
+Both OS-specific entry workflows delegate the shared checkout/configure/build logic to `tbb-common.yml`.
 
-```bash
-cmake --preset tbb-debug-core
-cmake --build --preset build-tbb-debug-core
-ctest --preset ctest-tbb-debug-core
+### Linux CI
 
-cmake --preset tbb-release-core
-cmake --build --preset build-tbb-release-core
-ctest --preset ctest-tbb-release-core
-```
+- `tbb-core-linux.yml` runs `tbb-debug-core` and `tbb-release-core`, then executes the matching `ctest` presets
+- `tbb-vizkit-linux.yml` builds `tbb-debug` and `tbb-release`
 
-`tbb-vizkit.yml` covers the Ubuntu and macOS Vizkit build matrix for both `tbb-debug` and `tbb-release`.
+Linux package installation in CI:
+
+- Core: `ninja-build`, `libtbb-dev`
+- Vizkit: `ninja-build`, `libtbb-dev`, `libglfw3-dev`, `libglew-dev`
+
+### macOS CI
+
+- `tbb-core-macos.yml` runs `tbb-debug-core` and `tbb-release-core`, then executes the matching `ctest` presets
+- `tbb-vizkit-macos.yml` builds `tbb-debug` and `tbb-release`
+
+macOS package installation in CI:
+
+- Core: `ninja`, `tbb`
+- Vizkit: `ninja`, `tbb`, `glfw`, `glew`
 
 ## Quick Start
 
-### 1. Configure and build the recommended CPU/TBB debug build
+### Linux
+
+Install core dependencies:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y ninja-build libtbb-dev
+```
+
+Install Vizkit dependencies:
+
+```bash
+sudo apt-get install -y libglfw3-dev libglew-dev
+```
+
+Configure and build the recommended CPU/TBB debug build:
 
 ```bash
 cmake --preset tbb-debug-core
 cmake --build --preset build-tbb-debug-core
 ```
 
-### 2. Run tests
+Run tests:
+
+```bash
+ctest --preset ctest-tbb-debug-core
+```
+
+### macOS
+
+Install core dependencies:
+
+```bash
+brew update
+brew install ninja tbb
+```
+
+Install Vizkit dependencies:
+
+```bash
+brew install glfw glew
+```
+
+Configure and build the recommended CPU/TBB debug build:
+
+```bash
+cmake --preset tbb-debug-core
+cmake --build --preset build-tbb-debug-core
+```
+
+Run tests:
 
 ```bash
 ctest --preset ctest-tbb-debug-core

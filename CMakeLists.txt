@@ -488,6 +488,12 @@ if (ATLAS_USE_CUDA)
     # been selected and environment diagnostics have been gathered.
     enable_language(CUDA)
 
+    # Apply the CUDA language standard globally so CUDA-enabled targets do not
+    # need to restate the same target properties or per-source standard flags
+    # in each example directory.
+    set(CMAKE_CUDA_STANDARD 20)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
     # --------------------------------------------------------
     # CUDA architecture selection
     #
@@ -548,10 +554,17 @@ if (ATLAS_USE_CUDA)
             THRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_TBB
             THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA
     )
+    target_compile_definitions(atlas-serialization
+            PRIVATE
+            ATLAS_TASKING_CUDA
+            THRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_TBB
+            THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA
+    )
 
     # TBB remains required on the CUDA path because Thrust is
     # configured to use TBB for host-side parallel execution.
     target_link_libraries(atlas-core INTERFACE $<LINK_ONLY:TBB::tbb>)
+    target_link_libraries(atlas-serialization PRIVATE TBB::tbb)
 
     # Append CUDA-specific flags only when they are not already
     # present. This avoids duplicated flags during repeated CMake
@@ -566,6 +579,7 @@ if (ATLAS_USE_CUDA)
     # such as CUDA::cudart for downstream linkage.
     find_package(CUDAToolkit REQUIRED)
     target_link_libraries(atlas-core INTERFACE CUDA::cudart)
+    target_link_libraries(atlas-serialization PRIVATE CUDA::cudart)
 
 else ()
     message(STATUS "[ATLAS] Tasking backend: TBB")
@@ -578,8 +592,15 @@ else ()
             THRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_TBB
             THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP
     )
+    target_compile_definitions(atlas-serialization
+            PRIVATE
+            ATLAS_TASKING_TBB
+            THRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_TBB
+            THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP
+    )
 
     target_link_libraries(atlas-core INTERFACE TBB::tbb)
+    target_link_libraries(atlas-serialization PRIVATE TBB::tbb)
 endif ()
 
 # ============================================================
@@ -642,16 +663,18 @@ if (ATLAS_USE_VIZKIT)
 
     find_package(glfw3 REQUIRED)
     find_package(OpenGL REQUIRED)
-    find_package(GLUT REQUIRED)
     find_package(GLEW REQUIRED)
+
+    set(ATLAS_VIZKIT_OPENGL_TARGET OpenGL::GL)
+    if (TARGET OpenGL::OpenGL)
+        set(ATLAS_VIZKIT_OPENGL_TARGET OpenGL::OpenGL)
+    endif ()
 
     target_link_libraries(atlas-core
             INTERFACE
             glfw
             GLEW::GLEW
-            GL
-            GLU
-            glut
+            ${ATLAS_VIZKIT_OPENGL_TARGET}
     )
 else ()
     message(STATUS "[ATLAS] Vizkit visualization: DISABLED")

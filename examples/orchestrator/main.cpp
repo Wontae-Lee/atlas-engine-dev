@@ -18,8 +18,8 @@ namespace config {
     /**
      * @brief Viewer dimensions used by the Vizkit execution path.
      */
-    constexpr int kViewerWidth  = 1440;
-    constexpr int kViewerHeight = 900;
+    constexpr int kViewerWidth  = 2440;
+    constexpr int kViewerHeight = 1900;
 
     /**
      * @brief Core simulation parameters shared by the example.
@@ -64,7 +64,9 @@ namespace config {
      */
     constexpr T kSourceBaseVelocity          = -2.4f;
     constexpr T kSourceVelocityJitter        = 2.5f;
-    constexpr T kCodecCharacteristicLength   = 1.0e-20f;
+    // Raise the characteristic length so the Knudsen split is less biased toward
+    // the highest solver bucket, which keeps the red assignment closer to half.
+    constexpr T kCodecCharacteristicLength   = 1.e-1f;
     constexpr int kGatewayGroupParticleCount = 6;
 
     /**
@@ -90,7 +92,7 @@ namespace config {
     /**
      * @brief Tetrahedron collider and particle rendering parameters.
      */
-    constexpr T kParticlePointSize     = 1.5f;
+    constexpr T kParticlePointSize     = 2.5f;
     constexpr T kTetrahedronHalfExtent = 4.5f;
     const Vec3 kTetrahedronSpin(0.35f, 0.55f, 0.90f);
 
@@ -294,8 +296,6 @@ make_solver_colors() {
     return {
         atlas::Vector4<float>(0.14f, 0.54f, 0.96f, 0.92f),
         atlas::Vector4<float>(0.22f, 0.82f, 0.66f, 0.92f),
-        atlas::Vector4<float>(0.96f, 0.73f, 0.20f, 0.92f),
-        atlas::Vector4<float>(0.93f, 0.31f, 0.20f, 0.92f),
     };
 }
 
@@ -309,8 +309,8 @@ make_solver_colors() {
  * - a spatial searcher
  * - a Boltzmann measurer
  * - a Knudsen codec for cell classification
- * - two SPH gateway solver slots
- * - two DSMC NTC solver slots
+ * - one SPH gateway solver
+ * - one DSMC NTC solver
  * - a volume source, a domain sink, and a rotating tetrahedron collider
  *
  * The orchestrator uses the codec classification to decide which solver family
@@ -379,8 +379,9 @@ main() {
     /**
      * @brief Build the top-level orchestrator.
      *
-     * Two SPH slots and two DSMC slots are registered here. The orchestrator layer
-     * in Vizkit uses the same ordering when mapping solver colors to particles.
+     * One SPH solver and one DSMC solver are registered here. The orchestrator
+     * layer in Vizkit uses the same ordering when mapping solver colors to
+     * particles.
      */
     const auto orchestrator = atlas::Orchestrator<T>::builder()
                                   .with_universe(universe)
@@ -390,8 +391,6 @@ main() {
                                   .with_measurer(measurer)
                                   .with_gravity(config::kGravity)
                                   .with_solver(sph_gateway_solver)
-                                  .with_solver(sph_gateway_solver)
-                                  .with_solver(dsmc_solver)
                                   .with_solver(dsmc_solver)
                                   .make_host_shared();
 

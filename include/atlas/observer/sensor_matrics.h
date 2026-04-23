@@ -5,7 +5,7 @@
  * @brief Declares observer-side metric storage types used to record source and sink activity.
  */
 
-#include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/core/macros.h>
 
 #include <cstddef>
@@ -24,8 +24,17 @@ public:
      * @brief One aggregated metric entry for a single step and unit.
      */
     struct Record {
-        std::size_t step_index  = 0;
-        std::size_t unit_index  = 0;
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Record() noexcept = default;
+
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Record(std::size_t step_index_,
+                                                             std::size_t unit_index_,
+                                                             std::size_t particle_count_) noexcept
+            : step_index(step_index_)
+            , unit_index(unit_index_)
+            , particle_count(particle_count_) { }
+
+        std::size_t step_index     = 0;
+        std::size_t unit_index     = 0;
         std::size_t particle_count = 0;
     };
 
@@ -77,7 +86,7 @@ public:
     /**
      * @brief Returns the stored records.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<Record>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<Record>&
     records() const noexcept;
 
     /**
@@ -100,7 +109,7 @@ protected:
     ensure_extra_capacity(std::size_t additional_records);
 
 protected:
-    DeviceBuffer<Record> _records;
+    HostBuffer<Record> _records;
 };
 
 /**

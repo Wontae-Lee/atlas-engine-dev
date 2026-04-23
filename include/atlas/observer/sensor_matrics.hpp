@@ -35,7 +35,7 @@ ParticleCountSensorMatrics::record(const std::size_t step_index,
     _records.push_back(Record { step_index, unit_index, particle_count });
 }
 
-inline const DeviceBuffer<SensorMatrics::Record>&
+inline const HostBuffer<SensorMatrics::Record>&
 ParticleCountSensorMatrics::records() const noexcept {
     return _records;
 }
