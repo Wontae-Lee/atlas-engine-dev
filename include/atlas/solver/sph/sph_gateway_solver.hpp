@@ -116,13 +116,13 @@ SphGatewaySolver<T>::solve(const DeviceBuffer<int>* allocated_solver, const int 
     // Estimate group-level density and pressure using the selected SPH kernel.
     estimate_group_density_and_pressure(allocated_solver, index);
 
-    // Update the motion of each representative group using pressure and
+    // Update the velocity of each representative group using pressure and
     // viscosity interactions inside the cell.
     update_group_motion(allocated_solver, index, dt);
 
-    // Scatter the updated representative states back to the actual particles.
+    // Scatter the updated representative velocities back to the actual particles.
     //
-    // All particles belonging to a group inherit the same updated state.
+    // All particles belonging to a group inherit the same updated velocity.
     scatter_group_states_to_particles(allocated_solver, index);
 }
 
@@ -725,13 +725,12 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
                     continue;
                 }
 
-                // Integrate one explicit Euler step for velocity and then position.
+                // Integrate one explicit Euler step for velocity only.
                 const Vector3<T> updated_velocity = lhs_vel + acceleration * dt;
-                const Vector3<T> updated_position = lhs_pos + updated_velocity * dt;
 
-                // Store the updated representative state.
+                // Keep the representative position unchanged and store the updated velocity.
                 group_updated_vel_ptr[lhs_index] = updated_velocity;
-                group_updated_pos_ptr[lhs_index] = updated_position;
+                group_updated_pos_ptr[lhs_index] = lhs_pos;
 
                 // Accumulate this representative's contribution to the cell-level force summary.
                 cell_force += acceleration * group_mass;
@@ -748,23 +747,19 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
 template <typename T>
 void
 SphGatewaySolver<T>::scatter_group_states_to_particles(const DeviceBuffer<int>* allocated_solver, const int index) {
-    // Retrieve the particle position and velocity states that will receive the
-    // updated representative values.
-    auto* position_state = this->_fluid->template state<atlas::fluid::FluidPositionState<T>>();
+    // Retrieve the particle velocity state that will receive the updated
+    // representative velocities.
     auto* velocity_state = this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>();
 
-    auto& positions  = position_state->data();
     auto& velocities = velocity_state->data();
 
     // Convert all required buffers to raw pointers for device execution.
-    auto* position_ptr                = atlas::raw_pointer_cast(positions.data());
     auto* velocity_ptr                = atlas::raw_pointer_cast(velocities.data());
-    const auto* group_updated_pos_ptr = atlas::raw_pointer_cast(_group_updated_position.data());
     const auto* group_updated_vel_ptr = atlas::raw_pointer_cast(_group_updated_velocity.data());
     const auto* indices_ptr           = this->_searcher->indices();
     const auto* cell_start_ptr        = this->_searcher->cell_start();
     const auto* cell_end_ptr          = this->_searcher->cell_end();
-    const auto* cell_group_count_ptr  = atlas::raw_pointer_cast(_cell_group_count.data());
+    const auto* cell_group_count_ptr  = atlas::raw_pointer_cast(this->_cell_group_count.data());
     const int num_of_cells            = this->_universe->number_of_cells();
     const int particle_count          = static_cast<int>(this->_fluid->particle_count());
     const int group_particle_count    = _group_particle_count;
@@ -789,8 +784,8 @@ SphGatewaySolver<T>::scatter_group_states_to_particles(const DeviceBuffer<int>* 
                 return;
             }
 
-            // For each group, write the updated representative position and velocity
-            // back to all member particles in that group's chunk.
+            // For each group, write the updated representative velocity back to
+            // all member particles in that group's chunk.
             for (int group_local = 0; group_local < group_count; ++group_local) {
                 const int representative_index = begin + group_local;
                 const int sorted_begin         = begin + group_local * group_particle_count;
@@ -807,8 +802,7 @@ SphGatewaySolver<T>::scatter_group_states_to_particles(const DeviceBuffer<int>* 
                         continue;
                     }
 
-                    // All particles in the group inherit the same updated representative state.
-                    position_ptr[particle_index] = group_updated_pos_ptr[representative_index];
+                    // All particles in the group inherit the same updated representative velocity.
                     velocity_ptr[particle_index] = group_updated_vel_ptr[representative_index];
                 }
             }
