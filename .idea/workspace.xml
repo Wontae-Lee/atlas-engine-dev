@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="20" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="3" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
@@ -27,6 +27,7 @@
     <generated>
       <config projectName="atlas-engine-dev" targetName="absl_crc32c" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="benchmark_min_time_flag_iters_test" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_measurer" />
       <config projectName="atlas-engine-dev" targetName="repetitions_test" />
       <config projectName="atlas-engine-dev" targetName="benchmark_gtest" />
       <config projectName="atlas-engine-dev" targetName="NightlyMemoryCheck" folderName="CTestDashboardTargets" />
@@ -34,7 +35,10 @@
       <config projectName="atlas-engine-dev" targetName="utf8_range" />
       <config projectName="atlas-engine-dev" targetName="locale_impermeability_test" />
       <config projectName="atlas-engine-dev" targetName="absl_random_internal_randen_hwaes_impl" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_buffer" />
       <config projectName="atlas-engine-dev" targetName="benchmark_name_gtest" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_codec" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_sampling" />
       <config projectName="atlas-engine-dev" targetName="benchmark_setup_teardown_cb_types_gtest" />
       <config projectName="atlas-engine-dev" targetName="absl_failure_signal_handler" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="benchmark_min_time_flag_time_test" />
@@ -45,21 +49,29 @@
       <config projectName="atlas-engine-dev" targetName="orchestrator" />
       <config projectName="atlas-engine-dev" targetName="diagnostics_test" />
       <config projectName="atlas-engine-dev" targetName="absl_log_internal_check_op" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_math_matrix" />
       <config projectName="atlas-engine-dev" targetName="ContinuousMemCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="absl_cord" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="absl_utf8_for_code_point" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_log_sink" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="absl_random_internal_distribution_test_util" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_parallel" />
       <config projectName="atlas-engine-dev" targetName="absl_random_internal_seed_material" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_graphcycles_internal" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="report_aggregates_only_test" />
       <config projectName="atlas-engine-dev" targetName="templated_fixture_test" />
       <config projectName="atlas-engine-dev" targetName="basic_test" />
       <config projectName="atlas-engine-dev" targetName="libprotoc" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_orchestrator" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_container" />
       <config projectName="atlas-engine-dev" targetName="benchmark_setup_teardown_test" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_iterator" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_fluid" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_searcher" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalBuild" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="NightlyCoverage" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="uninstall" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_indexer" />
       <config projectName="atlas-engine-dev" targetName="string_util_gtest" />
       <config projectName="atlas-engine-dev" targetName="absl_periodic_sampler" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="user_counters_thousands_test" />
@@ -91,6 +103,7 @@
       <config projectName="atlas-engine-dev" targetName="perf_counters_test" />
       <config projectName="atlas-engine-dev" targetName="absl_raw_hash_set" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="absl_log_globals" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_material" />
       <config projectName="atlas-engine-dev" targetName="user_counters_tabular_test" />
       <config projectName="atlas-engine-dev" targetName="absl_die_if_null" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="tinyobjloader" />
@@ -98,24 +111,32 @@
       <config projectName="atlas-engine-dev" targetName="absl_log_internal_proto" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_debugging_internal" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="protoc-gen-upb" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_memory" />
       <config projectName="atlas-engine-dev" targetName="Experimental" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="ContinuousTest" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="intake" />
       <config projectName="atlas-engine-dev" targetName="absl_statusor" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="args_product_test" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_scan" />
       <config projectName="atlas-engine-dev" targetName="absl_throw_delegate" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_tracing_internal" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="ContinuousSubmit" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="absl_raw_logging_internal" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_universe" />
       <config projectName="atlas-engine-dev" targetName="multiple_ranges_test" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_observer" />
       <config projectName="atlas-engine-dev" targetName="NightlySubmit" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_solver_dsmc" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_transform" />
       <config projectName="atlas-engine-dev" targetName="ContinuousCoverage" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="absl_hash" folderName="Abseil" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_solver" />
       <config projectName="atlas-engine-dev" targetName="absl_log_internal_structured_proto" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="ContinuousConfigure" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="Nightly" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalSubmit" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="absl_symbolize" folderName="Abseil" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_serialization" />
       <config projectName="atlas-engine-dev" targetName="absl_random_distributions" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_cordz_functions" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_random_seed_gen_exception" folderName="Abseil/internal" />
@@ -123,6 +144,7 @@
       <config projectName="atlas-engine-dev" targetName="gtest_main" />
       <config projectName="atlas-engine-dev" targetName="utf8_validity" />
       <config projectName="atlas-engine-dev" targetName="absl_log_internal_conditions" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_sync" />
       <config projectName="atlas-engine-dev" targetName="benchmark_test" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalMemCheck" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="atlas-logging" />
@@ -135,7 +157,9 @@
       <config projectName="atlas-engine-dev" targetName="manual_threading_test" />
       <config projectName="atlas-engine-dev" targetName="NightlyConfigure" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="memory_manager_test" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_unit" />
       <config projectName="atlas-engine-dev" targetName="profiler_manager_gtest" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_spatial_bounding_volume_hierarchy" />
       <config projectName="atlas-engine-dev" targetName="benchmark_main" />
       <config projectName="atlas-engine-dev" targetName="absl_random_internal_randen_slow" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_log_internal_format" folderName="Abseil/internal" />
@@ -145,6 +169,7 @@
       <config projectName="atlas-engine-dev" targetName="absl_flags_commandlineflag" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="protoc" />
       <config projectName="atlas-engine-dev" targetName="absl_stacktrace" folderName="Abseil" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_remove" />
       <config projectName="atlas-engine-dev" targetName="absl_random_internal_platform" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_log_internal_log_sink_set" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_examine_stack" folderName="Abseil/internal" />
@@ -154,18 +179,25 @@
       <config projectName="atlas-engine-dev" targetName="waterfall" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalTest" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="libprotobuf-lite" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_tuple" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_spatial" />
       <config projectName="atlas-engine-dev" targetName="cylinder" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_math_vector" />
       <config projectName="atlas-engine-dev" targetName="absl_strings_internal" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_base" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="absl_log_internal_message" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_civil_time" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_shuffle" />
       <config projectName="atlas-engine-dev" targetName="absl_flags_internal" folderName="Abseil" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_random" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalCoverage" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="absl_random_internal_randen_hwaes" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests" />
       <config projectName="atlas-engine-dev" targetName="absl_flags_marshalling" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_flags_reflection" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_random_internal_pool_urbg" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_cordz_info" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_collider" />
       <config projectName="atlas-engine-dev" targetName="memory_results_gtest" />
       <config projectName="atlas-engine-dev" targetName="absl_poison" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="gmock_main" />
@@ -180,7 +212,9 @@
       <config projectName="atlas-engine-dev" targetName="absl_exponential_biased" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_cordz_handle" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_log_flags" folderName="Abseil" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_math" />
       <config projectName="atlas-engine-dev" targetName="spec_arg_verbosity_test" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_source" />
       <config projectName="atlas-engine-dev" targetName="register_benchmark_test" />
       <config projectName="atlas-engine-dev" targetName="absl_city" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="gmock" />
@@ -189,6 +223,7 @@
       <config projectName="atlas-engine-dev" targetName="fixture_test" />
       <config projectName="atlas-engine-dev" targetName="NightlyUpdate" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="absl_low_level_hash" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_generator" />
       <config projectName="atlas-engine-dev" targetName="absl_log_entry" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="Continuous" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalUpdate" folderName="CTestDashboardTargets" />
@@ -202,6 +237,7 @@
       <config projectName="atlas-engine-dev" targetName="gtest" />
       <config projectName="atlas-engine-dev" targetName="absl_log_internal_nullguard" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="ContinuousStart" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_geometry" />
       <config projectName="atlas-engine-dev" targetName="donotoptimize_test" />
       <config projectName="atlas-engine-dev" targetName="protoc-gen-upbdefs" />
       <config projectName="atlas-engine-dev" targetName="NightlyBuild" folderName="CTestDashboardTargets" />
@@ -217,6 +253,8 @@
       <config projectName="atlas-engine-dev" targetName="reporter_output_test" />
       <config projectName="atlas-engine-dev" targetName="map_test" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalStart" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_sink" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_solver_sph" />
       <config projectName="atlas-engine-dev" targetName="NightlyTest" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="absl_time" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="absl_log_severity" folderName="Abseil/internal" />
@@ -252,23 +290,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Updated yml to include CUDA-specific">
+      <change beforePath="$PROJECT_DIR$/.idea/editor.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/editor.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/cylinder/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/cylinder/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/inflow/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/inflow/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/intake/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/intake/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/orchestrator/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/orchestrator/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakePresets.json" beforeDir="false" afterPath="$PROJECT_DIR$/CMakePresets.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/orchestrator/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/orchestrator/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/waterfall/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/examples/waterfall/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/generator/generate_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/generate_operator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix2x2.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix3x3.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/matrix/matrix4x4.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/observer/sensor_matrics.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/observer/sensor_matrics.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/observer/sensor_matrics.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/observer/sensor_matrics.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/external/googlebenchmark" beforeDir="false" afterPath="$PROJECT_DIR$/external/googlebenchmark" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -291,7 +319,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="489" />
+    <option name="cachedIndexableFilesCount" value="493" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -399,7 +427,7 @@
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
     &quot;ctest.advertisement.all.test.configuration.is.created&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;development&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;/home/wontae/CLionProjects/atlas-engine-dev/examples/orchestrator&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -409,7 +437,7 @@
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;project.propVCSSupport.DirectoryMappings&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -437,7 +465,7 @@
       <recent name="$PROJECT_DIR$/tests" />
     </key>
   </component>
-  <component name="RunManager" selected="Google Test.All in atlas_tests">
+  <component name="RunManager" selected="CMake Application.orchestrator">
     <configuration default="true" type="UvRunConfigurationType" factoryName="UvRunConfigurationType">
       <option name="args">
         <list />
@@ -454,11 +482,6 @@
       </option>
       <option name="uvSdkKey" value="Python 3.12 (atlas-engine-dev) (2)" />
       <method v="2" />
-    </configuration>
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
     </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
@@ -1137,6 +1160,10 @@
       <workItem from="1776881255739" duration="65000" />
       <workItem from="1776931175715" duration="2045000" />
       <workItem from="1776933234541" duration="11000" />
+      <workItem from="1777028665026" duration="450000" />
+      <workItem from="1777034651970" duration="58000" />
+      <workItem from="1777034730838" duration="91000" />
+      <workItem from="1777035283710" duration="341000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
@@ -1440,7 +1467,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/main" />
+                        <option value="origin/development" />
                       </list>
                     </value>
                   </entry>

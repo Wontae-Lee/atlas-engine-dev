@@ -63,7 +63,7 @@ namespace config {
      * assign them to the appropriate solver family.
      */
     constexpr T kSourceBaseVelocity          = -2.4f;
-    constexpr T kSourceVelocityJitter        = 2.5f;
+    constexpr T kSourceVelocityJitter        = 5.5f;
     // Raise the characteristic length so the Knudsen split is less biased toward
     // the highest solver bucket, which keeps the red assignment closer to half.
     constexpr T kCodecCharacteristicLength   = 1.e-1f;
@@ -102,7 +102,7 @@ namespace config {
      * The fallback particle color is used when a solver-specific color is not
      * available from the orchestrator layer.
      */
-    const atlas::Vector4<float> kFallbackParticleColor(0.15f, 0.45f, 0.95f, 0.88f);
+    const atlas::Vector4<float> kFallbackParticleColor(1.00f, 0.84f, 0.18f, 0.96f);
     const atlas::Vector4<T> kDomainColor(0.92f, 0.96f, 0.98f, 0.45f);
     const atlas::Vector4<T> kTetrahedronColor(0.92f, 0.96f, 0.98f, 0.45f);
 
@@ -294,8 +294,8 @@ make_universe() {
 std::vector<atlas::Vector4<float>>
 make_solver_colors() {
     return {
-        atlas::Vector4<float>(0.14f, 0.54f, 0.96f, 0.92f),
-        atlas::Vector4<float>(0.22f, 0.82f, 0.66f, 0.92f),
+        atlas::Vector4<float>(0.00f, 0.82f, 1.00f, 0.96f),
+        atlas::Vector4<float>(1.00f, 0.22f, 0.50f, 0.96f),
     };
 }
 

@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 3,
   "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
 
   "configurePresets": [
@@ -9,8 +9,8 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "environment": {
-        "CMAKE_PREFIX_PATH": "/opt/homebrew${pathListSep}/usr/local${pathListSep}$penv{CMAKE_PREFIX_PATH}",
-        "PKG_CONFIG_PATH": "/opt/homebrew/lib/pkgconfig${pathListSep}/opt/homebrew/share/pkgconfig${pathListSep}/usr/local/lib/pkgconfig${pathListSep}/usr/local/share/pkgconfig${pathListSep}$penv{PKG_CONFIG_PATH}"
+        "CMAKE_PREFIX_PATH": "/opt/homebrew:/usr/local:$penv{CMAKE_PREFIX_PATH}",
+        "PKG_CONFIG_PATH": "/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/share/pkgconfig:$penv{PKG_CONFIG_PATH}"
       },
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
@@ -22,8 +22,8 @@
       "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "environment": {
-        "CMAKE_PREFIX_PATH": "/opt/homebrew${pathListSep}/usr/local${pathListSep}$penv{CMAKE_PREFIX_PATH}",
-        "PKG_CONFIG_PATH": "/opt/homebrew/lib/pkgconfig${pathListSep}/opt/homebrew/share/pkgconfig${pathListSep}/usr/local/lib/pkgconfig${pathListSep}/usr/local/share/pkgconfig${pathListSep}$penv{PKG_CONFIG_PATH}"
+        "CMAKE_PREFIX_PATH": "/opt/homebrew:/usr/local:$penv{CMAKE_PREFIX_PATH}",
+        "PKG_CONFIG_PATH": "/opt/homebrew/lib/pkgconfig:/opt/homebrew/share/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/share/pkgconfig:$penv{PKG_CONFIG_PATH}"
       },
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"

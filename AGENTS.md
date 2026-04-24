@@ -150,6 +150,9 @@ There is no `include/atlas/advector/` module.
 
 ## Build & Test
 
+`CMakePresets.json` is currently kept compatible with CMake 3.22.x preset parsing.
+On Unix-like environments, preset path lists use `:` separators.
+
 ```bash
 cmake --preset tbb-debug
 cmake --build build/tbb-debug -j$(nproc)
