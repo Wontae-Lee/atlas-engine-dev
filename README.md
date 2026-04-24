@@ -5,388 +5,295 @@
 [![TBB Core macOS](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-macos.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-macos.yml)
 [![TBB Vizkit macOS](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-macos.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-macos.yml)
 
-Atlas is a C++20 particle-simulation engine with a header-only core and dual tasking backends:
+Atlas is a C++20 particle simulation engine with:
 
-- `TBB` for CPU execution
-- `CUDA + Thrust` for GPU execution
+- a header-only core in [`include/atlas/`](include/atlas/)
+- a TBB backend for CPU execution
+- a CUDA + Thrust backend for GPU execution
+- an optional OpenGL visualization layer in [`src/vizkit/`](src/vizkit/)
 
-The core library is exposed through a single umbrella include:
+The public API is aggregated through:
 
 ```cpp
 #include <atlas/atlas.h>
 ```
 
-Most of the engine lives under [`include/atlas/`](include/atlas/). The only major compiled components are:
+## Overview
 
-- [`src/logging/`](src/logging/) for logging
-- [`src/vizkit/`](src/vizkit/) for optional OpenGL visualization
+Atlas is built around a small set of runtime objects:
 
-## What Atlas Provides
+- `atlas::Fluid<T>` owns particle storage, species properties, generators, and registered particle states
+- `atlas::Universe<T>` owns the Cartesian simulation domain and registered cell states
+- `atlas::Source<T>` emits particles into inactive fluid capacity
+- `atlas::Sink<T>` removes particles and compacts the active prefix
+- `atlas::system::System<T>` coordinates one simulation step
 
-- Header-only simulation core with a consistent API across CPU and GPU builds
-- Geometry primitives such as box, sphere, cylinder, plane, triangle, and triangle mesh
-- Spatial data structures including axis-aligned bounding boxes, spatial hashing, LBVH, and SAH BVH
-- Runtime particle emission/removal systems through `Source<T>` and `Sink<T>`
-- Per-species velocity generation through `Generator<T>` plus uniform and Maxwell-family generators
-- Builder-based construction for most public types
-- Portable host/device abstractions such as `DeviceBuffer<T>`, `HostBuffer<T>`, and `device_shared_ptr<T>`
-- Optional visualization through Vizkit
-- In-tree test coverage for both GoogleTest and CUDA-oriented test flows
+The current high-level simulation entry point is `atlas::system::System<T>`. Its default update order is:
 
-## Design Overview
+1. `emit()`
+2. `orchestrate()`
+3. `advect()`
+4. `remove()`
 
-### Header-only core
+If no collider is installed, `System<T>::advect()` falls back to direct time integration.
 
-The engine core is template-heavy and header-only by design. That keeps the simulation layer easy to embed into examples and downstream projects without maintaining a large link-time surface.
+## Backend Model
 
-The main include tree is under [`include/atlas/`](include/atlas/), and [`atlas/atlas.h`](include/atlas/atlas.h) aggregates the public API.
-
-### Exactly one backend
-
-Atlas requires exactly one tasking backend at configure time:
+Exactly one backend must be active at configure time:
 
 - `ATLAS_USE_TBB=ON`, `ATLAS_USE_CUDA=OFF`
 - `ATLAS_USE_TBB=OFF`, `ATLAS_USE_CUDA=ON`
 
-The top-level CMake config rejects:
+Atlas keeps most runtime APIs backend-agnostic through shared aliases:
 
-- both enabled
-- both disabled
+- `DeviceBuffer<T>` maps to `std::vector<T>` on TBB and `thrust::device_vector<T>` on CUDA
+- `HostBuffer<T>` maps to `std::vector<T>` on TBB and `thrust::host_vector<T>` on CUDA
+- `device_shared_ptr<T>` maps to `std::shared_ptr<T>` on TBB and managed-memory ownership on CUDA
+- `parallel_for(...)` dispatches to the active backend implementation
 
-This keeps backend-dependent aliases stable throughout the codebase.
+## Key Concepts
 
-The runtime particle APIs rely on a simple storage contract:
+### Active Prefix Storage
 
-- `ParticleData<T>` owns the backing buffers
-- `ParticleDeviceProbe<T>` exposes raw pointers into those buffers
-- `particle_count` is the active prefix length
+Particle storage distinguishes logical population from allocated capacity:
+
 - `buffer_size` is total allocated capacity
+- `particle_count` is the active dense prefix length
 
-### Backend abstraction
+This contract is important throughout the runtime:
 
-The public API is written against common Atlas types rather than backend-specific containers:
+- `Source<T>` writes into inactive capacity behind the active prefix
+- `Sink<T>` compacts surviving particles back into a dense prefix
+- tests should set `particle_count` explicitly instead of assuming it matches capacity
 
-- `DeviceBuffer<T>` maps to `thrust::device_vector<T>` on CUDA and `std::vector<T>` on TBB
-- `HostBuffer<T>` maps to `thrust::host_vector<T>` on CUDA and `std::vector<T>` on TBB
-- `parallel_for<ExecutionPolicy::host>(...)` dispatches to the active backend-compatible implementation
-- `device_shared_ptr<T>` is CUDA managed-memory aware on GPU builds and `std::shared_ptr<T>` on CPU builds
+### Builder Pattern
 
-### Builder pattern
-
-Most major types use a fluent nested `Builder` API:
+Most public types use nested builders with fluent setters and `.build()` / `.make_host_shared()` endpoints.
 
 ```cpp
-const auto domain = system::Domain<float>::builder()
-    .with_geometry(box_geometry)
-    .with_cell_size(0.02f)
-    .make_host_shared();
-```
-
-Typical builder endpoints are:
-
-- `.build()` for value construction
-- `.make_host_shared()` for shared host ownership
-
-This pattern is used heavily across geometry, simulation systems, fluids, units, codecs, and search structures.
-
-Recent runtime systems follow the same builder style:
-
-```cpp
-atlas::HostBuffer<atlas::MatrialProperties<float>> properties(1);
-atlas::HostBuffer<atlas::GeneratorHostPtr<float>> generators(1);
-
-properties[0] = atlas::MatrialProperties<float>::builder()
-    .with_type(atlas::MaterialType::Molecule)
-    .with_molecular_mass(4.651734e-26f)
-    .with_collision_diameter(4.17e-10f)
-    .build();
-
-generators[0] = atlas::fluid::MaxwellBoltzmannGenerator<float>::builder()
-    .with_temperature(300.0f)
-    .with_molecular_mass(4.651734e-26f)
-    .with_bulk_velocity(atlas::Vector3<float>(0, 0, 0))
-    .with_seed(42u)
-    .make_host_shared();
-
-const auto fluid = atlas::fluid::Fluid<float>::builder()
-    .with_buffer_size(200000)
+const auto fluid = atlas::Fluid<float>::builder()
+    .with_buffer_size(4096)
     .with_properties(properties)
     .with_generators(generators)
     .make_host_shared();
+
+const auto system = atlas::system::System<float>::builder()
+    .with_fluid(fluid)
+    .with_domain(universe)
+    .with_source(source)
+    .with_sink(sink)
+    .with_dt(0.01f)
+    .make_host_shared();
 ```
+
+### Namespaces
+
+- core aliases are available under `atlas::`
+- high-level runtime types are implemented under `atlas::system::`
+- geometry lives under `atlas::geometry::`
+- math lives under `atlas::math::` with common aliases re-exported in `atlas::`
 
 ## Repository Layout
 
 ```text
 atlas-engine-dev/
-├── include/atlas/                     # Header-only core library
-│   ├── atlas.h                        # Umbrella header
-│   ├── buffer/                        # HostBuffer, DeviceBuffer
-│   ├── codec/                         # Particle codecs / encoding systems
-│   ├── container/                     # Fixed-size utility containers
-│   ├── core/                          # Portability macros and core helpers
-│   ├── data/                          # Particle data/probes
-│   ├── domain/                        # Simulation domain
-│   ├── generator/                     # Velocity generator interfaces and implementations
-│   ├── geometry/                      # Box, Sphere, Plane, Cylinder, Triangle, TriangleMesh
-│   ├── logging/                       # Logging public headers
-│   ├── math/                          # Vector, matrix, quaternion, reductions
-│   ├── matter/                        # Fluid and particle species
-│   ├── memory/                        # Shared-pointer and copy abstractions
-│   ├── parallel/                      # Backend-agnostic parallel algorithms
-│   ├── random/                        # Backend-selected RNG aliases
-│   ├── sampling/                      # Sampling helpers
-│   ├── searcher/                      # Spatial hashing and neighborhood search
-│   ├── sink/                          # Despawn and sink systems
-│   ├── source/                        # Spawn/source systems
-│   ├── spatial/                       # Ray, AABB, BVH, trace operators
-│   ├── sync/                          # Local/world synchronization transforms
-│   ├── transform/                     # Transform helpers / reductions
-│   ├── tuple/                         # Tuple utilities
-│   └── unit/                          # Simulation units
-├── src/logging/                       # Compiled logging implementation
-├── src/vizkit/                        # Optional OpenGL visualization layer
-├── examples/cylinder/                 # DSMC nitrogen + cylinder collision example
-├── src/testkit/                       # Shared testkit headers (GoogleTest shim + cudatest)
-├── tests/                             # C++ and CUDA test sources
-├── benchmarks/                        # Benchmark targets
-├── external/                          # In-tree third-party dependencies
-└── tools/                             # Maintenance/codegen helpers
+├── include/atlas/            # Header-only core library
+│   ├── atlas.h               # Generated umbrella header
+│   ├── buffer/
+│   ├── codec/
+│   ├── collider/
+│   ├── container/
+│   ├── core/
+│   ├── data/
+│   ├── domain/
+│   ├── flatten/
+│   ├── generator/
+│   ├── geometry/
+│   ├── indexer/
+│   ├── iterator/
+│   ├── logging/
+│   ├── math/
+│   ├── material/
+│   ├── measure/
+│   ├── memory/
+│   ├── observer/
+│   ├── orchestrator/
+│   ├── parallel/
+│   ├── random/
+│   ├── remove/
+│   ├── sampling/
+│   ├── scan/
+│   ├── searcher/
+│   ├── serialization/
+│   ├── shuffle/
+│   ├── sink/
+│   ├── solver/
+│   ├── source/
+│   ├── spatial/
+│   ├── sync/
+│   ├── system/
+│   ├── transform/
+│   ├── tuple/
+│   ├── unit/
+│   └── universe/
+├── src/logging/              # Compiled logging implementation
+├── src/vizkit/               # Optional OpenGL visualization layer
+├── src/testkit/              # Shared test shim for C++ and CUDA tests
+├── examples/cylinder/        # DSMC cylinder example
+├── tests/                    # C++ and CUDA tests
+├── benchmarks/
+├── external/
+└── tools/
 ```
+
+## Features
+
+- header-only simulation core
+- portable particle storage and execution abstractions across TBB and CUDA
+- analytic geometry including box, sphere, cylinder, plane, circle, square, triangle, and triangle mesh
+- spatial acceleration structures including spatial hashing, BVH, LBVH, and SAH BVH
+- source/sink runtime pipeline for particle emission and removal
+- DSMC and SPH solver modules
+- observer and serialization support
+- optional Vizkit viewer and layer system
 
 ## Requirements
 
-### Required for all builds
+### Core
 
 | Dependency | Notes |
 |---|---|
-| CMake 3.20+ | Presets are provided |
-| C++20 compiler | GCC 11+ or Clang 14+ recommended |
-| Ninja or Unix Makefiles | Ninja is the primary preset generator |
-| TBB | Required for CPU builds and also linked in CUDA builds |
+| CMake 3.20+ | Presets are provided in [`CMakePresets.json`](CMakePresets.json) |
+| C++20 compiler | GCC 11+ / Clang 14+ class toolchains are reasonable targets |
+| Ninja or Unix Makefiles | Most presets use Ninja |
+| TBB | Required for TBB builds |
 
-### Required for CUDA builds
+### CUDA
 
 | Dependency | Notes |
 |---|---|
-| CUDA Toolkit 12.x | `nvcc` is auto-detected from `PATH`, `CUDACXX`, or common install paths |
-| NVIDIA driver | Runtime must support the generated toolkit/PTX combination |
-| GPU architecture support | Root CMake auto-detects compute capability with `nvidia-smi` and prefers native SASS builds |
+| CUDA Toolkit 12.x | Required for CUDA builds |
+| NVIDIA driver | Must support the selected toolkit/runtime combination |
 
-### Required for Vizkit
+### Vizkit
 
 | Dependency | Notes |
 |---|---|
 | `glfw3` | Windowing |
-| `GLEW` | OpenGL extension loading |
-| `OpenGL` | Core rendering API |
+| `GLEW` | Extension loading |
+| `OpenGL` / `GLU` / `GLUT` | Rendering stack |
 
-For the current CI environments, Vizkit dependencies are installed as:
+### In-tree Dependencies
 
-- Ubuntu: `libglfw3-dev`, `libglew-dev`
-- macOS: `glfw`, `glew`
-
-### In-tree dependencies
-
-The project vendors several dependencies in [`external/`](external/):
-
-- `tinyobj` for OBJ loading
-- `lyra` for CLI parsing
-- `googletest` for tests
-- `googlebenchmark` for benchmarks
+- `tinyobjloader` in `external/tinyobj/`
+- `lyra` in `external/lyra/`
+- GoogleTest and benchmark dependencies are also vendored for enabled builds
 
 ## Build Presets
 
-Atlas ships with CMake presets in [CMakePresets.json](CMakePresets.json).
+### TBB
 
-### TBB / CPU presets
+- `tbb-debug`
+- `tbb-release`
+- `tbb-debug-core`
+- `tbb-release-core`
+- `tbb-relwithdebinfo`
+- `tbb-debug-make`
 
-Primary presets are organized around `Debug` and `Release`. The `*-core` presets keep Vizkit disabled for environments that only need the simulation/test stack.
+### CUDA
 
-| Preset | Build Type | Vizkit | Logging | Tests | Benchmarks |
-|---|---|---|---|---|---|
-| `tbb-debug` | `Debug` | ON | ON | ON | ON |
-| `tbb-release` | `Release` | ON | ON | ON | ON |
-| `tbb-debug-core` | `Debug` | OFF | ON | ON | OFF |
-| `tbb-release-core` | `Release` | OFF | ON | ON | OFF |
-| `tbb-relwithdebinfo` | `RelWithDebInfo` | ON | ON | ON | ON |
-| `tbb-debug-make` | `Debug` | ON | ON | ON | ON |
+- `cuda-debug`
+- `cuda-release`
+- `cuda-debug-core`
+- `cuda-release-core`
+- `cuda-debug-tests`
+- `cuda-relwithdebinfo`
 
-### CUDA / GPU presets
+### Build Presets
 
-Primary CUDA presets are also split into `Debug` and `Release`. The `*-core` variants disable Vizkit, and `cuda-debug-tests` enables the standalone CUDA test target.
+- `build-tbb-debug`
+- `build-tbb-release`
+- `build-tbb-debug-core`
+- `build-tbb-release-core`
+- `build-tbb-relwithdebinfo`
+- `build-cuda-debug`
+- `build-cuda-release`
+- `build-cuda-debug-core`
+- `build-cuda-release-core`
+- `build-cuda-debug-tests`
+- `build-cuda-relwithdebinfo`
 
-| Preset | Build Type | Vizkit | Logging | Tests | Benchmarks |
-|---|---|---|---|---|---|
-| `cuda-debug` | `Debug` | ON | ON | OFF | OFF |
-| `cuda-release` | `Release` | ON | ON | OFF | OFF |
-| `cuda-debug-core` | `Debug` | OFF | ON | OFF | OFF |
-| `cuda-release-core` | `Release` | OFF | ON | OFF | OFF |
-| `cuda-debug-tests` | `Debug` | OFF | ON | ON | OFF |
-| `cuda-relwithdebinfo` | `RelWithDebInfo` | ON | ON | OFF | OFF |
+### Test Presets
 
-## Continuous Integration
-
-GitHub Actions CI is split across:
-
-- [`.github/workflows/tbb-common.yml`](.github/workflows/tbb-common.yml) reusable workflow
-- [`.github/workflows/tbb-core-linux.yml`](.github/workflows/tbb-core-linux.yml)
-- [`.github/workflows/tbb-core-macos.yml`](.github/workflows/tbb-core-macos.yml)
-- [`.github/workflows/tbb-vizkit-linux.yml`](.github/workflows/tbb-vizkit-linux.yml)
-- [`.github/workflows/tbb-vizkit-macos.yml`](.github/workflows/tbb-vizkit-macos.yml)
-
-Both OS-specific entry workflows delegate the shared checkout/configure/build logic to `tbb-common.yml`.
-
-### Linux CI
-
-- `tbb-core-linux.yml` runs `tbb-debug-core` and `tbb-release-core`, then executes the matching `ctest` presets
-- `tbb-vizkit-linux.yml` builds `tbb-debug` and `tbb-release`
-
-Linux package installation in CI:
-
-- Core: `ninja-build`, `libtbb-dev`
-- Vizkit: `ninja-build`, `libtbb-dev`, `libglfw3-dev`, `libglew-dev`
-
-### macOS CI
-
-- `tbb-core-macos.yml` runs `tbb-debug-core` and `tbb-release-core`, then executes the matching `ctest` presets
-- `tbb-vizkit-macos.yml` builds `tbb-debug` and `tbb-release`
-
-macOS package installation in CI:
-
-- Core: `ninja`, `tbb`
-- Vizkit: `ninja`, `tbb`, `glfw`, `glew`
+- `ctest-tbb-debug`
+- `ctest-tbb-release`
+- `ctest-tbb-debug-core`
+- `ctest-tbb-release-core`
 
 ## Quick Start
 
 ### Linux
 
-Install core dependencies:
-
 ```bash
 sudo apt-get update
 sudo apt-get install -y ninja-build libtbb-dev
-```
-
-Install Vizkit dependencies:
-
-```bash
 sudo apt-get install -y libglfw3-dev libglew-dev
 ```
 
-Configure and build the recommended CPU/TBB debug build:
+Recommended core build:
 
 ```bash
 cmake --preset tbb-debug-core
-cmake --build --preset build-tbb-debug-core
+cmake --build build/tbb-debug-core -j$(nproc)
+ctest --preset ctest-tbb-debug-core
 ```
 
-Run tests:
+Vizkit-enabled local build:
 
 ```bash
-ctest --preset ctest-tbb-debug-core
+cmake --preset tbb-debug
+cmake --build build/tbb-debug -j$(nproc)
+ctest --preset ctest-tbb-debug
 ```
 
 ### macOS
 
-Install core dependencies:
-
 ```bash
 brew update
 brew install ninja tbb
-```
-
-Install Vizkit dependencies:
-
-```bash
 brew install glfw glew
 ```
 
-Configure and build the recommended CPU/TBB debug build:
+Recommended core build:
 
 ```bash
 cmake --preset tbb-debug-core
-cmake --build --preset build-tbb-debug-core
-```
-
-Run tests:
-
-```bash
+cmake --build build/tbb-debug-core -j$(sysctl -n hw.ncpu)
 ctest --preset ctest-tbb-debug-core
-```
-
-If you want the local Vizkit-enabled developer build instead:
-
-```bash
-cmake --preset tbb-debug
-cmake --build --preset build-tbb-debug
-ctest --preset ctest-tbb-debug
-```
-
-### 3. Configure and build a CUDA build
-
-```bash
-cmake --preset cuda-debug
-cmake --build --preset build-cuda-debug
-```
-
-### 4. Core CUDA build
-
-```bash
-cmake --preset cuda-debug-core
-cmake --build --preset build-cuda-debug-core
-```
-
-### 5. CUDA test build
-
-```bash
-cmake --preset cuda-debug-tests
-cmake --build --preset build-cuda-debug-tests
-./build/cuda-debug-tests/atlas_all_cuda_test --gtest_list_tests
-```
-
-## Manual CMake Configuration
-
-If you prefer configuring manually instead of using presets:
-
-### CPU / TBB
-
-```bash
-cmake -S . -B build/tbb-manual \
-  -G Ninja \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DATLAS_USE_TBB=ON \
-  -DATLAS_USE_CUDA=OFF \
-  -DATLAS_USE_VIZKIT=ON \
-  -DATLAS_LOGGING=ON \
-  -DATLAS_GOOGLE_TEST=ON \
-  -DATLAS_CUDA_TEST=OFF \
-  -DATLAS_BENCHMARKS=ON
 ```
 
 ### CUDA
 
+Debug build:
+
 ```bash
-cmake -S . -B build/cuda-manual \
-  -G Ninja \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DATLAS_USE_TBB=OFF \
-  -DATLAS_USE_CUDA=ON \
-  -DATLAS_USE_VIZKIT=OFF \
-  -DATLAS_LOGGING=ON \
-  -DATLAS_GOOGLE_TEST=OFF \
-  -DATLAS_CUDA_TEST=ON \
-  -DATLAS_BENCHMARKS=OFF
+cmake --preset cuda-debug
+cmake --build build/cuda-debug -j$(nproc)
 ```
 
-The root CMake will try to:
+Core CUDA build:
 
-- find `nvcc` from `CUDACXX`, `PATH`, `/usr/bin`, or `/usr/local/cuda/bin`
-- query `nvidia-smi` for compute capability and driver CUDA runtime support
-- choose a native `CMAKE_CUDA_ARCHITECTURES` value when possible
-- warn when the CUDA toolkit is newer than the installed driver runtime
+```bash
+cmake --preset cuda-debug-core
+cmake --build build/cuda-debug-core -j$(nproc)
+```
 
-You can still override both `CMAKE_CUDA_COMPILER` and `CMAKE_CUDA_ARCHITECTURES` explicitly when needed.
+CUDA test build:
+
+```bash
+cmake --preset cuda-debug-tests
+cmake --build build/cuda-debug-tests --target atlas_all_cuda_test -j$(nproc)
+```
 
 ## Important CMake Options
 
@@ -394,22 +301,21 @@ You can still override both `CMAKE_CUDA_COMPILER` and `CMAKE_CUDA_ARCHITECTURES`
 |---|---|
 | `ATLAS_USE_TBB` | Enable the TBB backend |
 | `ATLAS_USE_CUDA` | Enable the CUDA backend |
-| `ATLAS_USE_VIZKIT` | Enable the OpenGL visualization layer |
-| `ATLAS_LOGGING` | Enable the logging library and logging macros |
-| `ATLAS_GOOGLE_TEST` | Build GoogleTest-based C++ test targets |
+| `ATLAS_USE_VIZKIT` | Enable Vizkit |
+| `ATLAS_LOGGING` | Build logging support |
+| `ATLAS_GOOGLE_TEST` | Build GoogleTest-based C++ tests |
 | `ATLAS_CUDA_TEST` | Build the aggregated CUDA test executable |
-| `ATLAS_BENCHMARKS` | Build benchmark targets |
+| `ATLAS_BENCHMARKS` | Build benchmarks |
 
-Notes:
+Constraints:
 
-- `ATLAS_USE_TBB` and `ATLAS_USE_CUDA` are mutually exclusive.
-- `ATLAS_GOOGLE_TEST` is automatically disabled when `ATLAS_USE_CUDA=ON`.
-- Current CUDA presets automatically disable tests and benchmarks.
-- The CUDA branch still links TBB because Thrust host-side integration is configured with TBB.
+- `ATLAS_USE_TBB` and `ATLAS_USE_CUDA` are mutually exclusive
+- CUDA presets disable GoogleTest-based C++ tests
+- benchmarks are currently enabled only in TBB-oriented presets
 
-## Usage Example
+## Minimal Runtime Example
 
-The following mirrors the setup flow used in [`examples/cylinder/main.cpp`](examples/cylinder/main.cpp).
+The current runtime model is `Fluid + Universe + optional subsystems + System`.
 
 ```cpp
 #include <atlas/atlas.h>
@@ -417,10 +323,9 @@ The following mirrors the setup flow used in [`examples/cylinder/main.cpp`](exam
 int main() {
     using T = float;
 
-    const auto universe = atlas::Universe<T>::builder()
-        .with_lower_corner(atlas::Vector3<T>{-6.0f, -2.5f, -1.2f})
-        .with_upper_corner(atlas::Vector3<T>{ 6.0f,  2.5f,  1.2f})
-        .with_cell_size(0.25f)
+    const auto observer = atlas::Observer::builder()
+        .with_source_sensor_matrics(1024)
+        .with_sink_sensor_matrics(1024)
         .make_host_shared();
 
     atlas::HostBuffer<atlas::MatrialProperties<T>> properties(1);
@@ -428,9 +333,7 @@ int main() {
 
     properties[0] = atlas::MatrialProperties<T>::builder()
         .with_type(atlas::MaterialType::Molecule)
-        .with_mass(4.651734e-26f)
         .with_molecular_mass(4.651734e-26f)
-        .with_species_id(0)
         .with_collision_diameter(4.17e-10f)
         .build();
 
@@ -441,262 +344,110 @@ int main() {
         .with_seed(42u)
         .make_host_shared();
 
-    const auto fluid = atlas::fluid::Fluid<T>::builder()
-        .with_buffer_size(200000)
+    const auto fluid = atlas::Fluid<T>::builder()
+        .with_buffer_size(4096)
         .with_properties(properties)
         .with_generators(generators)
+        .with_observer(observer)
         .make_host_shared();
 
-    const auto searcher = atlas::SpatialHashingSearcher<T>::builder()
-        .with_universe(universe)
-        .with_fluid(fluid)
+    const auto universe = atlas::Universe<T>::builder()
+        .with_lower_corner(atlas::Vector3<T>(-1, -1, -1))
+        .with_upper_corner(atlas::Vector3<T>(1, 1, 1))
+        .with_cell_size(0.1f)
+        .with_observer(observer)
         .make_host_shared();
 
-    const auto dsmc_solver = atlas::DsmcNtcSolver<T>::builder()
-        .with_universe(universe)
-        .with_fluid(fluid)
-        .with_searcher(searcher)
-        .with_kernel_type(atlas::system::DsmcKernelType::hard_sphere)
+    const auto source_geometry = atlas::geometry::Box<T>::builder()
+        .with_lower_corner(atlas::Vector3<T>(-0.8f, -0.2f, -0.2f))
+        .with_upper_corner(atlas::Vector3<T>(-0.4f, 0.2f, 0.2f))
         .make_host_shared();
 
-    const auto orchestrator = atlas::Orchestrator<T>::builder()
-        .with_universe(universe)
-        .with_fluid(fluid)
-        .with_searcher(searcher)
-        .with_solver(dsmc_solver)
-        .make_host_shared();
+    atlas::HostBuffer<atlas::Unit<T>> source_units(1);
+    source_units[0] = atlas::Unit<T>::builder()
+        .with_geometry(source_geometry)
+        .with_sync(atlas::Sync<T>::builder().make_host_shared())
+        .build();
 
-    const auto cylinder = atlas::geometry::Cylinder<T>::builder()
-        .with_center(atlas::Vector3<T>(0, 0, 0))
-        .with_radius(0.9f)
-        .with_height(2.2f)
-        .make_host_shared();
-
-    const auto sync = atlas::Sync<T>::builder()
-        .make_host_shared();
-
-    const auto unit = atlas::Unit<T>::builder()
-        .with_geometry(cylinder)
-        .with_sync(sync)
-        .make_host_shared();
+    atlas::HostBuffer<atlas::fluid::SpawnType> spawn_types(1);
+    spawn_types[0] = atlas::fluid::SpawnType::Volume;
 
     const auto source = atlas::Source<T>::builder()
-        .with_unit(*unit)
-        .with_spawn_type(atlas::system::SpawnType::Volume)
-        .with_spacing(0.18f)
+        .with_units(source_units)
         .with_fluid(fluid)
-        .build();
+        .with_observer(observer)
+        .with_spawn_types(spawn_types)
+        .with_spawn_operator(atlas::fluid::SpawnOperator<T>(atlas::fluid::SpawnType::Volume))
+        .with_spacing(0.05f)
+        .make_host_shared();
 
-    const auto sink = atlas::Sink<T>::builder()
-        .with_unit(*unit)
-        .with_despawn_type(atlas::system::DespawnType::Volume)
-        .with_tolerance(1e-4f)
-        .with_flip(true)
-        .build();
+    const auto system = atlas::system::System<T>::builder()
+        .with_fluid(fluid)
+        .with_domain(universe)
+        .with_source(source)
+        .with_dt(0.01f)
+        .make_host_shared();
 
-    (void)orchestrator;
-    (void)source;
-    (void)sink;
+    system->update();
     return 0;
 }
 ```
 
-### Typical setup order
-
-In practice, a common Atlas setup sequence is:
-
-1. Define geometry for the world/domain.
-2. Build a `Domain<T>` with geometry and cell size.
-3. Attach a search structure such as `SpatialHashingSearcher<T>`.
-4. Choose a codec for particle representation.
-5. Define particle species and assemble fluids, including per-species velocity generators when needed.
-6. Create units with geometry plus sync policies.
-7. Build `Source<T>` emitters and `Sink<T>` removers around those units.
-8. Run host/device simulation steps using the backend selected at configure time.
-
-## Sources, Sinks, and Generators
-
-Atlas includes a runtime pipeline for populating and removing particles from `ParticleDeviceProbe<T>`.
-
-- `Generator<T>` is the abstract interface for velocity generation.
-- `UniformGenerator<T>`, `MaxwellSigmaGenerator<T>`, and `MaxwellBoltzmannGenerator<T>` provide concrete policies.
-- `Fluid<T>` stores a generator per particle-species entry.
-- `Source<T>` uses unit geometry plus a `Fluid<T>` to fill inactive probe slots and initialize species/velocity data.
-- `Sink<T>` removes particles matching a geometric despawn condition and compacts the active prefix.
-
-This works best when the probe is treated as an active prefix plus spare capacity:
-
-- initialize `particle_count` to the number of active particles already present
-- keep inactive capacity available behind that prefix
-- let `Source<T>` reuse inactive slots
-- let `Sink<T>` rewrite the active prefix and update `particle_count`
-
-## Geometry and Spatial Features
-
-Atlas currently exposes several geometry and spatial building blocks:
-
-- Analytic geometry:
-  - `Box`
-  - `Sphere`
-  - `Cylinder`
-  - `Plane`
-  - `Triangle`
-- Mesh geometry:
-  - `TriangleMesh`
-- Spatial utilities:
-  - `AxisAlignedBoundingBox`
-  - `Ray`
-  - `TraceOperator`
-  - `QueryOperator`
-- Acceleration structures:
-  - Spatial hashing
-  - Generic BVH interface
-  - LBVH
-  - SAH BVH
-
-## Examples
-
-### Cylinder example
-
-Files:
-
-- [`examples/cylinder/main.cpp`](examples/cylinder/main.cpp)
-- [`examples/cylinder/main.cu`](examples/cylinder/main.cu)
-- [`examples/cylinder/CMakeLists.txt`](examples/cylinder/CMakeLists.txt)
-
-This example sets up:
-
-- a rectangular domain with a central analytic cylinder
-- a thermal nitrogen source at `300 K`
-- sink removal outside the domain via `flip=true`
-- particle-particle DSMC collisions with the hard-sphere kernel
-- diffuse cylinder reflection and optional Vizkit rendering
-
-`main.cu` is a thin CUDA entry-point wrapper that reuses the same example logic as `main.cpp`, so the example builds under both `ATLAS_USE_TBB=ON` and `ATLAS_USE_CUDA=ON`.
+For a complete end-to-end setup with DSMC, collider interaction, sink removal, observer export, and optional Vizkit rendering, see [`examples/cylinder/main.cpp`](examples/cylinder/main.cpp).
 
 ## Tests
 
-Tests live under [`tests/`](tests/) and include both C++ `*.cpp` tests and CUDA `*.cu` test wrappers.
-
-The shared include is:
+Tests live under [`tests/`](tests/) and use:
 
 ```cpp
 #include <testkit/testkit.h>
 ```
 
-`testkit` routes to:
+Current test structure:
 
-- GoogleTest for C++ test builds
-- the in-tree `cudatest` implementation for CUDA test builds
+- C++ tests: recursive `tests/*.cpp`
+- CUDA tests: recursive `tests/*.cu`
+- aggregate C++ binary: `atlas_tests`
+- per-directory C++ binaries: `atlas_tests_<directory>`
+- aggregate CUDA binary: `atlas_all_cuda_test`
 
-Examples of covered areas:
-
-- buffer abstractions
-- generators, sources, and sinks
-- geometry queries
-- axis-aligned bounding boxes and trace operators
-- sync operators and transforms
-- domains, units, codecs, tuples, iterators, and memory helpers
-
-Recommended GoogleTest/TBB run:
+Recommended runs:
 
 ```bash
 cmake --preset tbb-debug-core
-cmake --build --preset build-tbb-debug-core
+cmake --build build/tbb-debug-core -j$(nproc)
 ctest --preset ctest-tbb-debug-core
 ```
-
-CTest presets are also provided:
-
-```bash
-ctest --preset ctest-tbb-debug
-ctest --preset ctest-tbb-debug-core
-ctest --preset ctest-tbb-release
-ctest --preset ctest-tbb-release-core
-```
-
-CUDA test build:
 
 ```bash
 cmake --preset cuda-debug-tests
-cmake --build --preset build-cuda-debug-tests
+cmake --build build/cuda-debug-tests --target atlas_all_cuda_test -j$(nproc)
 ./build/cuda-debug-tests/atlas_all_cuda_test --gtest_list_tests
 ```
 
-Notes:
+## Example
 
-- CUDA test discovery is done in the root [`CMakeLists.txt`](CMakeLists.txt), not a separate `tests/CMakeLists.txt`.
-- `atlas_all_cuda_test` is a single executable driven by [`tests/cuda/main.cu`](tests/cuda/main.cu).
-- Some known CUDA-incompatible test wrappers are excluded explicitly from the aggregated CUDA target.
+The main maintained example is the cylinder flow case:
 
-## Benchmarks
+- [`examples/cylinder/main.cpp`](examples/cylinder/main.cpp)
+- [`examples/cylinder/main.cu`](examples/cylinder/main.cu)
 
-Benchmarks are enabled in TBB presets and disabled in CUDA presets. Build them through the normal build step when `ATLAS_BENCHMARKS=ON`.
+It demonstrates:
 
-```bash
-cmake --preset tbb-release
-cmake --build build/tbb-release -j$(nproc)
-```
-
-## Vizkit
-
-Vizkit is optional and only enabled when `ATLAS_USE_VIZKIT=ON`.
-
-It depends on the host OpenGL toolchain:
-
-- `glfw3`
-- `GLEW`
-- `OpenGL`
-- `GLU`
-- `GLUT`
-
-If you are building in an environment without OpenGL/Vizkit, prefer `tbb-debug-core`, `tbb-release-core`, `cuda-debug-core`, `cuda-release-core`, or disable Vizkit manually.
+- thermal nitrogen particle emission
+- DSMC hard-sphere collisions
+- collider interaction against a central cylinder
+- sink removal outside the domain
+- observer export
+- optional Vizkit visualization
 
 ## Development Notes
 
-### Generated umbrella headers
-
-Some umbrella headers are generated by tools. In particular:
-
-- [`include/atlas/atlas.h`](include/atlas/atlas.h)
-- `vizkit/vizkit.h`
-
-Do not hand-edit generated umbrella headers if they are managed by:
-
-- [`tools/generate_headers.py`](tools/generate_headers.py)
-
-### Header convention
-
-Public headers use:
-
-- `.h` for declarations and documentation
-- `.hpp` for inline/template definitions
-
-Typically the `.h` includes the matching `.hpp` at the bottom.
-
-Generated umbrella headers such as [`include/atlas/atlas.h`](include/atlas/atlas.h) should not be edited manually.
-
-### Portability macros
-
-Use Atlas portability macros from [`include/atlas/core/macros.h`](include/atlas/core/macros.h) instead of raw CUDA attributes:
-
-- `ATLAS_HOST`
-- `ATLAS_DEVICE`
-- `ATLAS_ALL_DEVICE`
-- `ATLAS_FORCE_INLINE`
-
-### Logging
-
-Logging is optional at configure time. When enabled, the compiled implementation is provided by [`src/logging/logging.cpp`](src/logging/logging.cpp).
-
-## Known Configuration Constraints
-
-- Benchmarks are not currently enabled for CUDA builds.
-- Plane geometry is infinite, so any finite visualization or spawn/sampling behavior must define an explicit finite patch.
-- `TriangleMesh` support depends on `tinyobjloader` for OBJ loading.
-- Some CUDA test wrappers are still excluded from `atlas_all_cuda_test` due to NVCC/CUDA compatibility issues in specific algorithms or test patterns.
-- CUDA configuration attempts to auto-detect `nvcc`, driver runtime support, and `CMAKE_CUDA_ARCHITECTURES`; override those values manually only when detection is unsuitable for your environment.
+- use portability macros from [`include/atlas/core/macros.h`](include/atlas/core/macros.h): `ATLAS_HOST`, `ATLAS_DEVICE`, `ATLAS_ALL_DEVICE`, `ATLAS_FORCE_INLINE`
+- template modules follow paired `.h` and `.hpp` files, with the `.h` including the `.hpp` at the bottom
+- do not hand-edit generated umbrella headers such as [`include/atlas/atlas.h`](include/atlas/atlas.h); use [`tools/generate_headers.py`](tools/generate_headers.py)
+- Vizkit depends on `atlas/system/system.h` and reads `system()->dt()` from the bound system
 
 ## License
 
-See the repository's license files and project metadata for the final licensing terms.
+See the repository license files and project metadata for licensing terms.

@@ -237,6 +237,35 @@ Collider<T>::collide(const T dt) const {
             const bool flip_normal      = flip_count > 0 && flips[flip_index] != std::uint8_t { 0 };
             const Vector3<T> hit_normal = flip_normal ? -best_norm : best_norm;
 
+            const auto& hit_unit = units[best_index];
+
+            // Evaluate the collider surface velocity at the world-space contact point.
+            //
+            // Rigid-body surface motion is modeled as:
+            //   v_surface = v_linear + omega x r
+            //
+            // where:
+            // - v_linear is the unit's world-space linear velocity,
+            // - omega is the unit's world-space angular velocity,
+            // - r is the world-space offset from the unit origin to the hit point.
+            Vector3<T> surface_velocity(T(0), T(0), T(0));
+
+            if (hit_unit.velocity().has_value()) {
+                surface_velocity += *hit_unit.velocity();
+            }
+
+            if (hit_unit.angular_velocity().has_value()) {
+                const Vector3<T> radius = best_pos - hit_unit.sync_operator().translation;
+                surface_velocity += atlas::math::cross(*hit_unit.angular_velocity(), radius);
+            }
+
+            // Collision response is computed in the surface's local rest frame.
+            //
+            // The particle velocity is first converted to a relative incident velocity,
+            // the interaction model is applied there, and the surface velocity is then
+            // added back to return to world space.
+            const Vector3<T> relative_incident = velocity - surface_velocity;
+
             // Reposition the particle slightly outside the surface.
             //
             // This small offset helps reduce:
@@ -252,7 +281,7 @@ Collider<T>::collide(const T dt) const {
             // - restitution,
             // - tangential damping,
             // - friction-like projection.
-            velocities_ptr[i] = surface_interactions[interaction_index](velocity, hit_normal);
+            velocities_ptr[i] = surface_interactions[interaction_index](relative_incident, hit_normal) + surface_velocity;
         });
 }
 
