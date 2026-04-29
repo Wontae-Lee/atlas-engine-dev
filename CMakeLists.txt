@@ -324,7 +324,8 @@ set(protobuf_INSTALL OFF CACHE BOOL "" FORCE)
 set(protobuf_USE_UNITY_BUILD OFF CACHE BOOL "" FORCE)
 set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
 
-add_subdirectory(external/protobuf EXCLUDE_FROM_ALL)
+set(ATLAS_PROTOBUF_BINARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/protobuf/build")
+add_subdirectory(external/protobuf "${ATLAS_PROTOBUF_BINARY_DIR}" EXCLUDE_FROM_ALL)
 
 set(ATLAS_PROTO_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/serialization/proto")
 set(ATLAS_PROTO_SCHEMA "${ATLAS_PROTO_SCHEMA_DIR}/atlas_snapshot.proto")
