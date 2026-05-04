@@ -52,6 +52,27 @@ class Collider final {
 
 public:
     /**
+     * @brief Cached raw views over common collider runtime data.
+     *
+     * Collision kernels repeatedly need the same unit, interaction, flip, and
+     * particle state buffers. This probe groups those values so device lambdas
+     * can capture one compact object by value.
+     */
+    struct ColliderProbe {
+        const Unit<T>* units {};
+        const ColliderSurfaceInteraction<T>* surface_interactions {};
+        const std::uint8_t* flips {};
+
+        Vector3<T>* positions {};
+        Vector3<T>* velocities {};
+
+        int unit_count {};
+        int interaction_count {};
+        int flip_count {};
+        int particle_count {};
+    };
+
+    /**
      * @brief Builder used for validated host-side Collider construction.
      */
     class Builder;
@@ -135,6 +156,15 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     empty() const noexcept;
+
+    /**
+     * @brief Build a cached probe for collider unit and particle-state data.
+     *
+     * @param probe Output probe populated with raw pointers and scalar metadata.
+     * @return True when all required collider and fluid state exists.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    make_probe(ColliderProbe& probe) const noexcept;
 
 private:
     /**

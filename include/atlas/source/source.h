@@ -48,6 +48,29 @@ class Source final {
 
 public:
     /**
+     * @brief Cached raw views over common source emission data.
+     *
+     * Emission repeatedly needs the same source-unit, generator, property, species,
+     * and fluid output buffers. This probe groups those values so device lambdas
+     * can capture one compact object by value.
+     */
+    struct SourceProbe {
+        const Unit<T>* units {};
+        const GenerateOperator<T>* generators {};
+        const MaterialProperties<T>* properties {};
+        const std::size_t* shuffled_species {};
+
+        Vector3<T>* positions {};
+        Vector3<T>* velocities {};
+        std::size_t* species {};
+        int* active {};
+
+        T temperature {};
+        int property_count {};
+        std::uint64_t emission_seed {};
+    };
+
+    /**
      * @brief Builder for configuring and constructing Source objects.
      */
     class Builder;
@@ -83,10 +106,10 @@ public:
            DeviceBuffer<SpawnType> spawn_types,
            DeviceBuffer<SpawnOperator<T>> spawn_operators,
            atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
-           bool flip     = false,
-           T spacing     = T(0.1),
-           T tolerance   = T(0),
-           T temperature = T(273.15),
+           bool flip                = false,
+           T spacing                = T(0.1),
+           T tolerance              = T(0),
+           T temperature            = T(273.15),
            ObserverHostPtr observer = nullptr) noexcept;
 
     /**
@@ -139,6 +162,15 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     shuffle_species(std::size_t count);
+
+    /**
+     * @brief Build a cached probe for source emission data.
+     *
+     * @param probe Output probe populated with raw pointers and scalar metadata.
+     * @return True when all required source and fluid state exists.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    make_probe(SourceProbe& probe) noexcept;
 
 private:
     /**

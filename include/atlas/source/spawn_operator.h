@@ -166,7 +166,6 @@ struct SpawnOperator final {
     spawn(const atlas::geometry::GeometryOperator<T>& query,
           const Vector3<T>& particle,
           T tolerance = T(0)) const noexcept;
-
 };
 
 } // namespace atlas::fluid

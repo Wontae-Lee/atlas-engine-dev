@@ -179,7 +179,7 @@ make_unit(const atlas::GeometryHostPtr<T>& geometry) {
  */
 atlas::FluidHostPtr<T>
 make_fluid(const atlas::ObserverHostPtr& observer) {
-    atlas::HostBuffer<atlas::MatrialProperties<T>> properties(1);
+    atlas::HostBuffer<atlas::MaterialProperties<T>> properties(1);
     atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(1);
 
     /**
@@ -192,7 +192,7 @@ make_fluid(const atlas::ObserverHostPtr& observer) {
      * `species_id` is also installed so the runtime retains an explicit species
      * identifier for the particle population.
      */
-    properties[0] = atlas::MatrialProperties<T>::builder()
+    properties[0] = atlas::MaterialProperties<T>::builder()
                         .with_type(atlas::MaterialType::Molecule)
                         .with_mass(config::kNitrogenMolecularMass)
                         .with_molecular_mass(config::kNitrogenMolecularMass)

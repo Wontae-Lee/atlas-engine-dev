@@ -79,7 +79,7 @@ option(ATLAS_USE_VIZKIT   "Build Vizkit-based visualization modules" ON)
 option(ATLAS_LOGGING      "Enable logging functionality" ON)
 option(ATLAS_GOOGLE_TEST  "Build GoogleTest-based C++ tests" ON)
 option(ATLAS_CUDA_TEST    "Build CUDA-specific tests" OFF)
-option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" OFF)
+option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" ON)
 
 # ============================================================
 # NVIDIA utility discovery
@@ -312,6 +312,11 @@ add_subdirectory(external/tinyobj)
 # `external/protobuf`. Both the protobuf C++ runtime and the
 # `protoc` compiler are built from that tree so no separate
 # prebuilt archive is required.
+#
+# Keep protobuf's own CMake output under the active Atlas build
+# tree, not under the vendored source checkout. Atlas-generated
+# files from our .proto schemas are kept in a separate generated/
+# directory in the same build tree.
 # ============================================================
 unset(WITH_PROTOC CACHE)
 set(protobuf_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -324,8 +329,9 @@ set(protobuf_INSTALL OFF CACHE BOOL "" FORCE)
 set(protobuf_USE_UNITY_BUILD OFF CACHE BOOL "" FORCE)
 set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
 
-set(ATLAS_PROTOBUF_BINARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/protobuf/build")
-add_subdirectory(external/protobuf "${ATLAS_PROTOBUF_BINARY_DIR}" EXCLUDE_FROM_ALL)
+set(ATLAS_PROTOBUF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/protobuf")
+set(ATLAS_PROTOBUF_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/protobuf")
+add_subdirectory("${ATLAS_PROTOBUF_SOURCE_DIR}" "${ATLAS_PROTOBUF_BINARY_DIR}" EXCLUDE_FROM_ALL)
 
 set(ATLAS_PROTO_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/serialization/proto")
 set(ATLAS_PROTO_SCHEMA "${ATLAS_PROTO_SCHEMA_DIR}/atlas_snapshot.proto")
@@ -951,6 +957,8 @@ endif ()
 # and benchmark definitions are expected to live under benchmarks/.
 # ============================================================
 if (ATLAS_BENCHMARKS)
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark self tests" FORCE)
+    set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable Google Benchmark GoogleTest tests" FORCE)
     add_subdirectory(external/googlebenchmark)
     add_subdirectory(benchmarks)
 endif ()

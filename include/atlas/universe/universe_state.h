@@ -71,8 +71,7 @@ public:
      * @return Reference to this object.
      */
     UniverseState&
-    operator=(UniverseState&&) noexcept
-        = default;
+    operator=(UniverseState&&) noexcept = default;
 
     /**
      * @brief Returns the number of cell entries stored in this state.
@@ -80,8 +79,7 @@ public:
      * @return Number of entries in the underlying buffer.
      */
     ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
-    size() const noexcept
-        = 0;
+    size() const noexcept = 0;
 };
 
 /**

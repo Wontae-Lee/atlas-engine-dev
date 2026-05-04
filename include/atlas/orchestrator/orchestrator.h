@@ -2,7 +2,11 @@
 
 /**
  * @file orchestrator.h
- * @brief Declares the Orchestrator class used to coordinate codec-aware solver execution.
+ * @brief Declares the atlas::system::Orchestrator class and its fluent Builder.
+ *
+ * The orchestrator is the high-level simulation-step coordinator. It connects
+ * the universe, fluid, spatial searcher, optional codec, optional measurer, and
+ * an ordered sequence of solvers into one update pipeline.
  */
 
 #include <atlas/buffer/host_buffer.h>
@@ -19,54 +23,184 @@
 namespace atlas::system {
 
 /**
- * @brief Coordinates execution of a sequence of solvers, optionally with a codec.
+ * @brief Coordinates search, classification, measurement, force application, and solver execution.
  *
- * An Orchestrator stores:
- * - an optional universe,
- * - an optional fluid,
- * - an optional searcher,
- * - an optional codec,
- * - an optional measure,
- * - an ordered list of solver objects.
+ * `Orchestrator` owns no simulation data directly. Instead, it stores host-side
+ * shared pointers to the simulation systems it coordinates:
  *
- * Its primary responsibility is to run the search -> classify -> measure ->
- * solve pipeline according to the current orchestration mode:
- * - if no codec is configured, each solver is invoked with solve(dt)
- * - if a codec is configured, each solver is invoked with solve(allocated_solver, index, dt)
+ * - a universe, used for cell-level states such as field force and gravity,
+ * - a fluid, used for particle velocity, species, and material-property data,
+ * - a spatial hashing searcher, used to map particles to cell ranges,
+ * - an optional codec, used to enable codec-aware solver dispatch,
+ * - an optional measurer, used to collect simulation measurements,
+ * - an ordered list of solvers.
  *
- * This allows the solver pipeline to adapt its behavior depending on whether
- * a codec-aware execution path is available.
+ * A full update step is performed by @ref update or @ref orchestrate. The
+ * implementation executes the following pipeline:
  *
- * @tparam T Scalar type associated with the simulation system.
+ * @code
+ * searcher.invalidate();
+ * search();
+ * classify();
+ * measure();
+ * apply_gravity(dt);
+ * apply_field_force(dt);
+ * solve(dt);
+ * @endcode
+ *
+ * Missing optional dependencies are handled defensively. For example, if no
+ * searcher is configured, search is skipped; if no codec is configured, solvers
+ * are executed through their non-codec path; if force-related states are absent,
+ * force application becomes a no-op.
+ *
+ * @tparam T Scalar type used by the simulation, for example `float` or `double`.
  */
 template <typename T>
 class Orchestrator final {
 public:
     /**
-     * @brief Builder for configuring and constructing Orchestrator instances.
+     * @brief Cached raw views over the data required by force-application passes.
+     *
+     * `OrchestratorProbe` is populated by @ref make_probe and then captured by
+     * value inside device lambdas. It groups raw pointers and scalar metadata
+     * needed by @ref apply_gravity and @ref apply_field_force so those kernels do
+     * not repeatedly resolve states or shared-pointer-backed containers.
+     *
+     * The probe may contain only a subset of optional data:
+     *
+     * - velocity/searcher data is required for a valid probe,
+     * - species and material properties are required only for field-force updates,
+     * - field-force data is required only by @ref apply_field_force,
+     * - gravity data is required only by @ref apply_gravity.
+     *
+     * Pointer members are initialized to `nullptr`, and count members are
+     * initialized to zero. Callers must check the relevant pointers and counts
+     * before launching work that depends on them.
+     */
+    struct OrchestratorProbe {
+        /**
+         * @brief Raw pointer to particle velocity data.
+         *
+         * Points to `FluidVelocityState<T>::data()`. This pointer is required
+         * for both gravity and field-force application.
+         */
+        Vector3<T>* velocity_ptr {};
+
+        /**
+         * @brief Raw pointer to per-particle species indices.
+         *
+         * Points to `FluidSpeciesState<T>::data()` when that state exists and is
+         * non-empty. Used by @ref apply_field_force to look up particle mass.
+         */
+        const std::size_t* species_ptr {};
+
+        /**
+         * @brief Raw pointer to per-species material properties.
+         *
+         * Points to `Fluid::particle_properties()` when available. Field-force
+         * application reads `mass` from this array.
+         */
+        const MaterialProperties<T>* properties_ptr {};
+
+        /**
+         * @brief Raw pointer to cell-wise external force vectors.
+         *
+         * Points to `UniverseFieldForceState<T>::data()` when available. Each
+         * element represents the force applied to particles currently mapped to
+         * the corresponding cell.
+         */
+        const Vector3<T>* field_force_ptr {};
+
+        /**
+         * @brief Raw pointer to cell-wise gravity acceleration vectors.
+         *
+         * Points to `UniverseGravityState<T>::data()` when available. Although
+         * Builder can install a uniform gravity value, the runtime pass consumes
+         * gravity as a per-cell vector buffer.
+         */
+        const Vector3<T>* gravity_ptr {};
+
+        /**
+         * @brief Raw pointer to sorted particle indices produced by the searcher.
+         *
+         * The range `[cell_start_ptr[cell], cell_end_ptr[cell])` indexes into
+         * this array to obtain particle indices belonging to a cell.
+         */
+        const int* indices_ptr {};
+
+        /**
+         * @brief Raw pointer to the first sorted index for each cell.
+         */
+        const int* cell_start_ptr {};
+
+        /**
+         * @brief Raw pointer to one-past-the-last sorted index for each cell.
+         */
+        const int* cell_end_ptr {};
+
+        /**
+         * @brief Number of active particles in the fluid.
+         */
+        int particle_count {};
+
+        /**
+         * @brief Number of cells in the universe.
+         */
+        int num_of_cells {};
+
+        /**
+         * @brief Number of species material-property entries.
+         */
+        int num_of_species {};
+
+        /**
+         * @brief Number of cells available in the field-force state buffer.
+         */
+        int field_force_cell_count {};
+
+        /**
+         * @brief Number of cells available in the gravity state buffer.
+         */
+        int gravity_cell_count {};
+    };
+
+    /**
+     * @brief Fluent builder for constructing validated `Orchestrator` instances.
+     *
+     * The builder collects the same dependencies stored by `Orchestrator`.
+     * During @ref build and @ref make_host_shared it validates the solver list
+     * and materializes staged gravity, if any, into the bound universe.
      */
     class Builder;
 
 public:
     /**
-     * @brief Default constructor.
+     * @brief Constructs an empty orchestrator.
+     *
+     * All dependencies are initialized to null-equivalent values and the solver
+     * list is empty. Calling @ref update or @ref orchestrate on an empty
+     * orchestrator is safe and results in no solver execution or force update.
      */
     Orchestrator() = default;
 
     /**
-     * @brief Destructor.
+     * @brief Destroys the orchestrator.
      */
     ~Orchestrator() = default;
 
     /**
-     * @brief Constructs an orchestrator from pipeline dependencies and solver list.
+     * @brief Constructs an orchestrator from explicit pipeline dependencies.
      *
-     * @param universe Optional host-side shared pointer to a universe.
-     * @param fluid Optional host-side shared pointer to a fluid.
-     * @param searcher Optional host-side shared pointer to a spatial searcher.
-     * @param codec Optional host-side shared pointer to a codec.
-     * @param measurer Optional host-side shared pointer to a measurer.
-     * @param solvers Ordered list of host-side shared solver pointers.
+     * This constructor stores the provided host-side shared pointers and solver
+     * list by move. It performs no validation and does not install gravity state;
+     * those responsibilities belong to @ref Builder when the builder is used.
+     *
+     * @param universe Universe used to access cell-wise field-force and gravity states.
+     * @param fluid Fluid used to access particle velocity, species, and material properties.
+     * @param searcher Spatial hashing searcher used to build cell-to-particle ranges.
+     * @param codec Optional codec enabling codec-aware solver dispatch.
+     * @param measurer Optional measurer invoked during the measurement stage.
+     * @param solvers Ordered list of solvers invoked during @ref solve.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Orchestrator(UniverseHostPtr<T> universe,
@@ -76,72 +210,191 @@ public:
                  MeasurerHostPtr<T> measurer,
                  HostBuffer<SolveHostPtr<T>> solvers) noexcept;
 
+    /**
+     * @brief Builds spatial search data when a searcher is configured.
+     *
+     * If `_searcher` is non-null, this function calls `build()` on it. If no
+     * searcher is configured, the function is a no-op.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     search();
 
+    /**
+     * @brief Updates codec classification when a codec is configured.
+     *
+     * If `_codec` is non-null, this function calls `update()` on it. This stage
+     * is intended to prepare codec-side allocation or classification data before
+     * codec-aware solver dispatch. If no codec is configured, the function is a
+     * no-op.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     classify();
 
+    /**
+     * @brief Runs the configured measurer, if present.
+     *
+     * If `_measurer` is non-null, this function calls `measure()` on it. If no
+     * measurer is configured, the function is a no-op.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     measure();
 
+    /**
+     * @brief Executes all configured solvers for one time step.
+     *
+     * Solver dispatch depends on whether a codec is configured:
+     *
+     * - without a codec, each non-null solver is invoked as `solver->solve(dt)`;
+     * - with a codec, each non-null solver is invoked as
+     *   `solver->solve(&_codec->allocated_solver(), solver_index, dt)`.
+     *
+     * Null solver entries are skipped defensively. An empty solver list causes
+     * an immediate return.
+     *
+     * @param dt Time-step size forwarded to each solver.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     solve(T dt);
 
     /**
-     * @brief Runs the full orchestrator pipeline for one simulation step.
+     * @brief Runs one full simulation orchestration step.
      *
-     * This is the high-level entry point used by @ref atlas::system::System so
-     * the system does not need to invoke the individual orchestration stages directly.
+     * This is the public high-level entry point used by system-level code. It
+     * forwards directly to @ref orchestrate.
      *
-     * @param dt Time step forwarded to field-force and solver stages.
+     * @param dt Time-step size used by gravity, field-force, and solver stages.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update(T dt);
 
     /**
-     * @brief Applies a cell-wise field force to particle velocities when available.
+     * @brief Applies cell-wise external field forces to particle velocities.
      *
-     * If the universe exposes a @ref atlas::universe::UniverseFieldForceState and
-     * the orchestrator has the universe, fluid, and searcher dependencies needed
-     * to map particles into cells, this function updates particle velocity using:
+     * The function reads force vectors from `UniverseFieldForceState<T>` and
+     * applies them to particles currently mapped to each cell by the spatial
+     * searcher. For every valid particle in a force cell, velocity is updated as:
      *
      * @code
-     * v += dt * (F / m)
+     * velocity += force * (dt / mass);
      * @endcode
      *
-     * where @c F is the force vector stored for the particle's current cell and
-     * @c m is the particle mass obtained from its species material properties.
+     * where `mass` is obtained from the particle's species material properties.
      *
-     * @param dt Time step used for the explicit velocity update.
+     * This function is a no-op when:
+     *
+     * - `dt` is zero,
+     * - the universe, fluid, or searcher dependency is missing,
+     * - velocity data or searcher cell-range data is unavailable,
+     * - field-force data is unavailable,
+     * - species or material-property data is unavailable,
+     * - the particle species index is invalid,
+     * - the resolved mass is not positive.
+     *
+     * Work is launched with `atlas::parallel_for<ExecutionPolicy::device>`.
+     *
+     * @param dt Time-step size used for the explicit velocity update.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     apply_field_force(T dt);
 
     /**
-     * @brief Applies a uniform gravity vector to all active particle velocities when configured.
+     * @brief Applies cell-wise gravity acceleration to particle velocities.
      *
-     * Gravity is read from @ref atlas::universe::UniverseGravityState. When the
-     * state is absent, this function does nothing.
+     * The function reads gravity vectors from `UniverseGravityState<T>` and
+     * applies the vector associated with each occupied cell to particles mapped
+     * to that cell:
      *
-     * @param dt Time step used for the explicit velocity update.
+     * @code
+     * velocity += gravity * dt;
+     * @endcode
+     *
+     * Builder-provided gravity is installed as a uniform per-cell buffer, but
+     * this runtime pass consumes the state as cell-wise data. This allows future
+     * non-uniform gravity fields to use the same execution path.
+     *
+     * This function is a no-op when:
+     *
+     * - `dt` is zero,
+     * - the universe, fluid, or searcher dependency is missing,
+     * - velocity data or searcher cell-range data is unavailable,
+     * - gravity data is unavailable.
+     *
+     * Work is launched with `atlas::parallel_for<ExecutionPolicy::device>`.
+     *
+     * @param dt Time-step size used for the explicit velocity update.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     apply_gravity(T dt);
 
     /**
-     * @brief Creates a Builder instance.
+     * @brief Populates a raw-pointer probe for force-application kernels.
      *
-     * @return Builder object for fluent orchestrator construction.
+     * This function resolves the currently configured universe, fluid, and
+     * searcher into raw data views used by @ref apply_gravity and
+     * @ref apply_field_force.
+     *
+     * A valid probe requires:
+     *
+     * - non-null universe, fluid, and searcher dependencies,
+     * - a non-null `FluidVelocityState<T>`,
+     * - non-empty velocity data,
+     * - positive particle and cell counts,
+     * - non-null searcher `indices`, `cell_start`, and `cell_end` arrays.
+     *
+     * Optional fields are populated when their corresponding states/data exist:
+     *
+     * - `species_ptr`, `properties_ptr`, and `num_of_species` for field force,
+     * - `field_force_ptr` and `field_force_cell_count`,
+     * - `gravity_ptr` and `gravity_cell_count`.
+     *
+     * @param probe Output probe to populate.
+     *
+     * @retval true The common velocity and searcher data required for force
+     *              application was found.
+     * @retval false Required common data was missing; the caller should skip
+     *               force application.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    make_probe(OrchestratorProbe& probe) noexcept;
+
+    /**
+     * @brief Creates an empty fluent builder.
+     *
+     * @return Builder object used to configure and construct an orchestrator.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
+    /**
+     * @brief Runs the complete orchestration pipeline for one simulation step.
+     *
+     * The execution order is:
+     *
+     * @code
+     * if (_searcher) {
+     *     _searcher->invalidate();
+     * }
+     * search();
+     * classify();
+     * measure();
+     * apply_gravity(dt);
+     * apply_field_force(dt);
+     * solve(dt);
+     * @endcode
+     *
+     * The searcher is invalidated before rebuilding search data. Gravity and
+     * field-force passes run after measurement and before solver execution.
+     *
+     * @param dt Time-step size used by force-application and solver stages.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     orchestrate(T dt);
 
     /**
      * @brief Sets or replaces the universe dependency.
+     *
+     * The universe supplies cell-level states such as
+     * `UniverseFieldForceState<T>` and `UniverseGravityState<T>`.
      *
      * @param universe Host-side shared pointer to the universe.
      */
@@ -151,21 +404,30 @@ public:
     /**
      * @brief Sets or replaces the fluid dependency.
      *
+     * The fluid supplies particle velocity state, species state, particle count,
+     * and material properties used by force application.
+     *
      * @param fluid Host-side shared pointer to the fluid.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_fluid(FluidHostPtr<T> fluid) noexcept;
 
     /**
-     * @brief Sets or replaces the searcher.
+     * @brief Sets or replaces the spatial hashing searcher.
      *
-     * @param searcher Host-side shared pointer to the searcher.
+     * The searcher supplies sorted particle indices and cell range boundaries
+     * used by force-application passes.
+     *
+     * @param searcher Host-side shared pointer to the spatial hashing searcher.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
 
     /**
-     * @brief Sets or replaces the codec.
+     * @brief Sets or replaces the codec dependency.
+     *
+     * When a codec is configured, @ref classify updates it and @ref solve uses
+     * codec-aware solver dispatch.
      *
      * @param codec Host-side shared pointer to the codec.
      */
@@ -173,28 +435,39 @@ public:
     set_codec(CodecHostPtr<T> codec) noexcept;
 
     /**
-     * @brief Sets or replaces the measure.
+     * @brief Sets or replaces the measurer dependency.
      *
-     * @param measurer Host-side shared pointer to the measure.
+     * When configured, the measurer is invoked during @ref measure.
+     *
+     * @param measurer Host-side shared pointer to the measurer.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_measurer(MeasurerHostPtr<T> measurer) noexcept;
 
     /**
-     * @brief Appends a solver to the orchestration list.
+     * @brief Appends a solver to the solver execution list.
      *
-     * @param solver Host-side shared pointer to the solver.
+     * This mutator does not validate the pointer. Null solvers appended through
+     * this function are skipped by @ref solve. Builder-based construction,
+     * however, rejects null solver entries during validation.
+     *
+     * @param solver Host-side shared pointer to the solver to append.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     add_solver(SolveHostPtr<T> solver) noexcept;
 
+    /**
+     * @brief Returns the configured spatial hashing searcher.
+     *
+     * @return Const reference to the stored searcher shared pointer.
+     */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SpatialHashingSearcherHostPtr<T>&
     searcher() const noexcept;
 
     /**
      * @brief Returns the configured universe.
      *
-     * @return Const reference to the universe shared pointer.
+     * @return Const reference to the stored universe shared pointer.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const UniverseHostPtr<T>&
     universe() const noexcept;
@@ -202,7 +475,7 @@ public:
     /**
      * @brief Returns the configured fluid.
      *
-     * @return Const reference to the fluid shared pointer.
+     * @return Const reference to the stored fluid shared pointer.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const FluidHostPtr<T>&
     fluid() const noexcept;
@@ -210,69 +483,101 @@ public:
     /**
      * @brief Returns the configured codec.
      *
-     * @return Const reference to the codec shared pointer.
+     * @return Const reference to the stored codec shared pointer.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const CodecHostPtr<T>&
     codec() const noexcept;
 
+    /**
+     * @brief Returns the configured measurer.
+     *
+     * @return Const reference to the stored measurer shared pointer.
+     */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const MeasurerHostPtr<T>&
     measurer() const noexcept;
 
     /**
      * @brief Returns the configured solver list.
      *
-     * @return Const reference to the solver container.
+     * @return Const reference to the ordered host buffer of solver pointers.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<SolveHostPtr<T>>&
     solvers() const noexcept;
 
 private:
     /**
-     * @brief Optional universe used to access cell-wise field states.
+     * @brief Universe dependency used for cell-wise orchestration states.
+     *
+     * May be null. Required by gravity and field-force application.
      */
     UniverseHostPtr<T> _universe {};
 
     /**
-     * @brief Optional fluid used to access particle states updated by orchestration.
+     * @brief Fluid dependency used for particle state and material data.
+     *
+     * May be null. Required by gravity and field-force application.
      */
     FluidHostPtr<T> _fluid {};
 
+    /**
+     * @brief Spatial searcher used to build and expose cell-to-particle ranges.
+     *
+     * May be null. Required by search and force-application stages.
+     */
     SpatialHashingSearcherHostPtr<T> _searcher {};
 
     /**
-     * @brief Optional codec used to control codec-aware solver execution.
+     * @brief Optional codec used for classification and codec-aware solver dispatch.
+     *
+     * When null, solvers are dispatched through their non-codec solve path.
      */
     CodecHostPtr<T> _codec {};
 
+    /**
+     * @brief Optional measurer invoked during the measurement stage.
+     */
     MeasurerHostPtr<T> _measurer {};
 
     /**
-     * @brief Ordered list of solvers managed by this orchestrator.
+     * @brief Ordered solver list executed during the solve stage.
+     *
+     * Solvers are invoked in buffer order. Null entries are skipped by @ref solve.
      */
     HostBuffer<SolveHostPtr<T>> _solvers {};
 };
 
 /**
- * @brief Builder for Orchestrator.
+ * @brief Fluent builder for `Orchestrator`.
  *
- * This builder collects:
- * - an optional codec,
- * - an ordered sequence of solvers.
+ * The builder collects orchestrator dependencies and solver entries, then
+ * constructs either a value object or a host-side shared object.
  *
- * Validation currently ensures that no stored solver pointer is null.
+ * During construction, the builder:
  *
- * @tparam T Scalar type associated with the simulation system.
+ * - validates that every configured solver pointer is non-null,
+ * - installs staged gravity into the universe when @ref with_gravity was used,
+ * - returns an orchestrator initialized with the collected dependencies.
+ *
+ * Staged gravity requires a bound universe with a positive number of cells. If a
+ * gravity state already exists, it is resized to match the universe cell count
+ * if necessary and filled with the staged gravity vector. If it does not exist,
+ * the builder creates `UniverseGravityState<T>` and fills it.
+ *
+ * @tparam T Scalar type used by the orchestrator.
  */
 template <typename T>
 class Orchestrator<T>::Builder final {
 public:
     /**
-     * @brief Default constructor.
+     * @brief Constructs an empty builder.
      */
     Builder() = default;
 
     /**
-     * @brief Sets the universe used by the orchestrator.
+     * @brief Sets the universe dependency to be stored in the orchestrator.
+     *
+     * The universe is also used by @ref with_gravity during @ref build or
+     * @ref make_host_shared to create or update `UniverseGravityState<T>`.
      *
      * @param universe Host-side shared pointer to the universe.
      * @return Reference to this builder.
@@ -281,7 +586,7 @@ public:
     with_universe(UniverseHostPtr<T> universe) noexcept;
 
     /**
-     * @brief Sets the fluid used by the orchestrator.
+     * @brief Sets the fluid dependency to be stored in the orchestrator.
      *
      * @param fluid Host-side shared pointer to the fluid.
      * @return Reference to this builder.
@@ -289,11 +594,22 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
+    /**
+     * @brief Sets the spatial hashing searcher dependency.
+     *
+     * The searcher is used to build search data and to expose cell ranges during
+     * gravity and field-force passes.
+     *
+     * @param searcher Host-side shared pointer to the spatial hashing searcher.
+     * @return Reference to this builder.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
 
     /**
-     * @brief Sets the codec used by the orchestrator.
+     * @brief Sets the optional codec dependency.
+     *
+     * A configured codec enables classification and codec-aware solver dispatch.
      *
      * @param codec Host-side shared pointer to the codec.
      * @return Reference to this builder.
@@ -301,16 +617,27 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_codec(CodecHostPtr<T> codec) noexcept;
 
+    /**
+     * @brief Sets the optional measurer dependency.
+     *
+     * @param measurer Host-side shared pointer to the measurer.
+     * @return Reference to this builder.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_measurer(MeasurerHostPtr<T> measurer) noexcept;
 
     /**
-     * @brief Installs a uniform gravity vector on the bound universe.
+     * @brief Stages a uniform gravity vector for installation during build.
      *
-     * The gravity value is staged in the builder and materialized as a
-     * @ref atlas::universe::UniverseGravityState during build.
+     * The value is not applied immediately. During @ref build or
+     * @ref make_host_shared, the builder ensures that the bound universe contains
+     * a `UniverseGravityState<T>` with one entry per universe cell and fills that
+     * buffer with this gravity vector.
      *
-     * @param gravity Gravity acceleration vector.
+     * If no universe is configured, or if the universe has zero cells, the staged
+     * gravity value has no effect during construction.
+     *
+     * @param gravity Gravity acceleration vector to assign to each universe cell.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -319,68 +646,101 @@ public:
     /**
      * @brief Appends a solver to the orchestrator configuration.
      *
-     * @param solver Host-side shared pointer to the solver.
+     * Solver order is preserved and used by @ref Orchestrator::solve. Null solver
+     * entries are rejected by @ref build and @ref make_host_shared.
+     *
+     * @param solver Host-side shared pointer to the solver to append.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_solver(SolveHostPtr<T> solver) noexcept;
 
     /**
-     * @brief Builds a validated Orchestrator object.
+     * @brief Builds a validated orchestrator value.
      *
-     * @return Constructed Orchestrator object.
+     * This function validates the solver list, materializes staged gravity into
+     * the universe when requested, and returns an orchestrator initialized with
+     * the collected dependencies.
      *
-     * @throw std::runtime_error Thrown if any configured solver is null.
+     * @return Constructed orchestrator.
+     *
+     * @throw std::runtime_error If any configured solver pointer is null.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Orchestrator<T>
     build() const;
 
     /**
-     * @brief Builds a host-side shared Orchestrator object.
+     * @brief Builds a validated host-side shared orchestrator.
      *
-     * @return Host shared pointer to a constructed Orchestrator object.
+     * This function performs the same validation and staged-gravity installation
+     * as @ref build, then constructs the orchestrator with
+     * `atlas::make_host_shared`.
      *
-     * @throw std::runtime_error Thrown if any configured solver is null.
+     * @return Host-side shared pointer to the constructed orchestrator.
+     *
+     * @throw std::runtime_error If any configured solver pointer is null.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<Orchestrator<T>>
     make_host_shared() const;
 
 private:
     /**
-     * @brief Validates the current builder state.
+     * @brief Validates the collected builder state.
      *
-     * @throw std::runtime_error Thrown if any solver pointer is null.
+     * Current validation requires every configured solver pointer to be non-null.
+     *
+     * @throw std::runtime_error If any solver pointer is null.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     validate() const;
 
+    /**
+     * @brief Creates or updates universe gravity state from staged gravity.
+     *
+     * If a universe and staged gravity vector are available, this function
+     * ensures that `UniverseGravityState<T>` exists, has one element per universe
+     * cell, and is filled with the staged gravity vector using device
+     * `parallel_fill`.
+     *
+     * The function is a no-op when no universe is configured, no gravity was
+     * staged, or the universe reports zero cells.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     ensure_gravity_state() const;
 
 private:
     /**
-     * @brief Universe collected by the builder.
+     * @brief Universe dependency collected by the builder.
      */
     UniverseHostPtr<T> _universe {};
 
     /**
-     * @brief Fluid collected by the builder.
+     * @brief Fluid dependency collected by the builder.
      */
     FluidHostPtr<T> _fluid {};
 
+    /**
+     * @brief Spatial hashing searcher collected by the builder.
+     */
     SpatialHashingSearcherHostPtr<T> _searcher {};
 
     /**
-     * @brief Codec collected by the builder.
+     * @brief Optional codec collected by the builder.
      */
     CodecHostPtr<T> _codec {};
 
+    /**
+     * @brief Optional measurer collected by the builder.
+     */
     MeasurerHostPtr<T> _measurer {};
 
+    /**
+     * @brief Optional gravity vector staged for build-time universe state setup.
+     */
     std::optional<Vector3<T>> _gravity {};
 
     /**
-     * @brief Solver list collected by the builder.
+     * @brief Ordered solver list collected by the builder.
      */
     HostBuffer<SolveHostPtr<T>> _solvers {};
 };
@@ -390,25 +750,25 @@ private:
 namespace atlas {
 
 /**
- * @brief Alias for atlas::system::Orchestrator.
+ * @brief Convenience alias for `atlas::system::Orchestrator`.
  *
- * @tparam T Scalar type associated with the orchestrator.
+ * @tparam T Scalar type used by the orchestrator.
  */
 template <typename T>
 using Orchestrator = atlas::system::Orchestrator<T>;
 
 /**
- * @brief Host-side shared pointer alias for Orchestrator.
+ * @brief Host-side shared pointer alias for `atlas::system::Orchestrator`.
  *
- * @tparam T Scalar type associated with the orchestrator.
+ * @tparam T Scalar type used by the orchestrator.
  */
 template <typename T>
 using OrchestratorHostPtr = atlas::host_shared_ptr<atlas::system::Orchestrator<T>>;
 
 /**
- * @brief Device-side shared pointer alias for Orchestrator.
+ * @brief Device-side shared pointer alias for `atlas::system::Orchestrator`.
  *
- * @tparam T Scalar type associated with the orchestrator.
+ * @tparam T Scalar type used by the orchestrator.
  */
 template <typename T>
 using OrchestratorDevicePtr = atlas::device_shared_ptr<atlas::system::Orchestrator<T>>;

@@ -224,10 +224,10 @@ make_tetrahedron_geometry() {
  */
 atlas::FluidHostPtr<T>
 make_fluid() {
-    atlas::HostBuffer<atlas::MatrialProperties<T>> material_properties(1);
+    atlas::HostBuffer<atlas::MaterialProperties<T>> material_properties(1);
     atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(1);
 
-    material_properties[0] = atlas::MatrialProperties<T>::builder()
+    material_properties[0] = atlas::MaterialProperties<T>::builder()
                                  .with_type(atlas::MaterialType::Molecule)
                                  .with_mass(config::kWaterMass)
                                  .with_molecular_mass(config::kWaterMass)

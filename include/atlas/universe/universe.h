@@ -94,8 +94,7 @@ public:
      * @return Reference to this object.
      */
     Universe&
-    operator=(Universe&&) noexcept
-        = default;
+    operator=(Universe&&) noexcept = default;
 
     /**
      * @brief Creates a Builder instance.

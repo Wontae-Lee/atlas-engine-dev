@@ -2,94 +2,217 @@
 
 /**
  * @file sph_solver.h
- * @brief Declares a smooth-particle-hydrodynamics (SPH) solver that updates particle velocities from local neighborhood interactions.
+ * @brief Declares the SPH solver used to estimate particle fields and update velocities.
  *
- * This header defines `SphSolver<T>`, an SPH-style solver that advances particle
- * motion using local smoothing-kernel interactions rather than binary collision
- * events.
- *
- * In contrast to DSMC-based solvers:
- * - no stochastic collision pair selection is performed
- * - no per-cell collision-count scheduling is used
- * - particle evolution is driven by neighborhood-based continuum-style interaction
- *
- * The solver relies on:
- * - a universe defining the spatial grid and domain extents
- * - a fluid containing particle states and material properties
- * - a spatial hashing searcher providing efficient neighborhood lookup
- *
- * At a high level, one SPH step consists of:
- * 1. preparing required field/state buffers
- * 2. rebuilding or reusing the spatial neighborhood structure
- * 3. estimating per-particle density and pressure
- * 4. accumulating SPH accelerations from local neighbors
- * 5. updating particle velocities in place
+ * This header defines `atlas::system::SphSolver<T>`, a smooth-particle-
+ * hydrodynamics style solver that computes density, pressure, acceleration, and
+ * cell-level force/particle-count fields from local particle neighborhoods.
  */
 
 #include <atlas/core/macros.h>
-#include <atlas/solver/sph/sph_kernel.h>
 #include <atlas/solver/solver.h>
+#include <atlas/solver/sph/sph_kernel.h>
 
 namespace atlas::system {
 
 /**
- * @brief Smooth-particle-hydrodynamics style solver driven by local neighbor search.
+ * @brief Smooth-particle-hydrodynamics solver using spatial-hash neighbor traversal.
  *
- * `SphSolver<T>` implements a particle-based continuum interaction model in which
- * each particle is influenced by nearby particles inside a smoothing neighborhood.
+ * `SphSolver<T>` derives from @ref Solver and implements an explicit SPH-style
+ * velocity update. It uses the spatial hashing searcher to find particles in
+ * neighboring grid cells, computes per-particle density and pressure, then
+ * accumulates pressure-gradient and viscosity terms into an acceleration field.
  *
- * Instead of discrete binary collisions, the solver computes:
- * - density estimates from smoothing-kernel weights
- * - pressure estimates from the density field and rest material parameters
- * - pressure-gradient and viscosity contributions from neighboring particles
- * - explicit velocity updates from the resulting acceleration field
+ * The primary execution path is @ref solve(T), which performs:
  *
- * The solver stores temporary per-particle fields such as:
- * - density
- * - pressure
- * - acceleration
+ * @code
+ * if (!initialize_sph_context()) return;
+ * if (!(dt > 0)) throw std::invalid_argument(...);
+ * if (!prepare_particle_fields()) {
+ *     reset_universe_fields();
+ *     return;
+ * }
+ * update();
+ * accumulate_acceleration(dt);
+ * @endcode
  *
- * These fields are solver-owned working buffers and are rebuilt or refreshed during
- * the solve pipeline.
+ * The internal @ref update stage executes:
  *
- * The overload `solve(T dt)` is the primary execution entry point.
- * The codec-aware overload taking `allocated_solver` is currently reserved for
- * future implementation and intentionally does not perform any work.
+ * @code
+ * estimate_particle_density_and_pressure();
+ * update_cell_number_particles();
+ * @endcode
  *
- * @tparam T Floating-point scalar type used by the simulation.
+ * The codec-aware `solve(const DeviceBuffer<int>*, int, T)` overload is currently
+ * a no-op. The SPH solver therefore does not currently support per-cell solver
+ * allocation filtering.
+ *
+ * @tparam T Scalar type used by the simulation.
  */
 template <typename T>
 class SphSolver final : public Solver<T> {
 public:
     /**
-     * @brief Builder type used to configure and construct `SphSolver`.
+     * @brief Raw-pointer view over common SPH runtime data.
+     *
+     * `SphSolverProbe` is populated by @ref make_probe and is intended to be
+     * captured by value in device kernels. It contains fluid particle data,
+     * universe output buffers, searcher cell ranges, spatial-grid metadata, and
+     * the runtime smoothing kernel.
+     *
+     * Required states for a valid probe are:
+     *
+     * - `FluidPositionState<T>`,
+     * - `FluidVelocityState<T>`,
+     * - `FluidSpeciesState<T>`,
+     * - `UniverseNumberParticleState<T>`,
+     * - `UniverseFieldForceState<T>`.
+     *
+     * `allocated_solver_ptr` is populated only when an allocation buffer is
+     * supplied to @ref make_probe. The current solver path passes `nullptr`.
+     */
+    struct SphSolverProbe {
+        /**
+         * @brief Raw pointer to per-particle positions.
+         *
+         * Points to `FluidPositionState<T>::data()`.
+         */
+        const Vector3<T>* position_ptr {};
+
+        /**
+         * @brief Raw pointer to mutable per-particle velocities.
+         *
+         * Points to `FluidVelocityState<T>::data()`. The acceleration stage
+         * updates this buffer in place.
+         */
+        Vector3<T>* velocity_ptr {};
+
+        /**
+         * @brief Raw pointer to per-particle species indices.
+         *
+         * Points to `FluidSpeciesState<T>::data()`.
+         */
+        const std::size_t* species_ptr {};
+
+        /**
+         * @brief Raw pointer to per-species material properties.
+         *
+         * Points to `fluid->particle_properties()`. SPH parameters such as mass,
+         * smoothing length, rest density, pressure coefficient, and dynamic
+         * viscosity are read from this array.
+         */
+        const MaterialProperties<T>* properties_ptr {};
+
+        /**
+         * @brief Raw pointer to per-cell particle-count output.
+         *
+         * Points to `UniverseNumberParticleState<T>::data()`.
+         */
+        T* number_particle_ptr {};
+
+        /**
+         * @brief Raw pointer to per-cell averaged force output.
+         *
+         * Points to `UniverseFieldForceState<T>::data()`. The acceleration stage
+         * stores the average force-like value per occupied cell.
+         */
+        Vector3<T>* field_force_ptr {};
+
+        /**
+         * @brief Raw pointer to sorted particle indices produced by the searcher.
+         *
+         * For each cell, `[cell_start_ptr[cell], cell_end_ptr[cell])` indexes
+         * into this array.
+         */
+        const int* indices_ptr {};
+
+        /**
+         * @brief Raw pointer to the first sorted index for each cell.
+         */
+        const int* cell_start_ptr {};
+
+        /**
+         * @brief Raw pointer to one-past-the-last sorted index for each cell.
+         */
+        const int* cell_end_ptr {};
+
+        /**
+         * @brief Optional raw pointer to per-cell solver allocation data.
+         *
+         * Currently unused by the main SPH solve path.
+         */
+        const int* allocated_solver_ptr {};
+
+        /**
+         * @brief Lower corner of the searcher grid domain.
+         */
+        Vector3<T> lower_corner {};
+
+        /**
+         * @brief Integer grid resolution used by the searcher.
+         */
+        Vector3<int> grid_size {};
+
+        /**
+         * @brief Reciprocal of the searcher cell size.
+         */
+        T inverse_cell_size {};
+
+        /**
+         * @brief Searcher cell size.
+         *
+         * Used as the fallback smoothing length when material properties do not
+         * define a positive smoothing length.
+         */
+        T cell_size {};
+
+        /**
+         * @brief Number of particles reported by the fluid.
+         */
+        int particle_count {};
+
+        /**
+         * @brief Number of cells reported by the universe.
+         */
+        int num_of_cells {};
+
+        /**
+         * @brief Number of species material-property entries.
+         */
+        int num_of_properties {};
+
+        /**
+         * @brief Runtime SPH kernel wrapper used for density, pressure, and viscosity terms.
+         */
+        SphKernel<T> kernel {};
+    };
+
+    /**
+     * @brief Fluent builder for constructing validated `SphSolver` instances.
      */
     class Builder;
 
 public:
     /**
-     * @brief Construct a default-initialized SPH solver.
+     * @brief Constructs an empty SPH solver.
      *
-     * A default-constructed solver is not yet fully configured for a real
-     * simulation pipeline. In normal usage, the parameterized constructor or
-     * builder interface should be preferred.
+     * Dependencies are initialized by the @ref Solver base class default state.
+     * Calling @ref solve on an unconfigured solver is safe: context initialization
+     * fails, transient buffers are cleared, and no device kernels are launched.
      */
     SphSolver() = default;
 
     /**
-     * @brief Construct an SPH solver with all required runtime dependencies.
+     * @brief Constructs an SPH solver with simulation dependencies and a kernel type.
      *
-     * The solver stores shared references to:
-     * - the universe
-     * - the fluid
-     * - the spatial hashing searcher
+     * The constructor forwards the universe, fluid, and searcher to the
+     * @ref Solver base class, initializes the runtime SPH kernel from
+     * `kernel_type`, and calls @ref ensure_universe_states.
      *
-     * It also initializes the selected runtime SPH smoothing kernel.
-     *
-     * @param universe Host-side universe describing the domain and grid.
-     * @param fluid Host-side fluid containing particle states and material properties.
-     * @param searcher Spatial hashing searcher used for particle neighborhood lookup.
-     * @param kernel_type SPH kernel type used for density, pressure, and viscosity evaluation.
+     * @param universe Universe containing SPH per-cell output states.
+     * @param fluid Fluid containing particle position, velocity, species, and material data.
+     * @param searcher Spatial hashing searcher used for cell and neighbor traversal.
+     * @param kernel_type SPH kernel model used for smoothing operations.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     SphSolver(UniverseHostPtr<T> universe,
@@ -98,219 +221,351 @@ public:
               SphKernelType kernel_type = SphKernelType::standard) noexcept;
 
     /**
-     * @brief Destroy the solver.
+     * @brief Destroys the SPH solver through the base interface.
      */
     ~SphSolver() override = default;
 
     /**
-     * @brief Create a builder for `SphSolver`.
+     * @brief Creates an empty fluent builder.
      *
-     * @return Default-initialized builder.
+     * @return Builder object used to configure and construct an SPH solver.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
     /**
-     * @brief Return the active SPH kernel type.
+     * @brief Returns the configured SPH kernel type.
      *
-     * @return Currently configured SPH kernel type.
+     * @return Kernel type stored in the runtime SPH kernel wrapper.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE SphKernelType
     kernel_type() const noexcept;
 
     /**
-     * @brief Execute one SPH solve step using the current spatial neighborhood.
+     * @brief Executes one explicit SPH velocity-update step.
      *
-     * This is the main execution entry point of the solver. A typical call performs:
-     * - context initialization
-     * - field/buffer preparation
-     * - per-cell particle-count refresh
-     * - density and pressure estimation
-     * - acceleration accumulation
-     * - in-place particle velocity update
+     * The solve step initializes the runtime context, validates that `dt` is
+     * positive, prepares solver-owned particle buffers, estimates density and
+     * pressure, updates per-cell particle counts, accumulates acceleration, and
+     * writes velocity updates in place.
      *
-     * The actual neighbor interaction radius is derived from each particle's
-     * material properties together with the selected SPH kernel support rule.
+     * Required dependencies and states are checked by @ref initialize_sph_context
+     * and @ref make_probe. If required dependencies or states are unavailable,
+     * the solver returns without work.
      *
-     * The update is explicit in time and uses the supplied `dt` directly when
-     * converting acceleration into a velocity increment.
+     * @param dt Positive time-step size used to integrate acceleration into velocity.
      *
-     * @param dt Explicit time step for the velocity update.
+     * @throw std::invalid_argument If `dt` is not positive after context
+     *                              initialization succeeds.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     solve(T dt) override final;
 
     /**
-     * @brief Reserved codec-aware execution path.
+     * @brief Codec-aware SPH solve overload.
      *
-     * This overload is intentionally left blank for future implementation.
-     * It exists to preserve interface compatibility with other solver families
-     * that support per-cell work partitioning through a solver-assignment buffer.
+     * This overload is currently intentionally empty. It ignores all arguments
+     * and performs no SPH update.
      *
-     * @param allocated_solver Optional per-cell solver-assignment buffer.
-     * @param index Solver index used for cell filtering.
-     * @param dt Explicit time step.
+     * @param allocated_solver Unused per-cell solver-allocation buffer.
+     * @param index Unused solver index.
+     * @param dt Unused time-step size.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     solve(const DeviceBuffer<int>* allocated_solver, int index, T dt) override final;
 
     /**
-     * @brief Ensure that all required universe-side states exist.
+     * @brief Ensures SPH universe-side output states exist.
      *
-     * The SPH solver may depend on universe-side fields such as:
-     * - cell particle counts
-     * - auxiliary scalar/vector fields used by solver diagnostics or coupling
+     * If a universe is configured, this function creates the following missing
+     * states with `universe->number_of_cells()` elements:
      *
-     * This function prepares those states before the main solve pipeline begins.
+     * - `UniverseNumberParticleState<T>`,
+     * - `UniverseFieldForceState<T>`.
+     *
+     * Existing states are left unchanged. If no universe is configured, the
+     * function is a no-op.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     ensure_universe_states();
 
     /**
-     * @brief Initialize the SPH execution context.
+     * @brief Initializes the SPH context for one solve step.
      *
-     * This function prepares the solver for one SPH step. Typical responsibilities
-     * include:
-     * - ensuring required universe states exist
-     * - allocating or resizing internal particle working buffers
-     * - resetting transient universe-side fields
+     * The function verifies that universe, fluid, and searcher dependencies exist
+     * and that the fluid provides:
      *
-     * @return True when the context is ready and the solve step may proceed.
+     * - `FluidPositionState<T>`,
+     * - `FluidVelocityState<T>`,
+     * - `FluidSpeciesState<T>`.
+     *
+     * If dependencies or required fluid states are missing, it resets universe
+     * fields, clears solver-owned particle buffers, and returns `false`.
+     *
+     * On success, it ensures required universe states exist, rebuilds the searcher
+     * by calling `searcher->build()`, and returns `true`.
+     *
+     * @retval true The SPH context is ready for the solve step.
+     * @retval false Required dependencies or fluid states were missing.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE bool
     initialize_sph_context() noexcept;
 
     /**
-     * @brief Prepare solver-owned particle working fields.
+     * @brief Populates an SPH probe from this solver's configured dependencies.
      *
-     * The SPH solver keeps several temporary per-particle buffers:
-     * - `_density`
-     * - `_pressure`
-     * - `_acceleration`
+     * This overload forwards to the static @ref make_probe overload using this
+     * solver's universe, fluid, searcher, and kernel.
      *
-     * This function ensures those buffers are correctly sized and ready for use
-     * in the current step.
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param probe Output probe populated with raw pointers and scalar metadata.
      *
-     * @return True when the particle working fields are available.
+     * @retval true Required dependencies and states were found.
+     * @retval false A required dependency or state was missing.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    make_probe(const DeviceBuffer<int>* allocated_solver, SphSolverProbe& probe) noexcept;
+
+    /**
+     * @brief Populates an SPH probe from explicit dependencies.
+     *
+     * This static helper resolves fluid particle states, universe output states,
+     * searcher buffers, grid metadata, material properties, and the runtime kernel
+     * into a @ref SphSolverProbe.
+     *
+     * Required dependencies:
+     *
+     * - universe,
+     * - fluid,
+     * - searcher.
+     *
+     * Required fluid states:
+     *
+     * - `FluidPositionState<T>`,
+     * - `FluidVelocityState<T>`,
+     * - `FluidSpeciesState<T>`.
+     *
+     * Required universe states:
+     *
+     * - `UniverseNumberParticleState<T>`,
+     * - `UniverseFieldForceState<T>`.
+     *
+     * The function does not validate that searcher pointers are non-null, that
+     * particle/cell counts are positive, or that material properties are non-empty.
+     * Later stages perform their own bounds checks where needed.
+     *
+     * @param universe Universe dependency.
+     * @param fluid Fluid dependency.
+     * @param searcher Spatial hashing searcher dependency.
+     * @param kernel Runtime SPH kernel wrapper to copy into the probe.
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param probe Output probe populated with raw pointers and metadata.
+     *
+     * @retval true Required dependencies and states were found.
+     * @retval false A required dependency or state was missing.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
+    make_probe(const UniverseHostPtr<T>& universe,
+               const FluidHostPtr<T>& fluid,
+               const SpatialHashingSearcherHostPtr<T>& searcher,
+               const SphKernel<T>& kernel,
+               const DeviceBuffer<int>* allocated_solver,
+               SphSolverProbe& probe) noexcept;
+
+    /**
+     * @brief Allocates and clears per-particle working fields for the current step.
+     *
+     * The working buffers are resized to `fluid->particle_count()` and cleared:
+     *
+     * - `_density` is filled with zero,
+     * - `_pressure` is filled with zero,
+     * - `_acceleration` is filled with zero vectors.
+     *
+     * Universe output fields are reset by calling @ref reset_universe_fields.
+     *
+     * If the particle count is not positive, all working buffers are cleared,
+     * universe fields are reset, and the function returns `false`.
+     *
+     * @retval true Working fields were allocated and cleared.
+     * @retval false Particle count was zero or negative.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE bool
     prepare_particle_fields();
 
     /**
-     * @brief Reset transient universe-side fields used by the SPH solver.
+     * @brief Resets universe-side SPH output fields to zero.
      *
-     * This function clears or reinitializes temporary universe-side state so that
-     * the next SPH step starts from a clean baseline.
+     * If a universe exists, this function ensures required universe states exist
+     * and clears:
+     *
+     * - `UniverseNumberParticleState<T>` to zero,
+     * - `UniverseFieldForceState<T>` to zero vectors.
+     *
+     * If no universe exists, the function is a no-op.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     reset_universe_fields();
 
     /**
-     * @brief Execute the internal SPH update pipeline.
+     * @brief Executes the internal SPH field-estimation update.
      *
-     * This helper drives the solver-side update stages excluding the final external
-     * `solve(dt)` interface. It typically sequences:
-     * - cell particle-count update
-     * - density and pressure estimation
-     * - acceleration accumulation
+     * The current implementation performs:
      *
-     * The exact order depends on the implementation in the accompanying `.hpp`.
+     * @code
+     * estimate_particle_density_and_pressure();
+     * update_cell_number_particles();
+     * @endcode
+     *
+     * Acceleration accumulation is not part of this function; it is called
+     * separately by @ref solve after @ref update completes.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update();
 
     /**
-     * @brief Estimate per-particle density and pressure from local neighborhoods.
+     * @brief Estimates per-particle density and pressure from neighboring particles.
      *
-     * This stage uses the configured smoothing kernel to accumulate density from
-     * nearby particles and then derives pressure from:
-     * - density
-     * - rest density
-     * - material pressure coefficient
+     * For each particle, the function:
      *
-     * The resulting values are written into `_density` and `_pressure`.
+     * - resolves material properties from the particle species,
+     * - computes the smoothing length using @ref smoothing_length_for,
+     * - maps the particle position to a search-grid cell,
+     * - scans neighboring cells within @ref search_radius_for,
+     * - accumulates density from neighboring particle masses and kernel weights,
+     * - falls back to rest density when the accumulated density is not positive,
+     * - computes pressure as:
+     *
+     * @code
+     * pressure = pressure_coefficient * (density - rest_density);
+     * @endcode
+     *
+     * Particles with invalid species indices receive zero density and pressure.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     estimate_particle_density_and_pressure();
 
     /**
-     * @brief Update the per-cell number-of-particles field in the universe.
+     * @brief Updates the universe per-cell particle-count field.
      *
-     * The SPH solver uses the searcher/universe grid to organize local neighborhoods.
-     * This function refreshes the per-cell particle-count information needed for
-     * later neighbor iteration and diagnostics.
+     * For each cell, this function counts valid particle indices in the searcher
+     * range `[cell_start[cell], cell_end[cell])` and writes the count to
+     * `UniverseNumberParticleState<T>`. Empty or invalid ranges receive zero.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update_cell_number_particles();
 
     /**
-     * @brief Accumulate SPH acceleration and update particle velocities.
+     * @brief Accumulates SPH acceleration, updates velocity, and writes cell force output.
      *
-     * This stage computes SPH forces from neighboring particles, including terms
-     * such as:
-     * - pressure force
-     * - viscosity force
+     * The first device pass computes per-particle acceleration from neighboring
+     * particles using pressure-gradient and optional viscosity terms:
      *
-     * The resulting acceleration is stored in `_acceleration`, then converted
-     * into a velocity update using the explicit time step `dt`.
+     * - pressure contribution is accumulated from the pair pressure term and
+     *   `kernel.pressure_gradient(...)`,
+     * - viscosity contribution is included only when the particle material's
+     *   `dynamic_viscosity` is positive.
      *
-     * @param dt Explicit time step used for velocity integration.
+     * The resulting acceleration is stored in `_acceleration`, and velocity is
+     * updated explicitly:
+     *
+     * @code
+     * velocity = velocity + acceleration * dt;
+     * @endcode
+     *
+     * If the particle species is invalid, or the particle material mass is not
+     * positive, acceleration is reset to zero.
+     *
+     * The second device pass computes a per-cell averaged force-like vector:
+     *
+     * @code
+     * field_force[cell] = average(acceleration[p] * mass[p])
+     * @endcode
+     *
+     * over valid particles in the cell. Empty cells receive a zero vector.
+     *
+     * @param dt Positive time-step size used for explicit velocity integration.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     accumulate_acceleration(T dt);
 
     /**
-     * @brief Return the effective smoothing length for a particle/material record.
+     * @brief Returns the effective smoothing length for a material.
      *
-     * If the material explicitly stores a smoothing length, that value may be used.
-     * Otherwise, the universe cell size may act as a fallback reference scale.
+     * If `property.smoothing_length` exists and is positive, that value is
+     * returned. Otherwise, the searcher cell size is used as the fallback.
      *
-     * @param property Particle/material property record.
-     * @param cell_size Universe cell size used as a fallback reference.
+     * @param property Material property record.
+     * @param cell_size Searcher cell size used as fallback.
+     *
      * @return Effective smoothing length.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    smoothing_length_for(const MatrialProperties<T>& property, T cell_size) noexcept;
+    smoothing_length_for(const MaterialProperties<T>& property, T cell_size) noexcept;
 
     /**
-     * @brief Return the effective rest density for a particle/material record.
+     * @brief Returns the effective rest density for a material.
      *
-     * @param property Particle/material property record.
-     * @return Rest density used in pressure evaluation.
+     * If `property.rest_density` exists and is positive, that value is returned.
+     * Otherwise, `T(1)` is used.
+     *
+     * @param property Material property record.
+     *
+     * @return Effective rest density.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    rest_density_for(const MatrialProperties<T>& property) noexcept;
+    rest_density_for(const MaterialProperties<T>& property) noexcept;
 
     /**
-     * @brief Return the effective pressure coefficient for a particle/material record.
+     * @brief Returns the pressure coefficient for a material.
      *
-     * @param property Particle/material property record.
-     * @return Pressure coefficient used in the equation of state or pressure model.
+     * If `property.pressure_coefficient` is set, that value is returned.
+     * Otherwise, `T(0)` is used.
+     *
+     * @param property Material property record.
+     *
+     * @return Pressure coefficient.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    pressure_coefficient_for(const MatrialProperties<T>& property) noexcept;
+    pressure_coefficient_for(const MaterialProperties<T>& property) noexcept;
 
     /**
-     * @brief Convert a smoothing length into a neighborhood search radius in grid cells.
+     * @brief Converts a smoothing length to a cell-neighborhood search radius.
      *
-     * This helper maps a physical smoothing support radius to an integer number of
-     * cells that must be scanned around a particle's home cell.
+     * The returned radius is:
+     *
+     * @code
+     * ceil(smoothing_length / cell_size)
+     * @endcode
      *
      * @param smoothing_length Effective smoothing length.
-     * @param cell_size Universe cell size.
-     * @return Neighborhood search radius measured in cells.
+     * @param cell_size Searcher cell size.
+     *
+     * @return Integer radius in grid cells.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
     search_radius_for(T smoothing_length, T cell_size) noexcept;
 
     /**
-     * @brief Map a particle position to an integer grid-cell coordinate.
+     * @brief Maps a particle position to a clamped search-grid cell coordinate.
+     *
+     * The function computes:
+     *
+     * @code
+     * floor((position - lower_corner) * inverse_cell_size)
+     * @endcode
+     *
+     * casts the result to integer coordinates, and clamps it to:
+     *
+     * @code
+     * [Vector3<int>(0, 0, 0), grid_size - Vector3<int>(1, 1, 1)]
+     * @endcode
      *
      * @param position Particle position.
-     * @param lower_corner Lower corner of the universe domain.
-     * @param inverse_cell_size Inverse of the universe cell size.
-     * @param grid_size Integer resolution of the universe grid.
-     * @return Grid-cell coordinate containing the particle.
+     * @param lower_corner Lower corner of the search grid.
+     * @param inverse_cell_size Reciprocal cell size.
+     * @param grid_size Grid resolution.
+     *
+     * @return Clamped integer grid-cell coordinate.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<int>
     particle_cell(const Vector3<T>& position,
@@ -319,158 +574,172 @@ public:
                   const Vector3<int>& grid_size) noexcept;
 
     /**
-     * @brief Check whether a neighbor-cell coordinate lies inside the valid grid.
+     * @brief Checks whether a grid-cell coordinate lies inside the search grid.
      *
-     * @param cell Candidate neighbor-cell coordinate.
-     * @param grid_size Integer resolution of the universe grid.
-     * @return True when the cell coordinate lies inside the valid grid range.
+     * The cell is valid when each component is in the half-open interval:
+     *
+     * @code
+     * [0, grid_size.component)
+     * @endcode
+     *
+     * @param cell Candidate grid-cell coordinate.
+     * @param grid_size Grid resolution.
+     *
+     * @retval true Cell coordinate is inside the grid.
+     * @retval false Cell coordinate is outside the grid.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
     is_valid_neighbor_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
 
 private:
     /**
-     * @brief Runtime-selected SPH smoothing kernel wrapper.
+     * @brief Runtime-selected SPH smoothing kernel.
      */
     SphKernel<T> _kernel {};
 
     /**
-     * @brief Solver-owned per-particle density field.
+     * @brief Solver-owned per-particle density working buffer.
      *
-     * This buffer stores the density estimate computed from local smoothing-kernel
-     * accumulation during the current solve step.
+     * Resized and cleared by @ref prepare_particle_fields, then populated by
+     * @ref estimate_particle_density_and_pressure.
      */
     DeviceBuffer<T> _density {};
 
     /**
-     * @brief Solver-owned per-particle pressure field.
+     * @brief Solver-owned per-particle pressure working buffer.
      *
-     * This buffer stores the pressure derived from the density field and material
-     * rest-density / pressure-coefficient parameters.
+     * Resized and cleared by @ref prepare_particle_fields, then populated by
+     * @ref estimate_particle_density_and_pressure.
      */
     DeviceBuffer<T> _pressure {};
 
     /**
-     * @brief Solver-owned per-particle acceleration field.
+     * @brief Solver-owned per-particle acceleration working buffer.
      *
-     * This buffer stores the net SPH acceleration accumulated from neighbor
-     * interactions before it is integrated into particle velocity.
+     * Resized and cleared by @ref prepare_particle_fields, then populated by
+     * @ref accumulate_acceleration.
      */
     DeviceBuffer<Vector3<T>> _acceleration {};
 };
 
 /**
- * @brief Builder for `SphSolver`.
+ * @brief Fluent builder for `SphSolver`.
  *
- * The builder collects all runtime dependencies required to construct a valid
- * SPH solver instance.
+ * The builder collects required SPH dependencies and an optional kernel type.
  *
  * Required dependencies:
- * - universe
- * - fluid
- * - searcher
  *
- * Optional configuration:
- * - SPH kernel type
+ * - universe,
+ * - fluid,
+ * - spatial hashing searcher.
  *
- * @tparam T Floating-point scalar type used by the solver.
+ * The default kernel type is `SphKernelType::standard`.
+ *
+ * @tparam T Scalar type used by the SPH solver.
  */
 template <typename T>
 class SphSolver<T>::Builder final {
 public:
     /**
-     * @brief Construct a default-initialized builder.
+     * @brief Constructs an empty builder.
      */
     Builder() = default;
 
     /**
-     * @brief Set the universe dependency.
+     * @brief Sets the universe dependency.
      *
-     * @param universe Host-side universe instance.
+     * @param universe Universe used for SPH per-cell output states.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_universe(UniverseHostPtr<T> universe) noexcept;
 
     /**
-     * @brief Set the fluid dependency.
+     * @brief Sets the fluid dependency.
      *
-     * @param fluid Host-side fluid instance.
+     * @param fluid Fluid used for particle positions, velocities, species, and material data.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     /**
-     * @brief Set the spatial hashing searcher dependency.
+     * @brief Sets the spatial hashing searcher dependency.
      *
-     * @param searcher Host-side spatial hashing searcher instance.
+     * @param searcher Searcher used for cell mapping and neighbor traversal.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
 
     /**
-     * @brief Set the SPH kernel type used by the solver.
+     * @brief Sets the SPH kernel type.
      *
-     * @param kernel_type Desired SPH kernel type.
+     * @param kernel_type Kernel type used to construct the runtime SPH kernel.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_kernel_type(SphKernelType kernel_type) noexcept;
 
     /**
-     * @brief Build a validated `SphSolver` instance.
+     * @brief Builds a validated SPH solver value.
      *
-     * @return Constructed solver.
+     * Validation requires universe, fluid, and searcher dependencies to be
+     * non-null.
      *
-     * @throws std::runtime_error Thrown when required dependencies are missing.
+     * @return Constructed SPH solver.
+     *
+     * @throw std::runtime_error If the universe dependency is missing.
+     * @throw std::runtime_error If the fluid dependency is missing.
+     * @throw std::runtime_error If the searcher dependency is missing.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE SphSolver<T>
     build() const;
 
     /**
-     * @brief Build a validated solver and wrap it in a host-shared pointer.
+     * @brief Builds a validated host-side shared SPH solver.
      *
-     * @return Host-shared pointer to the constructed solver.
+     * Validation requires universe, fluid, and searcher dependencies to be
+     * non-null.
      *
-     * @throws std::runtime_error Thrown when required dependencies are missing.
+     * @return Host-side shared pointer to the constructed SPH solver.
+     *
+     * @throw std::runtime_error If the universe dependency is missing.
+     * @throw std::runtime_error If the fluid dependency is missing.
+     * @throw std::runtime_error If the searcher dependency is missing.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<SphSolver<T>>
     make_host_shared() const;
 
 private:
     /**
-     * @brief Validate the builder configuration.
+     * @brief Validates that all required builder dependencies are configured.
      *
-     * Required:
-     * - universe must not be null
-     * - fluid must not be null
-     * - searcher must not be null
-     *
-     * @throws std::runtime_error Thrown when configuration is invalid.
+     * @throw std::runtime_error If the universe dependency is missing.
+     * @throw std::runtime_error If the fluid dependency is missing.
+     * @throw std::runtime_error If the searcher dependency is missing.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     validate() const;
 
 private:
     /**
-     * @brief Universe dependency used by the solver.
+     * @brief Universe dependency collected by the builder.
      */
     UniverseHostPtr<T> _universe {};
 
     /**
-     * @brief Fluid dependency used by the solver.
+     * @brief Fluid dependency collected by the builder.
      */
     FluidHostPtr<T> _fluid {};
 
     /**
-     * @brief Spatial hashing searcher dependency used by the solver.
+     * @brief Spatial hashing searcher dependency collected by the builder.
      */
     SpatialHashingSearcherHostPtr<T> _searcher {};
 
     /**
-     * @brief Selected SPH kernel type.
+     * @brief Kernel type collected by the builder.
      */
     SphKernelType _kernel_type { SphKernelType::standard };
 };
@@ -480,25 +749,25 @@ private:
 namespace atlas {
 
 /**
- * @brief Convenience alias for `atlas::system::SphSolver<T>`.
+ * @brief Convenience alias for `atlas::system::SphSolver`.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Scalar type used by the SPH solver.
  */
 template <typename T>
 using SphSolver = atlas::system::SphSolver<T>;
 
 /**
- * @brief Host-shared-pointer alias for `SphSolver`.
+ * @brief Host-side shared pointer alias for `atlas::system::SphSolver`.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Scalar type used by the SPH solver.
  */
 template <typename T>
 using SphSolverHostPtr = atlas::host_shared_ptr<atlas::system::SphSolver<T>>;
 
 /**
- * @brief Device-shared-pointer alias for `SphSolver`.
+ * @brief Device-side shared pointer alias for `atlas::system::SphSolver`.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Scalar type used by the SPH solver.
  */
 template <typename T>
 using SphSolverDevicePtr = atlas::device_shared_ptr<atlas::system::SphSolver<T>>;

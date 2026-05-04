@@ -22,8 +22,8 @@ public:
      * @return Effective cross section. Returns zero when the diameter data is unavailable.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    cross_section(const MatrialProperties<T>& lhs,
-                  const MatrialProperties<T>& rhs) noexcept;
+    cross_section(const MaterialProperties<T>& lhs,
+                  const MaterialProperties<T>& rhs) noexcept;
 
     /**
      * @brief Applies a simple elastic hard-sphere collision to two particle velocities.
@@ -36,8 +36,8 @@ public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Vector3<T>& lhs_velocity,
                Vector3<T>& rhs_velocity,
-               const MatrialProperties<T>& lhs,
-               const MatrialProperties<T>& rhs) const noexcept;
+               const MaterialProperties<T>& lhs,
+               const MaterialProperties<T>& rhs) const noexcept;
 };
 
 } // namespace atlas::system

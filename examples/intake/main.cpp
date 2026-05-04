@@ -235,7 +235,7 @@ make_collider_orientation() {
  */
 atlas::FluidHostPtr<T>
 make_fluid(const atlas::ObserverHostPtr& observer) {
-    atlas::HostBuffer<atlas::MatrialProperties<T>> material_properties(1);
+    atlas::HostBuffer<atlas::MaterialProperties<T>> material_properties(1);
     atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(1);
 
     /**
@@ -248,7 +248,7 @@ make_fluid(const atlas::ObserverHostPtr& observer) {
      * `species_id` is also assigned so the runtime retains an explicit species
      * label for the particle population.
      */
-    material_properties[0] = atlas::MatrialProperties<T>::builder()
+    material_properties[0] = atlas::MaterialProperties<T>::builder()
                                  .with_type(atlas::MaterialType::Molecule)
                                  .with_mass(config::kNitrogenMolecularMass)
                                  .with_molecular_mass(config::kNitrogenMolecularMass)

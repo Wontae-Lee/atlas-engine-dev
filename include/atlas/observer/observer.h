@@ -30,13 +30,14 @@ public:
     class Builder;
 
 public:
-    Observer() = default;
-    Observer(const Observer&) = delete;
+    Observer()                    = default;
+    Observer(const Observer&)     = delete;
     Observer(Observer&&) noexcept = default;
-    ~Observer() = default;
+    ~Observer()                   = default;
 
     Observer&
-    operator=(const Observer&) = delete;
+    operator=(const Observer&)
+        = delete;
 
     Observer&
     operator=(Observer&&) noexcept = default;
@@ -143,18 +144,18 @@ public:
     make_host_shared() const;
 
 private:
-    bool _with_source_sensor_matrics = false;
-    bool _with_sink_sensor_matrics = false;
+    bool _with_source_sensor_matrics  = false;
+    bool _with_sink_sensor_matrics    = false;
     std::size_t _source_reserve_count = 0;
-    std::size_t _sink_reserve_count = 0;
+    std::size_t _sink_reserve_count   = 0;
 };
 
 } // namespace atlas::observer
 
 namespace atlas {
 
-using Observer = observer::Observer;
-using ObserverHostPtr = host_shared_ptr<observer::Observer>;
+using Observer          = observer::Observer;
+using ObserverHostPtr   = host_shared_ptr<observer::Observer>;
 using ObserverDevicePtr = device_shared_ptr<observer::Observer>;
 
 } // namespace atlas

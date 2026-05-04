@@ -25,9 +25,9 @@ using Vec3 = atlas::Vector3<T>;
 atlas::FluidHostPtr<T>
 make_observed_fluid(const atlas::ObserverHostPtr& observer,
                     const std::size_t buffer_size = 64) {
-    atlas::HostBuffer<atlas::MatrialProperties<T>> properties(1);
+    atlas::HostBuffer<atlas::MaterialProperties<T>> properties(1);
 
-    properties[0] = atlas::MatrialProperties<T>::builder()
+    properties[0] = atlas::MaterialProperties<T>::builder()
                         .with_type(atlas::MaterialType::Molecule)
                         .with_mass(4.651734e-26f)
                         .with_molecular_mass(4.651734e-26f)
@@ -40,7 +40,7 @@ make_observed_fluid(const atlas::ObserverHostPtr& observer,
                      .with_observer(observer)
                      .make_host_shared();
 
-    fluid->particle_properties() = atlas::DeviceBuffer<atlas::MatrialProperties<T>>(
+    fluid->particle_properties() = atlas::DeviceBuffer<atlas::MaterialProperties<T>>(
         properties.begin(),
         properties.end());
     fluid->generators() = atlas::DeviceBuffer<atlas::fluid::GenerateOperator<T>>(

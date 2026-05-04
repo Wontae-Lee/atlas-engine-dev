@@ -2,95 +2,94 @@
 
 /**
  * @file sph_gateway_solver.h
- * @brief Declares a gateway SPH solver that operates on deterministic per-cell particle groups.
+ * @brief Declares the grouped SPH gateway solver.
  *
- * This header defines `SphGatewaySolver<T>`, an SPH solver variant that does not
- * directly evaluate particle-particle interactions for every particle in a cell.
- * Instead, it introduces a grouped intermediate representation:
- *
- * 1. particles in each cell are partitioned deterministically into fixed-size groups
- * 2. each group is represented by an aggregated position, velocity, mass, and species
- * 3. SPH density / pressure / motion updates are evaluated between group representatives
- * 4. the updated representative state is scattered back to all particles in the group
- *
- * This grouped formulation is useful when:
- * - a more compact or codec-aware execution path is desired
- * - the solver should operate on a reduced representative set instead of all particles
- * - deterministic grouping is preferred over stochastic local approximation
- *
- * The solver still depends on the standard SPH runtime inputs:
- * - a universe defining the simulation domain and grid
- * - a fluid containing particle states and material properties
- * - a spatial hashing searcher providing cell-local particle ordering
+ * This header defines `atlas::system::SphGatewaySolver<T>`, an SPH solver
+ * variant that compresses cell-local particles into deterministic group
+ * representatives, updates those representatives, and scatters representative
+ * velocity back to member particles.
  */
 
 #include <atlas/core/macros.h>
-#include <atlas/solver/solver.h>
-#include <atlas/solver/sph/sph_kernel.h>
+#include <atlas/solver/sph/sph_solver.h>
 
 namespace atlas::system {
 
 /**
- * @brief SPH solver variant that aggregates particles into fixed-size groups inside each cell.
+ * @brief Grouped SPH solver that updates particles through per-cell representatives.
  *
- * This solver replaces direct particle-level SPH interaction inside a cell with
- * a two-stage grouped approximation:
+ * `SphGatewaySolver<T>` derives from @ref Solver and implements a reduced
+ * representative-based SPH update. Instead of evaluating SPH interaction for
+ * every particle, it partitions particles in each cell into deterministic groups
+ * of up to @ref group_particle_count particles.
  *
- * - first, particles in each selected cell are partitioned into deterministic groups
- * - second, SPH interaction is evaluated between group representatives
+ * For each group, the solver computes representative data:
  *
- * The group representatives act as reduced-order proxies for the particles in the
- * cell. After representative-level density, pressure, and motion have been updated,
- * the solver propagates those results back to the underlying particles.
+ * - mean position,
+ * - mean velocity,
+ * - total mass,
+ * - member count,
+ * - representative species.
  *
- * High-level grouped solve pipeline:
- * - ensure required universe-side field buffers exist
- * - reset temporary universe-side field values
- * - update the per-cell particle counts
- * - build representative groups
- * - estimate representative density and pressure
- * - update representative motion
- * - scatter representative states back to particles
+ * It then estimates density and pressure at the group level, updates
+ * representative velocity through SPH pressure and viscosity terms, and finally
+ * copies each representative velocity back to all particles in that group.
  *
- * The grouped solve path is primarily exposed through:
- * - `solve(const DeviceBuffer<int>* allocated_solver, int index, T dt)`
+ * The full solve path is:
  *
- * The simpler overload:
- * - `solve(T dt)`
- * simply applies the grouped path to all cells.
+ * @code
+ * solve(dt)
+ *     -> solve(nullptr, 0, dt)
  *
- * @tparam T Floating-point scalar type used by the solver.
+ * solve(allocated_solver, index, dt)
+ *     -> initialize_context()
+ *     -> validate dt > 0
+ *     -> prepare_group_fields()
+ *     -> update_cell_particle_counts(allocated_solver, index)
+ *     -> build_group_representatives(allocated_solver, index)
+ *     -> estimate_group_density_and_pressure(allocated_solver, index)
+ *     -> update_group_motion(allocated_solver, index, dt)
+ *     -> scatter_group_states_to_particles(allocated_solver, index)
+ * @endcode
+ *
+ * When `allocated_solver` is provided, only cells whose allocation entry equals
+ * `index` are processed. Non-matching cells have their particle count and group
+ * count reset during @ref update_cell_particle_counts.
+ *
+ * @tparam T Scalar type used by the simulation.
  */
 template <typename T>
 class SphGatewaySolver final : public Solver<T> {
 public:
     /**
-     * @brief Builder type used to configure and construct `SphGatewaySolver`.
+     * @brief Fluent builder for constructing validated `SphGatewaySolver` instances.
      */
     class Builder;
 
 public:
     /**
-     * @brief Construct a default-initialized solver.
+     * @brief Constructs an empty grouped SPH solver.
      *
-     * A default-constructed solver is not yet fully configured for use in a real
-     * runtime pipeline. In normal usage, the parameterized constructor or builder
-     * should be preferred.
+     * Dependencies are initialized by the @ref Solver base class default state.
+     * Calling @ref solve on an unconfigured solver is safe: context initialization
+     * fails, transient buffers are cleared, and no device kernels are launched.
      */
     SphGatewaySolver() = default;
 
     /**
-     * @brief Construct a grouped SPH solver with all required runtime dependencies.
+     * @brief Constructs a grouped SPH solver from simulation dependencies.
      *
-     * The solver stores shared references to the universe, fluid, and searcher,
-     * selects an SPH kernel model, and records the fixed particle count used when
-     * partitioning particles into deterministic groups inside each cell.
+     * The constructor forwards universe, fluid, and searcher dependencies to the
+     * @ref Solver base class, initializes the runtime SPH kernel from
+     * `kernel_type`, clamps non-positive `group_particle_count` to `5`, and calls
+     * @ref ensure_universe_states.
      *
-     * @param universe Host-side universe describing the simulation domain and grid.
-     * @param fluid Host-side fluid containing particle states and material properties.
-     * @param searcher Spatial hashing searcher providing cell-local particle ordering.
-     * @param kernel_type SPH kernel type used for representative interaction.
-     * @param group_particle_count Fixed number of particles targeted per group.
+     * @param universe Universe containing per-cell SPH output states.
+     * @param fluid Fluid containing particle position, velocity, species, and material data.
+     * @param searcher Spatial hashing searcher used for cell-local particle ordering.
+     * @param kernel_type SPH kernel model used for representative interaction.
+     * @param group_particle_count Target number of particles per group. Non-positive
+     *                             values are replaced with `5`.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     SphGatewaySolver(UniverseHostPtr<T> universe,
@@ -100,258 +99,373 @@ public:
                      int group_particle_count  = 5) noexcept;
 
     /**
-     * @brief Destroy the solver.
+     * @brief Destroys the grouped SPH solver through the base interface.
      */
     ~SphGatewaySolver() override = default;
 
     /**
-     * @brief Create a builder for `SphGatewaySolver`.
+     * @brief Creates an empty fluent builder.
      *
-     * @return Default-initialized builder.
+     * @return Builder object used to configure and construct a grouped SPH solver.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
     /**
-     * @brief Return the configured SPH kernel type.
+     * @brief Returns the configured SPH kernel type.
      *
-     * @return Active SPH kernel type.
+     * @return Kernel type stored in the runtime SPH kernel wrapper.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE SphKernelType
     kernel_type() const noexcept;
 
     /**
-     * @brief Return the configured fixed particle count per group.
+     * @brief Returns the target number of particles represented by each group.
      *
-     * This value controls how particles are partitioned into deterministic groups
-     * inside each cell. The final group in a cell may contain fewer particles if
-     * the cell particle count is not divisible by this value.
+     * Groups are formed per cell from contiguous sorted-particle ranges. The last
+     * group in a cell may contain fewer particles than this target.
      *
-     * @return Target particle count per group.
+     * @return Positive target particle count per group.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE int
     group_particle_count() const noexcept;
 
     /**
-     * @brief Solve the grouped SPH update for all cells.
+     * @brief Runs the grouped SPH update over all cells.
      *
-     * This overload runs the grouped representative path without any solver-index
-     * filtering. It is equivalent to applying the grouped solve procedure over the
-     * full cell set owned by the current universe/searcher configuration.
+     * This overload forwards to:
      *
-     * @param dt Time step used for representative motion update.
+     * @code
+     * solve(nullptr, 0, dt);
+     * @endcode
+     *
+     * @param dt Positive time-step size used for representative velocity update.
+     *
+     * @throw std::invalid_argument If `dt` is not positive after context
+     *                              initialization succeeds.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     solve(T dt) override final;
 
     /**
-     * @brief Solve the grouped SPH update for a filtered subset of cells.
+     * @brief Runs the grouped SPH update with optional per-cell solver filtering.
      *
-     * When `allocated_solver` is not null, only cells whose solver assignment
-     * matches `index` are processed. This enables external work partitioning or
-     * codec-aware scheduling across multiple solver passes.
+     * The function initializes the context, validates `dt`, prepares group
+     * buffers, updates per-cell particle/group counts, builds group
+     * representatives, estimates group density/pressure, updates group velocity,
+     * and scatters updated group velocity to particles.
      *
-     * The grouped solve pipeline for selected cells is typically:
-     * - initialize context and required fields
-     * - update cell particle counts
-     * - build group representatives
-     * - estimate density and pressure for groups
-     * - update representative motion
-     * - scatter representative results back to particles
+     * If context initialization fails or group-field preparation fails, the
+     * function returns without completing the grouped update.
      *
-     * @param allocated_solver Optional per-cell solver-assignment buffer. May be null.
-     * @param index Solver index used to filter cells when `allocated_solver` is provided.
-     * @param dt Time step used for representative motion update.
+     * @param allocated_solver Optional per-cell solver-allocation buffer. When
+     *                         non-null, only cells whose value equals `index`
+     *                         are processed.
+     * @param index Solver index used when filtering through `allocated_solver`.
+     * @param dt Positive time-step size.
+     *
+     * @throw std::invalid_argument If `dt` is not positive after context
+     *                              initialization succeeds.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     solve(const DeviceBuffer<int>* allocated_solver, int index, T dt) override final;
 
     /**
-     * @brief Ensure that all required universe-side field states exist.
+     * @brief Ensures universe-side output states required by the solver exist.
      *
-     * The grouped solver needs a set of universe-side fields to store intermediate
-     * or diagnostic quantities used during grouped SPH evaluation. This function
-     * creates or prepares those fields before the main grouped solve stages run.
+     * If a universe is configured, this function creates the following missing
+     * states with `universe->number_of_cells()` elements:
+     *
+     * - `UniverseNumberParticleState<T>`,
+     * - `UniverseFieldForceState<T>`.
+     *
+     * Existing states are left unchanged. If no universe is configured, the
+     * function is a no-op.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     ensure_universe_states();
 
     /**
-     * @brief Initialize the grouped SPH execution context.
+     * @brief Initializes the grouped SPH context for one solve step.
      *
-     * This function prepares all shared state required before grouped processing.
-     * Typical responsibilities include:
-     * - ensuring required universe states exist
-     * - allocating or resizing internal group buffers
-     * - resetting universe-side transient fields
+     * The function verifies that universe, fluid, and searcher dependencies exist
+     * and that the fluid provides:
      *
-     * @return True when initialization succeeded and the grouped solve may continue.
+     * - `FluidPositionState<T>`,
+     * - `FluidVelocityState<T>`,
+     * - `FluidSpeciesState<T>`.
+     *
+     * If dependencies or required fluid states are missing, it resets universe
+     * fields, clears all group buffers, and returns `false`.
+     *
+     * On success, it ensures required universe states exist, rebuilds the searcher
+     * by calling `searcher->build()`, and returns `true`.
+     *
+     * @retval true The grouped SPH context is ready.
+     * @retval false Required dependencies or fluid states were missing.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE bool
     initialize_context() noexcept;
 
     /**
-     * @brief Prepare internal group-field buffers.
+     * @brief Allocates and clears group working buffers for the current step.
      *
-     * The grouped solver maintains several device buffers describing group-level
-     * representative data such as:
-     * - group position
-     * - group velocity
-     * - updated group position
-     * - updated group velocity
-     * - group mass
-     * - group density
-     * - group pressure
-     * - group member count
-     * - group species
+     * The solver allocates:
      *
-     * This function prepares those buffers so later grouped stages can safely read
-     * and write representative-level state.
+     * - `_cell_group_count` with one entry per universe cell,
+     * - all group data buffers with one entry per particle.
      *
-     * @return True when the group-field buffers are ready for use.
+     * Group data is indexed by a representative index derived from the cell's
+     * sorted-particle range:
+     *
+     * @code
+     * representative_index = cell_begin + group_local;
+     * @endcode
+     *
+     * All group buffers are cleared to zero-equivalent values, and universe
+     * fields are reset through @ref reset_universe_fields.
+     *
+     * If particle count or cell count is not positive, all group buffers are
+     * cleared, universe fields are reset, and the function returns `false`.
+     *
+     * @retval true Group buffers were allocated and cleared.
+     * @retval false Particle count or cell count was not positive.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE bool
     prepare_group_fields();
 
     /**
-     * @brief Reset universe-side temporary SPH fields.
+     * @brief Resets universe-side grouped-SPH output fields to zero.
      *
-     * This function clears or reinitializes transient universe-side data used during
-     * grouped SPH evaluation so that each solve step starts from a clean state.
+     * If a universe exists, this function ensures required universe states exist
+     * and clears:
+     *
+     * - `UniverseNumberParticleState<T>` to zero,
+     * - `UniverseFieldForceState<T>` to zero vectors.
+     *
+     * If no universe exists, the function is a no-op.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     reset_universe_fields();
 
     /**
-     * @brief Update per-cell particle counts for the selected cells.
+     * @brief Updates per-cell particle count and group count.
      *
-     * This stage refreshes the number of particles stored per cell, which is then
-     * used to determine how many deterministic groups must be created in each cell.
+     * For each cell, the function counts particles using the searcher range:
      *
-     * @param allocated_solver Optional per-cell solver-assignment buffer. May be null.
-     * @param index Solver index used to filter cells when `allocated_solver` is provided.
+     * @code
+     * count = end - begin
+     * @endcode
+     *
+     * when the range is valid, then writes:
+     *
+     * - `UniverseNumberParticleState<T>[cell] = count`,
+     * - `_cell_group_count[cell] = group_count_for_cell(count, _group_particle_count)`.
+     *
+     * If `allocated_solver` is provided and the cell assignment does not match
+     * `index`, both values are reset to zero.
+     *
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when `allocated_solver` is non-null.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update_cell_particle_counts(const DeviceBuffer<int>* allocated_solver, int index);
 
     /**
-     * @brief Build deterministic group representatives for the selected cells.
+     * @brief Builds deterministic group representatives for selected cells.
      *
-     * In each eligible cell, particles are partitioned into groups of size
-     * `group_particle_count()` (except possibly the final remainder group).
+     * For each eligible cell, particles are partitioned into contiguous chunks of
+     * up to `_group_particle_count` entries from the cell's sorted range. For
+     * each group, the function computes:
      *
-     * For each group, representative fields are built, typically including:
-     * - mean position
-     * - mean velocity
-     * - total or representative mass
-     * - member count
-     * - species label
+     * - mean particle position,
+     * - mean particle velocity,
+     * - total mass over valid species entries,
+     * - member count,
+     * - representative species taken from the first valid member.
      *
-     * @param allocated_solver Optional per-cell solver-assignment buffer. May be null.
-     * @param index Solver index used to filter cells when `allocated_solver` is provided.
+     * It writes the representative data at:
+     *
+     * @code
+     * representative_index = cell_begin + group_local;
+     * @endcode
+     *
+     * The initial updated position and velocity are initialized to the computed
+     * mean position and velocity.
+     *
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when `allocated_solver` is non-null.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build_group_representatives(const DeviceBuffer<int>* allocated_solver, int index);
 
     /**
-     * @brief Estimate SPH density and pressure using group representatives.
+     * @brief Estimates group-level density and pressure inside each selected cell.
      *
-     * This stage evaluates representative-level SPH interaction instead of direct
-     * particle-level interaction. Neighbor searches and kernel evaluations are
-     * performed between group representatives, and the resulting density/pressure
-     * values are stored in the group buffers.
+     * The implementation evaluates group interactions only among representatives
+     * belonging to the same cell. For each group representative:
      *
-     * @param allocated_solver Optional per-cell solver-assignment buffer. May be null.
-     * @param index Solver index used to filter cells when `allocated_solver` is provided.
+     * - material properties are resolved through its representative species,
+     * - smoothing length, rest density, and pressure coefficient are computed,
+     * - density is accumulated from all group representatives in that cell:
+     *
+     * @code
+     * density += group_mass[rhs] * kernel.density_weight(radius, smoothing_length);
+     * @endcode
+     *
+     * - non-positive density falls back to rest density,
+     * - pressure is computed as:
+     *
+     * @code
+     * pressure = pressure_coefficient * (density - rest_density);
+     * @endcode
+     *
+     * Groups with invalid species receive zero density and pressure.
+     *
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when `allocated_solver` is non-null.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     estimate_group_density_and_pressure(const DeviceBuffer<int>* allocated_solver, int index);
 
     /**
-     * @brief Update representative group motion over one time step.
+     * @brief Updates group velocities and writes per-cell averaged force output.
      *
-     * This stage uses group-level density, pressure, velocity, and other relevant
-     * quantities to compute updated representative position and velocity values.
+     * For each selected cell, this stage iterates over group representatives in
+     * that cell. For each group, it accumulates pressure-gradient and optional
+     * viscosity acceleration from other representatives in the same cell.
      *
-     * The updated states are written into the dedicated "updated group" buffers
-     * rather than immediately overwriting the original representative state.
+     * A viscosity term is included only when the representative material's
+     * `dynamic_viscosity` is positive.
      *
-     * @param allocated_solver Optional per-cell solver-assignment buffer. May be null.
-     * @param index Solver index used to filter cells when `allocated_solver` is provided.
-     * @param dt Time step used for motion integration.
+     * The representative velocity is updated explicitly:
+     *
+     * @code
+     * updated_velocity = velocity + acceleration * dt;
+     * @endcode
+     *
+     * The updated position is currently assigned to the original group position;
+     * no position integration is performed by this implementation.
+     *
+     * For each cell, `UniverseFieldForceState<T>` receives the average of:
+     *
+     * @code
+     * acceleration[group] * group_mass[group]
+     * @endcode
+     *
+     * over active groups. Empty cells, invalid cells, or cells with no active
+     * groups receive a zero vector.
+     *
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when `allocated_solver` is non-null.
+     * @param dt Positive time-step size used for representative velocity update.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update_group_motion(const DeviceBuffer<int>* allocated_solver, int index, T dt);
 
     /**
-     * @brief Scatter updated representative states back to particle storage.
+     * @brief Copies updated representative velocity back to particles.
      *
-     * After group-level motion has been computed, this stage propagates the updated
-     * representative state back to all particles belonging to each group.
+     * For each selected cell and each representative group, every valid particle
+     * in the group's sorted range receives:
      *
-     * This is the final stage that reconnects the reduced group representation to
-     * the actual per-particle simulation state.
+     * @code
+     * particle_velocity = group_updated_velocity[representative_index];
+     * @endcode
      *
-     * @param allocated_solver Optional per-cell solver-assignment buffer. May be null.
-     * @param index Solver index used to filter cells when `allocated_solver` is provided.
+     * This stage does not update particle positions.
+     *
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when `allocated_solver` is non-null.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     scatter_group_states_to_particles(const DeviceBuffer<int>* allocated_solver, int index);
 
     /**
-     * @brief Return the smoothing length used for a material property entry.
+     * @brief Returns the effective smoothing length for a material.
      *
-     * This helper derives the SPH smoothing length associated with a particle
-     * material/property record. If the material does not explicitly provide a
-     * smoothing length, the cell size may be used as a fallback scale.
+     * If `property.smoothing_length` exists and is positive, that value is
+     * returned. Otherwise, `cell_size` is used as the fallback.
      *
-     * @param property Particle/material property record.
-     * @param cell_size Universe cell size used as a fallback reference scale.
+     * @param property Material property record.
+     * @param cell_size Searcher cell size used as fallback.
+     *
      * @return Effective smoothing length.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    smoothing_length_for(const MatrialProperties<T>& property, T cell_size) noexcept;
+    smoothing_length_for(const MaterialProperties<T>& property, T cell_size) noexcept;
 
     /**
-     * @brief Return the rest density used for a material property entry.
+     * @brief Returns the effective rest density for a material.
      *
-     * @param property Particle/material property record.
+     * If `property.rest_density` exists and is positive, that value is returned.
+     * Otherwise, `T(1)` is used.
+     *
+     * @param property Material property record.
+     *
      * @return Effective rest density.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    rest_density_for(const MatrialProperties<T>& property) noexcept;
+    rest_density_for(const MaterialProperties<T>& property) noexcept;
 
     /**
-     * @brief Return the pressure coefficient used for a material property entry.
+     * @brief Returns the pressure coefficient for a material.
      *
-     * @param property Particle/material property record.
-     * @return Effective pressure coefficient.
+     * If `property.pressure_coefficient` is set, that value is returned.
+     * Otherwise, `T(0)` is used.
+     *
+     * @param property Material property record.
+     *
+     * @return Pressure coefficient.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    pressure_coefficient_for(const MatrialProperties<T>& property) noexcept;
+    pressure_coefficient_for(const MaterialProperties<T>& property) noexcept;
 
     /**
-     * @brief Return the integer search radius, in cells, required for a smoothing length.
+     * @brief Converts a smoothing length to a cell-neighborhood search radius.
      *
-     * This helper converts a physical smoothing length into a neighborhood radius
-     * measured in grid cells, which can be used when scanning neighboring cells
-     * around a representative group.
+     * The returned radius is:
+     *
+     * @code
+     * ceil(smoothing_length / cell_size)
+     * @endcode
+     *
+     * This helper is defined for API symmetry with @ref SphSolver. The current
+     * grouped implementation evaluates representative interactions only inside
+     * the same cell and does not call this helper.
      *
      * @param smoothing_length Effective smoothing length.
-     * @param cell_size Universe cell size.
-     * @return Neighborhood search radius measured in cells.
+     * @param cell_size Searcher cell size.
+     *
+     * @return Integer radius in grid cells.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
     search_radius_for(T smoothing_length, T cell_size) noexcept;
 
     /**
-     * @brief Map a particle position to its integer grid cell coordinate.
+     * @brief Maps a position to a clamped search-grid cell coordinate.
      *
-     * @param position Particle or representative position.
-     * @param lower_corner Lower corner of the universe domain.
-     * @param inverse_cell_size Inverse of the universe cell size.
-     * @param grid_size Integer grid resolution of the universe.
-     * @return Grid-cell coordinate containing the position.
+     * The function computes:
+     *
+     * @code
+     * floor((position - lower_corner) * inverse_cell_size)
+     * @endcode
+     *
+     * casts the result to integer coordinates, and clamps it to:
+     *
+     * @code
+     * [Vector3<int>(0, 0, 0), grid_size - Vector3<int>(1, 1, 1)]
+     * @endcode
+     *
+     * This helper is defined for API symmetry with @ref SphSolver. The current
+     * grouped implementation does not call it.
+     *
+     * @param position Position to map.
+     * @param lower_corner Lower corner of the search grid.
+     * @param inverse_cell_size Reciprocal cell size.
+     * @param grid_size Grid resolution.
+     *
+     * @return Clamped integer grid-cell coordinate.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<int>
     particle_cell(const Vector3<T>& position,
@@ -360,26 +474,40 @@ public:
                   const Vector3<int>& grid_size) noexcept;
 
     /**
-     * @brief Check whether a grid-cell coordinate lies inside the valid grid domain.
+     * @brief Checks whether a grid-cell coordinate lies inside the search grid.
      *
-     * @param cell Candidate neighbor cell coordinate.
-     * @param grid_size Integer grid resolution of the universe.
-     * @return True when the neighbor cell is داخل the valid grid range.
+     * The cell is valid when each component is in the half-open interval:
+     *
+     * @code
+     * [0, grid_size.component)
+     * @endcode
+     *
+     * This helper is defined for API symmetry with @ref SphSolver. The current
+     * grouped implementation does not call it.
+     *
+     * @param cell Candidate grid-cell coordinate.
+     * @param grid_size Grid resolution.
+     *
+     * @retval true Cell coordinate is inside the grid.
+     * @retval false Cell coordinate is outside the grid.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
     is_valid_neighbor_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
 
     /**
-     * @brief Compute how many groups are needed for a cell.
+     * @brief Computes the number of deterministic groups required for a cell.
      *
-     * The result is based on:
-     * - the number of particles currently in the cell
-     * - the configured fixed particle count per group
+     * The result is the ceiling division:
      *
-     * The final group may contain fewer particles than the target group size.
+     * @code
+     * (particle_count + group_particle_count - 1) / group_particle_count
+     * @endcode
      *
-     * @param particle_count Number of particles currently in the cell.
+     * If either input is not positive, the function returns zero.
+     *
+     * @param particle_count Number of particles in the cell.
      * @param group_particle_count Target number of particles per group.
+     *
      * @return Number of groups required for the cell.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
@@ -387,196 +515,245 @@ public:
 
 private:
     /**
-     * @brief Runtime-selected SPH kernel wrapper used for representative interaction.
+     * @brief Runtime-selected SPH kernel used for representative interaction.
      */
     SphKernel<T> _kernel {};
 
     /**
-     * @brief Fixed target particle count per deterministic group.
+     * @brief Target number of particles per deterministic group.
+     *
+     * Constructor input is clamped to `5` when non-positive. Builder validation
+     * rejects non-positive values before construction.
      */
     int _group_particle_count { 5 };
 
     /**
-     * @brief Per-cell number of groups constructed in the current grouped solve.
+     * @brief Per-cell group count for the current solve step.
+     *
+     * Resized to the universe cell count by @ref prepare_group_fields.
      */
     DeviceBuffer<int> _cell_group_count {};
 
     /**
-     * @brief Current representative position for each group.
+     * @brief Per-representative mean group position.
+     *
+     * Resized to the particle count by @ref prepare_group_fields. Group entries
+     * are indexed by `representative_index = cell_begin + group_local`.
      */
     DeviceBuffer<Vector3<T>> _group_position {};
 
     /**
-     * @brief Current representative velocity for each group.
+     * @brief Per-representative mean group velocity.
+     *
+     * Resized to the particle count by @ref prepare_group_fields.
      */
     DeviceBuffer<Vector3<T>> _group_velocity {};
 
     /**
-     * @brief Updated representative position after the current motion step.
+     * @brief Per-representative updated position.
+     *
+     * Currently initialized to the mean group position and later assigned the
+     * original representative position during @ref update_group_motion.
      */
     DeviceBuffer<Vector3<T>> _group_updated_position {};
 
     /**
-     * @brief Updated representative velocity after the current motion step.
+     * @brief Per-representative updated velocity.
+     *
+     * Updated by @ref update_group_motion and scattered to member particles by
+     * @ref scatter_group_states_to_particles.
      */
     DeviceBuffer<Vector3<T>> _group_updated_velocity {};
 
     /**
-     * @brief Representative or total group mass.
+     * @brief Per-representative total group mass.
+     *
+     * Computed as the sum of valid member particle masses during
+     * @ref build_group_representatives.
      */
     DeviceBuffer<T> _group_mass {};
 
     /**
-     * @brief Group-level density estimate.
+     * @brief Per-representative group density.
+     *
+     * Populated by @ref estimate_group_density_and_pressure.
      */
     DeviceBuffer<T> _group_density {};
 
     /**
-     * @brief Group-level pressure estimate.
+     * @brief Per-representative group pressure.
+     *
+     * Populated by @ref estimate_group_density_and_pressure.
      */
     DeviceBuffer<T> _group_pressure {};
 
     /**
-     * @brief Number of particle members assigned to each group.
+     * @brief Per-representative number of valid member particles.
+     *
+     * Populated by @ref build_group_representatives.
      */
     DeviceBuffer<int> _group_member_count {};
 
     /**
-     * @brief Representative species id used for each group.
+     * @brief Per-representative species index.
+     *
+     * The species of the first valid member in the group is used as the
+     * representative species.
      */
     DeviceBuffer<std::size_t> _group_species {};
 };
 
 /**
- * @brief Builder for `SphGatewaySolver`.
+ * @brief Fluent builder for `SphGatewaySolver`.
  *
- * The builder collects all dependencies and grouped-SPH configuration parameters
- * required to construct a valid solver instance.
+ * The builder collects required dependencies and grouped-SPH configuration.
  *
- * Required configuration:
- * - universe
- * - fluid
- * - searcher
+ * Required dependencies:
+ *
+ * - universe,
+ * - fluid,
+ * - spatial hashing searcher.
  *
  * Optional configuration:
- * - SPH kernel type
- * - fixed particle count per group
  *
- * @tparam T Floating-point scalar type used by the solver.
+ * - SPH kernel type, defaulting to `SphKernelType::standard`,
+ * - target particles per group, defaulting to `5`.
+ *
+ * Unlike the direct constructor, the builder rejects non-positive
+ * `group_particle_count` values during validation.
+ *
+ * @tparam T Scalar type used by the grouped SPH solver.
  */
 template <typename T>
 class SphGatewaySolver<T>::Builder final {
 public:
     /**
-     * @brief Construct a default-initialized builder.
+     * @brief Constructs an empty builder.
      */
     Builder() = default;
 
     /**
-     * @brief Set the universe dependency.
+     * @brief Sets the universe dependency.
      *
-     * @param universe Host-side universe instance.
+     * @param universe Universe used for grouped-SPH per-cell output states.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_universe(UniverseHostPtr<T> universe) noexcept;
 
     /**
-     * @brief Set the fluid dependency.
+     * @brief Sets the fluid dependency.
      *
-     * @param fluid Host-side fluid instance.
+     * @param fluid Fluid used for particle positions, velocities, species, and material data.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     /**
-     * @brief Set the spatial hashing searcher dependency.
+     * @brief Sets the spatial hashing searcher dependency.
      *
-     * @param searcher Host-side spatial hashing searcher instance.
+     * @param searcher Searcher used for cell-local particle ordering.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
 
     /**
-     * @brief Set the SPH kernel type used for representative interaction.
+     * @brief Sets the SPH kernel type.
      *
-     * @param kernel_type Desired SPH kernel type.
+     * @param kernel_type Kernel type used to construct the runtime SPH kernel.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_kernel_type(SphKernelType kernel_type) noexcept;
 
     /**
-     * @brief Set the target particle count per deterministic group.
+     * @brief Sets the target number of particles per group.
      *
-     * @param group_particle_count Desired number of particles per group.
+     * The builder stores the value as-is and validates positivity during
+     * @ref build or @ref make_host_shared.
+     *
+     * @param group_particle_count Target number of particles per group.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_group_particle_count(int group_particle_count) noexcept;
 
     /**
-     * @brief Build a validated `SphGatewaySolver` instance.
+     * @brief Builds a validated grouped SPH solver value.
      *
-     * @return Constructed solver.
+     * Validation requires universe, fluid, and searcher dependencies to be
+     * non-null, and `group_particle_count` to be positive.
      *
-     * @throws std::runtime_error Thrown when required dependencies or parameters
-     *         are invalid.
+     * @return Constructed grouped SPH solver.
+     *
+     * @throw std::runtime_error If the universe dependency is missing.
+     * @throw std::runtime_error If the fluid dependency is missing.
+     * @throw std::runtime_error If the searcher dependency is missing.
+     * @throw std::runtime_error If `group_particle_count` is not positive.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE SphGatewaySolver<T>
     build() const;
 
     /**
-     * @brief Build a validated solver and wrap it in a host-shared pointer.
+     * @brief Builds a validated host-side shared grouped SPH solver.
      *
-     * @return Host-shared pointer to the constructed solver.
+     * Validation requires universe, fluid, and searcher dependencies to be
+     * non-null, and `group_particle_count` to be positive.
      *
-     * @throws std::runtime_error Thrown when required dependencies or parameters
-     *         are invalid.
+     * @return Host-side shared pointer to the constructed grouped SPH solver.
+     *
+     * @throw std::runtime_error If the universe dependency is missing.
+     * @throw std::runtime_error If the fluid dependency is missing.
+     * @throw std::runtime_error If the searcher dependency is missing.
+     * @throw std::runtime_error If `group_particle_count` is not positive.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<SphGatewaySolver<T>>
     make_host_shared() const;
 
 private:
     /**
-     * @brief Validate the builder configuration.
+     * @brief Validates that all required builder fields are configured.
      *
      * Required:
-     * - universe must not be null
-     * - fluid must not be null
-     * - searcher must not be null
-     * - group_particle_count must be positive
      *
-     * @throws std::runtime_error Thrown when configuration is invalid.
+     * - universe must not be null,
+     * - fluid must not be null,
+     * - searcher must not be null,
+     * - group particle count must be positive.
+     *
+     * @throw std::runtime_error If the universe dependency is missing.
+     * @throw std::runtime_error If the fluid dependency is missing.
+     * @throw std::runtime_error If the searcher dependency is missing.
+     * @throw std::runtime_error If `group_particle_count` is not positive.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     validate() const;
 
 private:
     /**
-     * @brief Universe dependency used by the solver.
+     * @brief Universe dependency collected by the builder.
      */
     UniverseHostPtr<T> _universe {};
 
     /**
-     * @brief Fluid dependency used by the solver.
+     * @brief Fluid dependency collected by the builder.
      */
     FluidHostPtr<T> _fluid {};
 
     /**
-     * @brief Spatial hashing searcher dependency used by the solver.
+     * @brief Spatial hashing searcher dependency collected by the builder.
      */
     SpatialHashingSearcherHostPtr<T> _searcher {};
 
     /**
-     * @brief Selected SPH kernel type.
+     * @brief Kernel type collected by the builder.
      */
     SphKernelType _kernel_type { SphKernelType::standard };
 
     /**
-     * @brief Target number of particles per deterministic group.
+     * @brief Target number of particles per group collected by the builder.
      */
     int _group_particle_count { 5 };
 };
@@ -586,25 +763,25 @@ private:
 namespace atlas {
 
 /**
- * @brief Convenience alias for `atlas::system::SphGatewaySolver<T>`.
+ * @brief Convenience alias for `atlas::system::SphGatewaySolver`.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Scalar type used by the grouped SPH solver.
  */
 template <typename T>
 using SphGatewaySolver = atlas::system::SphGatewaySolver<T>;
 
 /**
- * @brief Host-shared-pointer alias for `SphGatewaySolver`.
+ * @brief Host-side shared pointer alias for `atlas::system::SphGatewaySolver`.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Scalar type used by the grouped SPH solver.
  */
 template <typename T>
 using SphGatewaySolverHostPtr = atlas::host_shared_ptr<atlas::system::SphGatewaySolver<T>>;
 
 /**
- * @brief Device-shared-pointer alias for `SphGatewaySolver`.
+ * @brief Device-side shared pointer alias for `atlas::system::SphGatewaySolver`.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Scalar type used by the grouped SPH solver.
  */
 template <typename T>
 using SphGatewaySolverDevicePtr = atlas::device_shared_ptr<atlas::system::SphGatewaySolver<T>>;

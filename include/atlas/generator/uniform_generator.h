@@ -176,7 +176,7 @@ public:
     UniformGenerator(
         T min_value,
         T max_value,
-        unsigned int seed =atlas::seed::DEFAULT_UNSIGNED_INT_SEED) noexcept;
+        unsigned int seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
     /**
      * @brief Generate a uniformly distributed velocity sample on the host.

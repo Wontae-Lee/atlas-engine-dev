@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file codec.h
+ * @brief Declares the abstract Codec base class for encode/decode solver-allocation workflows.
+ *
+ * A codec is responsible for translating measured universe/fluid state into
+ * per-cell solver-allocation metadata and, if needed, decoding codec-side
+ * results back into the simulation state.
+ */
+
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
@@ -8,40 +17,156 @@
 namespace atlas::system {
 
 /**
- * @brief Abstract base class for simulation encoding/decoding workflows.
+ * @brief Abstract base class for codec-driven simulation classification and decoding.
  *
- * This class provides a common interface for components that:
- * - encode simulation data into an intermediate or solver-oriented representation
- * - decode solver results or transformed data back into the fluid/system state
+ * `Codec` binds together the simulation dependencies required by derived codec
+ * implementations:
  *
- * A codec instance is bound to:
- * - a universe object describing the simulation domain
- * - a fluid object storing the particle/state data
- * - a spatial hashing searcher used for neighborhood or cell-based indexing support
+ * - a universe, used for cell count, cell volume, and optional cell-level states,
+ * - a fluid, used for particle count and statistical weight,
+ * - a spatial hashing searcher, used for sorted particle indices and cell ranges.
  *
- * Derived classes are expected to implement the actual encoding and decoding logic
- * by overriding encode() and decode().
+ * The base class owns `d_allocated_solver`, a device buffer with one integer
+ * entry per universe cell. Derived classes typically write this buffer during
+ * @ref encode to classify each cell or assign an appropriate solver. The
+ * orchestrator later passes this allocation buffer to codec-aware solvers.
  *
- * @tparam T Floating-point scalar type used by the simulation system.
+ * The default @ref update implementation executes:
+ *
+ * @code
+ * encode();
+ * decode();
+ * @endcode
+ *
+ * Derived classes must implement @ref encode and @ref decode.
+ *
+ * @tparam T Scalar type used by the simulation.
  */
 template <typename T>
 class Codec {
 public:
     /**
-     * @brief Default constructor.
+     * @brief Raw-pointer view over common codec input/output data.
      *
-     * Constructs an empty codec with no attached simulation dependencies.
-     * The object is not usable until properly initialized through the
-     * non-default constructor or by a derived construction path.
+     * `CodecProbe` is populated by @ref make_probe. It groups optional universe
+     * state pointers, codec-owned solver-allocation data, searcher cell ranges,
+     * and scalar simulation metadata into a compact object suitable for device
+     * kernel capture.
+     *
+     * The universe-state pointers are optional:
+     *
+     * - `temperature_ptr` is populated when `UniverseTemperatureState<T>` exists,
+     * - `number_particle_ptr` is populated when `UniverseNumberParticleState<T>` exists,
+     * - `knudsen_number_ptr` is populated when `UniverseKnudsenNumberState<T>` exists.
+     *
+     * Searcher pointers are copied from the configured spatial hashing searcher.
+     * The current implementation only requires `num_of_cells > 0` for the probe
+     * to report success, so derived codecs should check any optional pointer they
+     * require before dereferencing it.
+     */
+    struct CodecProbe {
+        /**
+         * @brief Raw pointer to optional per-cell temperature data.
+         *
+         * Points to `UniverseTemperatureState<T>::data()` when that state exists;
+         * otherwise remains `nullptr`.
+         */
+        const T* temperature_ptr {};
+
+        /**
+         * @brief Raw pointer to optional per-cell particle-count data.
+         *
+         * Points to `UniverseNumberParticleState<T>::data()` when that state
+         * exists; otherwise remains `nullptr`.
+         */
+        const T* number_particle_ptr {};
+
+        /**
+         * @brief Raw pointer to optional per-cell Knudsen-number output/input data.
+         *
+         * Points to `UniverseKnudsenNumberState<T>::data()` when that state
+         * exists; otherwise remains `nullptr`.
+         */
+        T* knudsen_number_ptr {};
+
+        /**
+         * @brief Raw pointer to the codec-owned per-cell solver allocation buffer.
+         *
+         * Points to @ref d_allocated_solver when it is non-empty; otherwise
+         * remains `nullptr`.
+         */
+        int* allocated_solver_ptr {};
+
+        /**
+         * @brief Raw pointer to sorted particle indices produced by the searcher.
+         *
+         * For each cell, `[cell_start_ptr[cell], cell_end_ptr[cell])` indexes
+         * into this array.
+         */
+        const int* indices_ptr {};
+
+        /**
+         * @brief Raw pointer to the first sorted index for each cell.
+         */
+        const int* cell_start_ptr {};
+
+        /**
+         * @brief Raw pointer to one-past-the-last sorted index for each cell.
+         */
+        const int* cell_end_ptr {};
+
+        /**
+         * @brief Number of particles reported by the fluid.
+         */
+        int particle_count {};
+
+        /**
+         * @brief Number of cells reported by the universe.
+         *
+         * @ref make_probe returns `true` only when this value is greater than zero.
+         */
+        int num_of_cells {};
+
+        /**
+         * @brief Volume of one universe cell.
+         *
+         * Copied from `universe->cell_volume()`.
+         */
+        T cell_volume {};
+
+        /**
+         * @brief Statistical weight of the fluid particles.
+         *
+         * Copied from `fluid->statistical_weight()`.
+         */
+        T statistical_weight {};
+    };
+
+public:
+    /**
+     * @brief Constructs an empty codec.
+     *
+     * All dependencies are initialized to null-equivalent values and the
+     * solver-allocation buffer is empty. Calling @ref make_probe on an empty
+     * codec returns `false`.
      */
     Codec() = default;
 
     /**
-     * @brief Constructs a codec with its required simulation dependencies.
+     * @brief Constructs a codec from required simulation dependencies.
      *
-     * @param domain Host pointer to the universe object.
-     * @param fluid Host pointer to the fluid object.
-     * @param searcher Host pointer to the spatial hashing searcher.
+     * The constructor stores the provided dependencies and validates that all of
+     * them are non-null. After validation, it calls @ref reset to resize
+     * `d_allocated_solver` to the current universe cell count and fill it with
+     * zero.
+     *
+     * @param domain Universe providing cell count, cell volume, and optional codec states.
+     * @param fluid Fluid providing particle count and statistical weight.
+     * @param searcher Spatial hashing searcher providing cell-to-particle ranges.
+     *
+     * @throw std::invalid_argument If `domain` is null.
+     * @throw std::invalid_argument If `fluid` is null.
+     * @throw std::invalid_argument If `searcher` is null.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Codec(UniverseHostPtr<T> domain,
@@ -49,125 +174,164 @@ public:
           SpatialHashingSearcherHostPtr<T> searcher);
 
     /**
-     * @brief Virtual destructor.
-     *
-     * Declared virtual because this class is intended to be used polymorphically
-     * through base pointers or references.
+     * @brief Destroys the codec through the base interface.
      */
     virtual ~Codec() = default;
 
     /**
-     * @brief Executes one full codec update cycle.
+     * @brief Executes one complete codec update cycle.
      *
-     * The default update sequence is:
-     * 1. encode()
-     * 2. decode()
-     *
-     * Derived classes may override this function if they require a custom update flow,
-     * but the default behavior is intended to represent the common encode/decode cycle.
+     * The default implementation calls @ref encode first and @ref decode second.
+     * Derived classes may override this function when their codec workflow
+     * requires a different sequencing policy.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     update();
 
     /**
-     * @brief Encodes the current simulation state into a derived representation.
+     * @brief Encodes the current simulation state into codec-owned or codec-target states.
      *
-     * This function must be implemented by derived classes.
+     * Derived classes implement this function to classify cells, compute
+     * codec-specific quantities, or populate @ref d_allocated_solver.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     encode()
         = 0;
 
     /**
-     * @brief Decodes the derived representation back into simulation state.
+     * @brief Decodes codec-side data back into simulation state.
      *
-     * This function must be implemented by derived classes.
+     * Derived classes implement this function to apply results produced by the
+     * codec workflow back to universe, fluid, or solver-facing state.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     decode()
         = 0;
 
     /**
-     * @brief Resets internal codec-owned buffers into a consistent initial state.
+     * @brief Resizes and clears the per-cell solver-allocation buffer.
      *
-     * This function resizes the per-cell solver allocation buffer according to
-     * the current universe grid and initializes it to zero.
+     * The buffer is resized to `universe->number_of_cells()` and filled with
+     * zero values. The constructor calls this after dependency validation.
+     *
+     * @warning This function assumes `_universe` is non-null. It should only be
+     *          called on a codec whose universe dependency has been initialized.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     reset() noexcept;
 
     /**
-     * @brief Returns a mutable reference to the per-cell solver allocation buffer.
+     * @brief Returns the mutable per-cell solver-allocation buffer.
      *
-     * This buffer is typically used by derived codecs to record which solver,
-     * solver block, or computational resource has been assigned to each cell.
+     * Derived codecs write this buffer to indicate which solver should be used
+     * for each cell. The orchestrator exposes this buffer to codec-aware solvers
+     * during solver dispatch.
      *
-     * @return Mutable reference to the allocation buffer.
+     * @return Mutable reference to the device allocation buffer.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<int>&
     allocated_solver() noexcept;
 
     /**
-     * @brief Returns a const reference to the per-cell solver allocation buffer.
+     * @brief Returns the immutable per-cell solver-allocation buffer.
      *
-     * @return Const reference to the allocation buffer.
+     * @return Const reference to the device allocation buffer.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<int>&
     allocated_solver() const noexcept;
 
+    /**
+     * @brief Populates a raw-pointer probe for derived codec kernels.
+     *
+     * This function resolves the configured universe, fluid, searcher, and
+     * codec-owned allocation buffer into raw pointers and scalar metadata.
+     *
+     * The following pointers are optional and may be null:
+     *
+     * - `temperature_ptr`,
+     * - `number_particle_ptr`,
+     * - `knudsen_number_ptr`,
+     * - `allocated_solver_ptr` when the allocation buffer is empty,
+     * - searcher pointers if the searcher does not currently expose buffers.
+     *
+     * The current success condition is intentionally lightweight:
+     *
+     * @code
+     * return probe.num_of_cells > 0;
+     * @endcode
+     *
+     * Therefore, derived codec implementations must explicitly validate any
+     * pointer or state they require before use.
+     *
+     * @param probe Output probe populated with raw pointers and metadata.
+     *
+     * @retval true Universe, fluid, and searcher dependencies exist, and the
+     *              universe reports a positive cell count.
+     * @retval false A required dependency is missing or the universe has no cells.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    make_probe(CodecProbe& probe) noexcept;
+
 protected:
     /**
-     * @brief Bound universe object describing the simulation domain and grid.
+     * @brief Universe dependency used for cell metadata and optional codec states.
+     *
+     * Required by the non-default constructor and @ref make_probe.
      */
     UniverseHostPtr<T> _universe {};
 
     /**
-     * @brief Bound fluid object containing the simulation state to be processed.
+     * @brief Fluid dependency used for particle metadata.
+     *
+     * Required by the non-default constructor and @ref make_probe.
      */
     FluidHostPtr<T> _fluid {};
 
     /**
-     * @brief Bound spatial hashing searcher used for cell-based or neighbor-aware processing.
+     * @brief Spatial hashing searcher dependency used for cell-to-particle ranges.
+     *
+     * Required by the non-default constructor and @ref make_probe.
      */
     SpatialHashingSearcherHostPtr<T> _searcher {};
 
     /**
      * @brief Device buffer storing per-cell solver allocation metadata.
      *
-     * The exact semantic meaning depends on the derived codec implementation,
-     * but it generally tracks which solver resource is associated with each cell.
+     * The buffer is resized by @ref reset to match the universe cell count.
+     * Derived codecs generally write solver identifiers or classification labels
+     * into this buffer during @ref encode.
      */
     DeviceBuffer<int> d_allocated_solver;
 };
 
-}
+} // namespace atlas::system
 
 namespace atlas {
 
 /**
- * @brief Alias for atlas::system::Codec.
+ * @brief Convenience alias for `atlas::system::Codec`.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Scalar type used by the codec.
  */
 template <typename T>
 using Codec = system::Codec<T>;
 
 /**
- * @brief Host shared pointer alias for Codec.
+ * @brief Host-side shared pointer alias for `atlas::system::Codec`.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Scalar type used by the codec.
  */
 template <typename T>
 using CodecHostPtr = atlas::host_shared_ptr<system::Codec<T>>;
 
 /**
- * @brief Device shared pointer alias for Codec.
+ * @brief Device-side shared pointer alias for `atlas::system::Codec`.
  *
- * @tparam T Floating-point scalar type.
+ * @tparam T Scalar type used by the codec.
  */
 template <typename T>
 using CodecDevicePtr = atlas::device_shared_ptr<system::Codec<T>>;
 
-}
+} // namespace atlas
 
 #include <atlas/codec/codec.hpp>

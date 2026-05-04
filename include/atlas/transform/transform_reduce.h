@@ -112,12 +112,12 @@ namespace detail {
      *
      * If the range is empty, `init` is returned unchanged.
      */
-template <typename InputIt, typename T, typename UnaryOp, typename BinaryOp>
-ATLAS_FORCE_INLINE T
-transform_reduce_serial_impl(InputIt first, InputIt last,
-                             T init,
-                             UnaryOp unary_op,
-                             BinaryOp binary_op) {
+    template <typename InputIt, typename T, typename UnaryOp, typename BinaryOp>
+    ATLAS_FORCE_INLINE T
+    transform_reduce_serial_impl(InputIt first, InputIt last,
+                                 T init,
+                                 UnaryOp unary_op,
+                                 BinaryOp binary_op) {
         if (first == last) return init;
         return thrust::transform_reduce(
             thrust::seq,

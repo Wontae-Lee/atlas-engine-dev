@@ -39,13 +39,14 @@ public:
     };
 
 public:
-    SensorMatrics() = default;
-    SensorMatrics(const SensorMatrics&) = delete;
+    SensorMatrics()                         = default;
+    SensorMatrics(const SensorMatrics&)     = delete;
     SensorMatrics(SensorMatrics&&) noexcept = default;
-    virtual ~SensorMatrics() = default;
+    virtual ~SensorMatrics()                = default;
 
     SensorMatrics&
-    operator=(const SensorMatrics&) = delete;
+    operator=(const SensorMatrics&)
+        = delete;
 
     SensorMatrics&
     operator=(SensorMatrics&&) noexcept = default;
@@ -146,9 +147,9 @@ protected:
 
 namespace atlas {
 
-using SensorMatrics = observer::SensorMatrics;
+using SensorMatrics       = observer::SensorMatrics;
 using SourceSensorMatrics = observer::SourceSensorMatrics;
-using SinkSensorMatrics = observer::SinkSensorMatrics;
+using SinkSensorMatrics   = observer::SinkSensorMatrics;
 
 } // namespace atlas
 

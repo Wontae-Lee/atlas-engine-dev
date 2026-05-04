@@ -14,6 +14,7 @@
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/unit/unit.h>
 
+#include <cstdint>
 #include <type_traits>
 
 namespace atlas::fluid {
@@ -49,6 +50,27 @@ class Sink final {
 
 public:
     /**
+     * @brief Cached raw views over common sink runtime data.
+     *
+     * Sink processing repeatedly needs the same unit, despawn-operator, and
+     * particle state buffers. This probe groups those values so device lambdas
+     * can capture one compact object by value.
+     */
+    struct SinkProbe {
+        const Unit<T>* units {};
+        const DespawnOperator<T>* despawn_operators {};
+        const Vector3<T>* positions {};
+        int* active {};
+
+        int unit_count {};
+        int despawn_operator_count {};
+        std::size_t particle_count {};
+
+        bool flip {};
+        T tolerance {};
+    };
+
+    /**
      * @brief Builder for validated Sink construction.
      */
     class Builder;
@@ -82,8 +104,8 @@ public:
          DeviceBuffer<DespawnType> despawn_types,
          DeviceBuffer<DespawnOperator<T>> despawn_operators,
          atlas::host_shared_ptr<atlas::Fluid<T>> fluid,
-         bool flip   = false,
-         T tolerance = T(0),
+         bool flip                = false,
+         T tolerance              = T(0),
          ObserverHostPtr observer = nullptr) noexcept;
 
     /**
@@ -141,6 +163,15 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     compact_fluid_particles();
+
+    /**
+     * @brief Build a cached probe for sink unit and particle-state data.
+     *
+     * @param probe Output probe populated with raw pointers and scalar metadata.
+     * @return True when all required sink and fluid state exists.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    make_probe(SinkProbe& probe) noexcept;
 
 private:
     /**

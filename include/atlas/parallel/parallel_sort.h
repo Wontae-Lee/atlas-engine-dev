@@ -69,155 +69,155 @@
 namespace atlas {
 namespace detail {
 
-/**
- * @brief Sort a range using the host backend in CUDA-enabled builds.
- *
- * @details
- * Delegates to `thrust::sort` with Thrust's host execution policy.
- *
- * @param first Iterator to the beginning of the range.
- * @param last Iterator to the end of the range.
- *
- * @tparam RandomIt Random-access iterator type.
- */
-template <typename RandomIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_host_impl(RandomIt first, RandomIt last) {
-    if (first == last) return;
-    thrust::sort(thrust::host, first, last);
-}
+    /**
+     * @brief Sort a range using the host backend in CUDA-enabled builds.
+     *
+     * @details
+     * Delegates to `thrust::sort` with Thrust's host execution policy.
+     *
+     * @param first Iterator to the beginning of the range.
+     * @param last Iterator to the end of the range.
+     *
+     * @tparam RandomIt Random-access iterator type.
+     */
+    template <typename RandomIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_host_impl(RandomIt first, RandomIt last) {
+        if (first == last) return;
+        thrust::sort(thrust::host, first, last);
+    }
 
-/**
- * @brief Sort a range using the device backend in CUDA-enabled builds.
- *
- * @details
- * Delegates to `thrust::sort` with Thrust's device execution policy.
- *
- * @param first Iterator to the beginning of the range.
- * @param last Iterator to the end of the range.
- *
- * @tparam RandomIt Random-access iterator type.
- */
-template <typename RandomIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_device_impl(RandomIt first, RandomIt last) {
-    if (first == last) return;
-    thrust::sort(thrust::device, first, last);
-}
+    /**
+     * @brief Sort a range using the device backend in CUDA-enabled builds.
+     *
+     * @details
+     * Delegates to `thrust::sort` with Thrust's device execution policy.
+     *
+     * @param first Iterator to the beginning of the range.
+     * @param last Iterator to the end of the range.
+     *
+     * @tparam RandomIt Random-access iterator type.
+     */
+    template <typename RandomIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_device_impl(RandomIt first, RandomIt last) {
+        if (first == last) return;
+        thrust::sort(thrust::device, first, last);
+    }
 
-/**
- * @brief Sort a range using the serial fallback implementation.
- *
- * @details
- * Delegates to `std::sort`.
- *
- * @param first Iterator to the beginning of the range.
- * @param last Iterator to the end of the range.
- *
- * @tparam RandomIt Random-access iterator type.
- */
-template <typename RandomIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_serial_impl(RandomIt first, RandomIt last) {
-    if (first == last) return;
-    std::sort(first, last);
-}
+    /**
+     * @brief Sort a range using the serial fallback implementation.
+     *
+     * @details
+     * Delegates to `std::sort`.
+     *
+     * @param first Iterator to the beginning of the range.
+     * @param last Iterator to the end of the range.
+     *
+     * @tparam RandomIt Random-access iterator type.
+     */
+    template <typename RandomIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_serial_impl(RandomIt first, RandomIt last) {
+        if (first == last) return;
+        std::sort(first, last);
+    }
 
-/**
- * @brief Serial fallback implementation for sorting keys and associated values together.
- *
- * @details
- * This routine performs a stable pair-preserving reorder in ascending key order by:
- * - copying the key and value ranges into temporary buffers,
- * - constructing an index array `[0, 1, ..., n-1]`,
- * - sorting the indices by comparing copied keys,
- * - writing keys and values back according to the sorted permutation.
- *
- * @param keys_first Iterator to the beginning of the key range.
- * @param keys_last Iterator to the end of the key range.
- * @param values_first Iterator to the beginning of the associated value range.
- *
- * @tparam KeyIt Iterator type over keys.
- * @tparam ValueIt Iterator type over values.
- */
-template <typename KeyIt, typename ValueIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_by_key_serial_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
-    using diff_t = typename std::iterator_traits<KeyIt>::difference_type;
+    /**
+     * @brief Serial fallback implementation for sorting keys and associated values together.
+     *
+     * @details
+     * This routine performs a stable pair-preserving reorder in ascending key order by:
+     * - copying the key and value ranges into temporary buffers,
+     * - constructing an index array `[0, 1, ..., n-1]`,
+     * - sorting the indices by comparing copied keys,
+     * - writing keys and values back according to the sorted permutation.
+     *
+     * @param keys_first Iterator to the beginning of the key range.
+     * @param keys_last Iterator to the end of the key range.
+     * @param values_first Iterator to the beginning of the associated value range.
+     *
+     * @tparam KeyIt Iterator type over keys.
+     * @tparam ValueIt Iterator type over values.
+     */
+    template <typename KeyIt, typename ValueIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_by_key_serial_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
+        using diff_t = typename std::iterator_traits<KeyIt>::difference_type;
 
-    diff_t n = std::distance(keys_first, keys_last);
-    if (n <= 1) return;
+        diff_t n = std::distance(keys_first, keys_last);
+        if (n <= 1) return;
 
-    std::vector<diff_t> indices(static_cast<std::size_t>(n));
-    std::iota(indices.begin(), indices.end(), diff_t(0));
+        std::vector<diff_t> indices(static_cast<std::size_t>(n));
+        std::iota(indices.begin(), indices.end(), diff_t(0));
 
-    std::vector<typename std::iterator_traits<KeyIt>::value_type> key_tmp(static_cast<std::size_t>(n));
-    std::vector<typename std::iterator_traits<ValueIt>::value_type> val_tmp(static_cast<std::size_t>(n));
-    {
-        KeyIt k_it   = keys_first;
-        ValueIt v_it = values_first;
-        for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
-            key_tmp[static_cast<std::size_t>(i)] = *k_it;
-            val_tmp[static_cast<std::size_t>(i)] = *v_it;
+        std::vector<typename std::iterator_traits<KeyIt>::value_type> key_tmp(static_cast<std::size_t>(n));
+        std::vector<typename std::iterator_traits<ValueIt>::value_type> val_tmp(static_cast<std::size_t>(n));
+        {
+            KeyIt k_it   = keys_first;
+            ValueIt v_it = values_first;
+            for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
+                key_tmp[static_cast<std::size_t>(i)] = *k_it;
+                val_tmp[static_cast<std::size_t>(i)] = *v_it;
+            }
+        }
+
+        std::sort(indices.begin(),
+                  indices.end(),
+                  [&key_tmp](diff_t a, diff_t b) {
+                      return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
+                  });
+
+        {
+            KeyIt k_it   = keys_first;
+            ValueIt v_it = values_first;
+            for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
+                const diff_t idx = indices[static_cast<std::size_t>(i)];
+                *k_it            = key_tmp[static_cast<std::size_t>(idx)];
+                *v_it            = val_tmp[static_cast<std::size_t>(idx)];
+            }
         }
     }
 
-    std::sort(indices.begin(),
-              indices.end(),
-              [&key_tmp](diff_t a, diff_t b) {
-                  return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
-              });
-
-    {
-        KeyIt k_it   = keys_first;
-        ValueIt v_it = values_first;
-        for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
-            const diff_t idx = indices[static_cast<std::size_t>(i)];
-            *k_it            = key_tmp[static_cast<std::size_t>(idx)];
-            *v_it            = val_tmp[static_cast<std::size_t>(idx)];
-        }
+    /**
+     * @brief Sort keys and associated values using the host backend in CUDA-enabled builds.
+     *
+     * @details
+     * Delegates to `thrust::sort_by_key` with Thrust's host execution policy.
+     *
+     * @param keys_first Iterator to the beginning of the key range.
+     * @param keys_last Iterator to the end of the key range.
+     * @param values_first Iterator to the beginning of the associated value range.
+     *
+     * @tparam KeyIt Iterator type over keys.
+     * @tparam ValueIt Iterator type over values.
+     */
+    template <typename KeyIt, typename ValueIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_by_key_host_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
+        if (keys_first == keys_last) return;
+        thrust::sort_by_key(thrust::host, keys_first, keys_last, values_first);
     }
-}
 
-/**
- * @brief Sort keys and associated values using the host backend in CUDA-enabled builds.
- *
- * @details
- * Delegates to `thrust::sort_by_key` with Thrust's host execution policy.
- *
- * @param keys_first Iterator to the beginning of the key range.
- * @param keys_last Iterator to the end of the key range.
- * @param values_first Iterator to the beginning of the associated value range.
- *
- * @tparam KeyIt Iterator type over keys.
- * @tparam ValueIt Iterator type over values.
- */
-template <typename KeyIt, typename ValueIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_by_key_host_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
-    if (keys_first == keys_last) return;
-    thrust::sort_by_key(thrust::host, keys_first, keys_last, values_first);
-}
-
-/**
- * @brief Sort keys and associated values using the device backend in CUDA-enabled builds.
- *
- * @details
- * Delegates to `thrust::sort_by_key` with Thrust's device execution policy.
- *
- * @param keys_first Iterator to the beginning of the key range.
- * @param keys_last Iterator to the end of the key range.
- * @param values_first Iterator to the beginning of the associated value range.
- *
- * @tparam KeyIt Iterator type over keys.
- * @tparam ValueIt Iterator type over values.
- */
-template <typename KeyIt, typename ValueIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_by_key_device_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
-    if (keys_first == keys_last) return;
-    thrust::sort_by_key(thrust::device, keys_first, keys_last, values_first);
-}
+    /**
+     * @brief Sort keys and associated values using the device backend in CUDA-enabled builds.
+     *
+     * @details
+     * Delegates to `thrust::sort_by_key` with Thrust's device execution policy.
+     *
+     * @param keys_first Iterator to the beginning of the key range.
+     * @param keys_last Iterator to the end of the key range.
+     * @param values_first Iterator to the beginning of the associated value range.
+     *
+     * @tparam KeyIt Iterator type over keys.
+     * @tparam ValueIt Iterator type over values.
+     */
+    template <typename KeyIt, typename ValueIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_by_key_device_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
+        if (keys_first == keys_last) return;
+        thrust::sort_by_key(thrust::device, keys_first, keys_last, values_first);
+    }
 
 } // namespace detail
 
@@ -289,154 +289,154 @@ parallel_sort_by_key(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
 namespace atlas {
 namespace detail {
 
-/**
- * @brief Sort a range using the host backend in non-CUDA builds.
- *
- * @details
- * Delegates to `tbb::parallel_sort`.
- *
- * @param first Iterator to the beginning of the range.
- * @param last Iterator to the end of the range.
- *
- * @tparam RandomIt Random-access iterator type.
- */
-template <typename RandomIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_host_impl(RandomIt first, RandomIt last) {
-    if (first == last) return;
-    tbb::parallel_sort(first, last);
-}
+    /**
+     * @brief Sort a range using the host backend in non-CUDA builds.
+     *
+     * @details
+     * Delegates to `tbb::parallel_sort`.
+     *
+     * @param first Iterator to the beginning of the range.
+     * @param last Iterator to the end of the range.
+     *
+     * @tparam RandomIt Random-access iterator type.
+     */
+    template <typename RandomIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_host_impl(RandomIt first, RandomIt last) {
+        if (first == last) return;
+        tbb::parallel_sort(first, last);
+    }
 
-/**
- * @brief Sort a range using the device backend in non-CUDA builds.
- *
- * @details
- * Since no dedicated device backend is available, this path falls back to the
- * host parallel implementation.
- *
- * @param first Iterator to the beginning of the range.
- * @param last Iterator to the end of the range.
- *
- * @tparam RandomIt Random-access iterator type.
- */
-template <typename RandomIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_device_impl(RandomIt first, RandomIt last) {
-    detail::parallel_sort_host_impl(first, last);
-}
+    /**
+     * @brief Sort a range using the device backend in non-CUDA builds.
+     *
+     * @details
+     * Since no dedicated device backend is available, this path falls back to the
+     * host parallel implementation.
+     *
+     * @param first Iterator to the beginning of the range.
+     * @param last Iterator to the end of the range.
+     *
+     * @tparam RandomIt Random-access iterator type.
+     */
+    template <typename RandomIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_device_impl(RandomIt first, RandomIt last) {
+        detail::parallel_sort_host_impl(first, last);
+    }
 
-/**
- * @brief Sort a range using the serial fallback implementation.
- *
- * @details
- * Delegates to `std::sort`.
- *
- * @param first Iterator to the beginning of the range.
- * @param last Iterator to the end of the range.
- *
- * @tparam RandomIt Random-access iterator type.
- */
-template <typename RandomIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_serial_impl(RandomIt first, RandomIt last) {
-    if (first == last) return;
-    std::sort(first, last);
-}
+    /**
+     * @brief Sort a range using the serial fallback implementation.
+     *
+     * @details
+     * Delegates to `std::sort`.
+     *
+     * @param first Iterator to the beginning of the range.
+     * @param last Iterator to the end of the range.
+     *
+     * @tparam RandomIt Random-access iterator type.
+     */
+    template <typename RandomIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_serial_impl(RandomIt first, RandomIt last) {
+        if (first == last) return;
+        std::sort(first, last);
+    }
 
-/**
- * @brief Serial fallback implementation for sorting keys and associated values together.
- *
- * @details
- * This routine performs a pair-preserving reorder in ascending key order by:
- * - copying keys and values into temporary buffers,
- * - constructing an index array,
- * - sorting indices by copied keys,
- * - writing keys and values back according to the sorted permutation.
- *
- * @param keys_first Iterator to the beginning of the key range.
- * @param keys_last Iterator to the end of the key range.
- * @param values_first Iterator to the beginning of the associated value range.
- *
- * @tparam KeyIt Iterator type over keys.
- * @tparam ValueIt Iterator type over values.
- */
-template <typename KeyIt, typename ValueIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_by_key_serial_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
-    using diff_t = typename std::iterator_traits<KeyIt>::difference_type;
+    /**
+     * @brief Serial fallback implementation for sorting keys and associated values together.
+     *
+     * @details
+     * This routine performs a pair-preserving reorder in ascending key order by:
+     * - copying keys and values into temporary buffers,
+     * - constructing an index array,
+     * - sorting indices by copied keys,
+     * - writing keys and values back according to the sorted permutation.
+     *
+     * @param keys_first Iterator to the beginning of the key range.
+     * @param keys_last Iterator to the end of the key range.
+     * @param values_first Iterator to the beginning of the associated value range.
+     *
+     * @tparam KeyIt Iterator type over keys.
+     * @tparam ValueIt Iterator type over values.
+     */
+    template <typename KeyIt, typename ValueIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_by_key_serial_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
+        using diff_t = typename std::iterator_traits<KeyIt>::difference_type;
 
-    diff_t n = std::distance(keys_first, keys_last);
-    if (n <= 1) return;
+        diff_t n = std::distance(keys_first, keys_last);
+        if (n <= 1) return;
 
-    std::vector<diff_t> indices(static_cast<std::size_t>(n));
-    std::iota(indices.begin(), indices.end(), diff_t(0));
+        std::vector<diff_t> indices(static_cast<std::size_t>(n));
+        std::iota(indices.begin(), indices.end(), diff_t(0));
 
-    std::vector<typename std::iterator_traits<KeyIt>::value_type> key_tmp(static_cast<std::size_t>(n));
-    std::vector<typename std::iterator_traits<ValueIt>::value_type> val_tmp(static_cast<std::size_t>(n));
-    {
-        KeyIt k_it   = keys_first;
-        ValueIt v_it = values_first;
-        for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
-            key_tmp[static_cast<std::size_t>(i)] = *k_it;
-            val_tmp[static_cast<std::size_t>(i)] = *v_it;
+        std::vector<typename std::iterator_traits<KeyIt>::value_type> key_tmp(static_cast<std::size_t>(n));
+        std::vector<typename std::iterator_traits<ValueIt>::value_type> val_tmp(static_cast<std::size_t>(n));
+        {
+            KeyIt k_it   = keys_first;
+            ValueIt v_it = values_first;
+            for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
+                key_tmp[static_cast<std::size_t>(i)] = *k_it;
+                val_tmp[static_cast<std::size_t>(i)] = *v_it;
+            }
+        }
+
+        std::sort(indices.begin(),
+                  indices.end(),
+                  [&key_tmp](diff_t a, diff_t b) {
+                      return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
+                  });
+
+        {
+            KeyIt k_it   = keys_first;
+            ValueIt v_it = values_first;
+            for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
+                const diff_t idx = indices[static_cast<std::size_t>(i)];
+                *k_it            = key_tmp[static_cast<std::size_t>(idx)];
+                *v_it            = val_tmp[static_cast<std::size_t>(idx)];
+            }
         }
     }
 
-    std::sort(indices.begin(),
-              indices.end(),
-              [&key_tmp](diff_t a, diff_t b) {
-                  return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
-              });
-
-    {
-        KeyIt k_it   = keys_first;
-        ValueIt v_it = values_first;
-        for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
-            const diff_t idx = indices[static_cast<std::size_t>(i)];
-            *k_it            = key_tmp[static_cast<std::size_t>(idx)];
-            *v_it            = val_tmp[static_cast<std::size_t>(idx)];
-        }
+    /**
+     * @brief Sort keys and associated values using the host backend in non-CUDA builds.
+     *
+     * @details
+     * This currently falls back to the serial index-based implementation.
+     *
+     * @param keys_first Iterator to the beginning of the key range.
+     * @param keys_last Iterator to the end of the key range.
+     * @param values_first Iterator to the beginning of the associated value range.
+     *
+     * @tparam KeyIt Iterator type over keys.
+     * @tparam ValueIt Iterator type over values.
+     */
+    template <typename KeyIt, typename ValueIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_by_key_host_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
+        detail::parallel_sort_by_key_serial_impl(keys_first, keys_last, values_first);
     }
-}
 
-/**
- * @brief Sort keys and associated values using the host backend in non-CUDA builds.
- *
- * @details
- * This currently falls back to the serial index-based implementation.
- *
- * @param keys_first Iterator to the beginning of the key range.
- * @param keys_last Iterator to the end of the key range.
- * @param values_first Iterator to the beginning of the associated value range.
- *
- * @tparam KeyIt Iterator type over keys.
- * @tparam ValueIt Iterator type over values.
- */
-template <typename KeyIt, typename ValueIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_by_key_host_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
-    detail::parallel_sort_by_key_serial_impl(keys_first, keys_last, values_first);
-}
-
-/**
- * @brief Sort keys and associated values using the device backend in non-CUDA builds.
- *
- * @details
- * Since no dedicated device backend is available, this currently falls back to
- * the serial index-based implementation.
- *
- * @param keys_first Iterator to the beginning of the key range.
- * @param keys_last Iterator to the end of the key range.
- * @param values_first Iterator to the beginning of the associated value range.
- *
- * @tparam KeyIt Iterator type over keys.
- * @tparam ValueIt Iterator type over values.
- */
-template <typename KeyIt, typename ValueIt>
-ATLAS_FORCE_INLINE void
-parallel_sort_by_key_device_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
-    detail::parallel_sort_by_key_serial_impl(keys_first, keys_last, values_first);
-}
+    /**
+     * @brief Sort keys and associated values using the device backend in non-CUDA builds.
+     *
+     * @details
+     * Since no dedicated device backend is available, this currently falls back to
+     * the serial index-based implementation.
+     *
+     * @param keys_first Iterator to the beginning of the key range.
+     * @param keys_last Iterator to the end of the key range.
+     * @param values_first Iterator to the beginning of the associated value range.
+     *
+     * @tparam KeyIt Iterator type over keys.
+     * @tparam ValueIt Iterator type over values.
+     */
+    template <typename KeyIt, typename ValueIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_by_key_device_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
+        detail::parallel_sort_by_key_serial_impl(keys_first, keys_last, values_first);
+    }
 
 } // namespace detail
 

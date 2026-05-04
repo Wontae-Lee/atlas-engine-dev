@@ -40,8 +40,8 @@ using tuple = thrust::tuple<Ts...>;
  */
 template <typename... Ts>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-tuple<Ts...>
-make_tuple(Ts... args) {
+    tuple<Ts...>
+    make_tuple(Ts... args) {
     return thrust::make_tuple(args...);
 }
 

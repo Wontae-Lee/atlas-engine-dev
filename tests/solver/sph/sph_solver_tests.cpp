@@ -24,9 +24,9 @@ make_universe() {
 
 atlas::FluidHostPtr<T>
 make_fluid() {
-    atlas::HostBuffer<atlas::MatrialProperties<T>> properties;
+    atlas::HostBuffer<atlas::MaterialProperties<T>> properties;
     properties.push_back(
-        atlas::MatrialProperties<T>::builder()
+        atlas::MaterialProperties<T>::builder()
             .with_type(atlas::MaterialType::Molecule)
             .with_mass(1.0f)
             .with_molecular_mass(1.0f)

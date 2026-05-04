@@ -285,7 +285,7 @@ namespace {
     template <typename T>
     void
     set_material_property(atlas::proto::MaterialProperty* target,
-                          const MatrialProperties<T>& source) {
+                          const MaterialProperties<T>& source) {
         target->set_type(static_cast<int>(source.type));
         target->set_mass(static_cast<double>(source.mass));
         target->set_molecular_mass(static_cast<double>(source.molecular_mass));
@@ -312,9 +312,9 @@ namespace {
      * @return Decoded material properties.
      */
     template <typename T>
-    MatrialProperties<T>
+    MaterialProperties<T>
     read_material_property(const atlas::proto::MaterialProperty& source) {
-        MatrialProperties<T> material {};
+        MaterialProperties<T> material {};
         material.type                 = static_cast<atlas::system::MaterialType::Value>(source.type());
         material.mass                 = static_cast<T>(source.mass());
         material.molecular_mass       = static_cast<T>(source.molecular_mass());
@@ -552,7 +552,7 @@ save_fluid_binary(const atlas::fluid::Fluid<T>& fluid, std::string_view path) {
     snapshot.set_statistical_weight(static_cast<double>(fluid.statistical_weight()));
 
     {
-        HostBuffer<MatrialProperties<T>> material_properties(
+        HostBuffer<MaterialProperties<T>> material_properties(
             fluid.particle_properties().begin(),
             fluid.particle_properties().end());
 

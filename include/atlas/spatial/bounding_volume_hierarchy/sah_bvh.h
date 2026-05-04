@@ -63,33 +63,33 @@ namespace atlas::spatial {
 
 namespace sah {
 
-/**
- * @brief Temporary bin used during surface-area-heuristic split evaluation.
- *
- * @details
- * Each bin accumulates:
- * - the bounding box of primitives assigned to the bin,
- * - the number of primitives assigned to the bin.
- *
- * Bins are commonly used to approximate the SAH cost efficiently without testing
- * every possible primitive split individually.
- *
- * ---
- *
- * @tparam T Floating-point scalar type used for bounds.
- */
-template <typename T>
-struct Bin {
     /**
-     * @brief Bounding box enclosing all primitives assigned to this bin.
+     * @brief Temporary bin used during surface-area-heuristic split evaluation.
+     *
+     * @details
+     * Each bin accumulates:
+     * - the bounding box of primitives assigned to the bin,
+     * - the number of primitives assigned to the bin.
+     *
+     * Bins are commonly used to approximate the SAH cost efficiently without testing
+     * every possible primitive split individually.
+     *
+     * ---
+     *
+     * @tparam T Floating-point scalar type used for bounds.
      */
-    AABB<T> bounds;
+    template <typename T>
+    struct Bin {
+        /**
+         * @brief Bounding box enclosing all primitives assigned to this bin.
+         */
+        AABB<T> bounds;
 
-    /**
-     * @brief Number of primitives assigned to this bin.
-     */
-    int count = 0;
-};
+        /**
+         * @brief Number of primitives assigned to this bin.
+         */
+        int count = 0;
+    };
 
 } // namespace sah
 

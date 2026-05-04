@@ -112,8 +112,7 @@ public:
      * @brief Move assignment operator.
      */
     Fluid&
-    operator=(Fluid&&) noexcept
-        = default;
+    operator=(Fluid&&) noexcept = default;
 
     /**
      * @brief Returns the generator operator buffer as a const reference.
@@ -136,7 +135,7 @@ public:
      *
      * @return Const reference to the device buffer of material properties.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<MatrialProperties<T>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<MaterialProperties<T>>&
     particle_properties() const noexcept;
 
     /**
@@ -144,7 +143,7 @@ public:
      *
      * @return Mutable reference to the device buffer of material properties.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<MatrialProperties<T>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<MaterialProperties<T>>&
     particle_properties() noexcept;
 
     /**
@@ -292,7 +291,7 @@ private:
     /**
      * @brief Device buffer storing particle/species material properties.
      */
-    DeviceBuffer<MatrialProperties<T>> _particle_properties;
+    DeviceBuffer<MaterialProperties<T>> _particle_properties;
 
     /**
      * @brief Device buffer storing generator operators.
@@ -373,7 +372,7 @@ public:
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_properties(const HostBuffer<MatrialProperties<T>>& properties);
+    with_properties(const HostBuffer<MaterialProperties<T>>& properties);
 
     /**
      * @brief Installs generator definitions by converting host-side generator objects
@@ -432,7 +431,7 @@ private:
     /**
      * @brief Builder-owned device buffer for material properties.
      */
-    DeviceBuffer<MatrialProperties<T>> _particles;
+    DeviceBuffer<MaterialProperties<T>> _particles;
 
     /**
      * @brief Builder-owned device buffer for generator operators.

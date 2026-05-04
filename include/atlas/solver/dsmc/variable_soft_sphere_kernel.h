@@ -80,8 +80,8 @@ public:
      * @return Effective VSS collision cross section.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    cross_section(const MatrialProperties<T>& lhs,
-                  const MatrialProperties<T>& rhs,
+    cross_section(const MaterialProperties<T>& lhs,
+                  const MaterialProperties<T>& rhs,
                   T relative_speed) noexcept;
 
     /**
@@ -114,8 +114,8 @@ public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Vector3<T>& lhs_velocity,
                Vector3<T>& rhs_velocity,
-               const MatrialProperties<T>& lhs,
-               const MatrialProperties<T>& rhs) const noexcept;
+               const MaterialProperties<T>& lhs,
+               const MaterialProperties<T>& rhs) const noexcept;
 };
 
 } // namespace atlas::system

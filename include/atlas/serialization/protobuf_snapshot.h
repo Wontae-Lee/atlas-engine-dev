@@ -35,7 +35,7 @@ struct FluidBinarySnapshot final {
     std::size_t particle_count = 0;
     T statistical_weight       = T(1);
 
-    HostBuffer<MatrialProperties<T>> properties;
+    HostBuffer<MaterialProperties<T>> properties;
     HostBuffer<fluid::GenerateOperator<T>> generators;
 
     std::optional<HostBuffer<Vector3<T>>> positions;

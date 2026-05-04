@@ -1,7 +1,6 @@
 #pragma once
-
+#include <atlas/memory/raw_pointer_cast.h>
 namespace atlas::system {
-
 template <typename T>
 Codec<T>::Codec(UniverseHostPtr<T> domain,
                 FluidHostPtr<T> fluid,
@@ -9,41 +8,18 @@ Codec<T>::Codec(UniverseHostPtr<T> domain,
     : _universe(std::move(domain))
     , _fluid(std::move(fluid))
     , _searcher(std::move(searcher)) {
-
-    // Validate all required external dependencies immediately.
-    //
-    // A codec is not meaningful without:
-    // - a universe that defines the simulation domain and cell layout
-    // - a fluid that provides the simulation state to encode/decode
-    // - a spatial hashing searcher that provides cell-based indexing support
-    //
-    // These checks ensure that the codec cannot be constructed in a partially
-    // valid state that would later fail deep inside encode()/decode().
     atlas::check<std::invalid_argument>(static_cast<bool>(_universe))
         << "Codec: universe must not be null.";
     atlas::check<std::invalid_argument>(static_cast<bool>(_fluid))
         << "Codec: fluid must not be null.";
     atlas::check<std::invalid_argument>(static_cast<bool>(_searcher))
         << "Codec: searcher must not be null.";
-
-    // Initialize internal device-side buffers so the object starts in a
-    // consistent state before any encode/decode operation is attempted.
     reset();
 }
 
 template <typename T>
 void
 Codec<T>::update() {
-
-    // Perform one complete codec cycle.
-    //
-    // The intended high-level workflow is:
-    // 1. encode the current simulation state into an intermediate form
-    // 2. decode the processed/intermediate form back into simulation state
-    //
-    // This base implementation defines the canonical order.
-    // Derived classes may override update() if they need additional steps,
-    // custom synchronization, or a different execution schedule.
     this->encode();
     this->decode();
 }
@@ -51,35 +27,57 @@ Codec<T>::update() {
 template <typename T>
 void
 Codec<T>::reset() noexcept {
-
-    // Resize the per-cell solver allocation buffer to match the current
-    // number of cells defined by the universe.
-    //
-    // The buffer is initialized with zeros so that all cells start in an
-    // "unassigned" or "default allocation" state.
-    //
-    // The exact interpretation of each entry depends on the derived codec,
-    // but a zero-initialized buffer provides a safe baseline.
     const auto num_of_cells = _universe->number_of_cells();
-
     d_allocated_solver.resize(num_of_cells, 0);
 }
 
 template <typename T>
 DeviceBuffer<int>&
 Codec<T>::allocated_solver() noexcept {
-
-    // Return mutable access so derived systems or external host-side
-    // orchestration code can update the solver allocation metadata directly.
     return d_allocated_solver;
 }
 
 template <typename T>
 const DeviceBuffer<int>&
 Codec<T>::allocated_solver() const noexcept {
-
-    // Return read-only access for inspection without allowing modification.
     return d_allocated_solver;
+}
+
+template <typename T>
+bool
+Codec<T>::make_probe(CodecProbe& probe) noexcept {
+    if (!_universe || !_fluid || !_searcher) {
+        return false;
+    }
+
+    auto* temperature_state
+        = _universe->template state<atlas::universe::UniverseTemperatureState<T>>();
+    auto* number_particle_state
+        = _universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
+    auto* knudsen_number_state
+        = _universe->template state<atlas::universe::UniverseKnudsenNumberState<T>>();
+
+    probe.temperature_ptr      = temperature_state != nullptr
+             ? atlas::raw_pointer_cast(temperature_state->data().data())
+             : nullptr;
+    probe.number_particle_ptr  = number_particle_state != nullptr
+         ? atlas::raw_pointer_cast(number_particle_state->data().data())
+         : nullptr;
+    probe.knudsen_number_ptr   = knudsen_number_state != nullptr
+          ? atlas::raw_pointer_cast(knudsen_number_state->data().data())
+          : nullptr;
+    probe.allocated_solver_ptr = d_allocated_solver.empty()
+        ? nullptr
+        : atlas::raw_pointer_cast(d_allocated_solver.data());
+    probe.indices_ptr          = _searcher->indices();
+    probe.cell_start_ptr       = _searcher->cell_start();
+    probe.cell_end_ptr         = _searcher->cell_end();
+    probe.particle_count       = static_cast<int>(_fluid->particle_count());
+    probe.num_of_cells         = _universe->number_of_cells();
+    probe.cell_volume          = _universe->cell_volume();
+    probe.statistical_weight   = _fluid->statistical_weight();
+
+    return probe.num_of_cells > 0;
 }
 
 }

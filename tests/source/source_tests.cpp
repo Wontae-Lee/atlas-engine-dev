@@ -17,10 +17,10 @@ using Vec3 = atlas::Vector3<T>;
 
 atlas::FluidHostPtr<T>
 make_fluid() {
-    atlas::HostBuffer<atlas::MatrialProperties<T>> properties(1);
+    atlas::HostBuffer<atlas::MaterialProperties<T>> properties(1);
     atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(1);
 
-    properties[0] = atlas::MatrialProperties<T>::builder()
+    properties[0] = atlas::MaterialProperties<T>::builder()
                         .with_type(atlas::MaterialType::Molecule)
                         .with_mass(4.651734e-26f)
                         .with_molecular_mass(4.651734e-26f)

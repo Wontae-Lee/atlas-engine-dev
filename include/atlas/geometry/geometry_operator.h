@@ -71,8 +71,8 @@
 #include <atlas/geometry/cylinder.h>
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/geometry/plane.h>
-#include <atlas/geometry/square.h>
 #include <atlas/geometry/sphere.h>
+#include <atlas/geometry/square.h>
 #include <atlas/geometry/triangle.h>
 #include <atlas/geometry/triangle_mesh.h>
 

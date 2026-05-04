@@ -22,9 +22,9 @@ make_universe() {
 
 atlas::FluidHostPtr<T>
 make_fluid() {
-    atlas::HostBuffer<atlas::MatrialProperties<T>> properties;
+    atlas::HostBuffer<atlas::MaterialProperties<T>> properties;
     properties.push_back(
-        atlas::MatrialProperties<T>::builder()
+        atlas::MaterialProperties<T>::builder()
             .with_type(atlas::MaterialType::Molecule)
             .with_mass(1.0f)
             .with_molecular_mass(1.0f)
@@ -93,6 +93,11 @@ TEST(SphGatewaySolver, CodecAwareSolveSharesStateWithinEachDeterministicGroup) {
     fluid->state<atlas::fluid::FluidVelocityState<T>>()->data()[2] = Vec3(5.0f, 0.0f, 0.0f);
     fluid->state<atlas::fluid::FluidVelocityState<T>>()->data()[3] = Vec3(7.0f, 0.0f, 0.0f);
 
+    const auto initial_p0 = fluid->state<atlas::fluid::FluidPositionState<T>>()->data()[0];
+    const auto initial_p1 = fluid->state<atlas::fluid::FluidPositionState<T>>()->data()[1];
+    const auto initial_p2 = fluid->state<atlas::fluid::FluidPositionState<T>>()->data()[2];
+    const auto initial_p3 = fluid->state<atlas::fluid::FluidPositionState<T>>()->data()[3];
+
     atlas::system::SphGatewaySolver<T> solver(
         universe,
         fluid,
@@ -115,8 +120,10 @@ TEST(SphGatewaySolver, CodecAwareSolveSharesStateWithinEachDeterministicGroup) {
     const auto v2 = fluid->state<atlas::fluid::FluidVelocityState<T>>()->data()[2];
     const auto v3 = fluid->state<atlas::fluid::FluidVelocityState<T>>()->data()[3];
 
-    EXPECT_TRUE(atlas::test::vec_near(p0, p1, static_cast<T>(1e-5)));
-    EXPECT_TRUE(atlas::test::vec_near(p2, p3, static_cast<T>(1e-5)));
+    EXPECT_TRUE(atlas::test::vec_near(p0, initial_p0, static_cast<T>(1e-5)));
+    EXPECT_TRUE(atlas::test::vec_near(p1, initial_p1, static_cast<T>(1e-5)));
+    EXPECT_TRUE(atlas::test::vec_near(p2, initial_p2, static_cast<T>(1e-5)));
+    EXPECT_TRUE(atlas::test::vec_near(p3, initial_p3, static_cast<T>(1e-5)));
     EXPECT_TRUE(atlas::test::vec_near(v0, v1, static_cast<T>(1e-5)));
     EXPECT_TRUE(atlas::test::vec_near(v2, v3, static_cast<T>(1e-5)));
 

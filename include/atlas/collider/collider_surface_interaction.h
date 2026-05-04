@@ -99,10 +99,10 @@ public:
     /**
      * @brief Sets the restitution coefficient.
      *
- * The restitution coefficient scales the outgoing speed relative to the
- * incident speed:
- * - `0` removes all reflected speed,
- * - `1` preserves the reflected speed magnitude.
+     * The restitution coefficient scales the outgoing speed relative to the
+     * incident speed:
+     * - `0` removes all reflected speed,
+     * - `1` preserves the reflected speed magnitude.
      *
      * @param restitution_coeff Restitution coefficient.
      */

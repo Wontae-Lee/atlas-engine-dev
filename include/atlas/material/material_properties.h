@@ -635,7 +635,7 @@ using MaterialType = system::MaterialType;
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MatrialProperties = system::MaterialProperties<T>;
+using MaterialProperties = system::MaterialProperties<T>;
 
 /**
  * @brief Convenience alias for a host-owned shared pointer to

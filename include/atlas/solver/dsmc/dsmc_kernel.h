@@ -190,8 +190,8 @@ struct DsmcKernel final {
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     cross_section(DsmcKernelType type,
-                  const MatrialProperties<T>& lhs,
-                  const MatrialProperties<T>& rhs,
+                  const MaterialProperties<T>& lhs,
+                  const MaterialProperties<T>& rhs,
                   T relative_speed) noexcept;
 
     /**
@@ -213,8 +213,8 @@ struct DsmcKernel final {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Vector3<T>& lhs_velocity,
                Vector3<T>& rhs_velocity,
-               const MatrialProperties<T>& lhs,
-               const MatrialProperties<T>& rhs) const noexcept;
+               const MaterialProperties<T>& lhs,
+               const MaterialProperties<T>& rhs) const noexcept;
 
 private:
     /**

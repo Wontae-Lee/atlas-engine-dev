@@ -9,9 +9,9 @@ namespace {
 
 using T = float;
 
-atlas::MatrialProperties<T>
+atlas::MaterialProperties<T>
 make_properties() {
-    return atlas::MatrialProperties<T>::builder()
+    return atlas::MaterialProperties<T>::builder()
         .with_type(atlas::MaterialType::Molecule)
         .with_mass(1.0f)
         .with_molecular_mass(1.0f)

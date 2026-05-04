@@ -23,9 +23,9 @@ namespace atlas::geometry {
  */
 template <typename T>
 struct SquareGeometryOperator {
-    const atlas::math::Vector<T, 3>* center      = nullptr;
-    const atlas::math::Vector<T, 3>* normal      = nullptr;
-    const T* side_length                         = nullptr;
+    const atlas::math::Vector<T, 3>* center = nullptr;
+    const atlas::math::Vector<T, 3>* normal = nullptr;
+    const T* side_length                    = nullptr;
 
     /**
      * @brief Return the closest point on the square to a query point.
@@ -175,7 +175,8 @@ public:
     /**
      * @brief Construct a default square centered at the origin.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE Square() noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE
+    Square() noexcept;
 
     /**
      * @brief Construct a square from explicit parameters.
