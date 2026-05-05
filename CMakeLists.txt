@@ -79,7 +79,7 @@ option(ATLAS_USE_VIZKIT   "Build Vizkit-based visualization modules" ON)
 option(ATLAS_LOGGING      "Enable logging functionality" ON)
 option(ATLAS_GOOGLE_TEST  "Build GoogleTest-based C++ tests" ON)
 option(ATLAS_CUDA_TEST    "Build CUDA-specific tests" OFF)
-option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" ON)
+option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" OFF)
 
 # ============================================================
 # NVIDIA utility discovery
