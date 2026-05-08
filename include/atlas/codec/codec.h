@@ -98,6 +98,21 @@ public:
         int* allocated_solver_ptr {};
 
         /**
+         * @brief Raw pointer to the codec-owned fixed solver-index buffer.
+         *
+         * Fixed-region cells use this solver index during decode.
+         */
+        const int* fixed_solver_ptr {};
+
+        /**
+         * @brief Raw pointer to the codec-owned fixed-region mask.
+         *
+         * A value of `1` marks a cell whose encode/decode classification should
+         * be fixed rather than recomputed by a derived codec.
+         */
+        const int* fixed_region_ptr {};
+
+        /**
          * @brief Raw pointer to sorted particle indices produced by the searcher.
          *
          * For each cell, `[cell_start_ptr[cell], cell_end_ptr[cell])` indexes
@@ -241,6 +256,65 @@ public:
     allocated_solver() const noexcept;
 
     /**
+     * @brief Replaces the per-cell fixed solver-index buffer.
+     *
+     * When the codec has a universe dependency, the replacement buffer must be
+     * either empty or match the universe cell count.
+     *
+     * @param fixed_solver Per-cell solver indices for fixed-region cells.
+     *
+     * @throw std::invalid_argument If the buffer size does not match the universe cell count.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_fixed_solver(DeviceBuffer<int> fixed_solver);
+
+    /**
+     * @brief Returns the mutable per-cell fixed solver-index buffer.
+     *
+     * @return Mutable reference to the fixed solver-index buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<int>&
+    fixed_solver() noexcept;
+
+    /**
+     * @brief Returns the immutable per-cell fixed solver-index buffer.
+     *
+     * @return Const reference to the fixed solver-index buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<int>&
+    fixed_solver() const noexcept;
+
+    /**
+     * @brief Replaces the per-cell fixed-region mask.
+     *
+     * When the codec has a universe dependency, the replacement buffer must be
+     * either empty or match the universe cell count. Cells with value `1` are
+     * skipped by codec classification and decoded from @ref fixed_solver.
+     *
+     * @param fixed_region Per-cell fixed-region mask.
+     *
+     * @throw std::invalid_argument If the buffer size does not match the universe cell count.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_fixed_region(DeviceBuffer<int> fixed_region);
+
+    /**
+     * @brief Returns the mutable per-cell fixed-region mask.
+     *
+     * @return Mutable reference to the fixed-region mask.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DeviceBuffer<int>&
+    fixed_region() noexcept;
+
+    /**
+     * @brief Returns the immutable per-cell fixed-region mask.
+     *
+     * @return Const reference to the fixed-region mask.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<int>&
+    fixed_region() const noexcept;
+
+    /**
      * @brief Populates a raw-pointer probe for derived codec kernels.
      *
      * This function resolves the configured universe, fluid, searcher, and
@@ -252,6 +326,8 @@ public:
      * - `number_particle_ptr`,
      * - `knudsen_number_ptr`,
      * - `allocated_solver_ptr` when the allocation buffer is empty,
+     * - `fixed_solver_ptr` when the fixed solver buffer is empty,
+     * - `fixed_region_ptr` when the fixed-region buffer is empty,
      * - searcher pointers if the searcher does not currently expose buffers.
      *
      * The current success condition is intentionally lightweight:
@@ -302,6 +378,22 @@ protected:
      * into this buffer during @ref encode.
      */
     DeviceBuffer<int> d_allocated_solver;
+
+    /**
+     * @brief Device buffer storing solver indices for fixed-region cells.
+     *
+     * During decode, derived codecs should copy this value into
+     * @ref d_allocated_solver for cells whose @ref d_fixed_region value is `1`.
+     */
+    DeviceBuffer<int> d_fixed_solver;
+
+    /**
+     * @brief Device buffer storing the per-cell fixed-region mask.
+     *
+     * A value of `1` marks cells that derived codecs should skip during encode
+     * and decode from @ref d_fixed_solver.
+     */
+    DeviceBuffer<int> d_fixed_region;
 };
 
 } // namespace atlas::system

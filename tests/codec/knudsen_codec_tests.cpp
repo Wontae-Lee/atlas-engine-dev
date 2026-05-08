@@ -122,6 +122,46 @@ TEST(KnudsenCodec, UpdateComputesKnudsenNumberAndAllocatesSolverBuckets) {
     EXPECT_LE(codec.allocated_solver()[1], codec.allocated_solver()[2]);
 }
 
+TEST(KnudsenCodec, FixedRegionSkipsEncodingAndDecodesFixedSolver) {
+    const auto universe = make_universe();
+    const auto fluid = make_fluid();
+    const auto searcher = make_searcher(universe, fluid);
+
+    auto& temperature = universe->emplace_state<atlas::universe::UniverseTemperatureState<T>>(
+        static_cast<std::size_t>(universe->number_of_cells()));
+    auto& number_particle = universe->emplace_state<atlas::universe::UniverseNumberParticleState<T>>(
+        static_cast<std::size_t>(universe->number_of_cells()));
+
+    temperature.data()[0] = 300.0f;
+    temperature.data()[1] = 300.0f;
+    number_particle.data()[0] = 1.0e26f;
+    number_particle.data()[1] = 1.0e26f;
+
+    atlas::DeviceBuffer<int> fixed_solver(static_cast<std::size_t>(universe->number_of_cells()), 0);
+    atlas::DeviceBuffer<int> fixed_region(static_cast<std::size_t>(universe->number_of_cells()), 0);
+    fixed_solver[1] = 7;
+    fixed_region[1] = 1;
+
+    auto codec = atlas::system::KnudsenCodec<T>::builder()
+                     .with_domain(universe)
+                     .with_fluid(fluid)
+                     .with_searcher(searcher)
+                     .with_characteristic_length(1.0f)
+                     .with_fixed_solver(fixed_solver)
+                     .with_fixed_region(fixed_region)
+                     .build();
+
+    auto* knudsen_number = universe->state<atlas::universe::UniverseKnudsenNumberState<T>>();
+    ASSERT_NE(knudsen_number, nullptr);
+    knudsen_number->data()[1] = 123.0f;
+
+    codec.update();
+
+    EXPECT_NEAR(knudsen_number->data()[1], 123.0f, 0.0f);
+    EXPECT_EQ(codec.allocated_solver()[1], 7);
+    EXPECT_NE(codec.allocated_solver()[0], 7);
+}
+
 TEST(KnudsenCodec, EncodeUsesFluidStatisticalWeightForNumberDensity) {
     const auto universe = make_universe();
     const auto fluid = atlas::fluid::Fluid<T>::builder()

@@ -45,6 +45,9 @@ KnudsenCodec<T>::encode() {
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
+            if (probe.fixed_region_ptr != nullptr && probe.fixed_region_ptr[cell] == 1) {
+                return;
+            }
             const T number_density = probe.cell_volume > T(0)
                 ? probe.number_particle_ptr[cell] * probe.statistical_weight / probe.cell_volume
                 : T(0);
@@ -74,6 +77,12 @@ KnudsenCodec<T>::decode() {
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
+            if (probe.fixed_region_ptr != nullptr && probe.fixed_region_ptr[cell] == 1) {
+                if (probe.fixed_solver_ptr != nullptr) {
+                    probe.allocated_solver_ptr[cell] = probe.fixed_solver_ptr[cell];
+                }
+                return;
+            }
             const T kn           = probe.knudsen_number_ptr[cell];
             int allocated_solver = 0;
             while (allocated_solver < split_count && !(kn < kn_split_ptr[allocated_solver])) {
@@ -112,6 +121,20 @@ KnudsenCodec<T>::Builder::with_characteristic_length(T characteristic_length) no
 }
 
 template <typename T>
+typename KnudsenCodec<T>::Builder&
+KnudsenCodec<T>::Builder::with_fixed_solver(DeviceBuffer<int> fixed_solver) noexcept {
+    _fixed_solver = std::move(fixed_solver);
+    return *this;
+}
+
+template <typename T>
+typename KnudsenCodec<T>::Builder&
+KnudsenCodec<T>::Builder::with_fixed_region(DeviceBuffer<int> fixed_region) noexcept {
+    _fixed_region = std::move(fixed_region);
+    return *this;
+}
+
+template <typename T>
 void
 KnudsenCodec<T>::Builder::validate() const {
     atlas::check<std::invalid_argument>(static_cast<bool>(_domain))
@@ -122,20 +145,39 @@ KnudsenCodec<T>::Builder::validate() const {
         << "KnudsenCodec::Builder: searcher must not be null.";
     atlas::check<std::invalid_argument>(_characteristic_length > T(0))
         << "KnudsenCodec::Builder: characteristic_length must be positive.";
+    const auto cell_count = static_cast<std::size_t>(_domain->number_of_cells());
+    atlas::check<std::invalid_argument>(_fixed_solver.empty() || _fixed_solver.size() == cell_count)
+        << "KnudsenCodec::Builder: fixed_solver size must match universe cell count.";
+    atlas::check<std::invalid_argument>(_fixed_region.empty() || _fixed_region.size() == cell_count)
+        << "KnudsenCodec::Builder: fixed_region size must match universe cell count.";
 }
 
 template <typename T>
 KnudsenCodec<T>
 KnudsenCodec<T>::Builder::build() const {
     validate();
-    return KnudsenCodec<T>(_domain, _fluid, _searcher, _characteristic_length);
+    auto codec = KnudsenCodec<T>(_domain, _fluid, _searcher, _characteristic_length);
+    if (!_fixed_solver.empty()) {
+        codec.set_fixed_solver(_fixed_solver);
+    }
+    if (!_fixed_region.empty()) {
+        codec.set_fixed_region(_fixed_region);
+    }
+    return codec;
 }
 
 template <typename T>
 atlas::host_shared_ptr<KnudsenCodec<T>>
 KnudsenCodec<T>::Builder::make_host_shared() const {
     validate();
-    return atlas::make_host_shared<KnudsenCodec<T>>(_domain, _fluid, _searcher, _characteristic_length);
+    auto codec = atlas::make_host_shared<KnudsenCodec<T>>(_domain, _fluid, _searcher, _characteristic_length);
+    if (!_fixed_solver.empty()) {
+        codec->set_fixed_solver(_fixed_solver);
+    }
+    if (!_fixed_region.empty()) {
+        codec->set_fixed_region(_fixed_region);
+    }
+    return codec;
 }
 
 }

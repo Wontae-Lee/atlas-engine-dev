@@ -69,6 +69,8 @@ TEST(Codec, ConstructorAllocatesSolverBufferForUniverseCells) {
     DummyCodec codec(universe, fluid, searcher);
 
     EXPECT_EQ(codec.allocated_solver().size(), static_cast<std::size_t>(universe->number_of_cells()));
+    EXPECT_EQ(codec.fixed_solver().size(), static_cast<std::size_t>(universe->number_of_cells()));
+    EXPECT_EQ(codec.fixed_region().size(), static_cast<std::size_t>(universe->number_of_cells()));
 }
 
 TEST(Codec, UpdateInvokesEncodeAndDecode) {
@@ -92,4 +94,25 @@ TEST(Codec, ConstructorRejectsMissingDependencies) {
     EXPECT_THROW(DummyCodec(nullptr, fluid, searcher), std::invalid_argument);
     EXPECT_THROW(DummyCodec(universe, nullptr, searcher), std::invalid_argument);
     EXPECT_THROW(DummyCodec(universe, fluid, nullptr), std::invalid_argument);
+}
+
+TEST(Codec, FixedBuffersCanBeReplacedAndValidateCellCount) {
+    const auto universe = make_universe();
+    const auto fluid = make_fluid();
+    const auto searcher = make_searcher(universe, fluid);
+
+    DummyCodec codec(universe, fluid, searcher);
+
+    atlas::DeviceBuffer<int> fixed_solver(static_cast<std::size_t>(universe->number_of_cells()), 2);
+    atlas::DeviceBuffer<int> fixed_region(static_cast<std::size_t>(universe->number_of_cells()), 1);
+
+    codec.set_fixed_solver(fixed_solver);
+    codec.set_fixed_region(fixed_region);
+
+    EXPECT_EQ(codec.fixed_solver()[0], 2);
+    EXPECT_EQ(codec.fixed_region()[0], 1);
+
+    atlas::DeviceBuffer<int> wrong_size(1, 0);
+    EXPECT_THROW(codec.set_fixed_solver(wrong_size), std::invalid_argument);
+    EXPECT_THROW(codec.set_fixed_region(wrong_size), std::invalid_argument);
 }

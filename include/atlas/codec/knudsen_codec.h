@@ -173,6 +173,29 @@ public:
     with_characteristic_length(T characteristic_length) noexcept;
 
     /**
+     * @brief Sets solver indices used for fixed-region cells.
+     *
+     * The buffer must be empty or match the universe cell count.
+     *
+     * @param fixed_solver Per-cell solver indices for fixed-region cells.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fixed_solver(DeviceBuffer<int> fixed_solver) noexcept;
+
+    /**
+     * @brief Sets the fixed-region mask.
+     *
+     * Cells with value `1` are skipped during encode/decode classification and
+     * decoded from the fixed solver buffer.
+     *
+     * @param fixed_region Per-cell fixed-region mask.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fixed_region(DeviceBuffer<int> fixed_region) noexcept;
+
+    /**
      * @brief Builds a KnudsenCodec instance.
      *
      * @return Constructed KnudsenCodec object.
@@ -211,6 +234,8 @@ private:
     FluidHostPtr<T> _fluid {};
     SpatialHashingSearcherHostPtr<T> _searcher {};
     T _characteristic_length = T(1);
+    DeviceBuffer<int> _fixed_solver {};
+    DeviceBuffer<int> _fixed_region {};
 };
 
 } // namespace atlas::system

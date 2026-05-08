@@ -139,6 +139,29 @@ public:
     with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
 
     /**
+     * @brief Sets solver indices used for fixed-region cells.
+     *
+     * The buffer must be empty or match the universe cell count.
+     *
+     * @param fixed_solver Per-cell solver indices for fixed-region cells.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fixed_solver(DeviceBuffer<int> fixed_solver) noexcept;
+
+    /**
+     * @brief Sets the fixed-region mask.
+     *
+     * Cells with value `1` are fixed to the matching solver index from the
+     * fixed solver buffer when a derived implementation decodes them.
+     *
+     * @param fixed_region Per-cell fixed-region mask.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fixed_region(DeviceBuffer<int> fixed_region) noexcept;
+
+    /**
      * @brief Builds a DeepLearningCodec instance.
      *
      * @return Constructed DeepLearningCodec object.
@@ -184,6 +207,16 @@ private:
      * @brief Spatial hashing searcher dependency used by the codec.
      */
     SpatialHashingSearcherHostPtr<T> _searcher {};
+
+    /**
+     * @brief Per-cell solver indices for fixed-region cells.
+     */
+    DeviceBuffer<int> _fixed_solver {};
+
+    /**
+     * @brief Per-cell fixed-region mask.
+     */
+    DeviceBuffer<int> _fixed_region {};
 };
 
 } // namespace atlas::system

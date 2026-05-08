@@ -29,6 +29,8 @@ void
 Codec<T>::reset() noexcept {
     const auto num_of_cells = _universe->number_of_cells();
     d_allocated_solver.resize(num_of_cells, 0);
+    d_fixed_solver.resize(num_of_cells, 0);
+    d_fixed_region.resize(num_of_cells, 0);
 }
 
 template <typename T>
@@ -41,6 +43,52 @@ template <typename T>
 const DeviceBuffer<int>&
 Codec<T>::allocated_solver() const noexcept {
     return d_allocated_solver;
+}
+
+template <typename T>
+void
+Codec<T>::set_fixed_solver(DeviceBuffer<int> fixed_solver) {
+    if (_universe && !fixed_solver.empty()) {
+        atlas::check<std::invalid_argument>(
+            fixed_solver.size() == static_cast<std::size_t>(_universe->number_of_cells()))
+            << "Codec: fixed_solver size must match universe cell count.";
+    }
+    d_fixed_solver = std::move(fixed_solver);
+}
+
+template <typename T>
+DeviceBuffer<int>&
+Codec<T>::fixed_solver() noexcept {
+    return d_fixed_solver;
+}
+
+template <typename T>
+const DeviceBuffer<int>&
+Codec<T>::fixed_solver() const noexcept {
+    return d_fixed_solver;
+}
+
+template <typename T>
+void
+Codec<T>::set_fixed_region(DeviceBuffer<int> fixed_region) {
+    if (_universe && !fixed_region.empty()) {
+        atlas::check<std::invalid_argument>(
+            fixed_region.size() == static_cast<std::size_t>(_universe->number_of_cells()))
+            << "Codec: fixed_region size must match universe cell count.";
+    }
+    d_fixed_region = std::move(fixed_region);
+}
+
+template <typename T>
+DeviceBuffer<int>&
+Codec<T>::fixed_region() noexcept {
+    return d_fixed_region;
+}
+
+template <typename T>
+const DeviceBuffer<int>&
+Codec<T>::fixed_region() const noexcept {
+    return d_fixed_region;
 }
 
 template <typename T>
@@ -69,6 +117,12 @@ Codec<T>::make_probe(CodecProbe& probe) noexcept {
     probe.allocated_solver_ptr = d_allocated_solver.empty()
         ? nullptr
         : atlas::raw_pointer_cast(d_allocated_solver.data());
+    probe.fixed_solver_ptr     = d_fixed_solver.empty()
+        ? nullptr
+        : atlas::raw_pointer_cast(d_fixed_solver.data());
+    probe.fixed_region_ptr     = d_fixed_region.empty()
+        ? nullptr
+        : atlas::raw_pointer_cast(d_fixed_region.data());
     probe.indices_ptr          = _searcher->indices();
     probe.cell_start_ptr       = _searcher->cell_start();
     probe.cell_end_ptr         = _searcher->cell_end();

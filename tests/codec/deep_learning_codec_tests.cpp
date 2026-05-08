@@ -54,6 +54,25 @@ TEST(DeepLearningCodec, BuilderConstructsCodecWithAllocatedSolverBuffer) {
     EXPECT_EQ(codec.allocated_solver().size(), static_cast<std::size_t>(universe->number_of_cells()));
 }
 
+TEST(DeepLearningCodec, BuilderAppliesFixedBuffers) {
+    const auto universe = make_universe();
+    const auto fluid = make_fluid();
+    const auto searcher = make_searcher(universe, fluid);
+    atlas::DeviceBuffer<int> fixed_solver(static_cast<std::size_t>(universe->number_of_cells()), 3);
+    atlas::DeviceBuffer<int> fixed_region(static_cast<std::size_t>(universe->number_of_cells()), 1);
+
+    auto codec = atlas::system::DeepLearningCodec<T>::builder()
+                     .with_domain(universe)
+                     .with_fluid(fluid)
+                     .with_searcher(searcher)
+                     .with_fixed_solver(fixed_solver)
+                     .with_fixed_region(fixed_region)
+                     .build();
+
+    EXPECT_EQ(codec.fixed_solver()[0], 3);
+    EXPECT_EQ(codec.fixed_region()[0], 1);
+}
+
 TEST(DeepLearningCodec, BuilderRejectsMissingDependencies) {
     const auto universe = make_universe();
     const auto fluid = make_fluid();
