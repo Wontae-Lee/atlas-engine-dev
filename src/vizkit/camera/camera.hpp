@@ -5,6 +5,69 @@
 namespace atlas::vizkit {
 
 inline void
+Camera::set_axis_view(const int index) noexcept {
+    constexpr float pi = static_cast<float>(M_PI);
+    constexpr float half_pi = pi * 0.5f;
+    constexpr float top_pitch = half_pi - 0.001f;
+
+    switch (index) {
+    case 0: // front
+        yaw = half_pi;
+        pitch = 0.0f;
+        break;
+    case 1: // back
+        yaw = -half_pi;
+        pitch = 0.0f;
+        break;
+    case 2: // top
+        yaw = half_pi;
+        pitch = top_pitch;
+        break;
+    case 3: // bottom
+        yaw = half_pi;
+        pitch = -top_pitch;
+        break;
+    case 4: // left
+        yaw = 0.0f;
+        pitch = 0.0f;
+        break;
+    case 5: // right
+        yaw = pi;
+        pitch = 0.0f;
+        break;
+    case 6: // perspective
+        yaw = -0.9f;
+        pitch = 0.45f;
+        break;
+    default:
+        break;
+    }
+}
+
+inline void
+Camera::handle_view_shortcuts(GLFWwindow* w) noexcept {
+    if (w == nullptr) return;
+
+    const int keys[7] = {
+        GLFW_KEY_1,
+        GLFW_KEY_2,
+        GLFW_KEY_3,
+        GLFW_KEY_4,
+        GLFW_KEY_5,
+        GLFW_KEY_6,
+        GLFW_KEY_7,
+    };
+
+    for (int i = 0; i < 7; ++i) {
+        const bool pressed = glfwGetKey(w, keys[i]) == GLFW_PRESS;
+        if (pressed && !view_key_down[i]) {
+            set_axis_view(i);
+        }
+        view_key_down[i] = pressed;
+    }
+}
+
+inline void
 Camera::init_mouse_controls(GLFWwindow* w) {
     // Initialize mouse interaction bindings for this camera.
     //
@@ -108,6 +171,8 @@ Camera::handle(GLFWwindow* w) {
     last_cursor_y = cursor_y;
 
     // --- Keyboard controls ---
+    handle_view_shortcuts(w);
+
     // Horizontal orbit
     if (glfwGetKey(w, GLFW_KEY_A) == GLFW_PRESS) yaw -= 0.02f;
     if (glfwGetKey(w, GLFW_KEY_D) == GLFW_PRESS) yaw += 0.02f;
@@ -127,7 +192,8 @@ Camera::handle(GLFWwindow* w) {
     pending_scroll_zoom = 0.0f;
 
     // Clamp pitch to avoid flipping (gimbal lock-like behavior).
-    pitch = fminf(fmaxf(pitch, -1.2f), 1.2f);
+    constexpr float max_pitch = static_cast<float>(M_PI) * 0.5f - 0.001f;
+    pitch = fminf(fmaxf(pitch, -max_pitch), max_pitch);
 
     // Clamp distance to maintain reasonable zoom bounds.
     dist = fminf(fmaxf(dist, min_dist), max_dist);

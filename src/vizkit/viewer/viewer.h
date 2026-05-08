@@ -90,6 +90,7 @@
  */
 
 #include <atlas/system/system.h>
+#include <atlas/math/vector/vector4.h>
 #include <vizkit/camera/camera.h>
 #include <vizkit/layer/layer.h>
 #include <vizkit/macros/macros.h>
@@ -188,13 +189,15 @@ public:
      * @param height Window height in pixels.
      * @param title Window title string.
      * @param fullscreen Whether the viewer should open in fullscreen mode.
+     * @param background_color RGBA color used when clearing the frame buffer.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Viewer(SystemHostPtr<T> system,
            int width,
            int height,
            const char* title,
-           bool fullscreen) noexcept;
+           bool fullscreen,
+           const Vector4<T>& background_color = Vector4<T>(T(0.08), T(0.09), T(0.12), T(1))) noexcept;
 
     /**
      * @brief Destructor.
@@ -363,6 +366,11 @@ private:
     bool _fullscreen = false;
 
     /**
+     * @brief RGBA color used to clear the framebuffer before rendering each frame.
+     */
+    Vector4<T> _background_color { T(0.08), T(0.09), T(0.12), T(1) };
+
+    /**
      * @brief Owned GLFW window handle.
      *
      * @details
@@ -472,6 +480,15 @@ public:
     with_fullscreen(bool fullscreen = true) noexcept;
 
     /**
+     * @brief Set the viewer background clear color.
+     *
+     * @param color RGBA color used when clearing the frame buffer.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_background_color(const Vector4<T>& color) noexcept;
+
+    /**
      * @brief Build a configured @ref Viewer by value after validation.
      *
      * @return Constructed viewer instance.
@@ -523,6 +540,11 @@ private:
      * @brief Pending fullscreen flag.
      */
     bool _fullscreen = false;
+
+    /**
+     * @brief Pending background clear color.
+     */
+    Vector4<T> _background_color { T(0.08), T(0.09), T(0.12), T(1) };
 };
 
 } // namespace atlas::vizkit

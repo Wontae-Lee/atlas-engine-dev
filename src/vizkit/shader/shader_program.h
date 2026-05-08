@@ -134,6 +134,36 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE GLint
     uniform_loc(const char* name) const;
 
+    /**
+     * @brief Upload a 4x4 float matrix uniform if it exists in the shader.
+     *
+     * @param name Uniform name.
+     * @param value Pointer to 16 contiguous float values.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_mat4(const char* name, const float* value) const;
+
+    /**
+     * @brief Upload an RGBA float vector uniform if it exists in the shader.
+     *
+     * @param name Uniform name.
+     * @param x First component.
+     * @param y Second component.
+     * @param z Third component.
+     * @param w Fourth component.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_vec4(const char* name, float x, float y, float z, float w) const;
+
+    /**
+     * @brief Upload a scalar float uniform if it exists in the shader.
+     *
+     * @param name Uniform name.
+     * @param value Uniform value.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_float(const char* name, float value) const;
+
 private:
     /**
      * @brief OpenGL program handle.

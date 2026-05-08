@@ -12,12 +12,14 @@ Viewer<T>::Viewer(SystemHostPtr<T> system,
                   int width,
                   int height,
                   const char* title,
-                  bool fullscreen) noexcept
+                  bool fullscreen,
+                  const Vector4<T>& background_color) noexcept
     : _system(std::move(system))
     , _width(width)
     , _height(height)
     , _title(title ? title : "Atlas Viewer")
-    , _fullscreen(fullscreen) {
+    , _fullscreen(fullscreen)
+    , _background_color(background_color) {
     // Construct a viewer with its initial runtime configuration.
     //
     // Stored configuration:
@@ -26,6 +28,7 @@ Viewer<T>::Viewer(SystemHostPtr<T> system,
     // - _height     : requested window height
     // - _title      : window title, defaulting to "Atlas Viewer" when null
     // - _fullscreen : whether the viewer opens in fullscreen mode
+    // - _background_color : framebuffer clear color
     //
     // This constructor only stores configuration.
     // OpenGL / GLFW resources are created later in init_gl().
@@ -259,7 +262,11 @@ Viewer<T>::main_loop() {
         glViewport(0, 0, fbw, fbh);
 
         // Clear the color and depth buffers for a new frame.
-        glClearColor(0.08f, 0.09f, 0.12f, 1.0f);
+        glClearColor(
+            static_cast<GLfloat>(_background_color.x),
+            static_cast<GLfloat>(_background_color.y),
+            static_cast<GLfloat>(_background_color.z),
+            static_cast<GLfloat>(_background_color.w));
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Update and draw each registered layer.
@@ -356,6 +363,14 @@ Viewer<T>::Builder::with_fullscreen(bool fullscreen) noexcept {
 }
 
 template <typename T>
+typename Viewer<T>::Builder&
+Viewer<T>::Builder::with_background_color(const Vector4<T>& color) noexcept {
+    // Stage the framebuffer clear color used by the render loop.
+    _background_color = color;
+    return *this;
+}
+
+template <typename T>
 void
 Viewer<T>::Builder::validate() const {
     // Validate all required viewer configuration before construction.
@@ -383,7 +398,7 @@ Viewer<T>
 Viewer<T>::Builder::build() const {
     // Validate builder state before constructing the viewer by value.
     validate();
-    return Viewer<T>(_system, _width, _height, _title, _fullscreen);
+    return Viewer<T>(_system, _width, _height, _title, _fullscreen, _background_color);
 }
 
 template <typename T>

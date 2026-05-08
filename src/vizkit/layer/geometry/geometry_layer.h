@@ -213,6 +213,30 @@ public:
     set_color(const Vector4<T>& color) noexcept;
 
     /**
+     * @brief Set the overlay edge color used for triangle geometry.
+     *
+     * @param color Edge RGBA color.
+     */
+    ATLAS_HOST void
+    set_edge_color(const Vector4<T>& color) noexcept;
+
+    /**
+     * @brief Set the line width used by line primitives and triangle edge overlays.
+     *
+     * @param width OpenGL line width in pixels.
+     */
+    ATLAS_HOST void
+    set_line_width(T width) noexcept;
+
+    /**
+     * @brief Enable or disable triangle edge overlay rendering.
+     *
+     * @param enabled Whether triangle geometry should draw a line overlay.
+     */
+    ATLAS_HOST void
+    set_edge_overlay(bool enabled) noexcept;
+
+    /**
      * @brief Release GPU resources owned by this layer.
      *
      * @details
@@ -323,6 +347,21 @@ protected:
      * @brief RGBA render color used when drawing the geometry.
      */
     Vector4<T> _color { T(0.90), T(0.95), T(1.00), T(1.00) };
+
+    /**
+     * @brief RGBA edge color used for triangle wire overlays.
+     */
+    Vector4<T> _edge_color { T(0.12), T(0.17), T(0.24), T(0.95) };
+
+    /**
+     * @brief Width used for line primitives and triangle edge overlays.
+     */
+    T _line_width { T(2.0) };
+
+    /**
+     * @brief Whether triangle layers should render an additional edge overlay pass.
+     */
+    bool _edge_overlay = true;
 
     /**
      * @brief Owned shader program used to render the geometry layer.

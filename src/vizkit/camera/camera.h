@@ -34,6 +34,7 @@
  * - left mouse drag → orbit rotation (yaw/pitch),
  * - right mouse drag → optional alternate interaction (implementation-defined),
  * - scroll wheel → zoom in/out via `dist`,
+ * - number keys 1-7 → snap to front, back, top, bottom, left, right, and perspective views,
  * - cursor state is tracked internally to compute deltas.
  *
  * The camera stores internal flags to ensure proper initialization and smooth
@@ -174,6 +175,11 @@ struct Camera {
     float pending_scroll_zoom = 0.0f;
 
     /**
+     * @brief Previous pressed state for number-key view shortcuts.
+     */
+    bool view_key_down[7] { false, false, false, false, false, false, false };
+
+    /**
      * @brief Process user input and update camera state.
      *
      * @details
@@ -217,6 +223,22 @@ struct Camera {
     fit_bounds(const Vector3F& lower, const Vector3F& upper) noexcept;
 
 private:
+    /**
+     * @brief Snap the orbit camera to one of the canonical axis views.
+     *
+     * @param index View index: 0 front, 1 back, 2 top, 3 bottom, 4 left, 5 right, 6 perspective.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_axis_view(int index) noexcept;
+
+    /**
+     * @brief Process keyboard shortcuts that snap the camera to canonical views.
+     *
+     * @param w Pointer to the GLFW window.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    handle_view_shortcuts(GLFWwindow* w) noexcept;
+
     /**
      * @brief Initialize mouse interaction state.
      *
