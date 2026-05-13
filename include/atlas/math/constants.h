@@ -33,6 +33,9 @@ namespace math {
 // Uses the C math macro M_PI (platform/defines dependent).
 constexpr double pi = M_PI;
 
+// Square root of two.
+constexpr double SQRT_TWO = 1.4142135623730950488;
+
 // Boltzmann constant in SI units (J/K = kg m^2 s^-2 K^-1).
 // Useful for Maxwell-Boltzmann thermal velocity and kinetic theory formulas.
 constexpr double boltzmann_constant = 1.380649e-23;
