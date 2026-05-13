@@ -31,7 +31,7 @@ namespace config {
      * around the configured bulk inflow velocity.
      */
     constexpr T kTemperature           = 300.0f;
-    constexpr T kDt                    = 2.5e-5f;
+    constexpr T kDt                    = 2.5e-6f;
     constexpr std::size_t kBufferSize  = 1000000;
     constexpr T kNitrogenMolecularMass = 4.651734e-26f;
     constexpr T kNitrogenDiameter      = 4.17e-10f;

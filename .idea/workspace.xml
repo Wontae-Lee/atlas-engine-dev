@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="3" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="12" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
@@ -150,6 +150,7 @@
       <config projectName="atlas-engine-dev" targetName="absl_leak_check" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="internal_threading_test" />
       <config projectName="atlas-engine-dev" targetName="absl_kernel_timeout_internal" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="cylinder_rarefied_gas" />
       <config projectName="atlas-engine-dev" targetName="link_main_test" />
       <config projectName="atlas-engine-dev" targetName="options_test" />
       <config projectName="atlas-engine-dev" targetName="user_counters_threads_test" />
@@ -180,7 +181,6 @@
       <config projectName="atlas-engine-dev" targetName="libprotobuf-lite" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_tuple" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_spatial" />
-      <config projectName="atlas-engine-dev" targetName="cylinder" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_math_vector" />
       <config projectName="atlas-engine-dev" targetName="absl_strings_internal" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="absl_base" folderName="Abseil" />
@@ -199,6 +199,7 @@
       <config projectName="atlas-engine-dev" targetName="atlas_tests_collider" />
       <config projectName="atlas-engine-dev" targetName="memory_results_gtest" />
       <config projectName="atlas-engine-dev" targetName="absl_poison" folderName="Abseil/internal" />
+      <config projectName="atlas-engine-dev" targetName="honeycomb" />
       <config projectName="atlas-engine-dev" targetName="gmock_main" />
       <config projectName="atlas-engine-dev" targetName="filter_test" />
       <config projectName="atlas-engine-dev" targetName="absl_flags_private_handle_accessor" folderName="Abseil/internal" />
@@ -254,6 +255,7 @@
       <config projectName="atlas-engine-dev" targetName="ExperimentalStart" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_sink" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_solver_sph" />
+      <config projectName="atlas-engine-dev" targetName="cylinder_continum" />
       <config projectName="atlas-engine-dev" targetName="NightlyTest" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="absl_time" folderName="Abseil" />
       <config projectName="atlas-engine-dev" targetName="absl_log_severity" folderName="Abseil/internal" />
@@ -289,14 +291,125 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactoried codes for device-view and cleaned comments.">
-      <change afterPath="$PROJECT_DIR$/docs/atlas-engine-logo.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/buffer/device_buffer_tests.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/buffer/device_buffer_tests.cu" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/buffer/host_buffer_tests.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/buffer/host_buffer_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/solver/dsmc_disjoint_pair_solver_benchmark.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/developers/abbreviation.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/honeycomb/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/honeycomb/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/math/vector/vector3.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/math/vector/vector3.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/random/seed.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/random/seed.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/shuffle/shuffle_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/shuffle/shuffle_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/shuffle/shuffle_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/shuffle/shuffle_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/wendland_quintic_sph_kernel.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/wendland_quintic_sph_kernel.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/spawn_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/spawn_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/axis_aligned_bounding_box.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/bvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/bvh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/lbvh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/node.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/node.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/spatial/bounding_volume_hierarchy/sah_bvh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sync/sync.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sync/sync.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sync/sync.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sync/sync.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sync/sync_operator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sync/sync_operator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sync/sync_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sync/sync_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/system/system.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/system/system.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/unit/unit.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/unit/unit.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/unit/unit.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/unit/unit.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/universe/universe.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/universe/universe.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/codec/codec_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/codec/codec_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/codec/deep_learning_codec_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/codec/deep_learning_codec_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/collider/collider_surface_interaction_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/collider/collider_surface_interaction_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/collider/collider_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/collider/collider_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/container/container_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/container/container_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/fluid/fluid_state_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/fluid/fluid_state_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/fluid/fluid_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/fluid/fluid_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/generator/generate_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/generator/generate_operator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/generator/generator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/generator/generator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/generator/jittering_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/generator/jittering_operator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/generator/maxwell_boltzmann_generator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/generator/maxwell_boltzmann_generator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/generator/maxwell_sigma_generator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/generator/maxwell_sigma_generator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/generator/uniform_generator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/generator/uniform_generator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/geometry/box_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/box_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/geometry/circle_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/circle_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/geometry/cylinder_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/cylinder_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/geometry/geometry_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/geometry_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/geometry/plane_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/plane_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/geometry/sphere_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/sphere_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/geometry/square_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/square_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/geometry/triangle_mesh_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/triangle_mesh_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/geometry/triangle_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/geometry/triangle_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/indexer/device_pair_indexer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/indexer/device_pair_indexer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/iterator/counting_iterator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/iterator/counting_iterator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/iterator/zip_iterator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/iterator/zip_iterator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/material/material_properties_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/material/material_properties_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/math/matrix/matrix2x2_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/math/matrix/matrix2x2_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/math/matrix/matrix3x3_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/math/matrix/matrix3x3_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/math/matrix/matrix4x4_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/math/matrix/matrix4x4_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/math/matrix/matrix_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/math/matrix/matrix_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/math/quaternion_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/math/quaternion_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/math/vector/vector2_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/math/vector/vector2_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/math/vector/vector3_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/math/vector/vector3_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/math/vector/vector4_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/math/vector/vector4_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/math/vector/vector_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/math/vector/vector_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/measurer/boltzman_measurer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measurer/boltzman_measurer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/measurer/measurer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/measurer/measurer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/memory/copy_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/memory/copy_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/memory/memory_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/memory/memory_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/memory/raw_pointer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/memory/raw_pointer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/observer/observer_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/observer/observer_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/orchestrator/orchestrator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/orchestrator/orchestrator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/parallel/parallel_fill_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/parallel/parallel_fill_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/parallel/parallel_for_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/parallel/parallel_for_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/parallel/parallel_sort_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/parallel/parallel_sort_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/parallel/parallel_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/parallel/parallel_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/random/default_random_engine_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/random/default_random_engine_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/random/seed_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/random/seed_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/random/uniform_real_distribution_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/random/uniform_real_distribution_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/remove/remove_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/remove/remove_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/sampling/sampling_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/sampling/sampling_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/scan/exclusive_scan_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/scan/exclusive_scan_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/searcher/spatial_hashing_searcher_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/searcher/spatial_hashing_searcher_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/serialization/protobuf_snapshot_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/serialization/protobuf_snapshot_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/shuffle/shuffle_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/shuffle/shuffle_operator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/sink/despawn_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/sink/despawn_operator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/sink/sink_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/sink/sink_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_disjoint_pair_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_disjoint_pair_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_kernel_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_kernel_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_ntc_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_ntc_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/hard_sphere_kernel_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/hard_sphere_kernel_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/variable_hard_sphere_kernel_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/variable_hard_sphere_kernel_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/variable_soft_sphere_kernel_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/variable_soft_sphere_kernel_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/sph/sph_gateway_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/sph/sph_gateway_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/sph/sph_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/sph/sph_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/source/source_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/source/source_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/source/spawn_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/source/spawn_operator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/spatial/axis_aligned_bounding_box_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/spatial/axis_aligned_bounding_box_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/bvh_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/bvh_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/lbvh_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/lbvh_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/node_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/node_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/sah_bvh_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/spatial/bounding_volume_hierarchy/sah_bvh_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/spatial/ray_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/spatial/ray_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/sync/sync_operator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/sync/sync_operator_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/sync/sync_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/sync/sync_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/transform/transform_reduce_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/transform/transform_reduce_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/transform/transform_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/transform/transform_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/tuple/tuple_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/tuple/tuple_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/unit/unit_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/unit/unit_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/universe/universe_state_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/universe/universe_state_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/universe/universe_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/universe/universe_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/utilities/tests_utils.h" beforeDir="false" afterPath="$PROJECT_DIR$/tests/utilities/test_utils.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -319,7 +432,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="480" />
+    <option name="cachedIndexableFilesCount" value="488" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -327,6 +440,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="CMakeLists.txt" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -345,7 +459,6 @@
     <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/examples/cylinder/main.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/core/macros.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/fluid/fluid.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/geometry/box.hpp" root0="FORCE_HIGHLIGHTING" />
@@ -391,61 +504,64 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "CMake Application.atlas_all_cuda_test.executor": "Run",
-    "CMake Application.atlas_benchmarks.executor": "Run",
-    "CMake Application.atlas_cuda_tests.executor": "Run",
-    "CMake Application.atlas_unit_cuda_tests.executor": "Run",
-    "CMake Application.cube_gravity_inflow.executor": "Run",
-    "CMake Application.cylinder.executor": "Run",
-    "CMake Application.dynamic.executor": "Run",
-    "CMake Application.inflow.executor": "Run",
-    "CMake Application.intake.executor": "Run",
-    "CMake Application.lh2_waterfall.executor": "Run",
-    "CMake Application.orchestrator.executor": "Run",
-    "CMake Application.overview.executor": "Run",
-    "CMake Application.solver.executor": "Run",
-    "CMake Application.visualization.executor": "Run",
-    "CMake Application.waterfall.executor": "Run",
-    "Google Test.All in atlas_tests.executor": "Run",
-    "Google Test.Sink.BuilderRejectsMissingDependencies.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.edit_code.executor": "Run",
-    "Python.generate_headers.executor": "Run",
-    "Python.remove_comments.executor": "Run",
-    "Python.remove_space.executor": "Run",
-    "Python.temp.executor": "Run",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.RadMigrateCodeStyle": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "RunOnceActivity.west.config.association.type.startup.service": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "cf.advertisement.text.overridden": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "ctest.advertisement.all.test.configuration.is.created": "true",
-    "git-widget-placeholder": "development",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/examples/orchestrator",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "org.rust.first.attach.projects": "true",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "CMakeSettings",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;CMake Application.atlas_all_cuda_test.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.atlas_benchmarks.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.atlas_cuda_tests.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.atlas_unit_cuda_tests.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.cube_gravity_inflow.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.cylinder.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.dynamic.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.honeycomb.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.inflow.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.intake.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.lh2_waterfall.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.orchestrator.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.overview.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.solver.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.visualization.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.waterfall.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.All in atlas_tests.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.Sink.BuilderRejectsMissingDependencies.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.atlas_tests_universe.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.edit_code.executor&quot;: &quot;Run&quot;,
+    &quot;Python.generate_headers.executor&quot;: &quot;Run&quot;,
+    &quot;Python.remove_comments.executor&quot;: &quot;Run&quot;,
+    &quot;Python.remove_space.executor&quot;: &quot;Run&quot;,
+    &quot;Python.temp.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.west.config.association.type.startup.service&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;cf.advertisement.text.overridden&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;ctest.advertisement.all.test.configuration.is.created&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;development&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/wontae/CLionProjects/atlas-engine-dev/examples&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;CMakeSettings&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="main" />
@@ -455,11 +571,11 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/examples" />
       <recent name="$PROJECT_DIR$/examples/orchestrator" />
       <recent name="$PROJECT_DIR$/examples/waterfall" />
       <recent name="$PROJECT_DIR$/examples/intake" />
       <recent name="$PROJECT_DIR$/include/atlas/universe" />
-      <recent name="$PROJECT_DIR$/include/atlas/measure" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/cudatest" />
@@ -469,7 +585,7 @@
       <recent name="$PROJECT_DIR$/tests" />
     </key>
   </component>
-  <component name="RunManager" selected="CMake Application.atlas-logging">
+  <component name="RunManager" selected="Google Test.All in atlas_tests">
     <configuration default="true" type="UvRunConfigurationType" factoryName="UvRunConfigurationType">
       <option name="args">
         <list />
@@ -500,6 +616,12 @@
       </method>
     </configuration>
     <configuration name="Sink.BuilderRejectsMissingDependencies" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" temporary="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_CLASS="Sink" TEST_METHOD="BuilderRejectsMissingDependencies" TEST_MODE="SUITE_TEST">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="BeforeTestRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" temporary="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_universe" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_universe" TEST_CLASS="Universe" TEST_METHOD="StateLifecycleSupportsInsertLookupReplaceAndRemove" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
         <option name="BeforeTestRunTask" enabled="true" />
@@ -736,17 +858,22 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="cylinder" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="cylinder" CONFIG_NAME="cuda-debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="cylinder">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="cylinder" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="cylinder" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="cylinder">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="dynamic" type="CMakeRunConfiguration" factoryName="Application" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="dynamic" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="dynamic">
+    <configuration name="cylinder_continum" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="cylinder_continum" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="cylinder_continum">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="cylinder_rarefied_gas" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="cylinder_rarefied_gas" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="cylinder_rarefied_gas">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="honeycomb" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="honeycomb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="honeycomb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -935,28 +1062,9 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="CMake Application.atlas-logging" />
-      <item itemvalue="CMake Application.atlas-serialization" />
-      <item itemvalue="CMake Application.cylinder" />
-      <item itemvalue="CMake Application.dynamic" />
-      <item itemvalue="CMake Application.inflow" />
-      <item itemvalue="CMake Application.intake" />
-      <item itemvalue="CMake Application.libprotobuf-lite" />
-      <item itemvalue="CMake Application.libprotobuf" />
-      <item itemvalue="CMake Application.libprotoc" />
-      <item itemvalue="CMake Application.libupb" />
-      <item itemvalue="CMake Application.orchestrator" />
-      <item itemvalue="CMake Application.protoc-gen-upb" />
-      <item itemvalue="CMake Application.protoc-gen-upb_minitable" />
-      <item itemvalue="CMake Application.protoc-gen-upbdefs" />
-      <item itemvalue="CMake Application.protoc" />
-      <item itemvalue="CMake Application.tinyobjloader" />
-      <item itemvalue="CMake Application.uninstall" />
-      <item itemvalue="CMake Application.utf8_range" />
-      <item itemvalue="CMake Application.utf8_validity" />
-      <item itemvalue="CMake Application.waterfall" />
-      <item itemvalue="CTest Application.All CTest" />
       <item itemvalue="Google Test.All in atlas_tests" />
+      <item itemvalue="Google Test.Sink.BuilderRejectsMissingDependencies" />
+      <item itemvalue="Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove" />
       <item itemvalue="Google Test.atlas_tests_codec" />
       <item itemvalue="Google Test.atlas_tests_collider" />
       <item itemvalue="Google Test.atlas_tests_container" />
@@ -993,7 +1101,37 @@
       <item itemvalue="Google Test.atlas_tests_tuple" />
       <item itemvalue="Google Test.atlas_tests_unit" />
       <item itemvalue="Google Test.atlas_tests_universe" />
+      <item itemvalue="CMake Application.atlas-logging" />
+      <item itemvalue="CMake Application.atlas-serialization" />
+      <item itemvalue="CMake Application.cylinder" />
+      <item itemvalue="CMake Application.cylinder_continum" />
+      <item itemvalue="CMake Application.cylinder_rarefied_gas" />
+      <item itemvalue="CMake Application.honeycomb" />
+      <item itemvalue="CMake Application.inflow" />
+      <item itemvalue="CMake Application.intake" />
+      <item itemvalue="CMake Application.libprotobuf-lite" />
+      <item itemvalue="CMake Application.libprotobuf" />
+      <item itemvalue="CMake Application.libprotoc" />
+      <item itemvalue="CMake Application.libupb" />
+      <item itemvalue="CMake Application.orchestrator" />
+      <item itemvalue="CMake Application.protoc-gen-upb" />
+      <item itemvalue="CMake Application.protoc-gen-upb_minitable" />
+      <item itemvalue="CMake Application.protoc-gen-upbdefs" />
+      <item itemvalue="CMake Application.protoc" />
+      <item itemvalue="CMake Application.tinyobjloader" />
+      <item itemvalue="CMake Application.uninstall" />
+      <item itemvalue="CMake Application.utf8_range" />
+      <item itemvalue="CMake Application.utf8_validity" />
+      <item itemvalue="CMake Application.waterfall" />
+      <item itemvalue="CTest Application.All CTest" />
+      <item itemvalue="Python.generate_headers" />
+      <item itemvalue="Python.remove_comments" />
     </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -1113,7 +1251,20 @@
       <workItem from="1777894473328" duration="2397000" />
       <workItem from="1777900219012" duration="347000" />
       <workItem from="1777903556248" duration="45000" />
-      <workItem from="1777987646836" duration="904000" />
+      <workItem from="1777987646836" duration="8352000" />
+      <workItem from="1778044343995" duration="15000" />
+      <workItem from="1778153846591" duration="83000" />
+      <workItem from="1778153939400" duration="41000" />
+      <workItem from="1778153992823" duration="628000" />
+      <workItem from="1778225526833" duration="2271000" />
+      <workItem from="1778485787262" duration="370000" />
+      <workItem from="1778586477578" duration="63000" />
+      <workItem from="1778586732324" duration="21000" />
+      <workItem from="1778588927241" duration="272000" />
+      <workItem from="1778667647948" duration="2023000" />
+      <workItem from="1778669840013" duration="4079000" />
+      <workItem from="1778673933490" duration="11685000" />
+      <workItem from="1778685932143" duration="11000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

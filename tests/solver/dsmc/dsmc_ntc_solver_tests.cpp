@@ -1,4 +1,4 @@
-#include "../../utilities/tests_utils.h"
+#include "../../utilities/test_utils.h"
 
 #include <atlas/generator/generate_operator.h>
 #include <atlas/material/material_properties.h>
@@ -8,42 +8,56 @@
 
 namespace {
 
-using T = float;
+using atlas::Fluid;
+using atlas::FluidHostPtr;
+using atlas::GeneratorHostPtr;
+using atlas::HostBuffer;
+using atlas::MaterialProperties;
+using atlas::MaterialType;
+using atlas::SpatialHashingSearcherHostPtr;
+using atlas::Universe;
+using atlas::UniverseHostPtr;
+using atlas::Vector3F;
+using atlas::system::DsmcKernelType;
+using atlas::system::DsmcNtcSolver;
+using atlas::system::SpatialHashingSearcher;
+using atlas::universe::UniverseCollisionCountState;
+using atlas::universe::UniverseNumberParticleState;
 
-atlas::UniverseHostPtr<T>
+UniverseHostPtr<float>
 make_universe() {
-    return atlas::universe::Universe<T>::builder()
-        .with_lower_corner(atlas::Vector3<T>(0, 0, 0))
-        .with_upper_corner(atlas::Vector3<T>(1, 1, 1))
+    return Universe<float>::builder()
+        .with_lower_corner(Vector3F(0, 0, 0))
+        .with_upper_corner(Vector3F(1, 1, 1))
         .with_cell_size(1.0f)
         .make_host_shared();
 }
 
-atlas::FluidHostPtr<T>
+FluidHostPtr<float>
 make_fluid() {
-    atlas::HostBuffer<atlas::MaterialProperties<T>> properties;
+    HostBuffer<MaterialProperties<float>> properties;
     properties.push_back(
-        atlas::MaterialProperties<T>::builder()
-            .with_type(atlas::MaterialType::Molecule)
+        MaterialProperties<float>::builder()
+            .with_type(MaterialType::Molecule)
             .with_mass(1.0f)
             .with_molecular_mass(1.0f)
             .with_collision_diameter(1.0f)
             .build());
 
-    atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators;
+    HostBuffer<GeneratorHostPtr<float>> generators;
     generators.push_back(nullptr);
 
-    return atlas::fluid::Fluid<T>::builder()
+    return Fluid<float>::builder()
         .with_buffer_size(4)
         .with_properties(properties)
         .with_generators(generators)
         .make_host_shared();
 }
 
-atlas::SpatialHashingSearcherHostPtr<T>
-make_searcher(const atlas::UniverseHostPtr<T>& universe,
-              const atlas::FluidHostPtr<T>& fluid) {
-    return atlas::system::SpatialHashingSearcher<T>::builder()
+SpatialHashingSearcherHostPtr<float>
+make_searcher(const UniverseHostPtr<float>& universe,
+              const FluidHostPtr<float>& fluid) {
+    return SpatialHashingSearcher<float>::builder()
         .with_universe(universe)
         .with_fluid(fluid)
         .make_host_shared();
@@ -52,38 +66,46 @@ make_searcher(const atlas::UniverseHostPtr<T>& universe,
 } // namespace
 
 TEST(DsmcNtcSolver, ConstructorCreatesRequiredUniverseStates) {
+    // Arrange: create the universe, fluid, and searcher dependencies.
     const auto universe = make_universe();
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    const atlas::system::DsmcNtcSolver<T> solver(universe, fluid, searcher);
+    // Act: construct the solver directly.
+    const DsmcNtcSolver<float> solver(universe, fluid, searcher);
 
-    EXPECT_EQ(solver.kernel_type(), atlas::system::DsmcKernelType::hard_sphere);
-    ASSERT_TRUE(universe->has_state<atlas::universe::UniverseNumberParticleState<T>>());
+    // Assert: construction installs required universe states.
+    EXPECT_EQ(solver.kernel_type(), DsmcKernelType::hard_sphere);
+    ASSERT_TRUE(universe->has_state<UniverseNumberParticleState<float>>());
 }
 
 TEST(DsmcNtcSolver, BuilderConstructsSolverWithKernelType) {
+    // Arrange: create the universe, fluid, and searcher dependencies.
     const auto universe = make_universe();
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    const auto solver = atlas::system::DsmcNtcSolver<T>::builder()
+    // Act: build the solver with a non-default kernel type.
+    const auto solver = DsmcNtcSolver<float>::builder()
                             .with_universe(universe)
                             .with_fluid(fluid)
                             .with_searcher(searcher)
-                            .with_kernel_type(atlas::system::DsmcKernelType::variable_hard_sphere)
+                            .with_kernel_type(DsmcKernelType::variable_hard_sphere)
                             .build();
 
-    EXPECT_EQ(solver.kernel_type(), atlas::system::DsmcKernelType::variable_hard_sphere);
+    // Assert: the configured kernel type is preserved.
+    EXPECT_EQ(solver.kernel_type(), DsmcKernelType::variable_hard_sphere);
 }
 
 TEST(DsmcNtcSolver, SolveIsSafeForEmptyFluid) {
+    // Arrange: create a solver attached to an empty fluid.
     const auto universe = make_universe();
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    atlas::system::DsmcNtcSolver<T> solver(universe, fluid, searcher);
+    DsmcNtcSolver<float> solver(universe, fluid, searcher);
 
+    // Assert: solving an empty fluid is a no-op for collision counts.
     EXPECT_NO_THROW(solver.solve(0.1f));
-    EXPECT_EQ(universe->state<atlas::universe::UniverseCollisionCountState<int>>()->data()[0], 0);
+    EXPECT_EQ(universe->state<UniverseCollisionCountState<int>>()->data()[0], 0);
 }

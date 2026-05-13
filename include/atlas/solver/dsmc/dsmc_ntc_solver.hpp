@@ -37,23 +37,19 @@ DsmcNtcSolver<T>::apply_collisions(const DeviceBuffer<int>* allocated_solver, co
             const int begin = probe.cell_start_ptr[cell];
             const int end   = probe.cell_end_ptr[cell];
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
-                int lhs_local       = 0;
-                const int ordinal   = local_collision % pair_count;
-                const int rhs_local = DsmcSolver<T>::pair_ordinal_to_rhs(count, ordinal, lhs_local);
-                const int particle_i
-                    = DsmcSolver<T>::nth_valid_particle(
-                        lhs_local,
-                        begin,
-                        end,
-                        probe.particle_count,
-                        probe.indices_ptr);
-                const int particle_j
-                    = DsmcSolver<T>::nth_valid_particle(
-                        rhs_local,
-                        begin,
-                        end,
-                        probe.particle_count,
-                        probe.indices_ptr);
+                int lhs_local        = 0;
+                const int ordinal    = local_collision % pair_count;
+                const int rhs_local  = DsmcSolver<T>::pair_ordinal_to_rhs(count, ordinal, lhs_local);
+                const int particle_i = DsmcSolver<T>::nth_valid_particle(lhs_local,
+                                                                         begin,
+                                                                         end,
+                                                                         probe.particle_count,
+                                                                         probe.indices_ptr);
+                const int particle_j = DsmcSolver<T>::nth_valid_particle(rhs_local,
+                                                                         begin,
+                                                                         end,
+                                                                         probe.particle_count,
+                                                                         probe.indices_ptr);
                 if (particle_i < 0 || particle_j < 0) {
                     continue;
                 }

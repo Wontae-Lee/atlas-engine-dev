@@ -1,4 +1,4 @@
-#include "../../utilities/tests_utils.h"
+#include "../../utilities/test_utils.h"
 
 #include <atlas/material/material_properties.h>
 #include <atlas/solver/dsmc/variable_hard_sphere_kernel.h>
@@ -7,12 +7,16 @@
 
 namespace {
 
-using T = float;
+using atlas::MaterialProperties;
+using atlas::MaterialType;
+using atlas::Vector3F;
+using atlas::system::VariableHardSphereKernel;
+using atlas::test::is_finite_vec;
 
-atlas::MaterialProperties<T>
+MaterialProperties<float>
 make_properties() {
-    return atlas::MaterialProperties<T>::builder()
-        .with_type(atlas::MaterialType::Molecule)
+    return MaterialProperties<float>::builder()
+        .with_type(MaterialType::Molecule)
         .with_mass(1.0f)
         .with_molecular_mass(1.0f)
         .with_collision_diameter(1.0f)
@@ -23,18 +27,23 @@ make_properties() {
 } // namespace
 
 TEST(VariableHardSphereKernel, CrossSectionIsPositiveForPositiveSpeed) {
+    // Arrange: create representative material properties.
     const auto properties = make_properties();
 
-    EXPECT_GT(atlas::system::VariableHardSphereKernel<T>::cross_section(properties, properties, 2.0f), 0.0f);
+    // Assert: variable hard-sphere cross section is positive for positive speed.
+    EXPECT_GT(VariableHardSphereKernel<float>::cross_section(properties, properties, 2.0f), 0.0f);
 }
 
 TEST(VariableHardSphereKernel, CollisionPreservesFiniteVelocities) {
+    // Arrange: create a pair of finite velocities and material properties.
     const auto properties = make_properties();
-    atlas::Vector3<T> lhs(1, 0, 0);
-    atlas::Vector3<T> rhs(-1, 0, 0);
+    Vector3F lhs(1, 0, 0);
+    Vector3F rhs(-1, 0, 0);
 
-    atlas::system::VariableHardSphereKernel<T> {}(lhs, rhs, properties, properties);
+    // Act: apply a variable hard-sphere collision.
+    VariableHardSphereKernel<float> {}(lhs, rhs, properties, properties);
 
-    EXPECT_TRUE(atlas::test::is_finite_vec(lhs));
-    EXPECT_TRUE(atlas::test::is_finite_vec(rhs));
+    // Assert: collision output remains finite.
+    EXPECT_TRUE(is_finite_vec(lhs));
+    EXPECT_TRUE(is_finite_vec(rhs));
 }

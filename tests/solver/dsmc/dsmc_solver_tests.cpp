@@ -1,4 +1,4 @@
-#include "../../utilities/tests_utils.h"
+#include "../../utilities/test_utils.h"
 
 #include <atlas/generator/generate_operator.h>
 #include <atlas/material/material_properties.h>
@@ -8,67 +8,86 @@
 
 namespace {
 
-using T = float;
+using atlas::DeviceBuffer;
+using atlas::Fluid;
+using atlas::FluidHostPtr;
+using atlas::GeneratorHostPtr;
+using atlas::HostBuffer;
+using atlas::MaterialProperties;
+using atlas::MaterialType;
+using atlas::SpatialHashingSearcherHostPtr;
+using atlas::Universe;
+using atlas::UniverseHostPtr;
+using atlas::Vector3F;
+using atlas::system::DsmcKernelType;
+using atlas::system::DsmcSolver;
+using atlas::system::SpatialHashingSearcher;
+using atlas::universe::UniverseCollisionCountState;
+using atlas::universe::UniverseMaxRelativeSpeedState;
+using atlas::universe::UniverseNumberParticleState;
 
-atlas::UniverseHostPtr<T>
+UniverseHostPtr<float>
 make_universe() {
-    return atlas::universe::Universe<T>::builder()
-        .with_lower_corner(atlas::Vector3<T>(0, 0, 0))
-        .with_upper_corner(atlas::Vector3<T>(1, 1, 1))
+    return Universe<float>::builder()
+        .with_lower_corner(Vector3F(0, 0, 0))
+        .with_upper_corner(Vector3F(1, 1, 1))
         .with_cell_size(1.0f)
         .make_host_shared();
 }
 
-atlas::FluidHostPtr<T>
+FluidHostPtr<float>
 make_fluid() {
-    atlas::HostBuffer<atlas::MaterialProperties<T>> properties;
+    HostBuffer<MaterialProperties<float>> properties;
     properties.push_back(
-        atlas::MaterialProperties<T>::builder()
-            .with_type(atlas::MaterialType::Molecule)
+        MaterialProperties<float>::builder()
+            .with_type(MaterialType::Molecule)
             .with_mass(1.0f)
             .with_molecular_mass(1.0f)
             .with_collision_diameter(1.0f)
             .build());
 
-    atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators;
+    HostBuffer<GeneratorHostPtr<float>> generators;
     generators.push_back(nullptr);
 
-    return atlas::fluid::Fluid<T>::builder()
+    return Fluid<float>::builder()
         .with_buffer_size(4)
         .with_properties(properties)
         .with_generators(generators)
         .make_host_shared();
 }
 
-atlas::SpatialHashingSearcherHostPtr<T>
-make_searcher(const atlas::UniverseHostPtr<T>& universe,
-              const atlas::FluidHostPtr<T>& fluid) {
-    return atlas::system::SpatialHashingSearcher<T>::builder()
+SpatialHashingSearcherHostPtr<float>
+make_searcher(const UniverseHostPtr<float>& universe,
+              const FluidHostPtr<float>& fluid) {
+    return SpatialHashingSearcher<float>::builder()
         .with_universe(universe)
         .with_fluid(fluid)
         .make_host_shared();
 }
 
-class DummyDsmcSolver final : public atlas::system::DsmcSolver<T> {
+class DummyDsmcSolver final : public DsmcSolver<float> {
 public:
-    using atlas::system::DsmcSolver<T>::DsmcSolver;
+    using DsmcSolver<float>::DsmcSolver;
 
-protected:
+public:
     void
-    apply_collisions(const atlas::DeviceBuffer<int>*, int, T) override { }
+    apply_collisions(const DeviceBuffer<int>*, int, float) override { }
 };
 
 } // namespace
 
 TEST(DsmcSolver, BaseConstructorCreatesRequiredUniverseStates) {
+    // Arrange: create the universe, fluid, and searcher dependencies.
     const auto universe = make_universe();
-    const auto fluid = make_fluid();
+    const auto fluid    = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    const DummyDsmcSolver solver(universe, fluid, searcher, atlas::system::DsmcKernelType::variable_soft_sphere);
+    // Act: construct a concrete test implementation of the DSMC base solver.
+    const DummyDsmcSolver solver(universe, fluid, searcher, DsmcKernelType::variable_soft_sphere);
 
-    EXPECT_EQ(solver.kernel_type(), atlas::system::DsmcKernelType::variable_soft_sphere);
-    ASSERT_TRUE(universe->has_state<atlas::universe::UniverseNumberParticleState<T>>());
-    ASSERT_TRUE(universe->has_state<atlas::universe::UniverseMaxRelativeSpeedState<T>>());
-    ASSERT_TRUE(universe->has_state<atlas::universe::UniverseCollisionCountState<int>>());
+    // Assert: construction preserves kernel type and installs required universe states.
+    EXPECT_EQ(solver.kernel_type(), DsmcKernelType::variable_soft_sphere);
+    ASSERT_TRUE(universe->has_state<UniverseNumberParticleState<float>>());
+    ASSERT_TRUE(universe->has_state<UniverseMaxRelativeSpeedState<float>>());
+    ASSERT_TRUE(universe->has_state<UniverseCollisionCountState<int>>());
 }

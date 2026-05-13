@@ -1,4 +1,4 @@
-#include "../../utilities/tests_utils.h"
+#include "../../utilities/test_utils.h"
 
 #include <atlas/material/material_properties.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
@@ -7,12 +7,15 @@
 
 namespace {
 
-using T = float;
+using atlas::MaterialProperties;
+using atlas::MaterialType;
+using atlas::system::DsmcKernel;
+using atlas::system::DsmcKernelType;
 
-atlas::MaterialProperties<T>
+MaterialProperties<float>
 make_properties() {
-    return atlas::MaterialProperties<T>::builder()
-        .with_type(atlas::MaterialType::Molecule)
+    return MaterialProperties<float>::builder()
+        .with_type(MaterialType::Molecule)
         .with_mass(1.0f)
         .with_molecular_mass(1.0f)
         .with_collision_diameter(1.0f)
@@ -24,21 +27,25 @@ make_properties() {
 } // namespace
 
 TEST(DsmcKernel, DefaultConstructorSelectsHardSphere) {
-    const atlas::system::DsmcKernel<T> kernel;
+    // Arrange: create a default runtime DSMC kernel.
+    const DsmcKernel<float> kernel;
 
-    EXPECT_EQ(kernel.type, atlas::system::DsmcKernelType::hard_sphere);
+    // Assert: the default type is hard sphere.
+    EXPECT_EQ(kernel.type, DsmcKernelType::hard_sphere);
 }
 
 TEST(DsmcKernel, CrossSectionDispatchesForAllKernelTypes) {
+    // Arrange: create representative material properties.
     const auto properties = make_properties();
 
-    EXPECT_GT(atlas::system::DsmcKernel<T>::cross_section(
-                  atlas::system::DsmcKernelType::hard_sphere, properties, properties, 2.0f),
+    // Assert: every runtime kernel variant reports a positive cross section.
+    EXPECT_GT(DsmcKernel<float>::cross_section(
+                  DsmcKernelType::hard_sphere, properties, properties, 2.0f),
               0.0f);
-    EXPECT_GT(atlas::system::DsmcKernel<T>::cross_section(
-                  atlas::system::DsmcKernelType::variable_hard_sphere, properties, properties, 2.0f),
+    EXPECT_GT(DsmcKernel<float>::cross_section(
+                  DsmcKernelType::variable_hard_sphere, properties, properties, 2.0f),
               0.0f);
-    EXPECT_GT(atlas::system::DsmcKernel<T>::cross_section(
-                  atlas::system::DsmcKernelType::variable_soft_sphere, properties, properties, 2.0f),
+    EXPECT_GT(DsmcKernel<float>::cross_section(
+                  DsmcKernelType::variable_soft_sphere, properties, properties, 2.0f),
               0.0f);
 }

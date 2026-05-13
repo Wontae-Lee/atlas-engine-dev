@@ -118,11 +118,11 @@ Codec<T>::make_probe(CodecProbe& probe) noexcept {
         ? nullptr
         : atlas::raw_pointer_cast(d_allocated_solver.data());
     probe.fixed_solver_ptr     = d_fixed_solver.empty()
-        ? nullptr
-        : atlas::raw_pointer_cast(d_fixed_solver.data());
+            ? nullptr
+            : atlas::raw_pointer_cast(d_fixed_solver.data());
     probe.fixed_region_ptr     = d_fixed_region.empty()
-        ? nullptr
-        : atlas::raw_pointer_cast(d_fixed_region.data());
+            ? nullptr
+            : atlas::raw_pointer_cast(d_fixed_region.data());
     probe.indices_ptr          = _searcher->indices();
     probe.cell_start_ptr       = _searcher->cell_start();
     probe.cell_end_ptr         = _searcher->cell_end();

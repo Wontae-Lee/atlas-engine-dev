@@ -42,18 +42,17 @@ DsmcDisjointPairSolver<T>::apply_collisions(const DeviceBuffer<int>* allocated_s
             for (int local_collision = 0; local_collision < collision_limit; ++local_collision) {
                 const int lhs_local  = local_collision * 2;
                 const int rhs_local  = lhs_local + 1;
-                const int particle_i = DsmcSolver<T>::nth_valid_particle(
-                    lhs_local,
-                    begin,
-                    end,
-                    probe.particle_count,
-                    probe.indices_ptr);
-                const int particle_j = DsmcSolver<T>::nth_valid_particle(
-                    rhs_local,
-                    begin,
-                    end,
-                    probe.particle_count,
-                    probe.indices_ptr);
+                const int particle_i = DsmcSolver<T>::nth_valid_particle(lhs_local,
+                                                                         begin,
+                                                                         end,
+                                                                         probe.particle_count,
+                                                                         probe.indices_ptr);
+
+                const int particle_j = DsmcSolver<T>::nth_valid_particle(rhs_local,
+                                                                         begin,
+                                                                         end,
+                                                                         probe.particle_count,
+                                                                         probe.indices_ptr);
                 if (particle_i < 0 || particle_j < 0) {
                     continue;
                 }
@@ -65,11 +64,11 @@ DsmcDisjointPairSolver<T>::apply_collisions(const DeviceBuffer<int>* allocated_s
                 }
                 Vector3<T> lhs_velocity = probe.velocity_ptr[particle_i];
                 Vector3<T> rhs_velocity = probe.velocity_ptr[particle_j];
-                probe.kernel(
-                    lhs_velocity,
-                    rhs_velocity,
-                    probe.properties_ptr[species_i],
-                    probe.properties_ptr[species_j]);
+
+                probe.kernel(lhs_velocity,
+                             rhs_velocity,
+                             probe.properties_ptr[species_i],
+                             probe.properties_ptr[species_j]);
                 probe.velocity_ptr[particle_i] = lhs_velocity;
                 probe.velocity_ptr[particle_j] = rhs_velocity;
             }

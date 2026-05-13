@@ -629,6 +629,7 @@ template <typename T>
 using Vector3  = math::Vector<T, 3>;
 using Vector3F = Vector3<float>;
 using Vector3D = Vector3<double>;
+using Vector3I = Vector3<int>;
 using Point3UI = Vector3<std::uint32_t>;
 
 } // namespace atlas

@@ -14,8 +14,9 @@ namespace atlas::physics {
  * @brief Represents a physical unit that couples geometry, synchronization state,
  *        and optional kinematic properties.
  *
- * This class stores the geometry access operator, the synchronization/operator state
- * used for spatial transforms, and optional linear/angular kinematics.
+ * This class stores a geometry operator, a synchronization operator, and optional
+ * linear/angular kinematic quantities. Transform interpretation is delegated to
+ * the synchronization operator.
  *
  * A unit can behave as:
  * - static, when no velocity information is present
@@ -55,9 +56,8 @@ public:
      * @param sync_operator Synchronization/operator object containing transform state.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Unit(
-        atlas::GeometryOperator<T> geometry_operator,
-        SyncOperator<T> sync_operator) noexcept;
+    Unit(atlas::GeometryOperator<T> geometry_operator,
+         SyncOperator<T> sync_operator) noexcept;
 
     /**
      * @brief Constructs a unit with geometry, sync, and optional kinematic quantities.
@@ -68,19 +68,18 @@ public:
      *
      * @param geometry_operator Geometry access/operator object.
      * @param sync_operator Synchronization/operator object containing transform state.
-     * @param velocity Optional linear velocity in world space.
-     * @param acceleration Optional linear acceleration in world space.
-     * @param angular_velocity Optional angular velocity vector in world space.
-     * @param angular_acceleration Optional angular acceleration vector in world space.
+     * @param velocity Optional linear velocity.
+     * @param acceleration Optional linear acceleration.
+     * @param angular_velocity Optional angular velocity vector.
+     * @param angular_acceleration Optional angular acceleration vector.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Unit(
-        atlas::GeometryOperator<T> geometry_operator,
-        SyncOperator<T> sync_operator,
-        std::optional<Vector<T, 3>> velocity,
-        std::optional<Vector<T, 3>> acceleration,
-        std::optional<Vector<T, 3>> angular_velocity,
-        std::optional<Vector<T, 3>> angular_acceleration) noexcept;
+    Unit(atlas::GeometryOperator<T> geometry_operator,
+         SyncOperator<T> sync_operator,
+         std::optional<Vector<T, 3>> velocity,
+         std::optional<Vector<T, 3>> acceleration,
+         std::optional<Vector<T, 3>> angular_velocity,
+         std::optional<Vector<T, 3>> angular_acceleration) noexcept;
 
     /**
      * @brief Creates a builder instance for host-side construction.
@@ -113,7 +112,6 @@ public:
      * accelerations, then applies translation and rotation to the sync state.
      *
      * If @p dt is not strictly positive, the function does nothing.
-     * If the unit is not dynamic, the function does nothing.
      *
      * @param dt Time step in seconds.
      */
@@ -121,24 +119,132 @@ public:
     update(T dt) noexcept;
 
     /**
-     * @brief Applies a world-space translation to the unit.
+     * @brief Translates the unit by applying a displacement vector.
      *
-     * @param delta_world Translation vector in world coordinates.
+     * This function updates the translation component stored in the synchronization
+     * operator by adding the given displacement vector to the current translation.
+     *
+     * Mathematically, if the current translation is @f$\mathbf{x}@f$ and the input
+     * displacement is @f$\Delta \mathbf{x}@f$, the updated translation is
+     *
+     * @f[
+     *     \mathbf{x}_{\mathrm{new}}
+     *     =
+     *     \mathbf{x}_{\mathrm{old}}
+     *     +
+     *     \Delta \mathbf{x}.
+     * @f]
+     *
+     * This operation only modifies the translational part of the synchronization
+     * state. It does not directly modify orientation, velocity, acceleration, or
+     * geometry data. Any coordinate-frame interpretation of the displacement is
+     * determined by the synchronization operator and the surrounding simulation
+     * convention.
+     *
+     * @param delta Displacement vector added to the current translation.
+     *
+     * @note This function performs a direct additive update and does not integrate
+     *       velocity or acceleration by itself. Time integration is handled by
+     *       update().
+     * @note The geometry operator is not modified directly. The unit transform is
+     *       changed through the synchronization operator.
+     *
+     * @see update()
+     * @see SyncOperator<T>
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    move(const Vector<T, 3>& delta_world) noexcept;
+    move(const Vector<T, 3>& delta) noexcept;
 
     /**
-     * @brief Applies a world-space rotation to the unit.
+     * @brief Rotates the unit by applying an axis-angle rotation.
      *
-     * The axis vector is normalized internally. If the axis length is zero,
-     * the function does nothing.
+     * This function updates the orientation component stored in the synchronization
+     * operator by constructing an incremental quaternion from the given rotation
+     * axis and angle, then composing it with the current orientation.
      *
-     * @param axis_world Rotation axis in world coordinates.
+     * Given an input axis @f$\mathbf{a}@f$ and rotation angle @f$\theta@f$, the axis
+     * is first normalized:
+     *
+     * @f[
+     *     \hat{\mathbf{a}}
+     *     =
+     *     \frac{\mathbf{a}}{\|\mathbf{a}\|}.
+     * @f]
+     *
+     * The normalized axis and angle define an incremental unit quaternion:
+     *
+     * @f[
+     *     q_{\Delta}
+     *     =
+     *     \left(
+     *         \cos\frac{\theta}{2},
+     *         \hat{a}_x \sin\frac{\theta}{2},
+     *         \hat{a}_y \sin\frac{\theta}{2},
+     *         \hat{a}_z \sin\frac{\theta}{2}
+     *     \right).
+     * @f]
+     *
+     * The current orientation quaternion @f$q_{\mathrm{old}}@f$ is then updated by
+     * quaternion composition:
+     *
+     * @f[
+     *     q_{\mathrm{new}}
+     *     =
+     *     \mathrm{normalize}
+     *     \left(
+     *         q_{\Delta} q_{\mathrm{old}}
+     *     \right).
+     * @f]
+     *
+     * The final normalization step reduces numerical drift caused by repeated
+     * floating-point quaternion multiplications. After the orientation update, the
+     * synchronization operator rebuilds its dependent transformation matrices so
+     * that the matrix representation remains consistent with the quaternion state.
+     *
+     * If the input axis has zero length, no valid axis-angle rotation can be formed,
+     * so the function returns without modifying the unit.
+     *
+     * This function does not assign world-space or local-space semantics to the
+     * input axis. Coordinate-frame interpretation is delegated to the synchronization
+     * operator and the simulation convention using it.
+     *
+     * @param axis Rotation axis. The vector does not need to be normalized by the
+     *             caller.
      * @param angle_rad Rotation angle in radians.
+     *
+     * @note The angle is not clamped, wrapped, or converted. It is passed directly
+     *       to Quaternion<T>::from_axis_angle().
+     * @note This function modifies only the orientation stored in the synchronization
+     *       operator and then rebuilds the associated transform matrices.
+     * @note The geometry operator is not modified directly.
+     *
+     * @par Mathematical summary
+     * @f[
+     *     \mathbf{a} \neq \mathbf{0},
+     *     \qquad
+     *     \hat{\mathbf{a}} = \frac{\mathbf{a}}{\|\mathbf{a}\|},
+     *     \qquad
+     *     q_{\Delta}
+     *     =
+     *     \left(
+     *         \cos\frac{\theta}{2},
+     *         \hat{\mathbf{a}}\sin\frac{\theta}{2}
+     *     \right),
+     *     \qquad
+     *     q_{\mathrm{new}}
+     *     =
+     *     \mathrm{normalize}
+     *     \left(
+     *         q_{\Delta} q_{\mathrm{old}}
+     *     \right).
+     * @f]
+     *
+     * @see Quaternion<T>::from_axis_angle()
+     * @see SyncOperator<T>::rebuild_matrices()
+     * @see update()
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    rotate(const Vector<T, 3>& axis_world, T angle_rad) noexcept;
+    rotate(const Vector<T, 3>& axis, T angle_rad) noexcept;
 
     /**
      * @brief Returns the geometry operator.
@@ -236,22 +342,22 @@ private:
     SyncOperator<T> _sync_operator;
 
     /**
-     * @brief Optional linear velocity in world coordinates.
+     * @brief Optional linear velocity.
      */
     std::optional<Vector<T, 3>> _velocity;
 
     /**
-     * @brief Optional linear acceleration in world coordinates.
+     * @brief Optional linear acceleration.
      */
     std::optional<Vector<T, 3>> _acceleration;
 
     /**
-     * @brief Optional angular velocity in world coordinates.
+     * @brief Optional angular velocity.
      */
     std::optional<Vector<T, 3>> _angular_velocity;
 
     /**
-     * @brief Optional angular acceleration in world coordinates.
+     * @brief Optional angular acceleration.
      */
     std::optional<Vector<T, 3>> _angular_acceleration;
 };
@@ -297,7 +403,7 @@ public:
     /**
      * @brief Sets the linear velocity.
      *
-     * @param v Linear velocity in world coordinates.
+     * @param v Linear velocity.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -306,7 +412,7 @@ public:
     /**
      * @brief Sets the linear acceleration.
      *
-     * @param a Linear acceleration in world coordinates.
+     * @param a Linear acceleration.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -315,7 +421,7 @@ public:
     /**
      * @brief Sets the angular velocity.
      *
-     * @param w Angular velocity in world coordinates.
+     * @param w Angular velocity.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -324,7 +430,7 @@ public:
     /**
      * @brief Sets the angular acceleration.
      *
-     * @param alpha Angular acceleration in world coordinates.
+     * @param alpha Angular acceleration.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
@@ -397,7 +503,7 @@ private:
     std::optional<Vector<T, 3>> _angular_acceleration;
 };
 
-}
+} // namespace atlas::physics
 
 namespace atlas {
 
@@ -425,6 +531,6 @@ using UnitHostPtr = atlas::host_shared_ptr<Unit<T>>;
 template <typename T>
 using UnitDevicePtr = atlas::device_shared_ptr<Unit<T>>;
 
-}
+} // namespace atlas
 
 #include <atlas/unit/unit.hpp>

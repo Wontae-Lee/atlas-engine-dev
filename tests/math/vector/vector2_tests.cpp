@@ -1,10 +1,14 @@
-#include "../../utilities/tests_utils.h"
+#include "../../utilities/test_utils.h"
 #include <cmath>
 #include <cstddef>
 #include <testkit/testkit.h>
 #include <type_traits>
 
-using namespace atlas;
+namespace {
+
+using atlas::eps;
+
+} // namespace
 
 TEST(Vector2, ScalarCtor) {
     const atlas::math::Vector<double, 2> v(3.0);

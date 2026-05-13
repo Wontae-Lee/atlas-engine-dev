@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/iterator/zip_iterator.h>
 #include <testkit/testkit.h>

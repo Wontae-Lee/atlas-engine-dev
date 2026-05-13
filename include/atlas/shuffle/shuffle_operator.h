@@ -52,6 +52,7 @@
  */
 
 #include <atlas/core/macros.h>
+#include <atlas/random/seed.h>
 
 #include <cstdint>
 
@@ -85,39 +86,6 @@ namespace atlas::system {
  * ---
  */
 struct ShuffleOperator final {
-    /**
-     * @brief Bit shift applied during the first mixing stage.
-     */
-    const int first_shift = 30;
-
-    /**
-     * @brief Bit shift applied during the second mixing stage.
-     */
-    const int second_shift = 27;
-
-    /**
-     * @brief Bit shift applied during the final mixing stage.
-     */
-    const int final_shift = 31;
-
-    /**
-     * @brief Additive offset applied to the index prior to mixing.
-     *
-     * @details
-     * Typically chosen as a large odd constant to decorrelate sequential indices.
-     */
-    const std::uint64_t index_offset = 0x9e3779b97f4a7c15ull;
-
-    /**
-     * @brief First multiplicative mixing constant.
-     */
-    const std::uint64_t first_multiplier = 0xbf58476d1ce4e5b9ull;
-
-    /**
-     * @brief Second multiplicative mixing constant.
-     */
-    const std::uint64_t second_multiplier = 0x94d049bb133111ebull;
-
     /**
      * @brief Compute a pseudo-random value from an index and seed.
      *

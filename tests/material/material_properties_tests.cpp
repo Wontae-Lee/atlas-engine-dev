@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/material/material_properties.h>
 
@@ -6,25 +6,28 @@
 
 namespace {
 
-using T = float;
-
-constexpr T kEps = static_cast<T>(1e-6);
+using atlas::MaterialProperties;
+using atlas::MaterialType;
+using atlas::tol;
 
 } // namespace
 
 TEST(MatrialProperties, DefaultConstructionLeavesOptionalsEmpty) {
-    const atlas::system::MaterialProperties<T> properties;
+    // Arrange and act: default-construct material properties.
+    const MaterialProperties<float> properties;
 
-    EXPECT_EQ(properties.type, atlas::system::MaterialType::Molecule);
-    EXPECT_NEAR(properties.mass, 0.0f, kEps);
-    EXPECT_NEAR(properties.molecular_mass, 0.0f, kEps);
+    // Assert: defaults match the molecule baseline and optionals are empty.
+    EXPECT_EQ(properties.type, MaterialType::Molecule);
+    EXPECT_NEAR(properties.mass, 0.0f, tol);
+    EXPECT_NEAR(properties.molecular_mass, 0.0f, tol);
     EXPECT_FALSE(properties.translational_energy.has_value());
     EXPECT_FALSE(properties.charge.has_value());
 }
 
 TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
-    const auto properties = atlas::system::MaterialProperties<T>::builder()
-                                .with_type(atlas::system::MaterialType::Ion)
+    // Arrange and act: build a fully populated material record.
+    const auto properties = MaterialProperties<float>::builder()
+                                .with_type(MaterialType::Ion)
                                 .with_mass(10.0f)
                                 .with_molecular_mass(2.0f)
                                 .with_translational_energy(1.0f)
@@ -42,8 +45,9 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
                                 .with_charge(2)
                                 .build();
 
-    EXPECT_EQ(properties.type, atlas::system::MaterialType::Ion);
-    EXPECT_NEAR(properties.mass, 10.0f, kEps);
+    // Assert: scalar and optional fields preserve the builder input.
+    EXPECT_EQ(properties.type, MaterialType::Ion);
+    EXPECT_NEAR(properties.mass, 10.0f, tol);
     ASSERT_TRUE(properties.translational_energy.has_value());
     ASSERT_TRUE(properties.rotational_energy.has_value());
     ASSERT_TRUE(properties.vibrational_energy.has_value());
@@ -57,61 +61,66 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     ASSERT_TRUE(properties.smoothing_length.has_value());
     ASSERT_TRUE(properties.electronic_energy.has_value());
     ASSERT_TRUE(properties.charge.has_value());
-    EXPECT_NEAR(properties.molecular_mass, 2.0f, kEps);
-    EXPECT_NEAR(*properties.translational_energy, 1.0f, kEps);
-    EXPECT_NEAR(*properties.rotational_energy, 2.0f, kEps);
-    EXPECT_NEAR(*properties.vibrational_energy, 3.0f, kEps);
+    EXPECT_NEAR(properties.molecular_mass, 2.0f, tol);
+    EXPECT_NEAR(*properties.translational_energy, 1.0f, tol);
+    EXPECT_NEAR(*properties.rotational_energy, 2.0f, tol);
+    EXPECT_NEAR(*properties.vibrational_energy, 3.0f, tol);
     EXPECT_EQ(*properties.species_id, 7);
-    EXPECT_NEAR(*properties.collision_diameter, 4.0f, kEps);
-    EXPECT_NEAR(*properties.viscosity_index, 5.0f, kEps);
-    EXPECT_NEAR(*properties.scattering_parameter, 6.0f, kEps);
-    EXPECT_NEAR(*properties.rest_density, 7.0f, kEps);
-    EXPECT_NEAR(*properties.pressure_coefficient, 8.0f, kEps);
-    EXPECT_NEAR(*properties.dynamic_viscosity, 9.0f, kEps);
-    EXPECT_NEAR(*properties.smoothing_length, 10.0f, kEps);
-    EXPECT_NEAR(*properties.electronic_energy, 11.0f, kEps);
+    EXPECT_NEAR(*properties.collision_diameter, 4.0f, tol);
+    EXPECT_NEAR(*properties.viscosity_index, 5.0f, tol);
+    EXPECT_NEAR(*properties.scattering_parameter, 6.0f, tol);
+    EXPECT_NEAR(*properties.rest_density, 7.0f, tol);
+    EXPECT_NEAR(*properties.pressure_coefficient, 8.0f, tol);
+    EXPECT_NEAR(*properties.dynamic_viscosity, 9.0f, tol);
+    EXPECT_NEAR(*properties.smoothing_length, 10.0f, tol);
+    EXPECT_NEAR(*properties.electronic_energy, 11.0f, tol);
     EXPECT_EQ(*properties.charge, 2);
 }
 
 TEST(MatrialProperties, BuilderRequiresExplicitMass) {
+    // Assert: molecular mass without explicit mass is rejected.
     EXPECT_THROW(
-        atlas::system::MaterialProperties<T>::builder()
+        MaterialProperties<float>::builder()
             .with_molecular_mass(2.5f)
             .build(),
         std::invalid_argument);
 }
 
 TEST(MatrialProperties, MakeHostSharedReturnsUsableRecord) {
-    const auto properties = atlas::system::MaterialProperties<T>::builder()
+    // Act: build a shared material record.
+    const auto properties = MaterialProperties<float>::builder()
                                 .with_mass(3.0f)
                                 .with_molecular_mass(1.0f)
                                 .make_host_shared();
 
+    // Assert: the shared record exists and preserves input values.
     ASSERT_NE(properties, nullptr);
-    EXPECT_NEAR(properties->mass, 3.0f, kEps);
+    EXPECT_NEAR(properties->mass, 3.0f, tol);
 }
 
 TEST(MatrialProperties, BuilderRejectsInvalidMassInputsImmediately) {
+    // Assert: non-positive mass values are rejected immediately.
     EXPECT_THROW(
-        atlas::system::MaterialProperties<T>::builder()
+        MaterialProperties<float>::builder()
             .with_mass(0.0f),
         std::invalid_argument);
 
     EXPECT_THROW(
-        atlas::system::MaterialProperties<T>::builder()
+        MaterialProperties<float>::builder()
             .with_molecular_mass(0.0f),
         std::invalid_argument);
 }
 
 TEST(MatrialProperties, BuilderRejectsMissingOrInconsistentMassConfiguration) {
+    // Assert: exactly one mass field is not enough to build a valid material.
     EXPECT_THROW(
-        atlas::system::MaterialProperties<T>::builder()
+        MaterialProperties<float>::builder()
             .with_mass(5.0f)
             .build(),
         std::invalid_argument);
 
     EXPECT_THROW(
-        atlas::system::MaterialProperties<T>::builder()
+        MaterialProperties<float>::builder()
             .with_molecular_mass(2.0f)
             .build(),
         std::invalid_argument);

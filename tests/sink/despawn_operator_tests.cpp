@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/geometry_operator.h>
@@ -8,14 +8,19 @@
 
 namespace {
 
-using T = float;
-using Vec3 = atlas::Vector3<T>;
+using atlas::Box;
+using atlas::GeometryOperator;
+using atlas::Vector3F;
+using atlas::fluid::DespawnOperator;
+using atlas::fluid::DespawnType;
+using atlas::fluid::SurfaceDespawnOperator;
+using atlas::fluid::VolumeDespawnOperator;
 
-atlas::GeometryOperator<T>
+GeometryOperator<float>
 make_box_operator() {
-    static const auto box = atlas::geometry::Box<T>::builder()
-                                .with_lower_corner(Vec3(-1, -1, -1))
-                                .with_upper_corner(Vec3(1, 1, 1))
+    static const auto box = Box<float>::builder()
+                                .with_lower_corner(Vector3F(-1, -1, -1))
+                                .with_upper_corner(Vector3F(1, 1, 1))
                                 .build();
     return box.make_geometry_operator();
 }
@@ -23,49 +28,63 @@ make_box_operator() {
 } // namespace
 
 TEST(DespawnOperator, SurfaceOperatorDetectsSurfacePoints) {
+    // Arrange: create a box geometry query operator.
     const auto geometry_operator = make_box_operator();
 
-    EXPECT_TRUE(atlas::fluid::SurfaceDespawnOperator<T>::despawn(geometry_operator, Vec3(1, 0, 0), 0.0f));
-    EXPECT_FALSE(atlas::fluid::SurfaceDespawnOperator<T>::despawn(geometry_operator, Vec3(0, 0, 0), 0.0f));
+    // Assert: surface despawning accepts boundary points and rejects interior points.
+    EXPECT_TRUE(SurfaceDespawnOperator<float>::despawn(geometry_operator, Vector3F(1, 0, 0), 0.0f));
+    EXPECT_FALSE(SurfaceDespawnOperator<float>::despawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
 }
 
 TEST(DespawnOperator, VolumeOperatorDetectsInteriorPoints) {
+    // Arrange: create a box geometry query operator.
     const auto geometry_operator = make_box_operator();
 
-    EXPECT_TRUE(atlas::fluid::VolumeDespawnOperator<T>::despawn(geometry_operator, Vec3(0, 0, 0), 0.0f));
-    EXPECT_FALSE(atlas::fluid::VolumeDespawnOperator<T>::despawn(geometry_operator, Vec3(3, 0, 0), 0.0f));
+    // Assert: volume despawning accepts interior points and rejects exterior points.
+    EXPECT_TRUE(VolumeDespawnOperator<float>::despawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
+    EXPECT_FALSE(VolumeDespawnOperator<float>::despawn(geometry_operator, Vector3F(3, 0, 0), 0.0f));
 }
 
 TEST(DespawnOperator, DefaultConstructorCreatesSurfaceVariant) {
-    const atlas::fluid::DespawnOperator<T> despawn_operator;
+    // Arrange: create a default runtime despawn operator.
+    const DespawnOperator<float> despawn_operator;
 
-    EXPECT_EQ(despawn_operator.type, atlas::fluid::DespawnType::Surface);
+    // Assert: the default variant is surface despawning.
+    EXPECT_EQ(despawn_operator.type, DespawnType::Surface);
 }
 
 TEST(DespawnOperator, ExplicitTypeConstructorSelectsRequestedVariant) {
-    const atlas::fluid::DespawnOperator<T> volume_operator(atlas::fluid::DespawnType::Volume);
+    // Arrange: create a runtime despawn operator with an explicit volume type.
+    const DespawnOperator<float> volume_operator(DespawnType::Volume);
 
-    EXPECT_EQ(volume_operator.type, atlas::fluid::DespawnType::Volume);
+    // Assert: the requested variant is stored.
+    EXPECT_EQ(volume_operator.type, DespawnType::Volume);
 }
 
 TEST(DespawnOperator, CopyConstructionAndAssignmentPreserveType) {
-    const atlas::fluid::DespawnOperator<T> original(atlas::fluid::DespawnType::Volume);
-    const atlas::fluid::DespawnOperator<T> copied(original);
+    // Arrange: create a runtime despawn operator with a non-default type.
+    const DespawnOperator<float> original(DespawnType::Volume);
 
-    atlas::fluid::DespawnOperator<T> assigned;
+    // Act: copy-construct and copy-assign runtime despawn operators.
+    const DespawnOperator<float> copied(original);
+
+    DespawnOperator<float> assigned;
     assigned = original;
 
-    EXPECT_EQ(copied.type, atlas::fluid::DespawnType::Volume);
-    EXPECT_EQ(assigned.type, atlas::fluid::DespawnType::Volume);
+    // Assert: copied operators preserve the active type.
+    EXPECT_EQ(copied.type, DespawnType::Volume);
+    EXPECT_EQ(assigned.type, DespawnType::Volume);
 }
 
 TEST(DespawnOperator, DespawnDispatchesToActiveVariant) {
+    // Arrange: create surface and volume runtime despawn operators.
     const auto geometry_operator = make_box_operator();
-    const atlas::fluid::DespawnOperator<T> surface_operator(atlas::fluid::DespawnType::Surface);
-    const atlas::fluid::DespawnOperator<T> volume_operator(atlas::fluid::DespawnType::Volume);
+    const DespawnOperator<float> surface_operator(DespawnType::Surface);
+    const DespawnOperator<float> volume_operator(DespawnType::Volume);
 
-    EXPECT_TRUE(surface_operator.despawn(geometry_operator, Vec3(1, 0, 0), 0.0f));
-    EXPECT_FALSE(surface_operator.despawn(geometry_operator, Vec3(0, 0, 0), 0.0f));
-    EXPECT_TRUE(volume_operator.despawn(geometry_operator, Vec3(0, 0, 0), 0.0f));
-    EXPECT_FALSE(volume_operator.despawn(geometry_operator, Vec3(2, 0, 0), 0.0f));
+    // Assert: dispatch follows the active runtime variant.
+    EXPECT_TRUE(surface_operator.despawn(geometry_operator, Vector3F(1, 0, 0), 0.0f));
+    EXPECT_FALSE(surface_operator.despawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
+    EXPECT_TRUE(volume_operator.despawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
+    EXPECT_FALSE(volume_operator.despawn(geometry_operator, Vector3F(2, 0, 0), 0.0f));
 }

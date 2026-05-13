@@ -1,4 +1,4 @@
-#include "../../utilities/tests_utils.h"
+#include "../../utilities/test_utils.h"
 
 #include <atlas/material/material_properties.h>
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>
@@ -7,12 +7,16 @@
 
 namespace {
 
-using T = float;
+using atlas::MaterialProperties;
+using atlas::MaterialType;
+using atlas::Vector3F;
+using atlas::system::HardSphereKernel;
+using atlas::test::is_finite_vec;
 
-atlas::MaterialProperties<T>
+MaterialProperties<float>
 make_properties() {
-    return atlas::MaterialProperties<T>::builder()
-        .with_type(atlas::MaterialType::Molecule)
+    return MaterialProperties<float>::builder()
+        .with_type(MaterialType::Molecule)
         .with_mass(1.0f)
         .with_molecular_mass(1.0f)
         .with_collision_diameter(1.0f)
@@ -22,18 +26,23 @@ make_properties() {
 } // namespace
 
 TEST(HardSphereKernel, CrossSectionIsPositiveWhenDiameterExists) {
+    // Arrange: create representative material properties.
     const auto properties = make_properties();
 
-    EXPECT_GT(atlas::system::HardSphereKernel<T>::cross_section(properties, properties), 0.0f);
+    // Assert: hard-sphere cross section is positive for positive diameter.
+    EXPECT_GT(HardSphereKernel<float>::cross_section(properties, properties), 0.0f);
 }
 
 TEST(HardSphereKernel, CollisionPreservesFiniteVelocities) {
+    // Arrange: create a pair of finite velocities and material properties.
     const auto properties = make_properties();
-    atlas::Vector3<T> lhs(1, 0, 0);
-    atlas::Vector3<T> rhs(-1, 0, 0);
+    Vector3F lhs(1, 0, 0);
+    Vector3F rhs(-1, 0, 0);
 
-    atlas::system::HardSphereKernel<T> {}(lhs, rhs, properties, properties);
+    // Act: apply a hard-sphere collision.
+    HardSphereKernel<float> {}(lhs, rhs, properties, properties);
 
-    EXPECT_TRUE(atlas::test::is_finite_vec(lhs));
-    EXPECT_TRUE(atlas::test::is_finite_vec(rhs));
+    // Assert: collision output remains finite.
+    EXPECT_TRUE(is_finite_vec(lhs));
+    EXPECT_TRUE(is_finite_vec(rhs));
 }

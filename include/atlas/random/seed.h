@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 /**
  * @file seed.h
  * @brief Defines constants used for deterministic hash-based sampling and default random seeding.
@@ -80,5 +82,75 @@ constexpr double RANDOM_HASH_NORMAL_SCALE_FOR_MIX = 17.0;
  * integer seed is not supplied.
  */
 constexpr unsigned int DEFAULT_UNSIGNED_INT_SEED = 0u;
+
+/**
+ * @brief Bit shift applied during the first shuffle hash mixing stage.
+ */
+constexpr int SHUFFLE_HASH_FIRST_SHIFT = 30;
+
+/**
+ * @brief Bit shift applied during the second shuffle hash mixing stage.
+ */
+constexpr int SHUFFLE_HASH_SECOND_SHIFT = 27;
+
+/**
+ * @brief Bit shift applied during the final shuffle hash mixing stage.
+ */
+constexpr int SHUFFLE_HASH_FINAL_SHIFT = 31;
+
+/**
+ * @brief Additive offset applied to shuffle indices before hash mixing.
+ */
+constexpr std::uint64_t SHUFFLE_HASH_INDEX_OFFSET = 0x9e3779b97f4a7c15ull;
+
+/**
+ * @brief First multiplicative shuffle hash mixing constant.
+ */
+constexpr std::uint64_t SHUFFLE_HASH_FIRST_MULTIPLIER = 0xbf58476d1ce4e5b9ull;
+
+/**
+ * @brief Second multiplicative shuffle hash mixing constant.
+ */
+constexpr std::uint64_t SHUFFLE_HASH_SECOND_MULTIPLIER = 0x94d049bb133111ebull;
+
+/**
+ * @brief First multiplicative constant used to expand Morton-code coordinate bits.
+ */
+constexpr unsigned MORTON_EXPAND_BITS_FIRST_MULTIPLIER = 0x00010001u;
+
+/**
+ * @brief First mask used to expand Morton-code coordinate bits.
+ */
+constexpr unsigned MORTON_EXPAND_BITS_FIRST_MASK = 0xFF0000FFu;
+
+/**
+ * @brief Second multiplicative constant used to expand Morton-code coordinate bits.
+ */
+constexpr unsigned MORTON_EXPAND_BITS_SECOND_MULTIPLIER = 0x00000101u;
+
+/**
+ * @brief Second mask used to expand Morton-code coordinate bits.
+ */
+constexpr unsigned MORTON_EXPAND_BITS_SECOND_MASK = 0x0F00F00Fu;
+
+/**
+ * @brief Third multiplicative constant used to expand Morton-code coordinate bits.
+ */
+constexpr unsigned MORTON_EXPAND_BITS_THIRD_MULTIPLIER = 0x00000011u;
+
+/**
+ * @brief Third mask used to expand Morton-code coordinate bits.
+ */
+constexpr unsigned MORTON_EXPAND_BITS_THIRD_MASK = 0xC30C30C3u;
+
+/**
+ * @brief Final multiplicative constant used to expand Morton-code coordinate bits.
+ */
+constexpr unsigned MORTON_EXPAND_BITS_FINAL_MULTIPLIER = 0x00000005u;
+
+/**
+ * @brief Final mask used to expand Morton-code coordinate bits.
+ */
+constexpr unsigned MORTON_EXPAND_BITS_FINAL_MASK = 0x49249249u;
 
 } // namespace atlas::seed

@@ -220,7 +220,7 @@ Constraints:
 - CUDA test binary: `atlas_all_cuda_test`
 - CUDA test entry point: `tests/cuda/main.cu`
 - Some CUDA-incompatible `*.cu` wrappers may be excluded explicitly in the root `CMakeLists.txt`
-- Common helpers: `tests/utilities/tests_utils.h`
+- Common helpers: `tests/utilities/test_utils.h`
 - `particle_count`-sensitive tests must set the active prefix explicitly instead of assuming it matches capacity
 - `System` behavior coverage lives in `tests/system/system_tests.cpp`
 - Source and sink behavior remain covered in `tests/source/` and `tests/sink/`
