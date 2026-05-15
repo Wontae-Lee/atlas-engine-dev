@@ -78,6 +78,9 @@
 #include <atlas/shuffle/shuffle_operator.h>
 #include <atlas/sink/despawn_operator.h>
 #include <atlas/sink/sink.h>
+#include <atlas/sink/surface_despawn_operator.h>
+#include <atlas/sink/tracing_despawn_operator.h>
+#include <atlas/sink/volume_despawn_operator.h>
 #include <atlas/solver/dsmc/dsmc_disjoint_pair_solver.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 #include <atlas/solver/dsmc/dsmc_ntc_solver.h>

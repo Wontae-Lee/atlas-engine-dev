@@ -45,6 +45,22 @@ make_unit() {
         .build();
 }
 
+Unit<float>
+make_tracing_unit() {
+    const auto geometry = Box<float>::builder()
+                              .with_lower_corner(Vector3F(2, -1, -1))
+                              .with_upper_corner(Vector3F(3, 1, 1))
+                              .make_host_shared();
+
+    const auto sync = Sync<float>::builder()
+                          .make_host_shared();
+
+    return Unit<float>::builder()
+        .with_geometry(geometry)
+        .with_sync(sync)
+        .build();
+}
+
 DespawnOperator<float>
 make_despawn_operator() {
     return DespawnOperator<float>(DespawnType::Surface);
@@ -161,4 +177,35 @@ TEST(Sink, UpdateIgnoresNonPositiveDt) {
 
     // Assert: non-positive dt is ignored without throwing.
     EXPECT_NO_THROW(sink.update(0.0f));
+}
+
+TEST(Sink, TracingDespawnUsesPositionVelocityAndUpdateDt) {
+    const auto fluid = make_fluid();
+    fluid->set_particle_count(2);
+
+    auto* position_state = fluid->state<atlas::fluid::FluidPositionState<float>>();
+    auto* velocity_state = fluid->state<atlas::fluid::FluidVelocityState<float>>();
+    auto* active_state   = fluid->state<atlas::fluid::FluidActiveState<float>>();
+    ASSERT_NE(position_state, nullptr);
+    ASSERT_NE(velocity_state, nullptr);
+    ASSERT_NE(active_state, nullptr);
+
+    position_state->data()[0] = Vector3F(1, 0, 0);
+    position_state->data()[1] = Vector3F(-2, 0, 0);
+    velocity_state->data()[0] = Vector3F(1, 0, 0);
+    velocity_state->data()[1] = Vector3F(1, 0, 0);
+    active_state->data()[0]   = 1;
+    active_state->data()[1]   = 1;
+
+    auto sink = Sink<float>::builder()
+                    .with_units(HostBuffer<Unit<float>> { make_tracing_unit() })
+                    .with_fluid(fluid)
+                    .with_despawn_types(HostBuffer<DespawnType> { DespawnType::Tracing })
+                    .with_despawn_operator(DespawnOperator<float>(DespawnType::Tracing))
+                    .build();
+
+    sink.update(2.5f);
+
+    EXPECT_EQ(fluid->particle_count(), std::size_t { 1 });
+    EXPECT_TRUE(atlas::test::vec_near(position_state->data()[0], Vector3F(-2, 0, 0), 1.0e-6f));
 }

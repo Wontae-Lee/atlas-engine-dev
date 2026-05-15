@@ -6,7 +6,9 @@
  *        should be removed relative to queried geometry.
  */
 
-#include <atlas/math/math.h>
+#include <atlas/sink/surface_despawn_operator.h>
+#include <atlas/sink/tracing_despawn_operator.h>
+#include <atlas/sink/volume_despawn_operator.h>
 
 namespace atlas::fluid {
 
@@ -26,63 +28,12 @@ enum class DespawnType : int {
     /**
      * @brief Remove particles that lie inside the queried geometry region or volume.
      */
-    Volume
-};
-
-/**
- * @brief Stateless despawn policy that removes particles on a geometry surface.
- *
- * This policy evaluates whether a candidate particle position lies on the
- * surface of the queried geometry within the specified tolerance.
- *
- * @tparam T Floating-point scalar type used for geometry queries.
- */
-template <typename T>
-struct SurfaceDespawnOperator final {
+    Volume,
 
     /**
-     * @brief Tests whether a particle should be removed based on surface membership.
-     *
-     * The particle is considered removable when it lies on the queried geometry
-     * surface within the provided tolerance.
-     *
-     * @param query Geometry query operator used to test spatial membership.
-     * @param particle Candidate particle position in query space.
-     * @param tolerance Surface-membership tolerance.
-     * @return True if the particle lies on the surface within tolerance.
+     * @brief Remove particles whose velocity trace intersects the queried geometry.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
-    despawn(const GeometryOperator<T>& query,
-            const Vector3<T>& particle,
-            T tolerance = T(0)) noexcept;
-};
-
-/**
- * @brief Stateless despawn policy that removes particles inside a geometry region.
- *
- * This policy evaluates whether a candidate particle position lies inside
- * the queried geometry volume or region within the specified tolerance.
- *
- * @tparam T Floating-point scalar type used for geometry queries.
- */
-template <typename T>
-struct VolumeDespawnOperator final {
-
-    /**
-     * @brief Tests whether a particle should be removed based on interior membership.
-     *
-     * The particle is considered removable when it lies inside the queried
-     * geometry region within the provided tolerance.
-     *
-     * @param query Geometry query operator used to test spatial membership.
-     * @param particle Candidate particle position in query space.
-     * @param tolerance Interior-membership tolerance.
-     * @return True if the particle lies inside within tolerance.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
-    despawn(const GeometryOperator<T>& query,
-            const Vector3<T>& particle,
-            T tolerance = T(0)) noexcept;
+    Tracing
 };
 
 /**
@@ -92,6 +43,7 @@ struct VolumeDespawnOperator final {
  * Actual despawn logic is delegated to one of the stateless concrete policies:
  * - @ref SurfaceDespawnOperator
  * - @ref VolumeDespawnOperator
+ * - @ref TracingDespawnOperator
  *
  * Because the concrete policies are stateless, this wrapper only needs to store
  * the runtime tag and does not need additional payload data.
@@ -172,20 +124,50 @@ struct DespawnOperator final {
     DespawnOperator(const VolumeDespawnOperator<T>& op);
 
     /**
+     * @brief Constructs the runtime operator from a tracing despawn policy.
+     *
+     * Since the policy is stateless, constructing from it simply selects
+     * the @ref DespawnType::Tracing runtime tag.
+     *
+     * @param op Concrete tracing despawn policy.
+     */
+    ATLAS_HOST
+    DespawnOperator(const TracingDespawnOperator<T>& op);
+
+    /**
      * @brief Evaluates whether a particle should be removed.
      *
      * This function dispatches the query to the currently active concrete
      * despawn policy based on the stored runtime tag.
      *
      * @param query Geometry query operator.
-     * @param particle Candidate particle position.
-     * @param tolerance Tolerance passed to the selected despawn policy.
+     * @param vector Vector passed to the selected despawn policy.
+     * @param value Scalar value passed to the selected despawn policy.
      * @return True if the particle should be removed.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    despawn(const GeometryOperator<T>& query,
-            const Vector3<T>& particle,
-            T tolerance = T(0)) const noexcept;
+    despawn(const atlas::geometry::GeometryOperator<T>& query,
+            const Vector3<T>& vector,
+            T value = T(0)) const noexcept;
+
+    /**
+     * @brief Evaluates whether a particle should be removed with explicit position.
+     *
+     * Surface and volume despawn policies use @p vector as their query point.
+     * Tracing despawn uses @p position as the ray origin, @p vector as velocity,
+     * and @p value as the time interval.
+     *
+     * @param query Geometry query operator.
+     * @param position Particle position passed to tracing despawn.
+     * @param vector Vector passed to the selected despawn policy.
+     * @param value Scalar value passed to the selected despawn policy.
+     * @return True if the particle should be removed.
+     */
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    despawn(const atlas::geometry::GeometryOperator<T>& query,
+            const Vector3<T>& position,
+            const Vector3<T>& vector,
+            T value = T(0)) const noexcept;
 };
 
 } // namespace atlas::fluid

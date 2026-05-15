@@ -1,0 +1,32 @@
+#include "../utilities/test_utils.h"
+
+#include <atlas/geometry/box.h>
+#include <atlas/geometry/geometry_operator.h>
+#include <atlas/sink/volume_despawn_operator.h>
+
+#include <testkit/testkit.h>
+
+namespace {
+
+using atlas::Box;
+using atlas::GeometryOperator;
+using atlas::Vector3F;
+using atlas::fluid::VolumeDespawnOperator;
+
+GeometryOperator<float>
+make_box_operator() {
+    static const auto box = Box<float>::builder()
+                                .with_lower_corner(Vector3F(-1, -1, -1))
+                                .with_upper_corner(Vector3F(1, 1, 1))
+                                .build();
+    return box.make_geometry_operator();
+}
+
+} // namespace
+
+TEST(VolumeDespawnOperator, DetectsInteriorPoints) {
+    const auto geometry_operator = make_box_operator();
+
+    EXPECT_TRUE(VolumeDespawnOperator<float>::despawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
+    EXPECT_FALSE(VolumeDespawnOperator<float>::despawn(geometry_operator, Vector3F(3, 0, 0), 0.0f));
+}

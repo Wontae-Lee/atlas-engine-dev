@@ -45,12 +45,12 @@ Sink<T>::update(const T dt) {
         [units, dt] ATLAS_DEVICE(const int i) {
             units[i].update(dt);
         });
-    sink();
+    sink(dt);
 }
 
 template <typename T>
 void
-Sink<T>::sink() {
+Sink<T>::sink(const T dt) {
     const std::size_t step_index = _step_index++;
     auto* sink_sensor_matrics    = _observer ? _observer->sensor_matrics<atlas::SinkSensorMatrics>() : nullptr;
     HostBuffer<std::size_t> removed_per_unit;
@@ -66,7 +66,7 @@ Sink<T>::sink() {
         }
     };
     SinkProbe probe;
-    if (!make_probe(probe)) {
+    if (!make_probe(probe, dt)) {
         record_sink_metrics();
         return;
     }
@@ -97,7 +97,17 @@ Sink<T>::sink() {
                 const int despawn_operator_index
                     = (probe.despawn_operator_count == 1 || unit_index >= probe.despawn_operator_count) ? 0 : unit_index;
                 const Vector3<T> local_p = sync_op.sync_to_local(p);
-                if (probe.despawn_operators[despawn_operator_index].despawn(geometry_op, local_p, probe.tolerance)) {
+                const auto& despawn_operator = probe.despawn_operators[despawn_operator_index];
+                Vector3<T> despawn_vector    = local_p;
+                T despawn_value              = probe.tolerance;
+                if (despawn_operator.type == DespawnType::Tracing) {
+                    if (probe.velocities == nullptr) {
+                        continue;
+                    }
+                    despawn_vector = sync_op.sync_dir_to_local(probe.velocities[i]);
+                    despawn_value  = probe.time_step;
+                }
+                if (despawn_operator.despawn(geometry_op, local_p, despawn_vector, despawn_value)) {
                     should_despawn     = true;
                     matched_unit_index = unit_index;
                     break;
@@ -129,11 +139,12 @@ Sink<T>::sink() {
 
 template <typename T>
 bool
-Sink<T>::make_probe(SinkProbe& probe) noexcept {
+Sink<T>::make_probe(SinkProbe& probe, const T dt) noexcept {
     if (!_fluid || _units.empty() || _despawn_operators.empty()) {
         return false;
     }
     auto* position_state = _fluid->template state<atlas::fluid::FluidPositionState<T>>();
+    auto* velocity_state = _fluid->template state<atlas::fluid::FluidVelocityState<T>>();
     auto* active_state   = _fluid->template state<atlas::fluid::FluidActiveState<T>>();
     if (position_state == nullptr || active_state == nullptr) {
         return false;
@@ -146,12 +157,16 @@ Sink<T>::make_probe(SinkProbe& probe) noexcept {
     probe.units                  = atlas::raw_pointer_cast(_units.data());
     probe.despawn_operators      = atlas::raw_pointer_cast(_despawn_operators.data());
     probe.positions              = atlas::raw_pointer_cast(positions.data());
+    if (velocity_state != nullptr && !velocity_state->data().empty()) {
+        probe.velocities = atlas::raw_pointer_cast(velocity_state->data().data());
+    }
     probe.active                 = atlas::raw_pointer_cast(active.data());
     probe.unit_count             = static_cast<int>(_units.size());
     probe.despawn_operator_count = static_cast<int>(_despawn_operators.size());
     probe.particle_count         = _fluid->particle_count();
     probe.flip                   = _flip;
     probe.tolerance              = _tolerance;
+    probe.time_step              = dt;
     return true;
 }
 

@@ -13,8 +13,6 @@ using atlas::GeometryOperator;
 using atlas::Vector3F;
 using atlas::fluid::DespawnOperator;
 using atlas::fluid::DespawnType;
-using atlas::fluid::SurfaceDespawnOperator;
-using atlas::fluid::VolumeDespawnOperator;
 
 GeometryOperator<float>
 make_box_operator() {
@@ -27,24 +25,6 @@ make_box_operator() {
 
 } // namespace
 
-TEST(DespawnOperator, SurfaceOperatorDetectsSurfacePoints) {
-    // Arrange: create a box geometry query operator.
-    const auto geometry_operator = make_box_operator();
-
-    // Assert: surface despawning accepts boundary points and rejects interior points.
-    EXPECT_TRUE(SurfaceDespawnOperator<float>::despawn(geometry_operator, Vector3F(1, 0, 0), 0.0f));
-    EXPECT_FALSE(SurfaceDespawnOperator<float>::despawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
-}
-
-TEST(DespawnOperator, VolumeOperatorDetectsInteriorPoints) {
-    // Arrange: create a box geometry query operator.
-    const auto geometry_operator = make_box_operator();
-
-    // Assert: volume despawning accepts interior points and rejects exterior points.
-    EXPECT_TRUE(VolumeDespawnOperator<float>::despawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
-    EXPECT_FALSE(VolumeDespawnOperator<float>::despawn(geometry_operator, Vector3F(3, 0, 0), 0.0f));
-}
-
 TEST(DespawnOperator, DefaultConstructorCreatesSurfaceVariant) {
     // Arrange: create a default runtime despawn operator.
     const DespawnOperator<float> despawn_operator;
@@ -56,9 +36,11 @@ TEST(DespawnOperator, DefaultConstructorCreatesSurfaceVariant) {
 TEST(DespawnOperator, ExplicitTypeConstructorSelectsRequestedVariant) {
     // Arrange: create a runtime despawn operator with an explicit volume type.
     const DespawnOperator<float> volume_operator(DespawnType::Volume);
+    const DespawnOperator<float> tracing_operator(DespawnType::Tracing);
 
     // Assert: the requested variant is stored.
     EXPECT_EQ(volume_operator.type, DespawnType::Volume);
+    EXPECT_EQ(tracing_operator.type, DespawnType::Tracing);
 }
 
 TEST(DespawnOperator, CopyConstructionAndAssignmentPreserveType) {
@@ -81,10 +63,15 @@ TEST(DespawnOperator, DespawnDispatchesToActiveVariant) {
     const auto geometry_operator = make_box_operator();
     const DespawnOperator<float> surface_operator(DespawnType::Surface);
     const DespawnOperator<float> volume_operator(DespawnType::Volume);
+    const DespawnOperator<float> tracing_operator(DespawnType::Tracing);
 
     // Assert: dispatch follows the active runtime variant.
     EXPECT_TRUE(surface_operator.despawn(geometry_operator, Vector3F(1, 0, 0), 0.0f));
     EXPECT_FALSE(surface_operator.despawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
     EXPECT_TRUE(volume_operator.despawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
     EXPECT_FALSE(volume_operator.despawn(geometry_operator, Vector3F(2, 0, 0), 0.0f));
+    EXPECT_TRUE(tracing_operator.despawn(
+        geometry_operator, Vector3F(-2, 0, 0), Vector3F(1, 0, 0), 1.0f));
+    EXPECT_FALSE(tracing_operator.despawn(
+        geometry_operator, Vector3F(-2, 0, 0), Vector3F(1, 0, 0), 0.0f));
 }

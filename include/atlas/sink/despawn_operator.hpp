@@ -1,20 +1,5 @@
 #pragma once
 namespace atlas::fluid {
-template <typename T>
-bool
-SurfaceDespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
-                                   const Vector3<T>& particle,
-                                   const T tolerance) noexcept {
-    return query.is_on_surface(particle, tolerance);
-}
-
-template <typename T>
-bool
-VolumeDespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
-                                  const Vector3<T>& particle,
-                                  const T tolerance) noexcept {
-    return query.is_inside(particle, tolerance);
-}
 
 template <typename T>
 DespawnOperator<T>::DespawnOperator(const DespawnType type) noexcept
@@ -34,15 +19,41 @@ DespawnOperator<T>::DespawnOperator(const VolumeDespawnOperator<T>& op)
 }
 
 template <typename T>
+DespawnOperator<T>::DespawnOperator(const TracingDespawnOperator<T>& op)
+    : type(DespawnType::Tracing) {
+    static_cast<void>(op);
+}
+
+template <typename T>
 bool
 DespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
-                            const Vector3<T>& particle,
-                            const T tolerance) const noexcept {
+                            const Vector3<T>& vector,
+                            const T value) const noexcept {
     switch (type) {
     case DespawnType::Surface:
-        return SurfaceDespawnOperator<T>::despawn(query, particle, tolerance);
+        return SurfaceDespawnOperator<T>::despawn(query, vector, value);
     case DespawnType::Volume:
-        return VolumeDespawnOperator<T>::despawn(query, particle, tolerance);
+        return VolumeDespawnOperator<T>::despawn(query, vector, value);
+    case DespawnType::Tracing:
+        return TracingDespawnOperator<T>::despawn(query, Vector3<T>(T(0), T(0), T(0)), vector, value);
+    default:
+        return false;
+    }
+}
+
+template <typename T>
+bool
+DespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
+                            const Vector3<T>& position,
+                            const Vector3<T>& vector,
+                            const T value) const noexcept {
+    switch (type) {
+    case DespawnType::Surface:
+        return SurfaceDespawnOperator<T>::despawn(query, vector, value);
+    case DespawnType::Volume:
+        return VolumeDespawnOperator<T>::despawn(query, vector, value);
+    case DespawnType::Tracing:
+        return TracingDespawnOperator<T>::despawn(query, position, vector, value);
     default:
         return false;
     }

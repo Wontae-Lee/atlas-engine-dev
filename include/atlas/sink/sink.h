@@ -60,6 +60,7 @@ public:
         const Unit<T>* units {};
         const DespawnOperator<T>* despawn_operators {};
         const Vector3<T>* positions {};
+        const Vector3<T>* velocities {};
         int* active {};
 
         int unit_count {};
@@ -68,6 +69,7 @@ public:
 
         bool flip {};
         T tolerance {};
+        T time_step {};
     };
 
     /**
@@ -145,7 +147,7 @@ public:
      * - the configured geometric tolerance.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    sink();
+    sink(T dt = T(0));
 
     /**
      * @brief Compacts the target fluid so surviving particles occupy a dense prefix.
@@ -171,7 +173,7 @@ public:
      * @return True when all required sink and fluid state exists.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    make_probe(SinkProbe& probe) noexcept;
+    make_probe(SinkProbe& probe, T dt = T(0)) noexcept;
 
 private:
     /**
