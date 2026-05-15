@@ -85,7 +85,7 @@ const auto fluid = atlas::Fluid<float>::builder()
     .with_generators(generators)
     .make_host_shared();
 
-const auto system = atlas::system::System<float>::builder()
+const auto system = atlas::System<float>::builder()
     .with_fluid(fluid)
     .with_domain(universe)
     .with_source(source)
@@ -155,8 +155,9 @@ atlas-engine-dev/
 ├── src/serialization/        # Snapshot serialization support
 ├── src/testkit/              # Shared C++ and CUDA test shim
 ├── src/vizkit/               # Optional OpenGL visualization layer
+├── assets/                   # Mesh assets used by examples (OBJ/MTL)
 ├── docs/                     # Logo, Doxygen, and developer metadata
-├── examples/                 # Cylinder, inflow, intake, orchestrator, waterfall examples
+├── examples/                 # cylinder, honeycomb, inflow, intake, orchestrator, waterfall
 ├── tests/                    # GoogleTest and CUDA test sources
 ├── benchmarks/
 ├── external/
@@ -182,8 +183,8 @@ atlas-engine-dev/
 | Dependency | Notes |
 |---|---|
 | CMake 3.20+ | Presets are provided in [`CMakePresets.json`](CMakePresets.json) |
-| C++20 compiler | GCC 11+ and Clang 14+ class toolchains are reasonable targets |
-| Ninja or Unix Makefiles | Most presets use Ninja |
+| C++20 compiler | GCC 11+ and Clang 14+ are reasonable targets |
+| Ninja | All presets use Ninja |
 | TBB | Required for TBB builds |
 
 ### CUDA
@@ -203,9 +204,13 @@ atlas-engine-dev/
 
 ### In-tree Dependencies
 
-- `tinyobjloader` in [`external/tinyobj/`](external/tinyobj/)
-- `lyra` in [`external/lyra/`](external/lyra/)
-- GoogleTest, benchmark, and protobuf-related dependencies are vendored or fetched by the configured build path when enabled
+All vendored under [`external/`](external/):
+
+- `tinyobjloader` — OBJ mesh loading
+- `lyra` — CLI argument parsing
+- `googletest` — C++ unit test framework
+- `googlebenchmark` — microbenchmark framework
+- `protobuf` — binary snapshot serialization
 
 ## Build Presets
 
@@ -215,40 +220,25 @@ TBB:
 
 - `tbb-debug`
 - `tbb-release`
-- `tbb-debug-core`
-- `tbb-release-core`
-- `tbb-relwithdebinfo`
-- `tbb-debug-make`
 
 CUDA:
 
 - `cuda-debug`
 - `cuda-release`
-- `cuda-debug-core`
-- `cuda-release-core`
 - `cuda-debug-tests`
-- `cuda-relwithdebinfo`
 
 ### Build Presets
 
 - `build-tbb-debug`
 - `build-tbb-release`
-- `build-tbb-debug-core`
-- `build-tbb-release-core`
-- `build-tbb-relwithdebinfo`
 - `build-cuda-debug`
 - `build-cuda-release`
-- `build-cuda-debug-core`
-- `build-cuda-release-core`
 - `build-cuda-debug-tests`
-- `build-cuda-relwithdebinfo`
 
 ### Test Presets
 
 - `ctest-tbb-debug`
 - `ctest-tbb-release`
-- `ctest-tbb-debug-core`
-- `ctest-tbb-release-core`
 
 ## Quick Start
 
@@ -260,15 +250,7 @@ sudo apt-get install -y ninja-build libtbb-dev
 sudo apt-get install -y libglfw3-dev libglew-dev freeglut3-dev
 ```
 
-Recommended core build:
-
-```bash
-cmake --preset tbb-debug-core
-cmake --build build/tbb-debug-core -j$(nproc)
-ctest --preset ctest-tbb-debug-core
-```
-
-Vizkit-enabled local build:
+Debug build:
 
 ```bash
 cmake --preset tbb-debug
@@ -284,12 +266,12 @@ brew install ninja tbb
 brew install glfw glew freeglut
 ```
 
-Recommended core build:
+Debug build:
 
 ```bash
-cmake --preset tbb-debug-core
-cmake --build build/tbb-debug-core -j$(sysctl -n hw.ncpu)
-ctest --preset ctest-tbb-debug-core
+cmake --preset tbb-debug
+cmake --build build/tbb-debug -j$(sysctl -n hw.ncpu)
+ctest --preset ctest-tbb-debug
 ```
 
 ### CUDA
@@ -299,13 +281,6 @@ Debug build:
 ```bash
 cmake --preset cuda-debug
 cmake --build build/cuda-debug -j$(nproc)
-```
-
-Core CUDA build:
-
-```bash
-cmake --preset cuda-debug-core
-cmake --build build/cuda-debug-core -j$(nproc)
 ```
 
 CUDA test build:
@@ -402,7 +377,7 @@ int main() {
         .with_spacing(0.05f)
         .make_host_shared();
 
-    const auto system = atlas::system::System<T>::builder()
+    const auto system = atlas::System<T>::builder()
         .with_fluid(fluid)
         .with_domain(universe)
         .with_source(source)
@@ -436,9 +411,9 @@ Current test structure:
 Recommended TBB test run:
 
 ```bash
-cmake --preset tbb-debug-core
-cmake --build build/tbb-debug-core -j$(nproc)
-ctest --preset ctest-tbb-debug-core
+cmake --preset tbb-debug
+cmake --build build/tbb-debug -j$(nproc)
+ctest --preset ctest-tbb-debug
 ```
 
 Recommended CUDA test run:
@@ -454,6 +429,7 @@ cmake --build build/cuda-debug-tests --target atlas_all_cuda_test -j$(nproc)
 Maintained examples live under [`examples/`](examples/):
 
 - [`examples/cylinder/`](examples/cylinder/) demonstrates DSMC cylinder flow, collider interaction, sink removal, observer export, and optional Vizkit rendering
+- [`examples/honeycomb/`](examples/honeycomb/) demonstrates honeycomb channel flow with mesh-based geometry
 - [`examples/inflow/`](examples/inflow/) demonstrates source-driven particle inflow
 - [`examples/intake/`](examples/intake/) demonstrates intake-style source and sink setup
 - [`examples/orchestrator/`](examples/orchestrator/) demonstrates orchestrator-centered simulation wiring

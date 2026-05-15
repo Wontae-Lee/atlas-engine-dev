@@ -132,8 +132,8 @@ Preserve that ordering when editing `System`.
 
 Key `include/atlas/` modules currently include:
 
-- `buffer`, `codec`, `collider`, `container`, `core`, `data`, `domain`
-- `flatten`, `generator`, `geometry`, `indexer`, `iterator`
+- `buffer`, `codec`, `collider`, `container`, `core`
+- `fluid`, `generator`, `geometry`, `indexer`, `iterator`
 - `logging`, `material`, `math`, `measure`, `memory`, `observer`, `orchestrator`
 - `parallel`, `random`, `remove`, `sampling`, `scan`, `searcher`, `serialization`, `shuffle`
 - `sink`, `solver`, `source`, `spatial`, `sync`, `system`
@@ -150,28 +150,19 @@ There is no `include/atlas/advector/` module.
 
 ## Build & Test
 
-`CMakePresets.json` is currently kept compatible with CMake 3.22.x preset parsing.
-On Unix-like environments, preset path lists use `:` separators.
+`CMakePresets.json` requires CMake 3.20+. All presets use the Ninja generator.
 
 ```bash
+# TBB
 cmake --preset tbb-debug
 cmake --build build/tbb-debug -j$(nproc)
 ctest --preset ctest-tbb-debug
 
-cmake --preset tbb-debug-core
-cmake --build build/tbb-debug-core -j$(nproc)
-ctest --preset ctest-tbb-debug-core
-
-cmake --preset tbb-release-core
-cmake --build build/tbb-release-core -j$(nproc)
-ctest --preset ctest-tbb-release-core
-
+# CUDA
 cmake --preset cuda-debug
 cmake --build build/cuda-debug -j$(nproc)
 
-cmake --preset cuda-debug-core
-cmake --build build/cuda-debug-core -j$(nproc)
-
+# CUDA tests
 cmake --preset cuda-debug-tests
 cmake --build build/cuda-debug-tests --target atlas_all_cuda_test -j$(nproc)
 ./build/cuda-debug-tests/atlas_all_cuda_test --gtest_list_tests
@@ -179,18 +170,17 @@ cmake --build build/cuda-debug-tests --target atlas_all_cuda_test -j$(nproc)
 
 Available configure presets from `CMakePresets.json`:
 
-- TBB: `tbb-debug`, `tbb-release`, `tbb-debug-core`, `tbb-release-core`, `tbb-relwithdebinfo`, `tbb-debug-make`
-- CUDA: `cuda-debug`, `cuda-release`, `cuda-debug-core`, `cuda-release-core`, `cuda-debug-tests`, `cuda-relwithdebinfo`
+- TBB: `tbb-debug`, `tbb-release`
+- CUDA: `cuda-debug`, `cuda-release`, `cuda-debug-tests`
 
 Available build presets:
 
-- `build-tbb-debug`, `build-tbb-release`, `build-tbb-debug-core`, `build-tbb-release-core`, `build-tbb-relwithdebinfo`
-- `build-cuda-debug`, `build-cuda-release`, `build-cuda-relwithdebinfo`
-- `build-cuda-debug-core`, `build-cuda-release-core`, `build-cuda-debug-tests`
+- `build-tbb-debug`, `build-tbb-release`
+- `build-cuda-debug`, `build-cuda-release`, `build-cuda-debug-tests`
 
 Available test presets:
 
-- `ctest-tbb-debug`, `ctest-tbb-release`, `ctest-tbb-debug-core`, `ctest-tbb-release-core`
+- `ctest-tbb-debug`, `ctest-tbb-release`
 
 Important options:
 
@@ -239,8 +229,16 @@ Constraints:
 
 ## Dependencies
 
-- **TBB**: required for the CPU backend
-- **tinyobjloader**: in-tree under `external/tinyobj/`
-- **Lyra**: header-only, in-tree under `external/lyra/`
-- **OpenGL stack**: needed for Vizkit builds (`glfw3`, `GLEW`, `GLU`, `GLUT`)
-- **CUDA 12.x**: for GPU builds, with `--expt-relaxed-constexpr --extended-lambda`
+External:
+
+- **TBB**: required for the TBB backend
+- **CUDA 12.x**: required for the CUDA backend, with `--expt-relaxed-constexpr --extended-lambda`
+- **OpenGL stack**: required for Vizkit builds (`glfw3`, `GLEW`, `GLU`, `GLUT`)
+
+In-tree under `external/`:
+
+- **tinyobjloader** (`external/tinyobj/`) — OBJ mesh loading
+- **Lyra** (`external/lyra/`) — header-only CLI argument parsing
+- **googletest** (`external/googletest/`) — C++ unit test framework
+- **googlebenchmark** (`external/googlebenchmark/`) — microbenchmark framework
+- **protobuf** (`external/protobuf/`) — binary snapshot serialization
