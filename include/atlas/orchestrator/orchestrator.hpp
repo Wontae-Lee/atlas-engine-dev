@@ -97,25 +97,6 @@ Orchestrator<T>::update(const T dt) {
 
 template <typename T>
 void
-Orchestrator<T>::apply_field_force(const T dt) {
-    // A zero time step produces no velocity change.
-    if (!(dt != T(0))) {
-        return;
-    }
-
-    OrchestratorProbe probe;
-
-    // Field-force application requires valid particle, species, and property data.
-    if (!make_probe(probe) || probe.field_force_ptr == nullptr || probe.species_ptr == nullptr
-        || probe.properties_ptr == nullptr || probe.num_of_species <= 0) {
-        return;
-    }
-
-    apply_field_force(probe, dt);
-}
-
-template <typename T>
-void
 Orchestrator<T>::apply_field_force(const OrchestratorProbe& probe, const T dt) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -158,24 +139,6 @@ Orchestrator<T>::apply_field_force(const OrchestratorProbe& probe, const T dt) {
                 probe.velocity_ptr[particle_index] += force * (dt / mass);
             }
         });
-}
-
-template <typename T>
-void
-Orchestrator<T>::apply_gravity(const T dt) {
-    // A zero time step produces no velocity change.
-    if (!(dt != T(0))) {
-        return;
-    }
-
-    OrchestratorProbe probe;
-
-    // Gravity application only requires valid particle data and gravity state.
-    if (!make_probe(probe) || probe.gravity_ptr == nullptr) {
-        return;
-    }
-
-    apply_gravity(probe, dt);
 }
 
 template <typename T>
@@ -293,10 +256,6 @@ Orchestrator<T>::orchestrate(const T dt) {
     classify();
     measure();
 
-    // Build the probe once and reuse it for both force passes.
-    // This avoids the duplicate unordered_map state lookups that
-    // apply_gravity(dt) and apply_field_force(dt) would each trigger
-    // through their internal make_probe() calls.
     if (dt != T(0)) {
         OrchestratorProbe probe;
         if (make_probe(probe)) {

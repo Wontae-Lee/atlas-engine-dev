@@ -32,15 +32,16 @@ namespace atlas::system {
  *     reset_universe_fields();
  *     return;
  * }
- * update();
- * accumulate_acceleration(dt);
+ * make_probe(nullptr, probe);
+ * update(probe);
+ * accumulate_acceleration(probe, dt);
  * @endcode
  *
  * The internal @ref update stage executes:
  *
  * @code
- * estimate_particle_density_and_pressure();
- * update_cell_number_particles();
+ * estimate_particle_density_and_pressure(probe);
+ * update_cell_number_particles(probe);
  * @endcode
  *
  * The codec-aware `solve(const DeviceBuffer<int>*, int, T)` overload is currently
@@ -259,7 +260,7 @@ public:
      *                              initialization succeeds.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    solve(T dt) override final;
+    solve(T dt) override;
 
     /**
      * @brief Codec-aware SPH solve overload.
@@ -272,7 +273,7 @@ public:
      * @param dt Unused time-step size.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    solve(const DeviceBuffer<int>* allocated_solver, int index, T dt) override final;
+    solve(const DeviceBuffer<int>* allocated_solver, int index, T dt) override;
 
     /**
      * @brief Ensures SPH universe-side output states exist.
@@ -407,88 +408,6 @@ public:
     reset_universe_fields();
 
     /**
-     * @brief Executes the internal SPH field-estimation update.
-     *
-     * The current implementation performs:
-     *
-     * @code
-     * estimate_particle_density_and_pressure();
-     * update_cell_number_particles();
-     * @endcode
-     *
-     * Acceleration accumulation is not part of this function; it is called
-     * separately by @ref solve after @ref update completes.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    update();
-
-    /**
-     * @brief Estimates per-particle density and pressure from neighboring particles.
-     *
-     * For each particle, the function:
-     *
-     * - resolves material properties from the particle species,
-     * - computes the smoothing length using @ref smoothing_length_for,
-     * - maps the particle position to a search-grid cell,
-     * - scans neighboring cells within @ref search_radius_for,
-     * - accumulates density from neighboring particle masses and kernel weights,
-     * - falls back to rest density when the accumulated density is not positive,
-     * - computes pressure as:
-     *
-     * @code
-     * pressure = pressure_coefficient * (density - rest_density);
-     * @endcode
-     *
-     * Particles with invalid species indices receive zero density and pressure.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    estimate_particle_density_and_pressure();
-
-    /**
-     * @brief Updates the universe per-cell particle-count field.
-     *
-     * For each cell, this function counts valid particle indices in the searcher
-     * range `[cell_start[cell], cell_end[cell])` and writes the count to
-     * `UniverseNumberParticleState<T>`. Empty or invalid ranges receive zero.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    update_cell_number_particles();
-
-    /**
-     * @brief Accumulates SPH acceleration, updates velocity, and writes cell force output.
-     *
-     * The first device pass computes per-particle acceleration from neighboring
-     * particles using pressure-gradient and optional viscosity terms:
-     *
-     * - pressure contribution is accumulated from the pair pressure term and
-     *   `kernel.pressure_gradient(...)`,
-     * - viscosity contribution is included only when the particle material's
-     *   `dynamic_viscosity` is positive.
-     *
-     * The resulting acceleration is stored in `_acceleration`, and velocity is
-     * updated explicitly:
-     *
-     * @code
-     * velocity = velocity + acceleration * dt;
-     * @endcode
-     *
-     * If the particle species is invalid, or the particle material mass is not
-     * positive, acceleration is reset to zero.
-     *
-     * The second device pass computes a per-cell averaged force-like vector:
-     *
-     * @code
-     * field_force[cell] = average(acceleration[p] * mass[p])
-     * @endcode
-     *
-     * over valid particles in the cell. Empty cells receive a zero vector.
-     *
-     * @param dt Positive time-step size used for explicit velocity integration.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    accumulate_acceleration(T dt);
-
-    /**
      * @brief Returns the effective smoothing length for a material.
      *
      * If `property.smoothing_length` exists and is positive, that value is
@@ -591,16 +510,36 @@ public:
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
     is_valid_neighbor_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
 
-private:
+    /**
+     * @brief Estimates per-particle density and pressure using a prepared SPH probe.
+     *
+     * @param probe Raw-pointer runtime data prepared by @ref make_probe.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     estimate_particle_density_and_pressure(const SphSolverProbe& probe);
 
+    /**
+     * @brief Updates per-cell particle counts using a prepared SPH probe.
+     *
+     * @param probe Raw-pointer runtime data prepared by @ref make_probe.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update_cell_number_particles(const SphSolverProbe& probe);
 
+    /**
+     * @brief Accumulates SPH acceleration and updates velocities using a prepared SPH probe.
+     *
+     * @param probe Raw-pointer runtime data prepared by @ref make_probe.
+     * @param dt Positive time-step size used for explicit velocity integration.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     accumulate_acceleration(const SphSolverProbe& probe, T dt);
 
+    /**
+     * @brief Executes the density/pressure and cell-count update using a prepared SPH probe.
+     *
+     * @param probe Raw-pointer runtime data prepared by @ref make_probe.
+     */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update(const SphSolverProbe& probe);
 

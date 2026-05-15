@@ -8,23 +8,21 @@ using T    = float;
 using Vec3 = atlas::Vector3<T>;
 
 namespace config {
-    constexpr T kTemperature           = 300.0f;
-    constexpr T kDt                    = 2.5e-5f;
-    constexpr std::size_t kBufferSize  = 200000;
-    constexpr T kNitrogenMolecularMass = 4.651734e-26f;
-    constexpr T kNitrogenDiameter      = 4.17e-10f;
-    constexpr T kCellSize              = 0.25f;
-    constexpr T kSourceSpacing         = 0.18f;
-    constexpr int kSteps               = 1000;
-    constexpr T kCylinderRadius        = 0.9f;
-    constexpr T kCylinderHeight        = 2.2f;
-    constexpr T kRestitution           = 1.0f;
-    constexpr T kTangentialMomentumAccommodation = 1.0f;
-    constexpr atlas::system::DiffuseSampling kDiffuseSampling
-        = atlas::system::DiffuseSampling::CosineWeighted;
-    constexpr atlas::system::DsmcKernelType kDsmcKernelType
-        = atlas::system::DsmcKernelType::hard_sphere;
-    constexpr atlas::MeasureModeType kMeasureMode = atlas::MeasureModeType::Field;
+    constexpr T kTemperature                                  = 300.0f;
+    constexpr T kDt                                           = 2.5e-5f;
+    constexpr std::size_t kBufferSize                         = 200000;
+    constexpr T kNitrogenMolecularMass                        = 4.651734e-26f;
+    constexpr T kNitrogenDiameter                             = 4.17e-10f;
+    constexpr T kCellSize                                     = 0.25f;
+    constexpr T kSourceSpacing                                = 0.18f;
+    constexpr int kSteps                                      = 1000;
+    constexpr T kCylinderRadius                               = 0.9f;
+    constexpr T kCylinderHeight                               = 2.2f;
+    constexpr T kRestitution                                  = 1.0f;
+    constexpr T kTangentialMomentumAccommodation              = 1.0f;
+    constexpr atlas::system::DiffuseSampling kDiffuseSampling = atlas::system::DiffuseSampling::CosineWeighted;
+    constexpr atlas::system::DsmcKernelType kDsmcKernelType   = atlas::system::DsmcKernelType::hard_sphere;
+    constexpr atlas::MeasureModeType kMeasureMode             = atlas::MeasureModeType::Field;
     const Vec3 kDomainMin(-6.0f, -2.5f, -1.2f);
     const Vec3 kDomainMax(6.0f, 2.5f, 1.2f);
     const Vec3 kSourceMin(-5.1f, -0.9f, -0.18f);
@@ -110,7 +108,7 @@ make_collider_interaction() {
 
 int
 main() {
-    const auto fluid = make_fluid();
+    const auto fluid    = make_fluid();
     const auto universe = atlas::Universe<T>::builder()
                               .with_lower_corner(config::kDomainMin)
                               .with_upper_corner(config::kDomainMax)
@@ -139,10 +137,10 @@ main() {
                                   .with_measurer(measurer)
                                   .with_solver(dsmc_solver)
                                   .make_host_shared();
-    const auto domain_unit = make_unit(make_domain_geometry());
-    const auto source_unit = make_unit(make_source_geometry());
+    const auto domain_unit   = make_unit(make_domain_geometry());
+    const auto source_unit   = make_unit(make_source_geometry());
     const auto cylinder_unit = make_unit(make_cylinder_geometry());
-    const auto source = atlas::fluid::Source<T>::builder()
+    const auto source        = atlas::fluid::Source<T>::builder()
                             .with_units(atlas::HostBuffer<atlas::Unit<T>> { *source_unit })
                             .with_fluid(fluid)
                             .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> {

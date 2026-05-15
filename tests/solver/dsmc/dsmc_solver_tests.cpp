@@ -71,7 +71,7 @@ public:
 
 public:
     void
-    apply_collisions(const DeviceBuffer<int>*, int, float) override { }
+    apply_collisions(const DsmcSolver<float>::DsmcSolverProbe&, int, float) override { }
 };
 
 } // namespace

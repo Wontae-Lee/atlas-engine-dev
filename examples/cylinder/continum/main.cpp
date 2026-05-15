@@ -8,25 +8,25 @@ using T    = float;
 using Vec3 = atlas::Vector3<T>;
 
 namespace config {
-    constexpr T kDt                       = 1.0e-3f;
-    constexpr std::size_t kBufferSize     = 120000;
-    constexpr T kParticleMass             = 1.0f;
-    constexpr T kRestDensity              = 1000.0f;
-    constexpr T kPressureCoefficient      = 35.0f;
-    constexpr T kDynamicViscosity         = 0.08f;
-    constexpr T kSmoothingLength          = 0.28f;
-    constexpr T kCellSize                 = 0.30f;
-    constexpr T kSourceSpacing            = 0.16f;
-    constexpr T kCylinderRadius           = 0.75f;
-    constexpr T kCylinderHeight           = 2.2f;
-    constexpr int kSteps                  = 1200;
+    constexpr T kDt                   = 1.0e-3f;
+    constexpr std::size_t kBufferSize = 120000;
+    constexpr T kParticleMass         = 1.0f;
+    constexpr T kRestDensity          = 1000.0f;
+    constexpr T kPressureCoefficient  = 35.0f;
+    constexpr T kDynamicViscosity     = 0.08f;
+    constexpr T kSmoothingLength      = 0.28f;
+    constexpr T kCellSize             = 0.30f;
+    constexpr T kSourceSpacing        = 0.16f;
+    constexpr T kCylinderRadius       = 0.75f;
+    constexpr T kCylinderHeight       = 2.2f;
+    constexpr int kSteps              = 1200;
     const Vec3 kDomainMin(-5.0f, -2.0f, -1.2f);
     const Vec3 kDomainMax(5.0f, 2.0f, 1.2f);
     const Vec3 kSourceMin(-4.5f, -0.7f, -0.2f);
     const Vec3 kSourceMax(-3.8f, 0.7f, 0.2f);
     const Vec3 kCylinderCenter(0, 0, 0);
-    constexpr T kSourceBaseVelocity    = 2.4f;
-    constexpr T kSourceVelocityJitter  = 0.25f;
+    constexpr T kSourceBaseVelocity   = 2.4f;
+    constexpr T kSourceVelocityJitter = 0.25f;
     const Vec3 kGravity(0.0f, 0.0f, 0.0f);
 }
 
@@ -100,7 +100,7 @@ make_cylinder_geometry() {
 
 int
 main() {
-    const auto fluid = make_fluid();
+    const auto fluid    = make_fluid();
     const auto universe = atlas::Universe<T>::builder()
                               .with_lower_corner(config::kDomainMin)
                               .with_upper_corner(config::kDomainMax)
@@ -123,10 +123,10 @@ main() {
                                   .with_gravity(config::kGravity)
                                   .with_solver(sph_solver)
                                   .make_host_shared();
-    const auto domain_unit = make_unit(make_domain_geometry());
-    const auto source_unit = make_unit(make_source_geometry());
+    const auto domain_unit   = make_unit(make_domain_geometry());
+    const auto source_unit   = make_unit(make_source_geometry());
     const auto cylinder_unit = make_unit(make_cylinder_geometry());
-    const auto source = atlas::fluid::Source<T>::builder()
+    const auto source        = atlas::fluid::Source<T>::builder()
                             .with_units(atlas::HostBuffer<atlas::Unit<T>> { *source_unit })
                             .with_fluid(fluid)
                             .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> {

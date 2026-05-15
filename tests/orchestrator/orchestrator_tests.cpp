@@ -11,12 +11,14 @@
 
 namespace {
 
+using atlas::boltzmann_constant;
 using atlas::Codec;
 using atlas::DeviceBuffer;
 using atlas::Fluid;
 using atlas::FluidHostPtr;
 using atlas::GeneratorHostPtr;
 using atlas::HostBuffer;
+using atlas::make_host_shared;
 using atlas::MaterialProperties;
 using atlas::MaterialType;
 using atlas::MeasureModeType;
@@ -24,18 +26,16 @@ using atlas::Measurer;
 using atlas::Orchestrator;
 using atlas::SpatialHashingSearcher;
 using atlas::SpatialHashingSearcherHostPtr;
+using atlas::tol;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
-using atlas::boltzmann_constant;
 using atlas::fluid::FluidActiveState;
 using atlas::fluid::FluidPositionState;
 using atlas::fluid::FluidSpeciesState;
 using atlas::fluid::FluidVelocityState;
-using atlas::make_host_shared;
 using atlas::system::Solver;
 using atlas::test::vec_near;
-using atlas::tol;
 using atlas::universe::UniverseFieldForceState;
 using atlas::universe::UniverseGravityState;
 
@@ -76,7 +76,7 @@ public:
         ++measure_calls;
     }
 
-    MeasureModeType
+    ATLAS_NODISCARD MeasureModeType
     measure_mode() const noexcept override {
         return MeasureModeType::Field;
     }
@@ -95,7 +95,7 @@ public:
     void
     solve(const DeviceBuffer<int>* allocated_solver, const int index, const float dt) override {
         ++codec_calls;
-        last_dt = dt;
+        last_dt    = dt;
         last_index = index;
         if (allocated_solver != nullptr && !allocated_solver->empty()) {
             first_allocated_value = (*allocated_solver)[0];
@@ -114,10 +114,10 @@ make_fluid() {
     HostBuffer<MaterialProperties<float>> properties(1);
     HostBuffer<GeneratorHostPtr<float>> generators(1);
 
-    properties[0].type = MaterialType::Molecule;
-    properties[0].mass = 2.0f;
+    properties[0].type           = MaterialType::Molecule;
+    properties[0].mass           = 2.0f;
     properties[0].molecular_mass = 2.0f;
-    properties[0].species_id = 0;
+    properties[0].species_id     = 0;
 
     return Fluid<float>::builder()
         .with_buffer_size(8)
@@ -149,8 +149,8 @@ void
 seed_one_particle(const FluidHostPtr<float>& fluid, const Vector3F& position, const Vector3F& velocity) {
     auto* position_state = fluid->state<FluidPositionState<float>>();
     auto* velocity_state = fluid->state<FluidVelocityState<float>>();
-    auto* species_state = fluid->state<FluidSpeciesState<float>>();
-    auto* active_state = fluid->state<FluidActiveState<float>>();
+    auto* species_state  = fluid->state<FluidSpeciesState<float>>();
+    auto* active_state   = fluid->state<FluidActiveState<float>>();
 
     ASSERT_NE(position_state, nullptr);
     ASSERT_NE(velocity_state, nullptr);
@@ -159,8 +159,8 @@ seed_one_particle(const FluidHostPtr<float>& fluid, const Vector3F& position, co
 
     position_state->data()[0] = position;
     velocity_state->data()[0] = velocity;
-    species_state->data()[0] = 0u;
-    active_state->data()[0] = 1;
+    species_state->data()[0]  = 0u;
+    active_state->data()[0]   = 1;
     fluid->set_particle_count(1);
 }
 
@@ -191,11 +191,11 @@ TEST(Orchestrator, BuilderWithGravityCreatesGravityState) {
 }
 
 TEST(Orchestrator, UpdateWithoutCodecUsesPlainSolverAndMeasurer) {
-    const auto fluid = make_fluid();
+    const auto fluid    = make_fluid();
     const auto universe = make_universe();
     const auto searcher = make_searcher(universe, fluid);
 
-    auto solver = make_host_shared<MockSolver>();
+    auto solver   = make_host_shared<MockSolver>();
     auto measurer = make_host_shared<MockMeasurer>(universe, fluid, searcher);
 
     auto orchestrator = Orchestrator<float>::builder()
@@ -215,13 +215,13 @@ TEST(Orchestrator, UpdateWithoutCodecUsesPlainSolverAndMeasurer) {
 }
 
 TEST(Orchestrator, UpdateWithCodecUsesCodecAwareSolve) {
-    const auto fluid = make_fluid();
+    const auto fluid    = make_fluid();
     const auto universe = make_universe();
     const auto searcher = make_searcher(universe, fluid);
 
-    auto solver0 = make_host_shared<MockSolver>();
-    auto solver1 = make_host_shared<MockSolver>();
-    auto codec = make_host_shared<MockCodec>(universe, fluid, searcher);
+    auto solver0  = make_host_shared<MockSolver>();
+    auto solver1  = make_host_shared<MockSolver>();
+    auto codec    = make_host_shared<MockCodec>(universe, fluid, searcher);
     auto measurer = make_host_shared<MockMeasurer>(universe, fluid, searcher);
 
     auto orchestrator = Orchestrator<float>::builder()
@@ -254,7 +254,7 @@ TEST(Orchestrator, UpdateWithCodecUsesCodecAwareSolve) {
 }
 
 TEST(Orchestrator, ApplyGravityUpdatesParticleVelocity) {
-    const auto fluid = make_fluid();
+    const auto fluid    = make_fluid();
     const auto universe = make_universe();
     const auto searcher = make_searcher(universe, fluid);
 
@@ -268,7 +268,9 @@ TEST(Orchestrator, ApplyGravityUpdatesParticleVelocity) {
                             .with_gravity(Vector3F(0.0f, -9.0f, 2.0f))
                             .build();
 
-    orchestrator.apply_gravity(0.5f);
+    Orchestrator<float>::OrchestratorProbe probe;
+    ASSERT_TRUE(orchestrator.make_probe(probe));
+    orchestrator.apply_gravity(probe, 0.5f);
 
     const auto* velocity_state = fluid->state<FluidVelocityState<float>>();
     ASSERT_NE(velocity_state, nullptr);
@@ -279,7 +281,7 @@ TEST(Orchestrator, ApplyGravityUpdatesParticleVelocity) {
 }
 
 TEST(Orchestrator, ApplyFieldForceUpdatesParticleVelocityUsingMass) {
-    const auto fluid = make_fluid();
+    const auto fluid    = make_fluid();
     const auto universe = make_universe();
     const auto searcher = make_searcher(universe, fluid);
 
@@ -296,7 +298,9 @@ TEST(Orchestrator, ApplyFieldForceUpdatesParticleVelocityUsingMass) {
                             .with_searcher(searcher)
                             .build();
 
-    orchestrator.apply_field_force(0.5f);
+    Orchestrator<float>::OrchestratorProbe probe;
+    ASSERT_TRUE(orchestrator.make_probe(probe));
+    orchestrator.apply_field_force(probe, 0.5f);
 
     const auto* velocity_state = fluid->state<FluidVelocityState<float>>();
     ASSERT_NE(velocity_state, nullptr);

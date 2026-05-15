@@ -43,8 +43,9 @@ namespace atlas::system {
  * search();
  * classify();
  * measure();
- * apply_gravity(dt);
- * apply_field_force(dt);
+ * make_probe(probe);
+ * apply_gravity(probe, dt);
+ * apply_field_force(probe, dt);
  * solve(dt);
  * @endcode
  *
@@ -268,65 +269,6 @@ public:
     update(T dt);
 
     /**
-     * @brief Applies cell-wise external field forces to particle velocities.
-     *
-     * The function reads force vectors from `UniverseFieldForceState<T>` and
-     * applies them to particles currently mapped to each cell by the spatial
-     * searcher. For every valid particle in a force cell, velocity is updated as:
-     *
-     * @code
-     * velocity += force * (dt / mass);
-     * @endcode
-     *
-     * where `mass` is obtained from the particle's species material properties.
-     *
-     * This function is a no-op when:
-     *
-     * - `dt` is zero,
-     * - the universe, fluid, or searcher dependency is missing,
-     * - velocity data or searcher cell-range data is unavailable,
-     * - field-force data is unavailable,
-     * - species or material-property data is unavailable,
-     * - the particle species index is invalid,
-     * - the resolved mass is not positive.
-     *
-     * Work is launched with `atlas::parallel_for<ExecutionPolicy::device>`.
-     *
-     * @param dt Time-step size used for the explicit velocity update.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    apply_field_force(T dt);
-
-    /**
-     * @brief Applies cell-wise gravity acceleration to particle velocities.
-     *
-     * The function reads gravity vectors from `UniverseGravityState<T>` and
-     * applies the vector associated with each occupied cell to particles mapped
-     * to that cell:
-     *
-     * @code
-     * velocity += gravity * dt;
-     * @endcode
-     *
-     * Builder-provided gravity is installed as a uniform per-cell buffer, but
-     * this runtime pass consumes the state as cell-wise data. This allows future
-     * non-uniform gravity fields to use the same execution path.
-     *
-     * This function is a no-op when:
-     *
-     * - `dt` is zero,
-     * - the universe, fluid, or searcher dependency is missing,
-     * - velocity data or searcher cell-range data is unavailable,
-     * - gravity data is unavailable.
-     *
-     * Work is launched with `atlas::parallel_for<ExecutionPolicy::device>`.
-     *
-     * @param dt Time-step size used for the explicit velocity update.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    apply_gravity(T dt);
-
-    /**
      * @brief Populates a raw-pointer probe for force-application kernels.
      *
      * This function resolves the currently configured universe, fluid, and
@@ -377,8 +319,9 @@ public:
      * search();
      * classify();
      * measure();
-     * apply_gravity(dt);
-     * apply_field_force(dt);
+     * make_probe(probe);
+     * apply_gravity(probe, dt);
+     * apply_field_force(probe, dt);
      * solve(dt);
      * @endcode
      *
@@ -504,7 +447,6 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<SolveHostPtr<T>>&
     solvers() const noexcept;
 
-private:
     /**
      * @brief Applies gravity to all particles in the probe using a pre-built probe.
      *
