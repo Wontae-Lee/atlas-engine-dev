@@ -19,7 +19,7 @@ make_properties() {
         .with_type(MaterialType::Molecule)
         .with_mass(1.0f)
         .with_molecular_mass(1.0f)
-        .with_collision_diameter(1.0f)
+        .with_reference_diameter(1.0f)
         .build();
 }
 

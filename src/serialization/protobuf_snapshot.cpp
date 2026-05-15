@@ -293,7 +293,8 @@ namespace {
         set_optional_double(target->mutable_rotational_energy(), source.rotational_energy);
         set_optional_double(target->mutable_vibrational_energy(), source.vibrational_energy);
         set_optional_int32(target->mutable_species_id(), source.species_id);
-        set_optional_double(target->mutable_collision_diameter(), source.collision_diameter);
+        set_optional_double(target->mutable_reference_diameter(), source.reference_diameter);
+        set_optional_double(target->mutable_reference_temperature(), source.reference_temperature);
         set_optional_double(target->mutable_viscosity_index(), source.viscosity_index);
         set_optional_double(target->mutable_scattering_parameter(), source.scattering_parameter);
         set_optional_double(target->mutable_rest_density(), source.rest_density);
@@ -322,15 +323,16 @@ namespace {
         material.rotational_energy    = read_optional_double<T>(source.rotational_energy());
         material.vibrational_energy   = read_optional_double<T>(source.vibrational_energy());
         material.species_id           = read_optional_int32(source.species_id());
-        material.collision_diameter   = read_optional_double<T>(source.collision_diameter());
-        material.viscosity_index      = read_optional_double<T>(source.viscosity_index());
-        material.scattering_parameter = read_optional_double<T>(source.scattering_parameter());
-        material.rest_density         = read_optional_double<T>(source.rest_density());
-        material.pressure_coefficient = read_optional_double<T>(source.pressure_coefficient());
-        material.dynamic_viscosity    = read_optional_double<T>(source.dynamic_viscosity());
-        material.smoothing_length     = read_optional_double<T>(source.smoothing_length());
-        material.electronic_energy    = read_optional_double<T>(source.electronic_energy());
-        material.charge               = read_optional_int32(source.charge());
+        material.reference_diameter    = read_optional_double<T>(source.reference_diameter());
+        material.reference_temperature = read_optional_double<T>(source.reference_temperature());
+        material.viscosity_index       = read_optional_double<T>(source.viscosity_index());
+        material.scattering_parameter  = read_optional_double<T>(source.scattering_parameter());
+        material.rest_density          = read_optional_double<T>(source.rest_density());
+        material.pressure_coefficient  = read_optional_double<T>(source.pressure_coefficient());
+        material.dynamic_viscosity     = read_optional_double<T>(source.dynamic_viscosity());
+        material.smoothing_length      = read_optional_double<T>(source.smoothing_length());
+        material.electronic_energy     = read_optional_double<T>(source.electronic_energy());
+        material.charge                = read_optional_int32(source.charge());
         return material;
     }
 

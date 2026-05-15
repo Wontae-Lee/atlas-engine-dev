@@ -187,7 +187,7 @@ make_fluid(const atlas::ObserverHostPtr& observer) {
      *
      * The hard-sphere collision kernel reads at least:
      * - molecular_mass
-     * - collision_diameter
+     * - reference_diameter
      *
      * `species_id` is also installed so the runtime retains an explicit species
      * identifier for the particle population.
@@ -197,7 +197,7 @@ make_fluid(const atlas::ObserverHostPtr& observer) {
                         .with_mass(config::kNitrogenMolecularMass)
                         .with_molecular_mass(config::kNitrogenMolecularMass)
                         .with_species_id(0)
-                        .with_collision_diameter(config::kNitrogenDiameter)
+                        .with_reference_diameter(config::kNitrogenDiameter)
                         .build();
 
     /**

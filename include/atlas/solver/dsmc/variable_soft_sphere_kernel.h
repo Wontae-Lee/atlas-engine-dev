@@ -2,97 +2,111 @@
 
 /**
  * @file variable_soft_sphere_kernel.h
- * @brief Declares a Variable Soft Sphere style collision kernel for DSMC solvers.
+ * @brief Declares a Variable Soft Sphere DSMC collision kernel.
  *
  * @details
- * This file defines @ref atlas::system::VariableSoftSphereKernel, a lightweight
- * DSMC collision-kernel component that evaluates a relative-speed-dependent
- * collision cross section and reuses the simple hard-sphere elastic velocity
- * update.
+ * This file defines @ref atlas::system::VariableSoftSphereKernel, a stateless
+ * DSMC collision-kernel component that combines:
  *
- * In a complete Variable Soft Sphere (VSS) DSMC model, the collision cross
- * section depends on relative speed and the post-collision scattering angle is
- * controlled by an additional scattering parameter. The current implementation
- * uses the scattering parameter only in the scalar cross-section scaling. The
- * post-collision velocity update itself is delegated to
- * @ref atlas::system::HardSphereKernel.
+ * - VHS total collision cross-section evaluation,
+ * - VSS scattering-parameter-controlled elastic angular scattering.
+ *
+ * In the Variable Soft Sphere (VSS) model, the total collision cross section is
+ * commonly evaluated with the same reference-temperature and viscosity-index
+ * law used by the Variable Hard Sphere (VHS) model. The main additional feature
+ * of VSS is the scattering parameter, which modifies the post-collision angular
+ * distribution.
+ *
+ * This implementation follows that structure:
+ *
+ * - `cross_section()` delegates to `VariableHardSphereKernel<T>::cross_section()`,
+ * - `operator()` uses the averaged VSS scattering parameter to sample the
+ *   post-collision relative-velocity direction.
  *
  * @section vss_cross_section_model Cross-section model
  *
- * The implementation first computes the base hard-sphere cross section:
- *
- * @f[
- *     \sigma_{\mathrm{HS}}
- *     =
- *     \pi d_{ij}^{2},
- * @f]
- *
- * where the effective pair diameter is:
- *
- * @f[
- *     d_{ij}
- *     =
- *     \frac{d_i + d_j}{2}.
- * @f]
- *
- * Here @f$d_i@f$ and @f$d_j@f$ are the collision diameters stored in the two
- * material-property records.
- *
- * The implementation then computes an averaged scattering parameter:
- *
- * @f[
- *     \alpha_{ij}
- *     =
- *     \frac{\alpha_i + \alpha_j}{2},
- * @f]
- *
- * where @f$\alpha_i@f$ and @f$\alpha_j@f$ are read from
- * `MaterialProperties<T>::scattering_parameter`. If a material does not provide
- * a scattering parameter, `T(1)` is used as the fallback.
- *
- * The returned cross section is:
+ * The total collision cross section is evaluated by the VHS kernel:
  *
  * @f[
  *     \sigma_{\mathrm{VSS}}
  *     =
- *     \sigma_{\mathrm{HS}}
- *     g^{\alpha_{ij} - 1},
+ *     \sigma_{\mathrm{VHS}}.
  * @f]
  *
- * where @f$g@f$ is the relative speed supplied to `cross_section()`.
+ * The delegated VHS law is:
  *
- * In code form:
+ * @f[
+ *     \sigma_{\mathrm{VHS}}
+ *     =
+ *     \frac{\pi d_{ref,ij}^{2}}{\Gamma(2.5-\omega_{ij})}
+ *     \left(
+ *       \frac{2 k_B T_{ref,ij}}{m_r g^2}
+ *     \right)^{\omega_{ij}-0.5},
+ * @f]
  *
- * @code
- * base_cross_section = HardSphereKernel<T>::cross_section(lhs, rhs);
- * alpha_ij = 0.5 * (lhs.scattering_parameter + rhs.scattering_parameter);
- * speed_scale = pow(relative_speed, alpha_ij - 1);
- * sigma_vss = base_cross_section * speed_scale;
- * @endcode
+ * where:
  *
- * If the relative speed is not positive, the implementation uses a speed scale
- * of `T(1)` and therefore falls back to the base hard-sphere cross section.
+ * - @f$d_{ref,ij}@f$ is the pair reference diameter,
+ * - @f$T_{ref,ij}@f$ is the pair reference temperature,
+ * - @f$m_r@f$ is the reduced molecular mass,
+ * - @f$g@f$ is the relative speed,
+ * - @f$\omega_{ij}@f$ is the pair viscosity index.
  *
- * @section vss_velocity_update Velocity update model
+ * @section vss_scattering_model Scattering model
  *
- * The velocity update is delegated to @ref atlas::system::HardSphereKernel:
+ * The VSS scattering parameter is computed as the arithmetic pair average:
  *
- * @code
- * HardSphereKernel<T>{}(lhs_velocity, rhs_velocity, lhs, rhs);
- * @endcode
+ * @f[
+ *     \alpha_{ij}
+ *     =
+ *     \frac{\alpha_i + \alpha_j}{2}.
+ * @f]
  *
- * Therefore, this implementation does not currently sample a VSS post-collision
- * angular distribution. It applies the same simple deterministic elastic
- * two-body velocity update used by the hard-sphere kernel.
+ * Missing material scattering parameters fall back to:
+ *
+ * @f[
+ *     \alpha = 1.
+ * @f]
+ *
+ * Two hash-based deterministic samples are generated:
+ *
+ * @f[
+ *     u_1,\ u_2 \in [0,1].
+ * @f]
+ *
+ * The polar scattering angle is sampled through:
+ *
+ * @f[
+ *     \cos\chi
+ *     =
+ *     2u_1^{1/\alpha_{ij}} - 1,
+ * @f]
+ *
+ * and the azimuthal angle is:
+ *
+ * @f[
+ *     \phi = 2\pi u_2.
+ * @f]
+ *
+ * When @f$\alpha_{ij}=1@f$, this reduces to the isotropic hard-sphere angular
+ * distribution:
+ *
+ * @f[
+ *     \cos\chi = 2u_1 - 1.
+ * @f]
+ *
+ * The scattered relative-velocity direction is then used to reconstruct both
+ * particle velocities from the center-of-mass frame. This preserves total
+ * momentum and relative kinetic energy for valid positive masses.
  *
  * @note
- * This class is VSS-style in its cross-section scaling, but it is not a complete
- * stochastic VSS scattering implementation.
+ * The kernel is stateless. The pseudo-random samples are deterministic functions
+ * of the collision input state, so no mutable random-number-generator state is
+ * required in host or device code.
  *
  * @note
- * The scattering parameter affects collision scheduling through
- * `cross_section()`. It does not directly affect the post-collision velocity
- * direction in the current implementation.
+ * The scattering parameter affects the post-collision angular distribution, not
+ * the total collision cross section.
  */
 
 #include <atlas/core/macros.h>
@@ -102,95 +116,81 @@
 namespace atlas::system {
 
 /**
- * @brief Variable Soft Sphere style DSMC collision kernel.
+ * @brief Variable Soft Sphere DSMC collision kernel.
  *
  * @details
  * `VariableSoftSphereKernel<T>` provides two operations used by DSMC collision
  * solvers:
  *
- * - VSS-style relative-speed-dependent collision cross-section evaluation,
- * - simple elastic binary velocity update delegated to `HardSphereKernel<T>`.
+ * - total collision cross-section evaluation through the VHS law,
+ * - VSS angular scattering controlled by the material scattering parameter.
  *
- * The class is stateless. All behavior is determined by the input velocities and
- * the material properties of the two colliding species.
+ * The class stores no runtime state. Its behavior is determined by:
+ *
+ * - the input particle velocities,
+ * - molecular masses,
+ * - reference diameters,
+ * - reference temperatures,
+ * - viscosity indices,
+ * - scattering parameters,
+ * - hash-based pseudo-random samples derived from the collision input.
  *
  * @tparam T Floating-point scalar type used for velocities, masses, diameters,
- *         scattering parameters, and cross-section calculations.
+ *         temperatures, scattering parameters, and cross-section calculations.
  */
 template <typename T>
 class VariableSoftSphereKernel final {
 public:
     /**
-     * @brief Computes the VSS-style relative-speed-dependent collision cross section.
+     * @brief Computes the VSS total collision cross section.
      *
      * @details
-     * This function computes an effective collision cross section for two
-     * species/material records and a supplied relative speed.
+     * This function delegates directly to:
      *
-     * The base cross section is obtained from the hard-sphere model:
+     * @code
+     * VariableHardSphereKernel<T>::cross_section(lhs, rhs, relative_speed)
+     * @endcode
      *
-     * @f[
-     *     \sigma_{\mathrm{HS}}
-     *     =
-     *     \pi
-     *     \left(
-     *         \frac{d_i + d_j}{2}
-     *     \right)^2.
-     * @f]
-     *
-     * The averaged scattering parameter is:
-     *
-     * @f[
-     *     \alpha_{ij}
-     *     =
-     *     \frac{\alpha_i + \alpha_j}{2}.
-     * @f]
-     *
-     * The final cross section is:
+     * Therefore, the total cross section follows the same reference-temperature
+     * and viscosity-index law as the VHS model:
      *
      * @f[
      *     \sigma_{\mathrm{VSS}}
      *     =
-     *     \sigma_{\mathrm{HS}}
-     *     g^{\alpha_{ij} - 1},
+     *     \sigma_{\mathrm{VHS}}.
      * @f]
      *
-     * where:
+     * The VHS law used by the delegated function is:
      *
-     * - @f$\sigma_{\mathrm{VSS}}@f$ is the returned cross section,
-     * - @f$\sigma_{\mathrm{HS}}@f$ is the base hard-sphere cross section,
-     * - @f$g@f$ is @p relative_speed,
-     * - @f$\alpha_{ij}@f$ is the averaged scattering parameter.
+     * @f[
+     *     \sigma_{\mathrm{VHS}}
+     *     =
+     *     \frac{\pi d_{ref,ij}^{2}}{\Gamma(2.5-\omega_{ij})}
+     *     \left(
+     *       \frac{2 k_B T_{ref,ij}}{m_r g^2}
+     *     \right)^{\omega_{ij}-0.5}.
+     * @f]
      *
-     * If either material lacks a valid collision diameter, the base hard-sphere
-     * cross section is zero and this function returns zero.
-     *
-     * If @p relative_speed is not positive, the speed scaling factor is set to
-     * `T(1)`. This avoids evaluating `pow()` at zero or negative speed.
+     * The VSS scattering parameter does not appear in this scalar cross-section
+     * calculation. It is used only by `operator()` to control the angular
+     * scattering distribution.
      *
      * @param lhs Material properties of the left-hand particle/species.
      * @param rhs Material properties of the right-hand particle/species.
      * @param relative_speed Magnitude of the relative velocity between the two
      *        particles.
      *
-     * @return VSS-style effective collision cross section.
-     * @return `T(0)` if the base hard-sphere cross section is unavailable or
-     *         invalid.
+     * @return VSS/VHS total collision cross section.
+     * @return `T(0)` if the delegated VHS cross-section evaluation rejects the
+     *         inputs.
      *
      * @pre For a physical result, both materials should provide positive
-     *      `collision_diameter` values.
-     * @pre For a relative-speed-dependent result, @p relative_speed should be
-     *      positive.
+     *      `reference_diameter` and `reference_temperature` values.
+     * @pre Both molecular masses should be positive.
+     * @pre @p relative_speed should be positive.
      *
      * @note
-     * The fallback scattering parameter is `T(1)`. With
-     * @f$\alpha_{ij}=1@f$, the exponent becomes zero and the result reduces to
-     * the hard-sphere cross section.
-     *
-     * @note
-     * In a full VSS model, the scattering parameter also controls angular
-     * scattering. In this implementation, it only affects the scalar
-     * cross-section scaling.
+     * Missing viscosity indices are handled by the delegated VHS implementation.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     cross_section(const MaterialProperties<T>& lhs,
@@ -198,20 +198,26 @@ public:
                   T relative_speed) noexcept;
 
     /**
-     * @brief Applies the binary velocity update for a VSS-style collision.
+     * @brief Applies a VSS elastic post-collision velocity update.
      *
      * @details
-     * The current implementation delegates the velocity update to
-     * `HardSphereKernel<T>`:
+     * This function updates two particle velocities in place. It preserves the
+     * center-of-mass velocity and the magnitude of the relative velocity, while
+     * changing the direction of the relative velocity according to the averaged
+     * VSS scattering parameter.
      *
-     * @code
-     * HardSphereKernel<T>{}(lhs_velocity, rhs_velocity, lhs, rhs);
-     * @endcode
+     * The pair scattering parameter is:
      *
-     * Therefore, the post-collision velocity update follows the same simple
-     * deterministic elastic two-body formula as the hard-sphere kernel.
+     * @f[
+     *     \alpha_{ij}
+     *     =
+     *     \frac{\alpha_i + \alpha_j}{2}.
+     * @f]
      *
-     * Let the input velocities be:
+     * If either material does not provide `scattering_parameter`, `T(1)` is used
+     * for that material.
+     *
+     * Let the pre-collision velocities be:
      *
      * @f[
      *     \mathbf{v}_i,\quad \mathbf{v}_j,
@@ -223,69 +229,132 @@ public:
      *     m_i,\quad m_j.
      * @f]
      *
-     * The delegated hard-sphere update computes:
+     * The center-of-mass velocity is:
+     *
+     * @f[
+     *     \mathbf{c}
+     *     =
+     *     \frac{
+     *         m_i\mathbf{v}_i + m_j\mathbf{v}_j
+     *     }{
+     *         m_i + m_j
+     *     }.
+     * @f]
+     *
+     * The incoming relative velocity is:
      *
      * @f[
      *     \mathbf{g}
      *     =
      *     \mathbf{v}_i - \mathbf{v}_j,
+     *     \qquad
+     *     g = \|\mathbf{g}\|.
      * @f]
      *
-     * and uses:
+     * The incoming relative-velocity direction is:
      *
      * @f[
-     *     \mathbf{n}
+     *     \mathbf{e}_g
      *     =
-     *     \frac{\mathbf{g}}{\|\mathbf{g}\|}
+     *     \frac{\mathbf{g}}{g}.
      * @f]
      *
-     * as the collision normal. The updated velocities are:
+     * The implementation builds two tangential directions
+     * @f$\mathbf{t}_1@f$ and @f$\mathbf{t}_2@f$ around @f$\mathbf{e}_g@f$.
+     *
+     * It then generates two hash-based samples:
      *
      * @f[
-     *     \mathbf{v}_i'
+     *     u_1,\ u_2 \in [0,1].
+     * @f]
+     *
+     * The polar and azimuthal scattering angles are:
+     *
+     * @f[
+     *     \cos\chi
      *     =
-     *     \mathbf{v}_i
-     *     -
-     *     \frac{2m_j}{m_i + m_j}
-     *     (\mathbf{g}\cdot\mathbf{n})
-     *     \mathbf{n},
+     *     2u_1^{1/\alpha_{ij}} - 1,
      * @f]
      *
      * @f[
-     *     \mathbf{v}_j'
+     *     \phi
      *     =
-     *     \mathbf{v}_j
+     *     2\pi u_2.
+     * @f]
+     *
+     * The scattered relative-velocity direction is:
+     *
+     * @f[
+     *     \mathbf{e}'_g
+     *     =
+     *     \mathbf{e}_g\cos\chi
      *     +
-     *     \frac{2m_i}{m_i + m_j}
-     *     (\mathbf{g}\cdot\mathbf{n})
-     *     \mathbf{n}.
+     *     \left(
+     *         \mathbf{t}_1\cos\phi
+     *         +
+     *         \mathbf{t}_2\sin\phi
+     *     \right)
+     *     \sin\chi.
      * @f]
      *
-     * This operation updates both velocity references in place.
+     * The scattered relative velocity is:
+     *
+     * @f[
+     *     \mathbf{g}'
+     *     =
+     *     g\mathbf{e}'_g.
+     * @f]
+     *
+     * Finally, post-collision velocities are reconstructed as:
+     *
+     * @f[
+     *     \mathbf{v}'_i
+     *     =
+     *     \mathbf{c}
+     *     +
+     *     \frac{m_j}{m_i + m_j}
+     *     \mathbf{g}',
+     * @f]
+     *
+     * @f[
+     *     \mathbf{v}'_j
+     *     =
+     *     \mathbf{c}
+     *     -
+     *     \frac{m_i}{m_i + m_j}
+     *     \mathbf{g}'.
+     * @f]
+     *
+     * The function returns without modifying either velocity when:
+     *
+     * - either molecular mass is not positive,
+     * - the total mass is not positive,
+     * - the averaged scattering parameter is not positive,
+     * - the relative speed is not positive.
      *
      * @param lhs_velocity Velocity of the left-hand particle. Updated in place.
      * @param rhs_velocity Velocity of the right-hand particle. Updated in place.
      * @param lhs Material properties of the left-hand particle/species.
-     *        `lhs.molecular_mass` is used by the delegated hard-sphere update.
+     *        `lhs.molecular_mass` and `lhs.scattering_parameter` are used.
      * @param rhs Material properties of the right-hand particle/species.
-     *        `rhs.molecular_mass` is used by the delegated hard-sphere update.
+     *        `rhs.molecular_mass` and `rhs.scattering_parameter` are used.
      *
-     * @pre For a physical velocity update, both molecular masses should be
-     *      positive.
+     * @pre For a physical velocity update, both molecular masses should be positive.
+     * @pre For a physical VSS angular distribution, both scattering parameters
+     *      should be positive when provided.
      *
-     * @post If the delegated hard-sphere update accepts the pair, both velocities
-     *       contain post-collision values.
-     * @post If the delegated hard-sphere update rejects the pair because of
-     *       invalid masses or zero relative speed, both velocities are left
-     *       unchanged.
-     *
-     * @note
-     * This function does not currently use `scattering_parameter` directly.
-     * The scattering parameter affects collision scheduling through
-     * `cross_section()`.
+     * @post If all validity checks pass, both velocities contain post-collision
+     *       values.
+     * @post If any validity check fails, both velocities are left unchanged.
      *
      * @note
-     * This is not a full stochastic VSS angular-scattering implementation.
+     * Missing scattering parameters fall back to `T(1)`, which gives isotropic
+     * hard-sphere-style scattering.
+     *
+     * @note
+     * The pseudo-random samples are deterministic functions of the collision
+     * inputs. This keeps the operator stateless and safe for parallel host/device
+     * execution.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Vector3<T>& lhs_velocity,

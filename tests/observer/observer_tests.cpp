@@ -57,7 +57,7 @@ make_observed_fluid(const ObserverHostPtr& observer,
                         .with_mass(4.651734e-26f)
                         .with_molecular_mass(4.651734e-26f)
                         .with_species_id(0)
-                        .with_collision_diameter(4.17e-10f)
+                        .with_reference_diameter(4.17e-10f)
                         .build();
 
     auto fluid = Fluid<float>::builder()

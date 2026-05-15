@@ -33,7 +33,7 @@ make_properties() {
                         .with_type(atlas::MaterialType::Molecule)
                         .with_mass(Scalar(4.651734e-26))
                         .with_molecular_mass(Scalar(4.651734e-26))
-                        .with_collision_diameter(Scalar(4.17e-10))
+                        .with_reference_diameter(Scalar(4.17e-10))
                         .build();
     return properties;
 }

@@ -19,7 +19,9 @@ make_properties() {
         .with_type(MaterialType::Molecule)
         .with_mass(1.0f)
         .with_molecular_mass(1.0f)
-        .with_collision_diameter(1.0f)
+        .with_reference_diameter(1.0f)
+        .with_reference_temperature(1.0f)
+        .with_viscosity_index(0.75f)
         .with_scattering_parameter(1.25f)
         .build();
 }
@@ -32,6 +34,18 @@ TEST(VariableSoftSphereKernel, CrossSectionIsPositiveForPositiveSpeed) {
 
     // Assert: variable soft-sphere cross section is positive for positive speed.
     EXPECT_GT(VariableSoftSphereKernel<float>::cross_section(properties, properties, 2.0f), 0.0f);
+}
+
+TEST(VariableSoftSphereKernel, CrossSectionUsesVhsTemperatureScaling) {
+    // Arrange: create representative material properties.
+    const auto properties = make_properties();
+
+    // Act: evaluate the VSS total cross section at two relative speeds.
+    const float slow = VariableSoftSphereKernel<float>::cross_section(properties, properties, 1.0f);
+    const float fast = VariableSoftSphereKernel<float>::cross_section(properties, properties, 4.0f);
+
+    // Assert: VSS uses the same VHS total cross-section law.
+    EXPECT_GT(slow, fast);
 }
 
 TEST(VariableSoftSphereKernel, CollisionPreservesFiniteVelocities) {

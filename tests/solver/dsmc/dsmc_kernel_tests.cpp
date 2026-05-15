@@ -18,7 +18,8 @@ make_properties() {
         .with_type(MaterialType::Molecule)
         .with_mass(1.0f)
         .with_molecular_mass(1.0f)
-        .with_collision_diameter(1.0f)
+        .with_reference_diameter(1.0f)
+        .with_reference_temperature(1.0f)
         .with_viscosity_index(0.75f)
         .with_scattering_parameter(1.25f)
         .build();

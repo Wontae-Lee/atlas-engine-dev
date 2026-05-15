@@ -19,7 +19,8 @@ make_properties() {
         .with_type(MaterialType::Molecule)
         .with_mass(1.0f)
         .with_molecular_mass(1.0f)
-        .with_collision_diameter(1.0f)
+        .with_reference_diameter(1.0f)
+        .with_reference_temperature(1.0f)
         .with_viscosity_index(0.75f)
         .build();
 }
@@ -32,6 +33,18 @@ TEST(VariableHardSphereKernel, CrossSectionIsPositiveForPositiveSpeed) {
 
     // Assert: variable hard-sphere cross section is positive for positive speed.
     EXPECT_GT(VariableHardSphereKernel<float>::cross_section(properties, properties, 2.0f), 0.0f);
+}
+
+TEST(VariableHardSphereKernel, CrossSectionDecreasesWithSpeedAboveHardSphereIndex) {
+    // Arrange: create representative material properties.
+    const auto properties = make_properties();
+
+    // Act: evaluate the VHS cross section at two relative speeds.
+    const float slow = VariableHardSphereKernel<float>::cross_section(properties, properties, 1.0f);
+    const float fast = VariableHardSphereKernel<float>::cross_section(properties, properties, 4.0f);
+
+    // Assert: omega > 0.5 gives the expected inverse speed dependence.
+    EXPECT_GT(slow, fast);
 }
 
 TEST(VariableHardSphereKernel, CollisionPreservesFiniteVelocities) {

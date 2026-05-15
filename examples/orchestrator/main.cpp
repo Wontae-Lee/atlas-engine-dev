@@ -247,7 +247,7 @@ make_fluid() {
                                  .with_type(atlas::MaterialType::Molecule)
                                  .with_mass(config::kParticleMass)
                                  .with_molecular_mass(config::kParticleMolecularMass)
-                                 .with_collision_diameter(config::kParticleCollisionDiameter)
+                                 .with_reference_diameter(config::kParticleCollisionDiameter)
                                  .with_rest_density(config::kParticleRestDensity)
                                  .with_pressure_coefficient(config::kParticlePressureCoefficient)
                                  .with_dynamic_viscosity(config::kParticleDynamicViscosity)

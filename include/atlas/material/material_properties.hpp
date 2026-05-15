@@ -20,15 +20,16 @@ MaterialProperties<T>::Builder::build() const {
     p.rotational_energy    = _rotational_energy;
     p.vibrational_energy   = _vibrational_energy;
     p.species_id           = _species_id;
-    p.collision_diameter   = _collision_diameter;
-    p.viscosity_index      = _viscosity_index;
-    p.scattering_parameter = _scattering_parameter;
-    p.rest_density         = _rest_density;
-    p.pressure_coefficient = _pressure_coefficient;
-    p.dynamic_viscosity    = _dynamic_viscosity;
-    p.smoothing_length     = _smoothing_length;
-    p.electronic_energy    = _electronic_energy;
-    p.charge               = _charge;
+    p.reference_diameter    = _reference_diameter;
+    p.reference_temperature = _reference_temperature;
+    p.viscosity_index       = _viscosity_index;
+    p.scattering_parameter  = _scattering_parameter;
+    p.rest_density          = _rest_density;
+    p.pressure_coefficient  = _pressure_coefficient;
+    p.dynamic_viscosity     = _dynamic_viscosity;
+    p.smoothing_length      = _smoothing_length;
+    p.electronic_energy     = _electronic_energy;
+    p.charge                = _charge;
     return p;
 }
 
@@ -98,8 +99,15 @@ MaterialProperties<T>::Builder::with_species_id(int id) {
 
 template <typename T>
 typename MaterialProperties<T>::Builder&
-MaterialProperties<T>::Builder::with_collision_diameter(T d_ref) {
-    _collision_diameter = d_ref;
+MaterialProperties<T>::Builder::with_reference_diameter(T d_ref) {
+    _reference_diameter = d_ref;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_reference_temperature(T t_ref) {
+    _reference_temperature = t_ref;
     return *this;
 }
 

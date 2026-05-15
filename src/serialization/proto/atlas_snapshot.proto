@@ -31,7 +31,7 @@ message MaterialProperty {
   OptionalDouble rotational_energy = 5;
   OptionalDouble vibrational_energy = 6;
   OptionalInt32 species_id = 7;
-  OptionalDouble collision_diameter = 8;
+  OptionalDouble reference_diameter = 8;
   OptionalDouble viscosity_index = 9;
   OptionalDouble scattering_parameter = 10;
   OptionalDouble rest_density = 11;
@@ -40,6 +40,7 @@ message MaterialProperty {
   OptionalDouble smoothing_length = 14;
   OptionalDouble electronic_energy = 15;
   OptionalInt32 charge = 16;
+  OptionalDouble reference_temperature = 17;
 }
 
 enum GeneratorType {

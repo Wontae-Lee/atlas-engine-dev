@@ -227,12 +227,22 @@ public:
     std::optional<int> species_id;
 
     /**
-     * @brief Optional collision diameter.
+     * @brief Optional reference collision diameter.
      *
      * @details
-     * Commonly used in kinetic-theory and collision cross-section models.
+     * Diameter measured at the reference temperature for kinetic-theory
+     * collision models such as HS, VHS, and VSS.
      */
-    std::optional<T> collision_diameter;
+    std::optional<T> reference_diameter;
+
+    /**
+     * @brief Optional reference temperature.
+     *
+     * @details
+     * Temperature associated with @ref reference_diameter in temperature-dependent
+     * collision models such as VHS and VSS.
+     */
+    std::optional<T> reference_temperature;
 
     /**
      * @brief Optional viscosity index.
@@ -336,7 +346,8 @@ public:
  *     .with_type(atlas::MaterialType::Molecule)
  *     .with_mass(4.65e-26f)
  *     .with_species_id(0)
- *     .with_collision_diameter(3.7e-10f)
+ *     .with_reference_diameter(3.7e-10f)
+ *     .with_reference_temperature(273.15f)
  *     .with_viscosity_index(0.81f)
  *     .build();
  * @endcode
@@ -448,13 +459,22 @@ public:
     with_species_id(int id);
 
     /**
-     * @brief Set the collision diameter.
+     * @brief Set the reference collision diameter.
      *
-     * @param d_ref Collision diameter to stage.
+     * @param d_ref Reference collision diameter to stage.
      * @return `*this` for fluent chaining.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_collision_diameter(T d_ref);
+    with_reference_diameter(T d_ref);
+
+    /**
+     * @brief Set the reference temperature.
+     *
+     * @param t_ref Reference temperature to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_reference_temperature(T t_ref);
 
     /**
      * @brief Set the viscosity index.
@@ -575,9 +595,14 @@ private:
     std::optional<int> _species_id;
 
     /**
-     * @brief Pending collision diameter.
+     * @brief Pending reference collision diameter.
      */
-    std::optional<T> _collision_diameter;
+    std::optional<T> _reference_diameter;
+
+    /**
+     * @brief Pending reference temperature.
+     */
+    std::optional<T> _reference_temperature;
 
     /**
      * @brief Pending viscosity index.

@@ -52,7 +52,7 @@ make_fluid() {
                         .with_mass(config::kNitrogenMolecularMass)
                         .with_molecular_mass(config::kNitrogenMolecularMass)
                         .with_species_id(0)
-                        .with_collision_diameter(config::kNitrogenDiameter)
+                        .with_reference_diameter(config::kNitrogenDiameter)
                         .build();
 
     generators[0] = atlas::fluid::MaxwellBoltzmannGenerator<T>::builder()

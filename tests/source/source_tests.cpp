@@ -40,7 +40,7 @@ make_fluid(const std::size_t buffer_size = 8) {
                         .with_mass(4.651734e-26f)
                         .with_molecular_mass(4.651734e-26f)
                         .with_species_id(0)
-                        .with_collision_diameter(4.17e-10f)
+                        .with_reference_diameter(4.17e-10f)
                         .build();
 
     generators[0] = MaxwellBoltzmannGenerator<float>::builder()

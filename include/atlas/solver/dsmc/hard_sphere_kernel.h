@@ -2,23 +2,23 @@
 
 /**
  * @file hard_sphere_kernel.h
- * @brief Declares a simple hard-sphere collision kernel for DSMC solvers.
+ * @brief Declares a hard-sphere DSMC collision kernel with hash-based scattering.
  *
  * @details
  * This file defines @ref atlas::system::HardSphereKernel, a binary collision
  * kernel used by DSMC solvers to evaluate hard-sphere collision cross sections
- * and to update the velocities of two colliding particles.
+ * and update the velocities of two colliding particles.
  *
  * The kernel provides two operations:
  *
  * - `cross_section()`: computes an effective hard-sphere collision cross section
- *   from the collision diameters of two material/species records.
- * - `operator()`: applies a simple elastic binary velocity update to two
- *   particle velocities.
+ *   from the reference diameters of two material/species records.
+ * - `operator()`: applies an elastic binary velocity update using a hash-based
+ *   sampled post-collision relative-velocity direction.
  *
  * @section hard_sphere_cross_section Cross-section model
  *
- * For two collision diameters @f$d_i@f$ and @f$d_j@f$, this implementation first
+ * For two reference diameters @f$d_i@f$ and @f$d_j@f$, this implementation first
  * computes the arithmetic mean diameter:
  *
  * @f[
@@ -27,18 +27,12 @@
  *     \frac{d_i + d_j}{2}.
  * @f]
  *
- * The effective hard-sphere collision cross section is then:
+ * The effective hard-sphere collision cross section is:
  *
  * @f[
  *     \sigma_{ij}
  *     =
- *     \pi d_{ij}^{2}.
- * @f]
- *
- * Expanding the expression gives:
- *
- * @f[
- *     \sigma_{ij}
+ *     \pi d_{ij}^{2}
  *     =
  *     \pi
  *     \left(
@@ -46,107 +40,136 @@
  *     \right)^2.
  * @f]
  *
- * If either species does not provide a collision diameter, or if the resulting
- * effective diameter is not positive, the cross section is reported as zero.
+ * With SI-consistent inputs, @f$d_i@f$ and @f$d_j@f$ should be given in meters,
+ * and @f$\sigma_{ij}@f$ is returned in square meters.
+ *
+ * If either species does not provide a reference diameter, or if the averaged
+ * diameter is not positive, the cross section is reported as zero.
  *
  * @section hard_sphere_velocity_update Velocity update model
  *
- * The velocity-update operator applies a simple elastic two-body update along the
- * current relative-velocity direction.
+ * The velocity-update operator performs an elastic two-body collision in the
+ * center-of-mass frame.
  *
- * Let:
- *
- * @f[
- *     \mathbf{v}_i
- * @f]
- *
- * and:
+ * Let the pre-collision velocities be:
  *
  * @f[
- *     \mathbf{v}_j
+ *     \mathbf{v}_i,\quad \mathbf{v}_j,
  * @f]
  *
- * be the two particle velocities, and let:
+ * and let the molecular masses be:
  *
  * @f[
- *     m_i,\quad m_j
+ *     m_i,\quad m_j.
  * @f]
  *
- * be their molecular masses.
+ * The center-of-mass velocity is:
  *
- * The relative velocity is:
+ * @f[
+ *     \mathbf{c}
+ *     =
+ *     \frac{
+ *         m_i\mathbf{v}_i + m_j\mathbf{v}_j
+ *     }{
+ *         m_i + m_j
+ *     }.
+ * @f]
+ *
+ * The pre-collision relative velocity is:
  *
  * @f[
  *     \mathbf{g}
  *     =
- *     \mathbf{v}_i - \mathbf{v}_j.
+ *     \mathbf{v}_i - \mathbf{v}_j,
  * @f]
  *
- * Its magnitude is:
+ * with magnitude:
  *
  * @f[
- *     g
+ *     g = \|\mathbf{g}\|.
+ * @f]
+ *
+ * A hash-based deterministic sampling step produces two pseudo-random values:
+ *
+ * @f[
+ *     u_1,\ u_2 \in [0,1].
+ * @f]
+ *
+ * These values define the scattering angles:
+ *
+ * @f[
+ *     \cos\chi = 2u_1 - 1,
+ * @f]
+ *
+ * @f[
+ *     \phi = 2\pi u_2.
+ * @f]
+ *
+ * The incoming relative-velocity direction:
+ *
+ * @f[
+ *     \mathbf{e}_g
  *     =
- *     \|\mathbf{g}\|.
+ *     \frac{\mathbf{g}}{g}
  * @f]
  *
- * The implementation uses the normalized relative-velocity direction as the
- * collision normal:
+ * is used to build an orthonormal basis:
  *
  * @f[
- *     \mathbf{n}
+ *     \mathbf{e}_g,\quad \mathbf{t}_1,\quad \mathbf{t}_2.
+ * @f]
+ *
+ * The sampled post-collision relative-velocity direction is:
+ *
+ * @f[
+ *     \mathbf{e}'_g
  *     =
- *     \frac{\mathbf{g}}{\|\mathbf{g}\|}.
- * @f]
- *
- * The normal relative velocity is then:
- *
- * @f[
- *     g_n
- *     =
- *     \mathbf{g} \cdot \mathbf{n}.
- * @f]
- *
- * Since @f$\mathbf{n}@f$ is chosen as the normalized relative velocity, this is
- * equivalent to:
- *
- * @f[
- *     g_n = \|\mathbf{g}\|.
- * @f]
- *
- * The elastic velocity update is:
- *
- * @f[
- *     \mathbf{v}_i'
- *     =
- *     \mathbf{v}_i
- *     -
- *     \frac{2m_j}{m_i + m_j}
- *     g_n
- *     \mathbf{n},
- * @f]
- *
- * and:
- *
- * @f[
- *     \mathbf{v}_j'
- *     =
- *     \mathbf{v}_j
+ *     \mathbf{e}_g\cos\chi
  *     +
- *     \frac{2m_i}{m_i + m_j}
- *     g_n
- *     \mathbf{n}.
+ *     \left(
+ *         \mathbf{t}_1\cos\phi
+ *         +
+ *         \mathbf{t}_2\sin\phi
+ *     \right)
+ *     \sin\chi.
  * @f]
  *
- * This update preserves the center-of-mass velocity for valid positive masses
- * and performs an elastic exchange of the normal relative component.
+ * The post-collision relative velocity is:
+ *
+ * @f[
+ *     \mathbf{g}'
+ *     =
+ *     g \mathbf{e}'_g.
+ * @f]
+ *
+ * Finally, the post-collision velocities are reconstructed as:
+ *
+ * @f[
+ *     \mathbf{v}'_i
+ *     =
+ *     \mathbf{c}
+ *     +
+ *     \frac{m_j}{m_i + m_j}
+ *     \mathbf{g}',
+ * @f]
+ *
+ * @f[
+ *     \mathbf{v}'_j
+ *     =
+ *     \mathbf{c}
+ *     -
+ *     \frac{m_i}{m_i + m_j}
+ *     \mathbf{g}'.
+ * @f]
+ *
+ * This update preserves total momentum and relative kinetic energy for valid
+ * positive molecular masses.
  *
  * @note
- * This implementation is intentionally simple. It does not randomly sample a
- * post-collision scattering direction. A full stochastic DSMC hard-sphere model
- * often samples a random post-collision relative-velocity direction while
- * preserving relative speed and momentum. This kernel instead uses the current
- * relative-velocity direction as the collision normal.
+ * The scattering samples are hash-based deterministic functions of the collision
+ * inputs. This keeps the operator stateless, reproducible, and safe for
+ * parallel host/device execution, but it is not backed by a mutable random-number
+ * generator state.
  *
  * @note
  * The kernel updates velocity only. It does not update particle position,
@@ -160,21 +183,22 @@
 namespace atlas::system {
 
 /**
- * @brief Simple hard-sphere binary collision kernel.
+ * @brief Hard-sphere binary collision kernel with hash-based scattering.
  *
  * @details
  * `HardSphereKernel<T>` provides the hard-sphere collision operations used by
  * DSMC collision solvers.
  *
- * The class has no runtime state. Its behavior is fully determined by:
+ * The class has no runtime state. Its behavior is determined by:
  *
  * - the two input particle velocities,
  * - the two material-property records,
- * - the collision diameters,
- * - the molecular masses.
+ * - the reference diameters,
+ * - the molecular masses,
+ * - hash-based pseudo-random samples derived from the collision inputs.
  *
- * The cross-section calculation uses the collision diameters stored in
- * `MaterialProperties<T>::collision_diameter`. The velocity update uses the
+ * The cross-section calculation uses the reference diameters stored in
+ * `MaterialProperties<T>::reference_diameter`. The velocity update uses the
  * molecular masses stored in `MaterialProperties<T>::molecular_mass`.
  *
  * @tparam T Floating-point scalar type used for velocity, mass, diameter, and
@@ -190,19 +214,8 @@ public:
      * This function computes the hard-sphere collision cross section for a pair
      * of species/material records.
      *
-     * If the two species have collision diameters:
-     *
-     * @f[
-     *     d_i
-     * @f]
-     *
-     * and:
-     *
-     * @f[
-     *     d_j,
-     * @f]
-     *
-     * the effective pair diameter is:
+     * If the two species have reference diameters @f$d_i@f$ and @f$d_j@f$, the
+     * effective pair diameter is:
      *
      * @f[
      *     d_{ij}
@@ -230,8 +243,8 @@ public:
      *
      * The function returns zero when:
      *
-     * - either material does not provide `collision_diameter`,
-     * - the averaged collision diameter is not positive.
+     * - either material does not provide `reference_diameter`,
+     * - the averaged reference diameter is not positive.
      *
      * Returning zero is useful because DSMC collision-count estimation commonly
      * uses:
@@ -249,33 +262,46 @@ public:
      * @return Effective hard-sphere collision cross section.
      * @return `T(0)` if required diameter data is missing or invalid.
      *
-     * @pre `lhs.collision_diameter` should be positive for a physical result.
-     * @pre `rhs.collision_diameter` should be positive for a physical result.
+     * @pre `lhs.reference_diameter` should be positive for a physical result.
+     * @pre `rhs.reference_diameter` should be positive for a physical result.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     cross_section(const MaterialProperties<T>& lhs,
                   const MaterialProperties<T>& rhs) noexcept;
 
     /**
-     * @brief Applies a simple elastic hard-sphere collision to two velocities.
+     * @brief Applies an elastic hard-sphere collision to two velocities.
      *
      * @details
-     * This function updates two particle velocities in place using a deterministic
-     * elastic binary collision formula.
+     * This function updates two particle velocities in place by preserving the
+     * center-of-mass velocity and rotating the relative velocity to a hash-sampled
+     * post-collision direction.
      *
      * Let the two input velocities be:
      *
      * @f[
-     *     \mathbf{v}_i,\quad \mathbf{v}_j.
+     *     \mathbf{v}_i,\quad \mathbf{v}_j,
      * @f]
      *
-     * Let the two molecular masses be:
+     * and the molecular masses be:
      *
      * @f[
      *     m_i,\quad m_j.
      * @f]
      *
-     * The function first computes the relative velocity:
+     * The center-of-mass velocity is:
+     *
+     * @f[
+     *     \mathbf{c}
+     *     =
+     *     \frac{
+     *         m_i\mathbf{v}_i + m_j\mathbf{v}_j
+     *     }{
+     *         m_i + m_j
+     *     }.
+     * @f]
+     *
+     * The relative velocity is:
      *
      * @f[
      *     \mathbf{g}
@@ -283,61 +309,48 @@ public:
      *     \mathbf{v}_i - \mathbf{v}_j.
      * @f]
      *
-     * If:
+     * If @f$g=\|\mathbf{g}\|@f$ is not positive, no update is applied.
+     *
+     * The function samples two deterministic pseudo-random values @f$u_1@f$ and
+     * @f$u_2@f$ from the collision inputs and uses:
      *
      * @f[
-     *     \|\mathbf{g}\| \le 0,
+     *     \cos\chi = 2u_1 - 1,\qquad
+     *     \phi = 2\pi u_2.
      * @f]
      *
-     * no update is applied.
-     *
-     * Otherwise, the collision normal is chosen as:
+     * These angles define a new relative-velocity direction @f$\mathbf{e}'_g@f$.
+     * The relative speed magnitude is preserved:
      *
      * @f[
-     *     \mathbf{n}
-     *     =
-     *     \frac{\mathbf{g}}{\|\mathbf{g}\|}.
+     *     \mathbf{g}' = g\mathbf{e}'_g.
      * @f]
      *
-     * The normal relative velocity is:
-     *
-     * @f[
-     *     g_n
-     *     =
-     *     \mathbf{g} \cdot \mathbf{n}.
-     * @f]
-     *
-     * The post-collision velocities are:
+     * The post-collision velocities are reconstructed as:
      *
      * @f[
      *     \mathbf{v}_i'
      *     =
-     *     \mathbf{v}_i
-     *     -
-     *     \frac{2m_j}{m_i + m_j}
-     *     g_n
-     *     \mathbf{n},
+     *     \mathbf{c}
+     *     +
+     *     \frac{m_j}{m_i + m_j}
+     *     \mathbf{g}',
      * @f]
      *
      * @f[
      *     \mathbf{v}_j'
      *     =
-     *     \mathbf{v}_j
-     *     +
-     *     \frac{2m_i}{m_i + m_j}
-     *     g_n
-     *     \mathbf{n}.
+     *     \mathbf{c}
+     *     -
+     *     \frac{m_i}{m_i + m_j}
+     *     \mathbf{g}'.
      * @f]
-     *
-     * For equal masses, this reduces to an exchange of the velocity component
-     * along @f$\mathbf{n}@f$.
      *
      * The function returns without modifying either velocity when:
      *
      * - either molecular mass is not positive,
      * - the total mass is not positive,
-     * - the relative speed is not positive,
-     * - the normal relative velocity is not positive.
+     * - the relative speed is not positive.
      *
      * @param lhs_velocity Velocity of the first particle. Updated in place.
      * @param rhs_velocity Velocity of the second particle. Updated in place.
@@ -352,9 +365,8 @@ public:
      * @post If any validity check fails, both velocities are left unchanged.
      *
      * @note
-     * This deterministic update is simpler than a full stochastic DSMC
-     * hard-sphere collision, where the post-collision relative-velocity direction
-     * is usually sampled randomly.
+     * The random samples are deterministic functions of the collision inputs.
+     * This keeps the stateless operator reproducible and thread-safe.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Vector3<T>& lhs_velocity,

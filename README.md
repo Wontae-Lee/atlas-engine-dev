@@ -330,7 +330,7 @@ int main() {
     properties[0] = atlas::MaterialProperties<T>::builder()
         .with_type(atlas::MaterialType::Molecule)
         .with_molecular_mass(4.651734e-26f)
-        .with_collision_diameter(4.17e-10f)
+        .with_reference_diameter(4.17e-10f)
         .build();
 
     generators[0] = atlas::fluid::MaxwellBoltzmannGenerator<T>::builder()

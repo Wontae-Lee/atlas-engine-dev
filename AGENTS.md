@@ -60,7 +60,7 @@ atlas::HostBuffer<atlas::GeneratorHostPtr<float>> generators(1);
 properties[0] = atlas::MatrialProperties<float>::builder()
     .with_type(atlas::MaterialType::Molecule)
     .with_molecular_mass(4.651734e-26f)
-    .with_collision_diameter(4.17e-10f)
+    .with_reference_diameter(4.17e-10f)
     .build();
 
 generators[0] = atlas::fluid::MaxwellBoltzmannGenerator<float>::builder()

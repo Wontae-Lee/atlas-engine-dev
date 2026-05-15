@@ -53,6 +53,8 @@ TEST(ProtobufSnapshot, SaveAndLoadFluidBinarySnapshotPayload) {
     properties[0].mass = 6.0f;
     properties[0].molecular_mass = 2.0f;
     properties[0].species_id = 7;
+    properties[0].reference_diameter = 4.0f;
+    properties[0].reference_temperature = 273.15f;
 
     auto fluid = FloatFluid::builder()
                      .with_buffer_size(4)
@@ -99,6 +101,8 @@ TEST(ProtobufSnapshot, SaveAndLoadFluidBinarySnapshotPayload) {
     EXPECT_FLOAT_EQ(snapshot.statistical_weight, 3.0f);
     ASSERT_EQ(snapshot.properties.size(), 1u);
     EXPECT_EQ(snapshot.properties[0].species_id.value_or(-1), 7);
+    EXPECT_FLOAT_EQ(snapshot.properties[0].reference_diameter.value_or(0.0f), 4.0f);
+    EXPECT_FLOAT_EQ(snapshot.properties[0].reference_temperature.value_or(0.0f), 273.15f);
 
     ASSERT_TRUE(snapshot.positions.has_value());
     ASSERT_TRUE(snapshot.velocities.has_value());

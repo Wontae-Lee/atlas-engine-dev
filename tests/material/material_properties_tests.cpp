@@ -34,8 +34,9 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
                                 .with_rotational_energy(2.0f)
                                 .with_vibrational_energy(3.0f)
                                 .with_species_id(7)
-                                .with_collision_diameter(4.0f)
-                                .with_viscosity_index(5.0f)
+                                .with_reference_diameter(4.0f)
+                                .with_reference_temperature(5.0f)
+                                .with_viscosity_index(0.75f)
                                 .with_scattering_parameter(6.0f)
                                 .with_rest_density(7.0f)
                                 .with_pressure_coefficient(8.0f)
@@ -52,7 +53,8 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     ASSERT_TRUE(properties.rotational_energy.has_value());
     ASSERT_TRUE(properties.vibrational_energy.has_value());
     ASSERT_TRUE(properties.species_id.has_value());
-    ASSERT_TRUE(properties.collision_diameter.has_value());
+    ASSERT_TRUE(properties.reference_diameter.has_value());
+    ASSERT_TRUE(properties.reference_temperature.has_value());
     ASSERT_TRUE(properties.viscosity_index.has_value());
     ASSERT_TRUE(properties.scattering_parameter.has_value());
     ASSERT_TRUE(properties.rest_density.has_value());
@@ -66,8 +68,9 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     EXPECT_NEAR(*properties.rotational_energy, 2.0f, tol);
     EXPECT_NEAR(*properties.vibrational_energy, 3.0f, tol);
     EXPECT_EQ(*properties.species_id, 7);
-    EXPECT_NEAR(*properties.collision_diameter, 4.0f, tol);
-    EXPECT_NEAR(*properties.viscosity_index, 5.0f, tol);
+    EXPECT_NEAR(*properties.reference_diameter, 4.0f, tol);
+    EXPECT_NEAR(*properties.reference_temperature, 5.0f, tol);
+    EXPECT_NEAR(*properties.viscosity_index, 0.75f, tol);
     EXPECT_NEAR(*properties.scattering_parameter, 6.0f, tol);
     EXPECT_NEAR(*properties.rest_density, 7.0f, tol);
     EXPECT_NEAR(*properties.pressure_coefficient, 8.0f, tol);
