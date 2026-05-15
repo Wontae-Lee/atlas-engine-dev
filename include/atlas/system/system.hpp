@@ -42,9 +42,9 @@ void
 System<T>::update() {
     // Execute one complete simulation step.
     emit();
+    remove();
     orchestrate();
     advect();
-    remove();
 }
 
 template <typename T>
