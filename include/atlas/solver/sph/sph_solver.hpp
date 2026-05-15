@@ -41,8 +41,12 @@ SphSolver<T>::solve(const T dt) {
         reset_universe_fields();
         return;
     }
-    update();
-    accumulate_acceleration(dt);
+    SphSolverProbe probe;
+    if (!make_probe(nullptr, probe)) {
+        return;
+    }
+    update(probe);
+    accumulate_acceleration(probe, dt);
 }
 
 template <typename T>
@@ -199,8 +203,18 @@ SphSolver<T>::reset_universe_fields() {
 template <typename T>
 void
 SphSolver<T>::update() {
-    estimate_particle_density_and_pressure();
-    update_cell_number_particles();
+    SphSolverProbe probe;
+    if (!make_probe(nullptr, probe)) {
+        return;
+    }
+    update(probe);
+}
+
+template <typename T>
+void
+SphSolver<T>::update(const SphSolverProbe& probe) {
+    estimate_particle_density_and_pressure(probe);
+    update_cell_number_particles(probe);
 }
 
 template <typename T>
@@ -210,6 +224,12 @@ SphSolver<T>::estimate_particle_density_and_pressure() {
     if (!make_probe(nullptr, probe)) {
         return;
     }
+    estimate_particle_density_and_pressure(probe);
+}
+
+template <typename T>
+void
+SphSolver<T>::estimate_particle_density_and_pressure(const SphSolverProbe& probe) {
     auto* density_ptr  = atlas::raw_pointer_cast(_density.data());
     auto* pressure_ptr = atlas::raw_pointer_cast(_pressure.data());
     atlas::parallel_for<ExecutionPolicy::device>(
@@ -289,6 +309,12 @@ SphSolver<T>::update_cell_number_particles() {
     if (!make_probe(nullptr, probe)) {
         return;
     }
+    update_cell_number_particles(probe);
+}
+
+template <typename T>
+void
+SphSolver<T>::update_cell_number_particles(const SphSolverProbe& probe) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
@@ -317,6 +343,12 @@ SphSolver<T>::accumulate_acceleration(const T dt) {
     if (!make_probe(nullptr, probe)) {
         return;
     }
+    accumulate_acceleration(probe, dt);
+}
+
+template <typename T>
+void
+SphSolver<T>::accumulate_acceleration(const SphSolverProbe& probe, const T dt) {
     const auto* density_ptr  = atlas::raw_pointer_cast(_density.data());
     const auto* pressure_ptr = atlas::raw_pointer_cast(_pressure.data());
     auto* acceleration_ptr   = atlas::raw_pointer_cast(_acceleration.data());

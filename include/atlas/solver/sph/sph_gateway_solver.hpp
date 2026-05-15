@@ -55,11 +55,15 @@ SphGatewaySolver<T>::solve(const DeviceBuffer<int>* allocated_solver, const int 
         reset_universe_fields();
         return;
     }
-    update_cell_particle_counts(allocated_solver, index);
-    build_group_representatives(allocated_solver, index);
-    estimate_group_density_and_pressure(allocated_solver, index);
-    update_group_motion(allocated_solver, index, dt);
-    scatter_group_states_to_particles(allocated_solver, index);
+    typename SphSolver<T>::SphSolverProbe probe;
+    if (!SphSolver<T>::make_probe(this->_universe, this->_fluid, this->_searcher, _kernel, allocated_solver, probe)) {
+        return;
+    }
+    update_cell_particle_counts(probe, index);
+    build_group_representatives(probe, index);
+    estimate_group_density_and_pressure(probe, index);
+    update_group_motion(probe, index, dt);
+    scatter_group_states_to_particles(probe, index);
 }
 
 template <typename T>
@@ -187,6 +191,12 @@ SphGatewaySolver<T>::update_cell_particle_counts(const DeviceBuffer<int>* alloca
     if (!SphSolver<T>::make_probe(this->_universe, this->_fluid, this->_searcher, _kernel, allocated_solver, probe)) {
         return;
     }
+    update_cell_particle_counts(probe, index);
+}
+
+template <typename T>
+void
+SphGatewaySolver<T>::update_cell_particle_counts(const typename SphSolver<T>::SphSolverProbe& probe, const int index) {
     auto* cell_group_count_ptr     = atlas::raw_pointer_cast(_cell_group_count.data());
     const int group_particle_count = _group_particle_count;
     atlas::parallel_for<ExecutionPolicy::device>(
@@ -213,6 +223,12 @@ SphGatewaySolver<T>::build_group_representatives(const DeviceBuffer<int>* alloca
     if (!SphSolver<T>::make_probe(this->_universe, this->_fluid, this->_searcher, _kernel, allocated_solver, probe)) {
         return;
     }
+    build_group_representatives(probe, index);
+}
+
+template <typename T>
+void
+SphGatewaySolver<T>::build_group_representatives(const typename SphSolver<T>::SphSolverProbe& probe, const int index) {
     auto* group_position_ptr         = atlas::raw_pointer_cast(_group_position.data());
     auto* group_velocity_ptr         = atlas::raw_pointer_cast(_group_velocity.data());
     auto* group_updated_pos_ptr      = atlas::raw_pointer_cast(_group_updated_position.data());
@@ -285,6 +301,12 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>
     if (!SphSolver<T>::make_probe(this->_universe, this->_fluid, this->_searcher, _kernel, allocated_solver, probe)) {
         return;
     }
+    estimate_group_density_and_pressure(probe, index);
+}
+
+template <typename T>
+void
+SphGatewaySolver<T>::estimate_group_density_and_pressure(const typename SphSolver<T>::SphSolverProbe& probe, const int index) {
     const auto* group_position_ptr   = atlas::raw_pointer_cast(_group_position.data());
     const auto* group_mass_ptr       = atlas::raw_pointer_cast(_group_mass.data());
     const auto* group_species_ptr    = atlas::raw_pointer_cast(_group_species.data());
@@ -340,6 +362,12 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
     if (!SphSolver<T>::make_probe(this->_universe, this->_fluid, this->_searcher, _kernel, allocated_solver, probe)) {
         return;
     }
+    update_group_motion(probe, index, dt);
+}
+
+template <typename T>
+void
+SphGatewaySolver<T>::update_group_motion(const typename SphSolver<T>::SphSolverProbe& probe, const int index, const T dt) {
     const auto* group_position_ptr   = atlas::raw_pointer_cast(_group_position.data());
     const auto* group_velocity_ptr   = atlas::raw_pointer_cast(_group_velocity.data());
     const auto* group_mass_ptr       = atlas::raw_pointer_cast(_group_mass.data());
@@ -423,6 +451,12 @@ SphGatewaySolver<T>::scatter_group_states_to_particles(const DeviceBuffer<int>* 
     if (!SphSolver<T>::make_probe(this->_universe, this->_fluid, this->_searcher, _kernel, allocated_solver, probe)) {
         return;
     }
+    scatter_group_states_to_particles(probe, index);
+}
+
+template <typename T>
+void
+SphGatewaySolver<T>::scatter_group_states_to_particles(const typename SphSolver<T>::SphSolverProbe& probe, const int index) {
     const auto* group_updated_vel_ptr = atlas::raw_pointer_cast(_group_updated_velocity.data());
     const auto* cell_group_count_ptr  = atlas::raw_pointer_cast(this->_cell_group_count.data());
     const int group_particle_count    = _group_particle_count;

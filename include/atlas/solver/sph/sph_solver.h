@@ -592,6 +592,19 @@ public:
     is_valid_neighbor_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
 
 private:
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    estimate_particle_density_and_pressure(const SphSolverProbe& probe);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    update_cell_number_particles(const SphSolverProbe& probe);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    accumulate_acceleration(const SphSolverProbe& probe, T dt);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    update(const SphSolverProbe& probe);
+
+private:
     /**
      * @brief Runtime-selected SPH smoothing kernel.
      */

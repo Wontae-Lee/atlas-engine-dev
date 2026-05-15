@@ -506,6 +506,32 @@ public:
 
 private:
     /**
+     * @brief Applies gravity to all particles in the probe using a pre-built probe.
+     *
+     * Called by @ref orchestrate to avoid rebuilding the probe inside
+     * @ref apply_gravity when both force passes share the same step.
+     *
+     * @param probe Pre-built data view. Must have a valid `gravity_ptr`.
+     * @param dt Time-step size.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    apply_gravity(const OrchestratorProbe& probe, T dt);
+
+    /**
+     * @brief Applies field forces to all particles in the probe using a pre-built probe.
+     *
+     * Called by @ref orchestrate to avoid rebuilding the probe inside
+     * @ref apply_field_force when both force passes share the same step.
+     *
+     * @param probe Pre-built data view. Must have valid `field_force_ptr`,
+     *              `species_ptr`, `properties_ptr`, and positive `num_of_species`.
+     * @param dt Time-step size.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    apply_field_force(const OrchestratorProbe& probe, T dt);
+
+private:
+    /**
      * @brief Universe dependency used for cell-wise orchestration states.
      *
      * May be null. Required by gravity and field-force application.

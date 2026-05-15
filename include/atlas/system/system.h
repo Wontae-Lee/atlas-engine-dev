@@ -435,6 +435,17 @@ private:
      * validation requires it to be strictly positive.
      */
     T _dt { static_cast<T>(0.01) };
+
+    /**
+     * @brief Cached raw pointers to the fluid position and velocity states.
+     *
+     * Resolved once at construction from the fluid state registry to avoid
+     * repeated unordered_map lookups during time_integration().  The pointed-to
+     * state objects are owned by the fluid and remain valid for the lifetime of
+     * the system.
+     */
+    fluid::FluidPositionState<T>* _cached_position_state {};
+    fluid::FluidVelocityState<T>* _cached_velocity_state {};
 };
 
 /**

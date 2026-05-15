@@ -96,16 +96,27 @@ bool
 DsmcSolver<T>::build_collision_workload(const DeviceBuffer<int>* allocated_solver,
                                         const int index,
                                         const T dt) {
-    if (!initialize_collision_context()) {
+    // Validate dependencies directly and set up the searcher, avoiding the
+    // duplicate state lookups that calling initialize_collision_context() and
+    // then make_probe() would otherwise perform.
+    if (!this->_universe || !this->_fluid || !this->_searcher) {
+        reset_collision_data();
         return false;
     }
+    ensure_universe_states();
+    this->_searcher->build();
+
     if (!(dt > T(0))) {
         throw std::invalid_argument("DsmcSolver: dt must be positive.");
     }
-    if (!measure_cell_collision_statistics(allocated_solver, index, dt)) {
+
+    // Build probe once: resolves all 5 required state pointers for the device kernel.
+    DsmcSolverProbe probe;
+    if (!make_probe(allocated_solver, probe)) {
+        reset_collision_data();
         return false;
     }
-    return true;
+    return measure_cell_collision_statistics(probe, index, dt);
 }
 
 template <typename T>
@@ -190,6 +201,14 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
         reset_collision_data();
         return false;
     }
+    return measure_cell_collision_statistics(probe, index, dt);
+}
+
+template <typename T>
+bool
+DsmcSolver<T>::measure_cell_collision_statistics(const DsmcSolverProbe& probe,
+                                                 const int index,
+                                                 const T dt) {
     if (probe.particle_count < 2 || probe.num_of_cells <= 0 || probe.num_of_properties <= 0
         || !(probe.cell_volume > T(0))) {
         reset_collision_data();

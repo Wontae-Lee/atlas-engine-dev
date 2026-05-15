@@ -23,6 +23,12 @@ System<T>::System(FluidHostPtr<T> fluid,
     , _collider(std::move(collider))
     , _orchestrator(std::move(orchestrator))
     , _dt(dt) {
+    // Cache state pointers once so time_integration() can skip the per-step
+    // unordered_map lookup that state<>() would otherwise perform.
+    if (_fluid) {
+        _cached_position_state = _fluid->template state<fluid::FluidPositionState<T>>();
+        _cached_velocity_state = _fluid->template state<fluid::FluidVelocityState<T>>();
+    }
 }
 
 template <typename T>
@@ -88,26 +94,22 @@ System<T>::time_integration() {
         return;
     }
 
-    auto* position_state = _fluid->template state<atlas::fluid::FluidPositionState<T>>();
-    auto* velocity_state = _fluid->template state<atlas::fluid::FluidVelocityState<T>>();
-
-    // Position and velocity states are both required for advection.
-    if (position_state == nullptr || velocity_state == nullptr) {
+    // Use the cached state pointers resolved at construction to avoid a
+    // per-step unordered_map lookup through state<>().
+    if (!_cached_position_state || !_cached_velocity_state) {
         return;
     }
 
-    auto& positions  = position_state->data();
-    auto& velocities = velocity_state->data();
-
-    // Skip empty particle buffers.
-    if (positions.empty() || velocities.empty() || _fluid->particle_count() == 0) {
+    // Read particle_count once; it is used both as the early-exit guard and
+    // as the kernel range, eliminating the previous double call.
+    const int particle_count = static_cast<int>(_fluid->particle_count());
+    if (particle_count == 0) {
         return;
     }
 
     // Extract raw device-accessible pointers for the parallel kernel.
-    auto* positions_ptr        = atlas::raw_pointer_cast(positions.data());
-    const auto* velocities_ptr = atlas::raw_pointer_cast(velocities.data());
-    const int particle_count   = static_cast<int>(_fluid->particle_count());
+    auto* positions_ptr        = atlas::raw_pointer_cast(_cached_position_state->data().data());
+    const auto* velocities_ptr = atlas::raw_pointer_cast(_cached_velocity_state->data().data());
     const T dt                 = _dt;
 
     atlas::parallel_for<ExecutionPolicy::device>(

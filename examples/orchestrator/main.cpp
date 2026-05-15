@@ -454,13 +454,18 @@ main() {
     /**
      * @brief Seed the initial codec classification using a non-empty particle set.
      *
-     * Without this warm-up step, the first visual frame may begin with an
-     * all-zero or otherwise uninformative solver classification.
+     * Spawning particles before the system starts ensures the first visual frame
+     * already has a non-empty particle population.  The search, measurement, and
+     * codec passes are only needed ahead of the first Vizkit render; in headless
+     * mode the orchestrator rebuilds all three on the very first system->update()
+     * call, so running them here would be redundant GPU work.
      */
     source->update(config::kDt);
+#ifdef ATLAS_ENABLE_VIZKIT
     searcher->build();
     measurer->measure();
     codec->update();
+#endif
 
     /**
      * @brief Assemble the top-level runtime system.
@@ -526,13 +531,6 @@ main() {
     for (int step = 0; step < config::kHeadlessSteps; ++step) {
         system->update();
     }
-
-    /**
-     * @brief Refresh search, measurement, and codec state before reporting.
-     */
-    searcher->build();
-    measurer->measure();
-    codec->update();
 
     std::cout
         << "Codec orchestrator example ran headlessly for " << config::kHeadlessSteps << " steps.\n"

@@ -111,6 +111,12 @@ Orchestrator<T>::apply_field_force(const T dt) {
         return;
     }
 
+    apply_field_force(probe, dt);
+}
+
+template <typename T>
+void
+Orchestrator<T>::apply_field_force(const OrchestratorProbe& probe, const T dt) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.field_force_cell_count,
@@ -169,6 +175,12 @@ Orchestrator<T>::apply_gravity(const T dt) {
         return;
     }
 
+    apply_gravity(probe, dt);
+}
+
+template <typename T>
+void
+Orchestrator<T>::apply_gravity(const OrchestratorProbe& probe, const T dt) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.gravity_cell_count,
@@ -280,8 +292,24 @@ Orchestrator<T>::orchestrate(const T dt) {
     search();
     classify();
     measure();
-    apply_gravity(dt);
-    apply_field_force(dt);
+
+    // Build the probe once and reuse it for both force passes.
+    // This avoids the duplicate unordered_map state lookups that
+    // apply_gravity(dt) and apply_field_force(dt) would each trigger
+    // through their internal make_probe() calls.
+    if (dt != T(0)) {
+        OrchestratorProbe probe;
+        if (make_probe(probe)) {
+            if (probe.gravity_ptr != nullptr) {
+                apply_gravity(probe, dt);
+            }
+            if (probe.field_force_ptr != nullptr && probe.species_ptr != nullptr
+                && probe.properties_ptr != nullptr && probe.num_of_species > 0) {
+                apply_field_force(probe, dt);
+            }
+        }
+    }
+
     solve(dt);
 }
 

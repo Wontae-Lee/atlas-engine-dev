@@ -145,7 +145,7 @@ public:
      *                              initialization succeeds.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    solve(T dt) override final;
+    solve(T dt) override;
 
     /**
      * @brief Runs the grouped SPH update with optional per-cell solver filtering.
@@ -168,7 +168,7 @@ public:
      *                              initialization succeeds.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    solve(const DeviceBuffer<int>* allocated_solver, int index, T dt) override final;
+    solve(const DeviceBuffer<int>* allocated_solver, int index, T dt) override;
 
     /**
      * @brief Ensures universe-side output states required by the solver exist.
@@ -512,6 +512,22 @@ public:
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
     group_count_for_cell(int particle_count, int group_particle_count) noexcept;
+
+private:
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    update_cell_particle_counts(const typename SphSolver<T>::SphSolverProbe& probe, int index);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    build_group_representatives(const typename SphSolver<T>::SphSolverProbe& probe, int index);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    estimate_group_density_and_pressure(const typename SphSolver<T>::SphSolverProbe& probe, int index);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    update_group_motion(const typename SphSolver<T>::SphSolverProbe& probe, int index, T dt);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    scatter_group_states_to_particles(const typename SphSolver<T>::SphSolverProbe& probe, int index);
 
 private:
     /**

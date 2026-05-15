@@ -556,6 +556,10 @@ public:
     apply_collisions(const DeviceBuffer<int>* allocated_solver, int index, T dt)
         = 0;
 
+private:
+    ATLAS_HOST ATLAS_FORCE_INLINE bool
+    measure_cell_collision_statistics(const DsmcSolverProbe& probe, int index, T dt);
+
 protected:
     /**
      * @brief Runtime DSMC kernel wrapper used by derived collision code.
