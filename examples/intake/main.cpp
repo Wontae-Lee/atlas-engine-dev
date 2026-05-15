@@ -472,7 +472,7 @@ main() {
     /**
      * @brief Build the DSMC solver responsible for particle-particle collisions.
      */
-    const auto dsmc_solver = atlas::DsmcNtcSolver<T>::builder()
+    const auto dsmc_solver = atlas::DsmcSolver<T>::builder()
                                  .with_universe(universe)
                                  .with_fluid(fluid)
                                  .with_searcher(searcher)

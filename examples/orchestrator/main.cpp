@@ -369,7 +369,7 @@ main() {
     /**
      * @brief Build the DSMC solver used for rarefied cells.
      */
-    const auto dsmc_solver = atlas::DsmcNtcSolver<T>::builder()
+    const auto dsmc_solver = atlas::DsmcSolver<T>::builder()
                                  .with_universe(universe)
                                  .with_fluid(fluid)
                                  .with_searcher(searcher)

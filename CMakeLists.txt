@@ -891,8 +891,6 @@ if (ATLAS_ENABLE_TESTS)
             set(ATLAS_CUDA_TEST_MAIN "${CMAKE_CURRENT_SOURCE_DIR}/tests/cuda/main.cu")
             set(ATLAS_CUDA_EXCLUDED_SOURCES
                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/remove/remove_tests.cu"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/solver/dsmc/dsmc_disjoint_pair_solver_tests.cu"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/solver/dsmc/dsmc_ntc_solver_tests.cu"
                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/transform/transform_reduce_tests.cu"
                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/transform/transform_tests.cu"
             )

@@ -278,12 +278,32 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactoried codes for device-view and cleaned comments.">
+      <change afterPath="$PROJECT_DIR$/docs/atlas/math/quaternion.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/atlas/solver/dsmc/collision_kernels.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/cylinder/rarefied_gas/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/cylinder/rarefied_gas/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/honeycomb/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/honeycomb/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/honeycomb/observer_output/sink_sensor_matrics.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/honeycomb/observer_output/source_sensor_matrics.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/inflow/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/inflow/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/intake/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/intake/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/orchestrator/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/orchestrator/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_disjoint_pair_solver.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_ntc_solver.hpp" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/universe/universe_state.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/universe/universe_state.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/universe/universe_state.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/universe/universe_state.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_disjoint_pair_solver_tests.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_disjoint_pair_solver_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_ntc_solver_tests.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_ntc_solver_tests.cu" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tools/edit_code.py" beforeDir="false" afterPath="$PROJECT_DIR$/tools/edit_code.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -306,7 +326,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="488" />
+    <option name="cachedIndexableFilesCount" value="495" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -378,65 +398,65 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "CMake Application.atlas_all_cuda_test.executor": "Run",
-    "CMake Application.atlas_benchmarks.executor": "Run",
-    "CMake Application.atlas_cuda_tests.executor": "Run",
-    "CMake Application.atlas_unit_cuda_tests.executor": "Run",
-    "CMake Application.cube_gravity_inflow.executor": "Run",
-    "CMake Application.cylinder.executor": "Run",
-    "CMake Application.dynamic.executor": "Run",
-    "CMake Application.honeycomb.executor": "Run",
-    "CMake Application.inflow.executor": "Run",
-    "CMake Application.intake.executor": "Run",
-    "CMake Application.lh2_waterfall.executor": "Run",
-    "CMake Application.orchestrator.executor": "Run",
-    "CMake Application.overview.executor": "Run",
-    "CMake Application.solver.executor": "Run",
-    "CMake Application.visualization.executor": "Run",
-    "CMake Application.waterfall.executor": "Run",
-    "Google Test.All in atlas_tests.executor": "Run",
-    "Google Test.Sink.BuilderRejectsMissingDependencies.executor": "Run",
-    "Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove.executor": "Run",
-    "Google Test.atlas_tests_universe.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.edit_code.executor": "Run",
-    "Python.generate_headers.executor": "Run",
-    "Python.remove_comments.executor": "Run",
-    "Python.remove_space.executor": "Run",
-    "Python.temp.executor": "Run",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.RadMigrateCodeStyle": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "RunOnceActivity.west.config.association.type.startup.service": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "cf.advertisement.text.overridden": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "ctest.advertisement.all.test.configuration.is.created": "true",
-    "deletionFromPopupRequiresConfirmation": "false",
-    "git-widget-placeholder": "development",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/examples",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "org.rust.first.attach.projects": "true",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "CMakeSettings",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;CMake Application.atlas_all_cuda_test.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.atlas_benchmarks.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.atlas_cuda_tests.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.atlas_unit_cuda_tests.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.cube_gravity_inflow.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.cylinder.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.dynamic.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.honeycomb.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.inflow.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.intake.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.lh2_waterfall.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.orchestrator.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.overview.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.solver.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.visualization.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.waterfall.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.All in atlas_tests.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.Sink.BuilderRejectsMissingDependencies.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.atlas_tests_universe.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.edit_code.executor&quot;: &quot;Run&quot;,
+    &quot;Python.generate_headers.executor&quot;: &quot;Run&quot;,
+    &quot;Python.remove_comments.executor&quot;: &quot;Run&quot;,
+    &quot;Python.remove_space.executor&quot;: &quot;Run&quot;,
+    &quot;Python.temp.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.west.config.association.type.startup.service&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;cf.advertisement.text.overridden&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;ctest.advertisement.all.test.configuration.is.created&quot;: &quot;true&quot;,
+    &quot;deletionFromPopupRequiresConfirmation&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;development&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/wontae/CLionProjects/atlas-engine-dev/temp&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;CMakeSettings&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="main" />
@@ -446,21 +466,21 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/temp" />
       <recent name="$PROJECT_DIR$/examples" />
       <recent name="$PROJECT_DIR$/examples/orchestrator" />
       <recent name="$PROJECT_DIR$/examples/waterfall" />
       <recent name="$PROJECT_DIR$/examples/intake" />
-      <recent name="$PROJECT_DIR$/include/atlas/universe" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/docs/atlas" />
       <recent name="$PROJECT_DIR$/src/cudatest" />
       <recent name="$PROJECT_DIR$/src" />
       <recent name="$PROJECT_DIR$/external/cudatest/include/cudatest" />
       <recent name="$PROJECT_DIR$/external/cudatest/include" />
-      <recent name="$PROJECT_DIR$/tests" />
     </key>
   </component>
-  <component name="RunManager" selected="Google Test.All in atlas_tests">
+  <component name="RunManager" selected="CMake Application.honeycomb">
     <configuration default="true" type="UvRunConfigurationType" factoryName="UvRunConfigurationType">
       <option name="args">
         <list />
@@ -477,11 +497,6 @@
       </option>
       <option name="uvSdkKey" value="Python 3.12 (atlas-engine-dev) (2)" />
       <method v="2" />
-    </configuration>
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
     </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
@@ -937,29 +952,9 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="CMake Application.atlas-logging" />
-      <item itemvalue="CMake Application.atlas-serialization" />
-      <item itemvalue="CMake Application.cylinder_continum" />
-      <item itemvalue="CMake Application.cylinder_rarefied_gas" />
-      <item itemvalue="CMake Application.honeycomb" />
-      <item itemvalue="CMake Application.inflow" />
-      <item itemvalue="CMake Application.intake" />
-      <item itemvalue="CMake Application.libprotobuf-lite" />
-      <item itemvalue="CMake Application.libprotobuf" />
-      <item itemvalue="CMake Application.libprotoc" />
-      <item itemvalue="CMake Application.libupb" />
-      <item itemvalue="CMake Application.orchestrator" />
-      <item itemvalue="CMake Application.protoc-gen-upb" />
-      <item itemvalue="CMake Application.protoc-gen-upb_minitable" />
-      <item itemvalue="CMake Application.protoc-gen-upbdefs" />
-      <item itemvalue="CMake Application.protoc" />
-      <item itemvalue="CMake Application.tinyobjloader" />
-      <item itemvalue="CMake Application.uninstall" />
-      <item itemvalue="CMake Application.utf8_range" />
-      <item itemvalue="CMake Application.utf8_validity" />
-      <item itemvalue="CMake Application.waterfall" />
-      <item itemvalue="CTest Application.All CTest" />
       <item itemvalue="Google Test.All in atlas_tests" />
+      <item itemvalue="Google Test.Sink.BuilderRejectsMissingDependencies" />
+      <item itemvalue="Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove" />
       <item itemvalue="Google Test.atlas_tests_codec" />
       <item itemvalue="Google Test.atlas_tests_collider" />
       <item itemvalue="Google Test.atlas_tests_container" />
@@ -996,8 +991,28 @@
       <item itemvalue="Google Test.atlas_tests_tuple" />
       <item itemvalue="Google Test.atlas_tests_unit" />
       <item itemvalue="Google Test.atlas_tests_universe" />
-      <item itemvalue="Google Test.Sink.BuilderRejectsMissingDependencies" />
-      <item itemvalue="Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove" />
+      <item itemvalue="CMake Application.atlas-logging" />
+      <item itemvalue="CMake Application.atlas-serialization" />
+      <item itemvalue="CMake Application.cylinder_continum" />
+      <item itemvalue="CMake Application.cylinder_rarefied_gas" />
+      <item itemvalue="CMake Application.honeycomb" />
+      <item itemvalue="CMake Application.inflow" />
+      <item itemvalue="CMake Application.intake" />
+      <item itemvalue="CMake Application.libprotobuf-lite" />
+      <item itemvalue="CMake Application.libprotobuf" />
+      <item itemvalue="CMake Application.libprotoc" />
+      <item itemvalue="CMake Application.libupb" />
+      <item itemvalue="CMake Application.orchestrator" />
+      <item itemvalue="CMake Application.protoc-gen-upb" />
+      <item itemvalue="CMake Application.protoc-gen-upb_minitable" />
+      <item itemvalue="CMake Application.protoc-gen-upbdefs" />
+      <item itemvalue="CMake Application.protoc" />
+      <item itemvalue="CMake Application.tinyobjloader" />
+      <item itemvalue="CMake Application.uninstall" />
+      <item itemvalue="CMake Application.utf8_range" />
+      <item itemvalue="CMake Application.utf8_validity" />
+      <item itemvalue="CMake Application.waterfall" />
+      <item itemvalue="CTest Application.All CTest" />
       <item itemvalue="Python.generate_headers" />
       <item itemvalue="Python.remove_comments" />
     </list>
@@ -1141,6 +1156,8 @@
       <workItem from="1778685932143" duration="284000" />
       <workItem from="1778833002110" duration="2373000" />
       <workItem from="1778835471324" duration="965000" />
+      <workItem from="1778844615515" duration="10767000" />
+      <workItem from="1778856214606" duration="10000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

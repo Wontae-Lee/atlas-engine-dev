@@ -322,6 +322,37 @@ private:
 };
 
 /**
+ * @brief Universe state storing cell-wise maximum DSMC collision-rate majorants.
+ *
+ * Each value stores the maximum @f$\sigma_T(g) g@f$ measured among valid
+ * unordered particle pairs in one cell. DSMC NTC collision solvers use this
+ * majorant both for candidate-count scheduling and accept/reject sampling.
+ *
+ * @tparam T Floating-point scalar type used for collision-rate values.
+ */
+template <typename T>
+class UniverseMaxSigmaGState final : public UniverseState {
+public:
+    UniverseMaxSigmaGState() = default;
+
+    ATLAS_HOST explicit UniverseMaxSigmaGState(std::size_t number_of_cells);
+
+    ATLAS_HOST explicit UniverseMaxSigmaGState(DeviceBuffer<T> max_sigma_g) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<T> _max_sigma_g;
+};
+
+/**
  * @brief Universe state storing cell-wise thermal energy values.
  *
  * @tparam T Floating-point scalar type used for thermal energy values.

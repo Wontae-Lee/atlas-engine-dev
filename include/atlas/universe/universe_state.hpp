@@ -121,6 +121,32 @@ UniverseMaxRelativeSpeedState<T>::data() const noexcept {
 }
 
 template <typename T>
+UniverseMaxSigmaGState<T>::UniverseMaxSigmaGState(const std::size_t number_of_cells)
+    : _max_sigma_g(number_of_cells) { }
+
+template <typename T>
+UniverseMaxSigmaGState<T>::UniverseMaxSigmaGState(DeviceBuffer<T> max_sigma_g) noexcept
+    : _max_sigma_g(std::move(max_sigma_g)) { }
+
+template <typename T>
+std::size_t
+UniverseMaxSigmaGState<T>::size() const noexcept {
+    return _max_sigma_g.size();
+}
+
+template <typename T>
+DeviceBuffer<T>&
+UniverseMaxSigmaGState<T>::data() noexcept {
+    return _max_sigma_g;
+}
+
+template <typename T>
+const DeviceBuffer<T>&
+UniverseMaxSigmaGState<T>::data() const noexcept {
+    return _max_sigma_g;
+}
+
+template <typename T>
 UniverseThermalEnergyState<T>::UniverseThermalEnergyState(const std::size_t number_of_cells)
     : _thermal_energy(number_of_cells) { }
 template <typename T>

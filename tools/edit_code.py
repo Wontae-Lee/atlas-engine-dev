@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 
-DEFAULT_EXTENSIONS = (".hpp", ".cu")
+DEFAULT_EXTENSIONS = (".hpp", ".h")
 
 
 def remove_comments(code: str) -> str:
