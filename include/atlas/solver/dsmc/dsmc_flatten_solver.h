@@ -40,16 +40,11 @@ public:
     build_flattened_collision_workload();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    apply_collisions(const Probe& probe, int index, T dt);
-
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
-    cell_from_collision_index(int work_index,
-                              int num_of_cells,
-                              const int* collision_offsets_ptr,
-                              const int* collision_count_ptr) noexcept;
+    apply_collisions(const Probe& probe);
 
 private:
     DeviceBuffer<int> _collision_offsets {};
+    DeviceBuffer<int> _collision_cells {};
     int _flattened_collision_count {};
 };
 

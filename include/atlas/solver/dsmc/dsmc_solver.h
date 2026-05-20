@@ -9,13 +9,9 @@
 namespace atlas::system {
 
 template <typename T>
-class DsmcFlattenSolver;
-
-template <typename T>
 class DsmcSolver : public Solver<T> {
 public:
     class Builder;
-    friend class DsmcFlattenSolver<T>;
 
 public:
     struct DsmcSolverProbe {
@@ -41,9 +37,6 @@ public:
 
         DsmcKernel<T> kernel {};
         std::uint64_t collision_seed {};
-
-        const int* collision_offsets_ptr {};
-        int flattened_collision_count {};
     };
 
 public:
@@ -99,6 +92,10 @@ public:
     apply_cell_sequential_collisions(const DsmcSolverProbe& probe, int index, T dt);
 
 protected:
+    UniverseHostPtr<T> _universe {};
+    FluidHostPtr<T> _fluid {};
+    SpatialHashingSearcherHostPtr<T> _searcher {};
+
     DsmcKernel<T> _kernel {};
     std::uint64_t _collision_seed = 0;
 };

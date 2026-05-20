@@ -54,10 +54,7 @@ DsmcFlattenSolver<T>::solve(const DeviceBuffer<int>* allocated_solver,
         return;
     }
 
-    probe.collision_offsets_ptr     = atlas::raw_pointer_cast(_collision_offsets.data());
-    probe.flattened_collision_count = _flattened_collision_count;
-
-    apply_collisions(probe, index, dt);
+    apply_collisions(probe);
 }
 
 template <typename T>
@@ -95,39 +92,52 @@ DsmcFlattenSolver<T>::build_flattened_collision_workload() {
     const int total_collisions = last_offset + last_count;
 
     if (total_collisions <= 0) {
+        _collision_cells.resize(0);
         _flattened_collision_count = 0;
         return false;
     }
 
+    if (_collision_cells.size() != static_cast<std::size_t>(total_collisions)) {
+        _collision_cells.resize(static_cast<std::size_t>(total_collisions));
+    }
+
     _flattened_collision_count = total_collisions;
+
+    auto* collision_offsets_ptr = atlas::raw_pointer_cast(_collision_offsets.data());
+    auto* collision_cells_ptr   = atlas::raw_pointer_cast(_collision_cells.data());
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        num_of_cells,
+        [=] ATLAS_DEVICE(const int cell) {
+            const int offset = collision_offsets_ptr[cell];
+            const int count  = collision_count_ptr[cell];
+
+            for (int local = 0; local < count; ++local) {
+                collision_cells_ptr[offset + local] = cell;
+            }
+        });
+
     return true;
 }
 
 template <typename T>
 void
-DsmcFlattenSolver<T>::apply_collisions(const Probe& probe,
-                                       const int index,
-                                       const T) {
-    if (probe.flattened_collision_count <= 0 || probe.collision_offsets_ptr == nullptr
+DsmcFlattenSolver<T>::apply_collisions(const Probe& probe) {
+    const int* collision_offsets_ptr = atlas::raw_pointer_cast(_collision_offsets.data());
+    const int* collision_cells_ptr   = atlas::raw_pointer_cast(_collision_cells.data());
+
+    if (_flattened_collision_count <= 0 || collision_offsets_ptr == nullptr || collision_cells_ptr == nullptr
         || probe.collision_count_ptr == nullptr || probe.properties_ptr == nullptr) {
         return;
     }
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
-        probe.flattened_collision_count,
+        _flattened_collision_count,
         [=] ATLAS_DEVICE(const int work_index) {
-            const int cell = DsmcFlattenSolver<T>::cell_from_collision_index(
-                work_index,
-                probe.num_of_cells,
-                probe.collision_offsets_ptr,
-                probe.collision_count_ptr);
-
-            if (cell < 0) {
-                return;
-            }
-
-            const int local_collision = work_index - probe.collision_offsets_ptr[cell];
+            const int cell            = collision_cells_ptr[work_index];
+            const int local_collision = work_index - collision_offsets_ptr[cell];
 
             const int count     = static_cast<int>(probe.number_particle_ptr[cell]);
             const T max_sigma_g = probe.max_sigma_g_ptr[cell];
@@ -213,32 +223,6 @@ DsmcFlattenSolver<T>::apply_collisions(const Probe& probe,
 }
 
 template <typename T>
-int
-DsmcFlattenSolver<T>::cell_from_collision_index(const int work_index,
-                                                const int num_of_cells,
-                                                const int* collision_offsets_ptr,
-                                                const int* collision_count_ptr) noexcept {
-    int first = 0;
-    int last  = num_of_cells;
-
-    while (first < last) {
-        const int mid    = first + (last - first) / 2;
-        const int offset = collision_offsets_ptr[mid];
-        const int count  = collision_count_ptr[mid];
-
-        if (work_index < offset) {
-            last = mid;
-        } else if (work_index >= offset + count) {
-            first = mid + 1;
-        } else {
-            return mid;
-        }
-    }
-
-    return -1;
-}
-
-template <typename T>
 const DeviceBuffer<int>&
 DsmcFlattenSolver<T>::collision_offsets() const noexcept {
 
@@ -250,6 +234,7 @@ void
 DsmcFlattenSolver<T>::reset_collision_data() {
     DsmcSolver<T>::reset_collision_data();
     _collision_offsets.resize(0);
+    _collision_cells.resize(0);
     _flattened_collision_count = 0;
 }
 

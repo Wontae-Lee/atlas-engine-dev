@@ -17,7 +17,9 @@ DsmcSolver<T>::DsmcSolver(UniverseHostPtr<T> universe,
                           FluidHostPtr<T> fluid,
                           SpatialHashingSearcherHostPtr<T> searcher,
                           const DsmcKernelType kernel_type) noexcept
-    : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher))
+    : _universe(std::move(universe))
+    , _fluid(std::move(fluid))
+    , _searcher(std::move(searcher))
     , _kernel(DsmcKernel<T>(kernel_type)) {
 
     ensure_universe_states();
