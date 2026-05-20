@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlas/atomic/atomic.h>
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/codec/codec.h>
@@ -81,6 +82,7 @@
 #include <atlas/sink/surface_despawn_operator.h>
 #include <atlas/sink/tracing_despawn_operator.h>
 #include <atlas/sink/volume_despawn_operator.h>
+#include <atlas/solver/dsmc/dsmc_flatten_solver.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>

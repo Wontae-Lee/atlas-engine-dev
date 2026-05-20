@@ -3,6 +3,7 @@
 #include <atlas/generator/generate_operator.h>
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/material/material_properties.h>
+#include <atlas/solver/dsmc/dsmc_flatten_solver.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 
 #include <testkit/testkit.h>
@@ -21,8 +22,7 @@ using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
 using atlas::system::DsmcKernelType;
-using atlas::system::DsmcApplyMode;
-using atlas::system::DsmcMajorantMode;
+using atlas::system::DsmcFlattenSolver;
 using atlas::system::DsmcSolver;
 using atlas::system::SpatialHashingSearcher;
 using atlas::universe::UniverseCollisionCountState;
@@ -90,16 +90,6 @@ populate_four_particle_cell(const FluidHostPtr<float>& fluid) {
     fluid->state<FluidSpeciesState>()->data()[3]  = 0u;
 }
 
-float
-velocity_difference_squared(const FluidHostPtr<float>& lhs,
-                            const FluidHostPtr<float>& rhs) {
-    float delta = 0.0f;
-    for (std::size_t i = 0; i < lhs->particle_count(); ++i) {
-        delta += (lhs->state<FluidVelocityState>()->data()[i] - rhs->state<FluidVelocityState>()->data()[i]).length_squared();
-    }
-    return delta;
-}
-
 } // namespace
 
 TEST(DsmcSolver, ConstructorCreatesRequiredUniverseStates) {
@@ -126,7 +116,7 @@ TEST(DsmcSolver, BuilderConstructsSolverWithKernelType) {
     const auto searcher = make_searcher(universe, fluid);
 
     // Act: build the solver with a non-default kernel type.
-    const auto solver = DsmcSolver<float>::builder()
+    const auto solver = DsmcFlattenSolver<float>::builder()
                             .with_universe(universe)
                             .with_fluid(fluid)
                             .with_searcher(searcher)
@@ -137,53 +127,24 @@ TEST(DsmcSolver, BuilderConstructsSolverWithKernelType) {
     EXPECT_EQ(solver.kernel_type(), DsmcKernelType::variable_hard_sphere);
 }
 
-TEST(DsmcSolver, BuilderConstructsSolverWithApplyMode) {
+TEST(DsmcSolver, BuilderConstructsCellSequentialSolver) {
     // Arrange: create the universe, fluid, and searcher dependencies.
     const auto universe = make_universe();
     const auto fluid    = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    // Act: build the solver with the lock-free cell-sequential apply path.
+    // Act: build the cell-sequential solver.
     const auto solver = DsmcSolver<float>::builder()
                             .with_universe(universe)
                             .with_fluid(fluid)
                             .with_searcher(searcher)
-                            .with_apply_mode(DsmcApplyMode::cell_sequential)
                             .build();
 
-    // Assert: the configured apply mode is preserved.
-    EXPECT_EQ(solver.apply_mode(), DsmcApplyMode::cell_sequential);
+    // Assert: base solver options are preserved.
+    EXPECT_EQ(solver.kernel_type(), DsmcKernelType::hard_sphere);
 }
 
-TEST(DsmcSolver, BuilderConstructsSolverWithMajorantOptions) {
-    // Arrange: create the universe, fluid, and searcher dependencies.
-    const auto universe = make_universe();
-    const auto fluid    = make_fluid();
-    const auto searcher = make_searcher(universe, fluid);
-
-    // Act: build the solver with exact majorant estimation.
-    const auto solver = DsmcSolver<float>::builder()
-                            .with_universe(universe)
-                            .with_fluid(fluid)
-                            .with_searcher(searcher)
-                            .with_majorant_mode(DsmcMajorantMode::exact_all_pairs)
-                            .with_majorant_sample_count(8)
-                            .with_majorant_safety_factor(1.5f)
-                            .with_majorant_decay_factor(0.9f)
-                            .with_pre_collision_snapshot(true)
-                            .with_diagnostics_enabled(true)
-                            .build();
-
-    // Assert: the configured majorant controls are preserved.
-    EXPECT_EQ(solver.majorant_mode(), DsmcMajorantMode::exact_all_pairs);
-    EXPECT_EQ(solver.majorant_sample_count(), 8);
-    EXPECT_FLOAT_EQ(solver.majorant_safety_factor(), 1.5f);
-    EXPECT_FLOAT_EQ(solver.majorant_decay_factor(), 0.9f);
-    EXPECT_TRUE(solver.use_pre_collision_snapshot());
-    EXPECT_TRUE(solver.diagnostics_enabled());
-}
-
-TEST(DsmcSolver, DefaultsToCellSequentialWithoutSnapshotPrecheck) {
+TEST(DsmcSolver, DefaultsToCellSequential) {
     // Arrange: create the universe, fluid, and searcher dependencies.
     const auto universe = make_universe();
     const auto fluid    = make_fluid();
@@ -192,13 +153,8 @@ TEST(DsmcSolver, DefaultsToCellSequentialWithoutSnapshotPrecheck) {
     // Act: construct with default DSMC execution options.
     const DsmcSolver<float> solver(universe, fluid, searcher);
 
-    // Assert: the default path is the lock-free cell-sequential solver.
-    EXPECT_EQ(solver.apply_mode(), DsmcApplyMode::cell_sequential);
-    EXPECT_EQ(solver.majorant_mode(), DsmcMajorantMode::exact_all_pairs);
-    EXPECT_FLOAT_EQ(solver.majorant_safety_factor(), 1.0f);
-    EXPECT_FLOAT_EQ(solver.majorant_decay_factor(), 1.0f);
-    EXPECT_FALSE(solver.use_pre_collision_snapshot());
-    EXPECT_FALSE(solver.diagnostics_enabled());
+    // Assert: defaults are simple.
+    EXPECT_EQ(solver.kernel_type(), DsmcKernelType::hard_sphere);
 }
 
 TEST(DsmcSolver, ConstructorResizesExistingUniverseStates) {
@@ -237,7 +193,7 @@ TEST(DsmcSolver, SolveIsSafeForEmptyFluid) {
     EXPECT_EQ(universe->state<UniverseCollisionCountState<int>>()->data()[0], 0);
 }
 
-TEST(DsmcSolver, SolveStoresNtcCollisionRateMajorant) {
+TEST(DsmcSolver, SolveStoresNtcCollisionRate) {
     // Arrange: put two active hard-sphere particles in the single universe cell.
     const auto universe = make_universe();
     const auto fluid    = make_fluid();
@@ -251,13 +207,11 @@ TEST(DsmcSolver, SolveStoresNtcCollisionRateMajorant) {
     fluid->state<FluidSpeciesState>()->data()[0]  = 0u;
     fluid->state<FluidSpeciesState>()->data()[1]  = 0u;
 
-    auto solver = DsmcSolver<float>::builder()
+    auto solver = DsmcFlattenSolver<float>::builder()
                       .with_universe(universe)
                       .with_fluid(fluid)
                       .with_searcher(searcher)
                       .with_kernel_type(DsmcKernelType::hard_sphere)
-                      .with_apply_mode(DsmcApplyMode::flattened_atomic)
-                      .with_diagnostics_enabled(true)
                       .build();
 
     // Act: build collision statistics without changing velocities.
@@ -267,11 +221,7 @@ TEST(DsmcSolver, SolveStoresNtcCollisionRateMajorant) {
     EXPECT_NEAR(universe->state<UniverseMaxRelativeSpeedState<float>>()->data()[0], 1.0f, 1.0e-6f);
     EXPECT_NEAR(universe->state<UniverseMaxSigmaGState<float>>()->data()[0], static_cast<float>(atlas::pi), 1.0e-5f);
     EXPECT_GT(universe->state<UniverseCollisionCountState<int>>()->data()[0], 0);
-    EXPECT_EQ(
-        solver.flattened_collision_cells().size(),
-        static_cast<std::size_t>(universe->state<UniverseCollisionCountState<int>>()->data()[0]));
-    EXPECT_EQ(solver.majorant_violation_count(), 0);
-    EXPECT_GT(solver.accepted_collision_count(), 0);
+    EXPECT_EQ(solver.collision_offsets().size(), static_cast<std::size_t>(universe->number_of_cells()));
 }
 
 TEST(DsmcSolver, CellSequentialApplyDoesNotBuildFlattenedWorkload) {
@@ -293,7 +243,6 @@ TEST(DsmcSolver, CellSequentialApplyDoesNotBuildFlattenedWorkload) {
                       .with_fluid(fluid)
                       .with_searcher(searcher)
                       .with_kernel_type(DsmcKernelType::hard_sphere)
-                      .with_apply_mode(DsmcApplyMode::cell_sequential)
                       .build();
 
     // Act: solve through the cell-sequential path.
@@ -301,10 +250,9 @@ TEST(DsmcSolver, CellSequentialApplyDoesNotBuildFlattenedWorkload) {
 
     // Assert: collision counts are still estimated, but no flattened list is built.
     EXPECT_GT(universe->state<UniverseCollisionCountState<int>>()->data()[0], 0);
-    EXPECT_TRUE(solver.flattened_collision_cells().empty());
 }
 
-TEST(DsmcSolver, SampledAdaptiveMajorantSolvesDenseCellWithoutExactPairBudget) {
+TEST(DsmcSolver, FullPairScanSolvesDenseCell) {
     // Arrange: put four active hard-sphere particles in the single universe cell.
     const auto universe = make_universe();
     const auto fluid    = make_fluid();
@@ -329,99 +277,12 @@ TEST(DsmcSolver, SampledAdaptiveMajorantSolvesDenseCellWithoutExactPairBudget) {
                       .with_fluid(fluid)
                       .with_searcher(searcher)
                       .with_kernel_type(DsmcKernelType::hard_sphere)
-                      .with_majorant_mode(DsmcMajorantMode::sampled_adaptive)
-                      .with_majorant_sample_count(1)
-                      .with_majorant_safety_factor(1.25f)
                       .build();
 
-    // Act: solve with a dense-cell sampled majorant budget lower than all pairs.
+    // Act: solve with full pair scanning.
     solver.solve(1.0f);
 
-    // Assert: the sampled/adaptive path still schedules valid DSMC work.
+    // Assert: the full-scan path still schedules valid DSMC work.
     EXPECT_GT(universe->state<UniverseMaxSigmaGState<float>>()->data()[0], 0.0f);
     EXPECT_GT(universe->state<UniverseCollisionCountState<int>>()->data()[0], 0);
-}
-
-TEST(DsmcSolver, DiagnosticsAreDisabledByDefault) {
-    // Arrange: put active particles in the single universe cell.
-    const auto universe = make_universe();
-    const auto fluid    = make_fluid();
-    const auto searcher = make_searcher(universe, fluid);
-    populate_four_particle_cell(fluid);
-
-    DsmcSolver<float> solver(universe, fluid, searcher);
-
-    // Act: solve with default diagnostics disabled.
-    solver.solve(1.0f);
-
-    // Assert: diagnostic counters stay unavailable/zero unless explicitly enabled.
-    EXPECT_FALSE(solver.diagnostics_enabled());
-    EXPECT_EQ(solver.majorant_violation_count(), 0);
-    EXPECT_EQ(solver.accepted_collision_count(), 0);
-}
-
-TEST(DsmcSolver, SnapshotPrecheckDoesNotIncreaseAcceptedCount) {
-    // Arrange: create two identical flattened-atomic simulations.
-    const auto universe_without_snapshot = make_universe();
-    const auto fluid_without_snapshot    = make_fluid();
-    const auto searcher_without_snapshot = make_searcher(universe_without_snapshot, fluid_without_snapshot);
-    populate_four_particle_cell(fluid_without_snapshot);
-
-    const auto universe_with_snapshot = make_universe();
-    const auto fluid_with_snapshot    = make_fluid();
-    const auto searcher_with_snapshot = make_searcher(universe_with_snapshot, fluid_with_snapshot);
-    populate_four_particle_cell(fluid_with_snapshot);
-
-    auto solver_without_snapshot = DsmcSolver<float>::builder()
-                                       .with_universe(universe_without_snapshot)
-                                       .with_fluid(fluid_without_snapshot)
-                                       .with_searcher(searcher_without_snapshot)
-                                       .with_apply_mode(DsmcApplyMode::flattened_atomic)
-                                       .with_majorant_mode(DsmcMajorantMode::exact_all_pairs)
-                                       .with_diagnostics_enabled(true)
-                                       .build();
-
-    auto solver_with_snapshot = DsmcSolver<float>::builder()
-                                    .with_universe(universe_with_snapshot)
-                                    .with_fluid(fluid_with_snapshot)
-                                    .with_searcher(searcher_with_snapshot)
-                                    .with_apply_mode(DsmcApplyMode::flattened_atomic)
-                                    .with_majorant_mode(DsmcMajorantMode::exact_all_pairs)
-                                    .with_pre_collision_snapshot(true)
-                                    .with_diagnostics_enabled(true)
-                                    .build();
-
-    // Act: solve both systems with identical initial state.
-    solver_without_snapshot.solve(1.0f);
-    solver_with_snapshot.solve(1.0f);
-
-    // Assert: snapshot precheck is an extra reject gate and should not increase accepts.
-    EXPECT_LE(solver_with_snapshot.accepted_collision_count(), solver_without_snapshot.accepted_collision_count());
-    EXPECT_GE(velocity_difference_squared(fluid_without_snapshot, fluid_with_snapshot), 0.0f);
-}
-
-TEST(DsmcSolver, SampledMajorantReportsNoViolationWhenBootstrappedFromExactState) {
-    // Arrange: use sampled mode with one sample, but start from the exact bootstrap.
-    const auto universe = make_universe();
-    const auto fluid    = make_fluid();
-    const auto searcher = make_searcher(universe, fluid);
-    populate_four_particle_cell(fluid);
-
-    auto solver = DsmcSolver<float>::builder()
-                      .with_universe(universe)
-                      .with_fluid(fluid)
-                      .with_searcher(searcher)
-                      .with_majorant_mode(DsmcMajorantMode::sampled)
-                      .with_majorant_sample_count(1)
-                      .with_majorant_safety_factor(1.05f)
-                      .with_majorant_decay_factor(0.99f)
-                      .with_diagnostics_enabled(true)
-                      .build();
-
-    // Act: first solve bootstraps exact majorant because previous max is zero.
-    solver.solve(1.0e-9f);
-    solver.solve(1.0e-9f);
-
-    // Assert: unchanged velocities and decayed exact carry-over should avoid violations.
-    EXPECT_EQ(solver.majorant_violation_count(), 0);
 }

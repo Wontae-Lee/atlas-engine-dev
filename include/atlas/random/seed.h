@@ -83,6 +83,18 @@ constexpr double RANDOM_HASH_NORMAL_SCALE_FOR_MIX = 17.0;
  */
 constexpr unsigned int DEFAULT_UNSIGNED_INT_SEED = 0u;
 
+constexpr int RANDOM_HASH_UNIT_INTERVAL_SHIFT = 11;
+
+constexpr double RANDOM_HASH_UNIT_INTERVAL_SCALE = 1.0 / 9007199254740992.0;
+
+constexpr std::uint64_t DSMC_CELL_STREAM_MULTIPLIER = 0x9e3779b97f4a7c15ull;
+
+constexpr std::uint64_t DSMC_COLLISION_LHS_SALT = 0x632be59bd9b4e019ull;
+
+constexpr std::uint64_t DSMC_COLLISION_RHS_SALT = 0x85157af5ull;
+
+constexpr std::uint64_t DSMC_COLLISION_ACCEPT_SALT = 0xda942042e4dd58b5ull;
+
 /**
  * @brief Bit shift applied during the first shuffle hash mixing stage.
  */

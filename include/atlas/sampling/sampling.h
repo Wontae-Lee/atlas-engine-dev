@@ -10,7 +10,9 @@
 #include <atlas/random/default_random_engine.h>
 #include <atlas/random/seed.h>
 #include <atlas/random/uniform_real_distribution.h>
+#include <atlas/shuffle/shuffle_operator.h>
 #include <cmath>
+#include <cstdint>
 
 namespace atlas::sampling {
 
@@ -285,6 +287,26 @@ sample_hashed_unit_interval(const Vector3<T>& seed, const T salt) noexcept {
     const T value = std::sin(phase) * T(atlas::seed::RANDOM_HASH_VALUE_SCALE);
 
     return value - std::floor(value);
+}
+
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+sample_hashed_unit_interval(const int index, const std::uint64_t seed) noexcept {
+    const std::uint64_t value = atlas::ShuffleOperator {}(index, seed);
+    return static_cast<T>(value >> atlas::seed::RANDOM_HASH_UNIT_INTERVAL_SHIFT)
+        * T(atlas::seed::RANDOM_HASH_UNIT_INTERVAL_SCALE);
+}
+
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
+sample_hashed_index(const int index,
+                    const int upper_bound,
+                    const std::uint64_t seed) noexcept {
+    if (upper_bound <= 0) {
+        return 0;
+    }
+
+    const std::uint64_t value = atlas::ShuffleOperator {}(index, seed);
+    return static_cast<int>(value % static_cast<std::uint64_t>(upper_bound));
 }
 
 } // namespace atlas::sampling

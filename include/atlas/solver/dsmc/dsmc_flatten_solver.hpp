@@ -1,0 +1,322 @@
+#pragma once
+
+#include <atlas/scan/exclusive_scan.h>
+
+namespace atlas::system {
+
+template <typename T>
+DsmcFlattenSolver<T>::DsmcFlattenSolver(UniverseHostPtr<T> universe,
+                                        FluidHostPtr<T> fluid,
+                                        SpatialHashingSearcherHostPtr<T> searcher,
+                                        const DsmcKernelType kernel_type) noexcept
+    : DsmcSolver<T>(
+        std::move(universe),
+        std::move(fluid),
+        std::move(searcher),
+        kernel_type) { }
+
+template <typename T>
+typename DsmcFlattenSolver<T>::Builder
+DsmcFlattenSolver<T>::builder() noexcept {
+    return Builder {};
+}
+
+template <typename T>
+void
+DsmcFlattenSolver<T>::solve(const T dt) {
+    solve(nullptr, 0, dt);
+}
+
+template <typename T>
+void
+DsmcFlattenSolver<T>::solve(const DeviceBuffer<int>* allocated_solver,
+                            const int index,
+                            const T dt) {
+    if (!this->_universe || !this->_fluid || !this->_searcher) {
+        reset_collision_data();
+        return;
+    }
+
+    this->ensure_universe_states();
+    this->_searcher->build();
+
+    if (!(dt > T(0))) {
+        throw std::invalid_argument("DsmcFlattenSolver: dt must be positive.");
+    }
+
+    Probe probe;
+    if (!this->make_probe(allocated_solver, probe)) {
+        reset_collision_data();
+        return;
+    }
+
+    if (!this->measure_cell_collision_statistics(probe, index, dt) || !build_flattened_collision_workload()) {
+        return;
+    }
+
+    probe.collision_offsets_ptr     = atlas::raw_pointer_cast(_collision_offsets.data());
+    probe.flattened_collision_count = _flattened_collision_count;
+
+    apply_collisions(probe, index, dt);
+}
+
+template <typename T>
+bool
+DsmcFlattenSolver<T>::build_flattened_collision_workload() {
+    auto* collision_count_state = this->_universe->template state<atlas::universe::UniverseCollisionCountState<int>>();
+
+    if (collision_count_state == nullptr) {
+        this->reset_collision_data();
+        return false;
+    }
+
+    auto& collision_count     = collision_count_state->data();
+    auto* collision_count_ptr = atlas::raw_pointer_cast(collision_count.data());
+    const int num_of_cells    = this->_universe->number_of_cells();
+
+    if (_collision_offsets.size() != static_cast<std::size_t>(num_of_cells)) {
+        _collision_offsets.resize(static_cast<std::size_t>(num_of_cells));
+    }
+
+    atlas::exclusive_scan<ExecutionPolicy::device>(
+        collision_count.begin(),
+        collision_count.end(),
+        _collision_offsets.begin(),
+        0);
+
+    const auto last_cell  = static_cast<std::size_t>(num_of_cells - 1);
+    const int last_offset = _collision_offsets[last_cell];
+    const int last_count  = collision_count[last_cell];
+
+    if (last_offset > std::numeric_limits<int>::max() - last_count) {
+        throw std::overflow_error("DsmcFlattenSolver: flattened collision workload exceeds int range.");
+    }
+
+    const int total_collisions = last_offset + last_count;
+
+    if (total_collisions <= 0) {
+        _flattened_collision_count = 0;
+        return false;
+    }
+
+    _flattened_collision_count = total_collisions;
+    return true;
+}
+
+template <typename T>
+void
+DsmcFlattenSolver<T>::apply_collisions(const Probe& probe,
+                                       const int index,
+                                       const T) {
+    if (probe.flattened_collision_count <= 0 || probe.collision_offsets_ptr == nullptr
+        || probe.collision_count_ptr == nullptr || probe.properties_ptr == nullptr) {
+        return;
+    }
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        probe.flattened_collision_count,
+        [=] ATLAS_DEVICE(const int work_index) {
+            const int cell = DsmcFlattenSolver<T>::cell_from_collision_index(
+                work_index,
+                probe.num_of_cells,
+                probe.collision_offsets_ptr,
+                probe.collision_count_ptr);
+
+            if (cell < 0) {
+                return;
+            }
+
+            const int local_collision = work_index - probe.collision_offsets_ptr[cell];
+
+            const int count     = static_cast<int>(probe.number_particle_ptr[cell]);
+            const T max_sigma_g = probe.max_sigma_g_ptr[cell];
+
+            if (count < 2 || local_collision < 0 || !(max_sigma_g > T(0))) {
+                return;
+            }
+
+            const int begin = probe.cell_start_ptr[cell];
+            const int end   = probe.cell_end_ptr[cell];
+
+            const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+                + static_cast<std::uint64_t>(local_collision);
+
+            const int lhs_local = atlas::sampling::sample_hashed_index(
+                cell,
+                count,
+                probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_LHS_SALT);
+
+            int rhs_local = atlas::sampling::sample_hashed_index(
+                cell,
+                count - 1,
+                probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
+            if (rhs_local >= lhs_local) {
+                ++rhs_local;
+            }
+
+            const int particle_i = DsmcSolver<T>::nth_valid_particle(
+                lhs_local,
+                begin,
+                end,
+                probe.particle_count,
+                probe.indices_ptr);
+
+            const int particle_j = DsmcSolver<T>::nth_valid_particle(
+                rhs_local,
+                begin,
+                end,
+                probe.particle_count,
+                probe.indices_ptr);
+
+            if (particle_i < 0 || particle_j < 0) {
+                return;
+            }
+
+            const std::size_t species_i = probe.species_ptr[particle_i];
+            const std::size_t species_j = probe.species_ptr[particle_j];
+
+            const T accept_sample = atlas::sampling::sample_hashed_unit_interval<T>(
+                cell,
+                probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_ACCEPT_SALT);
+
+            Vector3<T> lhs_velocity = probe.velocity_ptr[particle_i];
+            Vector3<T> rhs_velocity = probe.velocity_ptr[particle_j];
+
+            const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
+            const T sigma_g                = DsmcSolver<T>::sigma_g(
+                probe.kernel,
+                probe.properties_ptr,
+                species_i,
+                species_j,
+                relative_speed_squared);
+
+            T accept_probability = T(0);
+            if (sigma_g > T(0)) {
+                accept_probability = sigma_g / max_sigma_g;
+                if (accept_probability > T(1)) {
+                    accept_probability = T(1);
+                }
+            }
+
+            if (accept_sample < accept_probability) {
+                probe.kernel(
+                    lhs_velocity,
+                    rhs_velocity,
+                    probe.properties_ptr[species_i],
+                    probe.properties_ptr[species_j]);
+
+                probe.velocity_ptr[particle_i] = lhs_velocity;
+                probe.velocity_ptr[particle_j] = rhs_velocity;
+            }
+        });
+}
+
+template <typename T>
+int
+DsmcFlattenSolver<T>::cell_from_collision_index(const int work_index,
+                                                const int num_of_cells,
+                                                const int* collision_offsets_ptr,
+                                                const int* collision_count_ptr) noexcept {
+    int first = 0;
+    int last  = num_of_cells;
+
+    while (first < last) {
+        const int mid    = first + (last - first) / 2;
+        const int offset = collision_offsets_ptr[mid];
+        const int count  = collision_count_ptr[mid];
+
+        if (work_index < offset) {
+            last = mid;
+        } else if (work_index >= offset + count) {
+            first = mid + 1;
+        } else {
+            return mid;
+        }
+    }
+
+    return -1;
+}
+
+template <typename T>
+const DeviceBuffer<int>&
+DsmcFlattenSolver<T>::collision_offsets() const noexcept {
+
+    return _collision_offsets;
+}
+
+template <typename T>
+void
+DsmcFlattenSolver<T>::reset_collision_data() {
+    DsmcSolver<T>::reset_collision_data();
+    _collision_offsets.resize(0);
+    _flattened_collision_count = 0;
+}
+
+template <typename T>
+typename DsmcFlattenSolver<T>::Builder&
+DsmcFlattenSolver<T>::Builder::with_universe(UniverseHostPtr<T> universe) noexcept {
+    _universe = std::move(universe);
+    return *this;
+}
+
+template <typename T>
+typename DsmcFlattenSolver<T>::Builder&
+DsmcFlattenSolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
+    _fluid = std::move(fluid);
+    return *this;
+}
+
+template <typename T>
+typename DsmcFlattenSolver<T>::Builder&
+DsmcFlattenSolver<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+    _searcher = std::move(searcher);
+    return *this;
+}
+
+template <typename T>
+typename DsmcFlattenSolver<T>::Builder&
+DsmcFlattenSolver<T>::Builder::with_kernel_type(const DsmcKernelType kernel_type) noexcept {
+    _kernel = DsmcKernel<T>(kernel_type);
+    return *this;
+}
+
+template <typename T>
+void
+DsmcFlattenSolver<T>::Builder::validate() const {
+    if (!_universe) {
+        throw std::runtime_error("DsmcFlattenSolver::Builder: universe must not be null.");
+    }
+
+    if (!_fluid) {
+        throw std::runtime_error("DsmcFlattenSolver::Builder: fluid must not be null.");
+    }
+
+    if (!_searcher) {
+        throw std::runtime_error("DsmcFlattenSolver::Builder: searcher must not be null.");
+    }
+}
+
+template <typename T>
+DsmcFlattenSolver<T>
+DsmcFlattenSolver<T>::Builder::build() const {
+    validate();
+    return DsmcFlattenSolver<T>(
+        _universe,
+        _fluid,
+        _searcher,
+        _kernel.type);
+}
+
+template <typename T>
+atlas::host_shared_ptr<DsmcFlattenSolver<T>>
+DsmcFlattenSolver<T>::Builder::make_host_shared() const {
+    validate();
+    return atlas::make_host_shared<DsmcFlattenSolver<T>>(
+        _universe,
+        _fluid,
+        _searcher,
+        _kernel.type);
+}
+
+}

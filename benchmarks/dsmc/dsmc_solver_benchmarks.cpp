@@ -1,6 +1,7 @@
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/generator/generate_operator.h>
 #include <atlas/material/material_properties.h>
+#include <atlas/solver/dsmc/dsmc_flatten_solver.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 
 #include <benchmark/benchmark.h>
@@ -17,9 +18,8 @@ using atlas::SpatialHashingSearcherHostPtr;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
-using atlas::system::DsmcApplyMode;
+using atlas::system::DsmcFlattenSolver;
 using atlas::system::DsmcKernelType;
-using atlas::system::DsmcMajorantMode;
 using atlas::system::DsmcSolver;
 using atlas::system::SpatialHashingSearcher;
 
@@ -88,29 +88,31 @@ make_benchmark_searcher(const UniverseHostPtr<float>& universe,
 
 void
 run_dsmc_benchmark(benchmark::State& state,
-                   const DsmcApplyMode apply_mode,
-                   const DsmcMajorantMode majorant_mode,
-                   const bool use_snapshot) {
+                   const bool use_flattened_solver) {
     const int particle_count = static_cast<int>(state.range(0));
     const auto universe = make_benchmark_universe();
     const auto fluid = make_benchmark_fluid(particle_count);
     const auto searcher = make_benchmark_searcher(universe, fluid);
 
-    auto solver = DsmcSolver<float>::builder()
-                      .with_universe(universe)
-                      .with_fluid(fluid)
-                      .with_searcher(searcher)
-                      .with_kernel_type(DsmcKernelType::hard_sphere)
-                      .with_apply_mode(apply_mode)
-                      .with_majorant_mode(majorant_mode)
-                      .with_majorant_sample_count(64)
-                      .with_majorant_safety_factor(majorant_mode == DsmcMajorantMode::exact_all_pairs ? 1.0f : 1.05f)
-                      .with_majorant_decay_factor(majorant_mode == DsmcMajorantMode::exact_all_pairs ? 1.0f : 0.99f)
-                      .with_pre_collision_snapshot(use_snapshot)
-                      .build();
+    atlas::host_shared_ptr<DsmcSolver<float>> solver;
+    if (use_flattened_solver) {
+        solver = DsmcFlattenSolver<float>::builder()
+                     .with_universe(universe)
+                     .with_fluid(fluid)
+                     .with_searcher(searcher)
+                     .with_kernel_type(DsmcKernelType::hard_sphere)
+                     .make_host_shared();
+    } else {
+        solver = DsmcSolver<float>::builder()
+                     .with_universe(universe)
+                     .with_fluid(fluid)
+                     .with_searcher(searcher)
+                     .with_kernel_type(DsmcKernelType::hard_sphere)
+                     .make_host_shared();
+    }
 
     for (auto _ : state) {
-        solver.solve(1.0e-3f);
+        solver->solve(1.0e-3f);
         benchmark::DoNotOptimize(fluid->state<FluidVelocityState>()->data().data());
         benchmark::DoNotOptimize(universe->state<atlas::universe::UniverseCollisionCountState<int>>()->data().data());
     }
@@ -119,44 +121,20 @@ run_dsmc_benchmark(benchmark::State& state,
 }
 
 void
-BM_DsmcCellSequentialExact(benchmark::State& state) {
+BM_DsmcCellSequential(benchmark::State& state) {
     run_dsmc_benchmark(
         state,
-        DsmcApplyMode::cell_sequential,
-        DsmcMajorantMode::exact_all_pairs,
         false);
 }
 
 void
-BM_DsmcFlattenedAtomicExact(benchmark::State& state) {
+BM_DsmcFlattenedAtomic(benchmark::State& state) {
     run_dsmc_benchmark(
         state,
-        DsmcApplyMode::flattened_atomic,
-        DsmcMajorantMode::exact_all_pairs,
-        false);
-}
-
-void
-BM_DsmcFlattenedAtomicSampled(benchmark::State& state) {
-    run_dsmc_benchmark(
-        state,
-        DsmcApplyMode::flattened_atomic,
-        DsmcMajorantMode::sampled,
-        false);
-}
-
-void
-BM_DsmcFlattenedAtomicSampledSnapshot(benchmark::State& state) {
-    run_dsmc_benchmark(
-        state,
-        DsmcApplyMode::flattened_atomic,
-        DsmcMajorantMode::sampled,
         true);
 }
 
 } // namespace
 
-BENCHMARK(BM_DsmcCellSequentialExact)->RangeMultiplier(2)->Range(32, 512);
-BENCHMARK(BM_DsmcFlattenedAtomicExact)->RangeMultiplier(2)->Range(32, 512);
-BENCHMARK(BM_DsmcFlattenedAtomicSampled)->RangeMultiplier(2)->Range(32, 512);
-BENCHMARK(BM_DsmcFlattenedAtomicSampledSnapshot)->RangeMultiplier(2)->Range(32, 512);
+BENCHMARK(BM_DsmcCellSequential)->RangeMultiplier(2)->Range(32, 512);
+BENCHMARK(BM_DsmcFlattenedAtomic)->RangeMultiplier(2)->Range(32, 512);
