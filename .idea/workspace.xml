@@ -278,14 +278,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactoried codes for device-view and cleaned comments.">
-      <change afterPath="$PROJECT_DIR$/include/atlas/atomic/atomic.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/benchmarks/dsmc/dsmc_solver_benchmarks.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/dsmc/dsmc_solver_benchmarks.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/cylinder/rarefied_gas/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/cylinder/rarefied_gas/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/honeycomb/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/honeycomb/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/inflow/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/inflow/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/intake/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/intake/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/orchestrator/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/orchestrator/main.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/random/seed.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/random/seed.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/sampling/sampling.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sampling/sampling.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" afterDir="false" />
@@ -364,61 +368,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.067744147343536" />
-      <entry key="MS500" value="1.9757350628279169" />
-      <entry key="S2" value="4.439814815567086" />
-      <entry key="S5" value="8.584880612088408" />
-      <entry key="S10" value="14.89452524261694" />
-      <entry key="S30" value="27.828707791924344" />
-      <entry key="S60" value="35.48353248556592" />
-      <entry key="M2" value="51.026557604453366" />
-      <entry key="M5" value="96.4950892267756" />
-      <entry key="M10" value="155.290041810308" />
-      <entry key="M15" value="204.40181177470438" />
-      <entry key="M30" value="310.74259819514435" />
-      <entry key="H1" value="420.499598690661" />
-      <entry key="H2" value="506.0239968623541" />
-      <entry key="H4" value="560.7484772181732" />
-      <entry key="D1" value="614.2922767756115" />
-      <entry key="W1" value="624.3055931028304" />
+      <entry key="MS100" value="1.0000001291092315" />
+      <entry key="MS500" value="1.0820575298782507" />
+      <entry key="S2" value="2.9440822491006613" />
+      <entry key="S5" value="6.946964759973268" />
+      <entry key="S10" value="12.268510869652088" />
+      <entry key="S30" value="21.05449540319071" />
+      <entry key="S60" value="25.14996736120587" />
+      <entry key="M2" value="32.377910263638285" />
+      <entry key="M5" value="67.18116147286554" />
+      <entry key="M10" value="130.11061152836263" />
+      <entry key="M15" value="190.27083076381425" />
+      <entry key="M30" value="340.0920227242125" />
+      <entry key="H1" value="521.5693520109336" />
+      <entry key="H2" value="680.4716409457641" />
+      <entry key="H4" value="789.6322429296436" />
+      <entry key="D1" value="901.7923128746999" />
+      <entry key="W1" value="923.3368847682061" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="7.813379169780301E-112" />
-      <entry key="MS500" value="6.019457582314913E-23" />
-      <entry key="S2" value="3.396260784174608E-6" />
-      <entry key="S5" value="0.009698684455285028" />
-      <entry key="S10" value="0.15552000804920765" />
-      <entry key="S30" value="1.0871809903083194" />
-      <entry key="S60" value="1.808606453148039" />
-      <entry key="M2" value="2.4330395632769406" />
-      <entry key="M5" value="3.4080531947347774" />
-      <entry key="M10" value="4.747367458504554" />
-      <entry key="M15" value="6.160758490460102" />
-      <entry key="M30" value="9.938331525621281" />
-      <entry key="H1" value="14.345825735144123" />
-      <entry key="H2" value="17.919138471050815" />
-      <entry key="H4" value="20.231796219967443" />
-      <entry key="D1" value="22.502914383242505" />
-      <entry key="W1" value="22.928053803601316" />
+      <entry key="MS100" value="3.559317042077853E-89" />
+      <entry key="MS500" value="2.0430233713033048E-18" />
+      <entry key="S2" value="3.7806661919674905E-5" />
+      <entry key="S5" value="0.01702265748894714" />
+      <entry key="S10" value="0.13050365133068348" />
+      <entry key="S30" value="0.5391863547299652" />
+      <entry key="S60" value="0.8924761351748388" />
+      <entry key="M2" value="1.3107974437027514" />
+      <entry key="M5" value="2.1871554078235342" />
+      <entry key="M10" value="3.731028399330716" />
+      <entry key="M15" value="5.334683185067226" />
+      <entry key="M30" value="9.809809780407141" />
+      <entry key="H1" value="15.941047906693157" />
+      <entry key="H2" value="21.692046633323656" />
+      <entry key="H4" value="25.769903585172713" />
+      <entry key="D1" value="30.033601037568417" />
+      <entry key="W1" value="30.859401492609827" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.00317955648191" />
-      <entry key="MS500" value="1.951917233189947" />
-      <entry key="S2" value="4.425949533369647" />
-      <entry key="S5" value="8.58068609081624" />
-      <entry key="S10" value="15.018556918596575" />
-      <entry key="S30" value="28.861868351160858" />
-      <entry key="S60" value="37.24938510738775" />
-      <entry key="M2" value="53.431593669649395" />
-      <entry key="M5" value="99.88737617932829" />
-      <entry key="M10" value="160.0256880958558" />
-      <entry key="M15" value="210.55167561693318" />
-      <entry key="M30" value="320.6709932216493" />
-      <entry key="H1" value="434.83769484020144" />
-      <entry key="H2" value="523.9381239511728" />
-      <entry key="H4" value="580.9773925938523" />
-      <entry key="D1" value="636.7946492235425" />
-      <entry key="W1" value="647.2335678293371" />
+      <entry key="MS100" value="0.9592642414679974" />
+      <entry key="MS500" value="1.0726400358835886" />
+      <entry key="S2" value="2.934055999928425" />
+      <entry key="S5" value="6.953064785555282" />
+      <entry key="S10" value="12.386017619140016" />
+      <entry key="S30" value="21.582533930868046" />
+      <entry key="S60" value="26.034306186400308" />
+      <entry key="M2" value="33.68300341899025" />
+      <entry key="M5" value="69.36389315405893" />
+      <entry key="M10" value="133.83644665801376" />
+      <entry key="M15" value="195.59950440474765" />
+      <entry key="M30" value="349.8945763086916" />
+      <entry key="H1" value="537.5034514659034" />
+      <entry key="H2" value="702.1585568789457" />
+      <entry key="H4" value="815.398977057928" />
+      <entry key="D1" value="931.8252786651228" />
+      <entry key="W1" value="954.196192526629" />
     </decayedShown>
   </component>
   <component name="ProjectApplicationVersion">

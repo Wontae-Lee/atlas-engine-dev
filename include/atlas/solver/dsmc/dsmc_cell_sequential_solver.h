@@ -5,45 +5,31 @@
 namespace atlas::system {
 
 template <typename T>
-class DsmcFlattenSolver : public DsmcSolver<T> {
+class DsmcCellSequentialSolver final : public DsmcSolver<T> {
 public:
     class Builder;
     using Probe = typename DsmcSolver<T>::DsmcSolverProbe;
 
 public:
-    DsmcFlattenSolver() = default;
+    DsmcCellSequentialSolver() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
-    DsmcFlattenSolver(UniverseHostPtr<T> universe,
-                      FluidHostPtr<T> fluid,
-                      SpatialHashingSearcherHostPtr<T> searcher,
-                      DsmcKernelType kernel_type = DsmcKernelType::hard_sphere) noexcept;
+    DsmcCellSequentialSolver(UniverseHostPtr<T> universe,
+                             FluidHostPtr<T> fluid,
+                             SpatialHashingSearcherHostPtr<T> searcher,
+                             DsmcKernelType kernel_type = DsmcKernelType::hard_sphere) noexcept;
 
-    ~DsmcFlattenSolver() override = default;
+    ~DsmcCellSequentialSolver() override = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const DeviceBuffer<int>&
-    collision_offsets() const noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    reset_states() override;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE bool
-    build_flattened_collision_workload();
-
     ATLAS_HOST ATLAS_FORCE_INLINE void
     apply_collision(const DeviceBuffer<int>* allocated_solver, int index, T dt) override;
-
-private:
-    DeviceBuffer<int> _collision_offsets {};
-    DeviceBuffer<int> _collision_cells {};
-    int _flattened_collision_count {};
 };
 
 template <typename T>
-class DsmcFlattenSolver<T>::Builder final {
+class DsmcCellSequentialSolver<T>::Builder final {
 public:
     Builder() = default;
 
@@ -59,10 +45,10 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_kernel_type(DsmcKernelType kernel_type) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE DsmcFlattenSolver<T>
+    ATLAS_HOST ATLAS_FORCE_INLINE DsmcCellSequentialSolver<T>
     build() const;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<DsmcFlattenSolver<T>>
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<DsmcCellSequentialSolver<T>>
     make_host_shared() const;
 
 private:
@@ -81,14 +67,14 @@ private:
 namespace atlas {
 
 template <typename T>
-using DsmcFlattenSolver = atlas::system::DsmcFlattenSolver<T>;
+using DsmcCellSequentialSolver = atlas::system::DsmcCellSequentialSolver<T>;
 
 template <typename T>
-using DsmcFlattenSolverHostPtr = atlas::host_shared_ptr<atlas::system::DsmcFlattenSolver<T>>;
+using DsmcCellSequentialSolverHostPtr = atlas::host_shared_ptr<atlas::system::DsmcCellSequentialSolver<T>>;
 
 template <typename T>
-using DsmcFlattenSolverDevicePtr = atlas::device_shared_ptr<atlas::system::DsmcFlattenSolver<T>>;
+using DsmcCellSequentialSolverDevicePtr = atlas::device_shared_ptr<atlas::system::DsmcCellSequentialSolver<T>>;
 
 }
 
-#include <atlas/solver/dsmc/dsmc_flatten_solver.hpp>
+#include <atlas/solver/dsmc/dsmc_cell_sequential_solver.hpp>

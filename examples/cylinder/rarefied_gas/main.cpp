@@ -118,7 +118,7 @@ main() {
                               .with_universe(universe)
                               .with_fluid(fluid)
                               .make_host_shared();
-    const auto dsmc_solver = atlas::DsmcSolver<T>::builder()
+    const auto dsmc_solver = atlas::DsmcCellSequentialSolver<T>::builder()
                                  .with_universe(universe)
                                  .with_fluid(fluid)
                                  .with_searcher(searcher)

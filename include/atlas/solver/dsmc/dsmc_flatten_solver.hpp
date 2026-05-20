@@ -22,48 +22,12 @@ DsmcFlattenSolver<T>::builder() noexcept {
 }
 
 template <typename T>
-void
-DsmcFlattenSolver<T>::solve(const T dt) {
-    solve(nullptr, 0, dt);
-}
-
-template <typename T>
-void
-DsmcFlattenSolver<T>::solve(const DeviceBuffer<int>* allocated_solver,
-                            const int index,
-                            const T dt) {
-    if (!this->_universe || !this->_fluid || !this->_searcher) {
-        reset_collision_data();
-        return;
-    }
-
-    this->ensure_universe_states();
-    this->_searcher->build();
-
-    if (!(dt > T(0))) {
-        throw std::invalid_argument("DsmcFlattenSolver: dt must be positive.");
-    }
-
-    Probe probe;
-    if (!this->make_probe(allocated_solver, probe)) {
-        reset_collision_data();
-        return;
-    }
-
-    if (!this->measure_cell_collision_statistics(probe, index, dt) || !build_flattened_collision_workload()) {
-        return;
-    }
-
-    apply_collisions(probe);
-}
-
-template <typename T>
 bool
 DsmcFlattenSolver<T>::build_flattened_collision_workload() {
     auto* collision_count_state = this->_universe->template state<atlas::universe::UniverseCollisionCountState<int>>();
 
     if (collision_count_state == nullptr) {
-        this->reset_collision_data();
+        this->reset_states();
         return false;
     }
 
@@ -123,7 +87,15 @@ DsmcFlattenSolver<T>::build_flattened_collision_workload() {
 
 template <typename T>
 void
-DsmcFlattenSolver<T>::apply_collisions(const Probe& probe) {
+DsmcFlattenSolver<T>::apply_collision(const DeviceBuffer<int>*,
+                                      const int,
+                                      const T) {
+    if (!build_flattened_collision_workload()) {
+        return;
+    }
+
+    const auto probe = this->_probe;
+
     const int* collision_offsets_ptr = atlas::raw_pointer_cast(_collision_offsets.data());
     const int* collision_cells_ptr   = atlas::raw_pointer_cast(_collision_cells.data());
 
@@ -231,8 +203,8 @@ DsmcFlattenSolver<T>::collision_offsets() const noexcept {
 
 template <typename T>
 void
-DsmcFlattenSolver<T>::reset_collision_data() {
-    DsmcSolver<T>::reset_collision_data();
+DsmcFlattenSolver<T>::reset_states() {
+    DsmcSolver<T>::reset_states();
     _collision_offsets.resize(0);
     _collision_cells.resize(0);
     _flattened_collision_count = 0;

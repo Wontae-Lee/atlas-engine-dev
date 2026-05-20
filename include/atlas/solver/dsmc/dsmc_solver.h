@@ -11,9 +11,6 @@ namespace atlas::system {
 template <typename T>
 class DsmcSolver : public Solver<T> {
 public:
-    class Builder;
-
-public:
     struct DsmcSolverProbe {
         Vector3<T>* velocity_ptr {};
         const std::size_t* species_ptr {};
@@ -27,7 +24,6 @@ public:
         const int* indices_ptr {};
         const int* cell_start_ptr {};
         const int* cell_end_ptr {};
-        const int* allocated_solver_ptr {};
 
         int particle_count {};
         int num_of_cells {};
@@ -50,9 +46,6 @@ public:
 
     ~DsmcSolver() override = default;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE static Builder
-    builder() noexcept;
-
     ATLAS_HOST ATLAS_FORCE_INLINE void
     solve(T dt) override;
 
@@ -63,16 +56,16 @@ public:
     kernel_type() const noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    ensure_universe_states();
+    ensure_states();
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
-    reset_collision_data();
+    reset_states();
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    make_probe(const DeviceBuffer<int>* allocated_solver, DsmcSolverProbe& probe) noexcept;
+    make_probe() noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE bool
-    measure_cell_collision_statistics(const DsmcSolverProbe& probe, int index, T dt);
+    measure_cell_collision_statistics(const DeviceBuffer<int>* allocated_solver, int index, T dt);
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
     nth_valid_particle(int nth,
@@ -88,50 +81,17 @@ public:
             std::size_t species_j,
             T relative_speed_squared) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    apply_cell_sequential_collisions(const DsmcSolverProbe& probe, int index, T dt);
+    ATLAS_HOST ATLAS_FORCE_INLINE virtual void
+    apply_collision(const DeviceBuffer<int>* allocated_solver, int index, T dt) = 0;
 
 protected:
     UniverseHostPtr<T> _universe {};
     FluidHostPtr<T> _fluid {};
     SpatialHashingSearcherHostPtr<T> _searcher {};
 
+    DsmcSolverProbe _probe {};
     DsmcKernel<T> _kernel {};
     std::uint64_t _collision_seed = 0;
-};
-
-template <typename T>
-class DsmcSolver<T>::Builder final {
-public:
-    Builder() = default;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_universe(UniverseHostPtr<T> universe) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_fluid(FluidHostPtr<T> fluid) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_kernel_type(DsmcKernelType kernel_type) noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE DsmcSolver<T>
-    build() const;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<DsmcSolver<T>>
-    make_host_shared() const;
-
-private:
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    validate() const;
-
-private:
-    UniverseHostPtr<T> _universe {};
-    FluidHostPtr<T> _fluid {};
-    SpatialHashingSearcherHostPtr<T> _searcher {};
-    DsmcKernel<T> _kernel {};
 };
 
 }

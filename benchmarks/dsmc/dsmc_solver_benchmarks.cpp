@@ -1,6 +1,7 @@
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/generator/generate_operator.h>
 #include <atlas/material/material_properties.h>
+#include <atlas/solver/dsmc/dsmc_cell_sequential_solver.h>
 #include <atlas/solver/dsmc/dsmc_flatten_solver.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 
@@ -18,6 +19,7 @@ using atlas::SpatialHashingSearcherHostPtr;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
+using atlas::system::DsmcCellSequentialSolver;
 using atlas::system::DsmcFlattenSolver;
 using atlas::system::DsmcKernelType;
 using atlas::system::DsmcSolver;
@@ -103,7 +105,7 @@ run_dsmc_benchmark(benchmark::State& state,
                      .with_kernel_type(DsmcKernelType::hard_sphere)
                      .make_host_shared();
     } else {
-        solver = DsmcSolver<float>::builder()
+        solver = DsmcCellSequentialSolver<float>::builder()
                      .with_universe(universe)
                      .with_fluid(fluid)
                      .with_searcher(searcher)

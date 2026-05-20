@@ -3,6 +3,7 @@
 #include <atlas/generator/generate_operator.h>
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/material/material_properties.h>
+#include <atlas/solver/dsmc/dsmc_cell_sequential_solver.h>
 #include <atlas/solver/dsmc/dsmc_flatten_solver.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 
@@ -22,6 +23,7 @@ using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
 using atlas::system::DsmcKernelType;
+using atlas::system::DsmcCellSequentialSolver;
 using atlas::system::DsmcFlattenSolver;
 using atlas::system::DsmcSolver;
 using atlas::system::SpatialHashingSearcher;
@@ -99,7 +101,7 @@ TEST(DsmcSolver, ConstructorCreatesRequiredUniverseStates) {
     const auto searcher = make_searcher(universe, fluid);
 
     // Act: construct the DSMC solver directly.
-    const DsmcSolver<float> solver(universe, fluid, searcher, DsmcKernelType::variable_soft_sphere);
+    const DsmcCellSequentialSolver<float> solver(universe, fluid, searcher, DsmcKernelType::variable_soft_sphere);
 
     // Assert: construction preserves kernel type and installs required universe states.
     EXPECT_EQ(solver.kernel_type(), DsmcKernelType::variable_soft_sphere);
@@ -134,7 +136,7 @@ TEST(DsmcSolver, BuilderConstructsCellSequentialSolver) {
     const auto searcher = make_searcher(universe, fluid);
 
     // Act: build the cell-sequential solver.
-    const auto solver = DsmcSolver<float>::builder()
+    const auto solver = DsmcCellSequentialSolver<float>::builder()
                             .with_universe(universe)
                             .with_fluid(fluid)
                             .with_searcher(searcher)
@@ -151,7 +153,7 @@ TEST(DsmcSolver, DefaultsToCellSequential) {
     const auto searcher = make_searcher(universe, fluid);
 
     // Act: construct with default DSMC execution options.
-    const DsmcSolver<float> solver(universe, fluid, searcher);
+    const DsmcCellSequentialSolver<float> solver(universe, fluid, searcher);
 
     // Assert: defaults are simple.
     EXPECT_EQ(solver.kernel_type(), DsmcKernelType::hard_sphere);
@@ -169,7 +171,7 @@ TEST(DsmcSolver, ConstructorResizesExistingUniverseStates) {
     universe->emplace_state<UniverseCollisionCountState<int>>(0);
 
     // Act: construct the solver, which should normalize state sizes.
-    const DsmcSolver<float> solver(universe, fluid, searcher);
+    const DsmcCellSequentialSolver<float> solver(universe, fluid, searcher);
     (void)solver;
 
     // Assert: all DSMC cell states match the universe cell count.
@@ -186,7 +188,7 @@ TEST(DsmcSolver, SolveIsSafeForEmptyFluid) {
     const auto fluid    = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    DsmcSolver<float> solver(universe, fluid, searcher);
+    DsmcCellSequentialSolver<float> solver(universe, fluid, searcher);
 
     // Assert: solving an empty fluid is a no-op for collision counts.
     EXPECT_NO_THROW(solver.solve(0.1f));
@@ -238,7 +240,7 @@ TEST(DsmcSolver, CellSequentialApplyDoesNotBuildFlattenedWorkload) {
     fluid->state<FluidSpeciesState>()->data()[0]  = 0u;
     fluid->state<FluidSpeciesState>()->data()[1]  = 0u;
 
-    auto solver = DsmcSolver<float>::builder()
+    auto solver = DsmcCellSequentialSolver<float>::builder()
                       .with_universe(universe)
                       .with_fluid(fluid)
                       .with_searcher(searcher)
@@ -272,7 +274,7 @@ TEST(DsmcSolver, FullPairScanSolvesDenseCell) {
     fluid->state<FluidSpeciesState>()->data()[2]  = 0u;
     fluid->state<FluidSpeciesState>()->data()[3]  = 0u;
 
-    auto solver = DsmcSolver<float>::builder()
+    auto solver = DsmcCellSequentialSolver<float>::builder()
                       .with_universe(universe)
                       .with_fluid(fluid)
                       .with_searcher(searcher)
