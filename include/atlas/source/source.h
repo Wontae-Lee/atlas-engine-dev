@@ -164,13 +164,12 @@ public:
     shuffle_species(std::size_t count);
 
     /**
-     * @brief Build a cached probe for source emission data.
+     * @brief Refreshes the cached probe for source emission data.
      *
-     * @param probe Output probe populated with raw pointers and scalar metadata.
      * @return True when all required source and fluid state exists.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    make_probe(SourceProbe& probe) noexcept;
+    make_probe() noexcept;
 
 private:
     /**
@@ -245,6 +244,11 @@ private:
      * @brief Temporary shuffle keys used to permute species assignments.
      */
     DeviceBuffer<std::uint64_t> _shuffle_keys;
+
+    /**
+     * @brief Cached probe populated by @ref make_probe.
+     */
+    SourceProbe _probe {};
 
     /**
      * @brief Monotonically increasing seed used across shuffle passes.

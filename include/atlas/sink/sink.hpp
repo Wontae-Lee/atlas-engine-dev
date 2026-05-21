@@ -65,11 +65,11 @@ Sink<T>::sink(const T dt) {
             sink_sensor_matrics->record(step_index, unit_index, removed_per_unit[unit_index]);
         }
     };
-    SinkProbe probe;
-    if (!make_probe(probe, dt)) {
+    if (!make_probe(dt)) {
         record_sink_metrics();
         return;
     }
+    const auto probe = _probe;
     int* despawned_unit_indices_ptr = nullptr;
     if (sink_sensor_matrics != nullptr) {
         if (_despawned_unit_indices.size() != probe.particle_count) {
@@ -139,7 +139,8 @@ Sink<T>::sink(const T dt) {
 
 template <typename T>
 bool
-Sink<T>::make_probe(SinkProbe& probe, const T dt) noexcept {
+Sink<T>::make_probe(const T dt) noexcept {
+    _probe = {};
     if (!_fluid || _units.empty() || _despawn_operators.empty()) {
         return false;
     }
@@ -154,19 +155,19 @@ Sink<T>::make_probe(SinkProbe& probe, const T dt) noexcept {
     if (positions.empty() || active.empty() || _fluid->particle_count() == 0) {
         return false;
     }
-    probe.units                  = atlas::raw_pointer_cast(_units.data());
-    probe.despawn_operators      = atlas::raw_pointer_cast(_despawn_operators.data());
-    probe.positions              = atlas::raw_pointer_cast(positions.data());
+    _probe.units                  = atlas::raw_pointer_cast(_units.data());
+    _probe.despawn_operators      = atlas::raw_pointer_cast(_despawn_operators.data());
+    _probe.positions              = atlas::raw_pointer_cast(positions.data());
     if (velocity_state != nullptr && !velocity_state->data().empty()) {
-        probe.velocities = atlas::raw_pointer_cast(velocity_state->data().data());
+        _probe.velocities = atlas::raw_pointer_cast(velocity_state->data().data());
     }
-    probe.active                 = atlas::raw_pointer_cast(active.data());
-    probe.unit_count             = static_cast<int>(_units.size());
-    probe.despawn_operator_count = static_cast<int>(_despawn_operators.size());
-    probe.particle_count         = _fluid->particle_count();
-    probe.flip                   = _flip;
-    probe.tolerance              = _tolerance;
-    probe.time_step              = dt;
+    _probe.active                 = atlas::raw_pointer_cast(active.data());
+    _probe.unit_count             = static_cast<int>(_units.size());
+    _probe.despawn_operator_count = static_cast<int>(_despawn_operators.size());
+    _probe.particle_count         = _fluid->particle_count();
+    _probe.flip                   = _flip;
+    _probe.tolerance              = _tolerance;
+    _probe.time_step              = dt;
     return true;
 }
 

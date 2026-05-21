@@ -80,6 +80,17 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
     size() const noexcept = 0;
+
+    /**
+     * @brief Resets all stored cell entries to their default value.
+     */
+    ATLAS_HOST virtual void
+    reset() = 0;
+
+protected:
+    template <typename Buffer>
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    reset_buffer(Buffer& buffer);
 };
 
 /**
@@ -113,6 +124,9 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
 
     /**
      * @brief Returns mutable access to the underlying temperature buffer.
@@ -168,6 +182,9 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
 
     /**
      * @brief Returns mutable access to the underlying bulk velocity buffer.
@@ -230,6 +247,9 @@ public:
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
 
+    ATLAS_HOST void
+    reset() override;
+
     /**
      * @brief Returns mutable access to the underlying field-force buffer.
      *
@@ -284,6 +304,9 @@ public:
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
 
+    ATLAS_HOST void
+    reset() override;
+
     ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3<T>>&
     data() noexcept;
 
@@ -310,6 +333,9 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
 
     ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
     data() noexcept;
@@ -341,6 +367,9 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
 
     ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
     data() noexcept;
@@ -383,6 +412,9 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
 
     /**
      * @brief Returns mutable access to the underlying thermal energy buffer.
@@ -444,6 +476,9 @@ public:
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
 
+    ATLAS_HOST void
+    reset() override;
+
     /**
      * @brief Returns mutable access to the underlying particle-count buffer.
      *
@@ -483,6 +518,9 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
 
     ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
     data() noexcept;
@@ -529,6 +567,9 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
 
     /**
      * @brief Returns mutable access to the underlying Knudsen-number buffer.
@@ -587,6 +628,9 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD std::size_t
     size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
 
     /**
      * @brief Returns mutable access to the underlying material-ratio buffer.

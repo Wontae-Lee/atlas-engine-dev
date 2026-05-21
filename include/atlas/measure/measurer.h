@@ -226,7 +226,7 @@ public:
     measure_mode() const noexcept = 0;
 
     /**
-     * @brief Populates a raw-pointer probe for measurement kernels.
+     * @brief Refreshes the cached raw-pointer probe for measurement kernels.
      *
      * This function resolves the configured universe, fluid, and searcher into
      * raw pointer views over common measurement data.
@@ -256,14 +256,12 @@ public:
      * count is positive, and the searcher exposes non-null `indices`,
      * `cell_start`, and `cell_end` arrays.
      *
-     * @param probe Output probe populated with raw pointers and scalar metadata.
-     *
      * @retval true Required dependencies, states, and searcher buffers were found.
      * @retval false A required dependency, state, or searcher buffer was missing,
      *               or the universe cell count was not positive.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    make_probe(MeasurerProbe& probe) noexcept;
+    make_probe() noexcept;
 
 protected:
     /**
@@ -286,6 +284,11 @@ protected:
      * May be null. Required by @ref make_probe.
      */
     SpatialHashingSearcherHostPtr<T> _searcher {};
+
+    /**
+     * @brief Cached probe populated by @ref make_probe.
+     */
+    MeasurerProbe _probe {};
 };
 
 } // namespace atlas::system

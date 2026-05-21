@@ -316,7 +316,7 @@ public:
      *       attached.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    ensure_universe_states();
+    ensure_states();
 
     /**
      * @brief Initializes the grouped SPH context for one solve step.
@@ -398,7 +398,7 @@ public:
      *
      * @details
      * If a universe exists, this function ensures required universe states exist
-     * and clears:
+     * and resets:
      *
      * - `UniverseNumberParticleState<T>` to zero,
      * - `UniverseFieldForceState<T>` to zero vectors.

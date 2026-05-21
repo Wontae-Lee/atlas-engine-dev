@@ -35,10 +35,10 @@ make_fluid() {
 
 Unit<float>
 make_unit() {
-    const auto geometry = Box<float>::builder()
-                              .with_lower_corner(Vector3F(-1, -1, -1))
-                              .with_upper_corner(Vector3F(1, 1, 1))
-                              .make_host_shared();
+    static const auto geometry = Box<float>::builder()
+                                     .with_lower_corner(Vector3F(-1, -1, -1))
+                                     .with_upper_corner(Vector3F(1, 1, 1))
+                                     .make_host_shared();
 
     const auto sync = Sync<float>::builder()
                           .make_host_shared();
@@ -52,9 +52,9 @@ make_unit() {
 Unit<float>
 make_plane_unit(const Vector3F& linear_velocity = Vector3F(0, 0, 0),
                 const Vector3F& angular_velocity = Vector3F(0, 0, 0)) {
-    const auto geometry = Plane<float>::builder()
-                              .with_point_normal(Vector3F(0, 0, 0), Vector3F(1, 0, 0))
-                              .make_host_shared();
+    static const auto geometry = Plane<float>::builder()
+                                     .with_point_normal(Vector3F(0, 0, 0), Vector3F(1, 0, 0))
+                                     .make_host_shared();
 
     const auto sync = Sync<float>::builder()
                           .make_host_shared();

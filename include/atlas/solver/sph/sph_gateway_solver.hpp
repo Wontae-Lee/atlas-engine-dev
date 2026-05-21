@@ -20,7 +20,7 @@ SphGatewaySolver<T>::SphGatewaySolver(UniverseHostPtr<T> universe,
     , _kernel(kernel_type)
     , _group_particle_count(group_particle_count > 0 ? group_particle_count : 5) {
     // Ensure per-cell output states exist when a universe is already attached.
-    ensure_universe_states();
+    ensure_states();
 }
 
 template <typename T>
@@ -85,7 +85,7 @@ SphGatewaySolver<T>::solve(const DeviceBuffer<int>* allocated_solver, const int 
 
 template <typename T>
 void
-SphGatewaySolver<T>::ensure_universe_states() {
+SphGatewaySolver<T>::ensure_states() {
     // Nothing can be initialized without a universe.
     if (!this->_universe) {
         return;
@@ -151,7 +151,7 @@ SphGatewaySolver<T>::initialize_context() noexcept {
     }
 
     // Ensure output states exist and rebuild spatial hashing for the current particles.
-    ensure_universe_states();
+    ensure_states();
     this->_searcher->build();
 
     return true;
@@ -244,39 +244,72 @@ SphGatewaySolver<T>::reset_universe_fields() {
     }
 
     // Ensure reset targets exist.
-    ensure_universe_states();
+    ensure_states();
 
     auto* number_particle_state = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
     auto* field_force_state     = this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>();
 
     // Reset per-cell particle counts.
     if (number_particle_state != nullptr) {
-        auto& number_particle = number_particle_state->data();
-        atlas::parallel_fill<ExecutionPolicy::device>(
-            number_particle.begin(),
-            number_particle.end(),
-            T(0));
+        number_particle_state->reset();
     }
 
     // Reset per-cell averaged force output.
     if (field_force_state != nullptr) {
-        auto& field_force = field_force_state->data();
-        atlas::parallel_fill<ExecutionPolicy::device>(
-            field_force.begin(),
-            field_force.end(),
-            Vector3<T>(T(0), T(0), T(0)));
+        field_force_state->reset();
     }
 }
 
 template <typename T>
 bool
 SphGatewaySolver<T>::make_probe() noexcept {
-    return SphSolver<T>::make_probe(
-        this->_universe,
-        this->_fluid,
-        this->_searcher,
-        _kernel,
-        _probe);
+    _probe = {};
+
+    if (!this->_universe || !this->_fluid || !this->_searcher) {
+        return false;
+    }
+
+    auto* position_state = this->_fluid->template state<atlas::fluid::FluidPositionState<T>>();
+    auto* velocity_state = this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>();
+    auto* species_state  = this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
+
+    auto* number_particle_state = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
+    auto* field_force_state     = this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>();
+
+    if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr
+        || number_particle_state == nullptr || field_force_state == nullptr) {
+        return false;
+    }
+
+    auto& positions       = position_state->data();
+    auto& velocities      = velocity_state->data();
+    auto& species         = species_state->data();
+    auto& properties      = this->_fluid->particle_properties();
+    auto& number_particle = number_particle_state->data();
+    auto& field_force     = field_force_state->data();
+
+    _probe.position_ptr        = atlas::raw_pointer_cast(positions.data());
+    _probe.velocity_ptr        = atlas::raw_pointer_cast(velocities.data());
+    _probe.species_ptr         = atlas::raw_pointer_cast(species.data());
+    _probe.properties_ptr      = atlas::raw_pointer_cast(properties.data());
+    _probe.number_particle_ptr = atlas::raw_pointer_cast(number_particle.data());
+    _probe.field_force_ptr     = atlas::raw_pointer_cast(field_force.data());
+
+    _probe.indices_ptr    = this->_searcher->indices();
+    _probe.cell_start_ptr = this->_searcher->cell_start();
+    _probe.cell_end_ptr   = this->_searcher->cell_end();
+
+    _probe.lower_corner      = this->_searcher->lower_corner();
+    _probe.grid_size         = this->_searcher->grid_size();
+    _probe.inverse_cell_size = this->_searcher->inverse_cell_size();
+    _probe.cell_size         = this->_searcher->cell_size();
+
+    _probe.particle_count    = static_cast<int>(this->_fluid->particle_count());
+    _probe.num_of_cells      = this->_universe->number_of_cells();
+    _probe.num_of_properties = static_cast<int>(properties.size());
+    _probe.kernel            = _kernel;
+
+    return true;
 }
 
 template <typename T>

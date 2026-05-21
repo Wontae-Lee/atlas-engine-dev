@@ -42,10 +42,10 @@ BoltzmanMeasurer<T>::BoltzmanMeasurer(UniverseHostPtr<T> universe,
 template <typename T>
 void
 BoltzmanMeasurer<T>::measure() {
-    typename Measurer<T>::MeasurerProbe probe;
-    if (!this->make_probe(probe)) {
+    if (!this->make_probe()) {
         return;
     }
+    const auto probe = this->_probe;
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,

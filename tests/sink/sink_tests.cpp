@@ -31,10 +31,10 @@ make_fluid() {
 
 Unit<float>
 make_unit() {
-    const auto geometry = Box<float>::builder()
-                              .with_lower_corner(Vector3F(-1, -1, -1))
-                              .with_upper_corner(Vector3F(1, 1, 1))
-                              .make_host_shared();
+    static const auto geometry = Box<float>::builder()
+                                     .with_lower_corner(Vector3F(-1, -1, -1))
+                                     .with_upper_corner(Vector3F(1, 1, 1))
+                                     .make_host_shared();
 
     const auto sync = Sync<float>::builder()
                           .make_host_shared();
@@ -47,10 +47,10 @@ make_unit() {
 
 Unit<float>
 make_tracing_unit() {
-    const auto geometry = Box<float>::builder()
-                              .with_lower_corner(Vector3F(2, -1, -1))
-                              .with_upper_corner(Vector3F(3, 1, 1))
-                              .make_host_shared();
+    static const auto geometry = Box<float>::builder()
+                                     .with_lower_corner(Vector3F(2, -1, -1))
+                                     .with_upper_corner(Vector3F(3, 1, 1))
+                                     .make_host_shared();
 
     const auto sync = Sync<float>::builder()
                           .make_host_shared();

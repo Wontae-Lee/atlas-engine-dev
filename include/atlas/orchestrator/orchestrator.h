@@ -43,7 +43,8 @@ namespace atlas::system {
  * search();
  * classify();
  * measure();
- * make_probe(probe);
+ * make_probe();
+ * const auto probe = _probe;
  * apply_gravity(probe, dt);
  * apply_field_force(probe, dt);
  * solve(dt);
@@ -269,7 +270,7 @@ public:
     update(T dt);
 
     /**
-     * @brief Populates a raw-pointer probe for force-application kernels.
+     * @brief Refreshes the cached raw-pointer probe for force-application kernels.
      *
      * This function resolves the currently configured universe, fluid, and
      * searcher into raw data views used by @ref apply_gravity and
@@ -289,15 +290,13 @@ public:
      * - `field_force_ptr` and `field_force_cell_count`,
      * - `gravity_ptr` and `gravity_cell_count`.
      *
-     * @param probe Output probe to populate.
-     *
      * @retval true The common velocity and searcher data required for force
      *              application was found.
      * @retval false Required common data was missing; the caller should skip
      *               force application.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    make_probe(OrchestratorProbe& probe) noexcept;
+    make_probe() noexcept;
 
     /**
      * @brief Creates an empty fluent builder.
@@ -319,7 +318,8 @@ public:
      * search();
      * classify();
      * measure();
-     * make_probe(probe);
+     * make_probe();
+     * const auto probe = _probe;
      * apply_gravity(probe, dt);
      * apply_field_force(probe, dt);
      * solve(dt);
@@ -512,6 +512,11 @@ private:
      * Solvers are invoked in buffer order. Null entries are skipped by @ref solve.
      */
     HostBuffer<SolveHostPtr<T>> _solvers {};
+
+    /**
+     * @brief Cached probe populated by @ref make_probe.
+     */
+    OrchestratorProbe _probe {};
 };
 
 /**

@@ -131,33 +131,20 @@ template <typename T>
 bool
 SphSolver<T>::make_probe() noexcept {
     // Use the current solver dependencies to refresh the cached device-side probe.
-    return make_probe(
-        this->_universe,
-        this->_fluid,
-        this->_searcher,
-        _kernel,
-        _probe);
-}
+    _probe = {};
 
-template <typename T>
-bool
-SphSolver<T>::make_probe(const UniverseHostPtr<T>& universe,
-                         const FluidHostPtr<T>& fluid,
-                         const SpatialHashingSearcherHostPtr<T>& searcher,
-                         const SphKernel<T>& kernel,
-                         SphSolverProbe& probe) noexcept {
     // Probe construction requires all simulation dependencies.
-    if (!universe || !fluid || !searcher) {
+    if (!this->_universe || !this->_fluid || !this->_searcher) {
         return false;
     }
 
     // Retrieve particle states and universe output states.
-    auto* position_state = fluid->template state<atlas::fluid::FluidPositionState<T>>();
-    auto* velocity_state = fluid->template state<atlas::fluid::FluidVelocityState<T>>();
-    auto* species_state  = fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
+    auto* position_state = this->_fluid->template state<atlas::fluid::FluidPositionState<T>>();
+    auto* velocity_state = this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>();
+    auto* species_state  = this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
 
-    auto* number_particle_state = universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
-    auto* field_force_state     = universe->template state<atlas::universe::UniverseFieldForceState<T>>();
+    auto* number_particle_state = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
+    auto* field_force_state     = this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>();
 
     if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr
         || number_particle_state == nullptr || field_force_state == nullptr) {
@@ -168,34 +155,34 @@ SphSolver<T>::make_probe(const UniverseHostPtr<T>& universe,
     auto& positions       = position_state->data();
     auto& velocities      = velocity_state->data();
     auto& species         = species_state->data();
-    auto& properties      = fluid->particle_properties();
+    auto& properties      = this->_fluid->particle_properties();
     auto& number_particle = number_particle_state->data();
     auto& field_force     = field_force_state->data();
 
     // Store raw device pointers for fast kernel access.
-    probe.position_ptr        = atlas::raw_pointer_cast(positions.data());
-    probe.velocity_ptr        = atlas::raw_pointer_cast(velocities.data());
-    probe.species_ptr         = atlas::raw_pointer_cast(species.data());
-    probe.properties_ptr      = atlas::raw_pointer_cast(properties.data());
-    probe.number_particle_ptr = atlas::raw_pointer_cast(number_particle.data());
-    probe.field_force_ptr     = atlas::raw_pointer_cast(field_force.data());
+    _probe.position_ptr        = atlas::raw_pointer_cast(positions.data());
+    _probe.velocity_ptr        = atlas::raw_pointer_cast(velocities.data());
+    _probe.species_ptr         = atlas::raw_pointer_cast(species.data());
+    _probe.properties_ptr      = atlas::raw_pointer_cast(properties.data());
+    _probe.number_particle_ptr = atlas::raw_pointer_cast(number_particle.data());
+    _probe.field_force_ptr     = atlas::raw_pointer_cast(field_force.data());
 
     // Store searcher-generated sorted particle ranges.
-    probe.indices_ptr    = searcher->indices();
-    probe.cell_start_ptr = searcher->cell_start();
-    probe.cell_end_ptr   = searcher->cell_end();
+    _probe.indices_ptr    = this->_searcher->indices();
+    _probe.cell_start_ptr = this->_searcher->cell_start();
+    _probe.cell_end_ptr   = this->_searcher->cell_end();
 
     // Copy spatial search metadata.
-    probe.lower_corner      = searcher->lower_corner();
-    probe.grid_size         = searcher->grid_size();
-    probe.inverse_cell_size = searcher->inverse_cell_size();
-    probe.cell_size         = searcher->cell_size();
+    _probe.lower_corner      = this->_searcher->lower_corner();
+    _probe.grid_size         = this->_searcher->grid_size();
+    _probe.inverse_cell_size = this->_searcher->inverse_cell_size();
+    _probe.cell_size         = this->_searcher->cell_size();
 
     // Store scalar counts and kernel object.
-    probe.particle_count    = static_cast<int>(fluid->particle_count());
-    probe.num_of_cells      = universe->number_of_cells();
-    probe.num_of_properties = static_cast<int>(properties.size());
-    probe.kernel            = kernel;
+    _probe.particle_count    = static_cast<int>(this->_fluid->particle_count());
+    _probe.num_of_cells      = this->_universe->number_of_cells();
+    _probe.num_of_properties = static_cast<int>(properties.size());
+    _probe.kernel            = _kernel;
 
     return true;
 }
@@ -248,20 +235,12 @@ SphSolver<T>::reset_universe_fields() {
 
     // Reset per-cell particle counts.
     if (number_particle_state != nullptr) {
-        auto& number_particle = number_particle_state->data();
-        atlas::parallel_fill<ExecutionPolicy::device>(
-            number_particle.begin(),
-            number_particle.end(),
-            T(0));
+        number_particle_state->reset();
     }
 
     // Reset per-cell averaged force output.
     if (field_force_state != nullptr) {
-        auto& field_force = field_force_state->data();
-        atlas::parallel_fill<ExecutionPolicy::device>(
-            field_force.begin(),
-            field_force.end(),
-            Vector3<T>(T(0), T(0), T(0)));
+        field_force_state->reset();
     }
 }
 

@@ -175,7 +175,8 @@ Orchestrator<T>::apply_gravity(const OrchestratorProbe& probe, const T dt) {
 
 template <typename T>
 bool
-Orchestrator<T>::make_probe(OrchestratorProbe& probe) noexcept {
+Orchestrator<T>::make_probe() noexcept {
+    _probe = {};
     // The probe requires the core simulation objects and the spatial searcher.
     if (!_universe || !_fluid || !_searcher) {
         return false;
@@ -194,17 +195,17 @@ Orchestrator<T>::make_probe(OrchestratorProbe& probe) noexcept {
     auto& velocity = velocity_state->data();
 
     // Store common simulation sizes and searcher buffers.
-    probe.particle_count = static_cast<int>(_fluid->particle_count());
-    probe.num_of_cells   = _universe->number_of_cells();
-    probe.indices_ptr    = _searcher->indices();
-    probe.cell_start_ptr = _searcher->cell_start();
-    probe.cell_end_ptr   = _searcher->cell_end();
-    probe.velocity_ptr   = atlas::raw_pointer_cast(velocity.data());
+    _probe.particle_count = static_cast<int>(_fluid->particle_count());
+    _probe.num_of_cells   = _universe->number_of_cells();
+    _probe.indices_ptr    = _searcher->indices();
+    _probe.cell_start_ptr = _searcher->cell_start();
+    _probe.cell_end_ptr   = _searcher->cell_end();
+    _probe.velocity_ptr   = atlas::raw_pointer_cast(velocity.data());
 
     // Validate the minimum data required for cell-based particle traversal.
-    if (velocity.empty() || probe.particle_count <= 0 || probe.num_of_cells <= 0
-        || probe.indices_ptr == nullptr || probe.cell_start_ptr == nullptr
-        || probe.cell_end_ptr == nullptr) {
+    if (velocity.empty() || _probe.particle_count <= 0 || _probe.num_of_cells <= 0
+        || _probe.indices_ptr == nullptr || _probe.cell_start_ptr == nullptr
+        || _probe.cell_end_ptr == nullptr) {
         return false;
     }
 
@@ -214,9 +215,9 @@ Orchestrator<T>::make_probe(OrchestratorProbe& probe) noexcept {
         auto& particle_properties = _fluid->particle_properties();
 
         if (!species.empty() && !particle_properties.empty()) {
-            probe.species_ptr    = atlas::raw_pointer_cast(species.data());
-            probe.properties_ptr = atlas::raw_pointer_cast(particle_properties.data());
-            probe.num_of_species = static_cast<int>(particle_properties.size());
+            _probe.species_ptr    = atlas::raw_pointer_cast(species.data());
+            _probe.properties_ptr = atlas::raw_pointer_cast(particle_properties.data());
+            _probe.num_of_species = static_cast<int>(particle_properties.size());
         }
     }
 
@@ -225,8 +226,8 @@ Orchestrator<T>::make_probe(OrchestratorProbe& probe) noexcept {
         auto& field_force = field_force_state->data();
 
         if (!field_force.empty()) {
-            probe.field_force_ptr        = atlas::raw_pointer_cast(field_force.data());
-            probe.field_force_cell_count = static_cast<int>(field_force.size());
+            _probe.field_force_ptr        = atlas::raw_pointer_cast(field_force.data());
+            _probe.field_force_cell_count = static_cast<int>(field_force.size());
         }
     }
 
@@ -235,8 +236,8 @@ Orchestrator<T>::make_probe(OrchestratorProbe& probe) noexcept {
         auto& gravity = gravity_state->data();
 
         if (!gravity.empty()) {
-            probe.gravity_ptr        = atlas::raw_pointer_cast(gravity.data());
-            probe.gravity_cell_count = static_cast<int>(gravity.size());
+            _probe.gravity_ptr        = atlas::raw_pointer_cast(gravity.data());
+            _probe.gravity_cell_count = static_cast<int>(gravity.size());
         }
     }
 
@@ -257,8 +258,8 @@ Orchestrator<T>::orchestrate(const T dt) {
     measure();
 
     if (dt != T(0)) {
-        OrchestratorProbe probe;
-        if (make_probe(probe)) {
+        if (make_probe()) {
+            const auto probe = _probe;
             if (probe.gravity_ptr != nullptr) {
                 apply_gravity(probe, dt);
             }

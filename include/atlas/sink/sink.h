@@ -100,6 +100,7 @@ public:
      * @param fluid Host shared pointer to the target fluid.
      * @param flip Whether despawn acceptance should be inverted.
      * @param tolerance Geometric tolerance used during despawn tests.
+     * @param observer Observer for sink events and notifications.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Sink(DeviceBuffer<Unit<T>> units,
@@ -167,13 +168,12 @@ public:
     compact_fluid_particles();
 
     /**
-     * @brief Build a cached probe for sink unit and particle-state data.
+     * @brief Refreshes the cached probe for sink unit and particle-state data.
      *
-     * @param probe Output probe populated with raw pointers and scalar metadata.
      * @return True when all required sink and fluid state exists.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    make_probe(SinkProbe& probe, T dt = T(0)) noexcept;
+    make_probe(T dt = T(0)) noexcept;
 
 private:
     /**
@@ -255,6 +255,11 @@ private:
      * @brief Scratch buffer storing the matched sink-unit index for each particle.
      */
     DeviceBuffer<int> _despawned_unit_indices;
+
+    /**
+     * @brief Cached probe populated by @ref make_probe.
+     */
+    SinkProbe _probe {};
 
     /**
      * @brief Monotonic sink-step index used by sink metric recording.

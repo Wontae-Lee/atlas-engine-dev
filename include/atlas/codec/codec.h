@@ -315,7 +315,7 @@ public:
     fixed_region() const noexcept;
 
     /**
-     * @brief Populates a raw-pointer probe for derived codec kernels.
+     * @brief Refreshes the cached raw-pointer probe for derived codec kernels.
      *
      * This function resolves the configured universe, fluid, searcher, and
      * codec-owned allocation buffer into raw pointers and scalar metadata.
@@ -339,14 +339,12 @@ public:
      * Therefore, derived codec implementations must explicitly validate any
      * pointer or state they require before use.
      *
-     * @param probe Output probe populated with raw pointers and metadata.
-     *
      * @retval true Universe, fluid, and searcher dependencies exist, and the
      *              universe reports a positive cell count.
      * @retval false A required dependency is missing or the universe has no cells.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    make_probe(CodecProbe& probe) noexcept;
+    make_probe() noexcept;
 
 protected:
     /**
@@ -394,6 +392,11 @@ protected:
      * and decode from @ref d_fixed_solver.
      */
     DeviceBuffer<int> d_fixed_region;
+
+    /**
+     * @brief Cached probe populated by @ref make_probe.
+     */
+    CodecProbe _probe {};
 };
 
 } // namespace atlas::system

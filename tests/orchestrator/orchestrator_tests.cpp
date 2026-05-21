@@ -268,9 +268,7 @@ TEST(Orchestrator, ApplyGravityUpdatesParticleVelocity) {
                             .with_gravity(Vector3F(0.0f, -9.0f, 2.0f))
                             .build();
 
-    Orchestrator<float>::OrchestratorProbe probe;
-    ASSERT_TRUE(orchestrator.make_probe(probe));
-    orchestrator.apply_gravity(probe, 0.5f);
+    orchestrator.update(0.5f);
 
     const auto* velocity_state = fluid->state<FluidVelocityState<float>>();
     ASSERT_NE(velocity_state, nullptr);
@@ -298,9 +296,7 @@ TEST(Orchestrator, ApplyFieldForceUpdatesParticleVelocityUsingMass) {
                             .with_searcher(searcher)
                             .build();
 
-    Orchestrator<float>::OrchestratorProbe probe;
-    ASSERT_TRUE(orchestrator.make_probe(probe));
-    orchestrator.apply_field_force(probe, 0.5f);
+    orchestrator.update(0.5f);
 
     const auto* velocity_state = fluid->state<FluidVelocityState<float>>();
     ASSERT_NE(velocity_state, nullptr);

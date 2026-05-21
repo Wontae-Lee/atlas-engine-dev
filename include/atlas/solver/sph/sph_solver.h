@@ -305,59 +305,14 @@ public:
     /**
      * @brief Populates an SPH probe from this solver's configured dependencies.
      *
-     * This overload forwards to the static @ref make_probe overload using this
-     * solver's universe, fluid, searcher, and kernel, then stores the result in
-     * `_probe`.
+     * This function resolves this solver's universe, fluid, searcher, and kernel
+     * into the cached `_probe`.
      *
      * @retval true Required dependencies and states were found.
      * @retval false A required dependency or state was missing.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     make_probe() noexcept;
-
-    /**
-     * @brief Populates an SPH probe from explicit dependencies.
-     *
-     * This static helper resolves fluid particle states, universe output states,
-     * searcher buffers, grid metadata, material properties, and the runtime kernel
-     * into a @ref SphSolverProbe.
-     *
-     * Required dependencies:
-     *
-     * - universe,
-     * - fluid,
-     * - searcher.
-     *
-     * Required fluid states:
-     *
-     * - `FluidPositionState<T>`,
-     * - `FluidVelocityState<T>`,
-     * - `FluidSpeciesState<T>`.
-     *
-     * Required universe states:
-     *
-     * - `UniverseNumberParticleState<T>`,
-     * - `UniverseFieldForceState<T>`.
-     *
-     * The function does not validate that searcher pointers are non-null, that
-     * particle/cell counts are positive, or that material properties are non-empty.
-     * Later stages perform their own bounds checks where needed.
-     *
-     * @param universe Universe dependency.
-     * @param fluid Fluid dependency.
-     * @param searcher Spatial hashing searcher dependency.
-     * @param kernel Runtime SPH kernel wrapper to copy into the probe.
-     * @param probe Output probe populated with raw pointers and metadata.
-     *
-     * @retval true Required dependencies and states were found.
-     * @retval false A required dependency or state was missing.
-     */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
-    make_probe(const UniverseHostPtr<T>& universe,
-               const FluidHostPtr<T>& fluid,
-               const SpatialHashingSearcherHostPtr<T>& searcher,
-               const SphKernel<T>& kernel,
-               SphSolverProbe& probe) noexcept;
 
     /**
      * @brief Allocates and clears per-particle working fields for the current step.
@@ -383,7 +338,7 @@ public:
      * @brief Resets universe-side SPH output fields to zero.
      *
      * If a universe exists, this function ensures required universe states exist
-     * and clears:
+     * and resets:
      *
      * - `UniverseNumberParticleState<T>` to zero,
      * - `UniverseFieldForceState<T>` to zero vectors.

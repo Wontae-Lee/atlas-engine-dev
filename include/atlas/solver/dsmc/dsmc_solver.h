@@ -302,7 +302,7 @@ public:
      * @brief Resets universe-side DSMC statistic states to zero.
      *
      * If a universe exists and reports a positive number of cells, this function
-     * calls @ref ensure_states and fills the following states with zero values:
+     * calls @ref ensure_states and resets the following states:
      *
      * - `UniverseNumberParticleState<T>`,
      * - `UniverseMaxRelativeSpeedState<T>`,

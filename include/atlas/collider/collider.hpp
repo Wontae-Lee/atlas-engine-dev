@@ -60,10 +60,10 @@ Collider<T>::collide(const T dt) const {
 
     // Build a compact device-side probe containing raw pointers to collider, fluid, and interaction data.
     // If any required fluid state is missing, no collision pass is performed.
-    ColliderProbe probe;
-    if (!make_probe(probe)) {
+    if (!make_probe()) {
         return;
     }
+    const auto probe = _probe;
 
     // Process each particle independently on the device.
     atlas::parallel_for<ExecutionPolicy::device>(
@@ -174,7 +174,8 @@ Collider<T>::empty() const noexcept {
 
 template <typename T>
 bool
-Collider<T>::make_probe(ColliderProbe& probe) const noexcept {
+Collider<T>::make_probe() const noexcept {
+    _probe = {};
     // Do not expose raw pointers unless the collider has all required high-level components.
     if (empty()) {
         return false;
@@ -199,17 +200,17 @@ Collider<T>::make_probe(ColliderProbe& probe) const noexcept {
 
     // Store raw device pointers and array sizes in a compact probe object that can be captured
     // by the device collision kernel.
-    probe.units                = atlas::raw_pointer_cast(_units.data());
-    probe.surface_interactions = atlas::raw_pointer_cast(_surface_interactions.data());
-    probe.flips                = atlas::raw_pointer_cast(_flips.data());
-    probe.positions            = atlas::raw_pointer_cast(positions.data());
-    probe.velocities           = atlas::raw_pointer_cast(velocities.data());
+    _probe.units                = atlas::raw_pointer_cast(_units.data());
+    _probe.surface_interactions = atlas::raw_pointer_cast(_surface_interactions.data());
+    _probe.flips                = atlas::raw_pointer_cast(_flips.data());
+    _probe.positions            = atlas::raw_pointer_cast(positions.data());
+    _probe.velocities           = atlas::raw_pointer_cast(velocities.data());
 
     // Cache counts as integers because the device kernel iterates over integer ranges.
-    probe.unit_count        = static_cast<int>(_units.size());
-    probe.interaction_count = static_cast<int>(_surface_interactions.size());
-    probe.flip_count        = static_cast<int>(_flips.size());
-    probe.particle_count    = static_cast<int>(_fluid->particle_count());
+    _probe.unit_count        = static_cast<int>(_units.size());
+    _probe.interaction_count = static_cast<int>(_surface_interactions.size());
+    _probe.flip_count        = static_cast<int>(_flips.size());
+    _probe.particle_count    = static_cast<int>(_fluid->particle_count());
 
     return true;
 }

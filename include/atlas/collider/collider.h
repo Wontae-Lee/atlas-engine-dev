@@ -158,13 +158,12 @@ public:
     empty() const noexcept;
 
     /**
-     * @brief Build a cached probe for collider unit and particle-state data.
+     * @brief Refreshes the cached probe for collider unit and particle-state data.
      *
-     * @param probe Output probe populated with raw pointers and scalar metadata.
      * @return True when all required collider and fluid state exists.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    make_probe(ColliderProbe& probe) const noexcept;
+    make_probe() const noexcept;
 
 private:
     /**
@@ -200,6 +199,11 @@ private:
      * - size == number of units: one flag per unit.
      */
     DeviceBuffer<std::uint8_t> _flips;
+
+    /**
+     * @brief Cached probe populated by @ref make_probe.
+     */
+    mutable ColliderProbe _probe {};
 };
 
 /**

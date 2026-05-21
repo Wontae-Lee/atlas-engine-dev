@@ -279,20 +279,38 @@
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactoried codes for device-view and cleaned comments.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/external/googlebenchmark" beforeDir="false" afterPath="$PROJECT_DIR$/external/googlebenchmark" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/external/googletest" beforeDir="false" afterPath="$PROJECT_DIR$/external/googletest" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/external/tinyobj" beforeDir="false" afterPath="$PROJECT_DIR$/external/tinyobj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/codec.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/codec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/deep_learning_codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/codec/knudsen_codec.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider_surface_interaction.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/fluid/fluid_state.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/generator/jittering_operator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/jittering_operator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/generator/maxwell_boltzmann_generator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/generator/maxwell_boltzmann_generator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/boltzman_measurer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/boltzman_measurer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/measurer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/measurer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/measurer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/measurer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/universe/universe_state.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/universe/universe_state.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/universe/universe_state.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/universe/universe_state.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/orchestrator/orchestrator_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/orchestrator/orchestrator_tests.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -369,61 +387,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0080904545381564" />
-      <entry key="MS500" value="1.635630250954157" />
-      <entry key="S2" value="3.5579143843286163" />
-      <entry key="S5" value="7.184159136099129" />
-      <entry key="S10" value="12.370429776685596" />
-      <entry key="S30" value="24.56094354381216" />
-      <entry key="S60" value="32.46817415071342" />
-      <entry key="M2" value="39.71383790872499" />
-      <entry key="M5" value="54.24290904981579" />
-      <entry key="M10" value="79.16890830021818" />
-      <entry key="M15" value="97.27921398853952" />
-      <entry key="M30" value="125.49678733309842" />
-      <entry key="H1" value="145.19664354746772" />
-      <entry key="H2" value="156.88109264899884" />
-      <entry key="H4" value="163.25021929920376" />
-      <entry key="D1" value="168.84761014535297" />
-      <entry key="W1" value="169.8346878726876" />
+      <entry key="MS100" value="1.0009609281813583" />
+      <entry key="MS500" value="1.4054198383105507" />
+      <entry key="S2" value="2.5733653862991197" />
+      <entry key="S5" value="3.9005123609650774" />
+      <entry key="S10" value="5.010265198839622" />
+      <entry key="S30" value="6.351413597441085" />
+      <entry key="S60" value="8.082815862348454" />
+      <entry key="M2" value="15.442673241763401" />
+      <entry key="M5" value="42.00090314819936" />
+      <entry key="M10" value="83.31457956408215" />
+      <entry key="M15" value="119.94828488697566" />
+      <entry key="M30" value="195.29882136006373" />
+      <entry key="H1" value="263.9249807945543" />
+      <entry key="H2" value="311.66785976362826" />
+      <entry key="H4" value="340.04506592523717" />
+      <entry key="D1" value="366.40486562625836" />
+      <entry key="W1" value="371.1938081484307" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="7.524010454965222E-146" />
-      <entry key="MS500" value="9.446912179259368E-30" />
-      <entry key="S2" value="5.543990399228228E-8" />
-      <entry key="S5" value="0.0012517828419174608" />
-      <entry key="S10" value="0.03538490886650383" />
-      <entry key="S30" value="0.34463181144696714" />
-      <entry key="S60" value="0.7008565314403779" />
-      <entry key="M2" value="1.1282973829164962" />
-      <entry key="M5" value="2.037607924297741" />
-      <entry key="M10" value="3.4214077423274127" />
-      <entry key="M15" value="4.371214777420277" />
-      <entry key="M30" value="5.805368076828539" />
-      <entry key="H1" value="6.784848340193391" />
-      <entry key="H2" value="7.359496148401192" />
-      <entry key="H4" value="7.671036096519853" />
-      <entry key="D1" value="7.943919581740764" />
-      <entry key="W1" value="7.991957244721763" />
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="3.4105620161809527E-221" />
+      <entry key="S2" value="1.0994895675328617E-55" />
+      <entry key="S5" value="1.5462352890318534E-22" />
+      <entry key="S10" value="1.7531001729889447E-11" />
+      <entry key="S30" value="4.121528107058787E-4" />
+      <entry key="S60" value="0.028971852156284485" />
+      <entry key="M2" value="0.25849406337989295" />
+      <entry key="M5" value="1.1628058393801415" />
+      <entry key="M10" value="2.3927913839661916" />
+      <entry key="M15" value="3.4743489747506398" />
+      <entry key="M30" value="5.854493746434973" />
+      <entry key="H1" value="8.16949282553204" />
+      <entry key="H2" value="9.838734196702065" />
+      <entry key="H4" value="10.848853967538416" />
+      <entry key="D1" value="11.797471436781644" />
+      <entry key="W1" value="11.97079372819937" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9873391760746023" />
-      <entry key="MS500" value="1.628513657153967" />
-      <entry key="S2" value="3.5515397758279095" />
-      <entry key="S5" value="7.176505738429129" />
-      <entry key="S10" value="12.39670595482411" />
-      <entry key="S30" value="24.897200843316515" />
-      <entry key="S60" value="33.162511233305146" />
-      <entry key="M2" value="40.837549914486864" />
-      <entry key="M5" value="56.27593770397285" />
-      <entry key="M10" value="82.58458962744511" />
-      <entry key="M15" value="101.64481366672099" />
-      <entry key="M30" value="131.29789868268364" />
-      <entry key="H1" value="151.97884636603052" />
-      <entry key="H2" value="164.239111049118" />
-      <entry key="H4" value="170.92047406298605" />
-      <entry key="D1" value="176.79139326663224" />
-      <entry key="W1" value="177.82662546564285" />
+      <entry key="MS100" value="0.9871688602025668" />
+      <entry key="MS500" value="1.4008558441509764" />
+      <entry key="S2" value="2.5709531364808225" />
+      <entry key="S5" value="3.8989268544598237" />
+      <entry key="S10" value="5.009210387617779" />
+      <entry key="S30" value="6.3513526114153285" />
+      <entry key="S60" value="8.110920287781223" />
+      <entry key="M2" value="15.698438863563798" />
+      <entry key="M5" value="43.15964502928589" />
+      <entry key="M10" value="85.70351367447678" />
+      <entry key="M15" value="123.41879916192404" />
+      <entry key="M30" value="201.14973908818843" />
+      <entry key="H1" value="272.0917787537406" />
+      <entry key="H2" value="321.504901152766" />
+      <entry key="H4" value="350.89296621709127" />
+      <entry key="D1" value="378.20216106181573" />
+      <entry key="W1" value="383.164576284823" />
     </decayedShown>
   </component>
   <component name="ProjectApplicationVersion">
@@ -1212,7 +1230,7 @@
       <workItem from="1778835471324" duration="965000" />
       <workItem from="1778844615515" duration="10767000" />
       <workItem from="1778856214606" duration="10000" />
-      <workItem from="1779351455410" duration="11000" />
+      <workItem from="1779351455410" duration="2298000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

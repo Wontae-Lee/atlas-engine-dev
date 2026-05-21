@@ -55,15 +55,14 @@ KnudsenCodec<T>::KnudsenCodec(UniverseHostPtr<T> domain,
 template <typename T>
 void
 KnudsenCodec<T>::encode() {
-    typename Codec<T>::CodecProbe probe;
-
     // Encoding requires particle counts and writable Knudsen-number storage.
     // The current representative hard-sphere-style model does not use temperature explicitly.
-    if (!this->make_probe(probe)
-        || probe.number_particle_ptr == nullptr
-        || probe.knudsen_number_ptr == nullptr) {
+    if (!this->make_probe()
+        || this->_probe.number_particle_ptr == nullptr
+        || this->_probe.knudsen_number_ptr == nullptr) {
         return;
     }
+    const auto probe = this->_probe;
 
     // Capture model parameters by value so they are available inside the device kernel.
     const T characteristic_length                         = _characteristic_length;
@@ -123,17 +122,15 @@ KnudsenCodec<T>::encode() {
 template <typename T>
 void
 KnudsenCodec<T>::decode() {
-    // Build a compact probe containing raw device pointers to codec input and output states.
-    typename Codec<T>::CodecProbe probe;
-
     // Decoding requires the computed Knudsen number, the solver-allocation state,
     // and the device-side split thresholds.
-    if (!this->make_probe(probe)
-        || probe.knudsen_number_ptr == nullptr
-        || probe.allocated_solver_ptr == nullptr
+    if (!this->make_probe()
+        || this->_probe.knudsen_number_ptr == nullptr
+        || this->_probe.allocated_solver_ptr == nullptr
         || d_kn_split.empty()) {
         return;
     }
+    const auto probe = this->_probe;
 
     // Expose the Kn split thresholds to the device kernel.
     const auto* kn_split_ptr = atlas::raw_pointer_cast(d_kn_split.data());

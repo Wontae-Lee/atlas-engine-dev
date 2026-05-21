@@ -200,11 +200,11 @@ Source<T>::emit() {
         return;
     }
     shuffle_species(emit_count);
-    SourceProbe probe;
-    if (!make_probe(probe)) {
+    if (!make_probe()) {
         record_source_metrics();
         return;
     }
+    const auto probe = _probe;
     const ShuffleOperator shuffle {};
     std::size_t species_offset = 0;
     std::size_t emitted_count  = 0;
@@ -252,7 +252,8 @@ Source<T>::emit() {
 
 template <typename T>
 bool
-Source<T>::make_probe(SourceProbe& probe) noexcept {
+Source<T>::make_probe() noexcept {
+    _probe = {};
     if (!_fluid || _units.empty() || _shuffled_species.empty()) {
         return false;
     }
@@ -273,17 +274,17 @@ Source<T>::make_probe(SourceProbe& probe) noexcept {
         || generators_buf.empty() || properties_buf.empty()) {
         return false;
     }
-    probe.units            = atlas::raw_pointer_cast(_units.data());
-    probe.generators       = atlas::raw_pointer_cast(generators_buf.data());
-    probe.properties       = atlas::raw_pointer_cast(properties_buf.data());
-    probe.shuffled_species = atlas::raw_pointer_cast(_shuffled_species.data());
-    probe.positions        = atlas::raw_pointer_cast(positions_buf.data());
-    probe.velocities       = atlas::raw_pointer_cast(velocities_buf.data());
-    probe.species          = atlas::raw_pointer_cast(species_buf.data());
-    probe.active           = atlas::raw_pointer_cast(active_buf.data());
-    probe.temperature      = _temperature;
-    probe.property_count   = static_cast<int>(properties_buf.size());
-    probe.emission_seed    = _shuffle_seed;
+    _probe.units            = atlas::raw_pointer_cast(_units.data());
+    _probe.generators       = atlas::raw_pointer_cast(generators_buf.data());
+    _probe.properties       = atlas::raw_pointer_cast(properties_buf.data());
+    _probe.shuffled_species = atlas::raw_pointer_cast(_shuffled_species.data());
+    _probe.positions        = atlas::raw_pointer_cast(positions_buf.data());
+    _probe.velocities       = atlas::raw_pointer_cast(velocities_buf.data());
+    _probe.species          = atlas::raw_pointer_cast(species_buf.data());
+    _probe.active           = atlas::raw_pointer_cast(active_buf.data());
+    _probe.temperature      = _temperature;
+    _probe.property_count   = static_cast<int>(properties_buf.size());
+    _probe.emission_seed    = _shuffle_seed;
     return true;
 }
 

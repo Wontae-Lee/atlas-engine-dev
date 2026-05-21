@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/sampling/sampling.h>
 
@@ -137,23 +136,19 @@ DsmcSolver<T>::reset_states() {
     auto* collision_count_state    = this->_universe->template state<atlas::universe::UniverseCollisionCountState<int>>();
 
     if (number_particle_state != nullptr) {
-        auto& buffer = number_particle_state->data();
-        atlas::parallel_fill<ExecutionPolicy::device>(buffer.begin(), buffer.end(), T(0));
+        number_particle_state->reset();
     }
 
     if (max_relative_speed_state != nullptr) {
-        auto& buffer = max_relative_speed_state->data();
-        atlas::parallel_fill<ExecutionPolicy::device>(buffer.begin(), buffer.end(), T(0));
+        max_relative_speed_state->reset();
     }
 
     if (max_sigma_g_state != nullptr) {
-        auto& buffer = max_sigma_g_state->data();
-        atlas::parallel_fill<ExecutionPolicy::device>(buffer.begin(), buffer.end(), T(0));
+        max_sigma_g_state->reset();
     }
 
     if (collision_count_state != nullptr) {
-        auto& buffer = collision_count_state->data();
-        atlas::parallel_fill<ExecutionPolicy::device>(buffer.begin(), buffer.end(), 0);
+        collision_count_state->reset();
     }
 }
 

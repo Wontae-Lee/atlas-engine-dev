@@ -99,6 +99,12 @@ public:
     compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept)
         = 0;
 
+    /**
+     * @brief Resets all stored particle entries to their default value.
+     */
+    ATLAS_HOST virtual void
+    reset() = 0;
+
 public:
     /**
      * @brief Compacts a typed state buffer into its dense surviving prefix.
@@ -121,6 +127,10 @@ public:
     compact_buffer(Buffer& buffer,
                    const DeviceBuffer<std::size_t>& compact_indices,
                    std::size_t kept);
+
+    template <typename Buffer>
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    reset_buffer(Buffer& buffer);
 
 public:
     /**
@@ -180,6 +190,9 @@ public:
      */
     ATLAS_HOST void
     compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST void
+    reset() override;
 
     /**
      * @brief Returns mutable access to the underlying position storage.
@@ -253,6 +266,9 @@ public:
     ATLAS_HOST void
     compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
 
+    ATLAS_HOST void
+    reset() override;
+
     /**
      * @brief Returns mutable access to the underlying velocity storage.
      *
@@ -324,6 +340,9 @@ public:
      */
     ATLAS_HOST void
     compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST void
+    reset() override;
 
     /**
      * @brief Returns mutable access to the underlying species storage.
@@ -398,6 +417,9 @@ public:
     ATLAS_HOST void
     compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
 
+    ATLAS_HOST void
+    reset() override;
+
     /**
      * @brief Returns mutable access to the underlying activity storage.
      *
@@ -469,6 +491,9 @@ public:
      */
     ATLAS_HOST void
     compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST void
+    reset() override;
 
     /**
      * @brief Returns mutable access to the underlying temperature storage.
