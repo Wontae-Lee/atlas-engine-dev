@@ -17,11 +17,10 @@ DsmcSolver<T>::DsmcSolver(UniverseHostPtr<T> universe,
                           FluidHostPtr<T> fluid,
                           SpatialHashingSearcherHostPtr<T> searcher,
                           const DsmcKernelType kernel_type) noexcept
-    : _universe(std::move(universe))
-    , _fluid(std::move(fluid))
-    , _searcher(std::move(searcher))
+    : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher))
     , _kernel(DsmcKernel<T>(kernel_type)) {
 
+    // Prepare per-cell DSMC statistic states when the universe is available.
     ensure_states();
 }
 
@@ -29,6 +28,7 @@ template <typename T>
 void
 DsmcSolver<T>::solve(const T dt) {
 
+    // Run the default unfiltered DSMC path over all cells.
     solve(nullptr, 0, dt);
 }
 
@@ -38,11 +38,13 @@ DsmcSolver<T>::solve(const DeviceBuffer<int>* allocated_solver,
                      const int index,
                      const T dt) {
 
+    // Missing core dependencies make the collision step impossible.
     if (!this->_universe || !this->_fluid || !this->_searcher) {
         reset_states();
         return;
     }
 
+    // Refresh required states and rebuild cell-local particle ranges.
     ensure_states();
     this->_searcher->build();
 
@@ -50,15 +52,18 @@ DsmcSolver<T>::solve(const DeviceBuffer<int>* allocated_solver,
         throw std::invalid_argument("DsmcSolver: dt must be positive.");
     }
 
+    // Cache raw pointers and scalar metadata for device kernels.
     if (!make_probe()) {
         reset_states();
         return;
     }
 
+    // Compute per-cell collision counts before applying collisions.
     if (!measure_cell_collision_statistics(allocated_solver, index, dt)) {
         return;
     }
 
+    // Delegate concrete pair selection and velocity update to the derived solver.
     apply_collision(allocated_solver, index, dt);
 }
 
@@ -72,6 +77,7 @@ DsmcSolver<T>::ensure_states() {
 
     const auto number_of_cells = static_cast<std::size_t>(this->_universe->number_of_cells());
 
+    // Keep particle-count state synchronized with the current cell count.
     if (auto* state = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
         state == nullptr) {
         this->_universe->template emplace_state<atlas::universe::UniverseNumberParticleState<T>>(
@@ -80,6 +86,7 @@ DsmcSolver<T>::ensure_states() {
         state->data().resize(number_of_cells);
     }
 
+    // Store the maximum relative speed found in each cell.
     if (auto* state = this->_universe->template state<atlas::universe::UniverseMaxRelativeSpeedState<T>>();
         state == nullptr) {
         this->_universe->template emplace_state<atlas::universe::UniverseMaxRelativeSpeedState<T>>(
@@ -88,6 +95,7 @@ DsmcSolver<T>::ensure_states() {
         state->data().resize(number_of_cells);
     }
 
+    // Store the majorant sigma-g value used by the NTC estimate.
     if (auto* state = this->_universe->template state<atlas::universe::UniverseMaxSigmaGState<T>>();
         state == nullptr) {
         this->_universe->template emplace_state<atlas::universe::UniverseMaxSigmaGState<T>>(
@@ -96,6 +104,7 @@ DsmcSolver<T>::ensure_states() {
         state->data().resize(number_of_cells);
     }
 
+    // Store the final number of collision trials scheduled per cell.
     if (auto* state = this->_universe->template state<atlas::universe::UniverseCollisionCountState<int>>();
         state == nullptr) {
         this->_universe->template emplace_state<atlas::universe::UniverseCollisionCountState<int>>(
@@ -103,7 +112,6 @@ DsmcSolver<T>::ensure_states() {
     } else if (state->data().size() != number_of_cells) {
         state->data().resize(number_of_cells);
     }
-
 }
 
 template <typename T>
@@ -120,6 +128,7 @@ DsmcSolver<T>::reset_states() {
         return;
     }
 
+    // Ensure all reset targets exist before clearing them.
     ensure_states();
 
     auto* number_particle_state    = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
@@ -164,6 +173,7 @@ DsmcSolver<T>::make_probe() noexcept {
     auto* max_sigma_g_state        = this->_universe->template state<atlas::universe::UniverseMaxSigmaGState<T>>();
     auto* collision_count_state    = this->_universe->template state<atlas::universe::UniverseCollisionCountState<int>>();
 
+    // All particle and DSMC statistic states are required for the base kernel.
     if (velocity_state == nullptr || species_state == nullptr || number_particle_state == nullptr
         || max_relative_speed_state == nullptr || max_sigma_g_state == nullptr || collision_count_state == nullptr) {
         return false;
@@ -177,6 +187,7 @@ DsmcSolver<T>::make_probe() noexcept {
     auto& collision_count    = collision_count_state->data();
     auto& properties         = this->_fluid->particle_properties();
 
+    // Convert buffer-backed states into raw pointers for device capture.
     _probe.velocity_ptr   = atlas::raw_pointer_cast(velocities.data());
     _probe.species_ptr    = atlas::raw_pointer_cast(species.data());
     _probe.properties_ptr = atlas::raw_pointer_cast(properties.data());
@@ -186,16 +197,19 @@ DsmcSolver<T>::make_probe() noexcept {
     _probe.max_sigma_g_ptr        = atlas::raw_pointer_cast(max_sigma_g.data());
     _probe.collision_count_ptr    = atlas::raw_pointer_cast(collision_count.data());
 
+    // Reuse the searcher's sorted cell ranges.
     _probe.indices_ptr    = this->_searcher->indices();
     _probe.cell_start_ptr = this->_searcher->cell_start();
     _probe.cell_end_ptr   = this->_searcher->cell_end();
 
-    _probe.particle_count               = static_cast<int>(this->_fluid->particle_count());
-    _probe.num_of_cells                 = this->_universe->number_of_cells();
-    _probe.cell_volume                  = this->_universe->cell_volume();
-    _probe.statistical_weight           = this->_fluid->statistical_weight();
-    _probe.kernel                       = _kernel;
-    _probe.collision_seed               = _collision_seed++;
+    _probe.particle_count     = static_cast<int>(this->_fluid->particle_count());
+    _probe.num_of_cells       = this->_universe->number_of_cells();
+    _probe.cell_volume        = this->_universe->cell_volume();
+    _probe.statistical_weight = this->_fluid->statistical_weight();
+    _probe.kernel             = _kernel;
+
+    // Use a new seed for stochastic rounding each solve pass.
+    _probe.collision_seed = _collision_seed++;
 
     return true;
 }
@@ -205,6 +219,7 @@ bool
 DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* allocated_solver,
                                                  const int index,
                                                  const T dt) {
+    // Copy the probe so the device lambda captures a stable snapshot.
     const auto probe = _probe;
 
     if (probe.particle_count < 2 || probe.num_of_cells <= 0
@@ -213,12 +228,14 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
         return false;
     }
 
+    // Optional codec allocation restricts this solver to selected cells.
     const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
+            // Skip cells assigned to a different solver.
             if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 probe.number_particle_ptr[cell]    = T(0);
                 probe.max_relative_speed_ptr[cell] = T(0);
@@ -230,6 +247,7 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
             const int begin = probe.cell_start_ptr[cell];
             const int end   = probe.cell_end_ptr[cell];
 
+            // Empty or invalid cell ranges cannot produce collisions.
             if (begin < 0 || end <= begin) {
                 probe.number_particle_ptr[cell]    = T(0);
                 probe.max_relative_speed_ptr[cell] = T(0);
@@ -238,15 +256,16 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
                 return;
             }
 
-            const int count               = end - begin;
-            T max_relative_squared        = T(0);
-            T max_sigma_g                 = T(0);
+            const int count        = end - begin;
+            T max_relative_squared = T(0);
+            T max_sigma_g          = T(0);
 
+            // Scan all unordered pairs to estimate cell-local majorants.
             for (int a = begin; a < end; ++a) {
                 const int particle_i = probe.indices_ptr[a];
 
                 for (int b = a + 1; b < end; ++b) {
-                    const int particle_j = probe.indices_ptr[b];
+                    const int particle_j        = probe.indices_ptr[b];
                     const std::size_t species_i = probe.species_ptr[particle_i];
                     const std::size_t species_j = probe.species_ptr[particle_j];
 
@@ -281,6 +300,7 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
                 return;
             }
 
+            // NTC estimate based on pair count, majorant sigma-g, weight, dt, and cell volume.
             const T ntc_pair_count = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
             const T ntc_count      = ntc_pair_count * max_sigma_g * probe.statistical_weight * dt / probe.cell_volume;
 
@@ -289,6 +309,7 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
                 return;
             }
 
+            // Saturate before converting to int.
             constexpr int max_collision_count  = std::numeric_limits<int>::max();
             const T max_collision_count_scalar = static_cast<T>(max_collision_count);
             if (ntc_count >= max_collision_count_scalar) {
@@ -300,6 +321,7 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
             int collisions     = static_cast<int>(base_count);
             const T remainder  = ntc_count - base_count;
 
+            // Stochastically preserve the fractional expected collision count.
             if (remainder > T(0)
                 && atlas::sampling::sample_hashed_unit_interval<T>(cell, probe.collision_seed) < remainder) {
                 ++collisions;
@@ -340,6 +362,7 @@ DsmcSolver<T>::sigma_g(const DsmcKernel<T>& kernel,
         return T(0);
     }
 
+    // Convert |g|^2 to |g| before evaluating sigma * g.
     const T relative_speed = static_cast<T>(std::sqrt(static_cast<double>(relative_speed_squared)));
     return DsmcKernel<T>::cross_section(
                kernel.type,

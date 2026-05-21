@@ -278,21 +278,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactoried codes for device-view and cleaned comments.">
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/benchmarks/dsmc/dsmc_solver_benchmarks.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/dsmc/dsmc_solver_benchmarks.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/cylinder/rarefied_gas/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/cylinder/rarefied_gas/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/honeycomb/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/honeycomb/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/inflow/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/inflow/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/intake/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/intake/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/orchestrator/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/examples/orchestrator/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/external/googlebenchmark" beforeDir="false" afterPath="$PROJECT_DIR$/external/googlebenchmark" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/external/googletest" beforeDir="false" afterPath="$PROJECT_DIR$/external/googletest" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/external/tinyobj" beforeDir="false" afterPath="$PROJECT_DIR$/external/tinyobj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -315,7 +315,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="497" />
+    <option name="cachedIndexableFilesCount" value="504" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -355,6 +355,7 @@
     <setting file="file://$PROJECT_DIR$/include/atlas/remove/remove.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/searcher/spatial_hashing_searcher.hpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/solver/solver.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/system/system.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/include/atlas/universe/universe_state.h" root0="FORCE_HIGHLIGHTING" />
@@ -368,61 +369,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000001291092315" />
-      <entry key="MS500" value="1.0820575298782507" />
-      <entry key="S2" value="2.9440822491006613" />
-      <entry key="S5" value="6.946964759973268" />
-      <entry key="S10" value="12.268510869652088" />
-      <entry key="S30" value="21.05449540319071" />
-      <entry key="S60" value="25.14996736120587" />
-      <entry key="M2" value="32.377910263638285" />
-      <entry key="M5" value="67.18116147286554" />
-      <entry key="M10" value="130.11061152836263" />
-      <entry key="M15" value="190.27083076381425" />
-      <entry key="M30" value="340.0920227242125" />
-      <entry key="H1" value="521.5693520109336" />
-      <entry key="H2" value="680.4716409457641" />
-      <entry key="H4" value="789.6322429296436" />
-      <entry key="D1" value="901.7923128746999" />
-      <entry key="W1" value="923.3368847682061" />
+      <entry key="MS100" value="1.0080904545381564" />
+      <entry key="MS500" value="1.635630250954157" />
+      <entry key="S2" value="3.5579143843286163" />
+      <entry key="S5" value="7.184159136099129" />
+      <entry key="S10" value="12.370429776685596" />
+      <entry key="S30" value="24.56094354381216" />
+      <entry key="S60" value="32.46817415071342" />
+      <entry key="M2" value="39.71383790872499" />
+      <entry key="M5" value="54.24290904981579" />
+      <entry key="M10" value="79.16890830021818" />
+      <entry key="M15" value="97.27921398853952" />
+      <entry key="M30" value="125.49678733309842" />
+      <entry key="H1" value="145.19664354746772" />
+      <entry key="H2" value="156.88109264899884" />
+      <entry key="H4" value="163.25021929920376" />
+      <entry key="D1" value="168.84761014535297" />
+      <entry key="W1" value="169.8346878726876" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="3.559317042077853E-89" />
-      <entry key="MS500" value="2.0430233713033048E-18" />
-      <entry key="S2" value="3.7806661919674905E-5" />
-      <entry key="S5" value="0.01702265748894714" />
-      <entry key="S10" value="0.13050365133068348" />
-      <entry key="S30" value="0.5391863547299652" />
-      <entry key="S60" value="0.8924761351748388" />
-      <entry key="M2" value="1.3107974437027514" />
-      <entry key="M5" value="2.1871554078235342" />
-      <entry key="M10" value="3.731028399330716" />
-      <entry key="M15" value="5.334683185067226" />
-      <entry key="M30" value="9.809809780407141" />
-      <entry key="H1" value="15.941047906693157" />
-      <entry key="H2" value="21.692046633323656" />
-      <entry key="H4" value="25.769903585172713" />
-      <entry key="D1" value="30.033601037568417" />
-      <entry key="W1" value="30.859401492609827" />
+      <entry key="MS100" value="7.524010454965222E-146" />
+      <entry key="MS500" value="9.446912179259368E-30" />
+      <entry key="S2" value="5.543990399228228E-8" />
+      <entry key="S5" value="0.0012517828419174608" />
+      <entry key="S10" value="0.03538490886650383" />
+      <entry key="S30" value="0.34463181144696714" />
+      <entry key="S60" value="0.7008565314403779" />
+      <entry key="M2" value="1.1282973829164962" />
+      <entry key="M5" value="2.037607924297741" />
+      <entry key="M10" value="3.4214077423274127" />
+      <entry key="M15" value="4.371214777420277" />
+      <entry key="M30" value="5.805368076828539" />
+      <entry key="H1" value="6.784848340193391" />
+      <entry key="H2" value="7.359496148401192" />
+      <entry key="H4" value="7.671036096519853" />
+      <entry key="D1" value="7.943919581740764" />
+      <entry key="W1" value="7.991957244721763" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9592642414679974" />
-      <entry key="MS500" value="1.0726400358835886" />
-      <entry key="S2" value="2.934055999928425" />
-      <entry key="S5" value="6.953064785555282" />
-      <entry key="S10" value="12.386017619140016" />
-      <entry key="S30" value="21.582533930868046" />
-      <entry key="S60" value="26.034306186400308" />
-      <entry key="M2" value="33.68300341899025" />
-      <entry key="M5" value="69.36389315405893" />
-      <entry key="M10" value="133.83644665801376" />
-      <entry key="M15" value="195.59950440474765" />
-      <entry key="M30" value="349.8945763086916" />
-      <entry key="H1" value="537.5034514659034" />
-      <entry key="H2" value="702.1585568789457" />
-      <entry key="H4" value="815.398977057928" />
-      <entry key="D1" value="931.8252786651228" />
-      <entry key="W1" value="954.196192526629" />
+      <entry key="MS100" value="0.9873391760746023" />
+      <entry key="MS500" value="1.628513657153967" />
+      <entry key="S2" value="3.5515397758279095" />
+      <entry key="S5" value="7.176505738429129" />
+      <entry key="S10" value="12.39670595482411" />
+      <entry key="S30" value="24.897200843316515" />
+      <entry key="S60" value="33.162511233305146" />
+      <entry key="M2" value="40.837549914486864" />
+      <entry key="M5" value="56.27593770397285" />
+      <entry key="M10" value="82.58458962744511" />
+      <entry key="M15" value="101.64481366672099" />
+      <entry key="M30" value="131.29789868268364" />
+      <entry key="H1" value="151.97884636603052" />
+      <entry key="H2" value="164.239111049118" />
+      <entry key="H4" value="170.92047406298605" />
+      <entry key="D1" value="176.79139326663224" />
+      <entry key="W1" value="177.82662546564285" />
     </decayedShown>
   </component>
   <component name="ProjectApplicationVersion">
@@ -446,65 +447,65 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;CMake Application.atlas_all_cuda_test.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.atlas_benchmarks.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.atlas_cuda_tests.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.atlas_unit_cuda_tests.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.cube_gravity_inflow.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.cylinder.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.dynamic.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.honeycomb.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.inflow.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.intake.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.lh2_waterfall.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.orchestrator.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.overview.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.solver.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.visualization.executor&quot;: &quot;Run&quot;,
-    &quot;CMake Application.waterfall.executor&quot;: &quot;Run&quot;,
-    &quot;Google Test.All in atlas_tests.executor&quot;: &quot;Run&quot;,
-    &quot;Google Test.Sink.BuilderRejectsMissingDependencies.executor&quot;: &quot;Run&quot;,
-    &quot;Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove.executor&quot;: &quot;Run&quot;,
-    &quot;Google Test.atlas_tests_universe.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.edit_code.executor&quot;: &quot;Run&quot;,
-    &quot;Python.generate_headers.executor&quot;: &quot;Run&quot;,
-    &quot;Python.remove_comments.executor&quot;: &quot;Run&quot;,
-    &quot;Python.remove_space.executor&quot;: &quot;Run&quot;,
-    &quot;Python.temp.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.west.config.association.type.startup.service&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;cf.advertisement.text.overridden&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;ctest.advertisement.all.test.configuration.is.created&quot;: &quot;true&quot;,
-    &quot;deletionFromPopupRequiresConfirmation&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;development&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/wontae/CLionProjects/atlas-engine-dev/temp&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;CMakeSettings&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "CMake Application.atlas_all_cuda_test.executor": "Run",
+    "CMake Application.atlas_benchmarks.executor": "Run",
+    "CMake Application.atlas_cuda_tests.executor": "Run",
+    "CMake Application.atlas_unit_cuda_tests.executor": "Run",
+    "CMake Application.cube_gravity_inflow.executor": "Run",
+    "CMake Application.cylinder.executor": "Run",
+    "CMake Application.dynamic.executor": "Run",
+    "CMake Application.honeycomb.executor": "Run",
+    "CMake Application.inflow.executor": "Run",
+    "CMake Application.intake.executor": "Run",
+    "CMake Application.lh2_waterfall.executor": "Run",
+    "CMake Application.orchestrator.executor": "Run",
+    "CMake Application.overview.executor": "Run",
+    "CMake Application.solver.executor": "Run",
+    "CMake Application.visualization.executor": "Run",
+    "CMake Application.waterfall.executor": "Run",
+    "Google Test.All in atlas_tests.executor": "Run",
+    "Google Test.Sink.BuilderRejectsMissingDependencies.executor": "Run",
+    "Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove.executor": "Run",
+    "Google Test.atlas_tests_universe.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.edit_code.executor": "Run",
+    "Python.generate_headers.executor": "Run",
+    "Python.remove_comments.executor": "Run",
+    "Python.remove_space.executor": "Run",
+    "Python.temp.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.RadMigrateCodeStyle": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "RunOnceActivity.west.config.association.type.startup.service": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "cf.advertisement.text.overridden": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "ctest.advertisement.all.test.configuration.is.created": "true",
+    "deletionFromPopupRequiresConfirmation": "false",
+    "git-widget-placeholder": "development",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/temp",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.first.attach.projects": "true",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "ml.llm.LLMAiRulesSettingsProvider",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="main" />
@@ -545,6 +546,11 @@
       </option>
       <option name="uvSdkKey" value="Python 3.12 (atlas-engine-dev) (2)" />
       <method v="2" />
+    </configuration>
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
     </configuration>
     <configuration name="All in atlas_tests" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests" TEST_MODE="SUITE_TEST">
       <method v="2">
@@ -786,7 +792,7 @@
         <option name="BeforeTestRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+    <configuration name="atlas-logging" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-logging" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -796,12 +802,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="atlas-logging" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-logging" CONFIG_NAME="Debug">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="atlas-serialization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-serialization" CONFIG_NAME="Debug">
+    <configuration name="atlas-serialization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-serialization" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -821,7 +822,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="inflow" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="inflow" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="inflow">
+    <configuration name="inflow" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="inflow" CONFIG_NAME="cuda-debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="inflow">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -831,7 +832,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="intake" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="intake" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="intake">
+    <configuration name="intake" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="intake" CONFIG_NAME="cuda-debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="intake">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -841,47 +842,52 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="libprotobuf-lite" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="libprotobuf-lite" CONFIG_NAME="Debug">
+    <configuration name="libprotobuf-lite" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="libprotobuf-lite" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="libprotobuf" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="libprotobuf" CONFIG_NAME="Debug">
+    <configuration name="libprotobuf" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="libprotobuf" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="libprotoc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="libprotoc" CONFIG_NAME="Debug">
+    <configuration name="libprotoc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="libprotoc" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="libupb" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="libupb" CONFIG_NAME="Debug">
+    <configuration name="libupb" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="libupb" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="orchestrator" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="orchestrator" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="orchestrator">
+    <configuration name="orchestrator" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="orchestrator" CONFIG_NAME="cuda-debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="orchestrator">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="protoc-gen-upb" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="protoc-gen-upb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="protoc-gen-upb">
+    <configuration name="protoc-gen-upb" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="protoc-gen-upb" CONFIG_NAME="cuda-debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="protoc-gen-upb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="protoc-gen-upb_minitable" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="protoc-gen-upb_minitable" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="protoc-gen-upb_minitable">
+    <configuration name="protoc-gen-upb_minitable" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="protoc-gen-upb_minitable" CONFIG_NAME="cuda-debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="protoc-gen-upb_minitable">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="protoc-gen-upbdefs" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="protoc-gen-upbdefs" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="protoc-gen-upbdefs">
+    <configuration name="protoc-gen-upbdefs" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="protoc-gen-upbdefs" CONFIG_NAME="cuda-debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="protoc-gen-upbdefs">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="protoc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="protoc" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="protoc">
+    <configuration name="protoc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="protoc" CONFIG_NAME="cuda-debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="protoc">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="tinyobjloader" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="tinyobjloader" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -891,7 +897,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="tinyobjloader" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="tinyobjloader" CONFIG_NAME="Debug">
+    <configuration name="uninstall" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="uninstall" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -901,27 +907,22 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="uninstall" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="uninstall" CONFIG_NAME="Debug">
+    <configuration name="utf8_range" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="utf8_range" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="utf8_range" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="utf8_range" CONFIG_NAME="Debug">
+    <configuration name="utf8_validity" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="utf8_validity" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="utf8_validity" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="utf8_validity" CONFIG_NAME="Debug">
+    <configuration name="waterfall" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="waterfall" CONFIG_NAME="cuda-debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="waterfall">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="waterfall" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="waterfall" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="waterfall">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="All CTest" type="CTestRunConfiguration" factoryName="CTestRun" PROGRAM_PARAMS="--extra-verbose" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$CMakeCurrentLocalGenerationDir$" PASS_PARENT_ENVS_2="true" CONFIG_NAME="Debug" RUN_PATH="$CTestCurrentExecutableName$" EXPLICIT_BUILD_TARGET_NAME="all" TEST_MODE="SUITE_TEST">
+    <configuration name="All CTest" type="CTestRunConfiguration" factoryName="CTestRun" PROGRAM_PARAMS="--extra-verbose" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$CMakeCurrentLocalGenerationDir$" PASS_PARENT_ENVS_2="true" CONFIG_NAME="cuda-debug" RUN_PATH="$CTestCurrentExecutableName$" EXPLICIT_BUILD_TARGET_NAME="all" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
         <option name="BeforeTestRunTask" enabled="true" />
@@ -1211,6 +1212,7 @@
       <workItem from="1778835471324" duration="965000" />
       <workItem from="1778844615515" duration="10767000" />
       <workItem from="1778856214606" duration="10000" />
+      <workItem from="1779351455410" duration="11000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />

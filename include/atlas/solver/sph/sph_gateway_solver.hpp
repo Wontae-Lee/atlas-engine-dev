@@ -70,24 +70,17 @@ SphGatewaySolver<T>::solve(const DeviceBuffer<int>* allocated_solver, const int 
         return;
     }
 
-    // Build one shared SPH probe and reuse it across all grouped stages.
-    typename SphSolver<T>::SphSolverProbe probe;
-    if (!SphSolver<T>::make_probe(
-            this->_universe,
-            this->_fluid,
-            this->_searcher,
-            _kernel,
-            allocated_solver,
-            probe)) {
+    // Refresh one shared SPH probe and reuse it across all grouped stages.
+    if (!make_probe()) {
         return;
     }
 
     // Run the grouped-SPH pipeline.
-    update_cell_particle_counts(probe, index);
-    build_group_representatives(probe, index);
-    estimate_group_density_and_pressure(probe, index);
-    update_group_motion(probe, index, dt);
-    scatter_group_states_to_particles(probe, index);
+    update_cell_particle_counts(allocated_solver, index);
+    build_group_representatives(allocated_solver, index);
+    estimate_group_density_and_pressure(allocated_solver, index);
+    update_group_motion(allocated_solver, index, dt);
+    scatter_group_states_to_particles(allocated_solver, index);
 }
 
 template <typename T>
@@ -276,10 +269,22 @@ SphGatewaySolver<T>::reset_universe_fields() {
 }
 
 template <typename T>
+bool
+SphGatewaySolver<T>::make_probe() noexcept {
+    return SphSolver<T>::make_probe(
+        this->_universe,
+        this->_fluid,
+        this->_searcher,
+        _kernel,
+        _probe);
+}
+
+template <typename T>
 void
-SphGatewaySolver<T>::update_cell_particle_counts(
-    const typename SphSolver<T>::SphSolverProbe& probe,
-    const int index) {
+SphGatewaySolver<T>::update_cell_particle_counts(const DeviceBuffer<int>* allocated_solver,
+                                                 const int index) {
+    const auto probe = _probe;
+    const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
     auto* cell_group_count_ptr     = atlas::raw_pointer_cast(_cell_group_count.data());
     const int group_particle_count = _group_particle_count;
 
@@ -289,7 +294,7 @@ SphGatewaySolver<T>::update_cell_particle_counts(
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
             // Cells assigned to another solver are excluded from this gateway stage.
-            if (probe.allocated_solver_ptr != nullptr && probe.allocated_solver_ptr[cell] != index) {
+            if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 probe.number_particle_ptr[cell] = T(0);
                 cell_group_count_ptr[cell]      = 0;
                 return;
@@ -307,9 +312,11 @@ SphGatewaySolver<T>::update_cell_particle_counts(
 
 template <typename T>
 void
-SphGatewaySolver<T>::build_group_representatives(
-    const typename SphSolver<T>::SphSolverProbe& probe,
-    const int index) {
+SphGatewaySolver<T>::build_group_representatives(const DeviceBuffer<int>* allocated_solver,
+                                                 const int index) {
+    const auto probe = _probe;
+    const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
+
     // Expose group buffers to the device kernel.
     auto* group_position_ptr         = atlas::raw_pointer_cast(_group_position.data());
     auto* group_velocity_ptr         = atlas::raw_pointer_cast(_group_velocity.data());
@@ -327,7 +334,7 @@ SphGatewaySolver<T>::build_group_representatives(
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
             // Skip cells assigned to another solver.
-            if (probe.allocated_solver_ptr != nullptr && probe.allocated_solver_ptr[cell] != index) {
+            if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
 
@@ -400,9 +407,11 @@ SphGatewaySolver<T>::build_group_representatives(
 
 template <typename T>
 void
-SphGatewaySolver<T>::estimate_group_density_and_pressure(
-    const typename SphSolver<T>::SphSolverProbe& probe,
-    const int index) {
+SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>* allocated_solver,
+                                                         const int index) {
+    const auto probe = _probe;
+    const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
+
     const auto* group_position_ptr   = atlas::raw_pointer_cast(_group_position.data());
     const auto* group_mass_ptr       = atlas::raw_pointer_cast(_group_mass.data());
     const auto* group_species_ptr    = atlas::raw_pointer_cast(_group_species.data());
@@ -416,7 +425,7 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
             // Skip cells assigned to another solver.
-            if (probe.allocated_solver_ptr != nullptr && probe.allocated_solver_ptr[cell] != index) {
+            if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
 
@@ -471,10 +480,12 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(
 
 template <typename T>
 void
-SphGatewaySolver<T>::update_group_motion(
-    const typename SphSolver<T>::SphSolverProbe& probe,
-    const int index,
-    const T dt) {
+SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solver,
+                                         const int index,
+                                         const T dt) {
+    const auto probe = _probe;
+    const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
+
     const auto* group_position_ptr   = atlas::raw_pointer_cast(_group_position.data());
     const auto* group_velocity_ptr   = atlas::raw_pointer_cast(_group_velocity.data());
     const auto* group_mass_ptr       = atlas::raw_pointer_cast(_group_mass.data());
@@ -491,7 +502,7 @@ SphGatewaySolver<T>::update_group_motion(
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
             // Skip cells assigned to another solver.
-            if (probe.allocated_solver_ptr != nullptr && probe.allocated_solver_ptr[cell] != index) {
+            if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
 
@@ -585,9 +596,11 @@ SphGatewaySolver<T>::update_group_motion(
 
 template <typename T>
 void
-SphGatewaySolver<T>::scatter_group_states_to_particles(
-    const typename SphSolver<T>::SphSolverProbe& probe,
-    const int index) {
+SphGatewaySolver<T>::scatter_group_states_to_particles(const DeviceBuffer<int>* allocated_solver,
+                                                       const int index) {
+    const auto probe = _probe;
+    const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
+
     const auto* group_updated_vel_ptr = atlas::raw_pointer_cast(_group_updated_velocity.data());
     const auto* cell_group_count_ptr  = atlas::raw_pointer_cast(this->_cell_group_count.data());
     const int group_particle_count    = _group_particle_count;
@@ -598,7 +611,7 @@ SphGatewaySolver<T>::scatter_group_states_to_particles(
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
             // Skip cells assigned to another solver.
-            if (probe.allocated_solver_ptr != nullptr && probe.allocated_solver_ptr[cell] != index) {
+            if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
 

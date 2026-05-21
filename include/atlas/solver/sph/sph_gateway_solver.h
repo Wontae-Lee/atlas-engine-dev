@@ -65,12 +65,12 @@ namespace atlas::system {
  *     -> initialize_context()
  *     -> validate dt > 0
  *     -> prepare_group_fields()
- *     -> SphSolver<T>::make_probe(..., allocated_solver, probe)
- *     -> update_cell_particle_counts(probe, index)
- *     -> build_group_representatives(probe, index)
- *     -> estimate_group_density_and_pressure(probe, index)
- *     -> update_group_motion(probe, index, dt)
- *     -> scatter_group_states_to_particles(probe, index)
+ *     -> make_probe()
+ *     -> update_cell_particle_counts(allocated_solver, index)
+ *     -> build_group_representatives(allocated_solver, index)
+ *     -> estimate_group_density_and_pressure(allocated_solver, index)
+ *     -> update_group_motion(allocated_solver, index, dt)
+ *     -> scatter_group_states_to_particles(allocated_solver, index)
  * @endcode
  *
  * @section sph_gateway_solver_group_indexing Representative indexing
@@ -127,8 +127,13 @@ namespace atlas::system {
  * @see SpatialHashingSearcher
  */
 template <typename T>
-class SphGatewaySolver final : public Solver<T> {
+class SphGatewaySolver : public Solver<T> {
 public:
+    /**
+     * @brief Runtime SPH probe type shared with the full SPH solver.
+     */
+    using SphSolverProbe = typename SphSolver<T>::SphSolverProbe;
+
     /**
      * @brief Fluent builder for constructing validated `SphGatewaySolver` instances.
      *
@@ -258,9 +263,9 @@ public:
      * This function executes the complete grouped-SPH pipeline for one time step.
      *
      * The function first initializes the runtime context, validates the time step,
-     * prepares transient group buffers, and constructs a single
-     * `SphSolver<T>::SphSolverProbe`. The probe is then reused across all grouped
-     * stages to avoid repeated state lookups and raw-pointer extraction.
+     * prepares transient group buffers, and refreshes `_probe`. The cached probe
+     * is then reused across all grouped stages to avoid repeated state lookups
+     * and raw-pointer extraction.
      *
      * Processing stages:
      *
@@ -407,6 +412,18 @@ public:
     reset_universe_fields();
 
     /**
+     * @brief Refreshes the cached SPH probe from this solver's dependencies.
+     *
+     * The function resolves required fluid states, universe output states,
+     * searcher buffers, scalar metadata, and the runtime kernel into `_probe`.
+     *
+     * @retval true Required dependencies and states were found.
+     * @retval false A required dependency or state was missing.
+     */
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    make_probe() noexcept;
+
+    /**
      * @brief Updates per-cell particle counts and representative group counts.
      *
      * @details
@@ -435,10 +452,8 @@ public:
      * not match @p index, both the particle count and group count are reset to
      * zero.
      *
-     * @param probe Raw-pointer runtime data prepared by
-     *        `SphSolver<T>::make_probe`.
-     * @param index Solver index used when the probe contains solver-allocation
-     *        data.
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when @p allocated_solver is non-null.
      *
      * @pre `_cell_group_count` must be allocated with one entry per cell.
      * @pre `probe.number_particle_ptr` must be writable.
@@ -449,7 +464,7 @@ public:
      *       filtering is enabled.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    update_cell_particle_counts(const typename SphSolver<T>::SphSolverProbe& probe, int index);
+    update_cell_particle_counts(const DeviceBuffer<int>* allocated_solver, int index);
 
     /**
      * @brief Builds deterministic group representatives for selected cells.
@@ -485,10 +500,8 @@ public:
      * Cells assigned to another solver are skipped when solver filtering is
      * enabled.
      *
-     * @param probe Raw-pointer runtime data prepared by
-     *        `SphSolver<T>::make_probe`.
-     * @param index Solver index used when the probe contains solver-allocation
-     *        data.
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when @p allocated_solver is non-null.
      *
      * @pre `_cell_group_count` must contain valid group counts.
      * @pre Group buffers must be allocated with at least one entry per particle.
@@ -501,7 +514,7 @@ public:
      *       mean group state.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    build_group_representatives(const typename SphSolver<T>::SphSolverProbe& probe, int index);
+    build_group_representatives(const DeviceBuffer<int>* allocated_solver, int index);
 
     /**
      * @brief Estimates group-level density and pressure inside each selected cell.
@@ -536,10 +549,8 @@ public:
      * Groups with invalid representative species receive zero density and zero
      * pressure.
      *
-     * @param probe Raw-pointer runtime data prepared by
-     *        `SphSolver<T>::make_probe`.
-     * @param index Solver index used when the probe contains solver-allocation
-     *        data.
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when @p allocated_solver is non-null.
      *
      * @pre Group representatives must already be built.
      * @pre `_group_position`, `_group_mass`, and `_group_species` must be readable.
@@ -550,7 +561,7 @@ public:
      *       zero pressure.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    estimate_group_density_and_pressure(const typename SphSolver<T>::SphSolverProbe& probe, int index);
+    estimate_group_density_and_pressure(const DeviceBuffer<int>* allocated_solver, int index);
 
     /**
      * @brief Updates group velocities and writes per-cell averaged force output.
@@ -595,10 +606,8 @@ public:
      * Empty cells, invalid cells, or cells with no active groups receive a zero
      * force vector.
      *
-     * @param probe Raw-pointer runtime data prepared by
-     *        `SphSolver<T>::make_probe`.
-     * @param index Solver index used when the probe contains solver-allocation
-     *        data.
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when @p allocated_solver is non-null.
      * @param dt Positive time-step size used for explicit representative velocity
      *        update.
      *
@@ -611,7 +620,7 @@ public:
      * @post Selected cells contain averaged force output.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    update_group_motion(const typename SphSolver<T>::SphSolverProbe& probe, int index, T dt);
+    update_group_motion(const DeviceBuffer<int>* allocated_solver, int index, T dt);
 
     /**
      * @brief Copies updated representative velocity back to member particles.
@@ -634,10 +643,8 @@ public:
      *
      * This stage does not update particle positions.
      *
-     * @param probe Raw-pointer runtime data prepared by
-     *        `SphSolver<T>::make_probe`.
-     * @param index Solver index used when the probe contains solver-allocation
-     *        data.
+     * @param allocated_solver Optional per-cell solver-allocation buffer.
+     * @param index Solver index used when @p allocated_solver is non-null.
      *
      * @pre `_group_updated_velocity` must contain valid updated representative
      *      velocities.
@@ -648,7 +655,7 @@ public:
      *       representative velocity.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    scatter_group_states_to_particles(const typename SphSolver<T>::SphSolverProbe& probe, int index);
+    scatter_group_states_to_particles(const DeviceBuffer<int>* allocated_solver, int index);
 
     /**
      * @brief Returns the effective smoothing length for a material.
@@ -796,7 +803,16 @@ public:
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
     group_count_for_cell(int particle_count, int group_particle_count) noexcept;
 
-private:
+protected:
+    /**
+     * @brief Cached probe populated by @ref make_probe.
+     *
+     * The grouped solver refreshes this once per solve step after the searcher
+     * has been rebuilt. Grouped device stages copy it by value before launching
+     * kernels so each launch observes a stable raw-pointer snapshot.
+     */
+    SphSolverProbe _probe {};
+
     /**
      * @brief Runtime-selected SPH kernel used for representative interaction.
      *

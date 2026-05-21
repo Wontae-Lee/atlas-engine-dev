@@ -54,17 +54,16 @@ SphSolver<T>::solve(const T dt) {
         return;
     }
 
-    // Build a compact probe containing raw device pointers for kernel execution.
-    SphSolverProbe probe;
-    if (!make_probe(nullptr, probe)) {
+    // Refresh the cached probe containing raw device pointers for kernel execution.
+    if (!make_probe()) {
         return;
     }
 
     // Compute density/pressure and particle counts.
-    update(probe);
+    update();
 
     // Compute acceleration, update particle velocity, and write cell force output.
-    accumulate_acceleration(probe, dt);
+    accumulate_acceleration(dt);
 }
 
 template <typename T>
@@ -130,16 +129,14 @@ SphSolver<T>::initialize_sph_context() noexcept {
 
 template <typename T>
 bool
-SphSolver<T>::make_probe(const DeviceBuffer<int>* allocated_solver,
-                         SphSolverProbe& probe) noexcept {
-    // Use the current solver dependencies to build a device-side probe.
+SphSolver<T>::make_probe() noexcept {
+    // Use the current solver dependencies to refresh the cached device-side probe.
     return make_probe(
         this->_universe,
         this->_fluid,
         this->_searcher,
         _kernel,
-        allocated_solver,
-        probe);
+        _probe);
 }
 
 template <typename T>
@@ -148,7 +145,6 @@ SphSolver<T>::make_probe(const UniverseHostPtr<T>& universe,
                          const FluidHostPtr<T>& fluid,
                          const SpatialHashingSearcherHostPtr<T>& searcher,
                          const SphKernel<T>& kernel,
-                         const DeviceBuffer<int>* allocated_solver,
                          SphSolverProbe& probe) noexcept {
     // Probe construction requires all simulation dependencies.
     if (!universe || !fluid || !searcher) {
@@ -188,9 +184,6 @@ SphSolver<T>::make_probe(const UniverseHostPtr<T>& universe,
     probe.indices_ptr    = searcher->indices();
     probe.cell_start_ptr = searcher->cell_start();
     probe.cell_end_ptr   = searcher->cell_end();
-
-    // Optional solver allocation pointer used by filtered solver variants.
-    probe.allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
 
     // Copy spatial search metadata.
     probe.lower_corner      = searcher->lower_corner();
@@ -274,15 +267,16 @@ SphSolver<T>::reset_universe_fields() {
 
 template <typename T>
 void
-SphSolver<T>::update(const SphSolverProbe& probe) {
+SphSolver<T>::update() {
     // First compute particle density and pressure, then update cell particle counts.
-    estimate_particle_density_and_pressure(probe);
-    update_cell_number_particles(probe);
+    estimate_particle_density_and_pressure();
+    update_cell_number_particles();
 }
 
 template <typename T>
 void
-SphSolver<T>::estimate_particle_density_and_pressure(const SphSolverProbe& probe) {
+SphSolver<T>::estimate_particle_density_and_pressure() {
+    const auto probe = _probe;
     auto* density_ptr  = atlas::raw_pointer_cast(_density.data());
     auto* pressure_ptr = atlas::raw_pointer_cast(_pressure.data());
 
@@ -381,7 +375,9 @@ SphSolver<T>::estimate_particle_density_and_pressure(const SphSolverProbe& probe
 
 template <typename T>
 void
-SphSolver<T>::update_cell_number_particles(const SphSolverProbe& probe) {
+SphSolver<T>::update_cell_number_particles() {
+    const auto probe = _probe;
+
     // Count valid particles in each search cell.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -411,7 +407,8 @@ SphSolver<T>::update_cell_number_particles(const SphSolverProbe& probe) {
 
 template <typename T>
 void
-SphSolver<T>::accumulate_acceleration(const SphSolverProbe& probe, const T dt) {
+SphSolver<T>::accumulate_acceleration(const T dt) {
+    const auto probe = _probe;
     const auto* density_ptr  = atlas::raw_pointer_cast(_density.data());
     const auto* pressure_ptr = atlas::raw_pointer_cast(_pressure.data());
     auto* acceleration_ptr   = atlas::raw_pointer_cast(_acceleration.data());

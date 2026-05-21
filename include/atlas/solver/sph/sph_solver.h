@@ -32,9 +32,9 @@ namespace atlas::system {
  *     reset_universe_fields();
  *     return;
  * }
- * make_probe(nullptr, probe);
- * update(probe);
- * accumulate_acceleration(probe, dt);
+ * make_probe();
+ * update();
+ * accumulate_acceleration(dt);
  * @endcode
  *
  * The internal @ref update stage executes:
@@ -56,8 +56,8 @@ public:
     /**
      * @brief Raw-pointer view over common SPH runtime data.
      *
-     * `SphSolverProbe` is populated by @ref make_probe and is intended to be
-     * captured by value in device kernels. It contains fluid particle data,
+     * `SphSolverProbe` is populated by @ref make_probe, cached in `_probe`, and is
+     * intended to be captured by value in device kernels. It contains fluid particle data,
      * universe output buffers, searcher cell ranges, spatial-grid metadata, and
      * the runtime smoothing kernel.
      *
@@ -68,9 +68,6 @@ public:
      * - `FluidSpeciesState<T>`,
      * - `UniverseNumberParticleState<T>`,
      * - `UniverseFieldForceState<T>`.
-     *
-     * `allocated_solver_ptr` is populated only when an allocation buffer is
-     * supplied to @ref make_probe. The current solver path passes `nullptr`.
      */
     struct SphSolverProbe {
         /**
@@ -136,13 +133,6 @@ public:
          * @brief Raw pointer to one-past-the-last sorted index for each cell.
          */
         const int* cell_end_ptr {};
-
-        /**
-         * @brief Optional raw pointer to per-cell solver allocation data.
-         *
-         * Currently unused by the main SPH solve path.
-         */
-        const int* allocated_solver_ptr {};
 
         /**
          * @brief Lower corner of the searcher grid domain.
@@ -316,16 +306,14 @@ public:
      * @brief Populates an SPH probe from this solver's configured dependencies.
      *
      * This overload forwards to the static @ref make_probe overload using this
-     * solver's universe, fluid, searcher, and kernel.
-     *
-     * @param allocated_solver Optional per-cell solver-allocation buffer.
-     * @param probe Output probe populated with raw pointers and scalar metadata.
+     * solver's universe, fluid, searcher, and kernel, then stores the result in
+     * `_probe`.
      *
      * @retval true Required dependencies and states were found.
      * @retval false A required dependency or state was missing.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    make_probe(const DeviceBuffer<int>* allocated_solver, SphSolverProbe& probe) noexcept;
+    make_probe() noexcept;
 
     /**
      * @brief Populates an SPH probe from explicit dependencies.
@@ -359,7 +347,6 @@ public:
      * @param fluid Fluid dependency.
      * @param searcher Spatial hashing searcher dependency.
      * @param kernel Runtime SPH kernel wrapper to copy into the probe.
-     * @param allocated_solver Optional per-cell solver-allocation buffer.
      * @param probe Output probe populated with raw pointers and metadata.
      *
      * @retval true Required dependencies and states were found.
@@ -370,7 +357,6 @@ public:
                const FluidHostPtr<T>& fluid,
                const SpatialHashingSearcherHostPtr<T>& searcher,
                const SphKernel<T>& kernel,
-               const DeviceBuffer<int>* allocated_solver,
                SphSolverProbe& probe) noexcept;
 
     /**
@@ -511,39 +497,41 @@ public:
     is_valid_neighbor_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
 
     /**
-     * @brief Estimates per-particle density and pressure using a prepared SPH probe.
-     *
-     * @param probe Raw-pointer runtime data prepared by @ref make_probe.
+     * @brief Estimates per-particle density and pressure using the cached SPH probe.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    estimate_particle_density_and_pressure(const SphSolverProbe& probe);
+    estimate_particle_density_and_pressure();
 
     /**
-     * @brief Updates per-cell particle counts using a prepared SPH probe.
-     *
-     * @param probe Raw-pointer runtime data prepared by @ref make_probe.
+     * @brief Updates per-cell particle counts using the cached SPH probe.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    update_cell_number_particles(const SphSolverProbe& probe);
+    update_cell_number_particles();
 
     /**
-     * @brief Accumulates SPH acceleration and updates velocities using a prepared SPH probe.
+     * @brief Accumulates SPH acceleration and updates velocities using the cached SPH probe.
      *
-     * @param probe Raw-pointer runtime data prepared by @ref make_probe.
      * @param dt Positive time-step size used for explicit velocity integration.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    accumulate_acceleration(const SphSolverProbe& probe, T dt);
+    accumulate_acceleration(T dt);
 
     /**
-     * @brief Executes the density/pressure and cell-count update using a prepared SPH probe.
-     *
-     * @param probe Raw-pointer runtime data prepared by @ref make_probe.
+     * @brief Executes the density/pressure and cell-count update using the cached SPH probe.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    update(const SphSolverProbe& probe);
+    update();
 
 private:
+    /**
+     * @brief Cached probe populated by @ref make_probe.
+     *
+     * The solver refreshes this once per solve step after the searcher has been
+     * rebuilt. Device stages copy it by value before launching kernels so each
+     * launch observes a stable raw-pointer snapshot.
+     */
+    SphSolverProbe _probe {};
+
     /**
      * @brief Runtime-selected SPH smoothing kernel.
      */

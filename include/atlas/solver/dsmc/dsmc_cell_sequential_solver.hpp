@@ -24,8 +24,10 @@ void
 DsmcCellSequentialSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
                                              const int index,
                                              const T) {
+    // Use the DSMC runtime data prepared by the base solver.
     const auto probe = this->_probe;
 
+    // Required buffers must exist before launching the collision kernel.
     if (probe.num_of_cells <= 0 || probe.collision_count_ptr == nullptr
         || probe.velocity_ptr == nullptr || probe.species_ptr == nullptr
         || probe.properties_ptr == nullptr
@@ -35,12 +37,16 @@ DsmcCellSequentialSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
         return;
     }
 
-    const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
+    // Optional codec allocation restricts this solver to selected cells.
+    const int* allocated_solver_ptr = allocated_solver != nullptr
+        ? atlas::raw_pointer_cast(allocated_solver->data())
+        : nullptr;
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
+            // Skip cells assigned to another solver.
             if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
@@ -49,6 +55,7 @@ DsmcCellSequentialSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
             const int count      = static_cast<int>(probe.number_particle_ptr[cell]);
             const T max_sigma_g  = probe.max_sigma_g_ptr[cell];
 
+            // No collision trial is possible without pairs or a positive majorant.
             if (collisions <= 0 || count < 2 || !(max_sigma_g > T(0))) {
                 return;
             }
@@ -56,14 +63,18 @@ DsmcCellSequentialSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
             const int begin = probe.cell_start_ptr[cell];
             const int end   = probe.cell_end_ptr[cell];
 
+            // Invalid or empty cell ranges are ignored.
             if (begin < 0 || end <= begin) {
                 return;
             }
 
+            // Process this cell's scheduled collision trials sequentially.
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
+                // Derive an independent deterministic random stream per cell/trial.
                 const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
                     + static_cast<std::uint64_t>(local_collision);
 
+                // Sample two distinct local particle indices inside the cell.
                 const int lhs_local = atlas::sampling::sample_hashed_index(
                     cell,
                     count,
@@ -73,23 +84,22 @@ DsmcCellSequentialSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
                     cell,
                     count - 1,
                     probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
+
                 if (rhs_local >= lhs_local) {
                     ++rhs_local;
                 }
 
-                const int particle_i = DsmcSolver<T>::nth_valid_particle(
-                    lhs_local,
-                    begin,
-                    end,
-                    probe.particle_count,
-                    probe.indices_ptr);
-
-                const int particle_j = DsmcSolver<T>::nth_valid_particle(
-                    rhs_local,
-                    begin,
-                    end,
-                    probe.particle_count,
-                    probe.indices_ptr);
+                // Convert local cell offsets to global particle indices.
+                const int particle_i = DsmcSolver<T>::nth_valid_particle(lhs_local,
+                                                                         begin,
+                                                                         end,
+                                                                         probe.particle_count,
+                                                                         probe.indices_ptr);
+                const int particle_j = DsmcSolver<T>::nth_valid_particle(rhs_local,
+                                                                         begin,
+                                                                         end,
+                                                                         probe.particle_count,
+                                                                         probe.indices_ptr);
 
                 if (particle_i < 0 || particle_j < 0) {
                     continue;
@@ -101,6 +111,7 @@ DsmcCellSequentialSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
                 Vector3<T> lhs_velocity = probe.velocity_ptr[particle_i];
                 Vector3<T> rhs_velocity = probe.velocity_ptr[particle_j];
 
+                // Evaluate the actual sigma-g for the sampled pair.
                 const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
                 const T sigma_g                = DsmcSolver<T>::sigma_g(
                     probe.kernel,
@@ -113,6 +124,7 @@ DsmcCellSequentialSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
                     continue;
                 }
 
+                // Accept with probability sigma_g / max_sigma_g.
                 T accept_probability = sigma_g / max_sigma_g;
                 if (accept_probability > T(1)) {
                     accept_probability = T(1);
@@ -126,12 +138,14 @@ DsmcCellSequentialSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
                     continue;
                 }
 
+                // Apply the selected DSMC collision kernel to accepted pairs.
                 probe.kernel(
                     lhs_velocity,
                     rhs_velocity,
                     probe.properties_ptr[species_i],
                     probe.properties_ptr[species_j]);
 
+                // Commit updated velocities back to particle storage.
                 probe.velocity_ptr[particle_i] = lhs_velocity;
                 probe.velocity_ptr[particle_j] = rhs_velocity;
             }
@@ -169,6 +183,7 @@ DsmcCellSequentialSolver<T>::Builder::with_kernel_type(const DsmcKernelType kern
 template <typename T>
 void
 DsmcCellSequentialSolver<T>::Builder::validate() const {
+    // A complete DSMC runtime needs all three core dependencies.
     if (!_universe) {
         throw std::runtime_error("DsmcCellSequentialSolver::Builder: universe must not be null.");
     }
@@ -186,6 +201,7 @@ template <typename T>
 DsmcCellSequentialSolver<T>
 DsmcCellSequentialSolver<T>::Builder::build() const {
     validate();
+
     return DsmcCellSequentialSolver<T>(
         _universe,
         _fluid,
@@ -197,6 +213,7 @@ template <typename T>
 atlas::host_shared_ptr<DsmcCellSequentialSolver<T>>
 DsmcCellSequentialSolver<T>::Builder::make_host_shared() const {
     validate();
+
     return atlas::make_host_shared<DsmcCellSequentialSolver<T>>(
         _universe,
         _fluid,
@@ -204,4 +221,4 @@ DsmcCellSequentialSolver<T>::Builder::make_host_shared() const {
         _kernel.type);
 }
 
-}
+} // namespace atlas::system
