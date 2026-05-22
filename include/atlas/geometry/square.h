@@ -134,7 +134,7 @@ private:
      * @return Helper axis used to seed tangent construction.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    helper_axis(const atlas::math::Vector<T, 3>& unit_like_normal) const noexcept;
+    axis(const atlas::math::Vector<T, 3>& unit_like_normal) const noexcept;
 
     /**
      * @brief Build an orthonormal basis aligned with the square plane.
@@ -252,10 +252,10 @@ public:
     signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept override;
+    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept override;
+    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
     centroid() const noexcept override;
