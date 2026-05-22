@@ -657,4 +657,102 @@ private:
 
 } // namespace atlas::universe
 
+namespace atlas {
+
+/**
+ * @brief Alias for atlas::universe::UniverseState.
+ */
+using UniverseState = atlas::universe::UniverseState;
+
+/**
+ * @brief Alias for atlas::universe::UniverseTemperatureState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseTemperatureState = atlas::universe::UniverseTemperatureState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseBulkVelocityState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseBulkVelocityState = atlas::universe::UniverseBulkVelocityState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseFieldForceState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseFieldForceState = atlas::universe::UniverseFieldForceState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseGravityState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseGravityState = atlas::universe::UniverseGravityState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseMaxRelativeSpeedState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseMaxRelativeSpeedState = atlas::universe::UniverseMaxRelativeSpeedState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseMaxSigmaGState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseMaxSigmaGState = atlas::universe::UniverseMaxSigmaGState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseThermalEnergyState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseThermalEnergyState = atlas::universe::UniverseThermalEnergyState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseNumberParticleState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseNumberParticleState = atlas::universe::UniverseNumberParticleState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseCollisionCountState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseCollisionCountState = atlas::universe::UniverseCollisionCountState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseKnudsenNumberState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseKnudsenNumberState = atlas::universe::UniverseKnudsenNumberState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseMaterialRatioState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ * @tparam N Dimension of the material-ratio vector.
+ */
+template <typename T, std::size_t N>
+using UniverseMaterialRatioState = atlas::universe::UniverseMaterialRatioState<T, N>;
+
+} // namespace atlas
+
 #include <atlas/universe/universe_state.hpp>

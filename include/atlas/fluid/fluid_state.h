@@ -520,4 +520,53 @@ private:
 
 } // namespace atlas::fluid
 
+namespace atlas {
+
+/**
+ * @brief Alias for atlas::fluid::FluidState.
+ */
+using FluidState = atlas::fluid::FluidState;
+
+/**
+ * @brief Alias for atlas::fluid::FluidPositionState.
+ *
+ * @tparam T Scalar type used by the state.
+ */
+template <typename T>
+using FluidPositionState = atlas::fluid::FluidPositionState<T>;
+
+/**
+ * @brief Alias for atlas::fluid::FluidVelocityState.
+ *
+ * @tparam T Scalar type used by the state.
+ */
+template <typename T>
+using FluidVelocityState = atlas::fluid::FluidVelocityState<T>;
+
+/**
+ * @brief Alias for atlas::fluid::FluidSpeciesState.
+ *
+ * @tparam T Scalar type used by the state.
+ */
+template <typename T>
+using FluidSpeciesState = atlas::fluid::FluidSpeciesState<T>;
+
+/**
+ * @brief Alias for atlas::fluid::FluidActiveState.
+ *
+ * @tparam T Scalar type used by the state.
+ */
+template <typename T>
+using FluidActiveState = atlas::fluid::FluidActiveState<T>;
+
+/**
+ * @brief Alias for atlas::fluid::FluidTemperatureState.
+ *
+ * @tparam T Scalar type used by the state.
+ */
+template <typename T>
+using FluidTemperatureState = atlas::fluid::FluidTemperatureState<T>;
+
+} // namespace atlas
+
 #include <atlas/fluid/fluid_state.hpp>
