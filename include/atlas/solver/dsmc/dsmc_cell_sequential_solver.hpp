@@ -6,12 +6,14 @@ template <typename T>
 DsmcCellSequentialSolver<T>::DsmcCellSequentialSolver(UniverseHostPtr<T> universe,
                                                       FluidHostPtr<T> fluid,
                                                       SpatialHashingSearcherHostPtr<T> searcher,
-                                                      const DsmcKernelType kernel_type) noexcept
+                                                      const DsmcKernelType kernel_type,
+                                                      const bool prevent_duplicate_pairing) noexcept
     : DsmcSolver<T>(
         std::move(universe),
         std::move(fluid),
         std::move(searcher),
-        kernel_type) { }
+        kernel_type,
+        prevent_duplicate_pairing) { }
 
 template <typename T>
 typename DsmcCellSequentialSolver<T>::Builder
@@ -105,6 +107,11 @@ DsmcCellSequentialSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
                     continue;
                 }
 
+                if (probe.prevent_duplicate_pairing
+                    && !DsmcSolver<T>::try_lock_pair(probe.pairing_lock_ptr, particle_i, particle_j)) {
+                    continue;
+                }
+
                 const std::size_t species_i = probe.species_ptr[particle_i];
                 const std::size_t species_j = probe.species_ptr[particle_j];
 
@@ -181,6 +188,13 @@ DsmcCellSequentialSolver<T>::Builder::with_kernel_type(const DsmcKernelType kern
 }
 
 template <typename T>
+typename DsmcCellSequentialSolver<T>::Builder&
+DsmcCellSequentialSolver<T>::Builder::with_prevent_duplicate_pairing(const bool enabled) noexcept {
+    _prevent_duplicate_pairing = enabled;
+    return *this;
+}
+
+template <typename T>
 void
 DsmcCellSequentialSolver<T>::Builder::validate() const {
     // A complete DSMC runtime needs all three core dependencies.
@@ -206,7 +220,8 @@ DsmcCellSequentialSolver<T>::Builder::build() const {
         _universe,
         _fluid,
         _searcher,
-        _kernel.type);
+        _kernel.type,
+        _prevent_duplicate_pairing);
 }
 
 template <typename T>
@@ -218,7 +233,8 @@ DsmcCellSequentialSolver<T>::Builder::make_host_shared() const {
         _universe,
         _fluid,
         _searcher,
-        _kernel.type);
+        _kernel.type,
+        _prevent_duplicate_pairing);
 }
 
 } // namespace atlas::system

@@ -37,7 +37,8 @@ public:
                          T grouping_length,
                          int sph_particle_threshold,
                          SphKernelType sph_kernel_type = SphKernelType::standard,
-                         DsmcKernelType dsmc_kernel_type = DsmcKernelType::hard_sphere) noexcept;
+                         DsmcKernelType dsmc_kernel_type = DsmcKernelType::hard_sphere,
+                         bool prevent_duplicate_pairing = false) noexcept;
 
     ~HybridDsmcSphSolver() override = default;
 
@@ -61,6 +62,9 @@ public:
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DsmcKernelType
     dsmc_kernel_type() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    prevent_duplicate_pairing() const noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     ensure_states();
@@ -129,6 +133,7 @@ private:
     T _grouping_length {};
     int _sph_particle_threshold { 5 };
     std::uint64_t _collision_seed {};
+    bool _prevent_duplicate_pairing {};
     SpatialHashingSearcher<T> _local_sph_searcher {};
     SpatialHashingSearcher<T> _local_dsmc_searcher {};
 
@@ -143,6 +148,7 @@ private:
     DeviceBuffer<int> _dsmc_group_owner {};
     DeviceBuffer<int> _dsmc_group_member_count {};
     DeviceBuffer<int> _dsmc_collision_count {};
+    DeviceBuffer<int> _dsmc_pairing_locks {};
     DeviceBuffer<T> _dsmc_max_relative_speed {};
     DeviceBuffer<T> _dsmc_max_sigma_g {};
 
@@ -183,6 +189,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_dsmc_kernel_type(DsmcKernelType kernel_type) noexcept;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_prevent_duplicate_pairing(bool enabled) noexcept;
+
     ATLAS_HOST ATLAS_FORCE_INLINE HybridDsmcSphSolver<T>
     build() const;
 
@@ -201,6 +210,7 @@ private:
     int _sph_particle_threshold { 5 };
     SphKernel<T> _sph_kernel {};
     DsmcKernel<T> _dsmc_kernel {};
+    bool _prevent_duplicate_pairing {};
 };
 
 } // namespace atlas::system

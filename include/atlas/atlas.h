@@ -89,6 +89,7 @@
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_soft_sphere_kernel.h>
+#include <atlas/solver/hybrid/hybrid_dsmc_sph_solver.h>
 #include <atlas/solver/solver.h>
 #include <atlas/solver/sph/cubic_spline_sph_kernel.h>
 #include <atlas/solver/sph/sph_gateway_solver.h>

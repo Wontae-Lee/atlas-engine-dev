@@ -81,7 +81,8 @@ public:
     DsmcFlattenSolver(UniverseHostPtr<T> universe,
                       FluidHostPtr<T> fluid,
                       SpatialHashingSearcherHostPtr<T> searcher,
-                      DsmcKernelType kernel_type = DsmcKernelType::hard_sphere) noexcept;
+                      DsmcKernelType kernel_type = DsmcKernelType::hard_sphere,
+                      bool prevent_duplicate_pairing = false) noexcept;
 
     /**
      * @brief Destroys the solver through the base interface.
@@ -259,6 +260,9 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_kernel_type(DsmcKernelType kernel_type) noexcept;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_prevent_duplicate_pairing(bool enabled) noexcept;
+
     /**
      * @brief Builds a validated flattened DSMC solver value.
      *
@@ -322,6 +326,8 @@ private:
      * The constructed solver receives `_kernel.type`.
      */
     DsmcKernel<T> _kernel {};
+
+    bool _prevent_duplicate_pairing {};
 };
 
 } // namespace atlas::system

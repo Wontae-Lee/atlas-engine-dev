@@ -8,12 +8,14 @@ template <typename T>
 DsmcFlattenSolver<T>::DsmcFlattenSolver(UniverseHostPtr<T> universe,
                                         FluidHostPtr<T> fluid,
                                         SpatialHashingSearcherHostPtr<T> searcher,
-                                        const DsmcKernelType kernel_type) noexcept
+                                        const DsmcKernelType kernel_type,
+                                        const bool prevent_duplicate_pairing) noexcept
     : DsmcSolver<T>(
         std::move(universe),
         std::move(fluid),
         std::move(searcher),
-        kernel_type) { }
+        kernel_type,
+        prevent_duplicate_pairing) { }
 
 template <typename T>
 typename DsmcFlattenSolver<T>::Builder
@@ -168,6 +170,11 @@ DsmcFlattenSolver<T>::apply_collision(const DeviceBuffer<int>*,
                 return;
             }
 
+            if (probe.prevent_duplicate_pairing
+                && !DsmcSolver<T>::try_lock_pair(probe.pairing_lock_ptr, particle_i, particle_j)) {
+                return;
+            }
+
             const std::size_t species_i = probe.species_ptr[particle_i];
             const std::size_t species_j = probe.species_ptr[particle_j];
 
@@ -258,6 +265,13 @@ DsmcFlattenSolver<T>::Builder::with_kernel_type(const DsmcKernelType kernel_type
 }
 
 template <typename T>
+typename DsmcFlattenSolver<T>::Builder&
+DsmcFlattenSolver<T>::Builder::with_prevent_duplicate_pairing(const bool enabled) noexcept {
+    _prevent_duplicate_pairing = enabled;
+    return *this;
+}
+
+template <typename T>
 void
 DsmcFlattenSolver<T>::Builder::validate() const {
     // A valid DSMC solver needs all core runtime dependencies.
@@ -283,7 +297,8 @@ DsmcFlattenSolver<T>::Builder::build() const {
         _universe,
         _fluid,
         _searcher,
-        _kernel.type);
+        _kernel.type,
+        _prevent_duplicate_pairing);
 }
 
 template <typename T>
@@ -295,7 +310,8 @@ DsmcFlattenSolver<T>::Builder::make_host_shared() const {
         _universe,
         _fluid,
         _searcher,
-        _kernel.type);
+        _kernel.type,
+        _prevent_duplicate_pairing);
 }
 
 } // namespace atlas::system

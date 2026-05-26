@@ -190,6 +190,20 @@ public:
          * incremented whenever @ref make_probe succeeds.
          */
         std::uint64_t collision_seed {};
+
+        /**
+         * @brief Raw pointer to per-particle pairing locks.
+         *
+         * When duplicate-pairing prevention is enabled, collision kernels claim
+         * both particles before evaluating a sampled pair. A non-null pointer is
+         * required only when @ref prevent_duplicate_pairing is true.
+         */
+        int* pairing_lock_ptr {};
+
+        /**
+         * @brief Whether one particle may be paired more than once in this solve step.
+         */
+        bool prevent_duplicate_pairing {};
     };
 
 public:
@@ -219,7 +233,8 @@ public:
     DsmcSolver(UniverseHostPtr<T> universe,
                FluidHostPtr<T> fluid,
                SpatialHashingSearcherHostPtr<T> searcher,
-               DsmcKernelType kernel_type = DsmcKernelType::hard_sphere) noexcept;
+               DsmcKernelType kernel_type = DsmcKernelType::hard_sphere,
+               bool prevent_duplicate_pairing = false) noexcept;
 
     /**
      * @brief Destroys the DSMC solver through the base interface.
@@ -280,6 +295,9 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DsmcKernelType
     kernel_type() const noexcept;
 
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    prevent_duplicate_pairing() const noexcept;
+
     /**
      * @brief Ensures required universe-side DSMC statistic states exist.
      *
@@ -333,6 +351,9 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     make_probe() noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    prepare_pairing_locks();
 
     /**
      * @brief Computes per-cell DSMC no-time-counter collision statistics.
@@ -440,6 +461,9 @@ public:
             std::size_t species_j,
             T relative_speed_squared) noexcept;
 
+    ATLAS_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
+    try_lock_pair(int* pairing_lock_ptr, int particle_i, int particle_j) noexcept;
+
     /**
      * @brief Applies collisions using the concrete derived-solver strategy.
      *
@@ -478,6 +502,16 @@ protected:
      * @ref make_probe succeeds, then incremented for the next solve pass.
      */
     std::uint64_t _collision_seed = 0;
+
+    /**
+     * @brief Per-particle lock buffer used by optional duplicate-pairing prevention.
+     */
+    DeviceBuffer<int> _pairing_locks {};
+
+    /**
+     * @brief Prevents a particle from being paired more than once per solve step.
+     */
+    bool _prevent_duplicate_pairing {};
 };
 
 } // namespace atlas::system

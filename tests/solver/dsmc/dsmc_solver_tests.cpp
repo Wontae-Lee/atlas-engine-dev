@@ -123,10 +123,12 @@ TEST(DsmcSolver, BuilderConstructsSolverWithKernelType) {
                             .with_fluid(fluid)
                             .with_searcher(searcher)
                             .with_kernel_type(DsmcKernelType::variable_hard_sphere)
+                            .with_prevent_duplicate_pairing(true)
                             .build();
 
     // Assert: the configured kernel type is preserved.
     EXPECT_EQ(solver.kernel_type(), DsmcKernelType::variable_hard_sphere);
+    EXPECT_TRUE(solver.prevent_duplicate_pairing());
 }
 
 TEST(DsmcSolver, BuilderConstructsCellSequentialSolver) {
@@ -144,6 +146,7 @@ TEST(DsmcSolver, BuilderConstructsCellSequentialSolver) {
 
     // Assert: base solver options are preserved.
     EXPECT_EQ(solver.kernel_type(), DsmcKernelType::hard_sphere);
+    EXPECT_FALSE(solver.prevent_duplicate_pairing());
 }
 
 TEST(DsmcSolver, DefaultsToCellSequential) {
