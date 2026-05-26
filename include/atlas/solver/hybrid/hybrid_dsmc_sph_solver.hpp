@@ -362,7 +362,7 @@ HybridDsmcSphSolver<T>::classify_particles() {
             }
 
             if (count >= probe.sph_particle_threshold) {
-                sph_candidate_ptr[particle] = 1;
+                sph_candidate_ptr[particle] = count;
             } else {
                 group_owner_ptr[particle] = -1;
                 atlas::atomic_fetch_add_relaxed(dsmc_particle_count, 1);
@@ -380,6 +380,7 @@ HybridDsmcSphSolver<T>::classify_particles() {
             const Vector3<T> pos = probe.sph.position_ptr[particle];
             const auto center    = particle_cell(pos, probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
             int owner            = particle;
+            int owner_heat       = sph_candidate_ptr[particle];
 
             for (int z = -grouping_radius; z <= grouping_radius; ++z) {
                 for (int y = -grouping_radius; y <= grouping_radius; ++y) {
@@ -403,8 +404,14 @@ HybridDsmcSphSolver<T>::classify_particles() {
                             }
 
                             const Vector3<T> delta = pos - probe.sph.position_ptr[other];
-                            if (delta.length_squared() <= grouping_length2 && other < owner) {
+                            if (delta.length_squared() > grouping_length2) {
+                                continue;
+                            }
+
+                            const int other_heat = sph_candidate_ptr[other];
+                            if (other_heat > owner_heat || (other_heat == owner_heat && other < owner)) {
                                 owner = other;
+                                owner_heat = other_heat;
                             }
                         }
                     }
