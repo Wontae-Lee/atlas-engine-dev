@@ -216,7 +216,7 @@ HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe.dsmc.statistical_weight      = this->_fluid->statistical_weight();
     _probe.dsmc.kernel                  = _dsmc_kernel;
     _probe.dsmc.collision_seed          = _collision_seed;
-    _probe.dsmc.pairing_without_replacement = _pairing_without_replacement;
+    _probe.dsmc_piclas_scheduler = _pairing_without_replacement;
 
     _probe.grouping_length         = _grouping_length;
     _probe.sph_particle_threshold  = _sph_particle_threshold;
@@ -734,7 +734,7 @@ void
 HybridDsmcSphSolver<T>::apply_grouped_dsmc(const T dt) {
     measure_grouped_dsmc_statistics(dt);
 
-    if (_probe.dsmc.pairing_without_replacement) {
+    if (_probe.dsmc_piclas_scheduler) {
         apply_grouped_dsmc_collisions_without_replacement();
     } else {
         apply_random_grouped_dsmc_collisions();
@@ -790,9 +790,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
                         max_relative_squared = relative_speed_squared;
                     }
 
-                    const T sigma_g = DsmcSolver<T>::sigma_g(
-                        probe.dsmc.kernel,
-                        probe.dsmc.properties_ptr,
+                    const T sigma_g = probe.dsmc.kernel.sigma_g(probe.dsmc.properties_ptr,
                         species_i,
                         species_j,
                         relative_speed_squared);
@@ -814,7 +812,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
             const T pair_count = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
             const T expected_collisions = pair_count * max_sigma_g * probe.dsmc.statistical_weight * dt / group_volume;
             if (expected_collisions >= static_cast<T>(std::numeric_limits<int>::max())) {
-                dsmc_collision_count_ptr[owner] = probe.dsmc.pairing_without_replacement
+                dsmc_collision_count_ptr[owner] = probe.dsmc_piclas_scheduler
                     ? count / 2
                     : std::numeric_limits<int>::max();
                 return;
@@ -827,7 +825,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
                 ++collision_count;
             }
 
-            if (probe.dsmc.pairing_without_replacement) {
+            if (probe.dsmc_piclas_scheduler) {
                 const int max_unique_pairs = count / 2;
                 if (collision_count > max_unique_pairs) {
                     collision_count = max_unique_pairs;
@@ -905,9 +903,7 @@ HybridDsmcSphSolver<T>::apply_random_grouped_dsmc_collisions() {
                 Vector3<T> lhs_velocity = probe.dsmc.velocity_ptr[lhs_particle];
                 Vector3<T> rhs_velocity = probe.dsmc.velocity_ptr[rhs_particle];
                 const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
-                const T sigma_g = DsmcSolver<T>::sigma_g(
-                    probe.dsmc.kernel,
-                    probe.dsmc.properties_ptr,
+                const T sigma_g = probe.dsmc.kernel.sigma_g(probe.dsmc.properties_ptr,
                     species_i,
                     species_j,
                     relative_speed_squared);
@@ -967,7 +963,7 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
 
                 int lhs_local = -1;
                 int rhs_local = -1;
-                DsmcSolver<T>::select_pair_offsets_without_replacement(
+                atlas::scheduler::DsmcPiclasScheduler<T>::select_pair_offsets(
                     lhs_local,
                     rhs_local,
                     collision,
@@ -1002,9 +998,7 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
                 Vector3<T> lhs_velocity = probe.dsmc.velocity_ptr[lhs_particle];
                 Vector3<T> rhs_velocity = probe.dsmc.velocity_ptr[rhs_particle];
                 const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
-                const T sigma_g = DsmcSolver<T>::sigma_g(
-                    probe.dsmc.kernel,
-                    probe.dsmc.properties_ptr,
+                const T sigma_g = probe.dsmc.kernel.sigma_g(probe.dsmc.properties_ptr,
                     species_i,
                     species_j,
                     relative_speed_squared);

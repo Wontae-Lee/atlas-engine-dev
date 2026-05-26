@@ -1,8 +1,9 @@
 #pragma once
 
 #include <atlas/core/macros.h>
+#include <atlas/scheduler/dsmc_piclas_scheduler.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
-#include <atlas/solver/dsmc/dsmc_solver.h>
+#include <atlas/solver/dsmc/dsmc_probe.h>
 #include <atlas/solver/sph/sph_solver.h>
 
 #include <cstddef>
@@ -15,14 +16,15 @@ template <typename T>
 class HybridDsmcSphSolver final : public Solver<T> {
 public:
     using SphSolverProbe  = typename SphSolver<T>::SphSolverProbe;
-    using DsmcSolverProbe = typename DsmcSolver<T>::DsmcSolverProbe;
+    using DsmcProbe       = ::atlas::system::DsmcProbe<T>;
 
     struct HybridProbe {
         SphSolverProbe sph {};
-        DsmcSolverProbe dsmc {};
+        DsmcProbe dsmc {};
         T grouping_length {};
         int sph_particle_threshold {};
         std::uint64_t collision_seed {};
+        bool dsmc_piclas_scheduler {};
     };
 
     class Builder;

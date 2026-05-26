@@ -1,4 +1,7 @@
 #pragma once
+
+#include <cmath>
+
 namespace atlas::system {
 template <typename T>
 DsmcKernel<T>::DsmcKernel() noexcept
@@ -142,5 +145,25 @@ DsmcKernel<T>::operator()(Vector3<T>& lhs_velocity,
         return;
     }
 }
+
+template <typename T>
+T
+DsmcKernel<T>::sigma_g(const MaterialProperties<T>* properties_ptr,
+                       const std::size_t species_i,
+                       const std::size_t species_j,
+                       const T relative_speed_squared) const noexcept {
+    if (!(relative_speed_squared > T(0))) {
+        return T(0);
+    }
+
+    const T relative_speed = static_cast<T>(std::sqrt(static_cast<double>(relative_speed_squared)));
+    return DsmcKernel<T>::cross_section(
+               type,
+               properties_ptr[species_i],
+               properties_ptr[species_j],
+               relative_speed)
+        * relative_speed;
+}
+
 
 }

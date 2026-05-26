@@ -22,6 +22,8 @@
 #include <atlas/solver/dsmc/variable_hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_soft_sphere_kernel.h>
 
+#include <cstdint>
+
 namespace atlas::system {
 
 /**
@@ -216,7 +218,13 @@ struct DsmcKernel final {
                const MaterialProperties<T>& lhs,
                const MaterialProperties<T>& rhs) const noexcept;
 
-private:
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE T
+    sigma_g(const MaterialProperties<T>* properties_ptr,
+            std::size_t species_i,
+            std::size_t species_j,
+            T relative_speed_squared) const noexcept;
+
+public:
     /**
      * @brief Destroy the currently active union member.
      *

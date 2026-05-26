@@ -74,6 +74,10 @@
 #include <atlas/remove/remove.h>
 #include <atlas/sampling/sampling.h>
 #include <atlas/scan/exclusive_scan.h>
+#include <atlas/scheduler/dsmc_cell_sequential_scheduler.h>
+#include <atlas/scheduler/dsmc_collision_scheduler.h>
+#include <atlas/scheduler/dsmc_flatten_scheduler.h>
+#include <atlas/scheduler/dsmc_piclas_scheduler.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/shuffle/shuffle_operator.h>
@@ -82,9 +86,8 @@
 #include <atlas/sink/surface_despawn_operator.h>
 #include <atlas/sink/tracing_despawn_operator.h>
 #include <atlas/sink/volume_despawn_operator.h>
-#include <atlas/solver/dsmc/dsmc_cell_sequential_solver.h>
-#include <atlas/solver/dsmc/dsmc_flatten_solver.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
+#include <atlas/solver/dsmc/dsmc_probe.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_hard_sphere_kernel.h>
