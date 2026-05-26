@@ -123,12 +123,12 @@ TEST(DsmcSolver, BuilderConstructsSolverWithKernelType) {
                             .with_fluid(fluid)
                             .with_searcher(searcher)
                             .with_kernel_type(DsmcKernelType::variable_hard_sphere)
-                            .with_prevent_duplicate_pairing(true)
+                            .with_pairing_without_replacement(true)
                             .build();
 
     // Assert: the configured kernel type is preserved.
     EXPECT_EQ(solver.kernel_type(), DsmcKernelType::variable_hard_sphere);
-    EXPECT_TRUE(solver.prevent_duplicate_pairing());
+    EXPECT_TRUE(solver.pairing_without_replacement());
 }
 
 TEST(DsmcSolver, BuilderConstructsCellSequentialSolver) {
@@ -146,7 +146,32 @@ TEST(DsmcSolver, BuilderConstructsCellSequentialSolver) {
 
     // Assert: base solver options are preserved.
     EXPECT_EQ(solver.kernel_type(), DsmcKernelType::hard_sphere);
-    EXPECT_FALSE(solver.prevent_duplicate_pairing());
+    EXPECT_FALSE(solver.pairing_without_replacement());
+}
+
+TEST(DsmcSolver, PairingWithoutReplacementOffsetsUseEachParticleAtMostOnce) {
+    // Arrange: create an odd-size cell-local particle range.
+    constexpr int count = 9;
+    bool used[count] {};
+
+    // Act and assert: the without-replacement local pairing consumes two new offsets per pair.
+    for (int local_collision = 0; local_collision < count / 2; ++local_collision) {
+        int lhs = -1;
+        int rhs = -1;
+
+        DsmcSolver<float>::select_pair_offsets_without_replacement(lhs, rhs, local_collision, count, 7, 11);
+
+        ASSERT_GE(lhs, 0);
+        ASSERT_LT(lhs, count);
+        ASSERT_GE(rhs, 0);
+        ASSERT_LT(rhs, count);
+        EXPECT_NE(lhs, rhs);
+        EXPECT_FALSE(used[lhs]);
+        EXPECT_FALSE(used[rhs]);
+
+        used[lhs] = true;
+        used[rhs] = true;
+    }
 }
 
 TEST(DsmcSolver, DefaultsToCellSequential) {

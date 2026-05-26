@@ -117,7 +117,7 @@ TEST(HybridDsmcSphSolver, BuilderConstructsConfiguredSolverAndStates) {
                             .with_sph_particle_threshold(2)
                             .with_sph_kernel_type(SphKernelType::wendland_quintic)
                             .with_dsmc_kernel_type(DsmcKernelType::hard_sphere)
-                            .with_prevent_duplicate_pairing(true)
+                            .with_pairing_without_replacement(true)
                             .build();
 
     // Assert: configuration and required universe states are installed.
@@ -125,7 +125,7 @@ TEST(HybridDsmcSphSolver, BuilderConstructsConfiguredSolverAndStates) {
     EXPECT_EQ(solver.sph_particle_threshold(), 2);
     EXPECT_EQ(solver.sph_kernel_type(), SphKernelType::wendland_quintic);
     EXPECT_EQ(solver.dsmc_kernel_type(), DsmcKernelType::hard_sphere);
-    EXPECT_TRUE(solver.prevent_duplicate_pairing());
+    EXPECT_TRUE(solver.pairing_without_replacement());
     EXPECT_TRUE(universe->has_state<UniverseNumberParticleState<float>>());
     EXPECT_TRUE(universe->has_state<UniverseFieldForceState<float>>());
     EXPECT_TRUE(universe->has_state<UniverseMaxRelativeSpeedState<float>>());

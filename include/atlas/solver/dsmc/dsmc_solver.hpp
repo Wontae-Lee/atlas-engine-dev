@@ -1,8 +1,6 @@
 #pragma once
 
-#include <atlas/atomic/atomic.h>
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/sampling/sampling.h>
 
@@ -18,10 +16,10 @@ DsmcSolver<T>::DsmcSolver(UniverseHostPtr<T> universe,
                           FluidHostPtr<T> fluid,
                           SpatialHashingSearcherHostPtr<T> searcher,
                           const DsmcKernelType kernel_type,
-                          const bool prevent_duplicate_pairing) noexcept
+                          const bool pairing_without_replacement) noexcept
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher))
     , _kernel(DsmcKernel<T>(kernel_type))
-    , _prevent_duplicate_pairing(prevent_duplicate_pairing) {
+    , _pairing_without_replacement(pairing_without_replacement) {
 
     // Prepare per-cell DSMC statistic states when the universe is available.
     ensure_states();
@@ -54,8 +52,6 @@ DsmcSolver<T>::solve(const DeviceBuffer<int>* allocated_solver,
     if (!(dt > T(0))) {
         throw std::invalid_argument("DsmcSolver: dt must be positive.");
     }
-
-    prepare_pairing_locks();
 
     // Cache raw pointers and scalar metadata for device kernels.
     if (!make_probe()) {
@@ -208,8 +204,7 @@ DsmcSolver<T>::make_probe() noexcept {
     _probe.cell_volume        = this->_universe->cell_volume();
     _probe.statistical_weight = this->_fluid->statistical_weight();
     _probe.kernel             = _kernel;
-    _probe.pairing_lock_ptr   = _prevent_duplicate_pairing ? atlas::raw_pointer_cast(_pairing_locks.data()) : nullptr;
-    _probe.prevent_duplicate_pairing = _prevent_duplicate_pairing;
+    _probe.pairing_without_replacement = _pairing_without_replacement;
 
     // Use a new seed for stochastic rounding each solve pass.
     _probe.collision_seed = _collision_seed++;
@@ -316,7 +311,9 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
             constexpr int max_collision_count  = std::numeric_limits<int>::max();
             const T max_collision_count_scalar = static_cast<T>(max_collision_count);
             if (ntc_count >= max_collision_count_scalar) {
-                probe.collision_count_ptr[cell] = max_collision_count;
+                probe.collision_count_ptr[cell] = probe.pairing_without_replacement
+                    ? count / 2
+                    : max_collision_count;
                 return;
             }
 
@@ -329,26 +326,17 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
                 ++collisions;
             }
 
+            if (probe.pairing_without_replacement) {
+                const int max_unique_pairs = count / 2;
+                if (collisions > max_unique_pairs) {
+                    collisions = max_unique_pairs;
+                }
+            }
+
             probe.collision_count_ptr[cell] = collisions > 0 ? collisions : 0;
         });
 
     return true;
-}
-
-template <typename T>
-void
-DsmcSolver<T>::prepare_pairing_locks() {
-    if (!_prevent_duplicate_pairing || !this->_fluid) {
-        _pairing_locks.resize(0);
-        return;
-    }
-
-    const auto particle_count = this->_fluid->particle_count();
-    if (_pairing_locks.size() != particle_count) {
-        _pairing_locks.resize(particle_count);
-    }
-
-    atlas::parallel_fill<ExecutionPolicy::device>(_pairing_locks.begin(), _pairing_locks.end(), 0);
 }
 
 template <typename T>
@@ -391,28 +379,56 @@ DsmcSolver<T>::sigma_g(const DsmcKernel<T>& kernel,
 }
 
 template <typename T>
-ATLAS_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE
-bool
-DsmcSolver<T>::try_lock_pair(int* pairing_lock_ptr,
-                             const int particle_i,
-                             const int particle_j) noexcept {
-    if (pairing_lock_ptr == nullptr) {
-        return true;
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+void
+DsmcSolver<T>::select_pair_offsets_without_replacement(int& lhs_local,
+                                                       int& rhs_local,
+                                                       const int local_collision,
+                                                       const int count,
+                                                       const int selector,
+                                                       const std::uint64_t seed) noexcept {
+    lhs_local = -1;
+    rhs_local = -1;
+
+    if (count < 2 || local_collision < 0 || local_collision >= count / 2) {
+        return;
     }
 
-    const int first  = particle_i < particle_j ? particle_i : particle_j;
-    const int second = particle_i < particle_j ? particle_j : particle_i;
+    const int offset = atlas::sampling::sample_hashed_index(
+        selector,
+        count,
+        seed + atlas::seed::DSMC_COLLISION_LHS_SALT);
 
-    if (atlas::atomic_compare_exchange_acquire(&pairing_lock_ptr[first], 0, 1) != 0) {
-        return false;
+    int stride = count == 2
+        ? 1
+        : 1 + atlas::sampling::sample_hashed_index(
+              selector,
+              count - 1,
+              seed + atlas::seed::DSMC_COLLISION_RHS_SALT);
+
+    for (;;) {
+        int a = stride;
+        int b = count;
+        while (b != 0) {
+            const int next = a % b;
+            a = b;
+            b = next;
+        }
+
+        if (a == 1) {
+            break;
+        }
+
+        ++stride;
+        if (stride >= count) {
+            stride = 1;
+        }
     }
 
-    if (atlas::atomic_compare_exchange_acquire(&pairing_lock_ptr[second], 0, 1) != 0) {
-        atlas::atomic_exchange_release(&pairing_lock_ptr[first], 0);
-        return false;
-    }
-
-    return true;
+    const auto lhs_offset = static_cast<std::int64_t>(2 * local_collision) * static_cast<std::int64_t>(stride);
+    const auto rhs_offset = static_cast<std::int64_t>(2 * local_collision + 1) * static_cast<std::int64_t>(stride);
+    lhs_local = static_cast<int>((static_cast<std::int64_t>(offset) + lhs_offset) % count);
+    rhs_local = static_cast<int>((static_cast<std::int64_t>(offset) + rhs_offset) % count);
 }
 
 template <typename T>
@@ -424,9 +440,9 @@ DsmcSolver<T>::kernel_type() const noexcept {
 
 template <typename T>
 bool
-DsmcSolver<T>::prevent_duplicate_pairing() const noexcept {
+DsmcSolver<T>::pairing_without_replacement() const noexcept {
 
-    return _prevent_duplicate_pairing;
+    return _pairing_without_replacement;
 }
 
 }

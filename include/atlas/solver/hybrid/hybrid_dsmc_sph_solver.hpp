@@ -21,13 +21,13 @@ HybridDsmcSphSolver<T>::HybridDsmcSphSolver(UniverseHostPtr<T> universe,
                                             const int sph_particle_threshold,
                                             const SphKernelType sph_kernel_type,
                                             const DsmcKernelType dsmc_kernel_type,
-                                            const bool prevent_duplicate_pairing) noexcept
+                                            const bool pairing_without_replacement) noexcept
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher))
     , _sph_kernel(sph_kernel_type)
     , _dsmc_kernel(dsmc_kernel_type)
     , _grouping_length(grouping_length)
     , _sph_particle_threshold(sph_particle_threshold > 0 ? sph_particle_threshold : 5)
-    , _prevent_duplicate_pairing(prevent_duplicate_pairing) {
+    , _pairing_without_replacement(pairing_without_replacement) {
     ensure_states();
 }
 
@@ -94,8 +94,8 @@ HybridDsmcSphSolver<T>::dsmc_kernel_type() const noexcept {
 
 template <typename T>
 bool
-HybridDsmcSphSolver<T>::prevent_duplicate_pairing() const noexcept {
-    return _prevent_duplicate_pairing;
+HybridDsmcSphSolver<T>::pairing_without_replacement() const noexcept {
+    return _pairing_without_replacement;
 }
 
 template <typename T>
@@ -216,10 +216,7 @@ HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe.dsmc.statistical_weight      = this->_fluid->statistical_weight();
     _probe.dsmc.kernel                  = _dsmc_kernel;
     _probe.dsmc.collision_seed          = _collision_seed;
-    _probe.dsmc.pairing_lock_ptr        = _prevent_duplicate_pairing
-        ? atlas::raw_pointer_cast(_dsmc_pairing_locks.data())
-        : nullptr;
-    _probe.dsmc.prevent_duplicate_pairing = _prevent_duplicate_pairing;
+    _probe.dsmc.pairing_without_replacement = _pairing_without_replacement;
 
     _probe.grouping_length         = _grouping_length;
     _probe.sph_particle_threshold  = _sph_particle_threshold;
@@ -242,7 +239,6 @@ HybridDsmcSphSolver<T>::prepare_fields() {
         _dsmc_group_owner.resize(0);
         _dsmc_group_member_count.resize(0);
         _dsmc_collision_count.resize(0);
-        _dsmc_pairing_locks.resize(0);
         _dsmc_max_relative_speed.resize(0);
         _dsmc_max_sigma_g.resize(0);
         _group_position.resize(0);
@@ -264,11 +260,6 @@ HybridDsmcSphSolver<T>::prepare_fields() {
     _dsmc_group_owner.resize(size);
     _dsmc_group_member_count.resize(size);
     _dsmc_collision_count.resize(size);
-    if (_prevent_duplicate_pairing) {
-        _dsmc_pairing_locks.resize(size);
-    } else {
-        _dsmc_pairing_locks.resize(0);
-    }
     _dsmc_max_relative_speed.resize(size);
     _dsmc_max_sigma_g.resize(size);
     _group_position.resize(size);
@@ -286,9 +277,6 @@ HybridDsmcSphSolver<T>::prepare_fields() {
     atlas::parallel_fill<ExecutionPolicy::device>(_dsmc_group_owner.begin(), _dsmc_group_owner.end(), -1);
     atlas::parallel_fill<ExecutionPolicy::device>(_dsmc_group_member_count.begin(), _dsmc_group_member_count.end(), 0);
     atlas::parallel_fill<ExecutionPolicy::device>(_dsmc_collision_count.begin(), _dsmc_collision_count.end(), 0);
-    if (_prevent_duplicate_pairing) {
-        atlas::parallel_fill<ExecutionPolicy::device>(_dsmc_pairing_locks.begin(), _dsmc_pairing_locks.end(), 0);
-    }
     atlas::parallel_fill<ExecutionPolicy::device>(_dsmc_max_relative_speed.begin(), _dsmc_max_relative_speed.end(), T(0));
     atlas::parallel_fill<ExecutionPolicy::device>(_dsmc_max_sigma_g.begin(), _dsmc_max_sigma_g.end(), T(0));
     atlas::parallel_fill<ExecutionPolicy::device>(_group_position.begin(), _group_position.end(), Vector3<T>(T(0), T(0), T(0)));
@@ -737,6 +725,18 @@ HybridDsmcSphSolver<T>::build_dsmc_groups() {
 template <typename T>
 void
 HybridDsmcSphSolver<T>::apply_grouped_dsmc(const T dt) {
+    measure_grouped_dsmc_statistics(dt);
+
+    if (_probe.dsmc.pairing_without_replacement) {
+        apply_grouped_dsmc_collisions_without_replacement();
+    } else {
+        apply_random_grouped_dsmc_collisions();
+    }
+}
+
+template <typename T>
+void
+HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
     const auto probe = _probe;
     const auto* dsmc_group_owner_ptr = atlas::raw_pointer_cast(_dsmc_group_owner.data());
     auto* dsmc_group_member_count_ptr = atlas::raw_pointer_cast(_dsmc_group_member_count.data());
@@ -807,7 +807,9 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc(const T dt) {
             const T pair_count = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
             const T expected_collisions = pair_count * max_sigma_g * probe.dsmc.statistical_weight * dt / group_volume;
             if (expected_collisions >= static_cast<T>(std::numeric_limits<int>::max())) {
-                dsmc_collision_count_ptr[owner] = std::numeric_limits<int>::max();
+                dsmc_collision_count_ptr[owner] = probe.dsmc.pairing_without_replacement
+                    ? count / 2
+                    : std::numeric_limits<int>::max();
                 return;
             }
 
@@ -818,8 +820,25 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc(const T dt) {
                 ++collision_count;
             }
 
+            if (probe.dsmc.pairing_without_replacement) {
+                const int max_unique_pairs = count / 2;
+                if (collision_count > max_unique_pairs) {
+                    collision_count = max_unique_pairs;
+                }
+            }
+
             dsmc_collision_count_ptr[owner] = collision_count > 0 ? collision_count : 0;
         });
+}
+
+template <typename T>
+void
+HybridDsmcSphSolver<T>::apply_random_grouped_dsmc_collisions() {
+    const auto probe = _probe;
+    const auto* dsmc_group_owner_ptr = atlas::raw_pointer_cast(_dsmc_group_owner.data());
+    auto* dsmc_group_member_count_ptr = atlas::raw_pointer_cast(_dsmc_group_member_count.data());
+    auto* dsmc_collision_count_ptr = atlas::raw_pointer_cast(_dsmc_collision_count.data());
+    auto* max_sigma_g_ptr = atlas::raw_pointer_cast(_dsmc_max_sigma_g.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -837,11 +856,14 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc(const T dt) {
                 const auto stream = static_cast<std::uint64_t>(owner) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
                     + static_cast<std::uint64_t>(collision);
 
-                const int lhs_local = atlas::sampling::sample_hashed_index(
+                int lhs_local = -1;
+                int rhs_local = -1;
+
+                lhs_local = atlas::sampling::sample_hashed_index(
                     owner,
                     count,
                     probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_LHS_SALT);
-                int rhs_local = atlas::sampling::sample_hashed_index(
+                rhs_local = atlas::sampling::sample_hashed_index(
                     owner,
                     count - 1,
                     probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
@@ -871,8 +893,100 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc(const T dt) {
                     continue;
                 }
 
-                if (probe.dsmc.prevent_duplicate_pairing
-                    && !DsmcSolver<T>::try_lock_pair(probe.dsmc.pairing_lock_ptr, lhs_particle, rhs_particle)) {
+                const auto species_i = probe.dsmc.species_ptr[lhs_particle];
+                const auto species_j = probe.dsmc.species_ptr[rhs_particle];
+                Vector3<T> lhs_velocity = probe.dsmc.velocity_ptr[lhs_particle];
+                Vector3<T> rhs_velocity = probe.dsmc.velocity_ptr[rhs_particle];
+                const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
+                const T sigma_g = DsmcSolver<T>::sigma_g(
+                    probe.dsmc.kernel,
+                    probe.dsmc.properties_ptr,
+                    species_i,
+                    species_j,
+                    relative_speed_squared);
+
+                T accept_probability = T(0);
+                if (sigma_g > T(0)) {
+                    accept_probability = sigma_g / max_sigma_g;
+                    if (accept_probability > T(1)) {
+                        accept_probability = T(1);
+                    }
+                }
+
+                const T accept_sample = atlas::sampling::sample_hashed_unit_interval<T>(
+                    owner,
+                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_ACCEPT_SALT);
+
+                if (!(accept_sample < accept_probability)) {
+                    continue;
+                }
+
+                probe.dsmc.kernel(
+                    lhs_velocity,
+                    rhs_velocity,
+                    probe.dsmc.properties_ptr[species_i],
+                    probe.dsmc.properties_ptr[species_j]);
+
+                probe.dsmc.velocity_ptr[lhs_particle] = lhs_velocity;
+                probe.dsmc.velocity_ptr[rhs_particle] = rhs_velocity;
+            }
+        });
+}
+
+template <typename T>
+void
+HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
+    const auto probe = _probe;
+    const auto* dsmc_group_owner_ptr = atlas::raw_pointer_cast(_dsmc_group_owner.data());
+    auto* dsmc_group_member_count_ptr = atlas::raw_pointer_cast(_dsmc_group_member_count.data());
+    auto* dsmc_collision_count_ptr = atlas::raw_pointer_cast(_dsmc_collision_count.data());
+    auto* max_sigma_g_ptr = atlas::raw_pointer_cast(_dsmc_max_sigma_g.data());
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        probe.dsmc.particle_count,
+        [=] ATLAS_DEVICE(const int owner) {
+            const int count = dsmc_group_member_count_ptr[owner];
+            const int collision_count = dsmc_collision_count_ptr[owner];
+            const T max_sigma_g = max_sigma_g_ptr[owner];
+
+            if (count < 2 || collision_count <= 0 || !(max_sigma_g > T(0))) {
+                return;
+            }
+
+            for (int collision = 0; collision < collision_count; ++collision) {
+                const auto stream = static_cast<std::uint64_t>(owner) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+                    + static_cast<std::uint64_t>(collision);
+
+                int lhs_local = -1;
+                int rhs_local = -1;
+                DsmcSolver<T>::select_pair_offsets_without_replacement(
+                    lhs_local,
+                    rhs_local,
+                    collision,
+                    count,
+                    owner,
+                    probe.collision_seed + static_cast<std::uint64_t>(owner));
+
+                int lhs_particle = -1;
+                int rhs_particle = -1;
+                int local_index = 0;
+
+                for (int particle = 0; particle < probe.dsmc.particle_count; ++particle) {
+                    if (dsmc_group_owner_ptr[particle] != owner) {
+                        continue;
+                    }
+
+                    if (local_index == lhs_local) {
+                        lhs_particle = particle;
+                    }
+                    if (local_index == rhs_local) {
+                        rhs_particle = particle;
+                    }
+                    ++local_index;
+                }
+
+                if (lhs_particle < 0 || rhs_particle < 0) {
                     continue;
                 }
 
@@ -1017,8 +1131,8 @@ HybridDsmcSphSolver<T>::Builder::with_dsmc_kernel_type(const DsmcKernelType kern
 
 template <typename T>
 typename HybridDsmcSphSolver<T>::Builder&
-HybridDsmcSphSolver<T>::Builder::with_prevent_duplicate_pairing(const bool enabled) noexcept {
-    _prevent_duplicate_pairing = enabled;
+HybridDsmcSphSolver<T>::Builder::with_pairing_without_replacement(const bool enabled) noexcept {
+    _pairing_without_replacement = enabled;
     return *this;
 }
 
@@ -1054,7 +1168,7 @@ HybridDsmcSphSolver<T>::Builder::build() const {
         _sph_particle_threshold,
         _sph_kernel.type,
         _dsmc_kernel.type,
-        _prevent_duplicate_pairing);
+        _pairing_without_replacement);
 }
 
 template <typename T>
@@ -1069,7 +1183,7 @@ HybridDsmcSphSolver<T>::Builder::make_host_shared() const {
         _sph_particle_threshold,
         _sph_kernel.type,
         _dsmc_kernel.type,
-        _prevent_duplicate_pairing);
+        _pairing_without_replacement);
 }
 
 } // namespace atlas::system

@@ -9,13 +9,13 @@ DsmcFlattenSolver<T>::DsmcFlattenSolver(UniverseHostPtr<T> universe,
                                         FluidHostPtr<T> fluid,
                                         SpatialHashingSearcherHostPtr<T> searcher,
                                         const DsmcKernelType kernel_type,
-                                        const bool prevent_duplicate_pairing) noexcept
+                                        const bool pairing_without_replacement) noexcept
     : DsmcSolver<T>(
         std::move(universe),
         std::move(fluid),
         std::move(searcher),
         kernel_type,
-        prevent_duplicate_pairing) { }
+        pairing_without_replacement) { }
 
 template <typename T>
 typename DsmcFlattenSolver<T>::Builder
@@ -114,6 +114,18 @@ DsmcFlattenSolver<T>::apply_collision(const DeviceBuffer<int>*,
         return;
     }
 
+    if (probe.pairing_without_replacement) {
+        apply_pairing_without_replacement_collision(probe, collision_offsets_ptr, collision_cells_ptr);
+    } else {
+        apply_random_pairing_collision(probe, collision_offsets_ptr, collision_cells_ptr);
+    }
+}
+
+template <typename T>
+void
+DsmcFlattenSolver<T>::apply_random_pairing_collision(const Probe probe,
+                                                     const int* collision_offsets_ptr,
+                                                     const int* collision_cells_ptr) const {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         _flattened_collision_count,
@@ -170,11 +182,6 @@ DsmcFlattenSolver<T>::apply_collision(const DeviceBuffer<int>*,
                 return;
             }
 
-            if (probe.prevent_duplicate_pairing
-                && !DsmcSolver<T>::try_lock_pair(probe.pairing_lock_ptr, particle_i, particle_j)) {
-                return;
-            }
-
             const std::size_t species_i = probe.species_ptr[particle_i];
             const std::size_t species_j = probe.species_ptr[particle_j];
 
@@ -212,6 +219,95 @@ DsmcFlattenSolver<T>::apply_collision(const DeviceBuffer<int>*,
                     probe.properties_ptr[species_j]);
 
                 // Commit updated velocities back to particle storage.
+                probe.velocity_ptr[particle_i] = lhs_velocity;
+                probe.velocity_ptr[particle_j] = rhs_velocity;
+            }
+        });
+}
+
+template <typename T>
+void
+DsmcFlattenSolver<T>::apply_pairing_without_replacement_collision(const Probe probe,
+                                                     const int* collision_offsets_ptr,
+                                                     const int* collision_cells_ptr) const {
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        _flattened_collision_count,
+        [=] ATLAS_DEVICE(const int work_index) {
+            const int cell            = collision_cells_ptr[work_index];
+            const int local_collision = work_index - collision_offsets_ptr[cell];
+
+            const int count     = static_cast<int>(probe.number_particle_ptr[cell]);
+            const T max_sigma_g = probe.max_sigma_g_ptr[cell];
+
+            if (count < 2 || local_collision < 0 || !(max_sigma_g > T(0))) {
+                return;
+            }
+
+            const int begin = probe.cell_start_ptr[cell];
+            const int end   = probe.cell_end_ptr[cell];
+
+            const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+                + static_cast<std::uint64_t>(local_collision);
+
+            int lhs_local = -1;
+            int rhs_local = -1;
+            DsmcSolver<T>::select_pair_offsets_without_replacement(
+                lhs_local,
+                rhs_local,
+                local_collision,
+                count,
+                cell,
+                probe.collision_seed + static_cast<std::uint64_t>(cell));
+
+            const int particle_i = DsmcSolver<T>::nth_valid_particle(
+                lhs_local,
+                begin,
+                end,
+                probe.particle_count,
+                probe.indices_ptr);
+            const int particle_j = DsmcSolver<T>::nth_valid_particle(
+                rhs_local,
+                begin,
+                end,
+                probe.particle_count,
+                probe.indices_ptr);
+
+            if (particle_i < 0 || particle_j < 0) {
+                return;
+            }
+
+            const std::size_t species_i = probe.species_ptr[particle_i];
+            const std::size_t species_j = probe.species_ptr[particle_j];
+            const T accept_sample = atlas::sampling::sample_hashed_unit_interval<T>(
+                cell,
+                probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_ACCEPT_SALT);
+
+            Vector3<T> lhs_velocity = probe.velocity_ptr[particle_i];
+            Vector3<T> rhs_velocity = probe.velocity_ptr[particle_j];
+            const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
+            const T sigma_g = DsmcSolver<T>::sigma_g(
+                probe.kernel,
+                probe.properties_ptr,
+                species_i,
+                species_j,
+                relative_speed_squared);
+
+            T accept_probability = T(0);
+            if (sigma_g > T(0)) {
+                accept_probability = sigma_g / max_sigma_g;
+                if (accept_probability > T(1)) {
+                    accept_probability = T(1);
+                }
+            }
+
+            if (accept_sample < accept_probability) {
+                probe.kernel(
+                    lhs_velocity,
+                    rhs_velocity,
+                    probe.properties_ptr[species_i],
+                    probe.properties_ptr[species_j]);
+
                 probe.velocity_ptr[particle_i] = lhs_velocity;
                 probe.velocity_ptr[particle_j] = rhs_velocity;
             }
@@ -266,8 +362,8 @@ DsmcFlattenSolver<T>::Builder::with_kernel_type(const DsmcKernelType kernel_type
 
 template <typename T>
 typename DsmcFlattenSolver<T>::Builder&
-DsmcFlattenSolver<T>::Builder::with_prevent_duplicate_pairing(const bool enabled) noexcept {
-    _prevent_duplicate_pairing = enabled;
+DsmcFlattenSolver<T>::Builder::with_pairing_without_replacement(const bool enabled) noexcept {
+    _pairing_without_replacement = enabled;
     return *this;
 }
 
@@ -298,7 +394,7 @@ DsmcFlattenSolver<T>::Builder::build() const {
         _fluid,
         _searcher,
         _kernel.type,
-        _prevent_duplicate_pairing);
+        _pairing_without_replacement);
 }
 
 template <typename T>
@@ -311,7 +407,7 @@ DsmcFlattenSolver<T>::Builder::make_host_shared() const {
         _fluid,
         _searcher,
         _kernel.type,
-        _prevent_duplicate_pairing);
+        _pairing_without_replacement);
 }
 
 } // namespace atlas::system

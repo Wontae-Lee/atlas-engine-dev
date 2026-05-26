@@ -192,18 +192,9 @@ public:
         std::uint64_t collision_seed {};
 
         /**
-         * @brief Raw pointer to per-particle pairing locks.
-         *
-         * When duplicate-pairing prevention is enabled, collision kernels claim
-         * both particles before evaluating a sampled pair. A non-null pointer is
-         * required only when @ref prevent_duplicate_pairing is true.
+         * @brief Whether without-replacement cell-local pairing is enabled.
          */
-        int* pairing_lock_ptr {};
-
-        /**
-         * @brief Whether one particle may be paired more than once in this solve step.
-         */
-        bool prevent_duplicate_pairing {};
+        bool pairing_without_replacement {};
     };
 
 public:
@@ -228,13 +219,15 @@ public:
      * @param fluid Fluid containing particle velocity, species, and material data.
      * @param searcher Spatial hashing searcher used to group particles by cell.
      * @param kernel_type DSMC collision kernel model used for cross-section evaluation.
+     * @param pairing_without_replacement If true, each cell-local pairing pass consumes
+     *                       particles without replacement.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     DsmcSolver(UniverseHostPtr<T> universe,
                FluidHostPtr<T> fluid,
                SpatialHashingSearcherHostPtr<T> searcher,
                DsmcKernelType kernel_type = DsmcKernelType::hard_sphere,
-               bool prevent_duplicate_pairing = false) noexcept;
+               bool pairing_without_replacement = false) noexcept;
 
     /**
      * @brief Destroys the DSMC solver through the base interface.
@@ -295,8 +288,11 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DsmcKernelType
     kernel_type() const noexcept;
 
+    /**
+     * @brief Returns whether cell-local pairing consumes particles without replacement.
+     */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    prevent_duplicate_pairing() const noexcept;
+    pairing_without_replacement() const noexcept;
 
     /**
      * @brief Ensures required universe-side DSMC statistic states exist.
@@ -351,9 +347,6 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     make_probe() noexcept;
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    prepare_pairing_locks();
 
     /**
      * @brief Computes per-cell DSMC no-time-counter collision statistics.
@@ -461,8 +454,20 @@ public:
             std::size_t species_j,
             T relative_speed_squared) noexcept;
 
-    ATLAS_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
-    try_lock_pair(int* pairing_lock_ptr, int particle_i, int particle_j) noexcept;
+    /**
+     * @brief Selects a deterministic pair from a cell-local permutation.
+     *
+     * For collision ordinal `k`, this helper returns offsets `2k` and `2k + 1`
+     * from a hashed permutation of `[0, count)`. This mirrors the without-replacement
+     * pairing pass where each particle can appear in at most one pair.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
+    select_pair_offsets_without_replacement(int& lhs_local,
+                                            int& rhs_local,
+                                            int local_collision,
+                                            int count,
+                                            int selector,
+                                            std::uint64_t seed) noexcept;
 
     /**
      * @brief Applies collisions using the concrete derived-solver strategy.
@@ -504,14 +509,9 @@ protected:
     std::uint64_t _collision_seed = 0;
 
     /**
-     * @brief Per-particle lock buffer used by optional duplicate-pairing prevention.
+     * @brief Enables cell-local pairing without replacement.
      */
-    DeviceBuffer<int> _pairing_locks {};
-
-    /**
-     * @brief Prevents a particle from being paired more than once per solve step.
-     */
-    bool _prevent_duplicate_pairing {};
+    bool _pairing_without_replacement {};
 };
 
 } // namespace atlas::system

@@ -79,7 +79,7 @@ public:
                              FluidHostPtr<T> fluid,
                              SpatialHashingSearcherHostPtr<T> searcher,
                              DsmcKernelType kernel_type = DsmcKernelType::hard_sphere,
-                             bool prevent_duplicate_pairing = false) noexcept;
+                             bool pairing_without_replacement = false) noexcept;
 
     /**
      * @brief Destroys the solver through the base interface.
@@ -121,6 +121,13 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     apply_collision(const DeviceBuffer<int>* allocated_solver, int index, T dt) override;
+
+private:
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    apply_random_pairing_collision(Probe probe, const int* allocated_solver_ptr, int index) const;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    apply_pairing_without_replacement_collision(Probe probe, const int* allocated_solver_ptr, int index) const;
 };
 
 /**
@@ -189,7 +196,7 @@ public:
     with_kernel_type(DsmcKernelType kernel_type) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_prevent_duplicate_pairing(bool enabled) noexcept;
+    with_pairing_without_replacement(bool enabled) noexcept;
 
     /**
      * @brief Builds a validated cell-sequential DSMC solver value.
@@ -255,7 +262,7 @@ private:
      */
     DsmcKernel<T> _kernel {};
 
-    bool _prevent_duplicate_pairing {};
+    bool _pairing_without_replacement {};
 };
 
 } // namespace atlas::system
