@@ -144,6 +144,11 @@ Current `include/atlas/` modules:
 - `sink`, `solver`, `source`, `spatial`, `sync`, `system`
 - `transform`, `tuple`, `unit`, `universe`
 
+## Python Environment
+
+- Before using Python, activate the project virtual environment with `source .venv/bin/activate`.
+- The virtual environment contains the project Python interpreter and required libraries.
+
 ## Build Reference
 
 `CMakePresets.json` requires CMake 3.20+. All presets use Ninja.

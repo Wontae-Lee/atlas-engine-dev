@@ -5,11 +5,11 @@
 
 #include <cstdint>
 
-namespace atlas::scheduler {
+namespace atlas::workload {
 
 template <typename T>
 bool
-DsmcCollisionScheduler<T>::execute_collision_pair(const Probe& probe,
+DsmcCollisionWorkload<T>::execute_collision_pair(const Probe& probe,
                                                   const int cell,
                                                   const int local_collision,
                                                   const int begin,
@@ -82,7 +82,7 @@ DsmcCollisionScheduler<T>::execute_collision_pair(const Probe& probe,
 
 template <typename T>
 int
-DsmcCollisionScheduler<T>::particle_at(const int nth,
+DsmcCollisionWorkload<T>::particle_at(const int nth,
                                        const int begin,
                                        const int end,
                                        const int particle_count,

@@ -9,17 +9,17 @@
 #include <limits>
 #include <stdexcept>
 
-namespace atlas::scheduler {
+namespace atlas::workload {
 
 template <typename T>
 const atlas::DeviceBuffer<int>&
-DsmcFlattenScheduler<T>::offsets() const noexcept {
+DsmcFlattenWorkload<T>::offsets() const noexcept {
     return collision_offsets;
 }
 
 template <typename T>
 void
-DsmcFlattenScheduler<T>::clear() {
+DsmcFlattenWorkload<T>::clear() {
     collision_offsets.resize(0);
     collision_cells.resize(0);
     flattened_collision_count = 0;
@@ -27,7 +27,7 @@ DsmcFlattenScheduler<T>::clear() {
 
 template <typename T>
 bool
-DsmcFlattenScheduler<T>::build(int* collision_count_ptr,
+DsmcFlattenWorkload<T>::build(int* collision_count_ptr,
                                const int num_of_cells) {
     if (collision_offsets.size() != static_cast<std::size_t>(num_of_cells)) {
         collision_offsets.resize(static_cast<std::size_t>(num_of_cells));
@@ -44,7 +44,7 @@ DsmcFlattenScheduler<T>::build(int* collision_count_ptr,
     const int last_count  = collision_count_ptr[last_cell];
 
     if (last_offset > std::numeric_limits<int>::max() - last_count) {
-        throw std::overflow_error("DsmcFlattenScheduler: flattened collision workload exceeds int range.");
+        throw std::overflow_error("DsmcFlattenWorkload: flattened collision workload exceeds int range.");
     }
 
     const int total_collisions = last_offset + last_count;
@@ -81,7 +81,7 @@ DsmcFlattenScheduler<T>::build(int* collision_count_ptr,
 
 template <typename T>
 void
-DsmcFlattenScheduler<T>::schedule(const Probe& probe,
+DsmcFlattenWorkload<T>::schedule(const Probe& probe,
                                   const atlas::DeviceBuffer<int>*,
                                   const int) {
     if (!build(probe.collision_count_ptr, probe.num_of_cells)) {
@@ -109,7 +109,7 @@ DsmcFlattenScheduler<T>::schedule(const Probe& probe,
             const int begin = probe.cell_start_ptr[cell];
             const int end   = probe.cell_end_ptr[cell];
 
-            DsmcFlattenScheduler<T>::execute_collision_trial(
+            DsmcFlattenWorkload<T>::execute_collision_trial(
                 probe,
                 cell,
                 local_collision,
@@ -122,7 +122,7 @@ DsmcFlattenScheduler<T>::schedule(const Probe& probe,
 
 template <typename T>
 bool
-DsmcFlattenScheduler<T>::execute_collision_trial(const Probe& probe,
+DsmcFlattenWorkload<T>::execute_collision_trial(const Probe& probe,
                                                  const int cell,
                                                  const int local_collision,
                                                  const int begin,
@@ -140,7 +140,7 @@ DsmcFlattenScheduler<T>::execute_collision_trial(const Probe& probe,
         return false;
     }
 
-    return DsmcCollisionScheduler<T>::execute_collision_pair(
+    return DsmcCollisionWorkload<T>::execute_collision_pair(
         probe,
         cell,
         local_collision,
@@ -153,7 +153,7 @@ DsmcFlattenScheduler<T>::execute_collision_trial(const Probe& probe,
 
 template <typename T>
 bool
-DsmcFlattenScheduler<T>::select_pair_offsets(const Probe& probe,
+DsmcFlattenWorkload<T>::select_pair_offsets(const Probe& probe,
                                              int& lhs_local,
                                              int& rhs_local,
                                              const int cell,

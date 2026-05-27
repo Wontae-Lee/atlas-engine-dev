@@ -4,16 +4,16 @@
 #include <atlas/core/macros.h>
 #include <atlas/solver/dsmc/dsmc_probe.h>
 
-namespace atlas::scheduler {
+namespace atlas::workload {
 
 template <typename T>
-class DsmcCollisionScheduler {
+class DsmcCollisionWorkload {
 public:
     using Probe = atlas::system::DsmcProbe<T>;
 
-    DsmcCollisionScheduler() = default;
+    DsmcCollisionWorkload() = default;
 
-    virtual ~DsmcCollisionScheduler() = default;
+    virtual ~DsmcCollisionWorkload() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     schedule(const Probe& probe, const atlas::DeviceBuffer<int>* allocated_solver, int index) = 0;
@@ -45,8 +45,8 @@ protected:
 namespace atlas {
 
 template <typename T>
-using DsmcCollisionScheduler = atlas::scheduler::DsmcCollisionScheduler<T>;
+using DsmcCollisionWorkload = atlas::workload::DsmcCollisionWorkload<T>;
 
 }
 
-#include <atlas/scheduler/dsmc_collision_scheduler.hpp>
+#include <atlas/workload/dsmc_collision_workload.hpp>

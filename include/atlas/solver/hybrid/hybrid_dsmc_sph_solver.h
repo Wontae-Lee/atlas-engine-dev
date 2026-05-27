@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atlas/core/macros.h>
-#include <atlas/scheduler/dsmc_piclas_scheduler.h>
+#include <atlas/workload/dsmc_piclas_workload.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 #include <atlas/solver/dsmc/dsmc_probe.h>
 #include <atlas/solver/sph/sph_solver.h>
@@ -24,7 +24,7 @@ public:
         T grouping_length {};
         int sph_particle_threshold {};
         std::uint64_t collision_seed {};
-        bool dsmc_piclas_scheduler {};
+        bool dsmc_piclas_workload {};
     };
 
     class Builder;

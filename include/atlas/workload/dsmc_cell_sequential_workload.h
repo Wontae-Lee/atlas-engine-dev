@@ -2,12 +2,12 @@
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/core/macros.h>
-#include <atlas/scheduler/dsmc_collision_scheduler.h>
+#include <atlas/workload/dsmc_collision_workload.h>
 
-namespace atlas::scheduler {
+namespace atlas::workload {
 
 template <typename T>
-class DsmcCellSequentialScheduler final : public DsmcCollisionScheduler<T> {
+class DsmcCellSequentialWorkload final : public DsmcCollisionWorkload<T> {
 public:
     using Probe = atlas::system::DsmcProbe<T>;
 
@@ -37,8 +37,8 @@ public:
 namespace atlas {
 
 template <typename T>
-using DsmcCellSequentialScheduler = atlas::scheduler::DsmcCellSequentialScheduler<T>;
+using DsmcCellSequentialWorkload = atlas::workload::DsmcCellSequentialWorkload<T>;
 
 }
 
-#include <atlas/scheduler/dsmc_cell_sequential_scheduler.hpp>
+#include <atlas/workload/dsmc_cell_sequential_workload.hpp>

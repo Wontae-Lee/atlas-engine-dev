@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atlas/core/macros.h>
-#include <atlas/scheduler/dsmc_collision_scheduler.h>
+#include <atlas/workload/dsmc_collision_workload.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 #include <atlas/solver/dsmc/dsmc_probe.h>
 #include <atlas/solver/solver.h>
@@ -19,8 +19,8 @@ public:
     DsmcSolver(UniverseHostPtr<T> universe,
                FluidHostPtr<T> fluid,
                SpatialHashingSearcherHostPtr<T> searcher,
-               DsmcKernelType kernel_type                                                    = DsmcKernelType::hard_sphere,
-               atlas::host_shared_ptr<atlas::scheduler::DsmcCollisionScheduler<T>> scheduler = {}) noexcept;
+               DsmcKernelType kernel_type                                                 = DsmcKernelType::hard_sphere,
+               atlas::host_shared_ptr<atlas::workload::DsmcCollisionWorkload<T>> workload = {}) noexcept;
 
     ~DsmcSolver() override = default;
 
@@ -33,8 +33,8 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DsmcKernelType
     kernel_type() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::host_shared_ptr<atlas::scheduler::DsmcCollisionScheduler<T>>&
-    scheduler() const noexcept;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::host_shared_ptr<atlas::workload::DsmcCollisionWorkload<T>>&
+    workload() const noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     ensure_states();
@@ -54,7 +54,7 @@ public:
 protected:
     DsmcProbe<T> _probe {};
     DsmcKernel<T> _kernel {};
-    atlas::host_shared_ptr<atlas::scheduler::DsmcCollisionScheduler<T>> _scheduler {};
+    atlas::host_shared_ptr<atlas::workload::DsmcCollisionWorkload<T>> _workload {};
     std::uint64_t _collision_seed = 0;
 };
 

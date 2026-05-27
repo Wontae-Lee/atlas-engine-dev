@@ -2,7 +2,7 @@
 
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/scheduler/dsmc_cell_sequential_scheduler.h>
+#include <atlas/workload/dsmc_cell_sequential_workload.h>
 #include <atlas/sampling/sampling.h>
 
 #include <cmath>
@@ -17,13 +17,13 @@ DsmcSolver<T>::DsmcSolver(UniverseHostPtr<T> universe,
                           FluidHostPtr<T> fluid,
                           SpatialHashingSearcherHostPtr<T> searcher,
                           const DsmcKernelType kernel_type,
-                          atlas::host_shared_ptr<atlas::scheduler::DsmcCollisionScheduler<T>> scheduler) noexcept
+                          atlas::host_shared_ptr<atlas::workload::DsmcCollisionWorkload<T>> workload) noexcept
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher))
     , _kernel(DsmcKernel<T>(kernel_type))
-    , _scheduler(std::move(scheduler)) {
+    , _workload(std::move(workload)) {
 
-    if (!_scheduler) {
-        _scheduler = atlas::make_host_shared<atlas::scheduler::DsmcCellSequentialScheduler<T>>();
+    if (!_workload) {
+        _workload = atlas::make_host_shared<atlas::workload::DsmcCellSequentialWorkload<T>>();
     }
     ensure_states();
 }
@@ -214,7 +214,7 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
     }
 
     const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
-    const bool collision_count_limited = _scheduler && _scheduler->limits_collision_count();
+    const bool collision_count_limited = _workload && _workload->limits_collision_count();
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -328,9 +328,9 @@ DsmcSolver<T>::kernel_type() const noexcept {
 }
 
 template <typename T>
-const atlas::host_shared_ptr<atlas::scheduler::DsmcCollisionScheduler<T>>&
-DsmcSolver<T>::scheduler() const noexcept {
-    return _scheduler;
+const atlas::host_shared_ptr<atlas::workload::DsmcCollisionWorkload<T>>&
+DsmcSolver<T>::workload() const noexcept {
+    return _workload;
 }
 
 template <typename T>
@@ -338,8 +338,8 @@ void
 DsmcSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
                                const int index,
                                const T) {
-    if (_scheduler) {
-        _scheduler->schedule(_probe, allocated_solver, index);
+    if (_workload) {
+        _workload->schedule(_probe, allocated_solver, index);
     }
 }
 

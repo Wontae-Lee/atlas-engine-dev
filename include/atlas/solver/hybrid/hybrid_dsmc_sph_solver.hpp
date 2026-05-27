@@ -216,7 +216,7 @@ HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe.dsmc.statistical_weight      = this->_fluid->statistical_weight();
     _probe.dsmc.kernel                  = _dsmc_kernel;
     _probe.dsmc.collision_seed          = _collision_seed;
-    _probe.dsmc_piclas_scheduler = _pairing_without_replacement;
+    _probe.dsmc_piclas_workload = _pairing_without_replacement;
 
     _probe.grouping_length         = _grouping_length;
     _probe.sph_particle_threshold  = _sph_particle_threshold;
@@ -734,7 +734,7 @@ void
 HybridDsmcSphSolver<T>::apply_grouped_dsmc(const T dt) {
     measure_grouped_dsmc_statistics(dt);
 
-    if (_probe.dsmc_piclas_scheduler) {
+    if (_probe.dsmc_piclas_workload) {
         apply_grouped_dsmc_collisions_without_replacement();
     } else {
         apply_random_grouped_dsmc_collisions();
@@ -812,7 +812,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
             const T pair_count = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
             const T expected_collisions = pair_count * max_sigma_g * probe.dsmc.statistical_weight * dt / group_volume;
             if (expected_collisions >= static_cast<T>(std::numeric_limits<int>::max())) {
-                dsmc_collision_count_ptr[owner] = probe.dsmc_piclas_scheduler
+                dsmc_collision_count_ptr[owner] = probe.dsmc_piclas_workload
                     ? count / 2
                     : std::numeric_limits<int>::max();
                 return;
@@ -825,7 +825,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
                 ++collision_count;
             }
 
-            if (probe.dsmc_piclas_scheduler) {
+            if (probe.dsmc_piclas_workload) {
                 const int max_unique_pairs = count / 2;
                 if (collision_count > max_unique_pairs) {
                     collision_count = max_unique_pairs;
@@ -963,7 +963,7 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
 
                 int lhs_local = -1;
                 int rhs_local = -1;
-                atlas::scheduler::DsmcPiclasScheduler<T>::select_pair_offsets(
+                atlas::workload::DsmcPiclasWorkload<T>::select_pair_offsets(
                     lhs_local,
                     rhs_local,
                     collision,

@@ -1,14 +1,14 @@
 #pragma once
 
 #include <atlas/core/macros.h>
-#include <atlas/scheduler/dsmc_collision_scheduler.h>
+#include <atlas/workload/dsmc_collision_workload.h>
 
 #include <cstdint>
 
-namespace atlas::scheduler {
+namespace atlas::workload {
 
 template <typename T>
-class DsmcPiclasScheduler final : public DsmcCollisionScheduler<T> {
+class DsmcPiclasWorkload final : public DsmcCollisionWorkload<T> {
 public:
     using Probe = atlas::system::DsmcProbe<T>;
 
@@ -41,8 +41,8 @@ public:
 namespace atlas {
 
 template <typename T>
-using DsmcPiclasScheduler = atlas::scheduler::DsmcPiclasScheduler<T>;
+using DsmcPiclasWorkload = atlas::workload::DsmcPiclasWorkload<T>;
 
 }
 
-#include <atlas/scheduler/dsmc_piclas_scheduler.hpp>
+#include <atlas/workload/dsmc_piclas_workload.hpp>

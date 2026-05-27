@@ -4,11 +4,11 @@
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/sampling/sampling.h>
 
-namespace atlas::scheduler {
+namespace atlas::workload {
 
 template <typename T>
 void
-DsmcPiclasScheduler<T>::schedule(const Probe& probe,
+DsmcPiclasWorkload<T>::schedule(const Probe& probe,
                                  const atlas::DeviceBuffer<int>* allocated_solver,
                                  const int index) {
     if (probe.num_of_cells <= 0 || probe.collision_count_ptr == nullptr
@@ -48,7 +48,7 @@ DsmcPiclasScheduler<T>::schedule(const Probe& probe,
             }
 
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
-                DsmcPiclasScheduler<T>::execute_collision_trial(
+                DsmcPiclasWorkload<T>::execute_collision_trial(
                     probe,
                     cell,
                     local_collision,
@@ -62,13 +62,13 @@ DsmcPiclasScheduler<T>::schedule(const Probe& probe,
 
 template <typename T>
 bool
-DsmcPiclasScheduler<T>::limits_collision_count() const noexcept {
+DsmcPiclasWorkload<T>::limits_collision_count() const noexcept {
     return true;
 }
 
 template <typename T>
 void
-DsmcPiclasScheduler<T>::select_pair_offsets(int& lhs_local,
+DsmcPiclasWorkload<T>::select_pair_offsets(int& lhs_local,
                                             int& rhs_local,
                                             const int local_collision,
                                             const int count,
@@ -120,7 +120,7 @@ DsmcPiclasScheduler<T>::select_pair_offsets(int& lhs_local,
 
 template <typename T>
 bool
-DsmcPiclasScheduler<T>::execute_collision_trial(const Probe& probe,
+DsmcPiclasWorkload<T>::execute_collision_trial(const Probe& probe,
                                                 const int cell,
                                                 const int local_collision,
                                                 const int begin,
@@ -145,7 +145,7 @@ DsmcPiclasScheduler<T>::execute_collision_trial(const Probe& probe,
         return false;
     }
 
-    return DsmcCollisionScheduler<T>::execute_collision_pair(
+    return DsmcCollisionWorkload<T>::execute_collision_pair(
         probe,
         cell,
         local_collision,

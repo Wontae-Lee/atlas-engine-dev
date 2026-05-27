@@ -6,11 +6,11 @@
 
 #include <cstdint>
 
-namespace atlas::scheduler {
+namespace atlas::workload {
 
 template <typename T>
 void
-DsmcCellSequentialScheduler<T>::schedule(const Probe& probe,
+DsmcCellSequentialWorkload<T>::schedule(const Probe& probe,
                                          const atlas::DeviceBuffer<int>* allocated_solver,
                                          const int index) {
     if (probe.num_of_cells <= 0 || probe.collision_count_ptr == nullptr
@@ -50,7 +50,7 @@ DsmcCellSequentialScheduler<T>::schedule(const Probe& probe,
             }
 
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
-                DsmcCellSequentialScheduler<T>::execute_collision_trial(
+                DsmcCellSequentialWorkload<T>::execute_collision_trial(
                     probe,
                     cell,
                     local_collision,
@@ -64,7 +64,7 @@ DsmcCellSequentialScheduler<T>::schedule(const Probe& probe,
 
 template <typename T>
 bool
-DsmcCellSequentialScheduler<T>::execute_collision_trial(const Probe& probe,
+DsmcCellSequentialWorkload<T>::execute_collision_trial(const Probe& probe,
                                                         const int cell,
                                                         const int local_collision,
                                                         const int begin,
@@ -82,7 +82,7 @@ DsmcCellSequentialScheduler<T>::execute_collision_trial(const Probe& probe,
         return false;
     }
 
-    return DsmcCollisionScheduler<T>::execute_collision_pair(
+    return DsmcCollisionWorkload<T>::execute_collision_pair(
         probe,
         cell,
         local_collision,
@@ -95,7 +95,7 @@ DsmcCellSequentialScheduler<T>::execute_collision_trial(const Probe& probe,
 
 template <typename T>
 bool
-DsmcCellSequentialScheduler<T>::select_pair_offsets(const Probe& probe,
+DsmcCellSequentialWorkload<T>::select_pair_offsets(const Probe& probe,
                                                     int& lhs_local,
                                                     int& rhs_local,
                                                     const int cell,
