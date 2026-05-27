@@ -217,6 +217,24 @@ Test binaries:
 - CUDA binary: `atlas_all_cuda_test`
 - CUDA entry point: `tests/cuda/main.cu`
 
+Test file structure:
+
+- Place tests under `tests/<module>/` to match the public module or runtime subsystem under test.
+- Use nested directories for nested modules, such as `tests/math/matrix/`, `tests/solver/dsmc/`, and `tests/spatial/bounding_volume_hierarchy/`.
+- Name C++ test files `<subject>_tests.cpp`.
+- Name CUDA companion test files `<subject>_tests.cu` when backend/device coverage is needed.
+- Keep shared test helpers in `tests/utilities/test_utils.h`.
+- Do not add another `main` for C++ tests or CUDA tests; C++ uses GoogleTest main through `testkit`, and CUDA uses `tests/cuda/main.cu`.
+
+Test writing guidelines:
+
+- Include `<testkit/testkit.h>` in test sources instead of including GoogleTest or cudatest headers directly.
+- Include `tests/utilities/test_utils.h` only when shared helpers are needed.
+- Keep local aliases, helper functions, and test fixtures in an anonymous namespace.
+- Prefer focused `TEST(SuiteName, BehaviorName)` cases that describe observable behavior.
+- For new public modules, add tests in a matching `tests/<module>/` directory so recursive discovery creates the expected `atlas_tests_<module>` target.
+- When adding a `.cu` companion, mirror the `.cpp` subject where practical and avoid unsupported sources unless the root `CMakeLists.txt` explicitly excludes them.
+
 Focused coverage:
 
 - `System`: `tests/system/system_tests.cpp`
@@ -249,3 +267,12 @@ In-tree under `external/`:
 - **googletest**: C++ unit tests
 - **googlebenchmark**: microbenchmarks
 - **protobuf**: binary snapshot serialization
+
+Benchmark reference submodules under `benchmarks/`:
+
+- **dumux**: `benchmarks/dumux`
+- **piclas**: `benchmarks/piclas`
+- **sparta**: `benchmarks/sparta`
+- **splishsplash**: `benchmarks/splishsplash`
+
+When the user mentions `piclas`, `dumux`, `sparta`, or `splishsplash` in benchmark or reference-code context, treat the name as referring to the corresponding submodule directory under `benchmarks/`.
