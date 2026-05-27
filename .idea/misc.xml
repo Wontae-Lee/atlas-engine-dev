@@ -16,6 +16,10 @@
     <excludeRoots>
       <file path="$PROJECT_DIR$/.claude" />
       <file path="$PROJECT_DIR$/.venv" />
+      <file path="$PROJECT_DIR$/benchmarks/dumux" />
+      <file path="$PROJECT_DIR$/benchmarks/piclas" />
+      <file path="$PROJECT_DIR$/benchmarks/sparta" />
+      <file path="$PROJECT_DIR$/benchmarks/splishsplash" />
       <file path="$PROJECT_DIR$/build" />
       <file path="$PROJECT_DIR$/cmake-build-debug" />
       <file path="$PROJECT_DIR$/docs/doxygen/html" />

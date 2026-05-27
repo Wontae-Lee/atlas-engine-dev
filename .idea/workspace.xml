@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="4" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="8" type="long" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/LiveTemplatesHousekeeping/HotspotSessionHintIsShown/@EntryValue" value="true" type="bool" />
@@ -178,6 +178,7 @@
       <config projectName="atlas-engine-dev" targetName="absl_crc_cpu_detect" folderName="Abseil/internal" />
       <config projectName="atlas-engine-dev" targetName="waterfall" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalTest" folderName="CTestDashboardTargets" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_solver_hybrid" />
       <config projectName="atlas-engine-dev" targetName="libprotobuf-lite" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_tuple" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_spatial" />
@@ -278,17 +279,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactoried codes for device-view and cleaned comments.">
+      <change afterPath="$PROJECT_DIR$/benchmarks/atlas/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/benchmarks/dumux" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/benchmarks/piclas" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/benchmarks/sparta" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/benchmarks/splishsplash" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitmodules" beforeDir="false" afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_cell_sequential_solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_cell_sequential_scheduler.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_cell_sequential_scheduler.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_collision_scheduler.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_collision_scheduler.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_flatten_scheduler.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_flatten_scheduler.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_piclas_scheduler.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_piclas_scheduler.hpp" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/hybrid/hybrid_dsmc_sph_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/hybrid/hybrid_dsmc_sph_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/hybrid/hybrid_dsmc_sph_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/hybrid/hybrid_dsmc_sph_solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/dsmc/dsmc_solver_tests.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/solver/hybrid/hybrid_dsmc_sph_solver_tests.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/solver/hybrid/hybrid_dsmc_sph_solver_tests.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/scheduler/dsmc_collision_scheduler_tests.cpp" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -311,7 +324,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="505" />
+    <option name="cachedIndexableFilesCount" value="509" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -365,61 +378,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0118687841224367" />
-      <entry key="MS500" value="1.8813765160783562" />
-      <entry key="S2" value="4.650063298655701" />
-      <entry key="S5" value="7.541279558006214" />
-      <entry key="S10" value="12.091882528013965" />
-      <entry key="S30" value="21.357741140886695" />
-      <entry key="S60" value="26.28128740318122" />
-      <entry key="M2" value="33.886919051276415" />
-      <entry key="M5" value="55.31354580161076" />
-      <entry key="M10" value="99.86882118617825" />
-      <entry key="M15" value="155.00813433468247" />
-      <entry key="M30" value="323.8887662176947" />
-      <entry key="H1" value="575.0030104157687" />
-      <entry key="H2" value="852.8664578866851" />
-      <entry key="H4" value="1085.3812081387507" />
-      <entry key="D1" value="1365.7432386967835" />
-      <entry key="W1" value="1424.7883309739716" />
+      <entry key="MS100" value="1.5091041010953363" />
+      <entry key="MS500" value="3.516338362459951" />
+      <entry key="S2" value="6.74892860374894" />
+      <entry key="S5" value="8.42179299625606" />
+      <entry key="S10" value="9.260703599301813" />
+      <entry key="S30" value="11.908799957997628" />
+      <entry key="S60" value="14.600221336227971" />
+      <entry key="M2" value="18.688367539996428" />
+      <entry key="M5" value="45.74123168697012" />
+      <entry key="M10" value="116.75921416122073" />
+      <entry key="M15" value="194.8691573731726" />
+      <entry key="M30" value="424.13892852783334" />
+      <entry key="H1" value="810.9415272417618" />
+      <entry key="H2" value="1314.7162260085547" />
+      <entry key="H4" value="1794.0718686982068" />
+      <entry key="D1" value="2438.8553343209596" />
+      <entry key="W1" value="2583.647684167533" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="2.140332138810576E-197" />
-      <entry key="S5" value="2.148782553166317E-79" />
-      <entry key="S10" value="4.63549625516679E-40" />
-      <entry key="S30" value="7.739537636124271E-14" />
-      <entry key="S60" value="2.798981234486754E-7" />
-      <entry key="M2" value="5.694445774868951E-4" />
-      <entry key="M5" value="0.07404954524081508" />
-      <entry key="M10" value="0.5667176127401634" />
-      <entry key="M15" value="1.3650789225293458" />
-      <entry key="M30" value="4.41137442621967" />
-      <entry key="H1" value="10.578556979636597" />
-      <entry key="H2" value="18.99536245086199" />
-      <entry key="H4" value="26.735992262939543" />
-      <entry key="D1" value="36.52920364611723" />
-      <entry key="W1" value="38.63465741517073" />
+      <entry key="S2" value="9.788518530502054E-110" />
+      <entry key="S5" value="2.493772520053309E-44" />
+      <entry key="S10" value="1.6353266398635044E-22" />
+      <entry key="S30" value="7.192407490806148E-8" />
+      <entry key="S60" value="3.6712572549384305E-4" />
+      <entry key="M2" value="0.028130741992827352" />
+      <entry key="M5" value="0.5153909329207701" />
+      <entry key="M10" value="2.0938368485114123" />
+      <entry key="M15" value="4.173866311418255" />
+      <entry key="M30" value="10.689421339541125" />
+      <entry key="H1" value="21.074863045484864" />
+      <entry key="H2" value="34.700744217612446" />
+      <entry key="H4" value="48.37254186760633" />
+      <entry key="D1" value="67.73887762153646" />
+      <entry key="W1" value="72.21259835735084" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9910408972362915" />
-      <entry key="MS500" value="1.8732345576692058" />
-      <entry key="S2" value="4.644865961390898" />
-      <entry key="S5" value="7.537849660209647" />
-      <entry key="S10" value="12.089046141962912" />
-      <entry key="S30" value="21.356015881888087" />
-      <entry key="S60" value="26.280106259439496" />
-      <entry key="M2" value="33.88614034557941" />
-      <entry key="M5" value="55.38585013065874" />
-      <entry key="M10" value="100.43301627718004" />
-      <entry key="M15" value="156.36973558439237" />
-      <entry key="M30" value="328.2950761035401" />
-      <entry key="H1" value="585.5761369521613" />
-      <entry key="H2" value="871.8573480735873" />
-      <entry key="H4" value="1112.1141975105534" />
-      <entry key="D1" value="1402.2717840968505" />
-      <entry key="W1" value="1463.4228895545143" />
+      <entry key="MS100" value="1.4637725091567395" />
+      <entry key="MS500" value="3.497503204064018" />
+      <entry key="S2" value="6.739919957413509" />
+      <entry key="S5" value="8.417266711821714" />
+      <entry key="S10" value="9.258216261676456" />
+      <entry key="S30" value="11.907781079525167" />
+      <entry key="S60" value="14.599982178049675" />
+      <entry key="M2" value="18.71596637128736" />
+      <entry key="M5" value="46.254721737407294" />
+      <entry key="M10" value="118.84712471879574" />
+      <entry key="M15" value="199.03319734132293" />
+      <entry key="M30" value="434.81325622719834" />
+      <entry key="H1" value="832.0011233481698" />
+      <entry key="H2" value="1349.4050136017524" />
+      <entry key="H4" value="1842.4365369292707" />
+      <entry key="D1" value="2506.5924925619634" />
+      <entry key="W1" value="2655.8600240645637" />
     </decayedShown>
   </component>
   <component name="ProjectApplicationVersion">
@@ -730,6 +743,12 @@
         <option name="BeforeTestRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="atlas_tests_solver_hybrid" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_solver_hybrid" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_solver_hybrid" TEST_MODE="SUITE_TEST">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="BeforeTestRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="atlas_tests_solver_sph" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_solver_sph" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_solver_sph" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -782,6 +801,11 @@
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
         <option name="BeforeTestRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
     <configuration name="atlas-logging" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-logging" CONFIG_NAME="cuda-debug">
@@ -1048,6 +1072,7 @@
       <item itemvalue="Google Test.atlas_tests_sink" />
       <item itemvalue="Google Test.atlas_tests_solver" />
       <item itemvalue="Google Test.atlas_tests_solver_dsmc" />
+      <item itemvalue="Google Test.atlas_tests_solver_hybrid" />
       <item itemvalue="Google Test.atlas_tests_solver_sph" />
       <item itemvalue="Google Test.atlas_tests_source" />
       <item itemvalue="Google Test.atlas_tests_spatial" />
@@ -1209,7 +1234,12 @@
       <workItem from="1779434877919" duration="4782000" />
       <workItem from="1779439943404" duration="7000" />
       <workItem from="1779783676386" duration="3090000" />
-      <workItem from="1779787969731" duration="2712000" />
+      <workItem from="1779787969731" duration="3263000" />
+      <workItem from="1779798001413" duration="22000" />
+      <workItem from="1779804481596" duration="86000" />
+      <workItem from="1779805488263" duration="122000" />
+      <workItem from="1779805729581" duration="4580000" />
+      <workItem from="1779874488448" duration="1579000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
