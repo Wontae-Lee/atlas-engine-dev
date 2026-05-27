@@ -216,7 +216,7 @@ HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe.dsmc.statistical_weight      = this->_fluid->statistical_weight();
     _probe.dsmc.kernel                  = _dsmc_kernel;
     _probe.dsmc.collision_seed          = _collision_seed;
-    _probe.dsmc_piclas_workload = _pairing_without_replacement;
+    _probe.pairing_without_replacement = _pairing_without_replacement;
 
     _probe.grouping_length         = _grouping_length;
     _probe.sph_particle_threshold  = _sph_particle_threshold;
@@ -734,7 +734,7 @@ void
 HybridDsmcSphSolver<T>::apply_grouped_dsmc(const T dt) {
     measure_grouped_dsmc_statistics(dt);
 
-    if (_probe.dsmc_piclas_workload) {
+    if (_probe.pairing_without_replacement) {
         apply_grouped_dsmc_collisions_without_replacement();
     } else {
         apply_random_grouped_dsmc_collisions();
@@ -812,7 +812,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
             const T pair_count = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
             const T expected_collisions = pair_count * max_sigma_g * probe.dsmc.statistical_weight * dt / group_volume;
             if (expected_collisions >= static_cast<T>(std::numeric_limits<int>::max())) {
-                dsmc_collision_count_ptr[owner] = probe.dsmc_piclas_workload
+                dsmc_collision_count_ptr[owner] = probe.pairing_without_replacement
                     ? count / 2
                     : std::numeric_limits<int>::max();
                 return;
@@ -825,7 +825,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
                 ++collision_count;
             }
 
-            if (probe.dsmc_piclas_workload) {
+            if (probe.pairing_without_replacement) {
                 const int max_unique_pairs = count / 2;
                 if (collision_count > max_unique_pairs) {
                     collision_count = max_unique_pairs;
@@ -963,7 +963,7 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
 
                 int lhs_local = -1;
                 int rhs_local = -1;
-                atlas::workload::DsmcPiclasWorkload<T>::select_pair_offsets(
+                HybridDsmcSphSolver<T>::select_pair_offsets_without_replacement(
                     lhs_local,
                     rhs_local,
                     collision,
@@ -1079,6 +1079,58 @@ HybridDsmcSphSolver<T>::is_valid_neighbor_cell(const Vector3<int>& cell,
                                                const Vector3<int>& grid_size) noexcept {
     return cell.x >= 0 && cell.y >= 0 && cell.z >= 0
         && cell.x < grid_size.x && cell.y < grid_size.y && cell.z < grid_size.z;
+}
+
+template <typename T>
+void
+HybridDsmcSphSolver<T>::select_pair_offsets_without_replacement(int& lhs_local,
+                                                                int& rhs_local,
+                                                                const int local_pair,
+                                                                const int count,
+                                                                const int selector,
+                                                                const std::uint64_t seed) noexcept {
+    lhs_local = -1;
+    rhs_local = -1;
+
+    if (count < 2 || local_pair < 0 || local_pair >= count / 2) {
+        return;
+    }
+
+    const int offset = atlas::sampling::sample_hashed_index(
+        selector,
+        count,
+        seed + atlas::seed::DSMC_COLLISION_LHS_SALT);
+
+    int stride = count == 2
+        ? 1
+        : 1 + atlas::sampling::sample_hashed_index(
+              selector,
+              count - 1,
+              seed + atlas::seed::DSMC_COLLISION_RHS_SALT);
+
+    for (;;) {
+        int a = stride;
+        int b = count;
+        while (b != 0) {
+            const int next = a % b;
+            a = b;
+            b = next;
+        }
+
+        if (a == 1) {
+            break;
+        }
+
+        ++stride;
+        if (stride >= count) {
+            stride = 1;
+        }
+    }
+
+    const auto lhs_offset = static_cast<std::int64_t>(2 * local_pair) * static_cast<std::int64_t>(stride);
+    const auto rhs_offset = static_cast<std::int64_t>(2 * local_pair + 1) * static_cast<std::int64_t>(stride);
+    lhs_local = static_cast<int>((static_cast<std::int64_t>(offset) + lhs_offset) % count);
+    rhs_local = static_cast<int>((static_cast<std::int64_t>(offset) + rhs_offset) % count);
 }
 
 template <typename T>

@@ -1,9 +1,7 @@
 #pragma once
 
 #include <atlas/core/macros.h>
-#include <atlas/workload/dsmc_piclas_workload.h>
-#include <atlas/solver/dsmc/dsmc_kernel.h>
-#include <atlas/solver/dsmc/dsmc_probe.h>
+#include <atlas/solver/dsmc/dsmc_solver.h>
 #include <atlas/solver/sph/sph_solver.h>
 
 #include <cstddef>
@@ -24,7 +22,7 @@ public:
         T grouping_length {};
         int sph_particle_threshold {};
         std::uint64_t collision_seed {};
-        bool dsmc_piclas_workload {};
+        bool pairing_without_replacement {};
     };
 
     class Builder;
@@ -136,6 +134,14 @@ public:
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
     is_valid_neighbor_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
+    select_pair_offsets_without_replacement(int& lhs_local,
+                                            int& rhs_local,
+                                            int local_pair,
+                                            int count,
+                                            int selector,
+                                            std::uint64_t seed) noexcept;
 
 private:
     HybridProbe _probe {};
