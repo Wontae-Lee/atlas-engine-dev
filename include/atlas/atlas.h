@@ -8,6 +8,8 @@
 #include <atlas/codec/knudsen_codec.h>
 #include <atlas/collider/collider.h>
 #include <atlas/collider/collider_surface_interaction.h>
+#include <atlas/collider/piclas_surface_interaction.h>
+#include <atlas/collider/sparta_surface_interaction.h>
 #include <atlas/container/container.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
@@ -86,6 +88,11 @@
 #include <atlas/solver/dsmc/dsmc_probe.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>
+#include <atlas/solver/dsmc/piclas/dsmc_piclas_solver.h>
+#include <atlas/solver/dsmc/piclas/piclas_pairing.h>
+#include <atlas/solver/dsmc/piclas/piclas_vhs_kernel.h>
+#include <atlas/solver/dsmc/sparta/dsmc_sparta_solver.h>
+#include <atlas/solver/dsmc/sparta/sparta_vss_kernel.h>
 #include <atlas/solver/dsmc/variable_hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_soft_sphere_kernel.h>
 #include <atlas/solver/hybrid/hybrid_dsmc_sph_solver.h>
@@ -116,4 +123,3 @@
 #include <atlas/workload/dsmc_cell_sequential_workload.h>
 #include <atlas/workload/dsmc_collision_workload.h>
 #include <atlas/workload/dsmc_flatten_workload.h>
-#include <atlas/workload/dsmc_piclas_workload.h>
