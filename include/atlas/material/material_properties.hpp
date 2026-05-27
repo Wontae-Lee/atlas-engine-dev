@@ -19,6 +19,12 @@ MaterialProperties<T>::Builder::build() const {
     p.translational_energy = _translational_energy;
     p.rotational_energy    = _rotational_energy;
     p.vibrational_energy   = _vibrational_energy;
+    p.characteristic_vibrational_temperature = _characteristic_vibrational_temperature;
+    p.max_vibrational_quantum = _max_vibrational_quantum;
+    p.gamma_quant = _gamma_quant;
+    p.interaction_id = _interaction_id;
+    p.fully_ionized = _fully_ionized;
+    p.polyatomic_molecule = _polyatomic_molecule;
     p.species_id           = _species_id;
     p.reference_diameter    = _reference_diameter;
     p.reference_temperature = _reference_temperature;
@@ -87,6 +93,48 @@ template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_vibrational_energy(T e) {
     _vibrational_energy = e;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_characteristic_vibrational_temperature(T temperature) {
+    _characteristic_vibrational_temperature = temperature;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_max_vibrational_quantum(int quantum) {
+    _max_vibrational_quantum = quantum;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_gamma_quant(T gamma) {
+    _gamma_quant = gamma;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_interaction_id(int id) {
+    _interaction_id = id;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_fully_ionized(bool value) {
+    _fully_ionized = value;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_polyatomic_molecule(bool value) {
+    _polyatomic_molecule = value;
     return *this;
 }
 

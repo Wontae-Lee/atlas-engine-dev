@@ -219,6 +219,61 @@ public:
     std::optional<T> vibrational_energy;
 
     /**
+     * @brief Optional characteristic vibrational temperature.
+     *
+     * @details
+     * Used by wall and DSMC internal-energy models that sample vibrational
+     * quantum levels from a wall-temperature distribution.
+     */
+    std::optional<T> characteristic_vibrational_temperature;
+
+    /**
+     * @brief Optional maximum vibrational quantum level.
+     *
+     * @details
+     * Provides an upper bound for sampled vibrational quantum numbers in
+     * harmonic-oscillator-style wall accommodation models.
+     */
+    std::optional<int> max_vibrational_quantum;
+
+    /**
+     * @brief Optional vibrational zero-point quantum offset.
+     *
+     * @details
+     * Corresponds to the gamma quantum offset used when converting a sampled
+     * vibrational quantum number to vibrational energy.
+     */
+    std::optional<T> gamma_quant;
+
+    /**
+     * @brief Optional PICLas-style species interaction identifier.
+     *
+     * @details
+     * Used by DSMC and wall models to distinguish atoms, molecules, electrons,
+     * polyatomic molecules, granular particles, and related species classes.
+     */
+    std::optional<int> interaction_id;
+
+    /**
+     * @brief Optional fully-ionized species flag.
+     *
+     * @details
+     * Wall electronic-energy accommodation can use this to skip electronic
+     * relaxation for fully ionized species.
+     */
+    std::optional<bool> fully_ionized;
+
+    /**
+     * @brief Optional polyatomic molecule flag.
+     *
+     * @details
+     * Indicates that vibrational accommodation should be interpreted as a
+     * polyatomic internal-energy model when a solver provides the required DOF
+     * data.
+     */
+    std::optional<bool> polyatomic_molecule;
+
+    /**
      * @brief Optional species identifier.
      *
      * @details
@@ -450,6 +505,60 @@ public:
     with_vibrational_energy(T e);
 
     /**
+     * @brief Set the characteristic vibrational temperature.
+     *
+     * @param temperature Characteristic vibrational temperature to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_characteristic_vibrational_temperature(T temperature);
+
+    /**
+     * @brief Set the maximum vibrational quantum level.
+     *
+     * @param quantum Maximum vibrational quantum level to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_max_vibrational_quantum(int quantum);
+
+    /**
+     * @brief Set the vibrational zero-point quantum offset.
+     *
+     * @param gamma Quantum offset to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_gamma_quant(T gamma);
+
+    /**
+     * @brief Set the PICLas-style interaction identifier.
+     *
+     * @param id Interaction identifier to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_interaction_id(int id);
+
+    /**
+     * @brief Set whether the species is fully ionized.
+     *
+     * @param value Fully-ionized flag to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_fully_ionized(bool value);
+
+    /**
+     * @brief Set whether the species is polyatomic.
+     *
+     * @param value Polyatomic molecule flag to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_polyatomic_molecule(bool value);
+
+    /**
      * @brief Set the species identifier.
      *
      * @param id Species id to stage.
@@ -588,6 +697,36 @@ private:
      * @brief Pending vibrational energy.
      */
     std::optional<T> _vibrational_energy;
+
+    /**
+     * @brief Pending characteristic vibrational temperature.
+     */
+    std::optional<T> _characteristic_vibrational_temperature;
+
+    /**
+     * @brief Pending maximum vibrational quantum level.
+     */
+    std::optional<int> _max_vibrational_quantum;
+
+    /**
+     * @brief Pending vibrational zero-point quantum offset.
+     */
+    std::optional<T> _gamma_quant;
+
+    /**
+     * @brief Pending PICLas-style interaction identifier.
+     */
+    std::optional<int> _interaction_id;
+
+    /**
+     * @brief Pending fully-ionized species flag.
+     */
+    std::optional<bool> _fully_ionized;
+
+    /**
+     * @brief Pending polyatomic molecule flag.
+     */
+    std::optional<bool> _polyatomic_molecule;
 
     /**
      * @brief Pending species id.

@@ -33,6 +33,12 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
                                 .with_translational_energy(1.0f)
                                 .with_rotational_energy(2.0f)
                                 .with_vibrational_energy(3.0f)
+                                .with_characteristic_vibrational_temperature(1000.0f)
+                                .with_max_vibrational_quantum(12)
+                                .with_gamma_quant(0.5f)
+                                .with_interaction_id(20)
+                                .with_fully_ionized(false)
+                                .with_polyatomic_molecule(true)
                                 .with_species_id(7)
                                 .with_reference_diameter(4.0f)
                                 .with_reference_temperature(5.0f)
@@ -52,6 +58,12 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     ASSERT_TRUE(properties.translational_energy.has_value());
     ASSERT_TRUE(properties.rotational_energy.has_value());
     ASSERT_TRUE(properties.vibrational_energy.has_value());
+    ASSERT_TRUE(properties.characteristic_vibrational_temperature.has_value());
+    ASSERT_TRUE(properties.max_vibrational_quantum.has_value());
+    ASSERT_TRUE(properties.gamma_quant.has_value());
+    ASSERT_TRUE(properties.interaction_id.has_value());
+    ASSERT_TRUE(properties.fully_ionized.has_value());
+    ASSERT_TRUE(properties.polyatomic_molecule.has_value());
     ASSERT_TRUE(properties.species_id.has_value());
     ASSERT_TRUE(properties.reference_diameter.has_value());
     ASSERT_TRUE(properties.reference_temperature.has_value());
@@ -67,6 +79,12 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     EXPECT_NEAR(*properties.translational_energy, 1.0f, tol);
     EXPECT_NEAR(*properties.rotational_energy, 2.0f, tol);
     EXPECT_NEAR(*properties.vibrational_energy, 3.0f, tol);
+    EXPECT_NEAR(*properties.characteristic_vibrational_temperature, 1000.0f, tol);
+    EXPECT_EQ(*properties.max_vibrational_quantum, 12);
+    EXPECT_NEAR(*properties.gamma_quant, 0.5f, tol);
+    EXPECT_EQ(*properties.interaction_id, 20);
+    EXPECT_FALSE(*properties.fully_ionized);
+    EXPECT_TRUE(*properties.polyatomic_molecule);
     EXPECT_EQ(*properties.species_id, 7);
     EXPECT_NEAR(*properties.reference_diameter, 4.0f, tol);
     EXPECT_NEAR(*properties.reference_temperature, 5.0f, tol);
