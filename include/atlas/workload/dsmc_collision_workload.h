@@ -18,9 +18,6 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     schedule(const Probe& probe, const atlas::DeviceBuffer<int>* allocated_solver, int index) = 0;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
-    limits_collision_count() const noexcept { return false; }
-
 protected:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static bool
     execute_collision_pair(const Probe& probe,

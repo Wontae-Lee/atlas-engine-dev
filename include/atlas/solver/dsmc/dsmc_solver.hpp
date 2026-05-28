@@ -2,8 +2,8 @@
 
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/workload/dsmc_cell_sequential_workload.h>
 #include <atlas/sampling/sampling.h>
+#include <atlas/workload/dsmc_cell_sequential_workload.h>
 
 #include <cmath>
 #include <cstdint>
@@ -154,35 +154,14 @@ DsmcSolver<T>::make_probe() noexcept {
         return false;
     }
 
-    auto* velocity_state = this->_fluid->template state<FluidVelocityState<T>>();
-    auto* species_state  = this->_fluid->template state<FluidSpeciesState<T>>();
+    _probe.velocity_ptr   = atlas::raw_pointer_cast(this->_fluid->template state<FluidVelocityState<T>>()->data());
+    _probe.species_ptr    = atlas::raw_pointer_cast(this->_fluid->template state<FluidSpeciesState<T>>()->data());
+    _probe.properties_ptr = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
 
-    auto* number_particle_state    = this->_universe->template state<UniverseNumberParticleState<T>>();
-    auto* max_relative_speed_state = this->_universe->template state<UniverseMaxRelativeSpeedState<T>>();
-    auto* max_sigma_g_state        = this->_universe->template state<UniverseMaxSigmaGState<T>>();
-    auto* collision_count_state    = this->_universe->template state<UniverseCollisionCountState<int>>();
-
-    if (velocity_state == nullptr || species_state == nullptr || number_particle_state == nullptr
-        || max_relative_speed_state == nullptr || max_sigma_g_state == nullptr || collision_count_state == nullptr) {
-        return false;
-    }
-
-    auto& velocities         = velocity_state->data();
-    auto& species            = species_state->data();
-    auto& number_particle    = number_particle_state->data();
-    auto& max_relative_speed = max_relative_speed_state->data();
-    auto& max_sigma_g        = max_sigma_g_state->data();
-    auto& collision_count    = collision_count_state->data();
-    auto& properties         = this->_fluid->particle_properties();
-
-    _probe.velocity_ptr   = atlas::raw_pointer_cast(velocities.data());
-    _probe.species_ptr    = atlas::raw_pointer_cast(species.data());
-    _probe.properties_ptr = atlas::raw_pointer_cast(properties.data());
-
-    _probe.number_particle_ptr    = atlas::raw_pointer_cast(number_particle.data());
-    _probe.max_relative_speed_ptr = atlas::raw_pointer_cast(max_relative_speed.data());
-    _probe.max_sigma_g_ptr        = atlas::raw_pointer_cast(max_sigma_g.data());
-    _probe.collision_count_ptr    = atlas::raw_pointer_cast(collision_count.data());
+    _probe.number_particle_ptr    = atlas::raw_pointer_cast(this->_universe->template state<UniverseNumberParticleState<T>>()->data());
+    _probe.max_relative_speed_ptr = atlas::raw_pointer_cast(this->_universe->template state<UniverseMaxRelativeSpeedState<T>>()->data());
+    _probe.max_sigma_g_ptr        = atlas::raw_pointer_cast(this->_universe->template state<UniverseMaxSigmaGState<T>>()->data());
+    _probe.collision_count_ptr    = atlas::raw_pointer_cast(this->_universe->template state<UniverseCollisionCountState<int>>()->data());
 
     _probe.indices_ptr    = this->_searcher->indices();
     _probe.cell_start_ptr = this->_searcher->cell_start();
@@ -213,14 +192,10 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
         return false;
     }
 
-    const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
-    const bool collision_count_limited = _workload && _workload->limits_collision_count();
-
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
-        [=] ATLAS_DEVICE(const int cell) {
-
+        [=, allocated_solver_ptr = atlas::raw_pointer_cast(allocated_solver->data())] ATLAS_DEVICE(const int cell) {
             if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 probe.number_particle_ptr[cell]    = T(0);
                 probe.max_relative_speed_ptr[cell] = T(0);
@@ -231,16 +206,8 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
 
             const int begin = probe.cell_start_ptr[cell];
             const int end   = probe.cell_end_ptr[cell];
+            const int count = end - begin;
 
-            if (begin < 0 || end <= begin) {
-                probe.number_particle_ptr[cell]    = T(0);
-                probe.max_relative_speed_ptr[cell] = T(0);
-                probe.max_sigma_g_ptr[cell]        = T(0);
-                probe.collision_count_ptr[cell]    = 0;
-                return;
-            }
-
-            const int count        = end - begin;
             T max_relative_squared = T(0);
             T max_sigma_g          = T(0);
 
@@ -293,9 +260,7 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
             constexpr int max_collision_count  = std::numeric_limits<int>::max();
             const T max_collision_count_scalar = static_cast<T>(max_collision_count);
             if (ntc_count >= max_collision_count_scalar) {
-                probe.collision_count_ptr[cell] = collision_count_limited
-                    ? count / 2
-                    : max_collision_count;
+                probe.collision_count_ptr[cell] = max_collision_count;
                 return;
             }
 
@@ -305,13 +270,6 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
 
             if (remainder > T(0) && atlas::sampling::sample_hashed_unit_interval<T>(cell, probe.collision_seed) < remainder) {
                 ++collisions;
-            }
-
-            if (collision_count_limited) {
-                const int max_unique_pairs = count / 2;
-                if (collisions > max_unique_pairs) {
-                    collisions = max_unique_pairs;
-                }
             }
 
             probe.collision_count_ptr[cell] = collisions > 0 ? collisions : 0;

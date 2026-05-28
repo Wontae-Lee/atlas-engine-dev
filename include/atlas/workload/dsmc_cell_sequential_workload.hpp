@@ -11,8 +11,8 @@ namespace atlas::workload {
 template <typename T>
 void
 DsmcCellSequentialWorkload<T>::schedule(const Probe& probe,
-                                         const atlas::DeviceBuffer<int>* allocated_solver,
-                                         const int index) {
+                                        const atlas::DeviceBuffer<int>* allocated_solver,
+                                        const int index) {
     if (probe.num_of_cells <= 0 || probe.collision_count_ptr == nullptr
         || probe.velocity_ptr == nullptr || probe.species_ptr == nullptr
         || probe.properties_ptr == nullptr
@@ -65,12 +65,12 @@ DsmcCellSequentialWorkload<T>::schedule(const Probe& probe,
 template <typename T>
 bool
 DsmcCellSequentialWorkload<T>::execute_collision_trial(const Probe& probe,
-                                                        const int cell,
-                                                        const int local_collision,
-                                                        const int begin,
-                                                        const int end,
-                                                        const int count,
-                                                        const T max_sigma_g) noexcept {
+                                                       const int cell,
+                                                       const int local_collision,
+                                                       const int begin,
+                                                       const int end,
+                                                       const int count,
+                                                       const T max_sigma_g) noexcept {
     if (count < 2 || local_collision < 0 || begin < 0 || end <= begin || !(max_sigma_g > T(0))) {
         return false;
     }
@@ -96,11 +96,11 @@ DsmcCellSequentialWorkload<T>::execute_collision_trial(const Probe& probe,
 template <typename T>
 bool
 DsmcCellSequentialWorkload<T>::select_pair_offsets(const Probe& probe,
-                                                    int& lhs_local,
-                                                    int& rhs_local,
-                                                    const int cell,
-                                                    const int local_collision,
-                                                    const int count) noexcept {
+                                                   int& lhs_local,
+                                                   int& rhs_local,
+                                                   const int cell,
+                                                   const int local_collision,
+                                                   const int count) noexcept {
     const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
         + static_cast<std::uint64_t>(local_collision);
 
