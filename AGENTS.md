@@ -5,10 +5,13 @@
 - Communicate with the user in Korean unless they ask otherwise.
 - Write source-code comments in English.
 - Keep changes small and scoped to the user's request.
+- Write concise code: avoid unnecessary temporary variables, redundant null checks, and verbose comments when direct expressions match the local pattern.
 - Do not refactor broadly, change public APIs, or add dependencies unless explicitly asked.
 - Preserve existing style, naming, include order, file layout, and backend portability.
 - Do not add defensive checks, fallback paths, or new validation unless requested or already required by the local pattern.
 - Do not run builds, tests, benchmarks, simulations, or formatters unless the user explicitly asks. If not run, state that clearly.
+- When the user asks for `git commit`, group all staged changes except `.idea/workspace.xml` by related purpose, then create commits that match those groups.
+- Commit `.idea/workspace.xml` only when the user asks for `git commit all`, and only after all other grouped commits are complete.
 
 ## Project Overview
 
