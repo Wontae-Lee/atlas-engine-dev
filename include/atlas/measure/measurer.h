@@ -10,6 +10,7 @@
 
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
+#include <atlas/measure/measurer_probe.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/universe/universe.h>
@@ -73,106 +74,7 @@ enum class MeasureModeType : int {
 template <typename T>
 class Measurer {
 public:
-    /**
-     * @brief Raw-pointer view over common data used by measurement kernels.
-     *
-     * `MeasurerProbe` is populated by @ref make_probe. It groups output universe
-     * measurement buffers, input fluid particle buffers, and searcher cell-range
-     * data into one compact object suitable for capture by device lambdas.
-     *
-     * Required output buffers are:
-     *
-     * - field temperature,
-     * - bulk velocity,
-     * - thermal energy,
-     * - number of particles.
-     *
-     * Required input/search buffers are:
-     *
-     * - particle velocity,
-     * - sorted particle indices,
-     * - cell start offsets,
-     * - cell end offsets.
-     *
-     * Particle temperature is optional and may remain `nullptr`.
-     */
-    struct MeasurerProbe {
-        /**
-         * @brief Raw pointer to per-cell field temperature output.
-         *
-         * Points to `UniverseTemperatureState<T>::data()`.
-         */
-        T* field_temperature_ptr {};
-
-        /**
-         * @brief Raw pointer to per-cell bulk velocity output.
-         *
-         * Points to `UniverseBulkVelocityState<T>::data()`.
-         */
-        Vector3<T>* bulk_velocity_ptr {};
-
-        /**
-         * @brief Raw pointer to per-cell thermal energy output.
-         *
-         * Points to `UniverseThermalEnergyState<T>::data()`.
-         */
-        T* thermal_energy_ptr {};
-
-        /**
-         * @brief Raw pointer to per-cell particle-count output.
-         *
-         * Points to `UniverseNumberParticleState<T>::data()`.
-         */
-        T* number_particle_ptr {};
-
-        /**
-         * @brief Raw pointer to per-particle velocity input.
-         *
-         * Points to `FluidVelocityState<T>::data()`. This pointer is required
-         * for a valid probe.
-         */
-        const Vector3<T>* velocity_ptr {};
-
-        /**
-         * @brief Raw pointer to optional per-particle temperature data.
-         *
-         * Points to `FluidTemperatureState<T>::data()` when that state exists.
-         * Remains `nullptr` when the fluid does not expose particle temperature.
-         */
-        T* particle_temperature_ptr {};
-
-        /**
-         * @brief Raw pointer to sorted particle indices produced by the searcher.
-         *
-         * For each cell, the range
-         * `[cell_start_ptr[cell], cell_end_ptr[cell])` indexes into this array.
-         */
-        const int* indices_ptr {};
-
-        /**
-         * @brief Raw pointer to the first sorted index for each cell.
-         */
-        const int* cell_start_ptr {};
-
-        /**
-         * @brief Raw pointer to one-past-the-last sorted index for each cell.
-         */
-        const int* cell_end_ptr {};
-
-        /**
-         * @brief Number of particles reported by the fluid.
-         *
-         * A value of zero is accepted as valid by @ref make_probe.
-         */
-        int particle_count {};
-
-        /**
-         * @brief Number of cells reported by the universe.
-         *
-         * Must be greater than zero for @ref make_probe to succeed.
-         */
-        int num_of_cells {};
-    };
+    using MeasurerProbe = atlas::system::MeasurerProbe<T>;
 
     /**
      * @brief Constructs an empty measurer.

@@ -10,6 +10,7 @@
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/observer/observer.h>
+#include <atlas/source/source_probe.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/unit/unit.h>
 
@@ -47,28 +48,7 @@ class Source final {
     static_assert(std::is_floating_point_v<T>, "Source requires a floating-point T");
 
 public:
-    /**
-     * @brief Cached raw views over common source emission data.
-     *
-     * Emission repeatedly needs the same source-unit, generator, property, species,
-     * and fluid output buffers. This probe groups those values so device lambdas
-     * can capture one compact object by value.
-     */
-    struct SourceProbe {
-        const Unit<T>* units {};
-        const GenerateOperator<T>* generators {};
-        const MaterialProperties<T>* properties {};
-        const std::size_t* shuffled_species {};
-
-        Vector3<T>* positions {};
-        Vector3<T>* velocities {};
-        std::size_t* species {};
-        int* active {};
-
-        T temperature {};
-        int property_count {};
-        std::uint64_t emission_seed {};
-    };
+    using SourceProbe = atlas::fluid::SourceProbe<T>;
 
     /**
      * @brief Builder for configuring and constructing Source objects.

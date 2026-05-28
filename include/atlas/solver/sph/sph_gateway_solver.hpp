@@ -269,44 +269,22 @@ SphGatewaySolver<T>::make_probe() noexcept {
         return false;
     }
 
-    auto* position_state = this->_fluid->template state<atlas::fluid::FluidPositionState<T>>();
-    auto* velocity_state = this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>();
-    auto* species_state  = this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
-
-    auto* number_particle_state = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
-    auto* field_force_state     = this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>();
-
-    if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr
-        || number_particle_state == nullptr || field_force_state == nullptr) {
-        return false;
-    }
-
-    auto& positions       = position_state->data();
-    auto& velocities      = velocity_state->data();
-    auto& species         = species_state->data();
-    auto& properties      = this->_fluid->particle_properties();
-    auto& number_particle = number_particle_state->data();
-    auto& field_force     = field_force_state->data();
-
-    _probe.position_ptr        = atlas::raw_pointer_cast(positions.data());
-    _probe.velocity_ptr        = atlas::raw_pointer_cast(velocities.data());
-    _probe.species_ptr         = atlas::raw_pointer_cast(species.data());
-    _probe.properties_ptr      = atlas::raw_pointer_cast(properties.data());
-    _probe.number_particle_ptr = atlas::raw_pointer_cast(number_particle.data());
-    _probe.field_force_ptr     = atlas::raw_pointer_cast(field_force.data());
-
+    _probe.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidPositionState<T>>()->data().data());
+    _probe.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data().data());
+    _probe.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>()->data().data());
+    _probe.properties_ptr      = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
+    _probe.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()->data().data());
+    _probe.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>()->data().data());
     _probe.indices_ptr    = this->_searcher->indices();
     _probe.cell_start_ptr = this->_searcher->cell_start();
     _probe.cell_end_ptr   = this->_searcher->cell_end();
-
     _probe.lower_corner      = this->_searcher->lower_corner();
     _probe.grid_size         = this->_searcher->grid_size();
     _probe.inverse_cell_size = this->_searcher->inverse_cell_size();
     _probe.cell_size         = this->_searcher->cell_size();
-
     _probe.particle_count    = static_cast<int>(this->_fluid->particle_count());
     _probe.num_of_cells      = this->_universe->number_of_cells();
-    _probe.num_of_properties = static_cast<int>(properties.size());
+    _probe.num_of_properties = static_cast<int>(this->_fluid->particle_properties().size());
     _probe.kernel            = _kernel;
 
     return true;

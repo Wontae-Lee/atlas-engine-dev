@@ -144,17 +144,15 @@ Sink<T>::make_probe(const T dt) noexcept {
     if (!_fluid || _units.empty() || _despawn_operators.empty()) {
         return false;
     }
-    auto* position_state = _fluid->template state<atlas::fluid::FluidPositionState<T>>();
+
+    auto& positions = _fluid->template state<atlas::fluid::FluidPositionState<T>>()->data();
+    auto& active    = _fluid->template state<atlas::fluid::FluidActiveState<T>>()->data();
     auto* velocity_state = _fluid->template state<atlas::fluid::FluidVelocityState<T>>();
-    auto* active_state   = _fluid->template state<atlas::fluid::FluidActiveState<T>>();
-    if (position_state == nullptr || active_state == nullptr) {
-        return false;
-    }
-    auto& positions = position_state->data();
-    auto& active    = active_state->data();
+
     if (positions.empty() || active.empty() || _fluid->particle_count() == 0) {
         return false;
     }
+
     _probe.units                  = atlas::raw_pointer_cast(_units.data());
     _probe.despawn_operators      = atlas::raw_pointer_cast(_despawn_operators.data());
     _probe.positions              = atlas::raw_pointer_cast(positions.data());

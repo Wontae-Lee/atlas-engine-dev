@@ -8,6 +8,7 @@
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
+#include <atlas/collider/collider_probe.h>
 #include <atlas/collider/collider_surface_interaction.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
@@ -51,26 +52,7 @@ class Collider final {
     static_assert(std::is_floating_point_v<T>, "Collider requires a floating-point T");
 
 public:
-    /**
-     * @brief Cached raw views over common collider runtime data.
-     *
-     * Collision kernels repeatedly need the same unit, interaction, flip, and
-     * particle state buffers. This probe groups those values so device lambdas
-     * can capture one compact object by value.
-     */
-    struct ColliderProbe {
-        const Unit<T>* units {};
-        const ColliderSurfaceInteraction<T>* surface_interactions {};
-        const std::uint8_t* flips {};
-
-        Vector3<T>* positions {};
-        Vector3<T>* velocities {};
-
-        int unit_count {};
-        int interaction_count {};
-        int flip_count {};
-        int particle_count {};
-    };
+    using ColliderProbe = atlas::system::ColliderProbe<T>;
 
     /**
      * @brief Builder used for validated host-side Collider construction.

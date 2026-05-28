@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atlas/core/macros.h>
+#include <atlas/solver/hybrid/hybrid_dsmc_sph_probe.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 #include <atlas/solver/sph/sph_solver.h>
 
@@ -13,17 +14,9 @@ namespace atlas::system {
 template <typename T>
 class HybridDsmcSphSolver final : public Solver<T> {
 public:
-    using SphSolverProbe  = typename SphSolver<T>::SphSolverProbe;
-    using DsmcProbe       = ::atlas::system::DsmcProbe<T>;
-
-    struct HybridProbe {
-        SphSolverProbe sph {};
-        DsmcProbe dsmc {};
-        T grouping_length {};
-        int sph_particle_threshold {};
-        std::uint64_t collision_seed {};
-        bool pairing_without_replacement {};
-    };
+    using SphSolverProbe = typename SphSolver<T>::SphSolverProbe;
+    using DsmcProbe      = ::atlas::system::DsmcProbe<T>;
+    using HybridProbe    = atlas::system::HybridDsmcSphProbe<T>;
 
     class Builder;
 

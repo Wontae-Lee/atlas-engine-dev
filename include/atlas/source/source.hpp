@@ -376,54 +376,35 @@ Source<T>::emit() {
 template <typename T>
 bool
 Source<T>::make_probe() noexcept {
-    // Reset the probe so failed setup never leaves stale pointers behind.
     _probe = {};
 
-    // A valid emission probe requires a fluid, source units, and shuffled species data.
     if (!_fluid || _units.empty() || _shuffled_species.empty()) {
         return false;
     }
 
-    // Retrieve required fluid states used during emission.
-    auto* position_state = _fluid->template state<FluidPositionState<T>>();
-    auto* velocity_state = _fluid->template state<FluidVelocityState<T>>();
-    auto* species_state  = _fluid->template state<FluidSpeciesState<T>>();
-    auto* active_state   = _fluid->template state<FluidActiveState<T>>();
-
-    if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr || active_state == nullptr) {
-        return false;
-    }
-
-    auto& positions_buf  = position_state->data();
-    auto& velocities_buf = velocity_state->data();
-    auto& species_buf    = species_state->data();
-    auto& active_buf     = active_state->data();
-
+    auto& positions_buf   = _fluid->template state<FluidPositionState<T>>()->data();
+    auto& velocities_buf  = _fluid->template state<FluidVelocityState<T>>()->data();
+    auto& species_buf     = _fluid->template state<FluidSpeciesState<T>>()->data();
+    auto& active_buf      = _fluid->template state<FluidActiveState<T>>()->data();
     const auto& generators_buf = _fluid->generators();
     const auto& properties_buf = _fluid->particle_properties();
 
-    // Reject missing particle buffers, generators, or particle-property metadata.
     if (positions_buf.empty() || velocities_buf.empty() || species_buf.empty() || active_buf.empty()
         || generators_buf.empty() || properties_buf.empty()) {
         return false;
     }
 
-    // Bind source unit, generator, property, and shuffled species buffers.
     _probe.units            = atlas::raw_pointer_cast(_units.data());
     _probe.generators       = atlas::raw_pointer_cast(generators_buf.data());
     _probe.properties       = atlas::raw_pointer_cast(properties_buf.data());
     _probe.shuffled_species = atlas::raw_pointer_cast(_shuffled_species.data());
-
-    // Bind output particle-state buffers.
-    _probe.positions  = atlas::raw_pointer_cast(positions_buf.data());
-    _probe.velocities = atlas::raw_pointer_cast(velocities_buf.data());
-    _probe.species    = atlas::raw_pointer_cast(species_buf.data());
-    _probe.active     = atlas::raw_pointer_cast(active_buf.data());
-
-    // Store scalar emission parameters used by the device kernel.
-    _probe.temperature    = _temperature;
-    _probe.property_count = static_cast<int>(properties_buf.size());
-    _probe.emission_seed  = _shuffle_seed;
+    _probe.positions        = atlas::raw_pointer_cast(positions_buf.data());
+    _probe.velocities       = atlas::raw_pointer_cast(velocities_buf.data());
+    _probe.species          = atlas::raw_pointer_cast(species_buf.data());
+    _probe.active           = atlas::raw_pointer_cast(active_buf.data());
+    _probe.temperature      = _temperature;
+    _probe.property_count   = static_cast<int>(properties_buf.size());
+    _probe.emission_seed    = _shuffle_seed;
 
     return true;
 }

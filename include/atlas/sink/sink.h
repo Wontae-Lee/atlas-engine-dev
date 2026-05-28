@@ -12,6 +12,7 @@
 #include <atlas/memory/memory.h>
 #include <atlas/observer/observer.h>
 #include <atlas/sink/despawn_operator.h>
+#include <atlas/sink/sink_probe.h>
 #include <atlas/unit/unit.h>
 
 #include <cstdint>
@@ -49,28 +50,7 @@ class Sink final {
     static_assert(std::is_floating_point_v<T>, "Sink requires a floating-point T");
 
 public:
-    /**
-     * @brief Cached raw views over common sink runtime data.
-     *
-     * Sink processing repeatedly needs the same unit, despawn-operator, and
-     * particle state buffers. This probe groups those values so device lambdas
-     * can capture one compact object by value.
-     */
-    struct SinkProbe {
-        const Unit<T>* units {};
-        const DespawnOperator<T>* despawn_operators {};
-        const Vector3<T>* positions {};
-        const Vector3<T>* velocities {};
-        int* active {};
-
-        int unit_count {};
-        int despawn_operator_count {};
-        std::size_t particle_count {};
-
-        bool flip {};
-        T tolerance {};
-        T time_step {};
-    };
+    using SinkProbe = atlas::fluid::SinkProbe<T>;
 
     /**
      * @brief Builder for validated Sink construction.

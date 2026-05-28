@@ -176,37 +176,23 @@ template <typename T>
 bool
 Collider<T>::make_probe() const noexcept {
     _probe = {};
-    // Do not expose raw pointers unless the collider has all required high-level components.
+
     if (empty()) {
         return false;
     }
 
-    // Retrieve the particle position and velocity states from the fluid.
-    // Collision processing requires both states.
-    auto* position_state = _fluid->template state<atlas::fluid::FluidPositionState<T>>();
-    auto* velocity_state = _fluid->template state<atlas::fluid::FluidVelocityState<T>>();
+    auto& positions  = _fluid->template state<atlas::fluid::FluidPositionState<T>>()->data();
+    auto& velocities = _fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data();
 
-    if (position_state == nullptr || velocity_state == nullptr) {
-        return false;
-    }
-
-    auto& positions  = position_state->data();
-    auto& velocities = velocity_state->data();
-
-    // Reject incomplete fluid data before creating device-side raw pointers.
     if (positions.empty() || velocities.empty() || _fluid->particle_count() <= 0) {
         return false;
     }
 
-    // Store raw device pointers and array sizes in a compact probe object that can be captured
-    // by the device collision kernel.
     _probe.units                = atlas::raw_pointer_cast(_units.data());
     _probe.surface_interactions = atlas::raw_pointer_cast(_surface_interactions.data());
     _probe.flips                = atlas::raw_pointer_cast(_flips.data());
     _probe.positions            = atlas::raw_pointer_cast(positions.data());
     _probe.velocities           = atlas::raw_pointer_cast(velocities.data());
-
-    // Cache counts as integers because the device kernel iterates over integer ranges.
     _probe.unit_count        = static_cast<int>(_units.size());
     _probe.interaction_count = static_cast<int>(_surface_interactions.size());
     _probe.flip_count        = static_cast<int>(_flips.size());

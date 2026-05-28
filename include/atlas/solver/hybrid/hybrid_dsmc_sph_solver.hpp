@@ -155,39 +155,12 @@ bool
 HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe = {};
 
-    auto* position_state = this->_fluid->template state<atlas::fluid::FluidPositionState<T>>();
-    auto* velocity_state = this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>();
-    auto* species_state  = this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
-
-    auto* number_particle_state    = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
-    auto* field_force_state        = this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>();
-    auto* max_relative_speed_state = this->_universe->template state<atlas::universe::UniverseMaxRelativeSpeedState<T>>();
-    auto* max_sigma_g_state        = this->_universe->template state<atlas::universe::UniverseMaxSigmaGState<T>>();
-    auto* collision_count_state    = this->_universe->template state<atlas::universe::UniverseCollisionCountState<int>>();
-
-    if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr
-        || number_particle_state == nullptr || field_force_state == nullptr
-        || max_relative_speed_state == nullptr || max_sigma_g_state == nullptr
-        || collision_count_state == nullptr) {
-        return false;
-    }
-
-    auto& positions          = position_state->data();
-    auto& velocities         = velocity_state->data();
-    auto& species            = species_state->data();
-    auto& properties         = this->_fluid->particle_properties();
-    auto& number_particle    = number_particle_state->data();
-    auto& field_force        = field_force_state->data();
-    auto& max_relative_speed = max_relative_speed_state->data();
-    auto& max_sigma_g        = max_sigma_g_state->data();
-    auto& collision_count    = collision_count_state->data();
-
-    _probe.sph.position_ptr        = atlas::raw_pointer_cast(positions.data());
-    _probe.sph.velocity_ptr        = atlas::raw_pointer_cast(velocities.data());
-    _probe.sph.species_ptr         = atlas::raw_pointer_cast(species.data());
-    _probe.sph.properties_ptr      = atlas::raw_pointer_cast(properties.data());
-    _probe.sph.number_particle_ptr = atlas::raw_pointer_cast(number_particle.data());
-    _probe.sph.field_force_ptr     = atlas::raw_pointer_cast(field_force.data());
+    _probe.sph.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidPositionState<T>>()->data().data());
+    _probe.sph.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data().data());
+    _probe.sph.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>()->data().data());
+    _probe.sph.properties_ptr      = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
+    _probe.sph.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()->data().data());
+    _probe.sph.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>()->data().data());
     _probe.sph.indices_ptr         = this->_searcher->indices();
     _probe.sph.cell_start_ptr      = this->_searcher->cell_start();
     _probe.sph.cell_end_ptr        = this->_searcher->cell_end();
@@ -197,16 +170,16 @@ HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe.sph.cell_size           = this->_searcher->cell_size();
     _probe.sph.particle_count      = static_cast<int>(this->_fluid->particle_count());
     _probe.sph.num_of_cells        = this->_universe->number_of_cells();
-    _probe.sph.num_of_properties   = static_cast<int>(properties.size());
+    _probe.sph.num_of_properties   = static_cast<int>(this->_fluid->particle_properties().size());
     _probe.sph.kernel              = _sph_kernel;
 
-    _probe.dsmc.velocity_ptr            = atlas::raw_pointer_cast(velocities.data());
-    _probe.dsmc.species_ptr             = atlas::raw_pointer_cast(species.data());
-    _probe.dsmc.properties_ptr          = atlas::raw_pointer_cast(properties.data());
-    _probe.dsmc.number_particle_ptr     = atlas::raw_pointer_cast(number_particle.data());
-    _probe.dsmc.max_relative_speed_ptr  = atlas::raw_pointer_cast(max_relative_speed.data());
-    _probe.dsmc.max_sigma_g_ptr         = atlas::raw_pointer_cast(max_sigma_g.data());
-    _probe.dsmc.collision_count_ptr     = atlas::raw_pointer_cast(collision_count.data());
+    _probe.dsmc.velocity_ptr            = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data().data());
+    _probe.dsmc.species_ptr             = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>()->data().data());
+    _probe.dsmc.properties_ptr          = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
+    _probe.dsmc.number_particle_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()->data().data());
+    _probe.dsmc.max_relative_speed_ptr  = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseMaxRelativeSpeedState<T>>()->data().data());
+    _probe.dsmc.max_sigma_g_ptr         = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseMaxSigmaGState<T>>()->data().data());
+    _probe.dsmc.collision_count_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseCollisionCountState<int>>()->data().data());
     _probe.dsmc.indices_ptr             = this->_searcher->indices();
     _probe.dsmc.cell_start_ptr          = this->_searcher->cell_start();
     _probe.dsmc.cell_end_ptr            = this->_searcher->cell_end();

@@ -177,24 +177,16 @@ template <typename T>
 bool
 Orchestrator<T>::make_probe() noexcept {
     _probe = {};
-    // The probe requires the core simulation objects and the spatial searcher.
+
     if (!_universe || !_fluid || !_searcher) {
         return false;
     }
 
     auto* field_force_state = _universe->template state<atlas::universe::UniverseFieldForceState<T>>();
     auto* gravity_state     = _universe->template state<atlas::universe::UniverseGravityState<T>>();
-    auto* velocity_state    = _fluid->template state<atlas::fluid::FluidVelocityState<T>>();
     auto* species_state     = _fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
+    auto& velocity          = _fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data();
 
-    // Velocity is mandatory because force and gravity both update particle velocity.
-    if (velocity_state == nullptr) {
-        return false;
-    }
-
-    auto& velocity = velocity_state->data();
-
-    // Store common simulation sizes and searcher buffers.
     _probe.particle_count = static_cast<int>(_fluid->particle_count());
     _probe.num_of_cells   = _universe->number_of_cells();
     _probe.indices_ptr    = _searcher->indices();
@@ -202,14 +194,12 @@ Orchestrator<T>::make_probe() noexcept {
     _probe.cell_end_ptr   = _searcher->cell_end();
     _probe.velocity_ptr   = atlas::raw_pointer_cast(velocity.data());
 
-    // Validate the minimum data required for cell-based particle traversal.
     if (velocity.empty() || _probe.particle_count <= 0 || _probe.num_of_cells <= 0
         || _probe.indices_ptr == nullptr || _probe.cell_start_ptr == nullptr
         || _probe.cell_end_ptr == nullptr) {
         return false;
     }
 
-    // Species and particle properties are optional, but required for field-force mass lookup.
     if (species_state != nullptr) {
         auto& species             = species_state->data();
         auto& particle_properties = _fluid->particle_properties();
@@ -221,7 +211,6 @@ Orchestrator<T>::make_probe() noexcept {
         }
     }
 
-    // Field force is optional and is attached only when the corresponding state exists.
     if (field_force_state != nullptr) {
         auto& field_force = field_force_state->data();
 
@@ -231,7 +220,6 @@ Orchestrator<T>::make_probe() noexcept {
         }
     }
 
-    // Gravity is optional and is attached only when the corresponding state exists.
     if (gravity_state != nullptr) {
         auto& gravity = gravity_state->data();
 

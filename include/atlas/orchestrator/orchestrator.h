@@ -14,6 +14,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/measure/measurer.h>
 #include <atlas/memory/memory.h>
+#include <atlas/orchestrator/orchestrator_probe.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/solver/solver.h>
 #include <atlas/universe/universe.h>
@@ -60,111 +61,7 @@ namespace atlas::system {
 template <typename T>
 class Orchestrator final {
 public:
-    /**
-     * @brief Cached raw views over the data required by force-application passes.
-     *
-     * `OrchestratorProbe` is populated by @ref make_probe and then captured by
-     * value inside device lambdas. It groups raw pointers and scalar metadata
-     * needed by @ref apply_gravity and @ref apply_field_force so those kernels do
-     * not repeatedly resolve states or shared-pointer-backed containers.
-     *
-     * The probe may contain only a subset of optional data:
-     *
-     * - velocity/searcher data is required for a valid probe,
-     * - species and material properties are required only for field-force updates,
-     * - field-force data is required only by @ref apply_field_force,
-     * - gravity data is required only by @ref apply_gravity.
-     *
-     * Pointer members are initialized to `nullptr`, and count members are
-     * initialized to zero. Callers must check the relevant pointers and counts
-     * before launching work that depends on them.
-     */
-    struct OrchestratorProbe {
-        /**
-         * @brief Raw pointer to particle velocity data.
-         *
-         * Points to `FluidVelocityState<T>::data()`. This pointer is required
-         * for both gravity and field-force application.
-         */
-        Vector3<T>* velocity_ptr {};
-
-        /**
-         * @brief Raw pointer to per-particle species indices.
-         *
-         * Points to `FluidSpeciesState<T>::data()` when that state exists and is
-         * non-empty. Used by @ref apply_field_force to look up particle mass.
-         */
-        const std::size_t* species_ptr {};
-
-        /**
-         * @brief Raw pointer to per-species material properties.
-         *
-         * Points to `Fluid::particle_properties()` when available. Field-force
-         * application reads `mass` from this array.
-         */
-        const MaterialProperties<T>* properties_ptr {};
-
-        /**
-         * @brief Raw pointer to cell-wise external force vectors.
-         *
-         * Points to `UniverseFieldForceState<T>::data()` when available. Each
-         * element represents the force applied to particles currently mapped to
-         * the corresponding cell.
-         */
-        const Vector3<T>* field_force_ptr {};
-
-        /**
-         * @brief Raw pointer to cell-wise gravity acceleration vectors.
-         *
-         * Points to `UniverseGravityState<T>::data()` when available. Although
-         * Builder can install a uniform gravity value, the runtime pass consumes
-         * gravity as a per-cell vector buffer.
-         */
-        const Vector3<T>* gravity_ptr {};
-
-        /**
-         * @brief Raw pointer to sorted particle indices produced by the searcher.
-         *
-         * The range `[cell_start_ptr[cell], cell_end_ptr[cell])` indexes into
-         * this array to obtain particle indices belonging to a cell.
-         */
-        const int* indices_ptr {};
-
-        /**
-         * @brief Raw pointer to the first sorted index for each cell.
-         */
-        const int* cell_start_ptr {};
-
-        /**
-         * @brief Raw pointer to one-past-the-last sorted index for each cell.
-         */
-        const int* cell_end_ptr {};
-
-        /**
-         * @brief Number of active particles in the fluid.
-         */
-        int particle_count {};
-
-        /**
-         * @brief Number of cells in the universe.
-         */
-        int num_of_cells {};
-
-        /**
-         * @brief Number of species material-property entries.
-         */
-        int num_of_species {};
-
-        /**
-         * @brief Number of cells available in the field-force state buffer.
-         */
-        int field_force_cell_count {};
-
-        /**
-         * @brief Number of cells available in the gravity state buffer.
-         */
-        int gravity_cell_count {};
-    };
+    using OrchestratorProbe = atlas::system::OrchestratorProbe<T>;
 
     /**
      * @brief Fluent builder for constructing validated `Orchestrator` instances.

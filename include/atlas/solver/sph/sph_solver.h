@@ -12,6 +12,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/solver/solver.h>
 #include <atlas/solver/sph/sph_kernel.h>
+#include <atlas/solver/sph/sph_probe.h>
 
 namespace atlas::system {
 
@@ -53,130 +54,7 @@ namespace atlas::system {
 template <typename T>
 class SphSolver final : public Solver<T> {
 public:
-    /**
-     * @brief Raw-pointer view over common SPH runtime data.
-     *
-     * `SphSolverProbe` is populated by @ref make_probe, cached in `_probe`, and is
-     * intended to be captured by value in device kernels. It contains fluid particle data,
-     * universe output buffers, searcher cell ranges, spatial-grid metadata, and
-     * the runtime smoothing kernel.
-     *
-     * Required states for a valid probe are:
-     *
-     * - `FluidPositionState<T>`,
-     * - `FluidVelocityState<T>`,
-     * - `FluidSpeciesState<T>`,
-     * - `UniverseNumberParticleState<T>`,
-     * - `UniverseFieldForceState<T>`.
-     */
-    struct SphSolverProbe {
-        /**
-         * @brief Raw pointer to per-particle positions.
-         *
-         * Points to `FluidPositionState<T>::data()`.
-         */
-        const Vector3<T>* position_ptr {};
-
-        /**
-         * @brief Raw pointer to mutable per-particle velocities.
-         *
-         * Points to `FluidVelocityState<T>::data()`. The acceleration stage
-         * updates this buffer in place.
-         */
-        Vector3<T>* velocity_ptr {};
-
-        /**
-         * @brief Raw pointer to per-particle species indices.
-         *
-         * Points to `FluidSpeciesState<T>::data()`.
-         */
-        const std::size_t* species_ptr {};
-
-        /**
-         * @brief Raw pointer to per-species material properties.
-         *
-         * Points to `fluid->particle_properties()`. SPH parameters such as mass,
-         * smoothing length, rest density, pressure coefficient, and dynamic
-         * viscosity are read from this array.
-         */
-        const MaterialProperties<T>* properties_ptr {};
-
-        /**
-         * @brief Raw pointer to per-cell particle-count output.
-         *
-         * Points to `UniverseNumberParticleState<T>::data()`.
-         */
-        T* number_particle_ptr {};
-
-        /**
-         * @brief Raw pointer to per-cell averaged force output.
-         *
-         * Points to `UniverseFieldForceState<T>::data()`. The acceleration stage
-         * stores the average force-like value per occupied cell.
-         */
-        Vector3<T>* field_force_ptr {};
-
-        /**
-         * @brief Raw pointer to sorted particle indices produced by the searcher.
-         *
-         * For each cell, `[cell_start_ptr[cell], cell_end_ptr[cell])` indexes
-         * into this array.
-         */
-        const int* indices_ptr {};
-
-        /**
-         * @brief Raw pointer to the first sorted index for each cell.
-         */
-        const int* cell_start_ptr {};
-
-        /**
-         * @brief Raw pointer to one-past-the-last sorted index for each cell.
-         */
-        const int* cell_end_ptr {};
-
-        /**
-         * @brief Lower corner of the searcher grid domain.
-         */
-        Vector3<T> lower_corner {};
-
-        /**
-         * @brief Integer grid resolution used by the searcher.
-         */
-        Vector3<int> grid_size {};
-
-        /**
-         * @brief Reciprocal of the searcher cell size.
-         */
-        T inverse_cell_size {};
-
-        /**
-         * @brief Searcher cell size.
-         *
-         * Used as the fallback smoothing length when material properties do not
-         * define a positive smoothing length.
-         */
-        T cell_size {};
-
-        /**
-         * @brief Number of particles reported by the fluid.
-         */
-        int particle_count {};
-
-        /**
-         * @brief Number of cells reported by the universe.
-         */
-        int num_of_cells {};
-
-        /**
-         * @brief Number of species material-property entries.
-         */
-        int num_of_properties {};
-
-        /**
-         * @brief Runtime SPH kernel wrapper used for density, pressure, and viscosity terms.
-         */
-        SphKernel<T> kernel {};
-    };
+    using SphSolverProbe = atlas::system::SphProbe<T>;
 
     /**
      * @brief Fluent builder for constructing validated `SphSolver` instances.
