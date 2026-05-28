@@ -117,61 +117,42 @@ Codec<T>::fixed_region() const noexcept {
 template <typename T>
 bool
 Codec<T>::make_probe() noexcept {
-    // Rebuild the probe from scratch so stale pointers are never reused.
     _probe = {};
 
-    // A valid probe cannot be formed unless all required simulation resources exist.
     if (!_universe || !_fluid || !_searcher) {
         return false;
     }
 
-    // Retrieve optional universe states used by codec kernels.
-    auto* temperature_state
-        = _universe->template state<atlas::universe::UniverseTemperatureState<T>>();
-    auto* number_particle_state
-        = _universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
-    auto* knudsen_number_state
-        = _universe->template state<atlas::universe::UniverseKnudsenNumberState<T>>();
+    auto* temperature_state     = _universe->template state<atlas::universe::UniverseTemperatureState<T>>();
+    auto* number_particle_state = _universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
+    auto* knudsen_number_state  = _universe->template state<atlas::universe::UniverseKnudsenNumberState<T>>();
 
-    // Store raw device pointers when the corresponding state is available.
     _probe.temperature_ptr = temperature_state != nullptr
         ? atlas::raw_pointer_cast(temperature_state->data().data())
         : nullptr;
-
     _probe.number_particle_ptr = number_particle_state != nullptr
         ? atlas::raw_pointer_cast(number_particle_state->data().data())
         : nullptr;
-
     _probe.knudsen_number_ptr = knudsen_number_state != nullptr
         ? atlas::raw_pointer_cast(knudsen_number_state->data().data())
         : nullptr;
-
-    // Empty buffers are represented as null pointers to keep kernel-side checks simple.
     _probe.allocated_solver_ptr = d_allocated_solver.empty()
         ? nullptr
         : atlas::raw_pointer_cast(d_allocated_solver.data());
-
     _probe.fixed_solver_ptr = d_fixed_solver.empty()
         ? nullptr
         : atlas::raw_pointer_cast(d_fixed_solver.data());
-
     _probe.fixed_region_ptr = d_fixed_region.empty()
         ? nullptr
         : atlas::raw_pointer_cast(d_fixed_region.data());
-
-    // Attach spatial-hashing views required for cell-wise particle traversal.
     _probe.indices_ptr    = _searcher->indices();
     _probe.cell_start_ptr = _searcher->cell_start();
     _probe.cell_end_ptr   = _searcher->cell_end();
-
-    // Cache scalar metadata so kernels can access simulation constants without
-    // dereferencing host-side objects.
     _probe.particle_count     = static_cast<int>(_fluid->particle_count());
     _probe.num_of_cells       = _universe->number_of_cells();
     _probe.cell_volume        = _universe->cell_volume();
     _probe.statistical_weight = _fluid->statistical_weight();
 
-    // A probe with zero cells cannot produce meaningful codec work.
     return _probe.num_of_cells > 0;
 }
 

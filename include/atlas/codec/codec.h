@@ -10,6 +10,7 @@
  */
 
 #include <atlas/fluid/fluid.h>
+#include <atlas/codec/codec_probe.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/universe/universe.h>
@@ -45,117 +46,7 @@ namespace atlas::system {
 template <typename T>
 class Codec {
 public:
-    /**
-     * @brief Raw-pointer view over common codec input/output data.
-     *
-     * `CodecProbe` is populated by @ref make_probe. It groups optional universe
-     * state pointers, codec-owned solver-allocation data, searcher cell ranges,
-     * and scalar simulation metadata into a compact object suitable for device
-     * kernel capture.
-     *
-     * The universe-state pointers are optional:
-     *
-     * - `temperature_ptr` is populated when `UniverseTemperatureState<T>` exists,
-     * - `number_particle_ptr` is populated when `UniverseNumberParticleState<T>` exists,
-     * - `knudsen_number_ptr` is populated when `UniverseKnudsenNumberState<T>` exists.
-     *
-     * Searcher pointers are copied from the configured spatial hashing searcher.
-     * The current implementation only requires `num_of_cells > 0` for the probe
-     * to report success, so derived codecs should check any optional pointer they
-     * require before dereferencing it.
-     */
-    struct CodecProbe {
-        /**
-         * @brief Raw pointer to optional per-cell temperature data.
-         *
-         * Points to `UniverseTemperatureState<T>::data()` when that state exists;
-         * otherwise remains `nullptr`.
-         */
-        const T* temperature_ptr {};
-
-        /**
-         * @brief Raw pointer to optional per-cell particle-count data.
-         *
-         * Points to `UniverseNumberParticleState<T>::data()` when that state
-         * exists; otherwise remains `nullptr`.
-         */
-        const T* number_particle_ptr {};
-
-        /**
-         * @brief Raw pointer to optional per-cell Knudsen-number output/input data.
-         *
-         * Points to `UniverseKnudsenNumberState<T>::data()` when that state
-         * exists; otherwise remains `nullptr`.
-         */
-        T* knudsen_number_ptr {};
-
-        /**
-         * @brief Raw pointer to the codec-owned per-cell solver allocation buffer.
-         *
-         * Points to @ref d_allocated_solver when it is non-empty; otherwise
-         * remains `nullptr`.
-         */
-        int* allocated_solver_ptr {};
-
-        /**
-         * @brief Raw pointer to the codec-owned fixed solver-index buffer.
-         *
-         * Fixed-region cells use this solver index during decode.
-         */
-        const int* fixed_solver_ptr {};
-
-        /**
-         * @brief Raw pointer to the codec-owned fixed-region mask.
-         *
-         * A value of `1` marks a cell whose encode/decode classification should
-         * be fixed rather than recomputed by a derived codec.
-         */
-        const int* fixed_region_ptr {};
-
-        /**
-         * @brief Raw pointer to sorted particle indices produced by the searcher.
-         *
-         * For each cell, `[cell_start_ptr[cell], cell_end_ptr[cell])` indexes
-         * into this array.
-         */
-        const int* indices_ptr {};
-
-        /**
-         * @brief Raw pointer to the first sorted index for each cell.
-         */
-        const int* cell_start_ptr {};
-
-        /**
-         * @brief Raw pointer to one-past-the-last sorted index for each cell.
-         */
-        const int* cell_end_ptr {};
-
-        /**
-         * @brief Number of particles reported by the fluid.
-         */
-        int particle_count {};
-
-        /**
-         * @brief Number of cells reported by the universe.
-         *
-         * @ref make_probe returns `true` only when this value is greater than zero.
-         */
-        int num_of_cells {};
-
-        /**
-         * @brief Volume of one universe cell.
-         *
-         * Copied from `universe->cell_volume()`.
-         */
-        T cell_volume {};
-
-        /**
-         * @brief Statistical weight of the fluid particles.
-         *
-         * Copied from `fluid->statistical_weight()`.
-         */
-        T statistical_weight {};
-    };
+    using CodecProbe = atlas::system::CodecProbe<T>;
 
 public:
     /**
