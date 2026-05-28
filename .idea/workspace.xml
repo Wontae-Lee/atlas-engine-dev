@@ -252,6 +252,7 @@
       <config projectName="atlas-engine-dev" targetName="ContinuousUpdate" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalConfigure" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="reporter_output_test" />
+      <config projectName="atlas-engine-dev" targetName="atlas_tests_workload" />
       <config projectName="atlas-engine-dev" targetName="map_test" />
       <config projectName="atlas-engine-dev" targetName="ExperimentalStart" folderName="CTestDashboardTargets" />
       <config projectName="atlas-engine-dev" targetName="atlas_tests_sink" />
@@ -279,29 +280,51 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactoried codes for device-view and cleaned comments.">
-      <change afterPath="$PROJECT_DIR$/benchmarks/atlas/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/dumux" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/piclas" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/sparta" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/splishsplash" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitmodules" beforeDir="false" afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/collider/collider_probe.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/measure/measurer_probe.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator_probe.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/sink/sink_probe.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/solver/hybrid/hybrid_dsmc_sph_probe.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_probe.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/include/atlas/source/source_probe.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/benchmarks/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_cell_sequential_scheduler.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_cell_sequential_scheduler.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_collision_scheduler.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_collision_scheduler.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_flatten_scheduler.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_flatten_scheduler.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_piclas_scheduler.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/scheduler/dsmc_piclas_scheduler.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/collider/collider.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/piclas_surface_interaction.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/piclas_surface_interaction.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/sparta_surface_interaction.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/collider/sparta_surface_interaction.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/measurer.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/measurer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/measure/measurer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/measure/measurer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/orchestrator/orchestrator.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/sink/sink.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/piclas/dsmc_piclas_solver.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/piclas/dsmc_piclas_solver.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/piclas/piclas_pairing.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/piclas/piclas_vhs_kernel.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/piclas/piclas_vhs_kernel.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/sparta/dsmc_sparta_solver.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/sparta/dsmc_sparta_solver.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/sparta/sparta_vss_kernel.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/sparta/sparta_vss_kernel.hpp" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/hybrid/hybrid_dsmc_sph_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/hybrid/hybrid_dsmc_sph_solver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/include/atlas/solver/hybrid/hybrid_dsmc_sph_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/hybrid/hybrid_dsmc_sph_solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/scheduler/dsmc_collision_scheduler_tests.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/source/source.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/source/source.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/workload/dsmc_cell_sequential_workload.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/workload/dsmc_cell_sequential_workload.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/atlas/workload/dsmc_collision_workload.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/workload/dsmc_collision_workload.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/collider/piclas_surface_interaction_tests.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/piclas/piclas_pairing_tests.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/piclas/piclas_vhs_kernel_tests.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/solver/dsmc/sparta/sparta_vss_kernel_tests.cpp" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -324,7 +347,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="509" />
+    <option name="cachedIndexableFilesCount" value="527" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -378,61 +401,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.5091041010953363" />
-      <entry key="MS500" value="3.516338362459951" />
-      <entry key="S2" value="6.74892860374894" />
-      <entry key="S5" value="8.42179299625606" />
-      <entry key="S10" value="9.260703599301813" />
-      <entry key="S30" value="11.908799957997628" />
-      <entry key="S60" value="14.600221336227971" />
-      <entry key="M2" value="18.688367539996428" />
-      <entry key="M5" value="45.74123168697012" />
-      <entry key="M10" value="116.75921416122073" />
-      <entry key="M15" value="194.8691573731726" />
-      <entry key="M30" value="424.13892852783334" />
-      <entry key="H1" value="810.9415272417618" />
-      <entry key="H2" value="1314.7162260085547" />
-      <entry key="H4" value="1794.0718686982068" />
-      <entry key="D1" value="2438.8553343209596" />
-      <entry key="W1" value="2583.647684167533" />
+      <entry key="MS100" value="1.7461525319917184" />
+      <entry key="MS500" value="4.172472451078598" />
+      <entry key="S2" value="7.859880982671031" />
+      <entry key="S5" value="12.785582683143186" />
+      <entry key="S10" value="20.616434913672826" />
+      <entry key="S30" value="46.265382596874616" />
+      <entry key="S60" value="70.10652303693297" />
+      <entry key="M2" value="107.01955232448613" />
+      <entry key="M5" value="172.79259023956135" />
+      <entry key="M10" value="220.06889989379366" />
+      <entry key="M15" value="244.67825117662983" />
+      <entry key="M30" value="301.77701591082257" />
+      <entry key="H1" value="485.0134519873321" />
+      <entry key="H2" value="990.7287076540463" />
+      <entry key="H4" value="1840.9686485234242" />
+      <entry key="D1" value="3678.7857413744737" />
+      <entry key="W1" value="4212.708364838742" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="9.788518530502054E-110" />
-      <entry key="S5" value="2.493772520053309E-44" />
-      <entry key="S10" value="1.6353266398635044E-22" />
-      <entry key="S30" value="7.192407490806148E-8" />
-      <entry key="S60" value="3.6712572549384305E-4" />
-      <entry key="M2" value="0.028130741992827352" />
-      <entry key="M5" value="0.5153909329207701" />
-      <entry key="M10" value="2.0938368485114123" />
-      <entry key="M15" value="4.173866311418255" />
-      <entry key="M30" value="10.689421339541125" />
-      <entry key="H1" value="21.074863045484864" />
-      <entry key="H2" value="34.700744217612446" />
-      <entry key="H4" value="48.37254186760633" />
-      <entry key="D1" value="67.73887762153646" />
-      <entry key="W1" value="72.21259835735084" />
+      <entry key="MS100" value="4.7300694919586077E-141" />
+      <entry key="MS500" value="8.609412256551526E-29" />
+      <entry key="S2" value="9.632783311156106E-8" />
+      <entry key="S5" value="0.0015849945822203099" />
+      <entry key="S10" value="0.04585926013939321" />
+      <entry key="S30" value="0.6304718034706807" />
+      <entry key="S60" value="1.40092256912212" />
+      <entry key="M2" value="2.3366590012867374" />
+      <entry key="M5" value="3.636830913672493" />
+      <entry key="M10" value="4.6553451832130355" />
+      <entry key="M15" value="5.306468542890913" />
+      <entry key="M30" value="6.864445383527561" />
+      <entry key="H1" value="10.64182467175076" />
+      <entry key="H2" value="21.345910948109857" />
+      <entry key="H4" value="41.24961751134318" />
+      <entry key="D1" value="88.15101779873712" />
+      <entry key="W1" value="102.36251115484721" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.4637725091567395" />
-      <entry key="MS500" value="3.497503204064018" />
-      <entry key="S2" value="6.739919957413509" />
-      <entry key="S5" value="8.417266711821714" />
-      <entry key="S10" value="9.258216261676456" />
-      <entry key="S30" value="11.907781079525167" />
-      <entry key="S60" value="14.599982178049675" />
-      <entry key="M2" value="18.71596637128736" />
-      <entry key="M5" value="46.254721737407294" />
-      <entry key="M10" value="118.84712471879574" />
-      <entry key="M15" value="199.03319734132293" />
-      <entry key="M30" value="434.81325622719834" />
-      <entry key="H1" value="832.0011233481698" />
-      <entry key="H2" value="1349.4050136017524" />
-      <entry key="H4" value="1842.4365369292707" />
-      <entry key="D1" value="2506.5924925619634" />
-      <entry key="W1" value="2655.8600240645637" />
+      <entry key="MS100" value="1.6999573041743858" />
+      <entry key="MS500" value="4.150608292804744" />
+      <entry key="S2" value="7.849118746207373" />
+      <entry key="S5" value="12.779528848362018" />
+      <entry key="S10" value="20.6490912082774" />
+      <entry key="S30" value="46.85929033081569" />
+      <entry key="S60" value="71.46996186429494" />
+      <entry key="M2" value="109.32680767766246" />
+      <entry key="M5" value="176.4122927722855" />
+      <entry key="M10" value="224.71367249468022" />
+      <entry key="M15" value="249.97668650842078" />
+      <entry key="M30" value="308.6359242142792" />
+      <entry key="H1" value="495.6502679640256" />
+      <entry key="H2" value="1012.0686877730307" />
+      <entry key="H4" value="1882.2121820657044" />
+      <entry key="D1" value="3766.934588944477" />
+      <entry key="W1" value="4315.070517719802" />
     </decayedShown>
   </component>
   <component name="ProjectApplicationVersion">
@@ -803,9 +826,10 @@
         <option name="BeforeTestRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+    <configuration name="atlas_tests_workload" type="CMakeGoogleTestRunConfigurationType" factoryName="Google Test" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas_tests_workload" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="atlas-engine-dev" RUN_TARGET_NAME="atlas_tests_workload" TEST_MODE="SUITE_TEST">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="BeforeTestRunTask" enabled="true" />
       </method>
     </configuration>
     <configuration name="atlas-logging" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-logging" CONFIG_NAME="cuda-debug">
@@ -1082,6 +1106,7 @@
       <item itemvalue="Google Test.atlas_tests_tuple" />
       <item itemvalue="Google Test.atlas_tests_unit" />
       <item itemvalue="Google Test.atlas_tests_universe" />
+      <item itemvalue="Google Test.atlas_tests_workload" />
       <item itemvalue="Google Test.Sink.BuilderRejectsMissingDependencies" />
       <item itemvalue="Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove" />
       <item itemvalue="Python.generate_headers" />
@@ -1239,7 +1264,12 @@
       <workItem from="1779804481596" duration="86000" />
       <workItem from="1779805488263" duration="122000" />
       <workItem from="1779805729581" duration="4580000" />
-      <workItem from="1779874488448" duration="1579000" />
+      <workItem from="1779874488448" duration="5160000" />
+      <workItem from="1779882250162" duration="10000" />
+      <workItem from="1779891400319" duration="281000" />
+      <workItem from="1779891818023" duration="6327000" />
+      <workItem from="1779952595899" duration="7722000" />
+      <workItem from="1779967627492" duration="424000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
