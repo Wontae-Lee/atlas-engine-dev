@@ -1,54 +1,67 @@
-# AGENTS.md — Atlas Engine Dev
+# AGENTS.md — Atlas Engine
 
-## Codex Operating Rules
+## General AI Instructions
 
-- Communicate with the user in Korean unless they ask otherwise.
-- Write source-code comments in English.
-- Keep changes small and scoped to the user's request.
-- Write concise code: avoid unnecessary temporary variables, redundant null checks, and verbose comments when direct expressions match the local pattern.
-- Do not refactor broadly, change public APIs, or add dependencies unless explicitly asked.
-- Preserve existing style, naming, include order, file layout, and backend portability.
-- Do not add defensive checks, fallback paths, or new validation unless requested or already required by the local pattern.
-- Do not run builds, tests, benchmarks, simulations, or formatters unless the user explicitly asks. If not run, state that clearly.
-- When the user asks for `git commit`, group all staged changes except `.idea/workspace.xml` by related purpose, then create commits that match those groups.
-- Commit `.idea/workspace.xml` only when the user asks for `git commit all`, and only after all other grouped commits are complete.
+* Respond in Korean unless the user asks for another language.
+* Write source-code comments in English.
+* Make changes bold enough to fully satisfy the requested behavior. Do not preserve broken structure just to keep a diff small.
+* Keep edits focused on the requested behavior, but do not treat minimal line count as a goal.
+* Preserve existing style, naming, include order, file layout, and backend portability.
+* Do not introduce broad refactors, public API changes, new dependencies, build-system changes, or formatting-only churn unless explicitly requested.
+* Be cautious only when the user asks for a conservative change, when public APIs or cross-module contracts would change, or when the invariant needed for a larger fix is unclear.
+* Avoid changes that predictably break builds or leave declarations and definitions inconsistent. If the correct fix requires touching related files, update them together.
+* Prefer project abstractions and existing invariants over ad-hoc workarounds.
+* When a request depends on missing context or an unclear invariant, explain the gap instead of guessing or adding unrelated safeguards.
+* When the user asks for `git commit`, group all staged changes except `.idea/workspace.xml` by related purpose, then create commits that match those groups.
+* Commit `.idea/workspace.xml` only when the user asks for `git commit all`, and only after all other grouped commits are complete.
+
+## Coding Style
+
+* Implement only the requested algorithm or behavior.
+* Keep code concise and direct; avoid unnecessary temporary variables, redundant branches, and verbose comments.
+* Prefer concise class and function names, but optimize for readable control flow over raw name length.
+* Keep member function names short and natural when the class context already supplies meaning. Prefer names like `apply_collision` over overly explicit names such as `accept_and_scatter_pair` or `particle_index_at_offset`.
+* Function names should clearly distinguish each algorithmic step. Avoid near-duplicate names that differ only by a generic suffix or repeated verb, such as `execute_*_trial` and `execute_*_pair`, when more specific step names would make the call flow easier to scan.
+* Do not split code into many tiny helpers just to shorten individual functions. A readable implementation should make the algorithmic flow understandable at the call site.
+* Do not add defensive checks, fallback paths, ownership guards, recovery branches, diagnostic-only state, or debug scaffolding unless requested or necessary to preserve an existing local contract.
+* Do not silently repair invalid states by resetting, zeroing, clamping, skipping required work, or mutating unrelated data unless that is part of the requested algorithm.
+* Avoid mutating shared solver, universe, fluid, or searcher state from guard branches. Update only the state owned by the requested algorithmic step.
+* Keep temporary logging, counters, assertions, probes, timing code, and instrumentation-only fields out of production code unless requested.
+* Use Doxygen-style comments for public APIs or files that already follow that convention.
 
 ## Project Overview
 
 Atlas is a C++20 particle simulation engine with a mostly header-only core.
 
-- Core headers: `include/atlas/`
-- Optional OpenGL visualization: `src/vizkit/`
-- Compiled sources: `src/logging/`, `src/vizkit/`, `src/serialization/`
-- Generated umbrella header: `include/atlas/atlas.h`
-- Do not hand-edit generated umbrella headers; use `tools/generate_headers.py`.
+* Core headers: `include/atlas/`
+* Optional OpenGL visualization: `src/vizkit/`
+* Compiled sources: `src/logging/`, `src/vizkit/`, `src/serialization/`
+* Generated umbrella header: `include/atlas/atlas.h`
+* Do not hand-edit generated umbrella headers; use `tools/generate_headers.py`.
 
-## Backend Model
+## Backend and Portability
 
-- Exactly one backend must be enabled: `ATLAS_USE_CUDA` or `ATLAS_USE_TBB`.
-- Backend macros are `ATLAS_TASKING_CUDA` and `ATLAS_TASKING_TBB`.
-- `DeviceBuffer<T>` is `thrust::device_vector<T>` on CUDA and `std::vector<T>` on TBB.
-- `HostBuffer<T>` is `thrust::host_vector<T>` on CUDA and `std::vector<T>` on TBB.
-- `device_shared_ptr<T>` maps to CUDA-aware ownership or `std::shared_ptr<T>`.
-- Use `parallel_for<ExecutionPolicy>(...)` and project abstractions instead of backend-specific code when possible.
+Exactly one backend must be enabled: `ATLAS_USE_CUDA` or `ATLAS_USE_TBB`.
 
-Use portability macros from `include/atlas/core/macros.h`:
+* Backend macros: `ATLAS_TASKING_CUDA`, `ATLAS_TASKING_TBB`
+* `DeviceBuffer<T>` maps to `thrust::device_vector<T>` on CUDA and `std::vector<T>` on TBB.
+* `HostBuffer<T>` maps to `thrust::host_vector<T>` on CUDA and `std::vector<T>` on TBB.
+* `device_shared_ptr<T>` maps to CUDA-aware ownership or `std::shared_ptr<T>`.
+* Prefer `parallel_for<ExecutionPolicy>(...)` and project abstractions over backend-specific code.
 
-- `ATLAS_HOST`
-- `ATLAS_DEVICE`
-- `ATLAS_ALL_DEVICE`
-- `ATLAS_FORCE_INLINE`
-- `ATLAS_NODISCARD`
-- `ATLAS_MAYBE_UNUSED`
-- `RESTRICT`
+Use portability macros from `include/atlas/core/macros.h` when appropriate:
+
+* `ATLAS_HOST`, `ATLAS_DEVICE`, `ATLAS_ALL_DEVICE`
+* `ATLAS_FORCE_INLINE`, `ATLAS_NODISCARD`, `ATLAS_MAYBE_UNUSED`
+* `RESTRICT`
 
 ## Runtime Architecture
 
-- `atlas::Fluid<T>` owns particle storage, material/species properties, generator operators, and fluid states.
-- `atlas::Universe<T>` owns domain extents, grid resolution, and universe states.
-- `atlas::Source<T>` emits particles into inactive capacity after the active prefix.
-- `atlas::Sink<T>` removes particles and compacts survivors back into the active prefix.
-- `atlas::system::System<T>` is the high-level simulation driver.
+* `atlas::Fluid<T>` owns particle storage, material/species properties, generator operators, and fluid states.
+* `atlas::Universe<T>` owns domain extents, grid resolution, and universe states.
+* `atlas::Source<T>` emits particles into inactive capacity after the active prefix.
+* `atlas::Sink<T>` removes particles and compacts survivors into the active prefix.
+* `atlas::system::System<T>` is the high-level simulation driver.
 
 `System<T>::update()` runs:
 
@@ -59,223 +72,127 @@ source->update(dt)
 -> sink->update(dt)
 ```
 
-Collision and motion:
-
-- The old standalone `Advector` API is gone.
-- There is no `include/atlas/advector/` module.
-- Collider-aware motion is handled through `Collider<T>` and `System<T>::advect()`.
-- Without a collider, `System<T>::time_integration()` performs `position += velocity * dt`.
+Collision-aware motion is handled through `Collider<T>` and `System<T>::advect()`. Without a collider, `System<T>::time_integration()` performs `position += velocity * dt`.
 
 ## Active Prefix Discipline
 
-- `Fluid<T>::buffer_size()` is total allocated capacity.
-- `Fluid<T>::particle_count()` is the active dense prefix length.
-- Only `[0, particle_count)` is active.
-- Source emission appends behind the active prefix.
-- Sink removal compacts active particles and updates `particle_count`.
+* `Fluid<T>::buffer_size()` is total allocated capacity.
+* `Fluid<T>::particle_count()` is the active dense prefix length.
+* Only `[0, particle_count)` is active.
+* Source emission appends behind the active prefix.
+* Sink removal compacts active particles and updates `particle_count`.
 
-When writing tests or setup code:
+When writing setup code or tests, set capacity with `Fluid<T>::Builder::with_buffer_size(...)`, set `particle_count` explicitly when active particles should exist, and never assume `particle_count == buffer_size`.
 
-1. Set capacity through `Fluid<T>::Builder::with_buffer_size(...)`.
-2. Set `particle_count` explicitly when active particles should exist.
-3. Never assume `particle_count == buffer_size`.
+## Solver Guidelines
 
-## Solver Structure
+* `Solver<T>` owns protected `_universe`, `_fluid`, and `_searcher`; derived solvers should reuse these members instead of duplicating dependencies.
+* DSMC solvers use `DsmcSolver<T>::DsmcSolverProbe` cached in `_probe`; call `make_probe()` before device launches when probe data must be refreshed.
+* SPH solvers use `SphSolver<T>::SphSolverProbe` cached in `_probe`.
+* Solver-allocation filtering should be passed as function parameters, not stored in probes.
+* Allocation filtering must only skip cells outside the selected allocation. It must not clear collision statistics or universe state owned by another solver.
+* Solver code is performance-sensitive; avoid behavior, memory-layout, or ownership changes unless requested.
 
-- `Solver<T>` owns protected `_universe`, `_fluid`, and `_searcher` dependencies. Derived solvers should use the base storage, not duplicate these members.
-- DSMC solvers use `DsmcSolver<T>::DsmcSolverProbe` cached in `_probe`.
-- `DsmcSolver<T>::make_probe()` refreshes `_probe`; derived DSMC solvers copy `this->_probe` before device launches.
-- `DsmcSolver<T>` handles DSMC state setup, no-time-counter statistics, and stochastic collision-count rounding.
-- DSMC allocation filtering is passed as function parameters, not stored in the probe.
-- `SphSolver<T>` uses `SphSolver<T>::SphSolverProbe` cached in `_probe`.
-- `SphSolver<T>::make_probe()` stores runtime particle/search/universe pointers in `_probe`.
-- `SphSolverProbe` does not store solver-allocation data.
-- `SphGatewaySolver<T>` caches an SPH probe in protected `_probe` and uses function parameters for allocation filtering.
-- Solver code is performance-sensitive; avoid behavior or memory-layout changes unless requested.
+## Orchestrator and System
 
-## Orchestrator
-
-- `atlas::system::Orchestrator<T>` coordinates optional search, codec, measurement, field-force/gravity application, and solvers.
-- `System<T>::Builder::with_solver(...)` currently accepts an `OrchestratorHostPtr<T>`.
+* `atlas::system::Orchestrator<T>` coordinates optional search, codec, measurement, field-force/gravity application, and solvers.
+* `System<T>::Builder::with_solver(...)` currently accepts an `OrchestratorHostPtr<T>`.
+* The standalone `Advector` API and `include/atlas/advector/` module are no longer used.
 
 ## Vizkit
 
-- Vizkit is compiled only when `ATLAS_ENABLE_VIZKIT` is defined.
-- `vizkit::Viewer<T>` stores a `SystemHostPtr<T>`.
-- `Viewer<T>` reads `system()->dt()`; it does not own a separate timestep.
-- `Viewer<T>::Builder` uses `.with_system(...)`, `.with_size(...)`, `.with_title(...)`, and `.with_fullscreen(...)`.
-- Layer updates receive `(GLFWwindow*, Camera&, T dt)`.
+* Vizkit is compiled only when `ATLAS_ENABLE_VIZKIT` is defined.
+* `vizkit::Viewer<T>` stores a `SystemHostPtr<T>` and reads `system()->dt()`.
+* `Viewer<T>::Builder` uses `.with_system(...)`, `.with_size(...)`, `.with_title(...)`, and `.with_fullscreen(...)`.
+* Layer updates receive `(GLFWwindow*, Camera&, T dt)`.
 
-## Namespaces
+## Namespaces and Builders
 
-- Common aliases are re-exported under `atlas::`.
-- Runtime types mostly live under `atlas::system::`, `atlas::fluid::`, `atlas::universe::`, and `atlas::geometry::`.
-- Math types live under `atlas::math::`, with convenience aliases in `atlas::`.
+* Common aliases are re-exported under `atlas::`.
+* Runtime types mostly live under `atlas::system::`, `atlas::fluid::`, `atlas::universe::`, and `atlas::geometry::`.
+* Math types live under `atlas::math::`, with convenience aliases in `atlas::`.
+* Most public types use nested `Builder` classes with `.with_*()` setters, `.build()`, and `.make_host_shared()`.
+* Write nested builders in the `Collider<T>` style: declare `class Builder;` inside the owning class, then define `template <typename T> class Type<T>::Builder final` after the owning class body in the same header. Keep `builder()` as a static factory on the owning class.
+* `Source<T>::Builder` and `Sink<T>::Builder` use `with_units(...)`.
+* `System<T>::Builder` does not own particle capacity; capacity belongs to `Fluid<T>`.
 
-## Builders
+## File and Module Conventions
 
-Most public types use nested `Builder` classes with `.with_*()` setters, `.build()`, and `.make_host_shared()`.
+* Use `#pragma once` in headers.
+* Template components use paired `.h` and `.hpp` files in the same directory, with the `.h` including the `.hpp` at the bottom.
+* Keep declarations and definitions synchronized.
+* CUDA translation units use `.cu`; CPU translation units use `.cpp`.
+* Do not silently rename existing public spellings such as `MatrialProperties` or `sensor_matrics` unless the task explicitly requests a rename.
+* `include/atlas/system/system.h` and `include/atlas/system/system.hpp` should keep this order: constructors/destructor, major runtime functions, setters, getters, clear functions.
 
-Important details:
+Current `include/atlas/` modules include:
 
-- `Source<T>::Builder` uses `with_units(...)`, not `with_unit(...)`.
-- `Sink<T>::Builder` uses `with_units(...)`, not `with_unit(...)`.
-- `System<T>::Builder` does not own particle capacity; capacity belongs to `Fluid<T>`.
-
-## Template Files
-
-- Template components use paired `.h` and `.hpp` files in the same directory.
-- The `.h` includes the `.hpp` at the bottom.
-- Keep declarations and definitions synchronized.
-
-`include/atlas/system/system.h` and `include/atlas/system/system.hpp` should stay ordered as:
-
-1. constructors / destructor
-2. major runtime functions
-3. setters
-4. getters
-5. clear functions
-
-## Include Modules
-
-Current `include/atlas/` modules:
-
-- `atomic`, `buffer`, `codec`, `collider`, `container`, `core`
-- `fluid`, `generator`, `geometry`, `indexer`, `iterator`
-- `logging`, `material`, `math`, `measure`, `memory`, `observer`, `orchestrator`
-- `parallel`, `random`, `remove`, `sampling`, `scan`, `searcher`, `serialization`, `shuffle`
-- `sink`, `solver`, `source`, `spatial`, `sync`, `system`
-- `transform`, `tuple`, `unit`, `universe`
-
-## Python Environment
-
-- Before using Python, activate the project virtual environment with `source .venv/bin/activate`.
-- The virtual environment contains the project Python interpreter and required libraries.
-
-## Build Reference
-
-`CMakePresets.json` requires CMake 3.20+. All presets use Ninja.
-
-Do not run these commands unless the user explicitly asks.
-
-```bash
-# TBB
-cmake --preset tbb-debug
-cmake --build build/tbb-debug -j$(nproc)
-ctest --preset ctest-tbb-debug
-
-# CUDA
-cmake --preset cuda-debug
-cmake --build build/cuda-debug -j$(nproc)
-
-# CUDA tests
-cmake --preset cuda-debug-tests
-cmake --build build/cuda-debug-tests --target atlas_all_cuda_test -j$(nproc)
-./build/cuda-debug-tests/atlas_all_cuda_test --gtest_list_tests
+```text
+atomic, buffer, codec, collider, container, core, fluid, generator,
+geometry, indexer, iterator, logging, material, math, measure,
+memory, observer, orchestrator, parallel, random, remove, sampling,
+scan, searcher, serialization, shuffle, sink, solver, source,
+spatial, sync, system, transform, tuple, unit, universe
 ```
 
-Configure presets:
+## Build and Test Policy
 
-- TBB: `tbb-debug`, `tbb-release`
-- CUDA: `cuda-debug`, `cuda-release`, `cuda-debug-tests`
+Do not run builds, tests, benchmarks, simulations, generators, or formatters unless the user explicitly asks.
 
-Build presets:
+If the user asks to run project Python tools, activate the virtual environment first:
 
-- `build-tbb-debug`, `build-tbb-release`
-- `build-cuda-debug`, `build-cuda-release`, `build-cuda-debug-tests`
+```bash
+source .venv/bin/activate
+```
 
-Test presets:
+`CMakePresets.json` requires CMake 3.20+ and Ninja. Important presets are:
 
-- `ctest-tbb-debug`, `ctest-tbb-release`
+* Configure: `tbb-debug`, `tbb-release`, `cuda-debug`, `cuda-release`, `cuda-debug-tests`
+* Build: `build-tbb-debug`, `build-tbb-release`, `build-cuda-debug`, `build-cuda-release`, `build-cuda-debug-tests`
+* Test: `ctest-tbb-debug`, `ctest-tbb-release`
 
 Important options:
 
-- `ATLAS_USE_CUDA`
-- `ATLAS_USE_TBB`
-- `ATLAS_USE_VIZKIT`
-- `ATLAS_LOGGING`
-- `ATLAS_GOOGLE_TEST`
-- `ATLAS_CUDA_TEST`
-- `ATLAS_BENCHMARKS`
+* `ATLAS_USE_CUDA`, `ATLAS_USE_TBB`
+* `ATLAS_USE_VIZKIT`, `ATLAS_LOGGING`
+* `ATLAS_GOOGLE_TEST`, `ATLAS_CUDA_TEST`, `ATLAS_BENCHMARKS`
 
 Constraints:
 
-- Exactly one of `ATLAS_USE_CUDA` and `ATLAS_USE_TBB` must be enabled.
-- `ATLAS_GOOGLE_TEST` is disabled for CUDA presets.
-- Benchmarks are currently TBB-only.
+* Exactly one of `ATLAS_USE_CUDA` and `ATLAS_USE_TBB` must be enabled.
+* `ATLAS_GOOGLE_TEST` is disabled for CUDA presets.
+* Benchmarks are currently TBB-only.
 
-## Tests
+## Test Guidelines
 
-- Shared include: `src/testkit/testkit.h`
-- C++ tests use GoogleTest through `testkit`.
-- CUDA tests use the in-tree `cudatest` through `testkit`.
-- Test discovery uses recursive `tests/*.cpp` and `tests/*.cu` globbing from the root `CMakeLists.txt`.
-- Test sources should include `<testkit/testkit.h>`, not GoogleTest headers directly.
-- Common helpers live in `tests/utilities/test_utils.h`.
+* Shared include: `src/testkit/testkit.h`
+* C++ tests use GoogleTest through `testkit`; CUDA tests use the in-tree `cudatest` through `testkit`.
+* Include `<testkit/testkit.h>` instead of GoogleTest or cudatest headers directly.
+* Keep shared helpers in `tests/utilities/test_utils.h`.
+* Place tests under `tests/<module>/` to match the public module or runtime subsystem.
+* Name C++ test files `<subject>_tests.cpp` and CUDA companion files `<subject>_tests.cu`.
+* Keep local aliases, helper functions, and fixtures in an anonymous namespace.
+* Prefer focused `TEST(SuiteName, BehaviorName)` cases that describe observable behavior.
+* Do not add another C++ or CUDA test `main`; existing entry points are provided by `testkit` and `tests/cuda/main.cu`.
 
-Test binaries:
+Key test locations:
 
-- Aggregate C++ binary: `atlas_tests`
-- Per-directory C++ binaries: `atlas_tests_<directory>`
-- CUDA binary: `atlas_all_cuda_test`
-- CUDA entry point: `tests/cuda/main.cu`
+* `tests/system/system_tests.cpp`
+* `tests/source/`
+* `tests/sink/`
+* `tests/observer/`
+* `tests/material/`
+* `tests/solver/`
 
-Test file structure:
+## Dependencies and Reference Code
 
-- Place tests under `tests/<module>/` to match the public module or runtime subsystem under test.
-- Use nested directories for nested modules, such as `tests/math/matrix/`, `tests/solver/dsmc/`, and `tests/spatial/bounding_volume_hierarchy/`.
-- Name C++ test files `<subject>_tests.cpp`.
-- Name CUDA companion test files `<subject>_tests.cu` when backend/device coverage is needed.
-- Keep shared test helpers in `tests/utilities/test_utils.h`.
-- Do not add another `main` for C++ tests or CUDA tests; C++ uses GoogleTest main through `testkit`, and CUDA uses `tests/cuda/main.cu`.
+External dependencies include TBB, CUDA 12.x, and the OpenGL stack used by Vizkit. In-tree dependencies under `external/` include tinyobjloader, Lyra, googletest, googlebenchmark, and protobuf.
 
-Test writing guidelines:
+Benchmark reference submodules live under `benchmarks/`:
 
-- Include `<testkit/testkit.h>` in test sources instead of including GoogleTest or cudatest headers directly.
-- Include `tests/utilities/test_utils.h` only when shared helpers are needed.
-- Keep local aliases, helper functions, and test fixtures in an anonymous namespace.
-- Prefer focused `TEST(SuiteName, BehaviorName)` cases that describe observable behavior.
-- For new public modules, add tests in a matching `tests/<module>/` directory so recursive discovery creates the expected `atlas_tests_<module>` target.
-- When adding a `.cu` companion, mirror the `.cpp` subject where practical and avoid unsupported sources unless the root `CMakeLists.txt` explicitly excludes them.
+* `benchmarks/dumux`
+* `benchmarks/piclas`
+* `benchmarks/sparta`
+* `benchmarks/splishsplash`
 
-Focused coverage:
-
-- `System`: `tests/system/system_tests.cpp`
-- `Source`: `tests/source/`
-- `Sink`: `tests/sink/`
-- `Observer`: `tests/observer/`
-- `Material`: `tests/material/`
-- Solver tests: `tests/solver/`
-
-## File Conventions
-
-- Use `#pragma once` in headers.
-- CUDA translation units use `.cu`; CPU translation units use `.cpp`.
-- Public APIs should keep Doxygen-style comments where surrounding files use them.
-- Keep the existing public alias spelling `MatrialProperties` unless the task explicitly includes a rename.
-- Keep existing `sensor_matrics` naming in observer APIs and CSV outputs; do not silently normalize it in isolated edits.
-
-## Dependencies
-
-External:
-
-- **TBB**: TBB backend
-- **CUDA 12.x**: CUDA backend, with `--expt-relaxed-constexpr --extended-lambda`
-- **OpenGL stack**: Vizkit builds (`glfw3`, `GLEW`, `GLU`, `GLUT`)
-
-In-tree under `external/`:
-
-- **tinyobjloader**: OBJ mesh loading
-- **Lyra**: header-only CLI parsing
-- **googletest**: C++ unit tests
-- **googlebenchmark**: microbenchmarks
-- **protobuf**: binary snapshot serialization
-
-Benchmark reference submodules under `benchmarks/`:
-
-- **dumux**: `benchmarks/dumux`
-- **piclas**: `benchmarks/piclas`
-- **sparta**: `benchmarks/sparta`
-- **splishsplash**: `benchmarks/splishsplash`
-
-When the user mentions `piclas`, `dumux`, `sparta`, or `splishsplash` in benchmark or reference-code context, treat the name as referring to the corresponding submodule directory under `benchmarks/`.
+When the user mentions `piclas`, `dumux`, `sparta`, or `splishsplash` in benchmark or reference-code context, treat the name as referring to the corresponding submodule directory.
