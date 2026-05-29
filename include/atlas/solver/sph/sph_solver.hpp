@@ -18,7 +18,7 @@ SphSolver<T>::SphSolver(UniverseHostPtr<T> universe,
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher)) {
     // Initialize the runtime SPH kernel and ensure required universe output states exist.
     _kernel = SphKernel<T>(kernel_type);
-    ensure_universe_states();
+    ensure_states();
 }
 
 template <typename T>
@@ -39,7 +39,7 @@ template <typename T>
 void
 SphSolver<T>::solve(const T dt) {
     // Validate dependencies, required fluid states, universe states, and searcher ordering.
-    if (!initialize_sph_context()) {
+    if (!initialize_context()) {
         return;
     }
 
@@ -49,8 +49,8 @@ SphSolver<T>::solve(const T dt) {
     }
 
     // Allocate and clear per-particle working buffers.
-    if (!prepare_particle_fields()) {
-        reset_universe_fields();
+    if (!prepare_fields()) {
+        reset_fields();
         return;
     }
 
@@ -63,7 +63,7 @@ SphSolver<T>::solve(const T dt) {
     update();
 
     // Compute acceleration, update particle velocity, and write cell force output.
-    accumulate_acceleration(dt);
+    accelerate(dt);
 }
 
 template <typename T>
@@ -75,7 +75,7 @@ SphSolver<T>::solve(const DeviceBuffer<int>*, const int, const T) {
 
 template <typename T>
 void
-SphSolver<T>::ensure_universe_states() {
+SphSolver<T>::ensure_states() {
     // Nothing can be initialized without a universe.
     if (!this->_universe) {
         return;
@@ -97,10 +97,10 @@ SphSolver<T>::ensure_universe_states() {
 
 template <typename T>
 bool
-SphSolver<T>::initialize_sph_context() noexcept {
+SphSolver<T>::initialize_context() noexcept {
     // Required runtime dependencies must exist before launching SPH kernels.
     if (!this->_universe || !this->_fluid || !this->_searcher) {
-        reset_universe_fields();
+        reset_fields();
         _density.resize(0);
         _pressure.resize(0);
         _acceleration.resize(0);
@@ -113,7 +113,7 @@ SphSolver<T>::initialize_sph_context() noexcept {
     auto* species_state  = this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
 
     if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr) {
-        reset_universe_fields();
+        reset_fields();
         _density.resize(0);
         _pressure.resize(0);
         _acceleration.resize(0);
@@ -121,7 +121,7 @@ SphSolver<T>::initialize_sph_context() noexcept {
     }
 
     // Ensure output states exist and rebuild spatial hashing for the current particles.
-    ensure_universe_states();
+    ensure_states();
     this->_searcher->build();
 
     return true;
@@ -159,14 +159,14 @@ SphSolver<T>::make_probe() noexcept {
 
 template <typename T>
 bool
-SphSolver<T>::prepare_particle_fields() {
+SphSolver<T>::prepare_fields() {
     // No particle means no SPH update.
     const int particle_count = static_cast<int>(this->_fluid->particle_count());
     if (particle_count <= 0) {
         _density.resize(0);
         _pressure.resize(0);
         _acceleration.resize(0);
-        reset_universe_fields();
+        reset_fields();
         return false;
     }
 
@@ -184,21 +184,21 @@ SphSolver<T>::prepare_particle_fields() {
         Vector3<T>(T(0), T(0), T(0)));
 
     // Clear universe outputs for this step.
-    reset_universe_fields();
+    reset_fields();
 
     return true;
 }
 
 template <typename T>
 void
-SphSolver<T>::reset_universe_fields() {
+SphSolver<T>::reset_fields() {
     // Nothing to reset when no universe is attached.
     if (!this->_universe) {
         return;
     }
 
     // Ensure reset targets exist.
-    ensure_universe_states();
+    ensure_states();
 
     auto* number_particle_state = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
     auto* field_force_state     = this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>();
@@ -218,13 +218,13 @@ template <typename T>
 void
 SphSolver<T>::update() {
     // First compute particle density and pressure, then update cell particle counts.
-    estimate_particle_density_and_pressure();
-    update_cell_number_particles();
+    estimate_density();
+    count_particles();
 }
 
 template <typename T>
 void
-SphSolver<T>::estimate_particle_density_and_pressure() {
+SphSolver<T>::estimate_density() {
     const auto probe = _probe;
     auto* density_ptr  = atlas::raw_pointer_cast(_density.data());
     auto* pressure_ptr = atlas::raw_pointer_cast(_pressure.data());
@@ -244,15 +244,15 @@ SphSolver<T>::estimate_particle_density_and_pressure() {
 
             // Resolve material parameters for this particle.
             const auto& property      = probe.properties_ptr[species_index];
-            const T h                 = smoothing_length_for(property, probe.cell_size);
-            const T rest_density      = rest_density_for(property);
-            const T k                 = pressure_coefficient_for(property);
+            const T h                 = smoothing_length(property, probe.cell_size);
+            const T rest_density      = SphSolver<T>::rest_density(property);
+            const T k                 = pressure_coefficient(property);
             const Vector3<T> position = probe.position_ptr[particle_index];
 
             // Locate the particle's base search cell.
             const Vector3<int> base_cell = particle_cell(position, probe.lower_corner, probe.inverse_cell_size, probe.grid_size);
 
-            const int neighbor_search_radius = search_radius_for(h, probe.cell_size);
+            const int neighbor_search_radius = search_radius(h, probe.cell_size);
             T density                        = T(0);
 
             // Visit all neighboring grid cells inside the smoothing-length search radius.
@@ -261,7 +261,7 @@ SphSolver<T>::estimate_particle_density_and_pressure() {
                     for (int dx = -neighbor_search_radius; dx <= neighbor_search_radius; ++dx) {
                         const Vector3<int> neighbor_cell = base_cell + Vector3<int>(dx, dy, dz);
 
-                        if (!is_valid_neighbor_cell(neighbor_cell, probe.grid_size)) {
+                        if (!valid_cell(neighbor_cell, probe.grid_size)) {
                             continue;
                         }
 
@@ -324,7 +324,7 @@ SphSolver<T>::estimate_particle_density_and_pressure() {
 
 template <typename T>
 void
-SphSolver<T>::update_cell_number_particles() {
+SphSolver<T>::count_particles() {
     const auto probe = _probe;
 
     // Count valid particles in each search cell.
@@ -356,7 +356,7 @@ SphSolver<T>::update_cell_number_particles() {
 
 template <typename T>
 void
-SphSolver<T>::accumulate_acceleration(const T dt) {
+SphSolver<T>::accelerate(const T dt) {
     const auto probe = _probe;
     const auto* density_ptr  = atlas::raw_pointer_cast(_density.data());
     const auto* pressure_ptr = atlas::raw_pointer_cast(_pressure.data());
@@ -376,7 +376,7 @@ SphSolver<T>::accumulate_acceleration(const T dt) {
 
             // Resolve material properties and particle state.
             const auto& property      = probe.properties_ptr[species_index];
-            const T h                 = smoothing_length_for(property, probe.cell_size);
+            const T h                 = smoothing_length(property, probe.cell_size);
             const T mu                = property.dynamic_viscosity.value_or(T(0));
             const T mass              = property.mass;
             const Vector3<T> position = probe.position_ptr[particle_index];
@@ -384,7 +384,7 @@ SphSolver<T>::accumulate_acceleration(const T dt) {
 
             const Vector3<int> base_cell = particle_cell(position, probe.lower_corner, probe.inverse_cell_size, probe.grid_size);
 
-            const int neighbor_search_radius = search_radius_for(h, probe.cell_size);
+            const int neighbor_search_radius = search_radius(h, probe.cell_size);
             Vector3<T> acceleration(T(0), T(0), T(0));
 
             // Accumulate pressure and viscosity interaction from neighbor particles.
@@ -393,7 +393,7 @@ SphSolver<T>::accumulate_acceleration(const T dt) {
                     for (int dx = -neighbor_search_radius; dx <= neighbor_search_radius; ++dx) {
                         const Vector3<int> neighbor_cell = base_cell + Vector3<int>(dx, dy, dz);
 
-                        if (!is_valid_neighbor_cell(neighbor_cell, probe.grid_size)) {
+                        if (!valid_cell(neighbor_cell, probe.grid_size)) {
                             continue;
                         }
 
@@ -515,8 +515,8 @@ SphSolver<T>::accumulate_acceleration(const T dt) {
 
 template <typename T>
 T
-SphSolver<T>::smoothing_length_for(const MaterialProperties<T>& property,
-                                   const T cell_size) noexcept {
+SphSolver<T>::smoothing_length(const MaterialProperties<T>& property,
+                               const T cell_size) noexcept {
     // Prefer material smoothing length; fall back to searcher cell size.
     if (property.smoothing_length.has_value() && *property.smoothing_length > T(0)) {
         return *property.smoothing_length;
@@ -527,7 +527,7 @@ SphSolver<T>::smoothing_length_for(const MaterialProperties<T>& property,
 
 template <typename T>
 T
-SphSolver<T>::rest_density_for(const MaterialProperties<T>& property) noexcept {
+SphSolver<T>::rest_density(const MaterialProperties<T>& property) noexcept {
     // Prefer material rest density; fall back to unit density.
     if (property.rest_density.has_value() && *property.rest_density > T(0)) {
         return *property.rest_density;
@@ -538,14 +538,14 @@ SphSolver<T>::rest_density_for(const MaterialProperties<T>& property) noexcept {
 
 template <typename T>
 T
-SphSolver<T>::pressure_coefficient_for(const MaterialProperties<T>& property) noexcept {
+SphSolver<T>::pressure_coefficient(const MaterialProperties<T>& property) noexcept {
     // Missing pressure coefficient disables pressure response.
     return property.pressure_coefficient.value_or(T(0));
 }
 
 template <typename T>
 int
-SphSolver<T>::search_radius_for(const T smoothing_length, const T cell_size) noexcept {
+SphSolver<T>::search_radius(const T smoothing_length, const T cell_size) noexcept {
     // Convert smoothing length to an integer grid-cell search radius.
     return static_cast<int>(std::ceil(smoothing_length / cell_size));
 }
@@ -567,8 +567,8 @@ SphSolver<T>::particle_cell(const Vector3<T>& position,
 
 template <typename T>
 bool
-SphSolver<T>::is_valid_neighbor_cell(const Vector3<int>& cell,
-                                     const Vector3<int>& grid_size) noexcept {
+SphSolver<T>::valid_cell(const Vector3<int>& cell,
+                         const Vector3<int>& grid_size) noexcept {
     // Check half-open grid bounds: [0, grid_size).
     return cell.x >= 0 && cell.y >= 0 && cell.z >= 0
         && cell.x < grid_size.x && cell.y < grid_size.y && cell.z < grid_size.z;

@@ -27,22 +27,22 @@ namespace atlas::system {
  * The primary execution path is @ref solve(T), which performs:
  *
  * @code
- * if (!initialize_sph_context()) return;
+ * if (!initialize_context()) return;
  * if (!(dt > 0)) throw std::invalid_argument(...);
- * if (!prepare_particle_fields()) {
- *     reset_universe_fields();
+ * if (!prepare_fields()) {
+ *     reset_fields();
  *     return;
  * }
  * make_probe();
  * update();
- * accumulate_acceleration(dt);
+ * accelerate(dt);
  * @endcode
  *
  * The internal @ref update stage executes:
  *
  * @code
- * estimate_particle_density_and_pressure(probe);
- * update_cell_number_particles(probe);
+ * estimate_density(probe);
+ * count_particles(probe);
  * @endcode
  *
  * The codec-aware `solve(const DeviceBuffer<int>*, int, T)` overload is currently
@@ -61,7 +61,6 @@ public:
      */
     class Builder;
 
-public:
     /**
      * @brief Constructs an empty SPH solver.
      *
@@ -76,7 +75,7 @@ public:
      *
      * The constructor forwards the universe, fluid, and searcher to the
      * @ref Solver base class, initializes the runtime SPH kernel from
-     * `kernel_type`, and calls @ref ensure_universe_states.
+     * `kernel_type`, and calls @ref ensure_states.
      *
      * @param universe Universe containing SPH per-cell output states.
      * @param fluid Fluid containing particle position, velocity, species, and material data.
@@ -118,7 +117,7 @@ public:
      * pressure, updates per-cell particle counts, accumulates acceleration, and
      * writes velocity updates in place.
      *
-     * Required dependencies and states are checked by @ref initialize_sph_context
+     * Required dependencies and states are checked by @ref initialize_context
      * and @ref make_probe. If required dependencies or states are unavailable,
      * the solver returns without work.
      *
@@ -156,7 +155,7 @@ public:
      * function is a no-op.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    ensure_universe_states();
+    ensure_states();
 
     /**
      * @brief Initializes the SPH context for one solve step.
@@ -178,7 +177,7 @@ public:
      * @retval false Required dependencies or fluid states were missing.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE bool
-    initialize_sph_context() noexcept;
+    initialize_context() noexcept;
 
     /**
      * @brief Populates an SPH probe from this solver's configured dependencies.
@@ -201,7 +200,7 @@ public:
      * - `_pressure` is filled with zero,
      * - `_acceleration` is filled with zero vectors.
      *
-     * Universe output fields are reset by calling @ref reset_universe_fields.
+     * Universe output fields are reset by calling @ref reset_fields.
      *
      * If the particle count is not positive, all working buffers are cleared,
      * universe fields are reset, and the function returns `false`.
@@ -210,7 +209,7 @@ public:
      * @retval false Particle count was zero or negative.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE bool
-    prepare_particle_fields();
+    prepare_fields();
 
     /**
      * @brief Resets universe-side SPH output fields to zero.
@@ -224,7 +223,7 @@ public:
      * If no universe exists, the function is a no-op.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    reset_universe_fields();
+    reset_fields();
 
     /**
      * @brief Returns the effective smoothing length for a material.
@@ -238,7 +237,7 @@ public:
      * @return Effective smoothing length.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    smoothing_length_for(const MaterialProperties<T>& property, T cell_size) noexcept;
+    smoothing_length(const MaterialProperties<T>& property, T cell_size) noexcept;
 
     /**
      * @brief Returns the effective rest density for a material.
@@ -251,7 +250,7 @@ public:
      * @return Effective rest density.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    rest_density_for(const MaterialProperties<T>& property) noexcept;
+    rest_density(const MaterialProperties<T>& property) noexcept;
 
     /**
      * @brief Returns the pressure coefficient for a material.
@@ -264,7 +263,7 @@ public:
      * @return Pressure coefficient.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    pressure_coefficient_for(const MaterialProperties<T>& property) noexcept;
+    pressure_coefficient(const MaterialProperties<T>& property) noexcept;
 
     /**
      * @brief Converts a smoothing length to a cell-neighborhood search radius.
@@ -281,7 +280,7 @@ public:
      * @return Integer radius in grid cells.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
-    search_radius_for(T smoothing_length, T cell_size) noexcept;
+    search_radius(T smoothing_length, T cell_size) noexcept;
 
     /**
      * @brief Maps a particle position to a clamped search-grid cell coordinate.
@@ -327,19 +326,19 @@ public:
      * @retval false Cell coordinate is outside the grid.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
-    is_valid_neighbor_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
+    valid_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
 
     /**
      * @brief Estimates per-particle density and pressure using the cached SPH probe.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    estimate_particle_density_and_pressure();
+    estimate_density();
 
     /**
      * @brief Updates per-cell particle counts using the cached SPH probe.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    update_cell_number_particles();
+    count_particles();
 
     /**
      * @brief Accumulates SPH acceleration and updates velocities using the cached SPH probe.
@@ -347,7 +346,7 @@ public:
      * @param dt Positive time-step size used for explicit velocity integration.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    accumulate_acceleration(T dt);
+    accelerate(T dt);
 
     /**
      * @brief Executes the density/pressure and cell-count update using the cached SPH probe.
@@ -373,24 +372,24 @@ private:
     /**
      * @brief Solver-owned per-particle density working buffer.
      *
-     * Resized and cleared by @ref prepare_particle_fields, then populated by
-     * @ref estimate_particle_density_and_pressure.
+     * Resized and cleared by @ref prepare_fields, then populated by
+     * @ref estimate_density.
      */
     DeviceBuffer<T> _density {};
 
     /**
      * @brief Solver-owned per-particle pressure working buffer.
      *
-     * Resized and cleared by @ref prepare_particle_fields, then populated by
-     * @ref estimate_particle_density_and_pressure.
+     * Resized and cleared by @ref prepare_fields, then populated by
+     * @ref estimate_density.
      */
     DeviceBuffer<T> _pressure {};
 
     /**
      * @brief Solver-owned per-particle acceleration working buffer.
      *
-     * Resized and cleared by @ref prepare_particle_fields, then populated by
-     * @ref accumulate_acceleration.
+     * Resized and cleared by @ref prepare_fields, then populated by
+     * @ref accelerate.
      */
     DeviceBuffer<Vector3<T>> _acceleration {};
 };

@@ -143,7 +143,6 @@ public:
      */
     class Builder;
 
-public:
     /**
      * @brief Constructs an empty grouped SPH solver.
      *
