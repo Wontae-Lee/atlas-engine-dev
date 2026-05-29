@@ -87,6 +87,7 @@
 #include <atlas/sink/surface_despawn_operator.h>
 #include <atlas/sink/tracing_despawn_operator.h>
 #include <atlas/sink/volume_despawn_operator.h>
+#include <atlas/solver/dsmc/dsmc_flatten_solver.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 #include <atlas/solver/dsmc/dsmc_probe.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
@@ -121,6 +122,3 @@
 #include <atlas/unit/unit.h>
 #include <atlas/universe/universe.h>
 #include <atlas/universe/universe_state.h>
-#include <atlas/workload/dsmc_cell_sequential_workload.h>
-#include <atlas/workload/dsmc_collision_workload.h>
-#include <atlas/workload/dsmc_flatten_workload.h>

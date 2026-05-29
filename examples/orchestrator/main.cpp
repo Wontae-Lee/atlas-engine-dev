@@ -169,21 +169,11 @@ main() {
                                         .make_host_shared();
 
     // Build the DSMC solver used for rarefied cells.
-    const auto dsmc_solver = DsmcCellSequentialSolver<T>::builder()
-                                 // Attach the universe so the solver can access cell topology.
-                                 .with_universe(universe)
-
-                                 // Attach the fluid so the solver can update particle velocities.
-                                 .with_fluid(fluid)
-
-                                 // Attach the searcher so the solver can traverse particles by cell.
-                                 .with_searcher(searcher)
-
-                                 // Use the hard-sphere collision kernel.
-                                 .with_kernel_type(system::DsmcKernelType::hard_sphere)
-
-                                 // Allocate the solver in host-managed shared ownership.
-                                 .make_host_shared();
+    const auto dsmc_solver = make_host_shared<DsmcSolver<T>>(
+        universe,
+        fluid,
+        searcher,
+        system::DsmcKernelType::hard_sphere);
 
     // Build the top-level orchestrator with codec-directed solver routing.
     const auto orchestrator = Orchestrator<T>::builder()
