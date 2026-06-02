@@ -106,9 +106,6 @@ set(ATLAS_PICLAS_SOURCE_DIR
 set(ATLAS_PICLAS_BINARY_DIR
         "${CMAKE_CURRENT_LIST_DIR}/piclas/build"
 )
-set(ATLAS_PICLAS_EXECUTABLE
-        "${ATLAS_PICLAS_BINARY_DIR}/bin/piclas"
-)
 
 set(ATLAS_SPARTA_SOURCE_DIR
         "${CMAKE_CURRENT_LIST_DIR}/sparta/cmake"
@@ -118,9 +115,6 @@ set(ATLAS_SPARTA_BINARY_DIR
 )
 set(ATLAS_SPARTA_INSTALL_DIR
         "${CMAKE_CURRENT_LIST_DIR}/sparta/install"
-)
-set(ATLAS_SPARTA_EXECUTABLE
-        "${ATLAS_SPARTA_BINARY_DIR}/src/spa_atlas"
 )
 
 # ============================================================
@@ -182,8 +176,8 @@ add_custom_target(atlas_external_benchmarks ALL
 add_custom_target(atlas_benchmark_cylinder_sparta_smoke
         COMMAND "${CMAKE_COMMAND}" -E chdir
         "${ATLAS_CYLINDER_BENCHMARK_DIR}/sparta"
-        "${ATLAS_SPARTA_EXECUTABLE}"
-        -in in.cylinder.smoke
+        "${ATLAS_CYLINDER_BENCHMARK_DIR}/sparta/run.sh"
+        --smoke
         DEPENDS atlas_benchmark_sparta_external
         COMMENT "Running SPARTA cylinder smoke simulation"
 )
@@ -191,8 +185,8 @@ add_custom_target(atlas_benchmark_cylinder_sparta_smoke
 add_custom_target(atlas_benchmark_cylinder_piclas_smoke
         COMMAND "${CMAKE_COMMAND}" -E chdir
         "${ATLAS_CYLINDER_BENCHMARK_DIR}/piclas"
-        "${ATLAS_PICLAS_EXECUTABLE}"
-        parameter.smoke.ini DSMC.ini
+        "${ATLAS_CYLINDER_BENCHMARK_DIR}/piclas/run.sh"
+        --smoke
         DEPENDS atlas_benchmark_piclas_external
         COMMENT "Running PICLas cylinder smoke simulation"
 )
