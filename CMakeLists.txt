@@ -9,8 +9,9 @@
 #   3. validating mutually exclusive or unsupported options
 #   4. configuring the selected tasking backend
 #   5. wiring optional subsystems such as logging and visualization
-#   6. creating test and benchmark targets when requested
-#   7. printing a final configuration summary for diagnostics
+#   6. creating test targets when requested
+#   7. delegating benchmark configuration to benchmarks/CMakeLists.txt
+#   8. printing a final configuration summary for diagnostics
 #
 # The overall design goal is to keep the top-level build readable,
 # predictable, and easy to diagnose when configuration issues occur.
@@ -240,12 +241,11 @@ endfunction()
 # Rules enforced here:
 #
 #   1. exactly one tasking backend must be selected
-#   2. benchmarks are disabled for the CUDA backend
-#   3. GoogleTest-based tests are disabled for the CUDA backend
+#   2. GoogleTest-based tests are disabled for the CUDA backend
 #
-# The benchmark and GoogleTest cases are downgraded to warnings
-# and auto-corrected because the user's broader configuration can
-# still proceed successfully without those optional features.
+# The GoogleTest case is downgraded to a warning and auto-corrected
+# because the user's broader configuration can still proceed
+# successfully without that optional feature.
 # ============================================================
 if (ATLAS_USE_CUDA AND ATLAS_USE_TBB)
     message(FATAL_ERROR
@@ -259,14 +259,6 @@ if ((NOT ATLAS_USE_CUDA) AND (NOT ATLAS_USE_TBB))
             "[ATLAS] Invalid configuration: "
             "one of ATLAS_USE_CUDA or ATLAS_USE_TBB must be ON."
     )
-endif ()
-
-if (ATLAS_USE_CUDA AND ATLAS_BENCHMARKS)
-    message(WARNING
-            "[ATLAS] ATLAS_BENCHMARKS are not yet compatible with the CUDA backend. "
-            "Disabling benchmarks."
-    )
-    set(ATLAS_BENCHMARKS OFF)
 endif ()
 
 if (ATLAS_USE_CUDA AND ATLAS_GOOGLE_TEST)
@@ -948,18 +940,20 @@ endif ()
 # ============================================================
 # Benchmarks
 #
-# Benchmark targets are added only when explicitly enabled and not
-# disabled earlier by compatibility validation.
+# Benchmark targets and benchmark-reference builds are intentionally
+# delegated to benchmarks/CMakeLists.txt. Keeping that logic out of
+# the top-level file prevents external benchmark projects from making
+# the main build entry point harder to scan.
 #
-# The benchmark framework itself is vendored through the source tree
-# and benchmark definitions are expected to live under benchmarks/.
+# The top-level file still owns the public ATLAS_BENCHMARKS option and
+# configuration summary, while the benchmark subdirectory owns:
+#
+#   - Google Benchmark setup
+#   - benchmark backend compatibility checks
+#   - external reference-code builds
+#   - benchmark input/smoke-run convenience targets
 # ============================================================
-if (ATLAS_BENCHMARKS)
-    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark self tests" FORCE)
-    set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable Google Benchmark GoogleTest tests" FORCE)
-    add_subdirectory(external/googlebenchmark)
-    add_subdirectory(benchmarks)
-endif ()
+add_subdirectory(benchmarks)
 
 # ============================================================
 # Example applications

@@ -25,7 +25,7 @@
         "ATLAS_LOGGING": "ON",
         "ATLAS_GOOGLE_TEST": "ON",
         "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "ON"
+        "ATLAS_BENCHMARKS": "OFF"
       }
     },
     {
@@ -40,7 +40,7 @@
         "ATLAS_LOGGING": "ON",
         "ATLAS_GOOGLE_TEST": "ON",
         "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "ON"
+        "ATLAS_BENCHMARKS": "OFF"
       }
     },
 
