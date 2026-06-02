@@ -280,22 +280,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d90551f1-efd4-4ca8-9c37-c56731309b9b" name="Changes" comment="Refactoried codes for device-view and cleaned comments.">
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_flatten_solver.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AGENTS.md" beforeDir="false" afterPath="$PROJECT_DIR$/AGENTS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/atlas.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/atlas.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/dsmc/dsmc_solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_gateway_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/atlas/solver/sph/sph_solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/workload/dsmc_cell_sequential_workload.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/workload/dsmc_cell_sequential_workload.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/workload/dsmc_collision_workload.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/workload/dsmc_collision_workload.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/workload/dsmc_flatten_workload.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/include/atlas/workload/dsmc_flatten_workload.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/workload/dsmc_collision_workload_tests.cpp" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -318,7 +303,7 @@
     </selectedModels>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="514" />
+    <option name="cachedIndexableFilesCount" value="510" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -372,61 +357,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0985739132683843" />
-      <entry key="MS500" value="2.2420909756540515" />
-      <entry key="S2" value="4.666313885045019" />
-      <entry key="S5" value="6.641765538375145" />
-      <entry key="S10" value="8.311493550480627" />
-      <entry key="S30" value="10.396906586434133" />
-      <entry key="S60" value="11.297359959464114" />
-      <entry key="M2" value="13.57841197175687" />
-      <entry key="M5" value="32.615616748532915" />
-      <entry key="M10" value="86.6717249864158" />
-      <entry key="M15" value="151.54711218737916" />
-      <entry key="M30" value="331.2285369310571" />
-      <entry key="H1" value="607.3666013489002" />
-      <entry key="H2" value="1116.0322167112479" />
-      <entry key="H4" value="2007.1200139630496" />
-      <entry key="D1" value="4254.619584485776" />
-      <entry key="W1" value="4973.04060501195" />
+      <entry key="MS100" value="1.697993820701992" />
+      <entry key="MS500" value="4.717340131533979" />
+      <entry key="S2" value="8.979424075291163" />
+      <entry key="S5" value="10.633997610978952" />
+      <entry key="S10" value="11.28717709336425" />
+      <entry key="S30" value="11.761070398987002" />
+      <entry key="S60" value="12.111869968566062" />
+      <entry key="M2" value="13.626786006426503" />
+      <entry key="M5" value="20.132170744383224" />
+      <entry key="M10" value="42.100018860732554" />
+      <entry key="M15" value="80.42165284780518" />
+      <entry key="M30" value="227.780179707182" />
+      <entry key="H1" value="501.3319879323006" />
+      <entry key="H2" value="1014.0631849060564" />
+      <entry key="H4" value="1915.2459239960326" />
+      <entry key="D1" value="4241.787520794403" />
+      <entry key="W1" value="4997.522672836636" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="2.4233341144052832E-14" />
-      <entry key="MS500" value="0.0018918406677700364" />
-      <entry key="S2" value="0.2180903674581394" />
-      <entry key="S5" value="0.6896822465195898" />
-      <entry key="S10" value="1.125213457096916" />
-      <entry key="S30" value="1.634693198471426" />
-      <entry key="S60" value="1.8349026351702438" />
-      <entry key="M2" value="2.1459560024164115" />
-      <entry key="M5" value="3.2871438039571306" />
-      <entry key="M10" value="5.688294794487668" />
-      <entry key="M15" value="8.296188771017269" />
-      <entry key="M30" value="14.953426391295057" />
-      <entry key="H1" value="23.904334527493415" />
-      <entry key="H2" value="37.25201408361537" />
-      <entry key="H4" value="59.198820038821154" />
-      <entry key="D1" value="116.52944875575527" />
-      <entry key="W1" value="135.4256380114577" />
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="7.840801230277061E-115" />
+      <entry key="S5" value="2.765585424375783E-46" />
+      <entry key="S10" value="2.215318427302584E-23" />
+      <entry key="S30" value="4.3921352651299243E-8" />
+      <entry key="S60" value="2.962613928705592E-4" />
+      <entry key="M2" value="0.025372058978336533" />
+      <entry key="M5" value="0.49912772425522894" />
+      <entry key="M10" value="2.0687971888063066" />
+      <entry key="M15" value="4.117302446475623" />
+      <entry key="M30" value="10.492342057645237" />
+      <entry key="H1" value="20.273478559864266" />
+      <entry key="H2" value="34.67135932315" />
+      <entry key="H4" value="57.48777176409534" />
+      <entry key="D1" value="117.29163858061078" />
+      <entry key="W1" value="137.21948873893894" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.0752513960966648" />
-      <entry key="MS500" value="2.230591941739455" />
-      <entry key="S2" value="4.694668740803026" />
-      <entry key="S5" value="6.923110342687351" />
-      <entry key="S10" value="9.011416928065884" />
-      <entry key="S30" value="11.783540657776193" />
-      <entry key="S60" value="12.987148137045427" />
-      <entry key="M2" value="15.64265803419759" />
-      <entry key="M5" value="35.86341739462495" />
-      <entry key="M10" value="92.33450732555337" />
-      <entry key="M15" value="159.8218449933345" />
-      <entry key="M30" value="346.1652816095419" />
-      <entry key="H1" value="631.2582568100918" />
-      <entry key="H2" value="1153.2741660307347" />
-      <entry key="H4" value="2066.3105139931013" />
-      <entry key="D1" value="4371.146238713378" />
-      <entry key="W1" value="5108.465779165114" />
+      <entry key="MS100" value="1.6743387118250082" />
+      <entry key="MS500" value="4.700951592194559" />
+      <entry key="S2" value="8.970677958115655" />
+      <entry key="S5" value="10.629759982181849" />
+      <entry key="S10" value="11.284911590268614" />
+      <entry key="S30" value="11.76027973749372" />
+      <entry key="S60" value="12.111753126979572" />
+      <entry key="M2" value="13.651683744158593" />
+      <entry key="M5" value="20.62814413710315" />
+      <entry key="M10" value="44.161770517173515" />
+      <entry key="M15" value="84.5298671306842" />
+      <entry key="M30" value="238.26160430052084" />
+      <entry key="H1" value="521.5951233688638" />
+      <entry key="H2" value="1048.7254069405822" />
+      <entry key="H4" value="1972.7257462385169" />
+      <entry key="D1" value="4359.076370028664" />
+      <entry key="W1" value="5134.741694940904" />
     </decayedShown>
   </component>
   <component name="ProjectApplicationVersion">
@@ -450,66 +435,66 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "CMake Application.atlas_all_cuda_test.executor": "Run",
-    "CMake Application.atlas_benchmarks.executor": "Run",
-    "CMake Application.atlas_cuda_tests.executor": "Run",
-    "CMake Application.atlas_unit_cuda_tests.executor": "Run",
-    "CMake Application.cube_gravity_inflow.executor": "Run",
-    "CMake Application.cylinder.executor": "Run",
-    "CMake Application.cylinder_rarefied_gas.executor": "Run",
-    "CMake Application.dynamic.executor": "Run",
-    "CMake Application.honeycomb.executor": "Run",
-    "CMake Application.inflow.executor": "Run",
-    "CMake Application.intake.executor": "Run",
-    "CMake Application.lh2_waterfall.executor": "Run",
-    "CMake Application.orchestrator.executor": "Run",
-    "CMake Application.overview.executor": "Run",
-    "CMake Application.solver.executor": "Run",
-    "CMake Application.visualization.executor": "Run",
-    "CMake Application.waterfall.executor": "Run",
-    "Google Test.All in atlas_tests.executor": "Run",
-    "Google Test.Sink.BuilderRejectsMissingDependencies.executor": "Run",
-    "Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove.executor": "Run",
-    "Google Test.atlas_tests_universe.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.edit_code.executor": "Run",
-    "Python.generate_headers.executor": "Run",
-    "Python.remove_comments.executor": "Run",
-    "Python.remove_space.executor": "Run",
-    "Python.temp.executor": "Run",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.RadMigrateCodeStyle": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "RunOnceActivity.west.config.association.type.startup.service": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "cf.advertisement.text.overridden": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "ctest.advertisement.all.test.configuration.is.created": "true",
-    "deletionFromPopupRequiresConfirmation": "false",
-    "git-widget-placeholder": "development",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/wontae/CLionProjects/atlas-engine-dev/temp",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "org.rust.first.attach.projects": "true",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "ml.llm.LLMAiRulesSettingsProvider",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;CMake Application.atlas_all_cuda_test.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.atlas_benchmarks.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.atlas_cuda_tests.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.atlas_unit_cuda_tests.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.cube_gravity_inflow.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.cylinder.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.cylinder_rarefied_gas.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.dynamic.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.honeycomb.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.inflow.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.intake.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.lh2_waterfall.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.orchestrator.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.overview.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.solver.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.visualization.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.waterfall.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.All in atlas_tests.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.Sink.BuilderRejectsMissingDependencies.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove.executor&quot;: &quot;Run&quot;,
+    &quot;Google Test.atlas_tests_universe.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.edit_code.executor&quot;: &quot;Run&quot;,
+    &quot;Python.generate_headers.executor&quot;: &quot;Run&quot;,
+    &quot;Python.remove_comments.executor&quot;: &quot;Run&quot;,
+    &quot;Python.remove_space.executor&quot;: &quot;Run&quot;,
+    &quot;Python.temp.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.west.config.association.type.startup.service&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;cf.advertisement.text.overridden&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;ctest.advertisement.all.test.configuration.is.created&quot;: &quot;true&quot;,
+    &quot;deletionFromPopupRequiresConfirmation&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;development&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/wontae/CLionProjects/atlas-engine-dev/temp&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.LLMAiRulesSettingsProvider&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="Push.Settings">
     <force-push-targets>
       <force-push-target remote-path="origin" branch="main" />
@@ -803,11 +788,6 @@
         <option name="BeforeTestRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="atlas-logging" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="atlas-engine-dev" TARGET_NAME="atlas-logging" CONFIG_NAME="cuda-debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -1022,29 +1002,9 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="CMake Application.atlas-logging" />
-      <item itemvalue="CMake Application.atlas-serialization" />
-      <item itemvalue="CMake Application.cylinder_continum" />
-      <item itemvalue="CMake Application.cylinder_rarefied_gas" />
-      <item itemvalue="CMake Application.honeycomb" />
-      <item itemvalue="CMake Application.inflow" />
-      <item itemvalue="CMake Application.intake" />
-      <item itemvalue="CMake Application.libprotobuf-lite" />
-      <item itemvalue="CMake Application.libprotobuf" />
-      <item itemvalue="CMake Application.libprotoc" />
-      <item itemvalue="CMake Application.libupb" />
-      <item itemvalue="CMake Application.orchestrator" />
-      <item itemvalue="CMake Application.protoc-gen-upb" />
-      <item itemvalue="CMake Application.protoc-gen-upb_minitable" />
-      <item itemvalue="CMake Application.protoc-gen-upbdefs" />
-      <item itemvalue="CMake Application.protoc" />
-      <item itemvalue="CMake Application.tinyobjloader" />
-      <item itemvalue="CMake Application.uninstall" />
-      <item itemvalue="CMake Application.utf8_range" />
-      <item itemvalue="CMake Application.utf8_validity" />
-      <item itemvalue="CMake Application.waterfall" />
-      <item itemvalue="CTest Application.All CTest" />
       <item itemvalue="Google Test.All in atlas_tests" />
+      <item itemvalue="Google Test.Sink.BuilderRejectsMissingDependencies" />
+      <item itemvalue="Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove" />
       <item itemvalue="Google Test.atlas_tests_codec" />
       <item itemvalue="Google Test.atlas_tests_collider" />
       <item itemvalue="Google Test.atlas_tests_container" />
@@ -1083,8 +1043,28 @@
       <item itemvalue="Google Test.atlas_tests_unit" />
       <item itemvalue="Google Test.atlas_tests_universe" />
       <item itemvalue="Google Test.atlas_tests_workload" />
-      <item itemvalue="Google Test.Sink.BuilderRejectsMissingDependencies" />
-      <item itemvalue="Google Test.Universe.StateLifecycleSupportsInsertLookupReplaceAndRemove" />
+      <item itemvalue="CMake Application.atlas-logging" />
+      <item itemvalue="CMake Application.atlas-serialization" />
+      <item itemvalue="CMake Application.cylinder_continum" />
+      <item itemvalue="CMake Application.cylinder_rarefied_gas" />
+      <item itemvalue="CMake Application.honeycomb" />
+      <item itemvalue="CMake Application.inflow" />
+      <item itemvalue="CMake Application.intake" />
+      <item itemvalue="CMake Application.libprotobuf-lite" />
+      <item itemvalue="CMake Application.libprotobuf" />
+      <item itemvalue="CMake Application.libprotoc" />
+      <item itemvalue="CMake Application.libupb" />
+      <item itemvalue="CMake Application.orchestrator" />
+      <item itemvalue="CMake Application.protoc-gen-upb" />
+      <item itemvalue="CMake Application.protoc-gen-upb_minitable" />
+      <item itemvalue="CMake Application.protoc-gen-upbdefs" />
+      <item itemvalue="CMake Application.protoc" />
+      <item itemvalue="CMake Application.tinyobjloader" />
+      <item itemvalue="CMake Application.uninstall" />
+      <item itemvalue="CMake Application.utf8_range" />
+      <item itemvalue="CMake Application.utf8_validity" />
+      <item itemvalue="CMake Application.waterfall" />
+      <item itemvalue="CTest Application.All CTest" />
       <item itemvalue="Python.generate_headers" />
       <item itemvalue="Python.remove_comments" />
     </list>
@@ -1248,7 +1228,11 @@
       <workItem from="1779967627492" duration="750000" />
       <workItem from="1779973248780" duration="132000" />
       <workItem from="1780036715138" duration="5167000" />
-      <workItem from="1780041986507" duration="2985000" />
+      <workItem from="1780041986507" duration="5601000" />
+      <workItem from="1780048121291" duration="614000" />
+      <workItem from="1780049252661" duration="222000" />
+      <workItem from="1780049878126" duration="113000" />
+      <workItem from="1780407667291" duration="9000" />
     </task>
     <task id="LOCAL-00001" summary="refactoring for simple solver structures.">
       <option name="closed" value="true" />
