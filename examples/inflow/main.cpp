@@ -112,7 +112,7 @@ main() {
                                        .make_host_shared();
 
     // Build the simulation domain from the cylinder's axis-aligned bounds.
-    const auto bounds = cylinder_geometry->bound();
+    const auto bounds          = cylinder_geometry->bound();
     const auto domain_geometry = geometry::Box<T>::builder()
                                      // Match the cylinder lower bound.
                                      .with_lower_corner(bounds.lower_corner)
@@ -283,7 +283,7 @@ main() {
                             .with_spawn_operator(fluid::SpawnOperator<T>(fluid::SpawnType::Surface))
 
                             // Set the approximate particle spacing on the source disk.
-                            .with_spacing(0.15f)
+                            .with_spacing(0.015f)
 
                             // Use the same thermal temperature as the velocity generator.
                             .with_temperature(300.0f)
@@ -394,6 +394,7 @@ main() {
                                    // Configure the viewer window.
                                    .with_title("Atlas DSMC Nitrogen In-Cylinder Flow")
                                    .with_size(1440, 900)
+                                   .with_timestep_count(1)
 
                                    // Build the viewer.
                                    .build();
