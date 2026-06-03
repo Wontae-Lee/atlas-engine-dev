@@ -13,13 +13,15 @@ Viewer<T>::Viewer(SystemHostPtr<T> system,
                   int height,
                   const char* title,
                   bool fullscreen,
-                  const Vector4<T>& background_color) noexcept
+                  const Vector4<T>& background_color,
+                  std::optional<std::size_t> timestep_count) noexcept
     : _system(std::move(system))
     , _width(width)
     , _height(height)
     , _title(title ? title : "Atlas Viewer")
     , _fullscreen(fullscreen)
-    , _background_color(background_color) {
+    , _background_color(background_color)
+    , _timestep_count(timestep_count) {
     // Construct a viewer with its initial runtime configuration.
     //
     // Stored configuration:
@@ -29,6 +31,7 @@ Viewer<T>::Viewer(SystemHostPtr<T> system,
     // - _title      : window title, defaulting to "Atlas Viewer" when null
     // - _fullscreen : whether the viewer opens in fullscreen mode
     // - _background_color : framebuffer clear color
+    // - _timestep_count : optional number of simulation updates before exit
     //
     // This constructor only stores configuration.
     // OpenGL / GLFW resources are created later in init_gl().
@@ -232,10 +235,11 @@ Viewer<T>::main_loop() {
     // 1. process OS / input events
     // 2. handle viewer-close shortcut
     // 3. update camera controls
-    // 4. advance the simulation system
+    // 4. advance the simulation system when timestep budget remains
     // 5. refresh viewport and clear frame buffers
-    // 6. update and draw each layer
+    // 6. update and draw each layer from the current simulation state
     // 7. present the frame
+    std::size_t timesteps = 0;
     while (!glfwWindowShouldClose(_win)) {
         // Pump pending input and window events.
         glfwPollEvents();
@@ -248,9 +252,12 @@ Viewer<T>::main_loop() {
         // Update camera state from current input.
         _cam.handle(_win);
 
-        if (_system) {
+        const bool should_update = !_timestep_count || timesteps < *_timestep_count;
+
+        if (should_update && _system) {
             // Advance the simulation one step before rendering layers.
             _system->update();
+            ++timesteps;
         }
 
         // Query current framebuffer size for HiDPI-aware viewport setup.
@@ -371,6 +378,14 @@ Viewer<T>::Builder::with_background_color(const Vector4<T>& color) noexcept {
 }
 
 template <typename T>
+typename Viewer<T>::Builder&
+Viewer<T>::Builder::with_timestep_count(std::optional<std::size_t> timestep_count) noexcept {
+    // Stage an optional finite simulation length.
+    _timestep_count = timestep_count;
+    return *this;
+}
+
+template <typename T>
 void
 Viewer<T>::Builder::validate() const {
     // Validate all required viewer configuration before construction.
@@ -398,7 +413,7 @@ Viewer<T>
 Viewer<T>::Builder::build() const {
     // Validate builder state before constructing the viewer by value.
     validate();
-    return Viewer<T>(_system, _width, _height, _title, _fullscreen, _background_color);
+    return Viewer<T>(_system, _width, _height, _title, _fullscreen, _background_color, _timestep_count);
 }
 
 template <typename T>
