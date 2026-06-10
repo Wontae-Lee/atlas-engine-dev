@@ -28,7 +28,7 @@ DtRemainColliderKernel<T>::operator()(Vector3<T>& position,
                                       const T sweep_speed,
                                       const T dt,
                                       const Unit<T>& unit,
-                                      const ColliderSurfaceInteraction<T>& interaction) const noexcept {
+                                      const SurfaceInteractionKernel<T>& interaction) const noexcept {
     const Vector3<T> wall_velocity     = FastColliderKernel<T>::surface_velocity(unit, hit_position);
     const Vector3<T> relative_incident = incident - wall_velocity;
     const Vector3<T> reflected         = interaction(relative_incident, hit_normal) + wall_velocity;

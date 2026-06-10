@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @file collider_surface_interaction.h
- * @brief Declares a configurable surface-interaction model for collider reflections.
+ * @file isothermal_surface_kernel.h
+ * @brief Declares a configurable isothermal interaction for surface reflections.
  */
 
 #include <atlas/math/math.h>
@@ -35,7 +35,7 @@ enum class DiffuseSampling {
 };
 
 /**
- * @brief Surface interaction model for collider reflections.
+ * @brief Surface interaction model for isothermal surface reflections.
  *
  * This class describes how an incident velocity interacts with a surface
  * normal to produce an outgoing velocity. The model supports:
@@ -43,20 +43,20 @@ enum class DiffuseSampling {
  * - purely diffuse reflection
  * - stochastic mixing between specular and diffuse reflection
  *
- * The mixing behavior is controlled by the tangential momentum accommodation
- * coefficient (TMAC). Additional parameters such as restitution and temperature
+ * The mixing behavior is controlled by the momentum accommodation
+ * coefficient. Additional parameters such as restitution and temperature
  * are stored as part of the interaction configuration.
  *
  * @tparam T Floating-point scalar type used for all computations.
  */
 template <typename T>
-class ColliderSurfaceInteraction final {
+class IsothermalSurfaceInteraction final {
     static_assert(std::is_floating_point_v<T>,
-                  "ColliderSurfaceInteraction requires a floating-point T");
+                  "IsothermalSurfaceInteraction requires a floating-point T");
 
 public:
     /**
-     * @brief Builder for configuring and constructing ColliderSurfaceInteraction objects.
+     * @brief Builder for configuring and constructing IsothermalSurfaceInteraction objects.
      */
     class Builder;
 
@@ -66,16 +66,18 @@ public:
      *
      * Initializes the interaction with default parameters:
      * - restitution = 1
-     * - TMAC = 1
+     * - momentum accommodation = 1
      * - temperature = 273.15
      * - diffuse sampling = Uniform
      */
-    ColliderSurfaceInteraction() = default;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    IsothermalSurfaceInteraction() noexcept = default;
 
     /**
      * @brief Destructor.
      */
-    ~ColliderSurfaceInteraction() = default;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    ~IsothermalSurfaceInteraction() noexcept = default;
 
     /**
      * @brief Creates a Builder instance.
@@ -110,17 +112,17 @@ public:
     set_restitution(T restitution_coeff) noexcept;
 
     /**
-     * @brief Sets the tangential momentum accommodation coefficient.
+     * @brief Sets the momentum accommodation coefficient.
      *
      * In the current model:
      * - 0 corresponds to purely specular reflection
      * - 1 corresponds to purely diffuse reflection
      * - intermediate values produce stochastic mixing
      *
-     * @param tmac Tangential momentum accommodation coefficient.
+     * @param momentum_acc Momentum accommodation coefficient.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_tangential_momentum_accommodation(T tmac) noexcept;
+    set_momentum_acc(T momentum_acc) noexcept;
 
     /**
      * @brief Sets the surface temperature parameter.
@@ -150,12 +152,12 @@ public:
     restitution() const noexcept;
 
     /**
-     * @brief Returns the tangential momentum accommodation coefficient.
+     * @brief Returns the momentum accommodation coefficient.
      *
-     * @return TMAC value.
+     * @return Momentum accommodation value.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
-    tangential_momentum_accommodation() const noexcept;
+    momentum_acc() const noexcept;
 
     /**
      * @brief Returns the stored surface temperature.
@@ -172,7 +174,7 @@ public:
      * an outgoing velocity according to the configured reflection model.
      *
      * The exact behavior depends on the current interaction parameters such as
-     * TMAC, restitution, and diffuse sampling mode.
+     * momentum accommodation, restitution, and diffuse sampling mode.
      *
      * The outgoing speed is `incident.length() * restitution()`, while the
      * outgoing direction is selected by the configured specular/diffuse model.
@@ -191,10 +193,9 @@ private:
     T _restitution_coeff { T(1) };
 
     /**
-     * @brief Tangential momentum accommodation coefficient controlling
-     *        diffuse/specular mixing.
+     * @brief Momentum accommodation coefficient controlling diffuse/specular mixing.
      */
-    T _tmac { T(1) };
+    T _momentum_acc { T(1) };
 
     /**
      * @brief Surface temperature associated with this interaction model.
@@ -208,15 +209,15 @@ private:
 };
 
 /**
- * @brief Builder for ColliderSurfaceInteraction.
+ * @brief Builder for IsothermalSurfaceInteraction.
  *
  * Provides a fluent interface for configuring interaction parameters before
- * constructing a validated ColliderSurfaceInteraction instance.
+ * constructing a validated IsothermalSurfaceInteraction instance.
  *
  * @tparam T Floating-point scalar type used for all computations.
  */
 template <typename T>
-class ColliderSurfaceInteraction<T>::Builder final {
+class IsothermalSurfaceInteraction<T>::Builder final {
 public:
     /**
      * @brief Default constructor.
@@ -242,13 +243,13 @@ public:
     with_restitution(T restitution) noexcept;
 
     /**
-     * @brief Sets the tangential momentum accommodation coefficient.
+     * @brief Sets the momentum accommodation coefficient.
      *
-     * @param tmac Tangential momentum accommodation coefficient.
+     * @param momentum_acc Momentum accommodation coefficient.
      * @return Reference to this builder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_tangential_momentum_accommodation(T tmac) noexcept;
+    with_momentum_acc(T momentum_acc) noexcept;
 
     /**
      * @brief Sets the surface temperature parameter.
@@ -260,23 +261,23 @@ public:
     with_temperature(T temperature) noexcept;
 
     /**
-     * @brief Builds a validated ColliderSurfaceInteraction object.
+     * @brief Builds a validated IsothermalSurfaceInteraction object.
      *
      * @return Constructed interaction object.
      *
      * @throw std::runtime_error Thrown if the configured parameters are invalid.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE ColliderSurfaceInteraction<T>
+    ATLAS_HOST ATLAS_FORCE_INLINE IsothermalSurfaceInteraction<T>
     build() const;
 
     /**
-     * @brief Builds a host-side shared instance of ColliderSurfaceInteraction.
+     * @brief Builds a host-side shared instance of IsothermalSurfaceInteraction.
      *
      * @return Host shared pointer to the constructed interaction object.
      *
      * @throw std::runtime_error Thrown if the configured parameters are invalid.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<ColliderSurfaceInteraction<T>>
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<IsothermalSurfaceInteraction<T>>
     make_host_shared() const;
 
 private:
@@ -303,9 +304,9 @@ private:
     T _restitution { T(1) };
 
     /**
-     * @brief TMAC value controlling diffuse/specular mixing.
+     * @brief Momentum accommodation value controlling diffuse/specular mixing.
      */
-    T _tmac { T(1) };
+    T _momentum_acc { T(1) };
 
     /**
      * @brief Surface temperature for the built interaction.
@@ -318,29 +319,29 @@ private:
 namespace atlas {
 
 /**
- * @brief Alias for atlas::system::ColliderSurfaceInteraction.
+ * @brief Alias for atlas::system::IsothermalSurfaceInteraction.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using ColliderSurfaceInteraction = atlas::system::ColliderSurfaceInteraction<T>;
+using IsothermalSurfaceInteraction = atlas::system::IsothermalSurfaceInteraction<T>;
 
 /**
- * @brief Host-side shared pointer alias for ColliderSurfaceInteraction.
+ * @brief Host-side shared pointer alias for IsothermalSurfaceInteraction.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using ColliderSurfaceInteractionHostPtr = atlas::host_shared_ptr<ColliderSurfaceInteraction<T>>;
+using IsothermalSurfaceInteractionHostPtr = atlas::host_shared_ptr<IsothermalSurfaceInteraction<T>>;
 
 /**
- * @brief Device-side shared pointer alias for ColliderSurfaceInteraction.
+ * @brief Device-side shared pointer alias for IsothermalSurfaceInteraction.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using ColliderSurfaceInteractionDevicePtr = atlas::device_shared_ptr<ColliderSurfaceInteraction<T>>;
+using IsothermalSurfaceInteractionDevicePtr = atlas::device_shared_ptr<IsothermalSurfaceInteraction<T>>;
 
 } // namespace atlas
 
-#include <atlas/collider/collider_surface_interaction.hpp>
+#include <atlas/collider/interaction/isothermal_surface_kernel.hpp>

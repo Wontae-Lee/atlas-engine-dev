@@ -176,10 +176,68 @@ vec_near(const thrust::device_reference<atlas::Vector<T, N>>& a,
     return vec_near(lhs, b, eps);
 }
 
+template <typename T, std::size_t N, typename Eps>
+static ATLAS_FORCE_INLINE bool
+vec_near(const thrust::device_reference<atlas::Vector<T, N>>& a,
+         const thrust::device_reference<atlas::Vector<T, N>>& b,
+         Eps eps) {
+    const atlas::Vector<T, N> lhs = a;
+    const atlas::Vector<T, N> rhs = b;
+    return vec_near(lhs, rhs, eps);
+}
+
+template <typename T, std::size_t N, typename Eps>
+static ATLAS_FORCE_INLINE bool
+vec_near(const thrust::device_reference<const atlas::Vector<T, N>>& a,
+         const thrust::device_reference<const atlas::Vector<T, N>>& b,
+         Eps eps) {
+    const atlas::Vector<T, N> lhs = a;
+    const atlas::Vector<T, N> rhs = b;
+    return vec_near(lhs, rhs, eps);
+}
+
+template <typename T, std::size_t N, typename Eps>
+static ATLAS_FORCE_INLINE bool
+vec_near(const thrust::device_reference<atlas::Vector<T, N>>& a,
+         const thrust::device_reference<const atlas::Vector<T, N>>& b,
+         Eps eps) {
+    const atlas::Vector<T, N> lhs = a;
+    const atlas::Vector<T, N> rhs = b;
+    return vec_near(lhs, rhs, eps);
+}
+
+template <typename T, std::size_t N, typename Eps>
+static ATLAS_FORCE_INLINE bool
+vec_near(const thrust::device_reference<const atlas::Vector<T, N>>& a,
+         const thrust::device_reference<atlas::Vector<T, N>>& b,
+         Eps eps) {
+    const atlas::Vector<T, N> lhs = a;
+    const atlas::Vector<T, N> rhs = b;
+    return vec_near(lhs, rhs, eps);
+}
+
+template <typename T, std::size_t N, typename B, typename Eps>
+static ATLAS_FORCE_INLINE bool
+vec_near(const thrust::device_reference<const atlas::Vector<T, N>>& a,
+         const B& b,
+         Eps eps) {
+    const atlas::Vector<T, N> lhs = a;
+    return vec_near(lhs, b, eps);
+}
+
 template <typename A, typename T, std::size_t N, typename Eps>
 static ATLAS_FORCE_INLINE bool
 vec_near(const A& a,
          const thrust::device_reference<atlas::Vector<T, N>>& b,
+         Eps eps) {
+    const atlas::Vector<T, N> rhs = b;
+    return vec_near(a, rhs, eps);
+}
+
+template <typename A, typename T, std::size_t N, typename Eps>
+static ATLAS_FORCE_INLINE bool
+vec_near(const A& a,
+         const thrust::device_reference<const atlas::Vector<T, N>>& b,
          Eps eps) {
     const atlas::Vector<T, N> rhs = b;
     return vec_near(a, rhs, eps);

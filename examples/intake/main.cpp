@@ -367,16 +367,16 @@ main() {
 
                               // Define one surface-interaction model for the intake mesh.
                               .with_surface_interactions(
-                                  HostBuffer<system::ColliderSurfaceInteraction<T>> {
-                                      system::ColliderSurfaceInteraction<T>::builder()
+                                  HostBuffer<system::IsothermalSurfaceInteraction<T>> {
+                                      system::IsothermalSurfaceInteraction<T>::builder()
                                           // Use cosine-weighted diffuse reflection.
                                           .with_diffuse_sampling(system::DiffuseSampling::CosineWeighted)
 
                                           // Preserve incident speed magnitude.
                                           .with_restitution(1.0f)
 
-                                          // Use full tangential momentum accommodation.
-                                          .with_tangential_momentum_accommodation(1.0f)
+                                          // Use full momentum accommodation.
+                                          .with_momentum_acc(1.0f)
 
                                           // Store the wall temperature used by the interaction model.
                                           .with_temperature(300.0f)

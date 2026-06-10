@@ -219,6 +219,33 @@ public:
     std::optional<T> vibrational_energy;
 
     /**
+     * @brief Optional rotational degrees of freedom.
+     *
+     * @details
+     * Matches SPARTA's per-species `rotdof` value used by wall and DSMC
+     * internal-energy samplers.
+     */
+    std::optional<int> rotational_dof;
+
+    /**
+     * @brief Optional vibrational degrees of freedom.
+     *
+     * @details
+     * Matches SPARTA's per-species `vibdof` value used by wall and DSMC
+     * internal-energy samplers.
+     */
+    std::optional<int> vibrational_dof;
+
+    /**
+     * @brief Optional characteristic rotational temperature.
+     *
+     * @details
+     * Used by SPARTA-style discrete rotational energy sampling when
+     * `rotational_dof == 2`.
+     */
+    std::optional<T> rotational_temperature;
+
+    /**
      * @brief Optional characteristic vibrational temperature.
      *
      * @details
@@ -314,6 +341,47 @@ public:
      * May parameterize scattering or collision-angle behavior in rarefied-gas models.
      */
     std::optional<T> scattering_parameter;
+
+    /**
+     * @brief Optional constant rotational relaxation probability.
+     *
+     * Matches SPARTA's per-species `rotrel` value when constant relaxation is
+     * used by DSMC particle-particle internal-energy exchange.
+     */
+    std::optional<T> rotational_relaxation_probability;
+
+    /**
+     * @brief Optional constant vibrational relaxation probability.
+     *
+     * Matches SPARTA's per-species `vibrel` value when constant relaxation is
+     * used by DSMC particle-particle internal-energy exchange.
+     */
+    std::optional<T> vibrational_relaxation_probability;
+
+    /**
+     * @brief Optional variable rotational relaxation coefficient c1.
+     */
+    std::optional<T> rotational_relaxation_c1;
+
+    /**
+     * @brief Optional variable rotational relaxation coefficient c2.
+     */
+    std::optional<T> rotational_relaxation_c2;
+
+    /**
+     * @brief Optional variable rotational relaxation coefficient c3.
+     */
+    std::optional<T> rotational_relaxation_c3;
+
+    /**
+     * @brief Optional variable vibrational relaxation coefficient c1.
+     */
+    std::optional<T> vibrational_relaxation_c1;
+
+    /**
+     * @brief Optional variable vibrational relaxation coefficient c2.
+     */
+    std::optional<T> vibrational_relaxation_c2;
 
     /**
      * @brief Optional reference/rest density.
@@ -505,6 +573,33 @@ public:
     with_vibrational_energy(T e);
 
     /**
+     * @brief Set the rotational degrees of freedom.
+     *
+     * @param dof Rotational degrees of freedom to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_rotational_dof(int dof);
+
+    /**
+     * @brief Set the vibrational degrees of freedom.
+     *
+     * @param dof Vibrational degrees of freedom to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_vibrational_dof(int dof);
+
+    /**
+     * @brief Set the characteristic rotational temperature.
+     *
+     * @param temperature Characteristic rotational temperature to stage.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_rotational_temperature(T temperature);
+
+    /**
      * @brief Set the characteristic vibrational temperature.
      *
      * @param temperature Characteristic vibrational temperature to stage.
@@ -603,6 +698,18 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_scattering_parameter(T alpha);
 
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_rotational_relaxation_probability(T probability);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_vibrational_relaxation_probability(T probability);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_rotational_relaxation_coefficients(T c1, T c2, T c3);
+
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_vibrational_relaxation_coefficients(T c1, T c2);
+
     /**
      * @brief Set the reference/rest density.
      *
@@ -699,6 +806,21 @@ private:
     std::optional<T> _vibrational_energy;
 
     /**
+     * @brief Pending rotational degrees of freedom.
+     */
+    std::optional<int> _rotational_dof;
+
+    /**
+     * @brief Pending vibrational degrees of freedom.
+     */
+    std::optional<int> _vibrational_dof;
+
+    /**
+     * @brief Pending characteristic rotational temperature.
+     */
+    std::optional<T> _rotational_temperature;
+
+    /**
      * @brief Pending characteristic vibrational temperature.
      */
     std::optional<T> _characteristic_vibrational_temperature;
@@ -752,6 +874,20 @@ private:
      * @brief Pending scattering parameter.
      */
     std::optional<T> _scattering_parameter;
+
+    std::optional<T> _rotational_relaxation_probability;
+
+    std::optional<T> _vibrational_relaxation_probability;
+
+    std::optional<T> _rotational_relaxation_c1;
+
+    std::optional<T> _rotational_relaxation_c2;
+
+    std::optional<T> _rotational_relaxation_c3;
+
+    std::optional<T> _vibrational_relaxation_c1;
+
+    std::optional<T> _vibrational_relaxation_c2;
 
     /**
      * @brief Pending rest density.

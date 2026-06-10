@@ -5,9 +5,9 @@
  * @brief Declares tagged post-collision kernels for Collider.
  */
 
-#include <atlas/collider/dt_remain_collider_kernel.h>
-#include <atlas/collider/fast_collider_kernel.h>
-#include <atlas/collider/precise_collider_kernel.h>
+#include <atlas/collider/kernel/dt_remain_collider_kernel.h>
+#include <atlas/collider/kernel/fast_collider_kernel.h>
+#include <atlas/collider/kernel/precise_collider_kernel.h>
 
 namespace atlas::system {
 
@@ -106,7 +106,7 @@ struct PostColliderKernel final {
      * @param sweep_speed Speed used to convert hit distance to hit time.
      * @param dt Simulation time step.
      * @param unit Collider unit hit by the particle.
-     * @param interaction Surface interaction model for outgoing velocity.
+     * @param interaction Tagged surface interaction kernel for outgoing velocity.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Vector3<T>& position,
@@ -118,7 +118,7 @@ struct PostColliderKernel final {
                T sweep_speed,
                T dt,
                const Unit<T>& unit,
-               const ColliderSurfaceInteraction<T>& interaction) const noexcept;
+               const SurfaceInteractionKernel<T>& interaction) const noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     destroy_active() noexcept;
@@ -138,4 +138,4 @@ using PostColliderKernel = atlas::system::PostColliderKernel<T>;
 
 } // namespace atlas
 
-#include <atlas/collider/post_collider_kernel.hpp>
+#include <atlas/collider/kernel/post_collider_kernel.hpp>

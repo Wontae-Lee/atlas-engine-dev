@@ -13,15 +13,20 @@ namespace {
 
 using atlas::Box;
 using atlas::Collider;
-using atlas::ColliderSurfaceInteraction;
+using atlas::FluidInternalEnergy;
+using atlas::IsothermalSurfaceInteraction;
 using atlas::Fluid;
 using atlas::FluidHostPtr;
 using atlas::HostBuffer;
+using atlas::MaterialProperties;
+using atlas::MaxwellianSurfaceInteraction;
 using atlas::Plane;
 using atlas::Sync;
 using atlas::Unit;
 using atlas::Vector3F;
+using atlas::fluid::FluidInternalEnergyState;
 using atlas::fluid::FluidPositionState;
+using atlas::fluid::FluidSpeciesState;
 using atlas::fluid::FluidVelocityState;
 using atlas::test::vec_near;
 using atlas::tol;
@@ -74,19 +79,19 @@ make_plane_unit(const Vector3F& linear_velocity = Vector3F(0, 0, 0),
     return builder.build();
 }
 
-ColliderSurfaceInteraction<float>
+IsothermalSurfaceInteraction<float>
 make_interaction() {
-    return ColliderSurfaceInteraction<float>::builder()
+    return IsothermalSurfaceInteraction<float>::builder()
         .with_restitution(0.9f)
-        .with_tangential_momentum_accommodation(0.2f)
+        .with_momentum_acc(0.2f)
         .build();
 }
 
-ColliderSurfaceInteraction<float>
+IsothermalSurfaceInteraction<float>
 make_specular_interaction() {
-    return ColliderSurfaceInteraction<float>::builder()
+    return IsothermalSurfaceInteraction<float>::builder()
         .with_restitution(1.0f)
-        .with_tangential_momentum_accommodation(0.0f)
+        .with_momentum_acc(0.0f)
         .build();
 }
 
@@ -105,10 +110,54 @@ TEST(Collider, BuilderConstructsUsableCollider) {
                               .with_units(HostBuffer<Unit<float>> { make_unit() })
                               .with_fluid(fluid)
                               .with_surface_interactions(
-                                  HostBuffer<ColliderSurfaceInteraction<float>> { make_interaction() })
+                                  HostBuffer<IsothermalSurfaceInteraction<float>> { make_interaction() })
                               .build();
 
     EXPECT_FALSE(collider.empty());
+}
+
+TEST(Collider, ConstructorAcceptsPreparedBuffers) {
+    const auto fluid = make_fluid();
+    const HostBuffer<Unit<float>> units { make_unit() };
+    const HostBuffer<atlas::SurfaceInteractionKernel<float>> interactions {
+        atlas::SurfaceInteractionKernel<float>(make_interaction())
+    };
+    const HostBuffer<std::uint8_t> flips { std::uint8_t { 0 } };
+
+    const Collider<float> collider(
+        atlas::DeviceBuffer<Unit<float>>(units.begin(), units.end()),
+        atlas::DeviceBuffer<atlas::SurfaceInteractionKernel<float>>(interactions.begin(), interactions.end()),
+        atlas::DeviceBuffer<std::uint8_t>(flips.begin(), flips.end()),
+        atlas::PostColliderType::fast,
+        fluid);
+
+    EXPECT_FALSE(collider.empty());
+}
+
+TEST(Collider, BuilderUsesDefaultIsothermalFastConfiguration) {
+    const auto fluid = make_fluid();
+
+    const auto collider = Collider<float>::builder()
+                              .with_units(HostBuffer<Unit<float>> { make_unit() })
+                              .with_fluid(fluid)
+                              .build();
+
+    EXPECT_FALSE(collider.empty());
+    EXPECT_NO_THROW(collider.collide(0.01f));
+}
+
+TEST(Collider, MakeProbeReflectsConfiguredRuntimeState) {
+    const auto fluid = make_fluid();
+    fluid->set_particle_count(1);
+
+    const auto collider = Collider<float>::builder()
+                              .with_units(HostBuffer<Unit<float>> { make_unit() })
+                              .with_fluid(fluid)
+                              .with_surface_interactions(
+                                  HostBuffer<IsothermalSurfaceInteraction<float>> { make_interaction() })
+                              .build();
+
+    EXPECT_TRUE(collider.make_probe());
 }
 
 TEST(Collider, BuilderRejectsInvalidConfiguration) {
@@ -125,6 +174,61 @@ TEST(Collider, BuilderRejectsInvalidConfiguration) {
             .with_units(HostBuffer<Unit<float>> { make_unit() })
             .build(),
         std::runtime_error);
+
+    EXPECT_THROW(
+        Collider<float>::builder()
+            .with_units(HostBuffer<Unit<float>> {})
+            .with_fluid(fluid),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        Collider<float>::builder()
+            .with_units(HostBuffer<Unit<float>> { make_unit(), make_unit() })
+            .with_fluid(fluid)
+            .with_surface_interactions(
+                HostBuffer<IsothermalSurfaceInteraction<float>> { make_interaction(), make_interaction(), make_interaction() })
+            .build(),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        Collider<float>::builder()
+            .with_units(HostBuffer<Unit<float>> { make_unit(), make_unit() })
+            .with_fluid(fluid)
+            .with_surface_interaction_kernels(HostBuffer<atlas::SurfaceInteractionKernel<float>> {})
+            .build(),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        Collider<float>::builder()
+            .with_units(HostBuffer<Unit<float>> { make_unit() })
+            .with_fluid(fluid)
+            .with_surface_interactions(HostBuffer<IsothermalSurfaceInteraction<float>> {})
+            .build(),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        Collider<float>::builder()
+            .with_units(HostBuffer<Unit<float>> { make_unit() })
+            .with_fluid(fluid)
+            .with_surface_interactions(HostBuffer<MaxwellianSurfaceInteraction<float>> {})
+            .build(),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        Collider<float>::builder()
+            .with_units(HostBuffer<Unit<float>> { make_unit() })
+            .with_fluid(fluid)
+            .with_flips(HostBuffer<std::uint8_t> {})
+            .build(),
+        std::runtime_error);
+
+    EXPECT_THROW(
+        Collider<float>::builder()
+            .with_units(HostBuffer<Unit<float>> { make_unit(), make_unit() })
+            .with_fluid(fluid)
+            .with_flips(HostBuffer<std::uint8_t> { 0, 0, 0 })
+            .build(),
+        std::runtime_error);
 }
 
 TEST(Collider, MakeHostSharedBuildsCollider) {
@@ -134,11 +238,33 @@ TEST(Collider, MakeHostSharedBuildsCollider) {
                               .with_units(HostBuffer<Unit<float>> { make_unit() })
                               .with_fluid(fluid)
                               .with_surface_interactions(
-                                  HostBuffer<ColliderSurfaceInteraction<float>> { make_interaction() })
+                                  HostBuffer<IsothermalSurfaceInteraction<float>> { make_interaction() })
                               .make_host_shared();
 
     ASSERT_NE(collider, nullptr);
     EXPECT_FALSE(collider->empty());
+}
+
+TEST(Collider, BuilderAcceptsTaggedSurfaceInteractionAndFlipConfigurations) {
+    const auto fluid = make_fluid();
+    const auto interaction = atlas::SurfaceInteractionKernel<float>(make_interaction());
+
+    const auto shared_interaction = Collider<float>::builder()
+                                        .with_units(HostBuffer<Unit<float>> { make_unit() })
+                                        .with_fluid(fluid)
+                                        .with_surface_interaction_kernel(interaction)
+                                        .with_flip(true)
+                                        .build();
+    EXPECT_FALSE(shared_interaction.empty());
+
+    const auto per_unit = Collider<float>::builder()
+                              .with_units(HostBuffer<Unit<float>> { make_unit(), make_unit() })
+                              .with_fluid(fluid)
+                              .with_surface_interaction_kernels(
+                                  HostBuffer<atlas::SurfaceInteractionKernel<float>> { interaction, interaction })
+                              .with_flips(HostBuffer<std::uint8_t> { 0, 1 })
+                              .build();
+    EXPECT_FALSE(per_unit.empty());
 }
 
 TEST(Collider, UpdateAndCollideAreSafeNoOpsForDefaultFluidState) {
@@ -148,7 +274,7 @@ TEST(Collider, UpdateAndCollideAreSafeNoOpsForDefaultFluidState) {
                         .with_units(HostBuffer<Unit<float>> { make_unit() })
                         .with_fluid(fluid)
                         .with_surface_interactions(
-                            HostBuffer<ColliderSurfaceInteraction<float>> { make_interaction() })
+                            HostBuffer<IsothermalSurfaceInteraction<float>> { make_interaction() })
                         .build();
 
     EXPECT_NO_THROW(collider.update(0.01f));
@@ -156,7 +282,6 @@ TEST(Collider, UpdateAndCollideAreSafeNoOpsForDefaultFluidState) {
 }
 
 TEST(Collider, CollideAccountsForColliderLinearVelocityInSurfaceResponse) {
-    
     const auto fluid = make_fluid();
     fluid->set_particle_count(1);
 
@@ -174,7 +299,7 @@ TEST(Collider, CollideAccountsForColliderLinearVelocityInSurfaceResponse) {
                         })
                         .with_fluid(fluid)
                         .with_surface_interactions(
-                            HostBuffer<ColliderSurfaceInteraction<float>> { make_specular_interaction() })
+                            HostBuffer<IsothermalSurfaceInteraction<float>> { make_specular_interaction() })
                         .build();
 
     collider.collide(1.0f);
@@ -186,7 +311,6 @@ TEST(Collider, CollideAccountsForColliderLinearVelocityInSurfaceResponse) {
 }
 
 TEST(Collider, CollideAccountsForColliderAngularVelocityAtContactPoint) {
-    
     const auto fluid = make_fluid();
     fluid->set_particle_count(1);
 
@@ -204,7 +328,7 @@ TEST(Collider, CollideAccountsForColliderAngularVelocityAtContactPoint) {
                         })
                         .with_fluid(fluid)
                         .with_surface_interactions(
-                            HostBuffer<ColliderSurfaceInteraction<float>> { make_specular_interaction() })
+                            HostBuffer<IsothermalSurfaceInteraction<float>> { make_specular_interaction() })
                         .build();
 
     collider.collide(1.0f);
@@ -213,4 +337,92 @@ TEST(Collider, CollideAccountsForColliderAngularVelocityAtContactPoint) {
         fluid->state<FluidVelocityState<float>>()->data()[0],
         Vector3F(-3.0f, 0.0f, 0.0f),
         tol));
+}
+
+TEST(Collider, CollideUpdatesInternalEnergyThroughSurfaceInteraction) {
+    const auto fluid = make_fluid();
+    fluid->set_particle_count(1);
+
+    auto* positions = fluid->state<FluidPositionState<float>>();
+    auto* velocities = fluid->state<FluidVelocityState<float>>();
+    auto* species = fluid->state<FluidSpeciesState<float>>();
+    auto& internal_energies = fluid->emplace_state<FluidInternalEnergyState<float>>(fluid->buffer_size());
+    ASSERT_NE(positions, nullptr);
+    ASSERT_NE(velocities, nullptr);
+    ASSERT_NE(species, nullptr);
+
+    positions->data()[0] = Vector3F(-1.0f, 0.0f, 0.0f);
+    velocities->data()[0] = Vector3F(1.0f, 0.0f, 0.0f);
+    species->data()[0] = 0u;
+    internal_energies.data()[0] = FluidInternalEnergy<float> { 1.0f, 2.0f, 3.0f };
+    const auto material = MaterialProperties<float>::builder()
+                              .with_mass(1.0f)
+                              .with_molecular_mass(1.0f)
+                              .with_rotational_dof(2)
+                              .with_vibrational_dof(2)
+                              .build();
+    fluid->particle_properties().push_back(material);
+
+    const auto interaction = MaxwellianSurfaceInteraction<float>::builder()
+                                 .with_temperature(300.0f)
+                                 .with_molecular_mass(2.0f)
+                                 .with_accommodation(1.0f, 1.0f, 1.0f, 1.0f)
+                                 .build();
+    const auto expected = interaction.internal_energy(
+        internal_energies.data()[0],
+        Vector3F(1.0f, 0.0f, 0.0f),
+        Vector3F(1.0f, 0.0f, 0.0f),
+        material);
+
+    auto collider = Collider<float>::builder()
+                        .with_units(HostBuffer<Unit<float>> { make_plane_unit() })
+                        .with_fluid(fluid)
+                        .with_surface_interactions(
+                            HostBuffer<MaxwellianSurfaceInteraction<float>> { interaction })
+                        .build();
+
+    collider.collide(1.0f);
+
+    const auto actual = internal_energies.data()[0];
+    EXPECT_NEAR(actual.translational, expected.translational, tol);
+    EXPECT_NEAR(actual.rotational, expected.rotational, tol);
+    EXPECT_NEAR(actual.vibrational, expected.vibrational, tol);
+}
+
+TEST(Collider, CollidePreservesInternalEnergyForIsothermalSurfaceInteraction) {
+    const auto fluid = make_fluid();
+    fluid->set_particle_count(1);
+
+    auto* positions = fluid->state<FluidPositionState<float>>();
+    auto* velocities = fluid->state<FluidVelocityState<float>>();
+    auto* species = fluid->state<FluidSpeciesState<float>>();
+    auto& internal_energies = fluid->emplace_state<FluidInternalEnergyState<float>>(fluid->buffer_size());
+    ASSERT_NE(positions, nullptr);
+    ASSERT_NE(velocities, nullptr);
+    ASSERT_NE(species, nullptr);
+
+    const FluidInternalEnergy<float> incident_energy { 1.0f, 2.0f, 3.0f };
+    positions->data()[0] = Vector3F(-1.0f, 0.0f, 0.0f);
+    velocities->data()[0] = Vector3F(1.0f, 0.0f, 0.0f);
+    species->data()[0] = 0u;
+    internal_energies.data()[0] = incident_energy;
+    fluid->particle_properties().push_back(
+        MaterialProperties<float>::builder()
+            .with_mass(1.0f)
+            .with_molecular_mass(1.0f)
+            .build());
+
+    auto collider = Collider<float>::builder()
+                        .with_units(HostBuffer<Unit<float>> { make_plane_unit() })
+                        .with_fluid(fluid)
+                        .with_surface_interactions(
+                            HostBuffer<IsothermalSurfaceInteraction<float>> { make_specular_interaction() })
+                        .build();
+
+    collider.collide(1.0f);
+
+    const auto actual = internal_energies.data()[0];
+    EXPECT_NEAR(actual.translational, incident_energy.translational, tol);
+    EXPECT_NEAR(actual.rotational, incident_energy.rotational, tol);
+    EXPECT_NEAR(actual.vibrational, incident_energy.vibrational, tol);
 }

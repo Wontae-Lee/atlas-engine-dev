@@ -198,6 +198,7 @@ protected:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     prepare_grid_buffers(int alive);
 
+public:
     /**
      * @brief Initializes _indices with [0, alive).
      */
@@ -210,18 +211,21 @@ protected:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     compute_grid_keys(int alive, const Vector3<T>* positions);
 
+protected:
     /**
      * @brief Sorts particle indices by their computed grid keys.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     sort_by_key(int alive);
 
+public:
     /**
      * @brief Builds per-cell start/end ranges after sorting by key.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build_cell_ranges(int alive);
 
+protected:
     /**
      * @brief Clears the neighbor list buffers and resets the slot count.
      */

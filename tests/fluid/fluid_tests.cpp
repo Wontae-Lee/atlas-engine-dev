@@ -211,7 +211,10 @@ TEST(Fluid, SaveAndReloadBinarySnapshot) {
     EXPECT_EQ(restored.particle_count(), 2u);
     EXPECT_FLOAT_EQ(restored.statistical_weight(), 3.0f);
     ASSERT_EQ(restored.particle_properties().size(), 1u);
-    EXPECT_EQ(restored.particle_properties()[0].species_id.value_or(-1), 7);
+    const HostBuffer<MaterialProperties<float>> restored_properties(
+        restored.particle_properties().begin(),
+        restored.particle_properties().end());
+    EXPECT_EQ(restored_properties[0].species_id.value_or(-1), 7);
 
     const auto* restored_position = restored.state<FluidPositionState<float>>();
     const auto* restored_velocity = restored.state<FluidVelocityState<float>>();

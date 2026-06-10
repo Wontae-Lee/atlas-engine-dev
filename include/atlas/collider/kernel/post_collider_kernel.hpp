@@ -79,7 +79,7 @@ PostColliderKernel<T>::operator()(Vector3<T>& position,
                                   const T sweep_speed,
                                   const T dt,
                                   const Unit<T>& unit,
-                                  const ColliderSurfaceInteraction<T>& interaction) const noexcept {
+                                  const SurfaceInteractionKernel<T>& interaction) const noexcept {
     switch (type) {
     case PostColliderType::fast:
         fast(position, velocity, incident, hit_position, hit_normal, hit_distance, sweep_speed, dt, unit, interaction);

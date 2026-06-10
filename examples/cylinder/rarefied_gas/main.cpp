@@ -320,8 +320,8 @@ main() {
 
                               // Define one surface-interaction model for the cylinder.
                               .with_surface_interactions(
-                                  HostBuffer<system::ColliderSurfaceInteraction<T>> {
-                                      system::ColliderSurfaceInteraction<T>::builder()
+                                  HostBuffer<system::IsothermalSurfaceInteraction<T>> {
+                                      system::IsothermalSurfaceInteraction<T>::builder()
                                           // Use cosine-weighted diffuse reflection, which is a
                                           // common model for thermally accommodated gas-wall scattering.
                                           .with_diffuse_sampling(system::DiffuseSampling::CosineWeighted)
@@ -330,9 +330,9 @@ main() {
                                           // A value below one would damp the reflected velocity.
                                           .with_restitution(1.0f)
 
-                                          // Use full tangential momentum accommodation.
+                                          // Use full momentum accommodation.
                                           // With 1.0, the reflection branch is fully diffuse.
-                                          .with_tangential_momentum_accommodation(1.0f)
+                                          .with_momentum_acc(1.0f)
 
                                           // Store the wall temperature used by the interaction model.
                                           .with_temperature(300.0f)

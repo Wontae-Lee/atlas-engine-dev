@@ -1,12 +1,12 @@
-#include "../utilities/test_utils.h"
+#include "../../utilities/test_utils.h"
 
-#include <atlas/collider/collider_surface_interaction.h>
+#include <atlas/collider/interaction/isothermal_surface_kernel.h>
 
 #include <testkit/testkit.h>
 
 namespace {
 
-using atlas::ColliderSurfaceInteraction;
+using atlas::IsothermalSurfaceInteraction;
 using atlas::tol;
 using atlas::Vector3F;
 using atlas::math::reflected;
@@ -16,78 +16,87 @@ using atlas::test::vec_near;
 
 } // namespace
 
-TEST(ColliderSurfaceInteraction, DefaultStateIsWellDefined) {
+TEST(IsothermalSurfaceInteraction, DefaultStateIsWellDefined) {
     // Arrange and act: construct the interaction with default settings.
-    const ColliderSurfaceInteraction<float> interaction;
+    const IsothermalSurfaceInteraction<float> interaction;
 
     // Assert: defaults are physically valid and deterministic.
     EXPECT_EQ(interaction.diffuse_sampling(), DiffuseSampling::Uniform);
     EXPECT_NEAR(interaction.restitution(), 1.0f, tol);
-    EXPECT_NEAR(interaction.tangential_momentum_accommodation(), 1.0f, tol);
+    EXPECT_NEAR(interaction.momentum_acc(), 1.0f, tol);
     EXPECT_NEAR(interaction.temperature(), 273.15f, tol);
 }
 
-TEST(ColliderSurfaceInteraction, SettersUpdateState) {
+TEST(IsothermalSurfaceInteraction, SettersUpdateState) {
     // Arrange: create an interaction object with default values.
-    ColliderSurfaceInteraction<float> interaction;
+    IsothermalSurfaceInteraction<float> interaction;
 
     // Act: update all configurable surface-interaction parameters.
     interaction.set_diffuse_sampling(DiffuseSampling::CosineWeighted);
     interaction.set_restitution(0.75f);
-    interaction.set_tangential_momentum_accommodation(0.25f);
+    interaction.set_momentum_acc(0.25f);
     interaction.set_temperature(350.0f);
 
     // Assert: all setter changes are preserved.
     EXPECT_EQ(interaction.diffuse_sampling(), DiffuseSampling::CosineWeighted);
     EXPECT_NEAR(interaction.restitution(), 0.75f, tol);
-    EXPECT_NEAR(interaction.tangential_momentum_accommodation(), 0.25f, tol);
+    EXPECT_NEAR(interaction.momentum_acc(), 0.25f, tol);
     EXPECT_NEAR(interaction.temperature(), 350.0f, tol);
 }
 
-TEST(ColliderSurfaceInteraction, BuilderConstructsConfiguredInteraction) {
+TEST(IsothermalSurfaceInteraction, BuilderConstructsConfiguredInteraction) {
     // Arrange and act: build an interaction with explicit configuration.
-    const auto interaction = ColliderSurfaceInteraction<float>::builder()
+    const auto interaction = IsothermalSurfaceInteraction<float>::builder()
                                  .with_diffuse_sampling(DiffuseSampling::CosineWeighted)
                                  .with_restitution(0.5f)
-                                 .with_tangential_momentum_accommodation(0.0f)
+                                 .with_momentum_acc(0.0f)
                                  .with_temperature(400.0f)
                                  .build();
 
     // Assert: builder-provided values are applied.
     EXPECT_EQ(interaction.diffuse_sampling(), DiffuseSampling::CosineWeighted);
     EXPECT_NEAR(interaction.restitution(), 0.5f, tol);
-    EXPECT_NEAR(interaction.tangential_momentum_accommodation(), 0.0f, tol);
+    EXPECT_NEAR(interaction.momentum_acc(), 0.0f, tol);
     EXPECT_NEAR(interaction.temperature(), 400.0f, tol);
 }
 
-TEST(ColliderSurfaceInteraction, BuilderRejectsInvalidParameters) {
+TEST(IsothermalSurfaceInteraction, BuilderMakesHostSharedInteraction) {
+    const auto interaction = IsothermalSurfaceInteraction<float>::builder()
+                                 .with_restitution(0.5f)
+                                 .make_host_shared();
+
+    ASSERT_NE(interaction, nullptr);
+    EXPECT_NEAR(interaction->restitution(), 0.5f, tol);
+}
+
+TEST(IsothermalSurfaceInteraction, BuilderRejectsInvalidParameters) {
     // Assert: restitution must be non-negative.
     EXPECT_THROW(
-        ColliderSurfaceInteraction<float>::builder()
+        IsothermalSurfaceInteraction<float>::builder()
             .with_restitution(-1.0f)
             .build(),
         std::runtime_error);
 
-    // Assert: tangential momentum accommodation must stay within the valid range.
+    // Assert: momentum accommodation must stay within the valid range.
     EXPECT_THROW(
-        ColliderSurfaceInteraction<float>::builder()
-            .with_tangential_momentum_accommodation(2.0f)
+        IsothermalSurfaceInteraction<float>::builder()
+            .with_momentum_acc(2.0f)
             .build(),
         std::runtime_error);
 
     // Assert: surface temperature must be non-negative.
     EXPECT_THROW(
-        ColliderSurfaceInteraction<float>::builder()
+        IsothermalSurfaceInteraction<float>::builder()
             .with_temperature(-1.0f)
             .build(),
         std::runtime_error);
 }
 
-TEST(ColliderSurfaceInteraction, SpecularModeMatchesReflectedDirection) {
+TEST(IsothermalSurfaceInteraction, SpecularModeMatchesReflectedDirection) {
     // Arrange: disable diffuse accommodation to force specular reflection.
-    ColliderSurfaceInteraction<float> interaction;
+    IsothermalSurfaceInteraction<float> interaction;
     interaction.set_restitution(0.5f);
-    interaction.set_tangential_momentum_accommodation(0.0f);
+    interaction.set_momentum_acc(0.0f);
 
     const Vector3F incident(1.0f, -2.0f, 0.0f);
     const Vector3F normal(0.0f, 1.0f, 0.0f);
@@ -100,11 +109,11 @@ TEST(ColliderSurfaceInteraction, SpecularModeMatchesReflectedDirection) {
     EXPECT_TRUE(vec_near(out, expected, tol));
 }
 
-TEST(ColliderSurfaceInteraction, DiffuseModeReturnsFiniteDirection) {
+TEST(IsothermalSurfaceInteraction, DiffuseModeReturnsFiniteDirection) {
     // Arrange: use full diffuse accommodation with reduced restitution.
-    ColliderSurfaceInteraction<float> interaction;
+    IsothermalSurfaceInteraction<float> interaction;
     interaction.set_restitution(0.5f);
-    interaction.set_tangential_momentum_accommodation(1.0f);
+    interaction.set_momentum_acc(1.0f);
 
     const Vector3F incident(1.0f, -1.0f, 0.5f);
 

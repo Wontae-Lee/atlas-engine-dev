@@ -15,6 +15,29 @@
 namespace atlas::fluid {
 
 /**
+ * @brief Per-particle internal energy split by molecular mode.
+ *
+ * @tparam T Scalar type used for energy values.
+ */
+template <typename T>
+struct FluidInternalEnergy final {
+    /**
+     * @brief Translational-mode internal energy.
+     */
+    T translational {};
+
+    /**
+     * @brief Rotational-mode internal energy.
+     */
+    T rotational {};
+
+    /**
+     * @brief Vibrational-mode internal energy.
+     */
+    T vibrational {};
+};
+
+/**
  * @brief Abstract interface for a per-particle fluid state buffer.
  *
  * A FluidState models one attribute stream associated with fluid particles,
@@ -518,9 +541,92 @@ private:
     DeviceBuffer<T> _temperature;
 };
 
+/**
+ * @brief Fluid state storing per-particle internal energy values.
+ *
+ * Each entry stores translational, rotational, and vibrational energy for one particle.
+ *
+ * @tparam T Scalar type used to represent energy values.
+ */
+template <typename T>
+class FluidInternalEnergyState final : public FluidState {
+public:
+    /**
+     * @brief Default constructor.
+     */
+    FluidInternalEnergyState() = default;
+
+    /**
+     * @brief Constructs an internal-energy state with the specified capacity.
+     *
+     * @param buffer_size Number of internal-energy entries to allocate.
+     */
+    ATLAS_HOST explicit FluidInternalEnergyState(std::size_t buffer_size);
+
+    /**
+     * @brief Constructs an internal-energy state from an existing device buffer.
+     *
+     * Ownership of the provided buffer is transferred to this state.
+     *
+     * @param internal_energy Device buffer containing per-particle internal energies.
+     */
+    ATLAS_HOST explicit FluidInternalEnergyState(DeviceBuffer<FluidInternalEnergy<T>> internal_energy) noexcept;
+
+    /**
+     * @brief Returns the size of the underlying internal-energy buffer.
+     *
+     * @return Number of stored internal-energy entries.
+     */
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    /**
+     * @brief Compacts the internal-energy buffer using the given index mapping.
+     *
+     * @param compact_indices Device buffer mapping compacted destination indices
+     *        to original source indices.
+     * @param kept Number of surviving particles.
+     */
+    ATLAS_HOST void
+    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST void
+    reset() override;
+
+    /**
+     * @brief Returns mutable access to the underlying internal-energy storage.
+     *
+     * @return Reference to the internal-energy device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<FluidInternalEnergy<T>>&
+    data() noexcept;
+
+    /**
+     * @brief Returns read-only access to the underlying internal-energy storage.
+     *
+     * @return Const reference to the internal-energy device buffer.
+     */
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<FluidInternalEnergy<T>>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing per-particle internal energy.
+     */
+    DeviceBuffer<FluidInternalEnergy<T>> _internal_energy;
+};
+
 } // namespace atlas::fluid
 
 namespace atlas {
+
+/**
+ * @brief Alias for atlas::fluid::FluidInternalEnergy.
+ *
+ * @tparam T Scalar type used by the energy values.
+ */
+template <typename T>
+using FluidInternalEnergy = atlas::fluid::FluidInternalEnergy<T>;
 
 /**
  * @brief Alias for atlas::fluid::FluidState.
@@ -566,6 +672,14 @@ using FluidActiveState = atlas::fluid::FluidActiveState<T>;
  */
 template <typename T>
 using FluidTemperatureState = atlas::fluid::FluidTemperatureState<T>;
+
+/**
+ * @brief Alias for atlas::fluid::FluidInternalEnergyState.
+ *
+ * @tparam T Scalar type used by the state.
+ */
+template <typename T>
+using FluidInternalEnergyState = atlas::fluid::FluidInternalEnergyState<T>;
 
 } // namespace atlas
 

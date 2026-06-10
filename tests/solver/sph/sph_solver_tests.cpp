@@ -149,9 +149,9 @@ TEST(SphSolver, SolveUpdatesVelocityFromLocalNeighborhood) {
     // Act: solve one SPH step.
     solver.solve(0.01f);
 
-    const auto lhs_velocity = fluid->state<FluidVelocityState>()->data()[0];
-    const auto rhs_velocity = fluid->state<FluidVelocityState>()->data()[1];
-    const auto cell_force = universe->state<UniverseFieldForceState<float>>()->data()[0];
+    const Vector3F lhs_velocity = fluid->state<FluidVelocityState>()->data()[0];
+    const Vector3F rhs_velocity = fluid->state<FluidVelocityState>()->data()[1];
+    const Vector3F cell_force = universe->state<UniverseFieldForceState<float>>()->data()[0];
 
     // Assert: local pressure interaction pushes particles apart and records cell data.
     EXPECT_LT(lhs_velocity.x, 0.0f);

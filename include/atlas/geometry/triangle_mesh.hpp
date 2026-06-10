@@ -882,6 +882,48 @@ HitSurface<T>
 TriangleMeshGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexcept {
     HitSurface<T> out {};
 
+#if defined(ATLAS_TASKING_CUDA) && !defined(__CUDA_ARCH__)
+    constexpr bool can_use_bvh = false;
+#else
+    constexpr bool can_use_bvh = true;
+#endif
+
+    if (!can_use_bvh) {
+        if (!is_valid()) {
+            return out;
+        }
+
+        T best_t = std::numeric_limits<T>::max();
+        TriangleGeometryOperator<T> tri_op {};
+
+        for (int t = 0; t < triangle_count; ++t) {
+            const int i0 = indices[3 * t + 0];
+            const int i1 = indices[3 * t + 1];
+            const int i2 = indices[3 * t + 2];
+
+            const atlas::math::Vector<T, 3>& a = vertices[i0];
+            const atlas::math::Vector<T, 3>& b = vertices[i1];
+            const atlas::math::Vector<T, 3>& c = vertices[i2];
+
+            atlas::math::Vector<T, 3> n = atlas::math::cross(b - a, c - a);
+            const T n2                  = n.length_squared();
+            n = n2 > T(0) ? atlas::math::normalize(n) : atlas::math::Vector<T, 3>(T(0), T(0), T(1));
+
+            tri_op.a = &a;
+            tri_op.b = &b;
+            tri_op.c = &c;
+            tri_op.n = &n;
+
+            const HitSurface<T> h = tri_op.trace(r);
+            if (h.is_intersecting && h.distance < best_t) {
+                best_t = h.distance;
+                out    = h;
+            }
+        }
+
+        return out;
+    }
+
     // BVH traversal requires valid BVH buffers and a valid root index.
     if (!bvh_nodes || !bvh_indices || !bvh_tris || bvh_root < 0) {
         return out;

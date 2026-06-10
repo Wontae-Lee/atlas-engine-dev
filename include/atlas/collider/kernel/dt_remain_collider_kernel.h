@@ -1,19 +1,19 @@
 #pragma once
 
 /**
- * @file precise_collider_kernel.h
- * @brief Declares the moving-surface-aware post-collider placement kernel.
+ * @file dt_remain_collider_kernel.h
+ * @brief Declares the remaining-time post-collider placement kernel.
  */
 
-#include <atlas/collider/dt_remain_collider_kernel.h>
+#include <atlas/collider/kernel/fast_collider_kernel.h>
 
 namespace atlas::system {
 
 template <typename T>
-class PreciseColliderKernel final {
+class DtRemainColliderKernel final {
 public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    PreciseColliderKernel() noexcept = default;
+    DtRemainColliderKernel() noexcept = default;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     sweep_motion(const Unit<T>& unit,
@@ -35,9 +35,9 @@ public:
                T sweep_speed,
                T dt,
                const Unit<T>& unit,
-               const ColliderSurfaceInteraction<T>& interaction) const noexcept;
+               const SurfaceInteractionKernel<T>& interaction) const noexcept;
 };
 
 } // namespace atlas::system
 
-#include <atlas/collider/precise_collider_kernel.hpp>
+#include <atlas/collider/kernel/dt_remain_collider_kernel.hpp>

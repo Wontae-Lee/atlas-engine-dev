@@ -29,7 +29,7 @@ PreciseColliderKernel<T>::operator()(Vector3<T>& position,
                                      const T sweep_speed,
                                      const T dt,
                                      const Unit<T>& unit,
-                                     const ColliderSurfaceInteraction<T>& interaction) const noexcept {
+                                     const SurfaceInteractionKernel<T>& interaction) const noexcept {
     DtRemainColliderKernel<T> {}(
         position,
         velocity,

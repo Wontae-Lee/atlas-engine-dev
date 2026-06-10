@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef ATLAS_TASKING_CUDA
+#include <cstddef>
 #include <thrust/iterator/counting_iterator.h>
 
 namespace atlas {
@@ -20,7 +21,7 @@ namespace atlas {
  * without storing an actual backing container.
  */
 template <typename T>
-using counting_iterator = thrust::counting_iterator<T>;
+using counting_iterator = thrust::counting_iterator<T, thrust::use_default, thrust::use_default, std::ptrdiff_t>;
 
 } // namespace atlas
 

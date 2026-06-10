@@ -50,3 +50,33 @@ TEST(DsmcKernel, CrossSectionDispatchesForAllKernelTypes) {
                   DsmcKernelType::variable_soft_sphere, properties, properties, 2.0f),
               0.0f);
 }
+
+TEST(DsmcKernel, PairParametersUseSpeciesPairAverages) {
+    const auto lhs = MaterialProperties<float>::builder()
+                         .with_type(MaterialType::Molecule)
+                         .with_mass(1.0f)
+                         .with_molecular_mass(2.0f)
+                         .with_reference_diameter(2.0f)
+                         .with_reference_temperature(100.0f)
+                         .with_viscosity_index(0.6f)
+                         .with_scattering_parameter(1.0f)
+                         .build();
+    const auto rhs = MaterialProperties<float>::builder()
+                         .with_type(MaterialType::Molecule)
+                         .with_mass(1.0f)
+                         .with_molecular_mass(6.0f)
+                         .with_reference_diameter(4.0f)
+                         .with_reference_temperature(300.0f)
+                         .with_viscosity_index(0.8f)
+                         .with_scattering_parameter(2.0f)
+                         .build();
+
+    const auto pair = DsmcKernel<float>::pair_parameters(lhs, rhs);
+
+    EXPECT_TRUE(pair.valid);
+    EXPECT_NEAR(pair.reference_diameter, 3.0f, 1.0e-6f);
+    EXPECT_NEAR(pair.reference_temperature, 200.0f, 1.0e-6f);
+    EXPECT_NEAR(pair.viscosity_index, 0.7f, 1.0e-6f);
+    EXPECT_NEAR(pair.scattering_parameter, 1.5f, 1.0e-6f);
+    EXPECT_NEAR(pair.reduced_mass, 1.5f, 1.0e-6f);
+}

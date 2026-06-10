@@ -314,6 +314,38 @@ UniverseCollisionCountState<T>::data() const noexcept {
 }
 
 template <typename T>
+UniverseCollisionRemainderState<T>::UniverseCollisionRemainderState(const std::size_t number_of_cells)
+    : _collision_remainder(number_of_cells) { }
+
+template <typename T>
+UniverseCollisionRemainderState<T>::UniverseCollisionRemainderState(DeviceBuffer<T> collision_remainder) noexcept
+    : _collision_remainder(std::move(collision_remainder)) { }
+
+template <typename T>
+std::size_t
+UniverseCollisionRemainderState<T>::size() const noexcept {
+    return _collision_remainder.size();
+}
+
+template <typename T>
+void
+UniverseCollisionRemainderState<T>::reset() {
+    reset_buffer(_collision_remainder);
+}
+
+template <typename T>
+DeviceBuffer<T>&
+UniverseCollisionRemainderState<T>::data() noexcept {
+    return _collision_remainder;
+}
+
+template <typename T>
+const DeviceBuffer<T>&
+UniverseCollisionRemainderState<T>::data() const noexcept {
+    return _collision_remainder;
+}
+
+template <typename T>
 UniverseKnudsenNumberState<T>::UniverseKnudsenNumberState(const std::size_t number_of_cells)
     : _knudsen_number(number_of_cells) { }
 template <typename T>

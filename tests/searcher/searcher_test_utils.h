@@ -191,8 +191,11 @@ contains_neighbor(const SearcherHostPtr<float>& searcher, const int particle, co
         return false;
     }
 
-    for (int i = offsets[particle]; i < offsets[particle + 1]; ++i) {
-        if (indices[i] == neighbor) {
+    const std::vector<int> host_offsets = copy_values(offsets + particle, 2);
+    const std::vector<int> host_indices = copy_values(indices, static_cast<std::size_t>(searcher->neighbor_count()));
+
+    for (int i = host_offsets[0]; i < host_offsets[1]; ++i) {
+        if (host_indices[static_cast<std::size_t>(i)] == neighbor) {
             return true;
         }
     }
@@ -209,9 +212,12 @@ valid_neighbor_slots(const SearcherHostPtr<float>& searcher, const int particle)
         return 0;
     }
 
+    const std::vector<int> host_offsets = copy_values(offsets + particle, 2);
+    const std::vector<int> host_indices = copy_values(indices, static_cast<std::size_t>(searcher->neighbor_count()));
+
     int count = 0;
-    for (int i = offsets[particle]; i < offsets[particle + 1]; ++i) {
-        if (indices[i] >= 0) {
+    for (int i = host_offsets[0]; i < host_offsets[1]; ++i) {
+        if (host_indices[static_cast<std::size_t>(i)] >= 0) {
             ++count;
         }
     }

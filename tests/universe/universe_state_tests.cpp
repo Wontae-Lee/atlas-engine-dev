@@ -11,6 +11,7 @@ using atlas::Vector3F;
 using atlas::eps;
 using atlas::test::vec_near;
 using atlas::universe::UniverseBulkVelocityState;
+using atlas::universe::UniverseCollisionRemainderState;
 using atlas::universe::UniverseMaterialRatioState;
 using atlas::universe::UniverseNumberParticleState;
 using atlas::universe::UniverseTemperatureState;
@@ -66,6 +67,17 @@ TEST(UniverseState, NumberParticleStateStoresScalarData) {
     // Assert: the scalar value is available at the assigned index.
     EXPECT_EQ(state.size(), 2u);
     EXPECT_NEAR(state.data()[0], 3.0f, eps);
+}
+
+TEST(UniverseState, CollisionRemainderStateStoresScalarData) {
+    UniverseCollisionRemainderState<float> state(2);
+
+    state.data()[0] = 0.25f;
+    state.data()[1] = 0.75f;
+
+    EXPECT_EQ(state.size(), 2u);
+    EXPECT_NEAR(state.data()[0], 0.25f, eps);
+    EXPECT_NEAR(state.data()[1], 0.75f, eps);
 }
 
 TEST(UniverseState, MaterialRatioStateStoresVectorData) {

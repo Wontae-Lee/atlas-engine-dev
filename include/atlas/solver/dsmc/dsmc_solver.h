@@ -1,13 +1,20 @@
 #pragma once
 
 #include <atlas/core/macros.h>
+#include <atlas/solver/dsmc/dsmc_flatten_workload.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 #include <atlas/solver/dsmc/dsmc_probe.h>
+#include <atlas/solver/dsmc/statistics/dsmc_statistics.h>
 #include <atlas/solver/solver.h>
 
 #include <cstdint>
 
 namespace atlas::system {
+
+enum struct DsmcCollisionWorkloadType : int {
+    cell,
+    flatten
+};
 
 /**
  * @brief Direct Simulation Monte Carlo solver for particle-based rarefied-gas collisions.
@@ -77,7 +84,8 @@ public:
     DsmcSolver(UniverseHostPtr<T> universe,
                FluidHostPtr<T> fluid,
                SpatialHashingSearcherHostPtr<T> searcher,
-               DsmcKernelType kernel_type = DsmcKernelType::hard_sphere) noexcept;
+               DsmcKernelType kernel_type = DsmcKernelType::hard_sphere,
+               DsmcCollisionWorkloadType workload_type = DsmcCollisionWorkloadType::cell) noexcept;
 
     /**
      * @brief Destroys the DSMC solver.
@@ -121,6 +129,12 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DsmcKernelType
     kernel_type() const noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE DsmcCollisionWorkloadType
+    workload_type() const noexcept;
+
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    set_workload_type(DsmcCollisionWorkloadType workload_type) noexcept;
 
     /**
      * @brief Ensures that all DSMC per-cell universe states exist and have valid size.
@@ -181,8 +195,8 @@ public:
      * based on pair count, maximum `sigma * g`, statistical weight, time step,
      * and cell volume.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE bool
-    measure_cell_collision_statistics(const DeviceBuffer<int>* allocated_solver, int index, T dt);
+    ATLAS_HOST ATLAS_FORCE_INLINE virtual bool
+    measure_collision_statistics(const DeviceBuffer<int>* allocated_solver, int index, T dt);
 
     /**
      * @brief Applies sampled DSMC pair collisions inside each selected cell.
@@ -193,7 +207,7 @@ public:
      *
      * @details
      * This method reads the per-cell collision counts produced by
-     * `measure_cell_collision_statistics()`, samples random candidate pairs, and
+     * `measure_collision_statistics()`, samples random candidate pairs, and
      * delegates pair acceptance and velocity update to `collide_pair()`.
      *
      * @note
@@ -264,6 +278,12 @@ protected:
      */
     DsmcKernel<T> _kernel {};
 
+    DsmcCollisionWorkloadType _workload_type { DsmcCollisionWorkloadType::cell };
+
+    DsmcFlattenWorkload<T> _flatten_workload {};
+
+    DsmcStatistics<T> _statistics {};
+
     /**
      * @brief Monotonic seed used to decorrelate DSMC stochastic samples between steps.
      */
@@ -297,6 +317,8 @@ using DsmcSolverHostPtr = atlas::host_shared_ptr<atlas::system::DsmcSolver<T>>;
  */
 template <typename T>
 using DsmcSolverDevicePtr = atlas::device_shared_ptr<atlas::system::DsmcSolver<T>>;
+
+using DsmcCollisionWorkloadType = atlas::system::DsmcCollisionWorkloadType;
 
 }
 

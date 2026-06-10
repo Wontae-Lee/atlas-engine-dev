@@ -62,7 +62,7 @@ generate_standard_normal(atlas::default_random_engine<T>& engine) {
  * @param b Output bitangent vector.
  */
 template <typename T>
-ATLAS_DEVICE ATLAS_FORCE_INLINE void
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
 build_orthonormal_basis(const Vector3<T>& n,
                         Vector3<T>& t,
                         Vector3<T>& b) {
@@ -93,7 +93,7 @@ build_orthonormal_basis(const Vector3<T>& n,
  * @return A unit direction sampled uniformly on the hemisphere defined by @p n.
  */
 template <typename T>
-ATLAS_DEVICE ATLAS_FORCE_INLINE Vector3<T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
 sample_uniform_hemisphere(const Vector3<T>& n, T u1, T u2) {
 
     const T two_pi = T(2) * M_PI;
@@ -137,7 +137,7 @@ sample_uniform_hemisphere(const Vector3<T>& n, T u1, T u2) {
  * @return A unit direction sampled with cosine weighting on the hemisphere defined by @p n.
  */
 template <typename T>
-ATLAS_DEVICE ATLAS_FORCE_INLINE Vector3<T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
 sample_cosine_hemisphere(const Vector3<T>& n, T u1, T u2) {
 
     const T two_pi = T(2) * M_PI;

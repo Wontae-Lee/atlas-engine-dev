@@ -487,11 +487,18 @@ if (ATLAS_USE_CUDA)
     # been selected and environment diagnostics have been gathered.
     enable_language(CUDA)
 
-    # Apply the CUDA language standard globally so CUDA-enabled targets do not
-    # need to restate the same target properties or per-source standard flags
-    # in each example directory.
-    set(CMAKE_CUDA_STANDARD 20)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    # CMake 3.20+ may not know how to map CUDA_STANDARD 20 to nvcc flags even
+    # when the installed nvcc supports C++20. Apply the standard explicitly so
+    # CUDA examples and tests configure consistently on those CMake versions.
+    set(CMAKE_CUDA20_STANDARD_COMPILE_OPTION "--std=c++20")
+    set(CMAKE_CUDA20_EXTENSION_COMPILE_OPTION "--std=c++20")
+    unset(CMAKE_CUDA_STANDARD CACHE)
+    unset(CMAKE_CUDA_STANDARD_REQUIRED CACHE)
+    unset(CMAKE_CUDA_STANDARD)
+    unset(CMAKE_CUDA_STANDARD_REQUIRED)
+    if (NOT CMAKE_CUDA_FLAGS MATCHES "(^| )--std=c\\+\\+20($| )")
+        string(APPEND CMAKE_CUDA_FLAGS " --std=c++20")
+    endif ()
 
     # --------------------------------------------------------
     # CUDA architecture selection
@@ -899,20 +906,6 @@ if (ATLAS_ENABLE_TESTS)
             add_executable(atlas_all_cuda_test
                     ${ATLAS_CUDA_TEST_MAIN}
                     ${ATLAS_CUDA_TEST_SOURCES}
-            )
-
-            # The CUDA target itself is configured with CUDA 17, while
-            # non-main CUDA sources additionally receive a C++20 flag.
-            # This mixed setup reflects the current project/toolchain
-            # expectations and should be revisited if the CUDA dialect
-            # policy is unified later.
-            set_target_properties(atlas_all_cuda_test PROPERTIES
-                    CUDA_STANDARD 17
-                    CUDA_STANDARD_REQUIRED ON
-            )
-
-            set_source_files_properties(${ATLAS_CUDA_TEST_SOURCES} PROPERTIES
-                    COMPILE_OPTIONS "--std=c++20"
             )
 
             target_link_libraries(atlas_all_cuda_test

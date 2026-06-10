@@ -1,7 +1,7 @@
-#include "../utilities/test_utils.h"
+#include "../../utilities/test_utils.h"
 
 #include <atlas/collider/collider.h>
-#include <atlas/collider/post_collider_kernel.h>
+#include <atlas/collider/kernel/post_collider_kernel.h>
 #include <atlas/geometry/plane.h>
 #include <atlas/sync/sync.h>
 #include <atlas/unit/unit.h>
@@ -11,7 +11,7 @@
 namespace {
 
 using atlas::Collider;
-using atlas::ColliderSurfaceInteraction;
+using atlas::IsothermalSurfaceInteraction;
 using atlas::Fluid;
 using atlas::FluidHostPtr;
 using atlas::HostBuffer;
@@ -59,11 +59,11 @@ make_plane_unit(const Vector3F& linear_velocity = Vector3F(0, 0, 0)) {
     return builder.build();
 }
 
-ColliderSurfaceInteraction<float>
+IsothermalSurfaceInteraction<float>
 make_specular_interaction() {
-    return ColliderSurfaceInteraction<float>::builder()
+    return IsothermalSurfaceInteraction<float>::builder()
         .with_restitution(1.0f)
-        .with_tangential_momentum_accommodation(0.0f)
+        .with_momentum_acc(0.0f)
         .build();
 }
 
@@ -102,7 +102,7 @@ collide_position(PostColliderType type) {
                         })
                         .with_fluid(fluid)
                         .with_surface_interactions(
-                            HostBuffer<ColliderSurfaceInteraction<float>> { make_specular_interaction() })
+                            HostBuffer<IsothermalSurfaceInteraction<float>> { make_specular_interaction() })
                         .with_post_collider_type(type)
                         .build();
 
@@ -117,6 +117,39 @@ collide_position(PostColliderType type) {
 }
 
 } // namespace
+
+TEST(PostColliderKernel, DefaultConstructsFastKernel) {
+    const PostColliderKernel<float> kernel;
+
+    EXPECT_EQ(kernel.type, PostColliderType::fast);
+}
+
+TEST(PostColliderKernel, TypeConstructorSelectsRequestedKernel) {
+    const PostColliderKernel<float> kernel(PostColliderType::dt_remain);
+
+    EXPECT_EQ(kernel.type, PostColliderType::dt_remain);
+}
+
+TEST(PostColliderKernel, CopyAndAssignmentPreserveActiveKernel) {
+    const PostColliderKernel<float> source(PostColliderType::precise);
+    const PostColliderKernel<float> copied(source);
+    PostColliderKernel<float> assigned;
+
+    assigned = source;
+
+    EXPECT_EQ(copied.type, PostColliderType::precise);
+    EXPECT_EQ(assigned.type, PostColliderType::precise);
+}
+
+TEST(PostColliderKernel, DestroyActiveAndCopyFromRebuildActiveKernel) {
+    const PostColliderKernel<float> source(PostColliderType::dt_remain);
+    PostColliderKernel<float> kernel(PostColliderType::fast);
+
+    kernel.destroy_active();
+    kernel.copy_from(source);
+
+    EXPECT_EQ(kernel.type, PostColliderType::dt_remain);
+}
 
 TEST(PostColliderKernel, FastStopsAtHitPointAndUpdatesVelocity) {
     Vector3F position(-1.0f, 0.0f, 0.0f);

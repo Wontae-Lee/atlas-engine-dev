@@ -119,6 +119,7 @@ private:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     ensure_state();
 
+public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     update_units(T dt) noexcept;
 

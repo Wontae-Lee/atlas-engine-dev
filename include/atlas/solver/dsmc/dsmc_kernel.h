@@ -43,6 +43,16 @@ enum struct DsmcKernelType : int {
     variable_soft_sphere
 };
 
+template <typename T>
+struct DsmcPairParameters final {
+    T reference_diameter {};
+    T reference_temperature {};
+    T viscosity_index { T(0.5) };
+    T scattering_parameter { T(1) };
+    T reduced_mass {};
+    bool valid {};
+};
+
 /**
  * @brief Tagged runtime wrapper for DSMC collision kernels.
  *
@@ -195,6 +205,10 @@ struct DsmcKernel final {
                   const MaterialProperties<T>& lhs,
                   const MaterialProperties<T>& rhs,
                   T relative_speed) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static DsmcPairParameters<T>
+    pair_parameters(const MaterialProperties<T>& lhs,
+                    const MaterialProperties<T>& rhs) noexcept;
 
     /**
      * @brief Apply the active collision kernel to two particle velocities.

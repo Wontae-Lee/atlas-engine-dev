@@ -19,6 +19,9 @@ MaterialProperties<T>::Builder::build() const {
     p.translational_energy = _translational_energy;
     p.rotational_energy    = _rotational_energy;
     p.vibrational_energy   = _vibrational_energy;
+    p.rotational_dof       = _rotational_dof;
+    p.vibrational_dof      = _vibrational_dof;
+    p.rotational_temperature = _rotational_temperature;
     p.characteristic_vibrational_temperature = _characteristic_vibrational_temperature;
     p.max_vibrational_quantum = _max_vibrational_quantum;
     p.gamma_quant = _gamma_quant;
@@ -30,6 +33,13 @@ MaterialProperties<T>::Builder::build() const {
     p.reference_temperature = _reference_temperature;
     p.viscosity_index       = _viscosity_index;
     p.scattering_parameter  = _scattering_parameter;
+    p.rotational_relaxation_probability = _rotational_relaxation_probability;
+    p.vibrational_relaxation_probability = _vibrational_relaxation_probability;
+    p.rotational_relaxation_c1 = _rotational_relaxation_c1;
+    p.rotational_relaxation_c2 = _rotational_relaxation_c2;
+    p.rotational_relaxation_c3 = _rotational_relaxation_c3;
+    p.vibrational_relaxation_c1 = _vibrational_relaxation_c1;
+    p.vibrational_relaxation_c2 = _vibrational_relaxation_c2;
     p.rest_density          = _rest_density;
     p.pressure_coefficient  = _pressure_coefficient;
     p.dynamic_viscosity     = _dynamic_viscosity;
@@ -98,7 +108,44 @@ MaterialProperties<T>::Builder::with_vibrational_energy(T e) {
 
 template <typename T>
 typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rotational_dof(int dof) {
+    if (dof != 0 && dof != 2 && dof != 3) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: rotational_dof must be 0, 2, or 3.");
+    }
+    _rotational_dof = dof;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_vibrational_dof(int dof) {
+    if (dof < 0 || dof % 2 != 0) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: vibrational_dof must be non-negative and even.");
+    }
+    _vibrational_dof = dof;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rotational_temperature(T temperature) {
+    if (!(temperature > T(0))) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: rotational_temperature must be > 0.");
+    }
+    _rotational_temperature = temperature;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_characteristic_vibrational_temperature(T temperature) {
+    if (!(temperature > T(0))) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: characteristic_vibrational_temperature must be > 0.");
+    }
     _characteristic_vibrational_temperature = temperature;
     return *this;
 }
@@ -170,6 +217,53 @@ template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_scattering_parameter(T alpha) {
     _scattering_parameter = alpha;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rotational_relaxation_probability(T probability) {
+    if (probability < T(0) || probability > T(1)) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: rotational_relaxation_probability must be in [0, 1].");
+    }
+    _rotational_relaxation_probability = probability;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_vibrational_relaxation_probability(T probability) {
+    if (probability < T(0) || probability > T(1)) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: vibrational_relaxation_probability must be in [0, 1].");
+    }
+    _vibrational_relaxation_probability = probability;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rotational_relaxation_coefficients(T c1, T c2, T c3) {
+    if (!(c1 > T(0))) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: rotational_relaxation_c1 must be > 0.");
+    }
+    _rotational_relaxation_c1 = c1;
+    _rotational_relaxation_c2 = c2;
+    _rotational_relaxation_c3 = c3;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_vibrational_relaxation_coefficients(T c1, T c2) {
+    if (!(c1 > T(0))) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: vibrational_relaxation_c1 must be > 0.");
+    }
+    _vibrational_relaxation_c1 = c1;
+    _vibrational_relaxation_c2 = c2;
     return *this;
 }
 

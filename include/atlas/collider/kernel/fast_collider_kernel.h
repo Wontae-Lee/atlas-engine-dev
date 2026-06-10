@@ -5,7 +5,7 @@
  * @brief Declares the fast post-collider placement kernel.
  */
 
-#include <atlas/collider/collider_surface_interaction.h>
+#include <atlas/collider/interaction/surface_interaction_kernel.h>
 #include <atlas/math/constants.h>
 #include <atlas/unit/unit.h>
 
@@ -41,9 +41,9 @@ public:
                T sweep_speed,
                T dt,
                const Unit<T>& unit,
-               const ColliderSurfaceInteraction<T>& interaction) const noexcept;
+               const SurfaceInteractionKernel<T>& interaction) const noexcept;
 };
 
 } // namespace atlas::system
 
-#include <atlas/collider/fast_collider_kernel.hpp>
+#include <atlas/collider/kernel/fast_collider_kernel.hpp>

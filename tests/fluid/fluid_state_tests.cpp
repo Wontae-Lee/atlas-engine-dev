@@ -7,8 +7,10 @@
 namespace {
 
 using atlas::DeviceBuffer;
+using atlas::FluidInternalEnergy;
 using atlas::Vector3F;
 using atlas::fluid::FluidActiveState;
+using atlas::fluid::FluidInternalEnergyState;
 using atlas::fluid::FluidPositionState;
 using atlas::fluid::FluidSpeciesState;
 using atlas::fluid::FluidTemperatureState;
@@ -102,6 +104,28 @@ TEST(FluidState, TemperatureStateCompactsKeptEntries) {
     // Assert: kept temperatures preserve their relative order.
     EXPECT_NEAR(state.data()[0], 300.0f, tol);
     EXPECT_NEAR(state.data()[1], 400.0f, tol);
+}
+
+TEST(FluidState, InternalEnergyStateCompactsKeptEntries) {
+    // Arrange: create an internal-energy state and compact index list.
+    FluidInternalEnergyState<float> state(4);
+    DeviceBuffer<std::size_t> compact_indices = { 1u, 3u };
+
+    state.data()[0] = FluidInternalEnergy<float> { 1.0f, 2.0f, 3.0f };
+    state.data()[1] = FluidInternalEnergy<float> { 4.0f, 5.0f, 6.0f };
+    state.data()[2] = FluidInternalEnergy<float> { 7.0f, 8.0f, 9.0f };
+    state.data()[3] = FluidInternalEnergy<float> { 10.0f, 11.0f, 12.0f };
+
+    // Act: compact the kept entries into the active prefix.
+    state.compact(compact_indices, 2);
+
+    // Assert: kept internal-energy values preserve their relative order.
+    EXPECT_NEAR(state.data()[0].translational, 4.0f, tol);
+    EXPECT_NEAR(state.data()[0].rotational, 5.0f, tol);
+    EXPECT_NEAR(state.data()[0].vibrational, 6.0f, tol);
+    EXPECT_NEAR(state.data()[1].translational, 10.0f, tol);
+    EXPECT_NEAR(state.data()[1].rotational, 11.0f, tol);
+    EXPECT_NEAR(state.data()[1].vibrational, 12.0f, tol);
 }
 
 TEST(FluidState, CompactWithZeroKeptLeavesExistingDataAccessible) {

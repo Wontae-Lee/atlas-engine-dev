@@ -580,6 +580,39 @@ private:
 };
 
 /**
+ * @brief Universe state storing cell-wise fractional DSMC collision remainders.
+ *
+ * DSMC NTC schedulers use this state to carry the fractional part of the
+ * expected collision-attempt count into the next time step.
+ *
+ * @tparam T Floating-point scalar type used for remainder values.
+ */
+template <typename T>
+class UniverseCollisionRemainderState final : public UniverseState {
+public:
+    UniverseCollisionRemainderState() = default;
+
+    ATLAS_HOST explicit UniverseCollisionRemainderState(std::size_t number_of_cells);
+
+    ATLAS_HOST explicit UniverseCollisionRemainderState(DeviceBuffer<T> collision_remainder) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<T> _collision_remainder;
+};
+
+/**
  * @brief Universe state storing cell-wise Knudsen number values.
  *
  * Each entry corresponds to the Knudsen number associated with one universe cell.
@@ -790,6 +823,14 @@ using UniverseNumberParticleState = atlas::universe::UniverseNumberParticleState
  */
 template <typename T>
 using UniverseCollisionCountState = atlas::universe::UniverseCollisionCountState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseCollisionRemainderState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseCollisionRemainderState = atlas::universe::UniverseCollisionRemainderState<T>;
 
 /**
  * @brief Alias for atlas::universe::UniverseKnudsenNumberState.

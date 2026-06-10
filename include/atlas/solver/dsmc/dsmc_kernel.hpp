@@ -108,6 +108,37 @@ DsmcKernel<T>::DsmcKernel(const VariableSoftSphereKernel<T>& op)
 }
 
 template <typename T>
+DsmcPairParameters<T>
+DsmcKernel<T>::pair_parameters(const MaterialProperties<T>& lhs,
+                               const MaterialProperties<T>& rhs) noexcept {
+    DsmcPairParameters<T> pair {};
+    const T lhs_mass = lhs.molecular_mass;
+    const T rhs_mass = rhs.molecular_mass;
+    const T mass_sum = lhs_mass + rhs_mass;
+    if (!(lhs_mass > T(0)) || !(rhs_mass > T(0)) || !(mass_sum > T(0))) {
+        return pair;
+    }
+
+    pair.reduced_mass = lhs_mass * rhs_mass / mass_sum;
+    pair.viscosity_index = (lhs.viscosity_index.value_or(T(0.5))
+                            + rhs.viscosity_index.value_or(T(0.5)))
+        * T(0.5);
+    pair.scattering_parameter = (lhs.scattering_parameter.value_or(T(1))
+                                 + rhs.scattering_parameter.value_or(T(1)))
+        * T(0.5);
+
+    if (lhs.reference_diameter.has_value() && rhs.reference_diameter.has_value()) {
+        pair.reference_diameter = (lhs.reference_diameter.value() + rhs.reference_diameter.value()) * T(0.5);
+    }
+    if (lhs.reference_temperature.has_value() && rhs.reference_temperature.has_value()) {
+        pair.reference_temperature = (lhs.reference_temperature.value() + rhs.reference_temperature.value()) * T(0.5);
+    }
+
+    pair.valid = pair.reduced_mass > T(0);
+    return pair;
+}
+
+template <typename T>
 T
 DsmcKernel<T>::cross_section(const DsmcKernelType type,
                              const MaterialProperties<T>& lhs,

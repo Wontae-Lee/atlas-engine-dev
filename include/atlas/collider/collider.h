@@ -9,8 +9,8 @@
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/collider/collider_probe.h>
-#include <atlas/collider/collider_surface_interaction.h>
-#include <atlas/collider/post_collider_kernel.h>
+#include <atlas/collider/interaction/surface_interaction_kernel.h>
+#include <atlas/collider/kernel/post_collider_kernel.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/unit/unit.h>
@@ -88,7 +88,7 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Collider(DeviceBuffer<Unit<T>> units,
-             DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions,
+             DeviceBuffer<SurfaceInteractionKernel<T>> surface_interactions,
              DeviceBuffer<std::uint8_t> flips,
              PostColliderType post_collider_type,
              atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
@@ -170,7 +170,7 @@ private:
      * - size == 1: one shared model for all collider units,
      * - size == number of units: one interaction model per unit.
      */
-    DeviceBuffer<ColliderSurfaceInteraction<T>> _surface_interactions;
+    DeviceBuffer<SurfaceInteractionKernel<T>> _surface_interactions;
 
     /**
      * @brief Device buffer storing per-unit normal-flip flags.
@@ -259,7 +259,44 @@ public:
      * @throw std::runtime_error Thrown if @p surface_interactions is empty.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_surface_interactions(const HostBuffer<ColliderSurfaceInteraction<T>>& surface_interactions);
+    with_surface_interactions(const HostBuffer<IsothermalSurfaceInteraction<T>>& surface_interactions);
+
+    /**
+     * @brief Sets Maxwellian surface interaction models.
+     *
+     * Valid counts are the same as @ref with_surface_interactions for the
+     * legacy collider interaction model.
+     *
+     * @param surface_interactions Host buffer containing Maxwellian interaction models.
+     * @return Reference to this builder.
+     *
+     * @throw std::runtime_error Thrown if @p surface_interactions is empty.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_surface_interactions(const HostBuffer<MaxwellianSurfaceInteraction<T>>& surface_interactions);
+
+    /**
+     * @brief Sets one shared tagged surface interaction kernel.
+     *
+     * @param surface_interaction Tagged interaction kernel shared by all collider units.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_surface_interaction_kernel(const SurfaceInteractionKernel<T>& surface_interaction);
+
+    /**
+     * @brief Sets already-tagged surface interaction kernels.
+     *
+     * Use this overload when a caller needs mixed interaction types across
+     * collider units while still storing them in a single DeviceBuffer.
+     *
+     * @param surface_interactions Host buffer containing tagged interaction kernels.
+     * @return Reference to this builder.
+     *
+     * @throw std::runtime_error Thrown if @p surface_interactions is empty.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_surface_interaction_kernels(const HostBuffer<SurfaceInteractionKernel<T>>& surface_interactions);
 
     /**
      * @brief Sets one shared flip flag for all collider units.
@@ -348,7 +385,7 @@ private:
     /**
      * @brief Host-side surface interaction models collected by the builder.
      */
-    HostBuffer<ColliderSurfaceInteraction<T>> _surface_interactions;
+    HostBuffer<SurfaceInteractionKernel<T>> _surface_interactions;
 
     /**
      * @brief Host-side normal-flip flags collected by the builder.

@@ -12,7 +12,7 @@ namespace atlas::system {
 
 template <typename T>
 Collider<T>::Collider(DeviceBuffer<Unit<T>> units,
-                      DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions,
+                      DeviceBuffer<SurfaceInteractionKernel<T>> surface_interactions,
                       DeviceBuffer<std::uint8_t> flips,
                       PostColliderType post_collider_type,
                       atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept
@@ -165,6 +165,7 @@ Collider<T>::collide(const T dt) const {
 
             // Delegate post-hit placement and velocity response to the selected collider kernel.
             const auto& hit_unit = probe.units[best_index];
+            const auto& interaction = probe.surface_interactions[interaction_index];
             post_collider_kernel(
                 probe.positions[i],
                 probe.velocities[i],
@@ -175,7 +176,20 @@ Collider<T>::collide(const T dt) const {
                 best_speed,
                 dt,
                 hit_unit,
-                probe.surface_interactions[interaction_index]);
+                interaction);
+
+            if (probe.internal_energies != nullptr) {
+                const Vector3<T> wall_velocity = FastColliderKernel<T>::surface_velocity(hit_unit, best_pos);
+                const std::size_t species_index = probe.species[i];
+                if (species_index >= static_cast<std::size_t>(probe.material_count)) {
+                    return;
+                }
+                probe.internal_energies[i] = interaction.internal_energy(
+                    probe.internal_energies[i],
+                    velocity - wall_velocity,
+                    hit_normal,
+                    probe.materials[species_index]);
+            }
         });
 }
 
@@ -198,8 +212,11 @@ Collider<T>::make_probe() const noexcept {
 
     auto& positions  = _fluid->template state<atlas::fluid::FluidPositionState<T>>()->data();
     auto& velocities = _fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data();
+    auto& species    = _fluid->template state<atlas::fluid::FluidSpeciesState<T>>()->data();
+    auto* internal_energy_state = _fluid->template state<atlas::fluid::FluidInternalEnergyState<T>>();
+    auto& materials = _fluid->particle_properties();
 
-    if (positions.empty() || velocities.empty() || _fluid->particle_count() <= 0) {
+    if (positions.empty() || velocities.empty() || species.empty() || _fluid->particle_count() <= 0) {
         return false;
     }
 
@@ -208,6 +225,15 @@ Collider<T>::make_probe() const noexcept {
     _probe.flips                = atlas::raw_pointer_cast(_flips.data());
     _probe.positions            = atlas::raw_pointer_cast(positions.data());
     _probe.velocities           = atlas::raw_pointer_cast(velocities.data());
+    if (internal_energy_state != nullptr
+        && internal_energy_state->data().size() >= _fluid->particle_count()
+        && species.size() >= _fluid->particle_count()
+        && !materials.empty()) {
+        _probe.internal_energies = atlas::raw_pointer_cast(internal_energy_state->data().data());
+        _probe.species           = atlas::raw_pointer_cast(species.data());
+        _probe.materials         = atlas::raw_pointer_cast(materials.data());
+        _probe.material_count    = static_cast<int>(materials.size());
+    }
     _probe.unit_count           = static_cast<int>(_units.size());
     _probe.interaction_count    = static_cast<int>(_surface_interactions.size());
     _probe.flip_count           = static_cast<int>(_flips.size());
@@ -240,9 +266,45 @@ Collider<T>::Builder::with_fluid(atlas::host_shared_ptr<atlas::Fluid<T>> fluid) 
 template <typename T>
 typename Collider<T>::Builder&
 Collider<T>::Builder::with_surface_interactions(
-    const HostBuffer<ColliderSurfaceInteraction<T>>& surface_interactions) {
-    // Require at least one interaction model.
-    // A single model can be broadcast to all collider units.
+    const HostBuffer<IsothermalSurfaceInteraction<T>>& surface_interactions) {
+    if (surface_interactions.empty()) {
+        throw std::runtime_error("Collider::Builder: surface interactions must not be empty.");
+    }
+
+    _surface_interactions.clear();
+    for (const auto& interaction : surface_interactions) {
+        _surface_interactions.push_back(SurfaceInteractionKernel<T>(interaction));
+    }
+    return *this;
+}
+
+template <typename T>
+typename Collider<T>::Builder&
+Collider<T>::Builder::with_surface_interactions(
+    const HostBuffer<MaxwellianSurfaceInteraction<T>>& surface_interactions) {
+    if (surface_interactions.empty()) {
+        throw std::runtime_error("Collider::Builder: surface interactions must not be empty.");
+    }
+
+    _surface_interactions.clear();
+    for (const auto& interaction : surface_interactions) {
+        _surface_interactions.push_back(SurfaceInteractionKernel<T>(interaction));
+    }
+    return *this;
+}
+
+template <typename T>
+typename Collider<T>::Builder&
+Collider<T>::Builder::with_surface_interaction_kernel(
+    const SurfaceInteractionKernel<T>& surface_interaction) {
+    _surface_interactions.assign(1, surface_interaction);
+    return *this;
+}
+
+template <typename T>
+typename Collider<T>::Builder&
+Collider<T>::Builder::with_surface_interaction_kernels(
+    const HostBuffer<SurfaceInteractionKernel<T>>& surface_interactions) {
     if (surface_interactions.empty()) {
         throw std::runtime_error("Collider::Builder: surface interactions must not be empty.");
     }
@@ -287,7 +349,7 @@ Collider<T>::Builder::build() {
 
     // Use the default surface interaction when the caller did not provide one explicitly.
     if (_surface_interactions.empty()) {
-        _surface_interactions.push_back(ColliderSurfaceInteraction<T> {});
+        _surface_interactions.push_back(SurfaceInteractionKernel<T> {});
     }
 
     // Use unflipped normals by default when the caller did not provide flip flags.
@@ -298,7 +360,7 @@ Collider<T>::Builder::build() {
     // Transfer host-side builder data into device buffers used by the runtime collider.
     Collider<T> collider(
         DeviceBuffer<Unit<T>>(_units.begin(), _units.end()),
-        DeviceBuffer<ColliderSurfaceInteraction<T>>(_surface_interactions.begin(), _surface_interactions.end()),
+        DeviceBuffer<SurfaceInteractionKernel<T>>(_surface_interactions.begin(), _surface_interactions.end()),
         DeviceBuffer<std::uint8_t>(_flips.begin(), _flips.end()),
         _post_collider_type,
         _fluid);

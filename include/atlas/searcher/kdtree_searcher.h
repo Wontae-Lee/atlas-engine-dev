@@ -56,7 +56,7 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder builder() noexcept;
 
-private:
+public:
     /**
      * @brief Builds neighbor slots using x-axis pruning followed by exact distance checks.
      *

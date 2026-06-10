@@ -76,7 +76,7 @@ public:
         ++measure_calls;
     }
 
-    ATLAS_NODISCARD MeasureModeType
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE MeasureModeType
     measure_mode() const noexcept override {
         return MeasureModeType::Field;
     }

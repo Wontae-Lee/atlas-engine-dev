@@ -298,4 +298,51 @@ FluidTemperatureState<T>::data() const noexcept {
     return _temperature;
 }
 
+template <typename T>
+FluidInternalEnergyState<T>::FluidInternalEnergyState(const std::size_t buffer_size)
+    : _internal_energy(buffer_size) {
+    // Allocate one internal-energy entry per particle slot.
+}
+
+template <typename T>
+FluidInternalEnergyState<T>::FluidInternalEnergyState(DeviceBuffer<FluidInternalEnergy<T>> internal_energy) noexcept
+    : _internal_energy(std::move(internal_energy)) {
+    // Take ownership of an existing internal-energy buffer.
+}
+
+template <typename T>
+std::size_t
+FluidInternalEnergyState<T>::size() const noexcept {
+    // Return the number of stored particle internal-energy values.
+    return _internal_energy.size();
+}
+
+template <typename T>
+void
+FluidInternalEnergyState<T>::compact(const DeviceBuffer<std::size_t>& compact_indices, const std::size_t kept) {
+    // Keep only the selected particle internal energies and move them to the front.
+    compact_buffer(_internal_energy, compact_indices, kept);
+}
+
+template <typename T>
+void
+FluidInternalEnergyState<T>::reset() {
+    // Reset all particle internal-energy values to zero.
+    reset_buffer(_internal_energy);
+}
+
+template <typename T>
+DeviceBuffer<FluidInternalEnergy<T>>&
+FluidInternalEnergyState<T>::data() noexcept {
+    // Expose mutable access to the internal-energy buffer.
+    return _internal_energy;
+}
+
+template <typename T>
+const DeviceBuffer<FluidInternalEnergy<T>>&
+FluidInternalEnergyState<T>::data() const noexcept {
+    // Expose read-only access to the internal-energy buffer.
+    return _internal_energy;
+}
+
 } // namespace atlas::fluid

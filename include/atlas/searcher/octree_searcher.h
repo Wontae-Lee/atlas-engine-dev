@@ -56,7 +56,7 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder builder() noexcept;
 
-private:
+public:
     /**
      * @brief Builds neighbor slots from same-octant candidates.
      *
