@@ -36,7 +36,7 @@ SquareGeometryOperator<T>::build_basis(const atlas::math::Vector<T, 3>& input_no
         return false;
     }
 
-    unit_normal *= T(1) / static_cast<T>(std::sqrt(normal_length_squared));
+    unit_normal.normalize();
 
     // Construct the first in-plane basis vector using a safe reference axis.
     tangent = atlas::math::cross(axis(unit_normal), unit_normal);
@@ -48,7 +48,7 @@ SquareGeometryOperator<T>::build_basis(const atlas::math::Vector<T, 3>& input_no
         return false;
     }
 
-    tangent *= T(1) / static_cast<T>(std::sqrt(tangent_length_squared));
+    tangent.normalize();
 
     // Construct the second in-plane basis vector orthogonal to both normal and tangent.
     bitangent = atlas::math::cross(unit_normal, tangent);
@@ -60,7 +60,7 @@ SquareGeometryOperator<T>::build_basis(const atlas::math::Vector<T, 3>& input_no
         return false;
     }
 
-    bitangent *= T(1) / static_cast<T>(std::sqrt(bitangent_length_squared));
+    bitangent.normalize();
 
     return true;
 }
@@ -121,7 +121,7 @@ SquareGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&) cons
     }
 
     // Return the normalized square normal.
-    return (*normal) * (T(1) / static_cast<T>(std::sqrt(normal_length_squared)));
+    return normal->normalized();
 }
 
 template <typename T>

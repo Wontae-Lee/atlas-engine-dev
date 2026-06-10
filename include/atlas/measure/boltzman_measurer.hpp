@@ -118,7 +118,7 @@ BoltzmanMeasurer<T>::measure() {
                 const Vector3<T> dv = probe.velocity_ptr[particle_index] - mean_velocity;
 
                 // Accumulate squared fluctuation speed.
-                thermal_energy_sum += dv.x * dv.x + dv.y * dv.y + dv.z * dv.z;
+                thermal_energy_sum += dv.length_squared();
             }
 
             // Store raw thermal energy proxy and particle count for this cell.

@@ -419,7 +419,7 @@ TriangleGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&) co
 
     if (len2 > T(0)) {
         // Normalize the computed normal.
-        nn *= (T(1) / static_cast<T>(std::sqrt(len2)));
+        nn.normalize();
     } else {
         // Degenerate triangles fall back to a deterministic normal.
         nn = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
@@ -605,7 +605,7 @@ TriangleGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexce
 
     if (n2 > T(0)) {
         // Normalize the hit normal before returning it.
-        normal_vec *= (T(1) / static_cast<T>(std::sqrt(n2)));
+        normal_vec.normalize();
     } else {
         // Deterministic fallback for degenerate normal data.
         normal_vec = atlas::math::Vector<T, 3>(T(1), T(0), T(0));

@@ -324,7 +324,7 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
             const T n2                  = n.length_squared();
 
             if (n2 > T(0)) {
-                n *= (T(1) / static_cast<T>(std::sqrt(n2)));
+                n.normalize();
             } else {
                 // Degenerate faces receive a deterministic fallback normal.
                 n = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
@@ -572,7 +572,7 @@ TriangleMeshGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& 
         const T n2                  = n.length_squared();
 
         if (n2 > T(0)) {
-            n *= (T(1) / static_cast<T>(std::sqrt(n2)));
+            n.normalize();
         } else {
             n = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
         }
@@ -624,7 +624,7 @@ TriangleMeshGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&
         const T n2                  = n.length_squared();
 
         if (n2 > T(0)) {
-            n *= (T(1) / static_cast<T>(std::sqrt(n2)));
+            n.normalize();
         } else {
             n = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
         }
@@ -675,7 +675,7 @@ TriangleMeshGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>
         const T n2                  = n.length_squared();
 
         if (n2 > T(0)) {
-            n *= (T(1) / static_cast<T>(std::sqrt(n2)));
+            n.normalize();
         } else {
             n = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
         }
@@ -735,7 +735,7 @@ TriangleMeshGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, c
         const T n2                  = n.length_squared();
 
         if (n2 > T(0)) {
-            n *= (T(1) / static_cast<T>(std::sqrt(n2)));
+            n.normalize();
         } else {
             n = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
         }

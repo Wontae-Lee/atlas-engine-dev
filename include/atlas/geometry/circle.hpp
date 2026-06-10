@@ -27,7 +27,7 @@ CircleGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) con
     }
 
     // Normalize the plane normal before computing the orthogonal projection.
-    n *= T(1) / static_cast<T>(std::sqrt(n2));
+    n.normalize();
 
     const atlas::math::Vector<T, 3> offset = p - *center;
     const T plane_distance                 = offset.dot(n);
@@ -68,7 +68,7 @@ CircleGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&) cons
     }
 
     // Return the normalized disk normal.
-    return (*normal) * (T(1) / static_cast<T>(std::sqrt(n2)));
+    return normal->normalized();
 }
 
 template <typename T>
@@ -135,7 +135,7 @@ CircleGeometryOperator<T>::bound() const noexcept {
     }
 
     // Normalize the disk normal before projecting the radius onto world axes.
-    n *= T(1) / static_cast<T>(std::sqrt(n2));
+    n.normalize();
 
     // Each AABB extent is the disk radius scaled by the projection onto that axis.
     const atlas::math::Vector<T, 3> extent(

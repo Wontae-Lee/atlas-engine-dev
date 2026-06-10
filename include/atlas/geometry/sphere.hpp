@@ -396,7 +396,7 @@ SphereGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
     const T len2                = n.length_squared();
 
     if (len2 > T(0)) {
-        n *= (T(1) / static_cast<T>(std::sqrt(len2)));
+        n.normalize();
     } else {
         // Deterministic fallback for undefined radial normal.
         n = atlas::math::Vector<T, 3>(T(1), T(0), T(0));
