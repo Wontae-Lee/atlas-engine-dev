@@ -1,97 +1,39 @@
-#include "../utilities/test_utils.h"
+#include "searcher_test_utils.h"
 
-#include <atlas/generator/generate_operator.h>
-#include <atlas/searcher/kdtree_searcher.h>
-#include <atlas/searcher/octree_searcher.h>
-#include <atlas/searcher/quadtree_searcher.h>
-#include <atlas/searcher/searcher.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 
 #include <testkit/testkit.h>
 
 #include <cstdint>
+#include <stdexcept>
+#include <vector>
 
 namespace {
 
-using atlas::FluidHostPtr;
-using atlas::KdTreeSearcher;
-using atlas::OctreeSearcher;
-using atlas::QuadtreeSearcher;
 using atlas::SearcherHostPtr;
-using atlas::UniverseHostPtr;
 using atlas::Vector3F;
 using atlas::Vector3I;
-using atlas::fluid::Fluid;
-using atlas::fluid::FluidPositionState;
 using atlas::system::SpatialHashingSearcher;
+using atlas::test::searcher::contains_neighbor;
+using atlas::test::searcher::copy_values;
+using atlas::test::searcher::make_fluid;
+using atlas::test::searcher::make_neighbor_fluid;
+using atlas::test::searcher::make_universe;
+using atlas::test::searcher::valid_neighbor_slots;
 using atlas::test::vec_near;
 using atlas::tol;
-using atlas::universe::Universe;
-
-UniverseHostPtr<float>
-make_universe() {
-    return Universe<float>::builder()
-        .with_lower_corner(Vector3F(0, 0, 0))
-        .with_upper_corner(Vector3F(1, 1, 1))
-        .with_cell_size(0.5f)
-        .make_host_shared();
-}
-
-FluidHostPtr<float>
-make_fluid() {
-    return Fluid<float>::builder()
-        .with_buffer_size(8)
-        .make_host_shared();
-}
-
-FluidHostPtr<float>
-make_neighbor_fluid() {
-    auto fluid = Fluid<float>::builder()
-                     .with_buffer_size(4)
-                     .make_host_shared();
-
-    fluid->set_particle_count(4);
-    auto& positions = fluid->state<FluidPositionState<float>>()->data();
-    positions[0] = Vector3F(0.10f, 0.10f, 0.10f);
-    positions[1] = Vector3F(0.20f, 0.10f, 0.10f);
-    positions[2] = Vector3F(0.85f, 0.85f, 0.85f);
-    positions[3] = Vector3F(0.95f, 0.85f, 0.85f);
-
-    return fluid;
-}
-
-bool
-contains_neighbor(const SearcherHostPtr<float>& searcher, const int particle, const int neighbor) {
-    const int* offsets = searcher->neighbor_offsets();
-    const int* indices = searcher->neighbor_indices();
-
-    if (!offsets || !indices) {
-        return false;
-    }
-
-    for (int i = offsets[particle]; i < offsets[particle + 1]; ++i) {
-        if (indices[i] == neighbor) {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 } // namespace
 
 TEST(SpatialHashingSearcher, BuilderConstructsUsableSearcher) {
-    // Arrange: create the required universe and fluid dependencies.
     const auto universe = make_universe();
     const auto fluid = make_fluid();
 
-    // Act: build a spatial hashing searcher.
     const auto searcher = SpatialHashingSearcher<float>::builder()
                               .with_universe(universe)
                               .with_fluid(fluid)
                               .build();
 
-    // Assert: derived spatial hashing parameters match the universe domain.
     EXPECT_TRUE(vec_near(searcher.lower_corner(), Vector3F(0, 0, 0), tol));
     EXPECT_TRUE(vec_near(searcher.grid_size(), Vector3I(3, 3, 3), 0));
     EXPECT_FLOAT_EQ(searcher.cell_size(), 0.5f);
@@ -99,18 +41,15 @@ TEST(SpatialHashingSearcher, BuilderConstructsUsableSearcher) {
 }
 
 TEST(SpatialHashingSearcher, BuilderRejectsMissingDependencies) {
-    // Arrange: create dependencies used by individual failure cases.
     const auto universe = make_universe();
     const auto fluid = make_fluid();
 
-    // A searcher cannot be built without a fluid.
     EXPECT_THROW(
         SpatialHashingSearcher<float>::builder()
             .with_universe(universe)
             .build(),
         std::invalid_argument);
 
-    // A searcher cannot be built without a universe.
     EXPECT_THROW(
         SpatialHashingSearcher<float>::builder()
             .with_fluid(fluid)
@@ -118,47 +57,7 @@ TEST(SpatialHashingSearcher, BuilderRejectsMissingDependencies) {
         std::invalid_argument);
 }
 
-TEST(SpatialHashingSearcher, MakeHostSharedBuildsSearcher) {
-    // Arrange: create the required universe and fluid dependencies.
-    const auto universe = make_universe();
-    const auto fluid = make_fluid();
-
-    // Act: build a searcher through host shared ownership.
-    const auto searcher = SpatialHashingSearcher<float>::builder()
-                              .with_universe(universe)
-                              .with_fluid(fluid)
-                              .make_host_shared();
-
-    // Assert: the shared searcher exists and exposes derived grid data.
-    ASSERT_NE(searcher, nullptr);
-    EXPECT_FLOAT_EQ(searcher->cell_size(), 0.5f);
-}
-
-TEST(SpatialHashingSearcher, LinearKeyMatchesFlattenedIndexing) {
-    // Act: flatten a 3D cell coordinate into a linear key.
-    const auto key = SpatialHashingSearcher<float>::linear_key(1, 2, 1, Vector3I(4, 5, 6));
-
-    // Assert: the key follows row-major flattened indexing.
-    EXPECT_EQ(key, static_cast<std::uint32_t>(1 + 2 * 4 + 1 * 4 * 5));
-}
-
-TEST(SpatialHashingSearcher, ResetIsSafeWithEmptyFluid) {
-    // Arrange: build a searcher over an empty active fluid prefix.
-    const auto universe = make_universe();
-    const auto fluid = make_fluid();
-
-    auto searcher = SpatialHashingSearcher<float>::builder()
-                        .with_universe(universe)
-                        .with_fluid(fluid)
-                        .build();
-
-    // Act and assert: reset keeps search buffers available.
-    EXPECT_NO_THROW(searcher.reset());
-    EXPECT_NE(searcher.cell_start(), nullptr);
-    EXPECT_NE(searcher.cell_end(), nullptr);
-}
-
-TEST(Searcher, SpatialHashingSearcherCanBeUsedThroughAbstractInterface) {
+TEST(SpatialHashingSearcher, MakeHostSharedBuildsAbstractCompatibleSearcher) {
     const auto universe = make_universe();
     const auto fluid = make_fluid();
 
@@ -169,67 +68,75 @@ TEST(Searcher, SpatialHashingSearcherCanBeUsedThroughAbstractInterface) {
 
     ASSERT_NE(searcher, nullptr);
     EXPECT_NO_THROW(searcher->build());
-    EXPECT_TRUE(vec_near(searcher->lower_corner(), Vector3F(0, 0, 0), tol));
-    EXPECT_TRUE(vec_near(searcher->grid_size(), Vector3I(3, 3, 3), 0));
     EXPECT_FLOAT_EQ(searcher->cell_size(), 0.5f);
+    EXPECT_TRUE(vec_near(searcher->grid_size(), Vector3I(3, 3, 3), 0));
 }
 
-TEST(Searcher, TreeSearchersExposeGridCompatibleSearchView) {
+TEST(SpatialHashingSearcher, LinearKeyForwardsBaseFlattening) {
+    const auto key = SpatialHashingSearcher<float>::linear_key(1, 2, 1, Vector3I(4, 5, 6));
+    EXPECT_EQ(key, static_cast<std::uint32_t>(1 + 2 * 4 + 1 * 4 * 5));
+}
+
+TEST(SpatialHashingSearcher, ResetIsSafeWithEmptyFluid) {
     const auto universe = make_universe();
     const auto fluid = make_fluid();
 
-    const SearcherHostPtr<float> kd_tree = KdTreeSearcher<float>::builder()
-                                               .with_universe(universe)
-                                               .with_fluid(fluid)
-                                               .make_host_shared();
+    auto searcher = SpatialHashingSearcher<float>::builder()
+                        .with_universe(universe)
+                        .with_fluid(fluid)
+                        .build();
 
-    const SearcherHostPtr<float> octree = OctreeSearcher<float>::builder()
-                                              .with_universe(universe)
-                                              .with_fluid(fluid)
-                                              .make_host_shared();
-
-    const SearcherHostPtr<float> quadtree = QuadtreeSearcher<float>::builder()
-                                                .with_universe(universe)
-                                                .with_fluid(fluid)
-                                                .make_host_shared();
-
-    for (const auto& searcher : { kd_tree, octree, quadtree }) {
-        ASSERT_NE(searcher, nullptr);
-        EXPECT_NO_THROW(searcher->build());
-        EXPECT_TRUE(vec_near(searcher->grid_size(), Vector3I(3, 3, 3), 0));
-        EXPECT_NE(searcher->cell_start(), nullptr);
-        EXPECT_NE(searcher->cell_end(), nullptr);
-    }
+    EXPECT_NO_THROW(searcher.reset());
+    EXPECT_NE(searcher.cell_start(), nullptr);
+    EXPECT_NE(searcher.cell_end(), nullptr);
+    EXPECT_EQ(searcher.neighbor_count(), 0);
 }
 
-TEST(Searcher, ConcreteSearchersBuildParticleNeighborLists) {
+TEST(SpatialHashingSearcher, BuildCreatesGridViewAndNeighborSlots) {
     const auto universe = make_universe();
     const auto fluid = make_neighbor_fluid();
 
-    const SearcherHostPtr<float> spatial = SpatialHashingSearcher<float>::builder()
-                                               .with_universe(universe)
-                                               .with_fluid(fluid)
-                                               .make_host_shared();
+    SearcherHostPtr<float> searcher = SpatialHashingSearcher<float>::builder()
+                                          .with_universe(universe)
+                                          .with_fluid(fluid)
+                                          .make_host_shared();
 
-    const SearcherHostPtr<float> kd_tree = KdTreeSearcher<float>::builder()
-                                               .with_universe(universe)
-                                               .with_fluid(fluid)
-                                               .make_host_shared();
+    searcher->build();
 
-    const SearcherHostPtr<float> octree = OctreeSearcher<float>::builder()
-                                              .with_universe(universe)
-                                              .with_fluid(fluid)
-                                              .make_host_shared();
+    EXPECT_EQ(searcher->neighbor_count(), 16);
+    EXPECT_TRUE(contains_neighbor(searcher, 0, 1));
+    EXPECT_TRUE(contains_neighbor(searcher, 1, 0));
+    EXPECT_TRUE(contains_neighbor(searcher, 2, 3));
+    EXPECT_TRUE(contains_neighbor(searcher, 3, 2));
+    EXPECT_EQ(valid_neighbor_slots(searcher, 0), 1);
+    EXPECT_EQ(valid_neighbor_slots(searcher, 2), 1);
 
-    const SearcherHostPtr<float> quadtree = QuadtreeSearcher<float>::builder()
-                                                .with_universe(universe)
-                                                .with_fluid(fluid)
-                                                .make_host_shared();
+    const std::vector<int> starts = copy_values(searcher->cell_start(), universe->number_of_cells());
+    const std::vector<int> ends = copy_values(searcher->cell_end(), universe->number_of_cells());
 
-    for (const auto& searcher : { spatial, kd_tree, octree, quadtree }) {
-        searcher->build();
-        EXPECT_GT(searcher->neighbor_count(), 0);
-        EXPECT_TRUE(contains_neighbor(searcher, 0, 1));
-        EXPECT_TRUE(contains_neighbor(searcher, 2, 3));
-    }
+    EXPECT_GE(starts[0], 0);
+    EXPECT_GT(ends[0], starts[0]);
+}
+
+TEST(SpatialHashingSearcher, BuildIsSkippedUntilInvalidated) {
+    const auto universe = make_universe();
+    const auto fluid = make_neighbor_fluid();
+
+    SearcherHostPtr<float> searcher = SpatialHashingSearcher<float>::builder()
+                                          .with_universe(universe)
+                                          .with_fluid(fluid)
+                                          .make_host_shared();
+
+    searcher->build();
+    ASSERT_TRUE(contains_neighbor(searcher, 0, 1));
+
+    auto& positions = fluid->state<atlas::fluid::FluidPositionState<float>>()->data();
+    positions[1] = Vector3F(0.90f, 0.90f, 0.90f);
+
+    searcher->build();
+    EXPECT_TRUE(contains_neighbor(searcher, 0, 1));
+
+    searcher->invalidate();
+    searcher->build();
+    EXPECT_FALSE(contains_neighbor(searcher, 0, 1));
 }
