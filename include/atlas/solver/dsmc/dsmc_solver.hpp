@@ -121,6 +121,11 @@ DsmcSolver<T>::make_probe() noexcept {
     _probe.cell_start_ptr = this->_searcher->cell_start();
     _probe.cell_end_ptr   = this->_searcher->cell_end();
 
+    if (auto* volume_state = this->_universe->template state<atlas::universe::UniverseVolumeState<T>>();
+        volume_state != nullptr && volume_state->data().size() == static_cast<std::size_t>(this->_universe->number_of_cells())) {
+        _probe.universe_volume_ptr = atlas::raw_pointer_cast(volume_state->data().data());
+    }
+
     // Scalar constants copied into the probe for device-side DSMC operations.
     _probe.particle_count     = static_cast<int>(this->_fluid->particle_count());
     _probe.num_of_cells       = this->_universe->number_of_cells();
@@ -210,13 +215,21 @@ DsmcSolver<T>::measure_cell_collision_statistics(const DeviceBuffer<int>* alloca
 
             // Number of unordered candidate pairs in the cell: N * (N - 1) / 2.
             const T ntc_pair_count = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
+            const T cell_volume = probe.universe_volume_ptr != nullptr
+                ? probe.universe_volume_ptr[cell]
+                : probe.cell_volume;
+
+            if (!(cell_volume > T(0))) {
+                probe.collision_count_ptr[cell] = 0;
+                return;
+            }
 
             // Expected number of NTC collision trials for this cell and time step.
             const T ntc_count = ntc_pair_count
                 * max_sigma_g
                 * probe.statistical_weight
                 * dt
-                / probe.cell_volume;
+                / cell_volume;
 
             if (!(ntc_count > T(0))) {
                 probe.collision_count_ptr[cell] = 0;

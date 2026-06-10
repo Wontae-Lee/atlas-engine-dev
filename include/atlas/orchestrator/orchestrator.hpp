@@ -60,6 +60,15 @@ Orchestrator<T>::measure() {
 
 template <typename T>
 void
+Orchestrator<T>::measure(const T dt) {
+    // Time-aware measurers use dt, while legacy measurers forward to measure().
+    if (_measurer) {
+        _measurer->measure(dt);
+    }
+}
+
+template <typename T>
+void
 Orchestrator<T>::solve(const T dt) {
     // Nothing can be solved without registered solvers.
     if (_solvers.empty()) {
@@ -243,7 +252,7 @@ Orchestrator<T>::orchestrate(const T dt) {
     // Execute the simulation update pipeline in dependency order.
     search();
     classify();
-    measure();
+    measure(dt);
 
     if (dt != T(0)) {
         if (make_probe()) {

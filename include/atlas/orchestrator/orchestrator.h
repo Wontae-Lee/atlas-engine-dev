@@ -139,6 +139,17 @@ public:
     measure();
 
     /**
+     * @brief Runs the configured measurer with the current time step.
+     *
+     * If `_measurer` is non-null, this function calls `measure(dt)` on it. If no
+     * measurer is configured, the function is a no-op.
+     *
+     * @param dt Simulation time step passed to time-aware measurers.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    measure(T dt);
+
+    /**
      * @brief Executes all configured solvers for one time step.
      *
      * Solver dispatch depends on whether a codec is configured:

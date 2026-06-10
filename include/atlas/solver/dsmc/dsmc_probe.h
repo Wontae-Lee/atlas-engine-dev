@@ -19,6 +19,7 @@ struct DsmcProbe {
     const int* indices_ptr {};
     const int* cell_start_ptr {};
     const int* cell_end_ptr {};
+    const T* universe_volume_ptr {};
     int particle_count {};
     int num_of_cells {};
     T cell_volume {};

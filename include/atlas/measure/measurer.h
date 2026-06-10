@@ -117,6 +117,18 @@ public:
         = 0;
 
     /**
+     * @brief Executes the concrete measurement pass with the current time step.
+     *
+     * Derived measurers that need time integration may override this overload.
+     * The default implementation preserves existing measurer behavior by
+     * forwarding to @ref measure().
+     *
+     * @param dt Simulation time step.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE virtual void
+    measure(T dt);
+
+    /**
      * @brief Returns the measurement category implemented by the concrete measurer.
      *
      * This value allows callers to distinguish field-only, fluid-only, and mixed

@@ -15,6 +15,12 @@ Measurer<T>::Measurer(UniverseHostPtr<T> universe,
 }
 
 template <typename T>
+void
+Measurer<T>::measure(const T) {
+    measure();
+}
+
+template <typename T>
 bool
 Measurer<T>::make_probe() noexcept {
     _probe = {};

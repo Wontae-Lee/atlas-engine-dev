@@ -183,6 +183,10 @@ HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe.dsmc.indices_ptr             = this->_searcher->indices();
     _probe.dsmc.cell_start_ptr          = this->_searcher->cell_start();
     _probe.dsmc.cell_end_ptr            = this->_searcher->cell_end();
+    if (auto* volume_state = this->_universe->template state<atlas::universe::UniverseVolumeState<T>>();
+        volume_state != nullptr && volume_state->data().size() == static_cast<std::size_t>(this->_universe->number_of_cells())) {
+        _probe.dsmc.universe_volume_ptr = atlas::raw_pointer_cast(volume_state->data().data());
+    }
     _probe.dsmc.particle_count          = static_cast<int>(this->_fluid->particle_count());
     _probe.dsmc.num_of_cells            = this->_universe->number_of_cells();
     _probe.dsmc.cell_volume             = this->_universe->cell_volume();
