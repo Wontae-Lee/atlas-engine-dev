@@ -10,6 +10,7 @@
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/collider/collider_probe.h>
 #include <atlas/collider/collider_surface_interaction.h>
+#include <atlas/collider/post_collider_kernel.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/unit/unit.h>
@@ -82,12 +83,14 @@ public:
      * @param units Device buffer containing collider units.
      * @param surface_interactions Device buffer containing post-collision surface interaction models.
      * @param flips Device buffer storing whether each collider unit should use flipped collision normals.
+     * @param post_collider_type Policy used to place particles after a collider hit.
      * @param fluid Host shared pointer to the target fluid whose particles will be processed.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Collider(DeviceBuffer<Unit<T>> units,
              DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions,
              DeviceBuffer<std::uint8_t> flips,
+             PostColliderType post_collider_type,
              atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept;
 
     /**
@@ -181,6 +184,11 @@ private:
      * - size == number of units: one flag per unit.
      */
     DeviceBuffer<std::uint8_t> _flips;
+
+    /**
+     * @brief Policy used to place particles after a collider hit.
+     */
+    PostColliderType _post_collider_type { PostColliderType::fast };
 
     /**
      * @brief Cached probe populated by @ref make_probe.
@@ -282,6 +290,15 @@ public:
     with_flips(const HostBuffer<std::uint8_t>& flips);
 
     /**
+     * @brief Sets the post-collision particle placement policy.
+     *
+     * @param type Policy used after a collider hit.
+     * @return Reference to this builder.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_post_collider_type(PostColliderType type) noexcept;
+
+    /**
      * @brief Validates the configuration and builds a Collider value object.
      *
      * If no surface interaction model was explicitly provided, a single default
@@ -337,6 +354,11 @@ private:
      * @brief Host-side normal-flip flags collected by the builder.
      */
     HostBuffer<std::uint8_t> _flips;
+
+    /**
+     * @brief Post-collision placement policy collected by the builder.
+     */
+    PostColliderType _post_collider_type { PostColliderType::fast };
 };
 
 } // namespace atlas::system

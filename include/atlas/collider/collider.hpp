@@ -14,11 +14,13 @@ template <typename T>
 Collider<T>::Collider(DeviceBuffer<Unit<T>> units,
                       DeviceBuffer<ColliderSurfaceInteraction<T>> surface_interactions,
                       DeviceBuffer<std::uint8_t> flips,
+                      PostColliderType post_collider_type,
                       atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept
     : _units(std::move(units))
     , _fluid(std::move(fluid))
     , _surface_interactions(std::move(surface_interactions))
-    , _flips(std::move(flips)) {
+    , _flips(std::move(flips))
+    , _post_collider_type(post_collider_type) {
 }
 
 template <typename T>
@@ -64,6 +66,7 @@ Collider<T>::collide(const T dt) const {
         return;
     }
     const auto probe = _probe;
+    const PostColliderKernel<T> post_collider_kernel(_post_collider_type);
 
     // Process each particle independently on the device.
     atlas::parallel_for<ExecutionPolicy::device>(
@@ -74,16 +77,19 @@ Collider<T>::collide(const T dt) const {
             const Vector3<T> p0        = probe.positions[i];
             const Vector3<T> velocity  = probe.velocities[i];
             const Vector3<T> direction = velocity * dt;
-            const T segment_length     = direction.length();
+            const T particle_speed     = velocity.length();
 
             // Ignore nearly stationary particles because their swept segment is numerically degenerate.
-            if (segment_length <= atlas::eps) {
+            if (particle_speed * dt <= atlas::eps
+                && post_collider_kernel.type != PostColliderType::precise) {
                 return;
             }
 
             // Track the closest valid surface intersection along the particle trajectory.
             bool any_hit = false;
             T best_t     = atlas::far;
+            T best_time  = atlas::far;
+            T best_speed = T(0);
             Vector3<T> best_pos {};
             Vector3<T> best_norm {};
             int best_index = -1;
@@ -93,23 +99,46 @@ Collider<T>::collide(const T dt) const {
                 const auto& unit    = probe.units[j];
                 const auto& sync_op = unit.sync_operator();
                 const auto& geom_op = unit.geometry_operator();
+                Vector3<T> sweep_direction {};
+                T sweep_speed {};
+                T sweep_length {};
+
+                post_collider_kernel.sweep_motion(unit,
+                                                  p0,
+                                                  velocity,
+                                                  particle_speed,
+                                                  dt,
+                                                  sweep_direction,
+                                                  sweep_speed,
+                                                  sweep_length);
+
+                if (sweep_length <= atlas::eps || sweep_speed <= atlas::eps) {
+                    continue;
+                }
 
                 // Build the ray in world coordinates, then transform it into the local coordinate system
                 // of the current collider unit before evaluating the geometry intersection.
-                const atlas::spatial::Ray<T> world_ray(p0, direction);
+                const atlas::spatial::Ray<T> world_ray(p0, sweep_direction);
                 const atlas::spatial::Ray<T> local_ray = sync_op.sync_to_local(world_ray);
                 const HitSurface<T> local_hit          = geom_op(local_ray);
 
                 // Reject missed intersections, hits beyond the current particle segment,
                 // and hits farther than a previously found collision.
-                if (!local_hit.is_intersecting || local_hit.distance > segment_length
-                    || local_hit.distance >= best_t) {
+                if (!local_hit.is_intersecting || local_hit.distance > sweep_length) {
+                    continue;
+                }
+
+                const T hit_time = local_hit.distance / sweep_speed;
+
+                if (hit_time >= best_time) {
                     continue;
                 }
 
                 // Store the closest intersection in world coordinates.
                 any_hit    = true;
                 best_t     = local_hit.distance;
+                best_time  = hit_time;
+                best_speed = sweep_speed;
                 best_pos   = sync_op.sync_to_world(local_hit.point);
                 best_norm  = sync_op.sync_dir_to_world(local_hit.normal);
                 best_index = j;
@@ -134,33 +163,19 @@ Collider<T>::collide(const T dt) const {
             const bool flip_normal      = probe.flip_count > 0 && probe.flips[flip_index] != std::uint8_t { 0 };
             const Vector3<T> hit_normal = flip_normal ? -best_norm : best_norm;
 
-            // Compute the local surface velocity at the hit point.
-            // This includes both translational motion and rotational motion of the collider unit.
+            // Delegate post-hit placement and velocity response to the selected collider kernel.
             const auto& hit_unit = probe.units[best_index];
-            Vector3<T> surface_velocity(T(0), T(0), T(0));
-
-            // Add rigid-body translational velocity if the collider unit provides one.
-            if (hit_unit.velocity().has_value()) {
-                surface_velocity += *hit_unit.velocity();
-            }
-
-            // Add rotational surface velocity using omega x r when angular velocity is available.
-            if (hit_unit.angular_velocity().has_value()) {
-                const Vector3<T> radius = best_pos - hit_unit.sync_operator().translation;
-                surface_velocity += atlas::math::cross(*hit_unit.angular_velocity(), radius);
-            }
-
-            // Convert the incoming particle velocity into the local moving-surface frame.
-            const Vector3<T> relative_incident = velocity - surface_velocity;
-
-            // Move the particle slightly outside the surface to avoid immediate self-intersection
-            // in the next collision step.
-            probe.positions[i] = best_pos + hit_normal * static_cast<T>(atlas::tol);
-
-            // Apply the selected surface-interaction model in the surface frame, then transform
-            // the reflected/emitted velocity back to the world frame by adding the surface velocity.
-            probe.velocities[i] = probe.surface_interactions[interaction_index](relative_incident, hit_normal)
-                + surface_velocity;
+            post_collider_kernel(
+                probe.positions[i],
+                probe.velocities[i],
+                velocity,
+                best_pos,
+                hit_normal,
+                best_t,
+                best_speed,
+                dt,
+                hit_unit,
+                probe.surface_interactions[interaction_index]);
         });
 }
 
@@ -193,10 +208,10 @@ Collider<T>::make_probe() const noexcept {
     _probe.flips                = atlas::raw_pointer_cast(_flips.data());
     _probe.positions            = atlas::raw_pointer_cast(positions.data());
     _probe.velocities           = atlas::raw_pointer_cast(velocities.data());
-    _probe.unit_count        = static_cast<int>(_units.size());
-    _probe.interaction_count = static_cast<int>(_surface_interactions.size());
-    _probe.flip_count        = static_cast<int>(_flips.size());
-    _probe.particle_count    = static_cast<int>(_fluid->particle_count());
+    _probe.unit_count           = static_cast<int>(_units.size());
+    _probe.interaction_count    = static_cast<int>(_surface_interactions.size());
+    _probe.flip_count           = static_cast<int>(_flips.size());
+    _probe.particle_count       = static_cast<int>(_fluid->particle_count());
 
     return true;
 }
@@ -258,6 +273,13 @@ Collider<T>::Builder::with_flips(const HostBuffer<std::uint8_t>& flips) {
 }
 
 template <typename T>
+typename Collider<T>::Builder&
+Collider<T>::Builder::with_post_collider_type(const PostColliderType type) noexcept {
+    _post_collider_type = type;
+    return *this;
+}
+
+template <typename T>
 Collider<T>
 Collider<T>::Builder::build() {
     // Validate the required builder inputs and per-unit array sizes before constructing the collider.
@@ -278,6 +300,7 @@ Collider<T>::Builder::build() {
         DeviceBuffer<Unit<T>>(_units.begin(), _units.end()),
         DeviceBuffer<ColliderSurfaceInteraction<T>>(_surface_interactions.begin(), _surface_interactions.end()),
         DeviceBuffer<std::uint8_t>(_flips.begin(), _flips.end()),
+        _post_collider_type,
         _fluid);
 
     // Clear the builder after construction so it no longer retains stale configuration data.
@@ -285,6 +308,7 @@ Collider<T>::Builder::build() {
     _fluid.reset();
     _surface_interactions.clear();
     _flips.clear();
+    _post_collider_type = PostColliderType::fast;
 
     return collider;
 }
