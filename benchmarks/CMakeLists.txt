@@ -117,16 +117,30 @@ set(ATLAS_SPARTA_INSTALL_DIR
         "${CMAKE_CURRENT_LIST_DIR}/sparta/install"
 )
 
+set(ATLAS_SPLISHSPLASH_SOURCE_DIR
+        "${CMAKE_CURRENT_LIST_DIR}/splishsplash"
+)
+set(ATLAS_SPLISHSPLASH_BINARY_DIR
+        "${CMAKE_CURRENT_LIST_DIR}/splishsplash/build"
+)
+
+set(ATLAS_DUMUX_SOURCE_DIR
+        "${CMAKE_CURRENT_LIST_DIR}/dumux"
+)
+set(ATLAS_DUMUX_BINARY_DIR
+        "${CMAKE_CURRENT_LIST_DIR}/dumux/build"
+)
+
 # ============================================================
 # External reference-code builds
 #
-# PICLas is configured from its submodule root. SPARTA's documented
-# CMake entry point is the submodule's cmake/ directory, so its source
-# directory is set there.
+# PICLas, SPlisHSPlasH, and DuMux are configured from their submodule
+# roots. SPARTA's documented CMake entry point is the submodule's
+# cmake/ directory, so its source directory is set there.
 #
 # SPARTA_MACHINE is fixed to "atlas" to make the generated executable
-# path predictable for smoke targets. MPI is not disabled; SPARTA and
-# PICLas can both use MPI when the system dependencies are available.
+# path predictable for smoke targets. MPI is not disabled; reference
+# solvers can use MPI when the system dependencies are available.
 # ============================================================
 ExternalProject_Add(atlas_benchmark_piclas_external
         SOURCE_DIR "${ATLAS_PICLAS_SOURCE_DIR}"
@@ -147,11 +161,33 @@ ExternalProject_Add(atlas_benchmark_sparta_external
         INSTALL_COMMAND ""
 )
 
+ExternalProject_Add(atlas_benchmark_splishsplash_external
+        SOURCE_DIR "${ATLAS_SPLISHSPLASH_SOURCE_DIR}"
+        BINARY_DIR "${ATLAS_SPLISHSPLASH_BINARY_DIR}"
+        CMAKE_ARGS
+        ${ATLAS_EXTERNAL_BENCHMARK_CMAKE_ARGS}
+        "-DUSE_PYTHON_BINDINGS=OFF"
+        BUILD_COMMAND
+        "${CMAKE_COMMAND}" --build "${ATLAS_SPLISHSPLASH_BINARY_DIR}" --target SPHSimulator
+        INSTALL_COMMAND ""
+)
+
+ExternalProject_Add(atlas_benchmark_dumux_external
+        SOURCE_DIR "${ATLAS_DUMUX_SOURCE_DIR}"
+        BINARY_DIR "${ATLAS_DUMUX_BINARY_DIR}"
+        CMAKE_ARGS
+        ${ATLAS_EXTERNAL_BENCHMARK_CMAKE_ARGS}
+        BUILD_COMMAND
+        "${CMAKE_COMMAND}" --build "${ATLAS_DUMUX_BINARY_DIR}"
+        --target test_ff_navierstokes_dfg_benchmark_stationary_pq1bubble_diamond
+        INSTALL_COMMAND ""
+)
+
 # ============================================================
 # Aggregate external benchmark build target
 #
 # This target is attached to ALL so enabling ATLAS_BENCHMARKS causes the
-# two external reference projects to be configured and built as part of
+# external reference projects to be configured and built as part of
 # the normal Atlas build. Smoke simulations remain opt-in custom targets
 # so ordinary builds do not run simulations as a side effect.
 # ============================================================
@@ -159,15 +195,17 @@ add_custom_target(atlas_external_benchmarks ALL
         DEPENDS
         atlas_benchmark_piclas_external
         atlas_benchmark_sparta_external
+        atlas_benchmark_splishsplash_external
+        atlas_benchmark_dumux_external
 )
 
 # ============================================================
 # Cylinder smoke simulations
 #
 # The smoke targets run one-step/shortened cylinder cases copied from
-# the SPARTA and PICLas submodules. They are useful for verifying that
-# the external solvers can execute the reference cylinder setup after
-# their binaries are built.
+# external solver submodules. They are useful for verifying that the
+# external solvers can execute the reference cylinder setup after their
+# binaries are built.
 #
 # Full benchmark inputs are kept next to the smoke variants and can be
 # executed manually with the same external binaries when longer runtime
@@ -191,10 +229,30 @@ add_custom_target(atlas_benchmark_cylinder_piclas_smoke
         COMMENT "Running PICLas cylinder smoke simulation"
 )
 
+add_custom_target(atlas_benchmark_cylinder_splishsplash_smoke
+        COMMAND "${CMAKE_COMMAND}" -E chdir
+        "${ATLAS_CYLINDER_BENCHMARK_DIR}/splishsplash"
+        "${ATLAS_CYLINDER_BENCHMARK_DIR}/splishsplash/run.sh"
+        --smoke
+        DEPENDS atlas_benchmark_splishsplash_external
+        COMMENT "Running SPlisHSPlasH cylinder smoke simulation"
+)
+
+add_custom_target(atlas_benchmark_cylinder_dumux_smoke
+        COMMAND "${CMAKE_COMMAND}" -E chdir
+        "${ATLAS_CYLINDER_BENCHMARK_DIR}/dumux"
+        "${ATLAS_CYLINDER_BENCHMARK_DIR}/dumux/run.sh"
+        --smoke
+        DEPENDS atlas_benchmark_dumux_external
+        COMMENT "Running DuMux cylinder smoke simulation"
+)
+
 add_custom_target(atlas_benchmark_cylinder_smoke
         DEPENDS
         atlas_benchmark_cylinder_sparta_smoke
         atlas_benchmark_cylinder_piclas_smoke
+        atlas_benchmark_cylinder_splishsplash_smoke
+        atlas_benchmark_cylinder_dumux_smoke
 )
 
 # ============================================================
@@ -211,5 +269,7 @@ if (TARGET atlas_benchmarks)
     add_dependencies(atlas_benchmarks
             atlas_benchmark_piclas_external
             atlas_benchmark_sparta_external
+            atlas_benchmark_splishsplash_external
+            atlas_benchmark_dumux_external
     )
 endif ()
