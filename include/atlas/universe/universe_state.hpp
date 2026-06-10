@@ -192,6 +192,38 @@ UniverseMaxSigmaGState<T>::data() const noexcept {
 }
 
 template <typename T>
+UniverseVolumeState<T>::UniverseVolumeState(const std::size_t number_of_cells)
+    : _volume(number_of_cells) { }
+
+template <typename T>
+UniverseVolumeState<T>::UniverseVolumeState(DeviceBuffer<T> volume) noexcept
+    : _volume(std::move(volume)) { }
+
+template <typename T>
+std::size_t
+UniverseVolumeState<T>::size() const noexcept {
+    return _volume.size();
+}
+
+template <typename T>
+void
+UniverseVolumeState<T>::reset() {
+    reset_buffer(_volume);
+}
+
+template <typename T>
+DeviceBuffer<T>&
+UniverseVolumeState<T>::data() noexcept {
+    return _volume;
+}
+
+template <typename T>
+const DeviceBuffer<T>&
+UniverseVolumeState<T>::data() const noexcept {
+    return _volume;
+}
+
+template <typename T>
 UniverseThermalEnergyState<T>::UniverseThermalEnergyState(const std::size_t number_of_cells)
     : _thermal_energy(number_of_cells) { }
 template <typename T>

@@ -382,6 +382,53 @@ private:
 };
 
 /**
+ * @brief Universe state storing cell-wise available gas volumes.
+ *
+ * Each entry stores the remaining free volume of one universe cell after solid
+ * unit occupancy has been subtracted. DSMC solvers may use this value instead
+ * of the uniform geometric cell volume when the state is present.
+ *
+ * @tparam T Floating-point scalar type used for volume values.
+ */
+template <typename T>
+class UniverseVolumeState final : public UniverseState {
+public:
+    UniverseVolumeState() = default;
+
+    /**
+     * @brief Constructs a volume state with storage for the given number of cells.
+     *
+     * @param number_of_cells Number of cell entries to allocate.
+     */
+    ATLAS_HOST explicit UniverseVolumeState(std::size_t number_of_cells);
+
+    /**
+     * @brief Constructs a volume state from an existing device buffer.
+     *
+     * @param volume Device buffer containing cell-wise available volumes.
+     */
+    ATLAS_HOST explicit UniverseVolumeState(DeviceBuffer<T> volume) noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
+
+    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<T>&
+    data() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<T>&
+    data() const noexcept;
+
+private:
+    /**
+     * @brief Device buffer storing one available volume value per cell.
+     */
+    DeviceBuffer<T> _volume;
+};
+
+/**
  * @brief Universe state storing cell-wise thermal energy values.
  *
  * @tparam T Floating-point scalar type used for thermal energy values.
@@ -711,6 +758,14 @@ using UniverseMaxRelativeSpeedState = atlas::universe::UniverseMaxRelativeSpeedS
  */
 template <typename T>
 using UniverseMaxSigmaGState = atlas::universe::UniverseMaxSigmaGState<T>;
+
+/**
+ * @brief Alias for atlas::universe::UniverseVolumeState.
+ *
+ * @tparam T Floating-point scalar type used by the state.
+ */
+template <typename T>
+using UniverseVolumeState = atlas::universe::UniverseVolumeState<T>;
 
 /**
  * @brief Alias for atlas::universe::UniverseThermalEnergyState.

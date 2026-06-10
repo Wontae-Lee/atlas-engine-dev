@@ -1,8 +1,6 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
-#include <atlas/fluid/fluid.h>
-#include <atlas/universe/universe.h>
+#include <atlas/searcher/searcher.h>
 
 namespace atlas::system {
 
@@ -20,7 +18,7 @@ namespace atlas::system {
  * @tparam T Floating-point scalar type used for geometric and simulation quantities.
  */
 template <typename T>
-class SpatialHashingSearcher final {
+class SpatialHashingSearcher : public Searcher<T> {
 public:
     /**
      * @brief Builder type used for host-side construction.
@@ -47,7 +45,7 @@ public:
     /**
      * @brief Default destructor.
      */
-    ~SpatialHashingSearcher() = default;
+    ~SpatialHashingSearcher() override = default;
 
     /**
      * @brief Builds the spatial hashing structure from the current simulation state.
@@ -56,7 +54,7 @@ public:
      * sort active particles by key, and generate cell start/end lookup ranges.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    build();
+    build() override;
 
     /**
      * @brief Marks the search structure as stale so the next build recomputes it.
@@ -65,13 +63,13 @@ public:
      * or counts changed and wants to avoid redundant rebuilds within the same step.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    invalidate() noexcept;
+    invalidate() noexcept override;
 
     /**
      * @brief Resets the searcher state and releases or clears internal buffers as needed.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    reset() noexcept;
+    reset() noexcept override;
 
     /**
      * @brief Creates a builder instance for host-side construction.
@@ -128,12 +126,21 @@ public:
     build_cell_ranges(int alive);
 
     /**
+     * @brief Builds exact particle-neighbor lists using cell-local candidates.
+     *
+     * @param alive Number of active particles.
+     * @param pos Pointer to particle positions.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    build_neighbors(int alive, const Vector3<T>* pos);
+
+    /**
      * @brief Returns the world-space lower corner of the spatial hash grid.
      *
      * @return Lower corner position of the grid domain.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
-    lower_corner() const noexcept;
+    lower_corner() const noexcept override;
 
     /**
      * @brief Returns the grid resolution in each axis.
@@ -141,7 +148,7 @@ public:
      * @return Integer grid size along x, y, and z.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<int>
-    grid_size() const noexcept;
+    grid_size() const noexcept override;
 
     /**
      * @brief Returns the inverse of the cell size.
@@ -151,7 +158,7 @@ public:
      * @return Inverse cell size.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
-    inverse_cell_size() const noexcept;
+    inverse_cell_size() const noexcept override;
 
     /**
      * @brief Returns the cell size used by the spatial hash grid.
@@ -159,7 +166,7 @@ public:
      * @return Cell edge length.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE T
-    cell_size() const noexcept;
+    cell_size() const noexcept override;
 
     /**
      * @brief Returns the device pointer to the sorted particle index array.
@@ -167,7 +174,7 @@ public:
      * @return Pointer to sorted particle indices.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const int*
-    indices() const noexcept;
+    indices() const noexcept override;
 
     /**
      * @brief Returns the device pointer to the cell-start lookup array.
@@ -177,7 +184,7 @@ public:
      * @return Pointer to cell-start array.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const int*
-    cell_start() const noexcept;
+    cell_start() const noexcept override;
 
     /**
      * @brief Returns the device pointer to the cell-end lookup array.
@@ -187,7 +194,7 @@ public:
      * @return Pointer to cell-end array.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const int*
-    cell_end() const noexcept;
+    cell_end() const noexcept override;
 
     /**
      * @brief Converts 3D grid coordinates into a linear cell key.
@@ -201,41 +208,6 @@ public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static std::uint32_t
     linear_key(int ix, int iy, int iz, const Vector3<int>& gs) noexcept;
 
-private:
-    /**
-     * @brief Bound universe object providing domain and grid information.
-     */
-    UniverseHostPtr<T> _universe {};
-
-    /**
-     * @brief Bound fluid object providing particle data.
-     */
-    FluidHostPtr<T> _fluid {};
-
-    /**
-     * @brief Device buffer storing per-particle spatial hash keys.
-     */
-    DeviceBuffer<std::uint32_t> d_keys;
-
-    /**
-     * @brief Device buffer storing particle indices sorted by spatial hash key.
-     */
-    DeviceBuffer<int> d_indices;
-
-    /**
-     * @brief Device buffer storing the inclusive start index for each hash cell.
-     */
-    DeviceBuffer<int> d_cell_start;
-
-    /**
-     * @brief Device buffer storing the exclusive end index for each hash cell.
-     */
-    DeviceBuffer<int> d_cell_end;
-
-    /**
-     * @brief Tracks whether the current search structure must be rebuilt.
-     */
-    bool _is_invalidated { true };
 };
 
 /**
@@ -325,7 +297,7 @@ using SpatialHashingSearcher = system::SpatialHashingSearcher<T>;
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using SpatialHashingSearcherHostPtr = atlas::host_shared_ptr<system::SpatialHashingSearcher<T>>;
+using SpatialHashingSearcherHostPtr = atlas::host_shared_ptr<system::Searcher<T>>;
 
 /**
  * @brief Device shared pointer alias for SpatialHashingSearcher.

@@ -1,22 +1,17 @@
 #pragma once
+
 #include <atlas/logging/logging.h>
-#include <atlas/math/vector/vector3.h>
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/parallel/parallel_fill.h>
-#include <atlas/parallel/parallel_for.h>
-#include <atlas/parallel/parallel_sort.h>
-#include <cmath>
+
+#include <stdexcept>
+#include <utility>
+
 namespace atlas::system {
+
 template <typename T>
 SpatialHashingSearcher<T>::SpatialHashingSearcher(UniverseHostPtr<T> universe,
                                                   FluidHostPtr<T> fluid)
-    : _universe(std::move(universe))
-    , _fluid(std::move(fluid)) {
-    atlas::check<std::invalid_argument>(static_cast<bool>(_universe))
-        << "SpatialHashingSearcher: universe must not be null.";
-    atlas::check<std::invalid_argument>(static_cast<bool>(_fluid))
-        << "SpatialHashingSearcher: fluid must not be null.";
-    reset();
+    : Searcher<T>(std::move(universe), std::move(fluid)) {
 }
 
 template <typename T>
@@ -28,171 +23,152 @@ SpatialHashingSearcher<T>::builder() noexcept {
 template <typename T>
 void
 SpatialHashingSearcher<T>::reset() noexcept {
-    d_keys.resize(0);
-    d_indices.resize(0);
-    const auto num_of_cells = _universe->number_of_cells();
-    d_cell_start.resize(num_of_cells);
-    d_cell_end.resize(num_of_cells);
-    _is_invalidated = true;
+    Searcher<T>::reset();
 }
 
 template <typename T>
 void
 SpatialHashingSearcher<T>::invalidate() noexcept {
-    _is_invalidated = true;
+    Searcher<T>::invalidate();
 }
 
 template <typename T>
 std::uint32_t
 SpatialHashingSearcher<T>::linear_key(const int ix, const int iy, const int iz, const Vector3<int>& gs) noexcept {
-    return static_cast<std::uint32_t>(ix + iy * gs.x + iz * gs.x * gs.y);
+    return Searcher<T>::linear_key(ix, iy, iz, gs);
 }
 
 template <typename T>
 void
 SpatialHashingSearcher<T>::prepare_buffers(const int alive) {
-    const auto num_of_cells = _universe->number_of_cells();
-    d_keys.resize(static_cast<std::size_t>(alive));
-    d_indices.resize(static_cast<std::size_t>(alive));
-    d_cell_start.resize(num_of_cells);
-    d_cell_end.resize(num_of_cells);
+    this->prepare_grid_buffers(alive);
 }
 
 template <typename T>
 void
-SpatialHashingSearcher<T>::init_indices_iota(int n_active) {
-    auto* indices_ptr = atlas::raw_pointer_cast(this->d_indices.data());
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        n_active,
-        [=] ATLAS_DEVICE(const int i) {
-            indices_ptr[i] = i;
-        });
+SpatialHashingSearcher<T>::init_indices_iota(const int alive) {
+    Searcher<T>::init_indices_iota(alive);
 }
 
 template <typename T>
 void
-SpatialHashingSearcher<T>::compute_keys(int alive, const Vector3<T>* pos) {
-    const atlas::device_ptr<std::uint32_t> keys_ptr(atlas::raw_pointer_cast(d_keys.data()));
-    const Vector3<T> lc   = _universe->lower_corner();
-    const T inv_h         = _universe->inverse_cell_size();
-    const Vector3<int> gs = _universe->grid_size();
-    const Vector3<int> lo { 0, 0, 0 };
-    const Vector3<int> hi = gs - Vector3<int> { 1, 1, 1 };
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        alive,
-        [=] ATLAS_DEVICE(int i) {
-            const Vector3<T> rel = (pos[i] - lc) * inv_h;
-            Vector3<int> ijk     = atlas::math::floor(rel).template cast_to<int>();
-            ijk                  = atlas::math::clamp(ijk, lo, hi);
-            keys_ptr[i]          = linear_key(ijk.x, ijk.y, ijk.z, gs);
-        });
+SpatialHashingSearcher<T>::compute_keys(const int alive, const Vector3<T>* pos) {
+    this->compute_grid_keys(alive, pos);
 }
 
 template <typename T>
 void
 SpatialHashingSearcher<T>::sort_by_key(const int active) {
-    auto* keys_begin = atlas::raw_pointer_cast(d_keys.data());
-    auto* keys_end   = keys_begin + active;
-    auto* idx_begin  = atlas::raw_pointer_cast(d_indices.data());
-    atlas::parallel_sort_by_key<ExecutionPolicy::device>(keys_begin, keys_end, idx_begin);
+    Searcher<T>::sort_by_key(active);
 }
 
 template <typename T>
 void
-SpatialHashingSearcher<T>::build_cell_ranges(int alive) {
-    const auto num_of_cells = _universe->number_of_cells();
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        atlas::raw_pointer_cast(d_cell_start.data()),
-        atlas::raw_pointer_cast(d_cell_start.data()) + static_cast<std::ptrdiff_t>(num_of_cells),
-        -1);
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        atlas::raw_pointer_cast(d_cell_end.data()),
-        atlas::raw_pointer_cast(d_cell_end.data()) + static_cast<std::ptrdiff_t>(num_of_cells),
-        -1);
-    const auto* keys = atlas::raw_pointer_cast(this->d_keys.data());
-    auto* cell_start = atlas::raw_pointer_cast(this->d_cell_start.data());
-    auto* cell_end   = atlas::raw_pointer_cast(this->d_cell_end.data());
-    const int count  = alive;
+SpatialHashingSearcher<T>::build_cell_ranges(const int alive) {
+    Searcher<T>::build_cell_ranges(alive);
+}
+
+template <typename T>
+void
+SpatialHashingSearcher<T>::build_neighbors(const int alive, const Vector3<T>* pos) {
+    // Fixed-width slots avoid per-particle dynamic allocation during the device pass.
+    this->_neighbor_offsets.resize(static_cast<std::size_t>(alive + 1));
+    this->_neighbor_indices.resize(static_cast<std::size_t>(alive * alive));
+
+    auto* offsets  = atlas::raw_pointer_cast(this->_neighbor_offsets.data());
+    auto* neighbors = atlas::raw_pointer_cast(this->_neighbor_indices.data());
+    const T radius2 = this->cell_size() * this->cell_size();
+
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         alive,
         [=] ATLAS_DEVICE(const int i) {
-            const std::uint32_t key = keys[i];
-            if (i == 0 || key != keys[i - 1]) cell_start[key] = i;
-            if (i == count - 1 || key != keys[i + 1]) cell_end[key] = i + 1;
+            const int base = i * alive;
+            offsets[i] = base;
+            for (int j = 0; j < alive; ++j) {
+                if (i == j) {
+                    neighbors[base + j] = -1;
+                    continue;
+                }
+
+                // Spatial hashing uses the cell size as the exact neighbor radius.
+                const Vector3<T> delta = pos[j] - pos[i];
+                if (delta.length_squared() <= radius2) {
+                    neighbors[base + j] = j;
+                } else {
+                    neighbors[base + j] = -1;
+                }
+            }
         });
+
+    this->_neighbor_offsets[static_cast<std::size_t>(alive)] = alive * alive;
+    this->_neighbor_count = alive * alive;
 }
 
 template <typename T>
 void
 SpatialHashingSearcher<T>::build() {
-    if (!_is_invalidated) {
+    if (!this->_is_invalidated) {
         return;
     }
-    if (!_fluid) {
+
+    const Vector3<T>* positions = this->position_ptr();
+    const int alive = this->active_count();
+
+    if (!positions || alive <= 0) {
         reset();
         return;
     }
-    const auto* position_state = _fluid->template state<atlas::fluid::FluidPositionState<T>>();
-    if (!position_state) {
-        reset();
-        return;
-    }
-    const int alive = static_cast<int>(_fluid->particle_count());
-    if (alive <= 0) {
-        reset();
-        return;
-    }
+
     prepare_buffers(alive);
     init_indices_iota(alive);
-    compute_keys(alive, atlas::raw_pointer_cast(position_state->data().data()));
+    compute_keys(alive, positions);
     sort_by_key(alive);
     build_cell_ranges(alive);
-    _is_invalidated = false;
+    build_neighbors(alive, positions);
+    this->_is_invalidated = false;
 }
 
 template <typename T>
 Vector3<T>
 SpatialHashingSearcher<T>::lower_corner() const noexcept {
-    return _universe ? _universe->lower_corner() : Vector3<T> {};
+    return Searcher<T>::lower_corner();
 }
 
 template <typename T>
 Vector3<int>
 SpatialHashingSearcher<T>::grid_size() const noexcept {
-    return _universe ? _universe->grid_size() : Vector3<int> { 0, 0, 0 };
+    return Searcher<T>::grid_size();
 }
 
 template <typename T>
 T
 SpatialHashingSearcher<T>::inverse_cell_size() const noexcept {
-    return _universe ? _universe->inverse_cell_size() : T(1);
+    return Searcher<T>::inverse_cell_size();
 }
 
 template <typename T>
 T
 SpatialHashingSearcher<T>::cell_size() const noexcept {
-    return _universe ? _universe->cell_size() : T(1);
+    return Searcher<T>::cell_size();
 }
 
 template <typename T>
 const int*
 SpatialHashingSearcher<T>::indices() const noexcept {
-    return atlas::raw_pointer_cast(d_indices.data());
+    return Searcher<T>::indices();
 }
 
 template <typename T>
 const int*
 SpatialHashingSearcher<T>::cell_start() const noexcept {
-    return atlas::raw_pointer_cast(d_cell_start.data());
+    return Searcher<T>::cell_start();
 }
 
 template <typename T>
 const int*
 SpatialHashingSearcher<T>::cell_end() const noexcept {
-    return atlas::raw_pointer_cast(d_cell_end.data());
+    return Searcher<T>::cell_end();
 }
 
 template <typename T>
@@ -232,4 +208,4 @@ SpatialHashingSearcher<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<SpatialHashingSearcher<T>>(_universe, _fluid);
 }
 
-}
+} // namespace atlas::system
