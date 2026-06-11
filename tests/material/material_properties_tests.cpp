@@ -54,7 +54,6 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
                                 .with_rest_density(7.0f)
                                 .with_pressure_coefficient(8.0f)
                                 .with_dynamic_viscosity(9.0f)
-                                .with_smoothing_length(10.0f)
                                 .with_electronic_energy(11.0f)
                                 .with_charge(2)
                                 .build();
@@ -89,7 +88,6 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     ASSERT_TRUE(properties.rest_density.has_value());
     ASSERT_TRUE(properties.pressure_coefficient.has_value());
     ASSERT_TRUE(properties.dynamic_viscosity.has_value());
-    ASSERT_TRUE(properties.smoothing_length.has_value());
     ASSERT_TRUE(properties.electronic_energy.has_value());
     ASSERT_TRUE(properties.charge.has_value());
     EXPECT_NEAR(properties.molecular_mass, 2.0f, tol);
@@ -120,7 +118,6 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     EXPECT_NEAR(*properties.rest_density, 7.0f, tol);
     EXPECT_NEAR(*properties.pressure_coefficient, 8.0f, tol);
     EXPECT_NEAR(*properties.dynamic_viscosity, 9.0f, tol);
-    EXPECT_NEAR(*properties.smoothing_length, 10.0f, tol);
     EXPECT_NEAR(*properties.electronic_energy, 11.0f, tol);
     EXPECT_EQ(*properties.charge, 2);
 }

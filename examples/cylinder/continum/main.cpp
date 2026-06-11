@@ -43,9 +43,6 @@ main() {
                         // Set the dynamic viscosity used by viscous force evaluation.
                         .with_dynamic_viscosity(0.08f)
 
-                        // Set the SPH smoothing length.
-                        .with_smoothing_length(0.28f)
-
                         // Assign a species identifier. With only one species, zero is used.
                         .with_species_id(0)
 

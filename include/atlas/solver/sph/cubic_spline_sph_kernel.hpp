@@ -4,21 +4,21 @@ namespace atlas::system {
 
 template <typename T>
 T
-CubicSplineSphKernel<T>::density_weight(const T radius, const T smoothing_length) noexcept {
-    // Reject invalid support radius, invalid smoothing length, and samples outside the kernel support.
-    if (!(smoothing_length > T(0)) || !(radius >= T(0)) || radius > smoothing_length) {
+CubicSplineSphKernel<T>::density_weight(const T radius, const T cell_size) noexcept {
+    // Reject invalid support radius, invalid cell size, and samples outside the kernel support.
+    if (!(cell_size > T(0)) || !(radius >= T(0)) || radius > cell_size) {
         return T(0);
     }
 
     // Normalize the physical distance into the compact support interval [0, 1].
-    const T q = radius / smoothing_length;
+    const T q = radius / cell_size;
 
     // 3D cubic spline normalization factor.
     const T alpha = static_cast<T>(1.0 / atlas::pi)
-        / (smoothing_length * smoothing_length * smoothing_length);
+        / (cell_size * cell_size * cell_size);
 
     if (q < T(0.5)) {
-        // Inner kernel branch for particles closer than half the smoothing length.
+        // Inner kernel branch for particles closer than half the cell size.
         return alpha * (T(6) * q * q * q - T(6) * q * q + T(1));
     }
 
@@ -31,18 +31,18 @@ template <typename T>
 Vector3<T>
 CubicSplineSphKernel<T>::pressure_gradient(const Vector3<T>& delta,
                                            const T radius,
-                                           const T smoothing_length) noexcept {
-    // Reject invalid smoothing length, zero-length direction, and samples outside the kernel support.
-    if (!(smoothing_length > T(0)) || !(radius > T(0)) || radius > smoothing_length) {
+                                           const T cell_size) noexcept {
+    // Reject invalid cell size, zero-length direction, and samples outside the kernel support.
+    if (!(cell_size > T(0)) || !(radius > T(0)) || radius > cell_size) {
         return Vector3<T>(T(0), T(0), T(0));
     }
 
     // Normalize the physical distance into the compact support interval [0, 1].
-    const T q = radius / smoothing_length;
+    const T q = radius / cell_size;
 
     // 3D cubic spline gradient normalization factor.
     const T alpha = static_cast<T>(6.0 / atlas::pi)
-        / (smoothing_length * smoothing_length * smoothing_length * smoothing_length);
+        / (cell_size * cell_size * cell_size * cell_size);
 
     T radial_derivative = T(0);
 
@@ -61,18 +61,18 @@ CubicSplineSphKernel<T>::pressure_gradient(const Vector3<T>& delta,
 
 template <typename T>
 T
-CubicSplineSphKernel<T>::viscosity_laplacian(const T radius, const T smoothing_length) noexcept {
-    // Reject invalid support radius, invalid smoothing length, and samples outside the kernel support.
-    if (!(smoothing_length > T(0)) || !(radius >= T(0)) || radius > smoothing_length) {
+CubicSplineSphKernel<T>::viscosity_laplacian(const T radius, const T cell_size) noexcept {
+    // Reject invalid support radius, invalid cell size, and samples outside the kernel support.
+    if (!(cell_size > T(0)) || !(radius >= T(0)) || radius > cell_size) {
         return T(0);
     }
 
     // Normalize the physical distance into the compact support interval [0, 1].
-    const T q = radius / smoothing_length;
+    const T q = radius / cell_size;
 
     // 3D cubic spline Laplacian normalization factor.
     const T alpha = static_cast<T>(6.0 / atlas::pi)
-        / (smoothing_length * smoothing_length * smoothing_length * smoothing_length * smoothing_length);
+        / (cell_size * cell_size * cell_size * cell_size * cell_size);
 
     if (q < T(0.5)) {
         // Inner Laplacian branch used near the particle center.

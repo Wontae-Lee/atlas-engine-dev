@@ -108,14 +108,14 @@ template <typename T>
 T
 SphKernel<T>::density_weight(const SphKernelType type,
                              const T radius,
-                             const T smoothing_length) noexcept {
+                             const T cell_size) noexcept {
     switch (type) {
     case SphKernelType::standard:
-        return StandardSphKernel<T>::density_weight(radius, smoothing_length);
+        return StandardSphKernel<T>::density_weight(radius, cell_size);
     case SphKernelType::cubic_spline:
-        return CubicSplineSphKernel<T>::density_weight(radius, smoothing_length);
+        return CubicSplineSphKernel<T>::density_weight(radius, cell_size);
     case SphKernelType::wendland_quintic:
-        return WendlandQuinticSphKernel<T>::density_weight(radius, smoothing_length);
+        return WendlandQuinticSphKernel<T>::density_weight(radius, cell_size);
     default:
         return T(0);
     }
@@ -126,14 +126,14 @@ Vector3<T>
 SphKernel<T>::pressure_gradient(const SphKernelType type,
                                 const Vector3<T>& delta,
                                 const T radius,
-                                const T smoothing_length) noexcept {
+                                const T cell_size) noexcept {
     switch (type) {
     case SphKernelType::standard:
-        return StandardSphKernel<T>::pressure_gradient(delta, radius, smoothing_length);
+        return StandardSphKernel<T>::pressure_gradient(delta, radius, cell_size);
     case SphKernelType::cubic_spline:
-        return CubicSplineSphKernel<T>::pressure_gradient(delta, radius, smoothing_length);
+        return CubicSplineSphKernel<T>::pressure_gradient(delta, radius, cell_size);
     case SphKernelType::wendland_quintic:
-        return WendlandQuinticSphKernel<T>::pressure_gradient(delta, radius, smoothing_length);
+        return WendlandQuinticSphKernel<T>::pressure_gradient(delta, radius, cell_size);
     default:
         return Vector3<T>(T(0), T(0), T(0));
     }
@@ -143,14 +143,14 @@ template <typename T>
 T
 SphKernel<T>::viscosity_laplacian(const SphKernelType type,
                                   const T radius,
-                                  const T smoothing_length) noexcept {
+                                  const T cell_size) noexcept {
     switch (type) {
     case SphKernelType::standard:
-        return StandardSphKernel<T>::viscosity_laplacian(radius, smoothing_length);
+        return StandardSphKernel<T>::viscosity_laplacian(radius, cell_size);
     case SphKernelType::cubic_spline:
-        return CubicSplineSphKernel<T>::viscosity_laplacian(radius, smoothing_length);
+        return CubicSplineSphKernel<T>::viscosity_laplacian(radius, cell_size);
     case SphKernelType::wendland_quintic:
-        return WendlandQuinticSphKernel<T>::viscosity_laplacian(radius, smoothing_length);
+        return WendlandQuinticSphKernel<T>::viscosity_laplacian(radius, cell_size);
     default:
         return T(0);
     }
@@ -158,22 +158,22 @@ SphKernel<T>::viscosity_laplacian(const SphKernelType type,
 
 template <typename T>
 T
-SphKernel<T>::density_weight(const T radius, const T smoothing_length) const noexcept {
-    return density_weight(type, radius, smoothing_length);
+SphKernel<T>::density_weight(const T radius, const T cell_size) const noexcept {
+    return density_weight(type, radius, cell_size);
 }
 
 template <typename T>
 Vector3<T>
 SphKernel<T>::pressure_gradient(const Vector3<T>& delta,
                                 const T radius,
-                                const T smoothing_length) const noexcept {
-    return pressure_gradient(type, delta, radius, smoothing_length);
+                                const T cell_size) const noexcept {
+    return pressure_gradient(type, delta, radius, cell_size);
 }
 
 template <typename T>
 T
-SphKernel<T>::viscosity_laplacian(const T radius, const T smoothing_length) const noexcept {
-    return viscosity_laplacian(type, radius, smoothing_length);
+SphKernel<T>::viscosity_laplacian(const T radius, const T cell_size) const noexcept {
+    return viscosity_laplacian(type, radius, cell_size);
 }
 
 }

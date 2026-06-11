@@ -37,7 +37,7 @@ message MaterialProperty {
   OptionalDouble rest_density = 11;
   OptionalDouble pressure_coefficient = 12;
   OptionalDouble dynamic_viscosity = 13;
-  OptionalDouble smoothing_length = 14;
+  reserved 14;
   OptionalDouble electronic_energy = 15;
   OptionalInt32 charge = 16;
   OptionalDouble reference_temperature = 17;

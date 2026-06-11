@@ -44,7 +44,6 @@ main() {
                                  .with_rest_density(1.0f)
                                  .with_pressure_coefficient(4.5f)
                                  .with_dynamic_viscosity(0.025f)
-                                 .with_smoothing_length(0.80f)
 
                                  // Assign a species identifier. With only one species, zero is used.
                                  .with_species_id(0)

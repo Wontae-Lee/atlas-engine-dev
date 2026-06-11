@@ -38,11 +38,11 @@ namespace atlas::system {
  * This type provides the kernel functions typically needed by an SPH solver.
  * It does not store any runtime state; all results depend only on:
  * - particle separation information
- * - the smoothing length
+ * - the cell size
  *
  * The kernel is assumed to use compact support, so contributions typically vanish
  * when the inter-particle distance exceeds the support radius implied by
- * `smoothing_length`.
+ * `cell_size`.
  *
  * @tparam T Floating-point scalar type.
  */
@@ -60,7 +60,7 @@ struct CubicSplineSphKernel final {
      *
      * where:
      * - \f$ r_{ij} \f$ is the distance between particles
-     * - \f$ h \f$ is the smoothing length
+     * - \f$ h \f$ is the cell size
      * - \f$ W \f$ is the cubic spline kernel value
      *
      * This function is:
@@ -69,11 +69,11 @@ struct CubicSplineSphKernel final {
      * - inexpensive enough to be called inside dense neighbor loops
      *
      * @param radius Distance between two particles.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Scalar density weight contributed by the kernel at the given radius.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    density_weight(T radius, T smoothing_length) noexcept;
+    density_weight(T radius, T cell_size) noexcept;
 
     /**
      * @brief Evaluate the pressure-force kernel gradient for the cubic spline kernel.
@@ -99,13 +99,13 @@ struct CubicSplineSphKernel final {
      *
      * @param delta Relative displacement vector between two particles.
      * @param radius Magnitude of the relative displacement.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Pressure kernel gradient vector.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<T>
     pressure_gradient(const Vector3<T>& delta,
                       T radius,
-                      T smoothing_length) noexcept;
+                      T cell_size) noexcept;
 
     /**
      * @brief Evaluate the viscosity Laplacian term of the cubic spline kernel.
@@ -124,11 +124,11 @@ struct CubicSplineSphKernel final {
      * diffusion-like terms.
      *
      * @param radius Distance between two particles.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Scalar viscosity Laplacian value of the kernel.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    viscosity_laplacian(T radius, T smoothing_length) noexcept;
+    viscosity_laplacian(T radius, T cell_size) noexcept;
 };
 
 } // namespace atlas::system

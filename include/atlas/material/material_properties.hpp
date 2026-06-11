@@ -43,7 +43,6 @@ MaterialProperties<T>::Builder::build() const {
     p.rest_density          = _rest_density;
     p.pressure_coefficient  = _pressure_coefficient;
     p.dynamic_viscosity     = _dynamic_viscosity;
-    p.smoothing_length      = _smoothing_length;
     p.electronic_energy     = _electronic_energy;
     p.charge                = _charge;
     return p;
@@ -285,13 +284,6 @@ template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_dynamic_viscosity(T mu) {
     _dynamic_viscosity = mu;
-    return *this;
-}
-
-template <typename T>
-typename MaterialProperties<T>::Builder&
-MaterialProperties<T>::Builder::with_smoothing_length(T h) {
-    _smoothing_length = h;
     return *this;
 }
 

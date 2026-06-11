@@ -143,7 +143,7 @@ struct MaterialType final {
  * Optional properties allow a single type to cover a wide range of modeling
  * needs without forcing all fields to be present. For example:
  * - collision-diameter-related fields are relevant to kinetic collisions,
- * - density, viscosity, and smoothing length are more relevant to SPH-like models,
+ * - density and viscosity are more relevant to SPH-like models,
  * - charge and electronic energy are relevant to ionized species.
  *
  * ## Builder support
@@ -406,14 +406,6 @@ public:
      * Represents the shear viscosity parameter when relevant to the active model.
      */
     std::optional<T> dynamic_viscosity;
-
-    /**
-     * @brief Optional smoothing length.
-     *
-     * @details
-     * Commonly used in SPH-like particle methods as a kernel support radius.
-     */
-    std::optional<T> smoothing_length;
 
     /**
      * @brief Optional electronic energy.
@@ -738,15 +730,6 @@ public:
     with_dynamic_viscosity(T mu);
 
     /**
-     * @brief Set the smoothing length.
-     *
-     * @param h Smoothing length to stage.
-     * @return `*this` for fluent chaining.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_smoothing_length(T h);
-
-    /**
      * @brief Set the electronic energy.
      *
      * @param e Electronic energy to stage.
@@ -903,11 +886,6 @@ private:
      * @brief Pending dynamic viscosity.
      */
     std::optional<T> _dynamic_viscosity;
-
-    /**
-     * @brief Pending smoothing length.
-     */
-    std::optional<T> _smoothing_length;
 
     /**
      * @brief Pending electronic energy.

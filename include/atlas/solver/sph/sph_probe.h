@@ -18,6 +18,8 @@ struct SphProbe {
     const int* indices_ptr {};
     const int* cell_start_ptr {};
     const int* cell_end_ptr {};
+    const int* neighbor_offsets_ptr {};
+    const int* neighbor_indices_ptr {};
     Vector3<T> lower_corner {};
     Vector3<int> grid_size {};
     T inverse_cell_size {};

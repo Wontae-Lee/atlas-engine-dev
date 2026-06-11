@@ -37,7 +37,7 @@ namespace atlas::system {
  * needed by an SPH solver. It does not store any runtime state; all outputs
  * depend only on:
  * - the inter-particle separation
- * - the smoothing length
+ * - the cell size
  *
  * The kernel is typically assumed to have compact support, which means its
  * contribution becomes zero outside the support radius implied by the smoothing
@@ -59,7 +59,7 @@ struct StandardSphKernel final {
      *
      * where:
      * - \f$ r_{ij} \f$ is the distance between particles
-     * - \f$ h \f$ is the smoothing length
+     * - \f$ h \f$ is the cell size
      * - \f$ W \f$ is the smoothing-kernel value
      *
      * The returned value is:
@@ -68,11 +68,11 @@ struct StandardSphKernel final {
      * - suitable for repeated evaluation in neighbor loops
      *
      * @param radius Distance between two particles.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Scalar kernel weight used for density estimation.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    density_weight(T radius, T smoothing_length) noexcept;
+    density_weight(T radius, T cell_size) noexcept;
 
     /**
      * @brief Evaluate the pressure-force kernel gradient.
@@ -97,13 +97,13 @@ struct StandardSphKernel final {
      *
      * @param delta Relative displacement vector between two particles.
      * @param radius Magnitude of the relative displacement.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Kernel gradient vector used in pressure-force accumulation.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<T>
     pressure_gradient(const Vector3<T>& delta,
                       T radius,
-                      T smoothing_length) noexcept;
+                      T cell_size) noexcept;
 
     /**
      * @brief Evaluate the viscosity Laplacian of the standard SPH kernel.
@@ -122,11 +122,11 @@ struct StandardSphKernel final {
      * viscosity models.
      *
      * @param radius Distance between two particles.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Scalar kernel Laplacian used in viscosity-force evaluation.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    viscosity_laplacian(T radius, T smoothing_length) noexcept;
+    viscosity_laplacian(T radius, T cell_size) noexcept;
 };
 
 } // namespace atlas::system

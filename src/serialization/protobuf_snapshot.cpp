@@ -300,7 +300,6 @@ namespace {
         set_optional_double(target->mutable_rest_density(), source.rest_density);
         set_optional_double(target->mutable_pressure_coefficient(), source.pressure_coefficient);
         set_optional_double(target->mutable_dynamic_viscosity(), source.dynamic_viscosity);
-        set_optional_double(target->mutable_smoothing_length(), source.smoothing_length);
         set_optional_double(target->mutable_electronic_energy(), source.electronic_energy);
         set_optional_int32(target->mutable_charge(), source.charge);
     }
@@ -330,7 +329,6 @@ namespace {
         material.rest_density          = read_optional_double<T>(source.rest_density());
         material.pressure_coefficient  = read_optional_double<T>(source.pressure_coefficient());
         material.dynamic_viscosity     = read_optional_double<T>(source.dynamic_viscosity());
-        material.smoothing_length      = read_optional_double<T>(source.smoothing_length());
         material.electronic_energy     = read_optional_double<T>(source.electronic_energy());
         material.charge                = read_optional_int32(source.charge());
         return material;

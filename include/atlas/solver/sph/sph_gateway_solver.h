@@ -188,7 +188,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     SphGatewaySolver(UniverseHostPtr<T> universe,
                      FluidHostPtr<T> fluid,
-                     SpatialHashingSearcherHostPtr<T> searcher,
+                     SearcherHostPtr<T> searcher,
                      SphKernelType kernel_type = SphKernelType::standard,
                      int group_particle_count  = 5) noexcept;
 
@@ -525,7 +525,7 @@ public:
      * For a left-hand-side group representative, density is accumulated as:
      *
      * @code
-     * density += group_mass[rhs] * kernel.density_weight(radius, smoothing_length);
+     * density += group_mass[rhs] * kernel.density_weight(radius, cell_size);
      * @endcode
      *
      * where `radius` is the distance between the left-hand-side and right-hand-side
@@ -534,9 +534,10 @@ public:
      * Material properties are resolved from the representative species. The
      * material controls:
      *
-     * - smoothing length,
      * - rest density,
      * - pressure coefficient.
+     *
+     * The interaction support is the searcher cell size.
      *
      * If the accumulated density is non-positive, the density falls back to the
      * material rest density. Pressure is then computed as:
@@ -657,22 +658,6 @@ public:
     scatter_group_states_to_particles(const DeviceBuffer<int>* allocated_solver, int index);
 
     /**
-     * @brief Returns the effective smoothing length for a material.
-     *
-     * @details
-     * If `property.smoothing_length` exists and is positive, that value is used.
-     * Otherwise, the spatial-search cell size is used as a fallback smoothing
-     * length.
-     *
-     * @param property Material property record.
-     * @param cell_size Searcher cell size used as fallback.
-     *
-     * @return Effective smoothing length.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    smoothing_length_for(const MaterialProperties<T>& property, T cell_size) noexcept;
-
-    /**
      * @brief Returns the effective rest density for a material.
      *
      * @details
@@ -700,83 +685,6 @@ public:
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     pressure_coefficient_for(const MaterialProperties<T>& property) noexcept;
-
-    /**
-     * @brief Converts a smoothing length to a cell-neighborhood search radius.
-     *
-     * @details
-     * The returned radius is:
-     *
-     * @code
-     * ceil(smoothing_length / cell_size)
-     * @endcode
-     *
-     * This helper is provided for API symmetry with `SphSolver<T>`. The current
-     * grouped implementation evaluates representative interactions only inside
-     * the same cell and does not use this helper in the grouped pipeline.
-     *
-     * @param smoothing_length Effective smoothing length.
-     * @param cell_size Searcher cell size.
-     *
-     * @return Integer radius in grid cells.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
-    search_radius_for(T smoothing_length, T cell_size) noexcept;
-
-    /**
-     * @brief Maps a position to a clamped search-grid cell coordinate.
-     *
-     * @details
-     * The function computes:
-     *
-     * @code
-     * floor((position - lower_corner) * inverse_cell_size)
-     * @endcode
-     *
-     * converts the result to integer coordinates, and clamps it to the valid
-     * search-grid range:
-     *
-     * @code
-     * [Vector3<int>(0, 0, 0), grid_size - Vector3<int>(1, 1, 1)]
-     * @endcode
-     *
-     * This helper is provided for API symmetry with `SphSolver<T>`. The current
-     * grouped implementation does not use this helper in the grouped pipeline.
-     *
-     * @param position Position to map.
-     * @param lower_corner Lower corner of the search grid.
-     * @param inverse_cell_size Reciprocal cell size.
-     * @param grid_size Grid resolution.
-     *
-     * @return Clamped integer grid-cell coordinate.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<int>
-    particle_cell(const Vector3<T>& position,
-                  const Vector3<T>& lower_corner,
-                  T inverse_cell_size,
-                  const Vector3<int>& grid_size) noexcept;
-
-    /**
-     * @brief Checks whether a grid-cell coordinate lies inside the search grid.
-     *
-     * @details
-     * The cell is valid when each component is in the half-open interval:
-     *
-     * @code
-     * [0, grid_size.component)
-     * @endcode
-     *
-     * This helper is provided for API symmetry with `SphSolver<T>`. The current
-     * grouped implementation does not use this helper in the grouped pipeline.
-     *
-     * @param cell Candidate grid-cell coordinate.
-     * @param grid_size Grid resolution.
-     *
-     * @retval true Cell coordinate is inside the grid.
-     * @retval false Cell coordinate is outside the grid.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
-    is_valid_neighbor_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
 
     /**
      * @brief Computes the number of deterministic groups required for a cell.
@@ -934,7 +842,7 @@ protected:
      * @details
      * The species of the first valid member particle in a group is used as the
      * representative species. It is later used to resolve material properties for
-     * density, pressure, viscosity, and smoothing length.
+     * density, pressure, and viscosity.
      */
     DeviceBuffer<std::size_t> _group_species {};
 };
@@ -1017,7 +925,7 @@ public:
      * @post The builder stores @p searcher.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+    with_searcher(SearcherHostPtr<T> searcher) noexcept;
 
     /**
      * @brief Sets the SPH kernel type.
@@ -1123,7 +1031,7 @@ private:
     /**
      * @brief Spatial hashing searcher dependency collected by the builder.
      */
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 
     /**
      * @brief Kernel type collected by the builder.

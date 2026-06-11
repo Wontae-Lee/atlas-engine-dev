@@ -56,7 +56,6 @@ make_fluid() {
             .with_rest_density(0.1f)
             .with_pressure_coefficient(4.0f)
             .with_dynamic_viscosity(0.05f)
-            .with_smoothing_length(0.15f)
             .build());
 
     HostBuffer<GeneratorHostPtr<float>> generators;

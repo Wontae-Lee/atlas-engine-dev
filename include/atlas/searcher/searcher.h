@@ -171,6 +171,33 @@ public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static std::uint32_t
     linear_key(int ix, int iy, int iz, const Vector3<int>& gs) noexcept;
 
+    /**
+     * @brief Converts an integer grid coordinate into a linear cell key.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static std::uint32_t
+    linear_key(const Vector3<int>& cell, const Vector3<int>& gs) noexcept;
+
+    /**
+     * @brief Maps a particle position to a clamped search-grid cell coordinate.
+     */
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<int>
+    cell_for(const Vector3<T>& position,
+             const Vector3<T>& lower_corner,
+             T inverse_cell_size,
+             const Vector3<int>& grid_size) noexcept;
+
+    /**
+     * @brief Checks whether a grid-cell coordinate lies inside the search grid.
+     */
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
+    contains_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
+
+    /**
+     * @brief Converts a world-space search length to a grid-cell radius.
+     */
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
+    search_radius_for(T length, T cell_size) noexcept;
+
 protected:
     /**
      * @brief Validates that required runtime dependencies are available.

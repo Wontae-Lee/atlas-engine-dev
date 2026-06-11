@@ -4,7 +4,6 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 
-#include <cmath>
 #include <stdexcept>
 
 namespace atlas::system {
@@ -12,7 +11,7 @@ namespace atlas::system {
 template <typename T>
 SphGatewaySolver<T>::SphGatewaySolver(UniverseHostPtr<T> universe,
                                       FluidHostPtr<T> fluid,
-                                      SpatialHashingSearcherHostPtr<T> searcher,
+                                      SearcherHostPtr<T> searcher,
                                       const SphKernelType kernel_type,
                                       const int group_particle_count) noexcept
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher))
@@ -240,6 +239,8 @@ SphGatewaySolver<T>::make_probe() noexcept {
     _probe.indices_ptr    = this->_searcher->indices();
     _probe.cell_start_ptr = this->_searcher->cell_start();
     _probe.cell_end_ptr   = this->_searcher->cell_end();
+    _probe.neighbor_offsets_ptr = this->_searcher->neighbor_offsets();
+    _probe.neighbor_indices_ptr = this->_searcher->neighbor_indices();
     _probe.lower_corner      = this->_searcher->lower_corner();
     _probe.grid_size         = this->_searcher->grid_size();
     _probe.inverse_cell_size = this->_searcher->inverse_cell_size();
@@ -422,8 +423,8 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>
 
                 // Resolve material parameters for the representative group.
                 const auto& property                 = probe.properties_ptr[species_index];
-                const T smoothing_length             = smoothing_length_for(property, probe.cell_size);
-                const T smoothing_length_squared     = smoothing_length * smoothing_length;
+                const T cell_size                    = probe.cell_size;
+                const T cell_size_squared            = cell_size * cell_size;
                 const T rest_density                 = rest_density_for(property);
                 const T pressure_coeff               = pressure_coefficient_for(property);
                 const Vector3<T> lhs_pos             = group_position_ptr[lhs_index];
@@ -437,13 +438,13 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>
                     const T radius_squared      = delta.length_squared();
                     const T representative_mass = group_mass_ptr[rhs_index];
 
-                    if (radius_squared > smoothing_length_squared) {
+                    if (radius_squared > cell_size_squared) {
                         continue;
                     }
 
-                    const T radius = static_cast<T>(sqrt(radius_squared));
+                    const T radius = atlas::math::sqrt_nonnegative(radius_squared);
 
-                    density += representative_mass * probe.kernel.density_weight(radius, smoothing_length);
+                    density += representative_mass * probe.kernel.density_weight(radius, cell_size);
                 }
 
                 // Fall back to rest density when the estimate is invalid.
@@ -507,8 +508,8 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
 
                 // Resolve representative material and state.
                 const auto& property                 = probe.properties_ptr[species_index];
-                const T smoothing_length             = smoothing_length_for(property, probe.cell_size);
-                const T smoothing_length_squared     = smoothing_length * smoothing_length;
+                const T cell_size                    = probe.cell_size;
+                const T cell_size_squared            = cell_size * cell_size;
                 const T viscosity                    = property.dynamic_viscosity.value_or(T(0));
                 const T group_mass                   = group_mass_ptr[lhs_index];
                 const Vector3<T> lhs_pos             = group_position_ptr[lhs_index];
@@ -532,14 +533,14 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
                     const Vector3<T> delta = lhs_pos - group_position_ptr[rhs_index];
                     const T radius_squared = delta.length_squared();
 
-                    if (!(radius_squared > T(0)) || radius_squared > smoothing_length_squared) {
+                    if (!(radius_squared > T(0)) || radius_squared > cell_size_squared) {
                         continue;
                     }
 
-                    const T radius = static_cast<T>(sqrt(radius_squared));
+                    const T radius = atlas::math::sqrt_nonnegative(radius_squared);
 
                     // Add pressure-gradient acceleration.
-                    const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, smoothing_length);
+                    const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, cell_size);
 
                     const T pressure_term = (group_pressure_ptr[lhs_index] + group_pressure_ptr[rhs_index])
                         / (static_cast<T>(2) * rhs_density);
@@ -548,7 +549,7 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
 
                     // Add viscosity acceleration when the material viscosity is enabled.
                     if (viscosity > T(0)) {
-                        const T laplacian = probe.kernel.viscosity_laplacian(radius, smoothing_length);
+                        const T laplacian = probe.kernel.viscosity_laplacian(radius, cell_size);
 
                         acceleration += (group_velocity_ptr[rhs_index] - lhs_vel)
                             * (viscosity * group_mass_ptr[rhs_index] * laplacian / rhs_density);
@@ -631,18 +632,6 @@ SphGatewaySolver<T>::scatter_group_states_to_particles(const DeviceBuffer<int>* 
 
 template <typename T>
 T
-SphGatewaySolver<T>::smoothing_length_for(const MaterialProperties<T>& property,
-                                          const T cell_size) noexcept {
-    // Prefer material smoothing length; fall back to searcher cell size.
-    if (property.smoothing_length.has_value() && *property.smoothing_length > T(0)) {
-        return *property.smoothing_length;
-    }
-
-    return cell_size;
-}
-
-template <typename T>
-T
 SphGatewaySolver<T>::rest_density_for(const MaterialProperties<T>& property) noexcept {
     // Prefer material rest density; fall back to unit density.
     if (property.rest_density.has_value() && *property.rest_density > T(0)) {
@@ -657,38 +646,6 @@ T
 SphGatewaySolver<T>::pressure_coefficient_for(const MaterialProperties<T>& property) noexcept {
     // Missing pressure coefficient disables pressure response.
     return property.pressure_coefficient.value_or(T(0));
-}
-
-template <typename T>
-int
-SphGatewaySolver<T>::search_radius_for(const T smoothing_length,
-                                       const T cell_size) noexcept {
-    // Convert smoothing length to an integer grid-cell search radius.
-    return static_cast<int>(std::ceil(smoothing_length / cell_size));
-}
-
-template <typename T>
-Vector3<int>
-SphGatewaySolver<T>::particle_cell(const Vector3<T>& position,
-                                   const Vector3<T>& lower_corner,
-                                   const T inverse_cell_size,
-                                   const Vector3<int>& grid_size) noexcept {
-    // Map world position to grid coordinates and clamp to the valid search domain.
-    auto cell = atlas::math::floor((position - lower_corner) * inverse_cell_size).template cast_to<int>();
-
-    return atlas::math::clamp(
-        cell,
-        Vector3<int>(0, 0, 0),
-        grid_size - Vector3<int>(1, 1, 1));
-}
-
-template <typename T>
-bool
-SphGatewaySolver<T>::is_valid_neighbor_cell(const Vector3<int>& cell,
-                                            const Vector3<int>& grid_size) noexcept {
-    // Check half-open grid bounds: [0, grid_size).
-    return atlas::math::all(cell >= Vector3<int>(0, 0, 0))
-        && atlas::math::all(cell < grid_size);
 }
 
 template <typename T>
@@ -722,7 +679,7 @@ SphGatewaySolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 template <typename T>
 typename SphGatewaySolver<T>::Builder&
 SphGatewaySolver<T>::Builder::with_searcher(
-    SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+    SearcherHostPtr<T> searcher) noexcept {
     // Store searcher dependency.
     _searcher = std::move(searcher);
     return *this;

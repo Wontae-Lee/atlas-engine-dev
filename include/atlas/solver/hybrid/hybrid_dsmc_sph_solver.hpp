@@ -16,7 +16,7 @@ namespace atlas::system {
 template <typename T>
 HybridDsmcSphSolver<T>::HybridDsmcSphSolver(UniverseHostPtr<T> universe,
                                             FluidHostPtr<T> fluid,
-                                            SpatialHashingSearcherHostPtr<T> searcher,
+                                            SearcherHostPtr<T> searcher,
                                             const T grouping_length,
                                             const int sph_particle_threshold,
                                             const SphKernelType sph_kernel_type,
@@ -165,17 +165,19 @@ HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe.sph.properties_ptr      = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
     _probe.sph.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()->data().data());
     _probe.sph.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>()->data().data());
-    _probe.sph.indices_ptr         = this->_searcher->indices();
-    _probe.sph.cell_start_ptr      = this->_searcher->cell_start();
-    _probe.sph.cell_end_ptr        = this->_searcher->cell_end();
-    _probe.sph.lower_corner        = this->_searcher->lower_corner();
-    _probe.sph.grid_size           = this->_searcher->grid_size();
-    _probe.sph.inverse_cell_size   = this->_searcher->inverse_cell_size();
-    _probe.sph.cell_size           = this->_searcher->cell_size();
-    _probe.sph.particle_count      = static_cast<int>(this->_fluid->particle_count());
-    _probe.sph.num_of_cells        = this->_universe->number_of_cells();
-    _probe.sph.num_of_properties   = static_cast<int>(this->_fluid->particle_properties().size());
-    _probe.sph.kernel              = _sph_kernel;
+    _probe.sph.indices_ptr          = this->_searcher->indices();
+    _probe.sph.cell_start_ptr       = this->_searcher->cell_start();
+    _probe.sph.cell_end_ptr         = this->_searcher->cell_end();
+    _probe.sph.neighbor_offsets_ptr = this->_searcher->neighbor_offsets();
+    _probe.sph.neighbor_indices_ptr = this->_searcher->neighbor_indices();
+    _probe.sph.lower_corner         = this->_searcher->lower_corner();
+    _probe.sph.grid_size            = this->_searcher->grid_size();
+    _probe.sph.inverse_cell_size    = this->_searcher->inverse_cell_size();
+    _probe.sph.cell_size            = this->_searcher->cell_size();
+    _probe.sph.particle_count       = static_cast<int>(this->_fluid->particle_count());
+    _probe.sph.num_of_cells         = this->_universe->number_of_cells();
+    _probe.sph.num_of_properties    = static_cast<int>(this->_fluid->particle_properties().size());
+    _probe.sph.kernel               = _sph_kernel;
 
     _probe.dsmc.velocity_ptr            = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data().data());
     if (auto* internal_energy_state = this->_fluid->template state<atlas::fluid::FluidInternalEnergyState<T>>();
@@ -315,25 +317,25 @@ HybridDsmcSphSolver<T>::classify_particles() {
     auto* group_owner_ptr       = atlas::raw_pointer_cast(_group_owner.data());
     auto* dsmc_particle_count   = atlas::raw_pointer_cast(_dsmc_particle_count.data());
     const T grouping_length2    = probe.grouping_length * probe.grouping_length;
-    const int grouping_radius   = search_radius_for(probe.grouping_length, probe.sph.cell_size);
+    const int grouping_radius   = Searcher<T>::search_radius_for(probe.grouping_length, probe.sph.cell_size);
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.sph.particle_count,
         [=] ATLAS_DEVICE(const int particle) {
             const Vector3<T> pos = probe.sph.position_ptr[particle];
-            const auto center    = particle_cell(pos, probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
+            const auto center    = Searcher<T>::cell_for(pos, probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
             int count            = 0;
 
             for (int z = -grouping_radius; z <= grouping_radius; ++z) {
                 for (int y = -grouping_radius; y <= grouping_radius; ++y) {
                     for (int x = -grouping_radius; x <= grouping_radius; ++x) {
                         const Vector3<int> cell = center + Vector3<int>(x, y, z);
-                        if (!is_valid_neighbor_cell(cell, probe.sph.grid_size)) {
+                        if (!Searcher<T>::contains_cell(cell, probe.sph.grid_size)) {
                             continue;
                         }
 
-                        const int flat = (cell.z * probe.sph.grid_size.y + cell.y) * probe.sph.grid_size.x + cell.x;
+                        const int flat = static_cast<int>(Searcher<T>::linear_key(cell, probe.sph.grid_size));
                         const int begin = probe.sph.cell_start_ptr[flat];
                         const int end   = probe.sph.cell_end_ptr[flat];
                         if (begin < 0 || end <= begin) {
@@ -368,7 +370,7 @@ HybridDsmcSphSolver<T>::classify_particles() {
             }
 
             const Vector3<T> pos = probe.sph.position_ptr[particle];
-            const auto center    = particle_cell(pos, probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
+            const auto center    = Searcher<T>::cell_for(pos, probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
             int owner            = particle;
             int owner_heat       = sph_candidate_ptr[particle];
 
@@ -376,11 +378,11 @@ HybridDsmcSphSolver<T>::classify_particles() {
                 for (int y = -grouping_radius; y <= grouping_radius; ++y) {
                     for (int x = -grouping_radius; x <= grouping_radius; ++x) {
                         const Vector3<int> cell = center + Vector3<int>(x, y, z);
-                        if (!is_valid_neighbor_cell(cell, probe.sph.grid_size)) {
+                        if (!Searcher<T>::contains_cell(cell, probe.sph.grid_size)) {
                             continue;
                         }
 
-                        const int flat = (cell.z * probe.sph.grid_size.y + cell.y) * probe.sph.grid_size.x + cell.x;
+                        const int flat = static_cast<int>(Searcher<T>::linear_key(cell, probe.sph.grid_size));
                         const int begin = probe.sph.cell_start_ptr[flat];
                         const int end   = probe.sph.cell_end_ptr[flat];
                         if (begin < 0 || end <= begin) {
@@ -504,41 +506,23 @@ HybridDsmcSphSolver<T>::estimate_group_density_and_pressure() {
             }
 
             const auto& property = probe.sph.properties_ptr[species];
-            const T smoothing_length = smoothing_length_for(property, probe.sph.cell_size);
+            const T cell_size = probe.sph.cell_size;
             const T rest_density = rest_density_for(property);
             const T pressure_coeff = pressure_coefficient_for(property);
-            const auto center = particle_cell(group_position_ptr[lhs], probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
-            const int search_radius = search_radius_for(smoothing_length, probe.sph.cell_size);
+            const int begin = probe.sph.neighbor_offsets_ptr[lhs];
+            const int end = probe.sph.neighbor_offsets_ptr[lhs + 1];
 
-            T density = T(0);
+            T density = group_mass_ptr[lhs] * probe.sph.kernel.density_weight(T(0), cell_size);
 
-            for (int z = -search_radius; z <= search_radius; ++z) {
-                for (int y = -search_radius; y <= search_radius; ++y) {
-                    for (int x = -search_radius; x <= search_radius; ++x) {
-                        const Vector3<int> cell = center + Vector3<int>(x, y, z);
-                        if (!is_valid_neighbor_cell(cell, probe.sph.grid_size)) {
-                            continue;
-                        }
-
-                        const int flat = (cell.z * probe.sph.grid_size.y + cell.y) * probe.sph.grid_size.x + cell.x;
-                        const int begin = probe.sph.cell_start_ptr[flat];
-                        const int end = probe.sph.cell_end_ptr[flat];
-                        if (begin < 0 || end <= begin) {
-                            continue;
-                        }
-
-                        for (int sorted = begin; sorted < end; ++sorted) {
-                            const int rhs = probe.sph.indices_ptr[sorted];
-                            if (group_member_count_ptr[rhs] <= 0) {
-                                continue;
-                            }
-
-                            const Vector3<T> delta = group_position_ptr[lhs] - group_position_ptr[rhs];
-                            const T radius = delta.length();
-                            density += group_mass_ptr[rhs] * probe.sph.kernel.density_weight(radius, smoothing_length);
-                        }
-                    }
+            for (int neighbor_offset = begin; neighbor_offset < end; ++neighbor_offset) {
+                const int rhs = probe.sph.neighbor_indices_ptr[neighbor_offset];
+                if (rhs < 0 || rhs >= probe.sph.particle_count || group_member_count_ptr[rhs] <= 0) {
+                    continue;
                 }
+
+                const Vector3<T> delta = group_position_ptr[lhs] - group_position_ptr[rhs];
+                const T radius = delta.length();
+                density += group_mass_ptr[rhs] * probe.sph.kernel.density_weight(radius, cell_size);
             }
 
             if (!(density > T(0))) {
@@ -577,51 +561,34 @@ HybridDsmcSphSolver<T>::update_group_motion(const T dt) {
             }
 
             const auto& property = probe.sph.properties_ptr[species];
-            const T smoothing_length = smoothing_length_for(property, probe.sph.cell_size);
+            const T cell_size = probe.sph.cell_size;
             const T viscosity = property.dynamic_viscosity.value_or(T(0));
-            const auto center = particle_cell(group_position_ptr[lhs], probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
-            const int search_radius = search_radius_for(smoothing_length, probe.sph.cell_size);
+            const int begin = probe.sph.neighbor_offsets_ptr[lhs];
+            const int end = probe.sph.neighbor_offsets_ptr[lhs + 1];
             Vector3<T> acceleration(T(0), T(0), T(0));
 
-            for (int z = -search_radius; z <= search_radius; ++z) {
-                for (int y = -search_radius; y <= search_radius; ++y) {
-                    for (int x = -search_radius; x <= search_radius; ++x) {
-                        const Vector3<int> cell = center + Vector3<int>(x, y, z);
-                        if (!is_valid_neighbor_cell(cell, probe.sph.grid_size)) {
-                            continue;
-                        }
+            for (int neighbor_offset = begin; neighbor_offset < end; ++neighbor_offset) {
+                const int rhs = probe.sph.neighbor_indices_ptr[neighbor_offset];
+                if (rhs == lhs || rhs < 0 || rhs >= probe.sph.particle_count
+                    || group_member_count_ptr[rhs] <= 0 || !(group_density_ptr[rhs] > T(0))) {
+                    continue;
+                }
 
-                        const int flat = (cell.z * probe.sph.grid_size.y + cell.y) * probe.sph.grid_size.x + cell.x;
-                        const int begin = probe.sph.cell_start_ptr[flat];
-                        const int end = probe.sph.cell_end_ptr[flat];
-                        if (begin < 0 || end <= begin) {
-                            continue;
-                        }
+                const Vector3<T> delta = group_position_ptr[lhs] - group_position_ptr[rhs];
+                const T radius = delta.length();
+                if (!(radius > T(0)) || radius > cell_size) {
+                    continue;
+                }
 
-                        for (int sorted = begin; sorted < end; ++sorted) {
-                            const int rhs = probe.sph.indices_ptr[sorted];
-                            if (rhs == lhs || group_member_count_ptr[rhs] <= 0 || !(group_density_ptr[rhs] > T(0))) {
-                                continue;
-                            }
+                const Vector3<T> grad = probe.sph.kernel.pressure_gradient(delta, radius, cell_size);
+                const T pressure_term = (group_pressure_ptr[lhs] + group_pressure_ptr[rhs])
+                    / (static_cast<T>(2) * group_density_ptr[rhs]);
+                acceleration -= grad * (group_mass_ptr[rhs] * pressure_term);
 
-                            const Vector3<T> delta = group_position_ptr[lhs] - group_position_ptr[rhs];
-                            const T radius = delta.length();
-                            if (!(radius > T(0)) || radius > smoothing_length) {
-                                continue;
-                            }
-
-                            const Vector3<T> grad = probe.sph.kernel.pressure_gradient(delta, radius, smoothing_length);
-                            const T pressure_term = (group_pressure_ptr[lhs] + group_pressure_ptr[rhs])
-                                / (static_cast<T>(2) * group_density_ptr[rhs]);
-                            acceleration -= grad * (group_mass_ptr[rhs] * pressure_term);
-
-                            if (viscosity > T(0)) {
-                                const T laplacian = probe.sph.kernel.viscosity_laplacian(radius, smoothing_length);
-                                acceleration += (group_velocity_ptr[rhs] - group_velocity_ptr[lhs])
-                                    * (viscosity * group_mass_ptr[rhs] * laplacian / group_density_ptr[rhs]);
-                            }
-                        }
-                    }
+                if (viscosity > T(0)) {
+                    const T laplacian = probe.sph.kernel.viscosity_laplacian(radius, cell_size);
+                    acceleration += (group_velocity_ptr[rhs] - group_velocity_ptr[lhs])
+                        * (viscosity * group_mass_ptr[rhs] * laplacian / group_density_ptr[rhs]);
                 }
             }
 
@@ -661,7 +628,7 @@ HybridDsmcSphSolver<T>::build_dsmc_groups() {
     }
 
     const T grouping_length2 = probe.grouping_length * probe.grouping_length;
-    const int grouping_radius = search_radius_for(probe.grouping_length, probe.sph.cell_size);
+    const int grouping_radius = Searcher<T>::search_radius_for(probe.grouping_length, probe.sph.cell_size);
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -672,18 +639,18 @@ HybridDsmcSphSolver<T>::build_dsmc_groups() {
             }
 
             const Vector3<T> pos = probe.sph.position_ptr[particle];
-            const auto center = particle_cell(pos, probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
+            const auto center = Searcher<T>::cell_for(pos, probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
             int owner = particle;
 
             for (int z = -grouping_radius; z <= grouping_radius; ++z) {
                 for (int y = -grouping_radius; y <= grouping_radius; ++y) {
                     for (int x = -grouping_radius; x <= grouping_radius; ++x) {
                         const Vector3<int> cell = center + Vector3<int>(x, y, z);
-                        if (!is_valid_neighbor_cell(cell, probe.sph.grid_size)) {
+                        if (!Searcher<T>::contains_cell(cell, probe.sph.grid_size)) {
                             continue;
                         }
 
-                        const int flat = (cell.z * probe.sph.grid_size.y + cell.y) * probe.sph.grid_size.x + cell.x;
+                        const int flat = static_cast<int>(Searcher<T>::linear_key(cell, probe.sph.grid_size));
                         const int begin = probe.sph.cell_start_ptr[flat];
                         const int end = probe.sph.cell_end_ptr[flat];
                         if (begin < 0 || end <= begin) {
@@ -790,9 +757,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
                 }
             }
 
-            max_relative_speed_ptr[owner] = max_relative_squared > T(0)
-                ? static_cast<T>(std::sqrt(static_cast<double>(max_relative_squared)))
-                : T(0);
+            max_relative_speed_ptr[owner] = atlas::math::sqrt_nonnegative(max_relative_squared);
             max_sigma_g_ptr[owner] = max_sigma_g;
 
             if (!(max_sigma_g > T(0))) {
@@ -1023,16 +988,6 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
 
 template <typename T>
 T
-HybridDsmcSphSolver<T>::smoothing_length_for(const MaterialProperties<T>& property,
-                                             const T cell_size) noexcept {
-    if (property.smoothing_length.has_value() && *property.smoothing_length > T(0)) {
-        return *property.smoothing_length;
-    }
-    return cell_size;
-}
-
-template <typename T>
-T
 HybridDsmcSphSolver<T>::rest_density_for(const MaterialProperties<T>& property) noexcept {
     if (property.rest_density.has_value() && *property.rest_density > T(0)) {
         return *property.rest_density;
@@ -1044,31 +999,6 @@ template <typename T>
 T
 HybridDsmcSphSolver<T>::pressure_coefficient_for(const MaterialProperties<T>& property) noexcept {
     return property.pressure_coefficient.value_or(T(0));
-}
-
-template <typename T>
-int
-HybridDsmcSphSolver<T>::search_radius_for(const T length,
-                                          const T cell_size) noexcept {
-    return static_cast<int>(std::ceil(length / cell_size));
-}
-
-template <typename T>
-Vector3<int>
-HybridDsmcSphSolver<T>::particle_cell(const Vector3<T>& position,
-                                      const Vector3<T>& lower_corner,
-                                      const T inverse_cell_size,
-                                      const Vector3<int>& grid_size) noexcept {
-    auto cell = atlas::math::floor((position - lower_corner) * inverse_cell_size).template cast_to<int>();
-    return atlas::math::clamp(cell, Vector3<int>(0, 0, 0), grid_size - Vector3<int>(1, 1, 1));
-}
-
-template <typename T>
-bool
-HybridDsmcSphSolver<T>::is_valid_neighbor_cell(const Vector3<int>& cell,
-                                               const Vector3<int>& grid_size) noexcept {
-    return atlas::math::all(cell >= Vector3<int>(0, 0, 0))
-        && atlas::math::all(cell < grid_size);
 }
 
 template <typename T>
@@ -1139,7 +1069,7 @@ HybridDsmcSphSolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 typename HybridDsmcSphSolver<T>::Builder&
-HybridDsmcSphSolver<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+HybridDsmcSphSolver<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
     _searcher = std::move(searcher);
     return *this;
 }

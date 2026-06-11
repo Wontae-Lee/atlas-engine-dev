@@ -26,7 +26,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     HybridDsmcSphSolver(UniverseHostPtr<T> universe,
                          FluidHostPtr<T> fluid,
-                         SpatialHashingSearcherHostPtr<T> searcher,
+                         SearcherHostPtr<T> searcher,
                          T grouping_length,
                          int sph_particle_threshold,
                          SphKernelType sph_kernel_type = SphKernelType::standard,
@@ -81,9 +81,6 @@ public:
     build_sph_groups();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    build_local_sph_searcher();
-
-    ATLAS_HOST ATLAS_FORCE_INLINE void
     estimate_group_density_and_pressure();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
@@ -108,25 +105,10 @@ public:
     apply_grouped_dsmc_collisions_without_replacement();
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
-    smoothing_length_for(const MaterialProperties<T>& property, T cell_size) noexcept;
-
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     rest_density_for(const MaterialProperties<T>& property) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     pressure_coefficient_for(const MaterialProperties<T>& property) noexcept;
-
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
-    search_radius_for(T length, T cell_size) noexcept;
-
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<int>
-    particle_cell(const Vector3<T>& position,
-                  const Vector3<T>& lower_corner,
-                  T inverse_cell_size,
-                  const Vector3<int>& grid_size) noexcept;
-
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
-    is_valid_neighbor_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
     select_pair_offsets_without_replacement(int& lhs_local,
@@ -144,17 +126,11 @@ private:
     int _sph_particle_threshold { 5 };
     std::uint64_t _collision_seed {};
     bool _pairing_without_replacement {};
-    SpatialHashingSearcher<T> _local_sph_searcher {};
-    SpatialHashingSearcher<T> _local_dsmc_searcher {};
 
     DeviceBuffer<int> _sph_candidate {};
     DeviceBuffer<int> _group_owner {};
     DeviceBuffer<int> _group_member_count {};
-    DeviceBuffer<int> _sph_group_count {};
-    DeviceBuffer<int> _sph_group_particle_index {};
     DeviceBuffer<int> _dsmc_particle_count {};
-    DeviceBuffer<int> _dsmc_compact_count {};
-    DeviceBuffer<int> _dsmc_particle_index {};
     DeviceBuffer<int> _dsmc_group_owner {};
     DeviceBuffer<int> _dsmc_group_member_count {};
     DeviceBuffer<int> _dsmc_collision_count {};
@@ -164,8 +140,6 @@ private:
     DeviceBuffer<Vector3<T>> _group_position {};
     DeviceBuffer<Vector3<T>> _group_velocity {};
     DeviceBuffer<Vector3<T>> _group_updated_velocity {};
-    DeviceBuffer<Vector3<T>> _sph_search_position {};
-    DeviceBuffer<Vector3<T>> _dsmc_search_position {};
     DeviceBuffer<T> _group_mass {};
     DeviceBuffer<T> _group_density {};
     DeviceBuffer<T> _group_pressure {};
@@ -184,7 +158,7 @@ public:
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+    with_searcher(SearcherHostPtr<T> searcher) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_grouping_length(T grouping_length) noexcept;
@@ -214,7 +188,7 @@ private:
 private:
     UniverseHostPtr<T> _universe {};
     FluidHostPtr<T> _fluid {};
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
     T _grouping_length {};
     int _sph_particle_threshold { 5 };
     SphKernel<T> _sph_kernel {};

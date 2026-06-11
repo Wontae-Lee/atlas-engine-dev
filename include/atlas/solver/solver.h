@@ -4,7 +4,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/searcher/searcher.h>
 #include <atlas/universe/universe.h>
 
 namespace atlas::system {
@@ -16,7 +16,7 @@ namespace atlas::system {
  *
  * @details
  * `Solver` stores shared access to the simulation universe, fluid storage, and
- * spatial hashing searcher used by concrete solver implementations. Derived
+ * particle searcher used by concrete solver implementations. Derived
  * solvers override one or both `solve()` overloads to update particle or
  * universe state for a simulation time step.
  *
@@ -48,7 +48,7 @@ public:
      *
      * @param universe Shared host pointer to the simulation universe.
      * @param fluid Shared host pointer to the particle fluid storage.
-     * @param searcher Shared host pointer to the spatial hashing searcher.
+     * @param searcher Shared host pointer to the particle searcher.
      *
      * @details
      * The pointers are stored for derived solver implementations. The base class
@@ -57,7 +57,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     Solver(UniverseHostPtr<T> universe,
            FluidHostPtr<T> fluid,
-           SpatialHashingSearcherHostPtr<T> searcher) noexcept
+           SearcherHostPtr<T> searcher) noexcept
         : _universe(std::move(universe))
         , _fluid(std::move(fluid))
         , _searcher(std::move(searcher)) { }
@@ -106,9 +106,9 @@ protected:
     FluidHostPtr<T> _fluid {};
 
     /**
-     * @brief Shared spatial hashing searcher used for neighborhood and cell access.
+     * @brief Shared particle searcher used for neighborhood and cell access.
      */
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 };
 
 }

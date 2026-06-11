@@ -4,7 +4,6 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 
-#include <cmath>
 #include <stdexcept>
 
 namespace atlas::system {
@@ -12,7 +11,7 @@ namespace atlas::system {
 template <typename T>
 SphSolver<T>::SphSolver(UniverseHostPtr<T> universe,
                         FluidHostPtr<T> fluid,
-                        SpatialHashingSearcherHostPtr<T> searcher,
+                        SearcherHostPtr<T> searcher,
                         const SphKernelType kernel_type) noexcept
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher)) {
     // Initialize the runtime SPH kernel and ensure required universe output states exist.
@@ -144,6 +143,8 @@ SphSolver<T>::make_probe() noexcept {
     _probe.indices_ptr    = this->_searcher->indices();
     _probe.cell_start_ptr = this->_searcher->cell_start();
     _probe.cell_end_ptr   = this->_searcher->cell_end();
+    _probe.neighbor_offsets_ptr = this->_searcher->neighbor_offsets();
+    _probe.neighbor_indices_ptr = this->_searcher->neighbor_indices();
     _probe.lower_corner      = this->_searcher->lower_corner();
     _probe.grid_size         = this->_searcher->grid_size();
     _probe.inverse_cell_size = this->_searcher->inverse_cell_size();
@@ -233,71 +234,43 @@ SphSolver<T>::estimate_density() {
                 return;
             }
 
-            // Resolve material parameters for this particle.
+            // SPH uses the searcher cell size as the kernel support.
             const auto& property      = probe.properties_ptr[species_index];
-            const T h                 = smoothing_length(property, probe.cell_size);
+            const T h                 = probe.cell_size;
+            const T h_squared         = h * h;
             const T rest_density      = SphSolver<T>::rest_density(property);
             const T k                 = pressure_coefficient(property);
             const Vector3<T> position = probe.position_ptr[particle_index];
+            T density                 = property.mass * probe.kernel.density_weight(T(0), h);
 
-            // Locate the particle's base search cell.
-            const Vector3<int> base_cell = particle_cell(position, probe.lower_corner, probe.inverse_cell_size, probe.grid_size);
+            const int begin = probe.neighbor_offsets_ptr[particle_index];
+            const int end   = probe.neighbor_offsets_ptr[particle_index + 1];
 
-            const int neighbor_search_radius = search_radius(h, probe.cell_size);
-            const T h_squared                = h * h;
-            const Vector3<int> radius_cell(neighbor_search_radius);
-            const Vector3<int> min_cell = atlas::math::max(
-                base_cell - radius_cell,
-                Vector3<int>(0, 0, 0));
-            const Vector3<int> max_cell = atlas::math::min(
-                base_cell + radius_cell,
-                probe.grid_size - Vector3<int>(1, 1, 1));
-            const int y_stride = probe.grid_size.x;
-            const int z_stride = probe.grid_size.x * probe.grid_size.y;
-            T density          = T(0);
+            for (int neighbor_offset = begin; neighbor_offset < end; ++neighbor_offset) {
+                const int neighbor_index = probe.neighbor_indices_ptr[neighbor_offset];
 
-            // Visit all neighboring grid cells inside the smoothing-length search radius.
-            for (int z = min_cell.z; z <= max_cell.z; ++z) {
-                const int z_offset = z * z_stride;
-                for (int y = min_cell.y; y <= max_cell.y; ++y) {
-                    int cell = z_offset + y * y_stride + min_cell.x;
-                    for (int x = min_cell.x; x <= max_cell.x; ++x, ++cell) {
-                        const int begin = probe.cell_start_ptr[cell];
-                        const int end   = probe.cell_end_ptr[cell];
-
-                        if (begin < 0 || end <= begin) {
-                            continue;
-                        }
-
-                        // Accumulate density contribution from valid neighbor particles.
-                        for (int sorted_index = begin; sorted_index < end; ++sorted_index) {
-                            const int neighbor_index = probe.indices_ptr[sorted_index];
-
-                            if (neighbor_index < 0 || neighbor_index >= probe.particle_count) {
-                                continue;
-                            }
-
-                            const Vector3<T> delta = position - probe.position_ptr[neighbor_index];
-                            const T radius_squared = delta.length_squared();
-
-                            if (radius_squared > h_squared) {
-                                continue;
-                            }
-
-                            const T radius = static_cast<T>(sqrt(radius_squared));
-
-                            const std::size_t neighbor_species_index = probe.species_ptr[neighbor_index];
-
-                            if (neighbor_species_index >= static_cast<std::size_t>(probe.num_of_properties)) {
-                                continue;
-                            }
-
-                            const T neighbor_mass = probe.properties_ptr[neighbor_species_index].mass;
-
-                            density += neighbor_mass * probe.kernel.density_weight(radius, h);
-                        }
-                    }
+                if (neighbor_index < 0 || neighbor_index >= probe.particle_count) {
+                    continue;
                 }
+
+                const Vector3<T> delta = position - probe.position_ptr[neighbor_index];
+                const T radius_squared = delta.length_squared();
+
+                if (radius_squared > h_squared) {
+                    continue;
+                }
+
+                const T radius = atlas::math::sqrt_nonnegative(radius_squared);
+
+                const std::size_t neighbor_species_index = probe.species_ptr[neighbor_index];
+
+                if (neighbor_species_index >= static_cast<std::size_t>(probe.num_of_properties)) {
+                    continue;
+                }
+
+                const T neighbor_mass = probe.properties_ptr[neighbor_species_index].mass;
+
+                density += neighbor_mass * probe.kernel.density_weight(radius, h);
             }
 
             // Use rest density as a fallback for isolated or numerically invalid particles.
@@ -355,89 +328,62 @@ SphSolver<T>::accelerate(const T dt) {
 
             // Resolve material properties and particle state.
             const auto& property      = probe.properties_ptr[species_index];
-            const T h                 = smoothing_length(property, probe.cell_size);
+            const T h                 = probe.cell_size;
+            const T h_squared         = h * h;
             const T mu                = property.dynamic_viscosity.value_or(T(0));
             const T mass              = property.mass;
             const Vector3<T> position = probe.position_ptr[particle_index];
             const Vector3<T> velocity = probe.velocity_ptr[particle_index];
-
-            const Vector3<int> base_cell = particle_cell(position, probe.lower_corner, probe.inverse_cell_size, probe.grid_size);
-
-            const int neighbor_search_radius = search_radius(h, probe.cell_size);
-            const T h_squared                = h * h;
-            const Vector3<int> radius_cell(neighbor_search_radius);
-            const Vector3<int> min_cell = atlas::math::max(
-                base_cell - radius_cell,
-                Vector3<int>(0, 0, 0));
-            const Vector3<int> max_cell = atlas::math::min(
-                base_cell + radius_cell,
-                probe.grid_size - Vector3<int>(1, 1, 1));
-            const int y_stride = probe.grid_size.x;
-            const int z_stride = probe.grid_size.x * probe.grid_size.y;
             Vector3<T> acceleration(T(0), T(0), T(0));
 
-            // Accumulate pressure and viscosity interaction from neighbor particles.
-            for (int z = min_cell.z; z <= max_cell.z; ++z) {
-                const int z_offset = z * z_stride;
-                for (int y = min_cell.y; y <= max_cell.y; ++y) {
-                    int cell = z_offset + y * y_stride + min_cell.x;
-                    for (int x = min_cell.x; x <= max_cell.x; ++x, ++cell) {
-                        const int begin = probe.cell_start_ptr[cell];
-                        const int end   = probe.cell_end_ptr[cell];
+            const int begin = probe.neighbor_offsets_ptr[particle_index];
+            const int end   = probe.neighbor_offsets_ptr[particle_index + 1];
 
-                        if (begin < 0 || end <= begin) {
-                            continue;
-                        }
+            for (int neighbor_offset = begin; neighbor_offset < end; ++neighbor_offset) {
+                const int neighbor_index = probe.neighbor_indices_ptr[neighbor_offset];
 
-                        for (int sorted_index = begin; sorted_index < end; ++sorted_index) {
-                            const int neighbor_index = probe.indices_ptr[sorted_index];
+                if (neighbor_index < 0 || neighbor_index >= probe.particle_count) {
+                    continue;
+                }
 
-                            if (neighbor_index < 0 || neighbor_index >= probe.particle_count
-                                || neighbor_index == particle_index) {
-                                continue;
-                            }
+                const std::size_t neighbor_species_index = probe.species_ptr[neighbor_index];
 
-                            const std::size_t neighbor_species_index = probe.species_ptr[neighbor_index];
+                if (neighbor_species_index >= static_cast<std::size_t>(probe.num_of_properties)) {
+                    continue;
+                }
 
-                            if (neighbor_species_index >= static_cast<std::size_t>(probe.num_of_properties)) {
-                                continue;
-                            }
+                const auto& neighbor_property = probe.properties_ptr[neighbor_species_index];
 
-                            const auto& neighbor_property = probe.properties_ptr[neighbor_species_index];
+                const T neighbor_mass    = neighbor_property.mass;
+                const T neighbor_density = density_ptr[neighbor_index];
 
-                            const T neighbor_mass    = neighbor_property.mass;
-                            const T neighbor_density = density_ptr[neighbor_index];
+                if (!(neighbor_density > T(0))) {
+                    continue;
+                }
 
-                            if (!(neighbor_density > T(0))) {
-                                continue;
-                            }
+                const Vector3<T> delta = position - probe.position_ptr[neighbor_index];
+                const T radius_squared = delta.length_squared();
 
-                            const Vector3<T> delta = position - probe.position_ptr[neighbor_index];
-                            const T radius_squared = delta.length_squared();
+                if (!(radius_squared > T(0)) || radius_squared > h_squared) {
+                    continue;
+                }
 
-                            if (!(radius_squared > T(0)) || radius_squared > h_squared) {
-                                continue;
-                            }
+                const T radius = atlas::math::sqrt_nonnegative(radius_squared);
 
-                            const T radius = static_cast<T>(sqrt(radius_squared));
+                // Add pressure-gradient acceleration.
+                const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, h);
 
-                            // Add pressure-gradient acceleration.
-                            const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, h);
+                const T pressure_term = (pressure_ptr[particle_index] + pressure_ptr[neighbor_index])
+                    / (static_cast<T>(2) * neighbor_density);
 
-                            const T pressure_term = (pressure_ptr[particle_index] + pressure_ptr[neighbor_index])
-                                / (static_cast<T>(2) * neighbor_density);
+                acceleration -= grad * (neighbor_mass * pressure_term);
 
-                            acceleration -= grad * (neighbor_mass * pressure_term);
+                // Add viscosity acceleration when the material viscosity is enabled.
+                if (mu > T(0)) {
+                    const T laplacian = probe.kernel.viscosity_laplacian(radius, h);
 
-                            // Add viscosity acceleration when the material viscosity is enabled.
-                            if (mu > T(0)) {
-                                const T laplacian = probe.kernel.viscosity_laplacian(radius, h);
-
-                                acceleration += (probe.velocity_ptr[neighbor_index] - velocity)
-                                    * (mu * neighbor_mass * laplacian / neighbor_density);
-                            }
-                        }
-                    }
+                    acceleration += (probe.velocity_ptr[neighbor_index] - velocity)
+                        * (mu * neighbor_mass * laplacian / neighbor_density);
                 }
             }
 
@@ -492,18 +438,6 @@ SphSolver<T>::accelerate(const T dt) {
 
 template <typename T>
 T
-SphSolver<T>::smoothing_length(const MaterialProperties<T>& property,
-                               const T cell_size) noexcept {
-    // Prefer material smoothing length; fall back to searcher cell size.
-    if (property.smoothing_length.has_value() && *property.smoothing_length > T(0)) {
-        return *property.smoothing_length;
-    }
-
-    return cell_size;
-}
-
-template <typename T>
-T
 SphSolver<T>::rest_density(const MaterialProperties<T>& property) noexcept {
     // Prefer material rest density; fall back to unit density.
     if (property.rest_density.has_value() && *property.rest_density > T(0)) {
@@ -518,37 +452,6 @@ T
 SphSolver<T>::pressure_coefficient(const MaterialProperties<T>& property) noexcept {
     // Missing pressure coefficient disables pressure response.
     return property.pressure_coefficient.value_or(T(0));
-}
-
-template <typename T>
-int
-SphSolver<T>::search_radius(const T smoothing_length, const T cell_size) noexcept {
-    // Convert smoothing length to an integer grid-cell search radius.
-    return static_cast<int>(std::ceil(smoothing_length / cell_size));
-}
-
-template <typename T>
-Vector3<int>
-SphSolver<T>::particle_cell(const Vector3<T>& position,
-                            const Vector3<T>& lower_corner,
-                            const T inverse_cell_size,
-                            const Vector3<int>& grid_size) noexcept {
-    // Map world position to grid coordinates and clamp to the valid search domain.
-    auto cell = atlas::math::floor((position - lower_corner) * inverse_cell_size).template cast_to<int>();
-
-    return atlas::math::clamp(
-        cell,
-        Vector3<int>(0, 0, 0),
-        grid_size - Vector3<int>(1, 1, 1));
-}
-
-template <typename T>
-bool
-SphSolver<T>::valid_cell(const Vector3<int>& cell,
-                         const Vector3<int>& grid_size) noexcept {
-    // Check half-open grid bounds: [0, grid_size).
-    return atlas::math::all(cell >= Vector3<int>(0, 0, 0))
-        && atlas::math::all(cell < grid_size);
 }
 
 template <typename T>
@@ -569,7 +472,7 @@ SphSolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 typename SphSolver<T>::Builder&
-SphSolver<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+SphSolver<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
     // Store searcher dependency.
     _searcher = std::move(searcher);
     return *this;

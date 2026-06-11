@@ -197,13 +197,13 @@ struct SphKernel final {
      *
      * @param type Selected SPH kernel type.
      * @param radius Inter-particle distance.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Scalar density kernel weight.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     density_weight(SphKernelType type,
                    T radius,
-                   T smoothing_length) noexcept;
+                   T cell_size) noexcept;
 
     /**
      * @brief Evaluate the pressure-gradient term for a selected kernel type.
@@ -214,19 +214,19 @@ struct SphKernel final {
      * It is typically used in pressure-force terms that depend on:
      * - the relative displacement vector `delta`
      * - the scalar distance `radius`
-     * - the smoothing length
+     * - the cell size
      *
      * @param type Selected SPH kernel type.
      * @param delta Relative displacement vector between two particles.
      * @param radius Magnitude of `delta`.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Pressure-gradient vector for the selected kernel.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<T>
     pressure_gradient(SphKernelType type,
                       const Vector3<T>& delta,
                       T radius,
-                      T smoothing_length) noexcept;
+                      T cell_size) noexcept;
 
     /**
      * @brief Evaluate the viscosity Laplacian for a selected kernel type.
@@ -237,13 +237,13 @@ struct SphKernel final {
      *
      * @param type Selected SPH kernel type.
      * @param radius Inter-particle distance.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Scalar viscosity Laplacian value.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     viscosity_laplacian(SphKernelType type,
                         T radius,
-                        T smoothing_length) noexcept;
+                        T cell_size) noexcept;
 
     /**
      * @brief Evaluate the scalar density weight using the currently active kernel.
@@ -251,11 +251,11 @@ struct SphKernel final {
      * This instance method dispatches through the active kernel stored in the union.
      *
      * @param radius Inter-particle distance.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Scalar density kernel weight.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE T
-    density_weight(T radius, T smoothing_length) const noexcept;
+    density_weight(T radius, T cell_size) const noexcept;
 
     /**
      * @brief Evaluate the pressure-gradient term using the currently active kernel.
@@ -264,13 +264,13 @@ struct SphKernel final {
      *
      * @param delta Relative displacement vector between two particles.
      * @param radius Magnitude of `delta`.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Pressure-gradient vector.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     pressure_gradient(const Vector3<T>& delta,
                       T radius,
-                      T smoothing_length) const noexcept;
+                      T cell_size) const noexcept;
 
     /**
      * @brief Evaluate the viscosity Laplacian using the currently active kernel.
@@ -278,11 +278,11 @@ struct SphKernel final {
      * This instance method dispatches through the active kernel stored in the union.
      *
      * @param radius Inter-particle distance.
-     * @param smoothing_length SPH smoothing length.
+     * @param cell_size SPH cell size.
      * @return Scalar viscosity Laplacian value.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE T
-    viscosity_laplacian(T radius, T smoothing_length) const noexcept;
+    viscosity_laplacian(T radius, T cell_size) const noexcept;
 
 private:
     /**

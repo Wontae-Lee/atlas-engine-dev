@@ -5,19 +5,19 @@ namespace atlas::system {
 template <typename T>
 T
 WendlandQuinticSphKernel<T>::density_weight(const T radius,
-                                            const T smoothing_length) noexcept {
+                                            const T cell_size) noexcept {
     // The kernel is compactly supported for 0 <= r <= h.
-    if (!(smoothing_length > T(0)) || !(radius >= T(0)) || radius > smoothing_length) {
+    if (!(cell_size > T(0)) || !(radius >= T(0)) || radius > cell_size) {
         return T(0);
     }
 
     // Normalized radius: q = r / h.
-    const T q           = radius / smoothing_length;
+    const T q           = radius / cell_size;
     const T one_minus_q = T(1) - q;
 
     // 3D Wendland quintic normalization factor.
     const T alpha = static_cast<T>(21.0 / (2.0 * atlas::pi))
-        / (smoothing_length * smoothing_length * smoothing_length);
+        / (cell_size * cell_size * cell_size);
 
     // W(r, h) = alpha * (1 - q)^4 * (1 + 4q).
     return alpha
@@ -29,20 +29,20 @@ template <typename T>
 Vector3<T>
 WendlandQuinticSphKernel<T>::pressure_gradient(const Vector3<T>& delta,
                                                const T radius,
-                                               const T smoothing_length) noexcept {
+                                               const T cell_size) noexcept {
     // The gradient is undefined at r = 0 and zero outside the support radius.
-    if (!(smoothing_length > T(0)) || !(radius > T(0)) || radius > smoothing_length) {
+    if (!(cell_size > T(0)) || !(radius > T(0)) || radius > cell_size) {
         return Vector3<T>(T(0), T(0), T(0));
     }
 
     // Normalized radius: q = r / h.
-    const T q           = radius / smoothing_length;
+    const T q           = radius / cell_size;
     const T one_minus_q = T(1) - q;
 
     // Radial derivative coefficient for the 3D Wendland quintic kernel.
     const T alpha = static_cast<T>(-210.0 / atlas::pi)
-        / (smoothing_length * smoothing_length
-           * smoothing_length * smoothing_length);
+        / (cell_size * cell_size
+           * cell_size * cell_size);
 
     // dW/dr = alpha * q * (1 - q)^3.
     const T radial_derivative = alpha * q * one_minus_q * one_minus_q * one_minus_q;
@@ -54,20 +54,20 @@ WendlandQuinticSphKernel<T>::pressure_gradient(const Vector3<T>& delta,
 template <typename T>
 T
 WendlandQuinticSphKernel<T>::viscosity_laplacian(const T radius,
-                                                 const T smoothing_length) noexcept {
+                                                 const T cell_size) noexcept {
     // The kernel Laplacian is compactly supported for 0 <= r <= h.
-    if (!(smoothing_length > T(0)) || !(radius >= T(0)) || radius > smoothing_length) {
+    if (!(cell_size > T(0)) || !(radius >= T(0)) || radius > cell_size) {
         return T(0);
     }
 
     // Normalized radius: q = r / h.
-    const T q           = radius / smoothing_length;
+    const T q           = radius / cell_size;
     const T one_minus_q = T(1) - q;
 
     // 3D Wendland quintic Laplacian coefficient.
     const T alpha = static_cast<T>(210.0 / atlas::pi)
-        / (smoothing_length * smoothing_length * smoothing_length
-           * smoothing_length * smoothing_length);
+        / (cell_size * cell_size * cell_size
+           * cell_size * cell_size);
 
     // Laplacian approximation used for viscosity: alpha * (1 - q)^2 * (1 - 4q).
     return alpha

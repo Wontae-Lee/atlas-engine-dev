@@ -7,6 +7,7 @@
 #include <atlas/parallel/parallel_sort.h>
 #include <atlas/scan/exclusive_scan.h>
 
+#include <cmath>
 #include <stdexcept>
 #include <utility>
 
@@ -26,32 +27,20 @@ struct SearcherNeighborCount {
     T inverse_cell_size {};
     T radius_squared {};
     Vector3<int> grid_size {};
-    Vector3<int> low {};
-    Vector3<int> high {};
 
     ATLAS_DEVICE void
     operator()(const int i) const {
         const Vector3<T> pi = positions[i];
-        const Vector3<T> rel = (pi - lower_corner) * inverse_cell_size;
-        const Vector3<int> cell = atlas::math::clamp(
-            atlas::math::floor(rel).template cast_to<int>(),
-            low,
-            high);
+        const Vector3<int> cell = Searcher<T>::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
 
         int count = 0;
         for (int dz = -1; dz <= 1; ++dz) {
-            const int z = cell.z + dz;
-            if (z < 0 || z >= grid_size.z) continue;
-
             for (int dy = -1; dy <= 1; ++dy) {
-                const int y = cell.y + dy;
-                if (y < 0 || y >= grid_size.y) continue;
-
                 for (int dx = -1; dx <= 1; ++dx) {
-                    const int x = cell.x + dx;
-                    if (x < 0 || x >= grid_size.x) continue;
+                    const Vector3<int> neighbor_cell = cell + Vector3<int>(dx, dy, dz);
+                    if (!Searcher<T>::contains_cell(neighbor_cell, grid_size)) continue;
 
-                    const std::uint32_t key = Searcher<T>::linear_key(x, y, z, grid_size);
+                    const std::uint32_t key = Searcher<T>::linear_key(neighbor_cell, grid_size);
                     const int first = start[key];
                     if (first < 0) continue;
 
@@ -89,32 +78,20 @@ struct SearcherNeighborWrite {
     T inverse_cell_size {};
     T radius_squared {};
     Vector3<int> grid_size {};
-    Vector3<int> low {};
-    Vector3<int> high {};
 
     ATLAS_DEVICE void
     operator()(const int i) const {
         const Vector3<T> pi = positions[i];
-        const Vector3<T> rel = (pi - lower_corner) * inverse_cell_size;
-        const Vector3<int> cell = atlas::math::clamp(
-            atlas::math::floor(rel).template cast_to<int>(),
-            low,
-            high);
+        const Vector3<int> cell = Searcher<T>::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
 
         int write = offsets[i];
         for (int dz = -1; dz <= 1; ++dz) {
-            const int z = cell.z + dz;
-            if (z < 0 || z >= grid_size.z) continue;
-
             for (int dy = -1; dy <= 1; ++dy) {
-                const int y = cell.y + dy;
-                if (y < 0 || y >= grid_size.y) continue;
-
                 for (int dx = -1; dx <= 1; ++dx) {
-                    const int x = cell.x + dx;
-                    if (x < 0 || x >= grid_size.x) continue;
+                    const Vector3<int> neighbor_cell = cell + Vector3<int>(dx, dy, dz);
+                    if (!Searcher<T>::contains_cell(neighbor_cell, grid_size)) continue;
 
-                    const std::uint32_t key = Searcher<T>::linear_key(x, y, z, grid_size);
+                    const std::uint32_t key = Searcher<T>::linear_key(neighbor_cell, grid_size);
                     const int first = start[key];
                     if (first < 0) continue;
 
@@ -256,6 +233,35 @@ Searcher<T>::linear_key(const int ix, const int iy, const int iz, const Vector3<
 }
 
 template <typename T>
+std::uint32_t
+Searcher<T>::linear_key(const Vector3<int>& cell, const Vector3<int>& gs) noexcept {
+    return linear_key(cell.x, cell.y, cell.z, gs);
+}
+
+template <typename T>
+Vector3<int>
+Searcher<T>::cell_for(const Vector3<T>& position,
+                      const Vector3<T>& lower_corner,
+                      const T inverse_cell_size,
+                      const Vector3<int>& grid_size) noexcept {
+    auto cell = atlas::math::floor((position - lower_corner) * inverse_cell_size).template cast_to<int>();
+    return atlas::math::clamp(cell, Vector3<int>(0, 0, 0), grid_size - Vector3<int>(1, 1, 1));
+}
+
+template <typename T>
+bool
+Searcher<T>::contains_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept {
+    return atlas::math::all(cell >= Vector3<int>(0, 0, 0))
+        && atlas::math::all(cell < grid_size);
+}
+
+template <typename T>
+int
+Searcher<T>::search_radius_for(const T length, const T cell_size) noexcept {
+    return static_cast<int>(std::ceil(length / cell_size));
+}
+
+template <typename T>
 const Vector3<T>*
 Searcher<T>::position_ptr() const noexcept {
     if (!_fluid) {
@@ -306,16 +312,12 @@ Searcher<T>::compute_grid_keys(const int alive, const Vector3<T>* positions) {
     const Vector3<T> lc  = _universe->lower_corner();
     const T inv_h        = _universe->inverse_cell_size();
     const Vector3<int> gs = _universe->grid_size();
-    const Vector3<int> lo { 0, 0, 0 };
-    const Vector3<int> hi = gs - Vector3<int> { 1, 1, 1 };
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         alive,
         [=] ATLAS_DEVICE(const int i) {
-            const Vector3<T> rel = (positions[i] - lc) * inv_h;
-            Vector3<int> ijk     = atlas::math::floor(rel).template cast_to<int>();
-            ijk                  = atlas::math::clamp(ijk, lo, hi);
+            const Vector3<int> ijk = Searcher<T>::cell_for(positions[i], lc, inv_h, gs);
             keys_ptr[i]          = Searcher<T>::linear_key(ijk.x, ijk.y, ijk.z, gs);
             indices_ptr[i]       = i;
         });
@@ -376,8 +378,6 @@ Searcher<T>::build_cell_neighbors(const int alive,
     const T inv_h = _universe->inverse_cell_size();
     const T radius2 = _universe->cell_size() * _universe->cell_size();
     const Vector3<int> gs = _universe->grid_size();
-    const Vector3<int> lo { 0, 0, 0 };
-    const Vector3<int> hi = gs - Vector3<int> { 1, 1, 1 };
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -392,9 +392,7 @@ Searcher<T>::build_cell_neighbors(const int alive,
             lc,
             inv_h,
             radius2,
-            gs,
-            lo,
-            hi
+            gs
         });
 
     atlas::exclusive_scan<ExecutionPolicy::device>(
@@ -426,9 +424,7 @@ Searcher<T>::build_cell_neighbors(const int alive,
             lc,
             inv_h,
             radius2,
-            gs,
-            lo,
-            hi
+            gs
         });
 }
 
