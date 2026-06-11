@@ -23,9 +23,8 @@ BoxGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const 
     // Clamp the point to the box bounds to get the closest point for exterior queries.
     atlas::math::Vector<T, 3> cp = atlas::math::clamp(p, lo, hi);
 
-    const bool inside = (p.x >= lo.x && p.x <= hi.x)
-        && (p.y >= lo.y && p.y <= hi.y)
-        && (p.z >= lo.z && p.z <= hi.z);
+    const bool inside = atlas::math::all(p >= lo)
+        && atlas::math::all(p <= hi);
 
     if (inside) {
         // For interior points, project to the nearest box face instead of returning p.
@@ -57,9 +56,8 @@ BoxGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const
     const atlas::math::Vector<T, 3>& lo = *lower_corner;
     const atlas::math::Vector<T, 3>& hi = *upper_corner;
 
-    const bool inside = (p.x >= lo.x && p.x <= hi.x)
-        && (p.y >= lo.y && p.y <= hi.y)
-        && (p.z >= lo.z && p.z <= hi.z);
+    const bool inside = atlas::math::all(p >= lo)
+        && atlas::math::all(p <= hi);
 
     atlas::math::Vector<T, 3> n(T(0));
 
@@ -102,9 +100,8 @@ BoxGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) cons
     const atlas::math::Vector<T, 3>& lo = *lower_corner;
     const atlas::math::Vector<T, 3>& hi = *upper_corner;
 
-    const bool inside = (p.x >= lo.x && p.x <= hi.x)
-        && (p.y >= lo.y && p.y <= hi.y)
-        && (p.z >= lo.z && p.z <= hi.z);
+    const bool inside = atlas::math::all(p >= lo)
+        && atlas::math::all(p <= hi);
 
     if (inside) {
         // Inside the box, distance is negative and equals the nearest face distance.
@@ -135,17 +132,47 @@ BoxGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p,
     const atlas::math::Vector<T, 3>& hi = *upper_corner;
 
     // Expand the box by tolerance to make boundary checks numerically robust.
-    return (p.x >= lo.x - tolerance) && (p.x <= hi.x + tolerance)
-        && (p.y >= lo.y - tolerance) && (p.y <= hi.y + tolerance)
-        && (p.z >= lo.z - tolerance) && (p.z <= hi.z + tolerance);
+    return atlas::math::all(p >= lo - tolerance)
+        && atlas::math::all(p <= hi + tolerance);
 }
 
 template <typename T>
 bool
 BoxGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p,
                                       const T tolerance) const noexcept {
-    // Surface membership is measured by the absolute signed distance.
-    return std::abs(signed_distance(p)) <= tolerance;
+    // Invalid geometry or negative tolerances cannot accept surface points.
+    if (!lower_corner || !upper_corner || tolerance < T(0)) {
+        return false;
+    }
+
+    const atlas::math::Vector<T, 3>& lo = *lower_corner;
+    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+    const T tolerance2                  = tolerance * tolerance;
+
+    const bool inside = atlas::math::all(p >= lo)
+        && atlas::math::all(p <= hi);
+
+    if (inside) {
+        const T dx = (p.x - lo.x < hi.x - p.x) ? p.x - lo.x : hi.x - p.x;
+        const T dy = (p.y - lo.y < hi.y - p.y) ? p.y - lo.y : hi.y - p.y;
+        const T dz = (p.z - lo.z < hi.z - p.z) ? p.z - lo.z : hi.z - p.z;
+        const T d  = (dx < dy) ? ((dx < dz) ? dx : dz)
+                               : ((dy < dz) ? dy : dz);
+
+        return d <= tolerance;
+    }
+
+    const T dx = p.x < lo.x ? lo.x - p.x
+        : p.x > hi.x       ? p.x - hi.x
+                            : T(0);
+    const T dy = p.y < lo.y ? lo.y - p.y
+        : p.y > hi.y       ? p.y - hi.y
+                            : T(0);
+    const T dz = p.z < lo.z ? lo.z - p.z
+        : p.z > hi.z       ? p.z - hi.z
+                            : T(0);
+
+    return dx * dx + dy * dy + dz * dz <= tolerance2;
 }
 
 template <typename T>
@@ -184,7 +211,9 @@ BoxGeometryOperator<T>::is_valid() const noexcept {
     const atlas::math::Vector<T, 3>& hi = *upper_corner;
 
     // Each upper coordinate must be greater than or equal to the matching lower coordinate.
-    return (hi.x >= lo.x) && (hi.y >= lo.y) && (hi.z >= lo.z);
+    return atlas::math::isfinite(lo)
+        && atlas::math::isfinite(hi)
+        && atlas::math::all(hi >= lo);
 }
 
 template <typename T>

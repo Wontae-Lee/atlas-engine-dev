@@ -516,6 +516,21 @@ private:
 
 private:
     /**
+     * @brief Assigns fast-winding aggregate data for a single primitive leaf.
+     */
+    static void
+    assign_solid_angle_moment(BVHNode<T>& node,
+                              const TriangleContainer4<T>& triangle) noexcept;
+
+    /**
+     * @brief Merges fast-winding aggregate data from two child nodes.
+     */
+    static void
+    merge_solid_angle_moment(BVHNode<T>& node,
+                             const BVHNode<T>& left,
+                             const BVHNode<T>& right) noexcept;
+
+    /**
      * @brief Computes the node index of the @p k-th leaf node.
      *
      * @details

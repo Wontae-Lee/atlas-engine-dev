@@ -297,8 +297,13 @@ PlaneGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T 
 template <typename T>
 bool
 PlaneGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Surface membership is measured by the absolute signed distance.
-    return std::abs(signed_distance(p)) <= tolerance;
+    // Invalid geometry or negative tolerances cannot accept surface points.
+    if (!normal || !offset || tolerance < T(0)) {
+        return false;
+    }
+
+    const T distance = (*normal).dot(p) + (*offset);
+    return distance >= -tolerance && distance <= tolerance;
 }
 
 template <typename T>
@@ -330,7 +335,9 @@ PlaneGeometryOperator<T>::is_valid() const noexcept {
 
     // The normal must be nonzero, and the offset must be finite.
     const T n2 = (*normal).length_squared();
-    return (n2 > T(0)) && std::isfinite(static_cast<double>(*offset));
+    return atlas::math::isfinite(*normal)
+        && (n2 > T(0))
+        && std::isfinite(static_cast<double>(*offset));
 }
 
 template <typename T>

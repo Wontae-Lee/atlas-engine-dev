@@ -128,15 +128,6 @@ struct SquareGeometryOperator {
 
 private:
     /**
-     * @brief Return an auxiliary axis that is sufficiently different from the normal.
-     *
-     * @param unit_like_normal Input normal-like vector.
-     * @return Helper axis used to seed tangent construction.
-     */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    axis(const atlas::math::Vector<T, 3>& unit_like_normal) const noexcept;
-
-    /**
      * @brief Build an orthonormal basis aligned with the square plane.
      *
      * @param input_normal Raw square normal.

@@ -98,6 +98,42 @@ LinearBoundingVolumeHierachy<T>::device_triangles() const noexcept {
 }
 
 template <typename T>
+void
+LinearBoundingVolumeHierachy<T>::assign_solid_angle_moment(
+    BVHNode<T>& node,
+    const TriangleContainer4<T>& triangle) noexcept {
+    const Vector3<T>& a = triangle.a();
+    const Vector3<T>& b = triangle.b();
+    const Vector3<T>& c = triangle.c();
+
+    const Vector3<T> normal_area = atlas::math::cross(b - a, c - a) * T(0.5);
+    const T area                 = normal_area.length();
+
+    node.solid_angle_moment      = Vector3<T>(T(0), T(0), T(0));
+    node.solid_angle_normal_area = Vector3<T>(T(0), T(0), T(0));
+    node.solid_angle_area        = T(0);
+
+    if (!(area > T(0))) {
+        return;
+    }
+
+    node.solid_angle_moment      = (a + b + c) * (area / T(3));
+    node.solid_angle_normal_area = normal_area;
+    node.solid_angle_area        = area;
+}
+
+template <typename T>
+void
+LinearBoundingVolumeHierachy<T>::merge_solid_angle_moment(
+    BVHNode<T>& node,
+    const BVHNode<T>& left,
+    const BVHNode<T>& right) noexcept {
+    node.solid_angle_moment      = left.solid_angle_moment + right.solid_angle_moment;
+    node.solid_angle_normal_area = left.solid_angle_normal_area + right.solid_angle_normal_area;
+    node.solid_angle_area        = left.solid_angle_area + right.solid_angle_area;
+}
+
+template <typename T>
 int
 LinearBoundingVolumeHierachy<T>::leaf_node_index(const int k, const int n) noexcept {
     // In a 2n-1 node LBVH layout, leaves are stored after the n-1 internal nodes.
@@ -348,6 +384,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         leaf.start = k;
         leaf.count = 1;
         leaf.bounds = h_prim_bounds[pid];
+        assign_solid_angle_moment(leaf, triangles[pid]);
     }
 
     if (n == 1) {
@@ -420,6 +457,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
 
         in.bounds = L.bounds;
         in.bounds.merge(R.bounds);
+        merge_solid_angle_moment(in, L, R);
     }
 
     // Internal node 0 is the LBVH root for n > 1.

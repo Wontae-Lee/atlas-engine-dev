@@ -18,8 +18,7 @@ CircleGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) con
         return p;
     }
 
-    atlas::math::Vector<T, 3> n = *normal;
-    const T n2                  = n.length_squared();
+    const T n2 = normal->length_squared();
 
     // Degenerate normals or non-positive radii cannot define a valid circle disk.
     if (n2 <= T(0) || *radius <= T(0)) {
@@ -27,7 +26,9 @@ CircleGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) con
     }
 
     // Normalize the plane normal before computing the orthogonal projection.
-    n.normalize();
+    const atlas::math::Vector<T, 3> n = atlas::math::normalized_or(
+        *normal,
+        atlas::math::Vector<T, 3>(T(0), T(0), T(1)));
 
     const atlas::math::Vector<T, 3> offset = p - *center;
     const T plane_distance                 = offset.dot(n);
@@ -60,15 +61,9 @@ CircleGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&) cons
         return atlas::math::Vector<T, 3>(T(0), T(0), T(1));
     }
 
-    const T n2 = normal->length_squared();
-
-    // Degenerate normals also fall back to the global z-axis.
-    if (n2 <= T(0)) {
-        return atlas::math::Vector<T, 3>(T(0), T(0), T(1));
-    }
-
-    // Return the normalized disk normal.
-    return normal->normalized();
+    return atlas::math::normalized_or(
+        *normal,
+        atlas::math::Vector<T, 3>(T(0), T(0), T(1)));
 }
 
 template <typename T>
@@ -94,16 +89,76 @@ template <typename T>
 bool
 CircleGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p,
                                      const T tolerance) const noexcept {
-    // Treat the negative side and near-surface band as inside according to signed distance.
-    return signed_distance(p) <= tolerance;
+    // Invalid circle parameters cannot classify points.
+    if (!center || !normal || !radius || !(*radius > T(0))) {
+        return false;
+    }
+
+    const T n2 = normal->length_squared();
+
+    if (!(n2 > T(0))) {
+        return false;
+    }
+
+    const atlas::math::Vector<T, 3> n = atlas::math::normalized_or(
+        *normal,
+        atlas::math::Vector<T, 3>(T(0), T(0), T(1)));
+
+    const atlas::math::Vector<T, 3> offset = p - *center;
+    const T plane_distance                 = offset.dot(n);
+    const atlas::math::Vector<T, 3> planar = offset - n * plane_distance;
+    const T planar_len2                    = planar.length_squared();
+    const T rr                             = (*radius) * (*radius);
+    const T tolerance2                     = tolerance * tolerance;
+
+    T distance2 = plane_distance * plane_distance;
+
+    if (planar_len2 > rr) {
+        const T radial_distance = static_cast<T>(std::sqrt(planar_len2)) - *radius;
+        distance2 += radial_distance * radial_distance;
+    }
+
+    if (!(plane_distance < T(0))) {
+        return tolerance >= T(0) && distance2 <= tolerance2;
+    }
+
+    return tolerance >= T(0) || distance2 >= tolerance2;
 }
 
 template <typename T>
 bool
 CircleGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p,
                                          const T tolerance) const noexcept {
-    // Surface membership is measured by the absolute signed distance.
-    return std::abs(signed_distance(p)) <= tolerance;
+    // Invalid circle parameters or negative tolerances cannot accept surface points.
+    if (!center || !normal || !radius || !(*radius > T(0)) || tolerance < T(0)) {
+        return false;
+    }
+
+    const T n2 = normal->length_squared();
+
+    if (!(n2 > T(0))) {
+        return false;
+    }
+
+    const atlas::math::Vector<T, 3> n = atlas::math::normalized_or(
+        *normal,
+        atlas::math::Vector<T, 3>(T(0), T(0), T(1)));
+
+    const atlas::math::Vector<T, 3> offset = p - *center;
+    const T plane_distance                 = offset.dot(n);
+    const atlas::math::Vector<T, 3> planar = offset - n * plane_distance;
+    const T planar_len2                    = planar.length_squared();
+    const T rr                             = (*radius) * (*radius);
+    const T tolerance2                     = tolerance * tolerance;
+
+    T distance2 = plane_distance * plane_distance;
+
+    if (planar_len2 > rr) {
+        const T radial_distance = static_cast<T>(std::sqrt(planar_len2)) - *radius;
+        distance2 += radial_distance * radial_distance;
+    }
+
+    return distance2 <= tolerance2;
 }
 
 template <typename T>
@@ -126,8 +181,7 @@ CircleGeometryOperator<T>::bound() const noexcept {
         return atlas::spatial::AxisAlignedBoundingBox<T>();
     }
 
-    atlas::math::Vector<T, 3> n = *normal;
-    const T n2                  = n.length_squared();
+    const T n2 = normal->length_squared();
 
     // Degenerate disks collapse to a point bound at the center.
     if (n2 <= T(0) || *radius <= T(0)) {
@@ -135,7 +189,9 @@ CircleGeometryOperator<T>::bound() const noexcept {
     }
 
     // Normalize the disk normal before projecting the radius onto world axes.
-    n.normalize();
+    const atlas::math::Vector<T, 3> n = atlas::math::normalized_or(
+        *normal,
+        atlas::math::Vector<T, 3>(T(0), T(0), T(1)));
 
     // Each AABB extent is the disk radius scaled by the projection onto that axis.
     const atlas::math::Vector<T, 3> extent(
@@ -155,12 +211,8 @@ CircleGeometryOperator<T>::is_valid() const noexcept {
     }
 
     // All geometric parameters must be finite, with a non-zero normal and positive radius.
-    return std::isfinite(static_cast<double>(center->x))
-        && std::isfinite(static_cast<double>(center->y))
-        && std::isfinite(static_cast<double>(center->z))
-        && std::isfinite(static_cast<double>(normal->x))
-        && std::isfinite(static_cast<double>(normal->y))
-        && std::isfinite(static_cast<double>(normal->z))
+    return atlas::math::isfinite(*center)
+        && atlas::math::isfinite(*normal)
         && normal->length_squared() > T(0)
         && std::isfinite(static_cast<double>(*radius))
         && *radius > T(0);

@@ -615,6 +615,23 @@ private:
 
 private:
     /**
+     * @brief Accumulates fast-winding aggregate data over a primitive range.
+     */
+    void
+    assign_solid_angle_moment(BVHNode<T>& node,
+                              int start,
+                              int end,
+                              const HostBuffer<TriangleContainer4<T>>& triangles) const noexcept;
+
+    /**
+     * @brief Merges fast-winding aggregate data from two child nodes.
+     */
+    static void
+    merge_solid_angle_moment(BVHNode<T>& node,
+                             const BVHNode<T>& left,
+                             const BVHNode<T>& right) noexcept;
+
+    /**
      * @brief Recursively builds a BVH subtree over a primitive-index interval.
      *
      * @details
@@ -662,7 +679,10 @@ private:
      * @return Index of the constructed subtree root node.
      */
     int
-    build_recursive(int start, int end, int& node_count);
+    build_recursive(int start,
+                    int end,
+                    int& node_count,
+                    const HostBuffer<TriangleContainer4<T>>& triangles);
 };
 
 } // namespace atlas::spatial

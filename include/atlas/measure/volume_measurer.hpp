@@ -160,13 +160,9 @@ VolumeMeasurer<T>::measure_volume() {
             region.end    = grid_high;
             region.active = true;
 
-            const auto finite_point = [] ATLAS_DEVICE(const Vector3<T>& point) {
-                return atlas::math::all(
-                    atlas::math::abs(point) < std::numeric_limits<T>::infinity());
-            };
             const bool finite_bound = local_bound.is_valid()
-                && finite_point(local_bound.lower_corner)
-                && finite_point(local_bound.upper_corner);
+                && atlas::math::isfinite(local_bound.lower_corner)
+                && atlas::math::isfinite(local_bound.upper_corner);
 
             if (!finite_bound) {
                 return;

@@ -263,7 +263,7 @@ CylinderGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p)
     const atlas::math::Vector<T, 3> d = p - *center;
 
     // Compute radial distance from the cylinder axis.
-    const T rho = static_cast<T>(std::sqrt(d.x * d.x + d.y * d.y));
+    const T rho = atlas::math::xy_length(d);
 
     // qx is radial signed excess; qy is axial signed excess.
     const T qx = rho - *radius;
@@ -306,7 +306,7 @@ CylinderGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const
     const atlas::math::Vector<T, 3> d = p - *center;
 
     // Convert the query point to radial and axial signed offsets.
-    const T rho = static_cast<T>(std::sqrt(d.x * d.x + d.y * d.y));
+    const T rho = atlas::math::xy_length(d);
     const T qx  = rho - *radius;
     const T qy  = static_cast<T>(std::fabs(d.z)) - hz;
 
@@ -336,12 +336,18 @@ CylinderGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const
 template <typename T>
 bool
 CylinderGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+    if (!center || !radius || !height
+        || !(*radius > T(0)) || !(*height > T(0))
+        || tolerance < T(0)) {
+        return false;
+    }
+
     if (center && radius && height && open && *open) {
         const T hz                        = (*height) * T(0.5);
         const atlas::math::Vector<T, 3> d = p - *center;
 
         // Open cylinders expose only the lateral surface.
-        const T rho  = static_cast<T>(std::sqrt(d.x * d.x + d.y * d.y));
+        const T rho  = atlas::math::xy_length(d);
         const T zmin = (*center).z - hz;
         const T zmax = (*center).z + hz;
 
@@ -350,8 +356,21 @@ CylinderGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, c
             && p.z <= zmax + tolerance;
     }
 
-    // Closed cylinders can use the full signed-distance surface test.
-    return std::abs(signed_distance(p)) <= tolerance;
+    const T hz                        = (*height) * T(0.5);
+    const atlas::math::Vector<T, 3> d = p - *center;
+    const T rho                       = atlas::math::xy_length(d);
+    const T radial                    = rho - *radius;
+    const T axial                     = static_cast<T>(std::fabs(d.z)) - hz;
+
+    if (radial <= T(0) && axial <= T(0)) {
+        const T inside_distance = (radial > axial) ? radial : axial;
+        return inside_distance >= -tolerance;
+    }
+
+    const T ax = (radial > T(0)) ? radial : T(0);
+    const T ay = (axial > T(0)) ? axial : T(0);
+
+    return ax * ax + ay * ay <= tolerance * tolerance;
 }
 
 template <typename T>
@@ -368,7 +387,7 @@ CylinderGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) c
     const bool is_open_cylinder = open && *open;
 
     const atlas::math::Vector<T, 3> d = p - *center;
-    const T rho                       = static_cast<T>(std::sqrt(d.x * d.x + d.y * d.y));
+    const T rho                       = atlas::math::xy_length(d);
 
     // Clamp z to the finite cylinder height.
     const T zc = (p.z < zmin) ? zmin
@@ -456,7 +475,7 @@ CylinderGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) 
     const bool is_open_cylinder = open && *open;
 
     const atlas::math::Vector<T, 3> d = p - *center;
-    const T rho                       = static_cast<T>(std::sqrt(d.x * d.x + d.y * d.y));
+    const T rho                       = atlas::math::xy_length(d);
 
     const bool inside_radial = (rho <= *radius);
     const bool inside_z      = (p.z >= zmin) && (p.z <= zmax);
@@ -465,15 +484,9 @@ CylinderGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) 
         // Open cylinders always return a lateral-surface normal.
         const atlas::math::Vector<T, 3> cp = closest_point(p);
         const atlas::math::Vector<T, 3> cd = cp - *center;
-        const T rr2                        = cd.x * cd.x + cd.y * cd.y;
-
-        if (rr2 > T(0)) {
-            const T inv = T(1) / static_cast<T>(std::sqrt(rr2));
-            return atlas::math::Vector<T, 3>(cd.x * inv, cd.y * inv, T(0));
-        }
-
-        // Deterministic fallback for degenerate radial direction.
-        return atlas::math::Vector<T, 3>(T(1), T(0), T(0));
+        return atlas::math::xy_normalized_or(
+            cd,
+            atlas::math::Vector<T, 3>(T(1), T(0), T(0)));
     }
 
     if (inside_radial && inside_z) {
@@ -483,13 +496,9 @@ CylinderGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) 
         const T d_to_top  = zmax - p.z;
 
         if (d_to_side <= d_to_bot && d_to_side <= d_to_top) {
-            if (rho > T(0)) {
-                const T inv = T(1) / rho;
-                return atlas::math::Vector<T, 3>(d.x * inv, d.y * inv, T(0));
-            }
-
-            // Deterministic fallback normal on the cylinder axis.
-            return atlas::math::Vector<T, 3>(T(1), T(0), T(0));
+            return atlas::math::xy_normalized_or(
+                d,
+                atlas::math::Vector<T, 3>(T(1), T(0), T(0)));
         }
 
         // Choose the nearest cap normal.
@@ -511,15 +520,9 @@ CylinderGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) 
     }
 
     const atlas::math::Vector<T, 3> cd = cp - *center;
-    const T rr2                        = cd.x * cd.x + cd.y * cd.y;
-
-    if (rr2 > T(0)) {
-        const T inv = T(1) / static_cast<T>(std::sqrt(rr2));
-        return atlas::math::Vector<T, 3>(cd.x * inv, cd.y * inv, T(0));
-    }
-
-    // Deterministic fallback when the closest radial direction is undefined.
-    return atlas::math::Vector<T, 3>(T(1), T(0), T(0));
+    return atlas::math::xy_normalized_or(
+        cd,
+        atlas::math::Vector<T, 3>(T(1), T(0), T(0)));
 }
 
 template <typename T>
@@ -614,9 +617,9 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
 
     if (z_ok) {
         // Solve the quadratic equation for intersection with the infinite cylinder side wall.
-        const T A = rd.x * rd.x + rd.y * rd.y;
-        const T B = T(2) * (ro.x * rd.x + ro.y * rd.y);
-        const T C = ro.x * ro.x + ro.y * ro.y - r * r;
+        const T A = atlas::math::xy_length_squared(rd);
+        const T B = T(2) * atlas::math::xy_dot(ro, rd);
+        const T C = atlas::math::xy_length_squared(ro) - r * r;
 
         if (A > T(0)) {
             const T disc = B * B - T(4) * A * C;
@@ -657,15 +660,9 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
 
                     // Compute the local hit point to derive the outward radial normal.
                     const atlas::math::Vector<T, 3> ph = ro + rd * t;
-                    const T rr2                        = ph.x * ph.x + ph.y * ph.y;
-
-                    if (rr2 > T(0)) {
-                        const T inv_rr = T(1) / static_cast<T>(std::sqrt(rr2));
-                        best_n         = atlas::math::Vector<T, 3>(ph.x * inv_rr, ph.y * inv_rr, T(0));
-                    } else {
-                        // Deterministic fallback for undefined radial normal.
-                        best_n = atlas::math::Vector<T, 3>(T(1), T(0), T(0));
-                    }
+                    best_n = atlas::math::xy_normalized_or(
+                        ph,
+                        atlas::math::Vector<T, 3>(T(1), T(0), T(0)));
                 };
 
                 if (accept_side(t0)) {
@@ -691,7 +688,7 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
 
             const atlas::math::Vector<T, 3> ph = ro + rd * t;
 
-            if (ph.x * ph.x + ph.y * ph.y <= r * r) {
+            if (atlas::math::xy_length_squared(ph) <= r * r) {
                 // Accept the cap hit only when the plane hit lies inside the cap disk.
                 best_t = t;
                 best_n = atlas::math::Vector<T, 3>(T(0), T(0), nz);

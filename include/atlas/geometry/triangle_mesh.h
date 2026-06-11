@@ -142,6 +142,52 @@ struct TriangleMeshGeometryOperator {
      */
     int bvh_root = -1;
 
+private:
+    /**
+     * @brief Return whether this operator has a usable BVH view.
+     */
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    has_bvh() const noexcept;
+
+    /**
+     * @brief Compute the squared distance from a point to an AABB.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    bounds_distance_squared(const atlas::spatial::AxisAlignedBoundingBox<T>& bounds,
+                            const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    /**
+     * @brief Find the closest triangle point through direct triangle iteration.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    closest_point_linear(const atlas::math::Vector<T, 3>& p,
+                         atlas::math::Vector<T, 3>* best_point,
+                         atlas::math::Vector<T, 3>* best_normal,
+                         T limit) const noexcept;
+
+    /**
+     * @brief Find the closest triangle point through BVH distance pruning.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    closest_point_bvh(const atlas::math::Vector<T, 3>& p,
+                      atlas::math::Vector<T, 3>* best_point,
+                      atlas::math::Vector<T, 3>* best_normal,
+                      T limit) const noexcept;
+
+    /**
+     * @brief Approximate one node's solid-angle contribution.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    approximate_solid_angle(const atlas::spatial::BVHNode<T>& node,
+                            const atlas::math::Vector<T, 3>& p) const noexcept;
+
+    /**
+     * @brief Evaluate winding number through BVH aggregate solid-angle approximation.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    fast_winding_number_bvh(const atlas::math::Vector<T, 3>& p) const noexcept;
+
+public:
     /**
      * @brief Compute the oriented solid angle subtended by a triangle at a query point.
      *

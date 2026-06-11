@@ -225,17 +225,14 @@ SphereGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) con
 
     // Vector from the sphere center to the query point.
     const atlas::math::Vector<T, 3> v = p - *center;
-    const T len2                      = v.length_squared();
     const T e                         = std::numeric_limits<T>::epsilon();
 
-    if (len2 <= e) {
-        // Choose a deterministic surface point when the query lies at the sphere center.
-        return atlas::math::Vector<T, 3>((*center).x + *radius, (*center).y, (*center).z);
-    }
-
     // Normalize the radial direction and scale it to the sphere radius.
-    const T inv_len = T(1) / static_cast<T>(std::sqrt(len2));
-    return (*center) + v * ((*radius) * inv_len);
+    const atlas::math::Vector<T, 3> direction = atlas::math::normalized_or(
+        v,
+        atlas::math::Vector<T, 3>(T(1), T(0), T(0)),
+        e);
+    return (*center) + direction * (*radius);
 }
 
 template <typename T>
@@ -248,15 +245,12 @@ SphereGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) co
 
     // The sphere normal is the normalized radial direction from center to point.
     const atlas::math::Vector<T, 3> v = p - *center;
-    const T len2                      = v.length_squared();
     const T e                         = std::numeric_limits<T>::epsilon();
 
-    if (len2 <= e) {
-        // Choose a deterministic fallback normal when the radial direction is undefined.
-        return atlas::math::Vector<T, 3>(T(1), T(0), T(0));
-    }
-
-    return v * (T(1) / static_cast<T>(std::sqrt(len2)));
+    return atlas::math::normalized_or(
+        v,
+        atlas::math::Vector<T, 3>(T(1), T(0), T(0)),
+        e);
 }
 
 template <typename T>
@@ -294,8 +288,17 @@ SphereGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T
 template <typename T>
 bool
 SphereGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Surface membership is measured by the absolute signed distance.
-    return std::abs(signed_distance(p)) <= tolerance;
+    // Invalid geometry or negative tolerances cannot accept surface points.
+    if (!center || !radius || !(*radius > T(0)) || tolerance < T(0)) {
+        return false;
+    }
+
+    const T outer_radius = *radius + tolerance;
+    const T inner_radius = (*radius > tolerance) ? *radius - tolerance : T(0);
+    const T d2           = (p - *center).length_squared();
+
+    return d2 >= inner_radius * inner_radius
+        && d2 <= outer_radius * outer_radius;
 }
 
 template <typename T>
@@ -392,17 +395,9 @@ SphereGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
     result.point           = ray.point_at(t);
 
     // Compute the outward normal from the hit point.
-    atlas::math::Vector<T, 3> n = result.point - c;
-    const T len2                = n.length_squared();
-
-    if (len2 > T(0)) {
-        n.normalize();
-    } else {
-        // Deterministic fallback for undefined radial normal.
-        n = atlas::math::Vector<T, 3>(T(1), T(0), T(0));
-    }
-
-    result.normal = n;
+    result.normal = atlas::math::normalized_or(
+        result.point - c,
+        atlas::math::Vector<T, 3>(T(1), T(0), T(0)));
 
     return result;
 }

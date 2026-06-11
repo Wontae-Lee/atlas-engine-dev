@@ -22,7 +22,9 @@ Triangle<T>::Triangle(const Vector3<T>& a_,
     , b(b_)
     , c(c_) {
     // Compute the geometric normal from the vertex winding.
-    normal = math::cross(b - a, c - a).normalized();
+    normal = atlas::math::normalized_or(
+        math::cross(b - a, c - a),
+        Vector3<T>(T(0), T(0), T(0)));
 
     // Bind the operator after initializing vertices and normal.
     bind_operator();
@@ -189,7 +191,9 @@ Triangle<T>::set_vertices(const Vector3<T>& a_,
     c = c_;
 
     // Recompute the normal from the updated vertex winding.
-    normal = math::cross(b - a, c - a).normalized();
+    normal = atlas::math::normalized_or(
+        math::cross(b - a, c - a),
+        Vector3<T>(T(0), T(0), T(0)));
 
     // Rebind to keep operator pointers synchronized with this object.
     bind_operator();
@@ -244,7 +248,9 @@ Triangle<T>::Builder::build() const {
         t.normal = *_normal;
     } else {
         // Otherwise derive the normal from the triangle vertex winding.
-        t.normal = math::cross(t.b - t.a, t.c - t.a).normalized();
+        t.normal = atlas::math::normalized_or(
+            math::cross(t.b - t.a, t.c - t.a),
+            Vector3<T>(T(0), T(0), T(0)));
     }
 
     // Rebind because vertices and normal are assigned after default construction.
@@ -413,19 +419,9 @@ TriangleGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&) co
         return atlas::math::Vector<T, 3>(T(0), T(0), T(1));
     }
 
-    // Derive the geometric normal from the triangle edges.
-    atlas::math::Vector<T, 3> nn = atlas::math::cross((*b) - (*a), (*c) - (*a));
-    const T len2                 = nn.length_squared();
-
-    if (len2 > T(0)) {
-        // Normalize the computed normal.
-        nn.normalize();
-    } else {
-        // Degenerate triangles fall back to a deterministic normal.
-        nn = atlas::math::Vector<T, 3>(T(0), T(0), T(1));
-    }
-
-    return nn;
+    return atlas::math::normalized_or(
+        atlas::math::cross((*b) - (*a), (*c) - (*a)),
+        atlas::math::Vector<T, 3>(T(0), T(0), T(1)));
 }
 
 template <typename T>
@@ -455,10 +451,6 @@ TriangleGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const
         return false;
     }
 
-    // Closest point on the finite triangle determines geometric proximity.
-    const atlas::math::Vector<T, 3> cp = closest_point(p);
-    const T d2                         = (p - cp).length_squared();
-
     // Use the bound normal if available; otherwise compute one from the vertices.
     const atlas::math::Vector<T, 3>* normal_ptr = normal ? normal : n;
     atlas::math::Vector<T, 3> nn                = normal_ptr ? *normal_ptr
@@ -479,24 +471,28 @@ TriangleGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const
         if (tolerance >= T(0)) {
             return true;
         }
-
-        // Negative tolerance shrinks the accepted region away from the surface.
-        return d2 >= (tolerance * tolerance);
-    }
-
-    // Positive-side points require a non-negative tolerance band.
-    if (tolerance < T(0)) {
+    } else if (tolerance < T(0)) {
         return false;
     }
 
-    return d2 <= (tolerance * tolerance);
+    // Closest point on the finite triangle is needed only for tolerance-band checks.
+    const atlas::math::Vector<T, 3> cp = closest_point(p);
+    const T d2                         = (p - cp).length_squared();
+
+    return side <= T(0) ? d2 >= tolerance * tolerance
+                        : d2 <= tolerance * tolerance;
 }
 
 template <typename T>
 bool
 TriangleGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Surface membership is measured by the absolute signed distance.
-    return std::abs(signed_distance(p)) <= tolerance;
+    // Surface membership only needs unsigned distance to the finite triangle.
+    if (!a || !b || !c || tolerance < T(0)) {
+        return false;
+    }
+
+    const atlas::math::Vector<T, 3> cp = closest_point(p);
+    return (p - cp).length_squared() <= tolerance * tolerance;
 }
 
 template <typename T>
@@ -601,17 +597,9 @@ TriangleGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexce
     const atlas::math::Vector<T, 3>* normal_ptr = normal ? normal : n;
     atlas::math::Vector<T, 3> normal_vec        = normal_ptr ? *normal_ptr : atlas::math::cross(e1, e2);
 
-    const T n2 = normal_vec.length_squared();
-
-    if (n2 > T(0)) {
-        // Normalize the hit normal before returning it.
-        normal_vec.normalize();
-    } else {
-        // Deterministic fallback for degenerate normal data.
-        normal_vec = atlas::math::Vector<T, 3>(T(1), T(0), T(0));
-    }
-
-    result.normal = normal_vec;
+    result.normal = atlas::math::normalized_or(
+        normal_vec,
+        atlas::math::Vector<T, 3>(T(1), T(0), T(0)));
 
     return result;
 }

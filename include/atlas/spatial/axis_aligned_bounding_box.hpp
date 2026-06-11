@@ -187,11 +187,9 @@ template <typename T>
 bool
 AxisAlignedBoundingBox<T>::is_valid() const noexcept {
     // Valid boxes have finite coordinates and ordered corners.
-    return std::isfinite(lower_corner.x) && std::isfinite(lower_corner.y)
-        && std::isfinite(lower_corner.z) && std::isfinite(upper_corner.x)
-        && std::isfinite(upper_corner.y) && std::isfinite(upper_corner.z)
-        && lower_corner.x <= upper_corner.x && lower_corner.y <= upper_corner.y
-        && lower_corner.z <= upper_corner.z;
+    return atlas::math::isfinite(lower_corner)
+        && atlas::math::isfinite(upper_corner)
+        && atlas::math::all(lower_corner <= upper_corner);
 }
 
 template <typename T>

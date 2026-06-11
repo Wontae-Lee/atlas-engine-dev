@@ -9,60 +9,12 @@
 namespace atlas::geometry {
 
 template <typename T>
-atlas::math::Vector<T, 3>
-SquareGeometryOperator<T>::axis(const atlas::math::Vector<T, 3>& unit_like_normal) const noexcept {
-    // Choose a reference axis that is not nearly parallel to the input normal.
-    if (std::abs(unit_like_normal.z) < static_cast<T>(0.9)) {
-        return Vector3<T>(T(0), T(0), T(1));
-    }
-
-    // Use the y-axis as a fallback when the normal is close to the z-axis.
-    return Vector3<T>(T(0), T(1), T(0));
-}
-
-template <typename T>
 bool
 SquareGeometryOperator<T>::build_basis(const atlas::math::Vector<T, 3>& input_normal,
                                        atlas::math::Vector<T, 3>& unit_normal,
                                        atlas::math::Vector<T, 3>& tangent,
                                        atlas::math::Vector<T, 3>& bitangent) const noexcept {
-    // Start from the provided normal and normalize it into a unit normal.
-    unit_normal = input_normal;
-
-    const T normal_length_squared = unit_normal.length_squared();
-
-    // A zero-length normal cannot define a square plane.
-    if (!(normal_length_squared > T(0))) {
-        return false;
-    }
-
-    unit_normal.normalize();
-
-    // Construct the first in-plane basis vector using a safe reference axis.
-    tangent = atlas::math::cross(axis(unit_normal), unit_normal);
-
-    const T tangent_length_squared = tangent.length_squared();
-
-    // Reject degenerate tangent construction.
-    if (!(tangent_length_squared > T(0))) {
-        return false;
-    }
-
-    tangent.normalize();
-
-    // Construct the second in-plane basis vector orthogonal to both normal and tangent.
-    bitangent = atlas::math::cross(unit_normal, tangent);
-
-    const T bitangent_length_squared = bitangent.length_squared();
-
-    // Reject degenerate bitangent construction.
-    if (!(bitangent_length_squared > T(0))) {
-        return false;
-    }
-
-    bitangent.normalize();
-
-    return true;
+    return atlas::math::orthonormal_basis(input_normal, unit_normal, tangent, bitangent);
 }
 
 template <typename T>
@@ -113,15 +65,7 @@ SquareGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&) cons
         return Vector3<T>(T(0), T(0), T(1));
     }
 
-    const T normal_length_squared = normal->length_squared();
-
-    // A zero-length normal cannot be normalized.
-    if (!(normal_length_squared > T(0))) {
-        return Vector3<T>(T(0), T(0), T(1));
-    }
-
-    // Return the normalized square normal.
-    return normal->normalized();
+    return atlas::math::normalized_or(*normal, Vector3<T>(T(0), T(0), T(1)));
 }
 
 template <typename T>
@@ -225,10 +169,7 @@ SquareGeometryOperator<T>::bound() const noexcept {
     const T half_side = (*side_length) * T(0.5);
 
     // Compute the world-space AABB half extent induced by the two in-plane axes.
-    const Vector3<T> extent(
-        half_side * (std::abs(tangent.x) + std::abs(bitangent.x)),
-        half_side * (std::abs(tangent.y) + std::abs(bitangent.y)),
-        half_side * (std::abs(tangent.z) + std::abs(bitangent.z)));
+    const Vector3<T> extent = (atlas::math::abs(tangent) + atlas::math::abs(bitangent)) * half_side;
 
     return atlas::spatial::AxisAlignedBoundingBox<T>(*center - extent, *center + extent);
 }
@@ -242,12 +183,8 @@ SquareGeometryOperator<T>::is_valid() const noexcept {
     }
 
     // Center, normal, and side length must be finite, with nonzero normal and positive size.
-    return std::isfinite(static_cast<double>(center->x))
-        && std::isfinite(static_cast<double>(center->y))
-        && std::isfinite(static_cast<double>(center->z))
-        && std::isfinite(static_cast<double>(normal->x))
-        && std::isfinite(static_cast<double>(normal->y))
-        && std::isfinite(static_cast<double>(normal->z))
+    return atlas::math::isfinite(*center)
+        && atlas::math::isfinite(*normal)
         && normal->length_squared() > T(0)
         && std::isfinite(static_cast<double>(*side_length))
         && *side_length > T(0);
@@ -291,8 +228,13 @@ SquareGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
 
     const Vector3<T> hit_point = ray.point_at(distance);
 
+    const Vector3<T> center_to_hit = hit_point - *center;
+    const T u                      = center_to_hit.dot(tangent);
+    const T v                      = center_to_hit.dot(bitangent);
+    const T half_side              = (*side_length) * T(0.5);
+
     // Reject plane hits that fall outside the finite square extent.
-    if (!is_inside(hit_point, epsilon)) {
+    if (std::abs(u) > half_side + epsilon || std::abs(v) > half_side + epsilon) {
         return hit;
     }
 
@@ -497,12 +439,8 @@ template <typename T>
 void
 Square<T>::Builder::validate() const {
     // All scalar and vector components must be finite before construction.
-    if (!std::isfinite(static_cast<double>(_center.x))
-        || !std::isfinite(static_cast<double>(_center.y))
-        || !std::isfinite(static_cast<double>(_center.z))
-        || !std::isfinite(static_cast<double>(_normal.x))
-        || !std::isfinite(static_cast<double>(_normal.y))
-        || !std::isfinite(static_cast<double>(_normal.z))
+    if (!atlas::math::isfinite(_center)
+        || !atlas::math::isfinite(_normal)
         || !std::isfinite(static_cast<double>(_side_length))) {
         throw std::runtime_error("Square::Builder: parameters must be finite.");
     }

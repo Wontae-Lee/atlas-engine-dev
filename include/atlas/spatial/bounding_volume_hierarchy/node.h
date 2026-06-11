@@ -133,6 +133,29 @@ struct BVHNode {
     AABB<T> bounds;
 
     /**
+     * @brief Area-weighted centroid sum used by fast winding approximation.
+     *
+     * @details
+     * This stores \f$\sum_i A_i c_i\f$ over the triangles covered by the node,
+     * where @f$A_i@f$ is triangle area and @f$c_i@f$ is triangle centroid. The
+     * aggregate center is `solid_angle_moment / solid_angle_area`.
+     */
+    atlas::math::Vector<T, 3> solid_angle_moment { T(0), T(0), T(0) };
+
+    /**
+     * @brief Sum of oriented triangle area vectors used by fast winding.
+     *
+     * @details
+     * Each triangle contributes @f$\frac{1}{2} ((b-a) \times (c-a))@f$.
+     */
+    atlas::math::Vector<T, 3> solid_angle_normal_area { T(0), T(0), T(0) };
+
+    /**
+     * @brief Sum of unsigned triangle areas covered by this node.
+     */
+    T solid_angle_area = T(0);
+
+    /**
      * @brief Left child node index for internal nodes.
      *
      * @details
