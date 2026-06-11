@@ -33,7 +33,7 @@ public:
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+    with_searcher(SearcherHostPtr<T> searcher) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_kernel_type(DsmcKernelType kernel_type) noexcept;
@@ -53,7 +53,7 @@ public:
 private:
     UniverseHostPtr<T> _universe {};
     FluidHostPtr<T> _fluid {};
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
     DsmcKernelType _kernel_type { DsmcKernelType::hard_sphere };
     DsmcCollisionWorkloadType _workload_type { DsmcCollisionWorkloadType::cell };
 };

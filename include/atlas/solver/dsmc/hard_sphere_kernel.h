@@ -178,7 +178,7 @@
 
 #include <atlas/core/macros.h>
 #include <atlas/material/material_properties.h>
-#include <atlas/math/vector/vector3.h>
+#include <atlas/math/math.h>
 
 namespace atlas::system {
 

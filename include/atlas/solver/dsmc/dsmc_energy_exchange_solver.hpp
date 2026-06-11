@@ -19,63 +19,75 @@ DsmcEnergyExchangeSolver<T>::builder() noexcept {
 
 template <typename T>
 void
-DsmcEnergyExchangeSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
-                                             const int index,
-                                             const T) {
+DsmcEnergyExchangeSolver<T>::apply_flattened_collision(const DeviceBuffer<int>* allocated_solver,
+                                                       const int index) {
     const auto probe = this->_probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr
         ? atlas::raw_pointer_cast(allocated_solver->data())
         : nullptr;
 
-    if (this->_workload_type == DsmcCollisionWorkloadType::flatten) {
-        if (!this->_flatten_workload.build(probe.collision_count_ptr, probe.num_of_cells, allocated_solver_ptr, index)) {
-            return;
-        }
-
-        const int* collision_offsets_ptr = atlas::raw_pointer_cast(this->_flatten_workload.collision_offsets.data());
-        const int* collision_cells_ptr = atlas::raw_pointer_cast(this->_flatten_workload.collision_cells.data());
-        const int flattened_collision_count = this->_flatten_workload.flattened_collision_count;
-
-        atlas::parallel_for<atlas::ExecutionPolicy::device>(
-            0,
-            flattened_collision_count,
-            [=] ATLAS_DEVICE(const int work_index) {
-                const int cell = collision_cells_ptr[work_index];
-                const int local_collision = work_index - collision_offsets_ptr[cell];
-                const int count = static_cast<int>(probe.number_particle_ptr[cell]);
-                const T max_sigma_g = probe.max_sigma_g_ptr[cell];
-                const int begin = probe.cell_start_ptr[cell];
-                const int end = probe.cell_end_ptr[cell];
-                if (count < 2 || !(max_sigma_g > T(0)) || begin < 0 || end <= begin) {
-                    return;
-                }
-                if (end - begin < count) {
-                    return;
-                }
-
-                const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
-                    + static_cast<std::uint64_t>(local_collision);
-                int lhs_local = 0;
-                int rhs_local = 0;
-                DsmcSolver<T>::sample_distinct_pair(
-                    lhs_local,
-                    rhs_local,
-                    cell,
-                    count,
-                    probe.collision_seed,
-                    stream);
-
-                DsmcEnergyExchangeSolver<T>::collide_indexed_pair(
-                    probe,
-                    cell,
-                    local_collision,
-                    stream,
-                    probe.indices_ptr[begin + lhs_local],
-                    probe.indices_ptr[begin + rhs_local],
-                    max_sigma_g);
-            });
+    if (!this->_flatten_workload.build(probe.collision_count_ptr, probe.num_of_cells, allocated_solver_ptr, index)) {
         return;
     }
+
+    const int* collision_offsets_ptr = atlas::raw_pointer_cast(this->_flatten_workload.collision_offsets.data());
+    const int* collision_cells_ptr = atlas::raw_pointer_cast(this->_flatten_workload.collision_cells.data());
+    const int flattened_collision_count = this->_flatten_workload.flattened_collision_count;
+
+    atlas::parallel_for<atlas::ExecutionPolicy::device>(
+        0,
+        flattened_collision_count,
+        [=] ATLAS_DEVICE(const int work_index) {
+            const int cell = collision_cells_ptr[work_index];
+            const int local_collision = work_index - collision_offsets_ptr[cell];
+            const int count = static_cast<int>(probe.number_particle_ptr[cell]);
+            const T max_sigma_g = probe.max_sigma_g_ptr[cell];
+            const int begin = probe.cell_start_ptr[cell];
+            const int end = probe.cell_end_ptr[cell];
+            if (count < 2 || !(max_sigma_g > T(0)) || begin < 0 || end <= begin) {
+                return;
+            }
+            if (end - begin < count) {
+                return;
+            }
+
+            const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+                + static_cast<std::uint64_t>(local_collision);
+            int lhs_local = 0;
+            int rhs_local = 0;
+            DsmcSolver<T>::sample_distinct_pair(
+                lhs_local,
+                rhs_local,
+                cell,
+                count,
+                probe.collision_seed,
+                stream);
+
+            DsmcEnergyExchangeSolver<T>::collide_indexed_pair(
+                probe,
+                cell,
+                local_collision,
+                stream,
+                probe.indices_ptr[begin + lhs_local],
+                probe.indices_ptr[begin + rhs_local],
+                max_sigma_g);
+        });
+}
+
+template <typename T>
+void
+DsmcEnergyExchangeSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
+                                             const int index,
+                                             const T) {
+    if (this->_workload_type == DsmcCollisionWorkloadType::flatten) {
+        apply_flattened_collision(allocated_solver, index);
+        return;
+    }
+
+    const auto probe = this->_probe;
+    const int* allocated_solver_ptr = allocated_solver != nullptr
+        ? atlas::raw_pointer_cast(allocated_solver->data())
+        : nullptr;
 
     atlas::parallel_for<atlas::ExecutionPolicy::device>(
         0,
@@ -293,7 +305,7 @@ DsmcEnergyExchangeSolver<T>::rotational_relaxation_probability(const MaterialPro
             const T tr = collision_energy / denominator;
             if (tr > T(0)) {
                 const T probability = (T(1)
-                                       + material.rotational_relaxation_c2.value() / std::sqrt(tr)
+                                       + material.rotational_relaxation_c2.value() / atlas::math::sqrt_nonnegative(tr)
                                        + material.rotational_relaxation_c3.value() / tr)
                     / material.rotational_relaxation_c1.value();
                 return probability < T(0) ? T(0) : (probability > T(1) ? T(1) : probability);
@@ -473,8 +485,7 @@ DsmcEnergyExchangeSolver<T>::rescale_relative_velocity(Vector3<T>& lhs_velocity,
         return;
     }
 
-    const T target_speed = static_cast<T>(std::sqrt(
-        static_cast<double>(T(2) * translational_energy / reduced_mass)));
+    const T target_speed = atlas::math::sqrt_nonnegative(T(2) * translational_energy / reduced_mass);
     const Vector3<T> scattered_relative = relative * (target_speed / speed);
     const Vector3<T> center = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
 
@@ -498,7 +509,7 @@ DsmcEnergyExchangeSolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept
 
 template <typename T>
 typename DsmcEnergyExchangeSolver<T>::Builder&
-DsmcEnergyExchangeSolver<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+DsmcEnergyExchangeSolver<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
     _searcher = std::move(searcher);
     return *this;
 }

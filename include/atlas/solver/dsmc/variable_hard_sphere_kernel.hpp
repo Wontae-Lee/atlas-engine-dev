@@ -1,11 +1,10 @@
 #pragma once
 
-#include <atlas/math/constants.h>
+#include <atlas/math/math.h>
 #include <atlas/sampling/sampling.h>
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>
 
 #include <cmath>
-#include <numbers>
 
 namespace atlas::system {
 
@@ -62,7 +61,7 @@ VariableHardSphereKernel<T>::cross_section(const MaterialProperties<T>& lhs,
     }
 
     // Reference cross-sectional area: pi * d_ref^2.
-    const T reference_area = static_cast<T>(std::numbers::pi_v<double>) * reference_diameter * reference_diameter;
+    const T reference_area = static_cast<T>(atlas::pi) * reference_diameter * reference_diameter;
 
     // Evaluate Gamma(2.5 - omega).
     const T gamma_value = static_cast<T>(std::tgamma(static_cast<double>(gamma_argument)));
@@ -104,11 +103,8 @@ VariableHardSphereKernel<T>::operator()(Vector3<T>& lhs_velocity,
     // Compute the center-of-mass velocity, which is preserved by the collision.
     const Vector3<T> center = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
 
-    // Build an orthonormal basis around the incoming relative-velocity direction.
+    // Build the incoming relative-velocity direction.
     const Vector3<T> axis = relative / speed;
-    const auto tangents   = axis.tangential();
-    const Vector3<T> t1   = std::get<0>(tangents);
-    const Vector3<T> t2   = std::get<1>(tangents);
 
     // Build a deterministic pair-dependent seed.
     // This avoids per-thread RNG state while still producing reproducible samples.
@@ -128,18 +124,11 @@ VariableHardSphereKernel<T>::operator()(Vector3<T>& lhs_velocity,
     //   cos_chi = 2u1 - 1.
     const T cos_chi = T(2) * std::pow(u1, T(1) / scattering_parameter) - T(1);
 
-    const T sin_chi_sq = T(1) - cos_chi * cos_chi;
-    const T sin_chi    = sin_chi_sq > T(0)
-           ? static_cast<T>(std::sqrt(static_cast<double>(sin_chi_sq)))
-           : T(0);
-
     // Sample the azimuthal angle uniformly in [0, 2*pi].
-    const T phi     = T(2) * static_cast<T>(std::numbers::pi_v<double>) * u2;
-    const T cos_phi = static_cast<T>(std::cos(static_cast<double>(phi)));
-    const T sin_phi = static_cast<T>(std::sin(static_cast<double>(phi)));
+    const T phi = T(2) * static_cast<T>(atlas::pi) * u2;
 
     // Rotate the relative-velocity direction while preserving its magnitude.
-    const Vector3<T> scattered_axis     = axis * cos_chi + (t1 * cos_phi + t2 * sin_phi) * sin_chi;
+    const Vector3<T> scattered_axis     = atlas::math::spherical_direction(axis, cos_chi, phi);
     const Vector3<T> scattered_relative = scattered_axis * speed;
 
     // Reconstruct post-collision velocities from the center-of-mass frame.

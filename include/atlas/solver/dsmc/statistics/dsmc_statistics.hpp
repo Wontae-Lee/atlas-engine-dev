@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/sampling/sampling.h>
@@ -82,9 +83,7 @@ DsmcStatistics<T>::measure(const DsmcProbe<T>& probe,
                     }
                 }
 
-                probe.max_relative_speed_ptr[cell] = max_relative_squared > T(0)
-                    ? static_cast<T>(std::sqrt(static_cast<double>(max_relative_squared)))
-                    : T(0);
+                probe.max_relative_speed_ptr[cell] = atlas::math::sqrt_nonnegative(max_relative_squared);
 
                 // NTC majorant: take max of the persistent value and the current sample.
                 if (sampled_max_sigma_g > max_sigma_g) {

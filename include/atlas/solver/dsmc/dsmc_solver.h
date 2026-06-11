@@ -83,7 +83,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     DsmcSolver(UniverseHostPtr<T> universe,
                FluidHostPtr<T> fluid,
-               SpatialHashingSearcherHostPtr<T> searcher,
+               SearcherHostPtr<T> searcher,
                DsmcKernelType kernel_type = DsmcKernelType::hard_sphere,
                DsmcCollisionWorkloadType workload_type = DsmcCollisionWorkloadType::cell) noexcept;
 
@@ -294,6 +294,9 @@ public:
                 const int* indices_ptr) noexcept;
 
 protected:
+    ATLAS_HOST ATLAS_FORCE_INLINE virtual void
+    apply_flattened_collision(const DeviceBuffer<int>* allocated_solver, int index);
+
     /**
      * @brief Device-side data probe used during DSMC measurement and collision passes.
      */

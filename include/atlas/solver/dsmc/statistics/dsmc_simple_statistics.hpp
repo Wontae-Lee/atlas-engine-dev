@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/sampling/sampling.h>
@@ -69,9 +70,7 @@ DsmcSimpleStatistics<T>::measure(const DsmcProbe<T>& probe,
                     }
                 }
 
-                const T max_relative_speed = max_relative_squared > T(0)
-                    ? static_cast<T>(std::sqrt(static_cast<double>(max_relative_squared)))
-                    : T(0);
+                const T max_relative_speed = atlas::math::sqrt_nonnegative(max_relative_squared);
 
                 probe.max_relative_speed_ptr[cell] = max_relative_speed;
 

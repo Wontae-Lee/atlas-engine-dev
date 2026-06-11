@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cmath>
+#include <atlas/math/math.h>
 
 namespace atlas::system {
 template <typename T>
@@ -187,7 +187,7 @@ DsmcKernel<T>::sigma_g(const MaterialProperties<T>* properties_ptr,
         return T(0);
     }
 
-    const T relative_speed = static_cast<T>(std::sqrt(static_cast<double>(relative_speed_squared)));
+    const T relative_speed = atlas::math::sqrt_nonnegative(relative_speed_squared);
     return DsmcKernel<T>::cross_section(
                type,
                properties_ptr[species_i],

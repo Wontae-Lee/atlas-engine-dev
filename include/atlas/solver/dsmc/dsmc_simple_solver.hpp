@@ -35,7 +35,7 @@ DsmcSimpleSolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 typename DsmcSimpleSolver<T>::Builder&
-DsmcSimpleSolver<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+DsmcSimpleSolver<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
     _searcher = std::move(searcher);
     return *this;
 }
