@@ -2,7 +2,7 @@
 
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/logging/logging.h>
-#include <atlas/math/constants.h>
+#include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 
@@ -152,9 +152,22 @@ KnudsenCodec<T>::decode() {
 
             // Find the first threshold that is larger than the current Kn value.
             // The resulting index is used as the solver allocation.
-            const T kn           = probe.knudsen_number_ptr[cell];
-            int allocated_solver = 0;
+            const T kn = probe.knudsen_number_ptr[cell];
 
+            if (split_count == 3) {
+                int allocated_solver = 3;
+                if (kn < kn_split_ptr[0]) {
+                    allocated_solver = 0;
+                } else if (kn < kn_split_ptr[1]) {
+                    allocated_solver = 1;
+                } else if (kn < kn_split_ptr[2]) {
+                    allocated_solver = 2;
+                }
+                probe.allocated_solver_ptr[cell] = allocated_solver;
+                return;
+            }
+
+            int allocated_solver = 0;
             while (allocated_solver < split_count && !(kn < kn_split_ptr[allocated_solver])) {
                 ++allocated_solver;
             }
