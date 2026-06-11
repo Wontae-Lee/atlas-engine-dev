@@ -153,6 +153,17 @@ public:
     measure() override;
 
     /**
+     * @brief Executes the Boltzman measurement pass for a time-stepped caller.
+     *
+     * `BoltzmanMeasurer` computes instantaneous cell aggregates, so the time step
+     * value is accepted for interface completeness and does not change the result.
+     *
+     * @param dt Simulation time step.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    measure(T dt) override;
+
+    /**
      * @brief Returns the configured measurement mode.
      *
      * @return Current measure mode.

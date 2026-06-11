@@ -157,6 +157,12 @@ BoltzmanMeasurer<T>::measure() {
 }
 
 template <typename T>
+void
+BoltzmanMeasurer<T>::measure(const T) {
+    measure();
+}
+
+template <typename T>
 MeasureModeType
 BoltzmanMeasurer<T>::measure_mode() const noexcept {
     // Return the configured target mode for temperature measurement output.

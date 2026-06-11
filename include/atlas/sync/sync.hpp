@@ -31,55 +31,37 @@ Sync<T>::builder() noexcept {
 template <typename T>
 Vector3<T>
 Sync<T>::sync_to_world(const Vector3<T>& local_point) const noexcept {
-    // Forward point conversion to the underlying sync operator.
-    Vector3<T> out;
-    sync_operator.sync_to_world(local_point, out);
-    return out;
+    return sync_operator.sync_to_world(local_point);
 }
 
 template <typename T>
 Vector3<T>
 Sync<T>::sync_to_local(const Vector3<T>& world_point) const noexcept {
-    // Forward inverse point conversion to the underlying sync operator.
-    Vector3<T> out;
-    sync_operator.sync_to_local(world_point, out);
-    return out;
+    return sync_operator.sync_to_local(world_point);
 }
 
 template <typename T>
 Vector3<T>
 Sync<T>::sync_dir_to_world(const Vector3<T>& local_dir) const noexcept {
-    // Forward direction conversion without applying translation.
-    Vector3<T> out;
-    sync_operator.sync_dir_to_world(local_dir, out);
-    return out;
+    return sync_operator.sync_dir_to_world(local_dir);
 }
 
 template <typename T>
 Vector3<T>
 Sync<T>::sync_dir_to_local(const Vector3<T>& world_dir) const noexcept {
-    // Forward inverse direction conversion without applying translation.
-    Vector3<T> out;
-    sync_operator.sync_dir_to_local(world_dir, out);
-    return out;
+    return sync_operator.sync_dir_to_local(world_dir);
 }
 
 template <typename T>
 Ray<T>
 Sync<T>::sync_to_world(const Ray<T>& local_ray) const noexcept {
-    // Transform the ray through the underlying sync operator.
-    Ray<T> out;
-    sync_operator.sync_to_world(local_ray, out);
-    return out;
+    return sync_operator.sync_to_world(local_ray);
 }
 
 template <typename T>
 Ray<T>
 Sync<T>::sync_to_local(const Ray<T>& world_ray) const noexcept {
-    // Transform the ray back through the inverse sync operator.
-    Ray<T> out;
-    sync_operator.sync_to_local(world_ray, out);
-    return out;
+    return sync_operator.sync_to_local(world_ray);
 }
 
 template <typename T>
@@ -169,18 +151,13 @@ Sync<T>::Builder::validate() const {
     const Quaternion<T>& orientation = _has_sync_operator ? _operator.orientation : _orientation;
 
     // Translation must contain only finite values.
-    if (!std::isfinite(translation.x)
-        || !std::isfinite(translation.y)
-        || !std::isfinite(translation.z)) {
+    if (!atlas::math::isfinite(translation)) {
         throw std::runtime_error(
             "Sync::Builder: translation contains non-finite values.");
     }
 
     // Orientation must contain only finite values.
-    if (!std::isfinite(orientation.w)
-        || !std::isfinite(orientation.x)
-        || !std::isfinite(orientation.y)
-        || !std::isfinite(orientation.z)) {
+    if (!atlas::math::isfinite(orientation)) {
         throw std::runtime_error(
             "Sync::Builder: orientation contains non-finite values.");
     }
@@ -193,15 +170,6 @@ Sync<T>::Builder::validate() const {
         throw std::runtime_error(
             "Sync::Builder: zero quaternion is invalid.");
     }
-
-    // Keep the norm available for future normalization checks.
-    const T norm = std::sqrt(
-        orientation.w * orientation.w
-        + orientation.x * orientation.x
-        + orientation.y * orientation.y
-        + orientation.z * orientation.z);
-
-    (void)norm;
 }
 
 template <typename T>
@@ -211,16 +179,12 @@ Sync<T>::Builder::build() const {
 
     Sync<T> s {};
 
-    // Use the complete operator when it was supplied.
     if (_has_sync_operator) {
         s.sync_operator = _operator;
+        s.rebuild_matrices();
     } else {
-        // Otherwise construct the operator from the stored pose.
         s.sync_operator = atlas::physics::SyncOperator<T>(_translation, _orientation);
     }
-
-    // Ensure cached matrices match the final orientation.
-    s.rebuild_matrices();
 
     return s;
 }

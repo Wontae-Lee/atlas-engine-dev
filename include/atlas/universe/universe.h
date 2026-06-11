@@ -5,6 +5,7 @@
  * @brief Declares the Universe class representing a regular Cartesian simulation domain and its associated state registry.
  */
 
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
@@ -259,6 +260,15 @@ public:
     save(std::string_view path) const;
 
 private:
+    template <typename StateT>
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE static const TypeId&
+    state_key() noexcept;
+
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<int>
+    compute_grid_size(const Vector3<T>& lower_corner,
+                      const Vector3<T>& upper_corner,
+                      T inverse_cell_size) noexcept;
+
     /**
      * @brief Lower corner of the domain.
      */
@@ -435,42 +445,42 @@ private:
     /**
      * @brief Optional restored temperature state.
      */
-    std::optional<DeviceBuffer<T>> _temperature_state;
+    std::optional<HostBuffer<T>> _temperature_state;
 
     /**
      * @brief Optional restored bulk-velocity state.
      */
-    std::optional<DeviceBuffer<Vector3<T>>> _bulk_velocity_state;
+    std::optional<HostBuffer<Vector3<T>>> _bulk_velocity_state;
 
     /**
      * @brief Optional restored field-force state.
      */
-    std::optional<DeviceBuffer<Vector3<T>>> _field_force_state;
+    std::optional<HostBuffer<Vector3<T>>> _field_force_state;
 
     /**
      * @brief Optional restored maximum-relative-speed state.
      */
-    std::optional<DeviceBuffer<T>> _max_relative_speed_state;
+    std::optional<HostBuffer<T>> _max_relative_speed_state;
 
     /**
      * @brief Optional restored thermal-energy state.
      */
-    std::optional<DeviceBuffer<T>> _thermal_energy_state;
+    std::optional<HostBuffer<T>> _thermal_energy_state;
 
     /**
      * @brief Optional restored number-particle state.
      */
-    std::optional<DeviceBuffer<T>> _number_particle_state;
+    std::optional<HostBuffer<T>> _number_particle_state;
 
     /**
      * @brief Optional restored collision-count state.
      */
-    std::optional<DeviceBuffer<int>> _collision_count_state;
+    std::optional<HostBuffer<int>> _collision_count_state;
 
     /**
      * @brief Optional restored Knudsen-number state.
      */
-    std::optional<DeviceBuffer<T>> _knudsen_number_state;
+    std::optional<HostBuffer<T>> _knudsen_number_state;
 };
 
 } // namespace atlas::universe

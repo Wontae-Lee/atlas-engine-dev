@@ -30,12 +30,15 @@
  * - otherwise, a host-side parallel implementation based on Intel oneTBB is used.
  *
  * ## Host fallback algorithm
- * In the non-CUDA path, the implementation proceeds in several stages:
+ * In the non-CUDA path, small ranges use `std::remove_if` directly to avoid
+ * parallel scheduling and scratch-allocation overhead. Larger ranges proceed in
+ * several stages:
  * 1. evaluate the predicate for each element and store a keep-mask,
- * 2. compute compacted destination indices via a parallel prefix scan,
- * 3. scatter retained values into a temporary buffer,
- * 4. move the compacted values back into the original range,
- * 5. return the iterator to the new logical end.
+ * 2. count retained elements and exit early for all-kept/all-removed ranges,
+ * 3. compute compacted destination indices via a parallel prefix scan,
+ * 4. scatter retained values into a temporary buffer,
+ * 5. move the compacted values back into the original range,
+ * 6. return the iterator to the new logical end.
  *
  * This approach allows parallel compaction while preserving the relative order
  * of retained elements.
@@ -54,7 +57,9 @@
  * ---
  */
 
+#include <algorithm>
 #include <iterator>
+#include <utility>
 
 #ifdef ATLAS_TASKING_CUDA
 #include <thrust/execution_policy.h>
@@ -117,6 +122,7 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 #include <functional>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
+#include <tbb/parallel_reduce.h>
 #include <tbb/parallel_scan.h>
 #include <vector>
 
@@ -145,28 +151,32 @@ static constexpr device_policy_t device {};
  * @brief Remove elements satisfying a predicate using the host-side parallel backend.
  *
  * @details
- * This function performs a stable parallel compaction of the input range:
+ * This function performs a stable compaction of the input range:
  * - elements for which `pred(element)` returns `true` are removed logically,
  * - elements for which the predicate returns `false` are retained,
  * - retained elements are moved to the front of the range in original order,
  * - the function returns an iterator to the new logical end.
  *
  * ## Algorithm
- * The implementation consists of four major phases:
+ * Small ranges use `std::remove_if`; larger ranges use these phases:
  * 1. **Predicate evaluation**
  *    A byte mask named `keep` is filled in parallel, where:
  *    - `1` means keep the element,
  *    - `0` means remove the element.
  *
- * 2. **Prefix-scan compaction indexing**
+ * 2. **Retained-count fast paths**
+ *    A parallel reduction over the keep mask detects all-kept and all-removed
+ *    ranges before allocating destination indices or compacted storage.
+ *
+ * 3. **Prefix-scan compaction indexing**
  *    A parallel scan computes the compacted destination position of each kept
  *    element and records those positions in `positions`.
  *
- * 3. **Parallel scatter**
+ * 4. **Parallel scatter**
  *    Retained elements are copied into a temporary contiguous buffer according
  *    to their computed compacted positions.
  *
- * 4. **Write-back**
+ * 5. **Write-back**
  *    The temporary compacted sequence is moved back into the original range.
  *
  * ## Stability
@@ -218,6 +228,11 @@ remove_if(Policy, Iterator first, Iterator last, Predicate pred) {
         return last;
     }
 
+    const diff_type serial_threshold = diff_type(2048);
+    if (n <= serial_threshold) {
+        return std::remove_if(first, last, pred);
+    }
+
     /**
      * @brief Per-element keep mask.
      *
@@ -242,39 +257,26 @@ remove_if(Policy, Iterator first, Iterator last, Predicate pred) {
         });
 
     /**
-     * @brief Destination positions for retained elements.
-     *
-     * @details
-     * For kept elements, `positions[i]` stores the compacted destination index.
-     * For removed elements, the position is later set to `-1`.
-     */
-    std::vector<diff_type> positions(static_cast<std::size_t>(n));
-
-    /**
      * @brief Total number of retained elements after compaction.
      *
      * @details
-     * Computed by a parallel prefix scan over the keep mask.
+     * Computed before destination indexing so all-kept and all-removed ranges
+     * avoid scan, scatter, and write-back work.
      */
-    diff_type total_kept = tbb::parallel_scan(
+    const diff_type total_kept = tbb::parallel_reduce(
         tbb::blocked_range<diff_type>(0, n),
         diff_type(0),
-        [&](const tbb::blocked_range<diff_type>& r, diff_type sum, bool is_final) {
+        [&](const tbb::blocked_range<diff_type>& r, diff_type sum) {
             for (diff_type i = r.begin(); i != r.end(); ++i) {
-                if (keep[static_cast<std::size_t>(i)]) {
-
-                    if (is_final) {
-                        positions[static_cast<std::size_t>(i)] = sum;
-                    }
-                    ++sum;
-                } else if (is_final) {
-
-                    positions[static_cast<std::size_t>(i)] = diff_type(-1);
-                }
+                sum += static_cast<diff_type>(keep[static_cast<std::size_t>(i)]);
             }
             return sum;
         },
         std::plus<diff_type>());
+
+    if (total_kept == n) {
+        return last;
+    }
 
     /**
      * @brief Fast path for the case where no elements are retained.
@@ -286,6 +288,35 @@ remove_if(Policy, Iterator first, Iterator last, Predicate pred) {
 
         return first;
     }
+
+    /**
+     * @brief Destination positions for retained elements.
+     *
+     * @details
+     * For kept elements, `positions[i]` stores the compacted destination index.
+     * Removed elements are ignored during scatter.
+     */
+    std::vector<diff_type> positions(static_cast<std::size_t>(n));
+
+    /**
+     * @brief Compute compacted destination positions for retained elements.
+     */
+    tbb::parallel_scan(
+        tbb::blocked_range<diff_type>(0, n),
+        diff_type(0),
+        [&](const tbb::blocked_range<diff_type>& r, diff_type sum, bool is_final) {
+            for (diff_type i = r.begin(); i != r.end(); ++i) {
+                if (keep[static_cast<std::size_t>(i)]) {
+
+                    if (is_final) {
+                        positions[static_cast<std::size_t>(i)] = sum;
+                    }
+                    ++sum;
+                }
+            }
+            return sum;
+        },
+        std::plus<diff_type>());
 
     /**
      * @brief Temporary compacted storage for retained elements.

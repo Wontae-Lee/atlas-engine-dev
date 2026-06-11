@@ -135,17 +135,16 @@ Unit<T>::move(const atlas::math::Vector<T, 3>& delta) noexcept {
 template <typename T>
 void
 Unit<T>::rotate(const atlas::math::Vector<T, 3>& axis, T angle_rad) noexcept {
-    // Copy the input axis because the rotation construction requires a normalized axis.
-    atlas::math::Vector<T, 3> normalized_axis = axis;
-
     // Use the squared length to avoid an unnecessary square root for the zero-axis test.
-    const T axis_len2 = normalized_axis.length_squared();
+    const T axis_len2 = axis.length_squared();
 
     // A zero-length axis cannot define a valid axis-angle rotation.
     if (axis_len2 <= T(0)) return;
 
     // Normalize the axis before constructing the incremental rotation quaternion.
-    normalized_axis.normalize();
+    const atlas::math::Vector<T, 3> normalized_axis = atlas::math::normalized_or(
+        axis,
+        atlas::math::Vector<T, 3>(T(0), T(0), T(0)));
 
     // Build the incremental rotation represented by the normalized axis and angle.
     const atlas::math::Quaternion<T> rotation = atlas::math::Quaternion<T>::from_axis_angle(normalized_axis, angle_rad);

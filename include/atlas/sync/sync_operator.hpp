@@ -35,50 +35,44 @@ template <typename T>
 void
 SyncOperator<T>::sync_to_world(const Vector3<T>& local_point,
                                Vector3<T>& world_point) const noexcept {
-    // Point transform: x_world = R * x_local + t.
-    world_point = (orientation_matrix * local_point) + translation;
+    atlas::math::rotate_translate(orientation_matrix, local_point, translation, world_point);
 }
 
 template <typename T>
 void
 SyncOperator<T>::sync_to_local(const Vector3<T>& world_point,
                                Vector3<T>& local_point) const noexcept {
-    // Inverse point transform: x_local = R^T * (x_world - t).
-    local_point = inverse_orientation_matrix * (world_point - translation);
+    atlas::math::rotate_subtract(inverse_orientation_matrix, world_point, translation, local_point);
 }
 
 template <typename T>
 void
 SyncOperator<T>::sync_dir_to_world(const Vector3<T>& local_dir,
                                    Vector3<T>& world_dir) const noexcept {
-    // Direction transform uses rotation only, without translation.
-    world_dir = orientation_matrix * local_dir;
+    atlas::math::rotate(orientation_matrix, local_dir, world_dir);
 }
 
 template <typename T>
 void
 SyncOperator<T>::sync_dir_to_local(const Vector3<T>& world_dir,
                                    Vector3<T>& local_dir) const noexcept {
-    // Inverse direction transform also uses rotation only.
-    local_dir = inverse_orientation_matrix * world_dir;
+    atlas::math::rotate(inverse_orientation_matrix, world_dir, local_dir);
 }
 
 template <typename T>
 void
 SyncOperator<T>::sync_to_world(const atlas::spatial::Ray<T>& local_ray,
                                atlas::spatial::Ray<T>& world_ray) const noexcept {
-    // Transform ray origin as a point and ray direction as a direction.
-    world_ray.origin    = (orientation_matrix * local_ray.origin) + translation;
-    world_ray.direction = orientation_matrix * local_ray.direction;
+    atlas::math::rotate_translate(orientation_matrix, local_ray.origin, translation, world_ray.origin);
+    atlas::math::rotate(orientation_matrix, local_ray.direction, world_ray.direction);
 }
 
 template <typename T>
 void
 SyncOperator<T>::sync_to_local(const atlas::spatial::Ray<T>& world_ray,
                                atlas::spatial::Ray<T>& local_ray) const noexcept {
-    // Apply inverse point transform to origin and inverse direction transform to direction.
-    local_ray.origin    = inverse_orientation_matrix * (world_ray.origin - translation);
-    local_ray.direction = inverse_orientation_matrix * world_ray.direction;
+    atlas::math::rotate_subtract(inverse_orientation_matrix, world_ray.origin, translation, local_ray.origin);
+    atlas::math::rotate(inverse_orientation_matrix, world_ray.direction, local_ray.direction);
 }
 
 template <typename T>

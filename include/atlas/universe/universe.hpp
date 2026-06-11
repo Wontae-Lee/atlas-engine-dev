@@ -2,6 +2,7 @@
 #include <atlas/logging/logging.h>
 #include <atlas/memory/memory.h>
 #include <atlas/serialization/protobuf_snapshot.h>
+#include <cmath>
 #include <limits>
 #include <utility>
 
@@ -18,8 +19,7 @@ Universe<T>::Universe(const Vector3<T>& lower_corner,
     // Precompute grid metrics used by solvers and searchers.
     _cell_volume  = _cell_size * _cell_size * _cell_size;
     _inv_h        = T(1) / _cell_size;
-    _grid_size    = math::cast_to<int>(math::floor((_upper_corner - _lower_corner) * _inv_h)
-                                    + Vector3<T> { T(1), T(1), T(1) });
+    _grid_size    = compute_grid_size(_lower_corner, _upper_corner, _inv_h);
     _num_of_cells = _grid_size.x * _grid_size.y * _grid_size.z;
 }
 
@@ -27,6 +27,23 @@ template <typename T>
 typename Universe<T>::Builder
 Universe<T>::builder() noexcept {
     return Builder {};
+}
+
+template <typename T>
+template <typename StateT>
+const TypeId&
+Universe<T>::state_key() noexcept {
+    static const TypeId key { typeid(StateT) };
+    return key;
+}
+
+template <typename T>
+Vector3<int>
+Universe<T>::compute_grid_size(const Vector3<T>& lower_corner,
+                               const Vector3<T>& upper_corner,
+                               const T inverse_cell_size) noexcept {
+    return atlas::math::floor((upper_corner - lower_corner) * inverse_cell_size)
+        .template cast_to<int>() + Vector3<int>(1, 1, 1);
 }
 
 template <typename T>
@@ -39,7 +56,7 @@ Universe<T>::emplace_state(Args&&... args) {
     // Construct and register the state by its concrete type.
     auto state = std::make_unique<StateT>(std::forward<Args>(args)...);
     auto* ptr  = state.get();
-    _states.insert_or_assign(typeid(StateT), std::move(state));
+    _states.insert_or_assign(state_key<StateT>(), std::move(state));
     return *ptr;
 }
 
@@ -54,7 +71,7 @@ Universe<T>::set_state(std::unique_ptr<StateT> state) {
     atlas::check<std::invalid_argument>(state != nullptr)
         << "Universe::set_state failed: state must not be null.";
 
-    _states.insert_or_assign(typeid(StateT), std::move(state));
+    _states.insert_or_assign(state_key<StateT>(), std::move(state));
 }
 
 template <typename T>
@@ -65,7 +82,8 @@ Universe<T>::state() noexcept {
                   "StateT must derive from atlas::universe::State.");
 
     // Return nullptr when the requested state is not registered.
-    auto it = _states.find(typeid(StateT));
+    const auto& key = state_key<StateT>();
+    auto it = _states.find(key);
     return it == _states.end() ? nullptr : static_cast<StateT*>(it->second.get());
 }
 
@@ -77,7 +95,8 @@ Universe<T>::state() const noexcept {
                   "StateT must derive from atlas::universe::State.");
 
     // Const-qualified lookup for read-only access.
-    auto it = _states.find(typeid(StateT));
+    const auto& key = state_key<StateT>();
+    auto it = _states.find(key);
     return it == _states.end() ? nullptr : static_cast<const StateT*>(it->second.get());
 }
 
@@ -89,7 +108,7 @@ Universe<T>::has_state() const noexcept {
                   "StateT must derive from atlas::universe::State.");
 
     // Check whether a state of the requested concrete type exists.
-    return _states.contains(typeid(StateT));
+    return _states.contains(state_key<StateT>());
 }
 
 template <typename T>
@@ -99,7 +118,8 @@ Universe<T>::remove_state() {
     static_assert(std::is_base_of_v<UniverseState, StateT>,
                   "StateT must derive from atlas::universe::State.");
 
-    auto it = _states.find(typeid(StateT));
+    const auto& key = state_key<StateT>();
+    auto it = _states.find(key);
     if (it == _states.end()) {
         return nullptr;
     }
@@ -186,6 +206,19 @@ Universe<T>::Builder::build() const {
     auto universe      = Universe<T>(_lower_corner, _upper_corner, _cell_size);
     universe._observer = _observer;
 
+    const auto restored_state_count =
+        static_cast<std::size_t>(_temperature_state.has_value())
+        + static_cast<std::size_t>(_bulk_velocity_state.has_value())
+        + static_cast<std::size_t>(_field_force_state.has_value())
+        + static_cast<std::size_t>(_max_relative_speed_state.has_value())
+        + static_cast<std::size_t>(_thermal_energy_state.has_value())
+        + static_cast<std::size_t>(_number_particle_state.has_value())
+        + static_cast<std::size_t>(_collision_count_state.has_value())
+        + static_cast<std::size_t>(_knudsen_number_state.has_value());
+    if (restored_state_count > 0) {
+        universe._states.reserve(restored_state_count);
+    }
+
     if (_temperature_state.has_value()) {
         universe.template set_state<UniverseTemperatureState<T>>(
             std::make_unique<UniverseTemperatureState<T>>(
@@ -240,8 +273,6 @@ Universe<T>::Builder::build() const {
 template <typename T>
 atlas::host_shared_ptr<Universe<T>>
 Universe<T>::Builder::make_host_shared() const {
-    validate();
-
     // Move the built universe into host-managed shared storage.
     auto universe = build();
     return atlas::make_host_shared<Universe<T>>(std::move(universe));
@@ -290,54 +321,20 @@ template <typename T>
 typename Universe<T>::Builder&
 Universe<T>::Builder::with_binary(const std::string& path) {
     // Load geometry and optional states from a serialized snapshot.
-    const auto snapshot = atlas::serialization::load_universe_binary<T>(path);
+    auto snapshot = atlas::serialization::load_universe_binary<T>(path);
 
     _lower_corner = snapshot.lower_corner;
     _upper_corner = snapshot.upper_corner;
     _cell_size    = snapshot.cell_size;
 
-    // Clear previously configured states before applying snapshot data.
-    _temperature_state.reset();
-    _bulk_velocity_state.reset();
-    _field_force_state.reset();
-    _max_relative_speed_state.reset();
-    _thermal_energy_state.reset();
-    _number_particle_state.reset();
-    _collision_count_state.reset();
-    _knudsen_number_state.reset();
-
-    if (snapshot.temperature.has_value()) {
-        _temperature_state = DeviceBuffer<T>(snapshot.temperature->begin(), snapshot.temperature->end());
-    }
-
-    if (snapshot.bulk_velocity.has_value()) {
-        _bulk_velocity_state = DeviceBuffer<Vector3<T>>(snapshot.bulk_velocity->begin(), snapshot.bulk_velocity->end());
-    }
-
-    if (snapshot.field_force.has_value()) {
-        _field_force_state = DeviceBuffer<Vector3<T>>(snapshot.field_force->begin(), snapshot.field_force->end());
-    }
-
-    if (snapshot.max_relative_speed.has_value()) {
-        _max_relative_speed_state =
-            DeviceBuffer<T>(snapshot.max_relative_speed->begin(), snapshot.max_relative_speed->end());
-    }
-
-    if (snapshot.thermal_energy.has_value()) {
-        _thermal_energy_state = DeviceBuffer<T>(snapshot.thermal_energy->begin(), snapshot.thermal_energy->end());
-    }
-
-    if (snapshot.number_particle.has_value()) {
-        _number_particle_state = DeviceBuffer<T>(snapshot.number_particle->begin(), snapshot.number_particle->end());
-    }
-
-    if (snapshot.collision_count.has_value()) {
-        _collision_count_state = DeviceBuffer<int>(snapshot.collision_count->begin(), snapshot.collision_count->end());
-    }
-
-    if (snapshot.knudsen_number.has_value()) {
-        _knudsen_number_state = DeviceBuffer<T>(snapshot.knudsen_number->begin(), snapshot.knudsen_number->end());
-    }
+    _temperature_state        = std::move(snapshot.temperature);
+    _bulk_velocity_state      = std::move(snapshot.bulk_velocity);
+    _field_force_state        = std::move(snapshot.field_force);
+    _max_relative_speed_state = std::move(snapshot.max_relative_speed);
+    _thermal_energy_state     = std::move(snapshot.thermal_energy);
+    _number_particle_state    = std::move(snapshot.number_particle);
+    _collision_count_state    = std::move(snapshot.collision_count);
+    _knudsen_number_state     = std::move(snapshot.knudsen_number);
 
     return *this;
 }
@@ -352,9 +349,7 @@ Universe<T>::Builder::validate() const {
 
     // The Universe must have positive extent on every axis.
     atlas::check<std::invalid_argument>(
-        _upper_corner.x > _lower_corner.x &&
-        _upper_corner.y > _lower_corner.y &&
-        _upper_corner.z > _lower_corner.z)
+        atlas::math::all(_upper_corner > _lower_corner))
         << "Universe::Builder validation failed: upper_corner must be greater than lower_corner on all axes. "
         << "lower=(" << _lower_corner.x << "," << _lower_corner.y << "," << _lower_corner.z << "), "
         << "upper=(" << _upper_corner.x << "," << _upper_corner.y << "," << _upper_corner.z << ")";
@@ -362,11 +357,9 @@ Universe<T>::Builder::validate() const {
     const T inv_h = T(1) / _cell_size;
 
     // Compute the grid resolution implied by the Universe and cell size.
-    const Vector3<int> gs =
-        math::cast_to<int>(math::floor((_upper_corner - _lower_corner) * inv_h)
-                        + Vector3<T> { T(1), T(1), T(1) });
+    const Vector3<int> gs = Universe<T>::compute_grid_size(_lower_corner, _upper_corner, inv_h);
 
-    atlas::check<std::invalid_argument>(gs.x >= 1 && gs.y >= 1 && gs.z >= 1)
+    atlas::check<std::invalid_argument>(atlas::math::all(gs >= Vector3<int>(1, 1, 1)))
         << "Universe::Builder validation failed: computed grid_size must be >= 1 on all axes. "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
 
