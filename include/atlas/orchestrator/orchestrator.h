@@ -228,13 +228,12 @@ public:
      * measure();
      * make_probe();
      * const auto probe = _probe;
-     * apply_gravity(probe, dt);
-     * apply_field_force(probe, dt);
+     * apply_forces(probe, dt);
      * solve(dt);
      * @endcode
      *
      * The searcher is invalidated before rebuilding search data. Gravity and
-     * field-force passes run after measurement and before solver execution.
+     * field-force application runs after measurement and before solver execution.
      *
      * @param dt Time-step size used by force-application and solver stages.
      */
@@ -354,6 +353,19 @@ public:
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const HostBuffer<SolveHostPtr<T>>&
     solvers() const noexcept;
+
+    /**
+     * @brief Applies all configured cell forces to probe particles in one pass.
+     *
+     * Gravity and field-force states share the same cell-to-particle ranges, so
+     * this fused path avoids launching separate passes over identical sorted
+     * ranges during @ref orchestrate.
+     *
+     * @param probe Pre-built data view.
+     * @param dt Time-step size.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    apply_forces(const OrchestratorProbe& probe, T dt);
 
     /**
      * @brief Applies gravity to all particles in the probe using a pre-built probe.

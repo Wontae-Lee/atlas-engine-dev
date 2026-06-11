@@ -106,6 +106,84 @@ Orchestrator<T>::update(const T dt) {
 
 template <typename T>
 void
+Orchestrator<T>::apply_forces(const OrchestratorProbe& probe, const T dt) {
+    const bool has_gravity = probe.gravity_ptr != nullptr && probe.gravity_cell_count > 0;
+    const bool has_field_force = probe.field_force_ptr != nullptr
+        && probe.field_force_cell_count > 0
+        && probe.species_ptr != nullptr
+        && probe.properties_ptr != nullptr
+        && probe.num_of_species > 0;
+
+    if (!has_gravity && !has_field_force) {
+        return;
+    }
+
+    int force_cell_count = has_gravity ? probe.gravity_cell_count : 0;
+    if (has_field_force && probe.field_force_cell_count > force_cell_count) {
+        force_cell_count = probe.field_force_cell_count;
+    }
+    if (force_cell_count > probe.num_of_cells) {
+        force_cell_count = probe.num_of_cells;
+    }
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        force_cell_count,
+        [=] ATLAS_DEVICE(const int cell) {
+            const bool gravity_cell    = has_gravity && cell < probe.gravity_cell_count;
+            const bool field_force_cell = has_field_force && cell < probe.field_force_cell_count;
+
+            if (!gravity_cell && !field_force_cell) {
+                return;
+            }
+
+            const int start = probe.cell_start_ptr[cell];
+            const int end   = probe.cell_end_ptr[cell];
+
+            if (start < 0 || end <= start) {
+                return;
+            }
+
+            const Vector3<T> gravity = gravity_cell ? probe.gravity_ptr[cell] : Vector3<T>();
+            const Vector3<T> force   = field_force_cell ? probe.field_force_ptr[cell] : Vector3<T>();
+
+            for (int sorted_index = start; sorted_index < end; ++sorted_index) {
+                const int particle_index = probe.indices_ptr[sorted_index];
+
+                if (particle_index < 0 || particle_index >= probe.particle_count) {
+                    continue;
+                }
+
+                Vector3<T> delta_velocity;
+                bool update_velocity = false;
+
+                if (gravity_cell) {
+                    delta_velocity += gravity * dt;
+                    update_velocity = true;
+                }
+
+                if (field_force_cell) {
+                    const std::size_t species_index = probe.species_ptr[particle_index];
+
+                    if (species_index < static_cast<std::size_t>(probe.num_of_species)) {
+                        const T mass = probe.properties_ptr[species_index].mass;
+
+                        if (mass > T(0)) {
+                            delta_velocity += force * (dt / mass);
+                            update_velocity = true;
+                        }
+                    }
+                }
+
+                if (update_velocity) {
+                    probe.velocity_ptr[particle_index] += delta_velocity;
+                }
+            }
+        });
+}
+
+template <typename T>
+void
 Orchestrator<T>::apply_field_force(const OrchestratorProbe& probe, const T dt) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -257,13 +335,7 @@ Orchestrator<T>::orchestrate(const T dt) {
     if (dt != T(0)) {
         if (make_probe()) {
             const auto probe = _probe;
-            if (probe.gravity_ptr != nullptr) {
-                apply_gravity(probe, dt);
-            }
-            if (probe.field_force_ptr != nullptr && probe.species_ptr != nullptr
-                && probe.properties_ptr != nullptr && probe.num_of_species > 0) {
-                apply_field_force(probe, dt);
-            }
+            apply_forces(probe, dt);
         }
     }
 
