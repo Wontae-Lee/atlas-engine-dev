@@ -1,6 +1,9 @@
 #pragma once
+#include <atlas/core/macros.h>
+
 #include <cmath>
 #include <limits>
+#include <type_traits>
 
 namespace atlas {
 
@@ -56,5 +59,44 @@ constexpr double inf = std::numeric_limits<double>::infinity();
 constexpr double tol = 1e-6;
 
 constexpr double gravity = 9.80665;
+
+namespace math {
+
+// ------------------------------------------------------------
+// Scalar helpers (math)
+// ------------------------------------------------------------
+
+/**
+ * @brief Returns the absolute value of a scalar.
+ */
+template <typename T>
+ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE std::enable_if_t<std::is_arithmetic_v<T>, T>
+abs(const T value) noexcept {
+    return value < T(0) ? -value : value;
+}
+
+/**
+ * @brief Returns true when a scalar is finite.
+ */
+template <typename T>
+ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE std::enable_if_t<std::is_arithmetic_v<T>, bool>
+isfinite(const T value) noexcept {
+    return std::isfinite(static_cast<double>(value));
+}
+
+/**
+ * @brief Returns sqrt(value) for positive values and zero otherwise.
+ *
+ * Useful for numerically guarded formulas where small negative roundoff
+ * should collapse to zero before the square root.
+ */
+template <typename T>
+ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+sqrt_nonnegative(const T value) noexcept {
+    using std::sqrt;
+    return value > T(0) ? static_cast<T>(sqrt(value)) : T(0);
+}
+
+} // namespace math
 
 } // namespace atlas

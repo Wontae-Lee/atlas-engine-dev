@@ -92,7 +92,7 @@ AxisAlignedBoundingBox<T>::intersects(const Ray<T>& ray) const noexcept {
         const T mx = upper_corner[i];
 
         // Parallel ray must already lie inside this axis interval.
-        if (std::abs(d) <= eps) {
+        if (atlas::math::abs(d) <= eps) {
             if (o < mn || o > mx) return false;
             continue;
         }
@@ -129,7 +129,7 @@ AxisAlignedBoundingBox<T>::trace(const Ray<T>& ray) const noexcept {
         const T mx = upper_corner[i];
 
         // Parallel ray misses if its origin is outside this axis interval.
-        if (std::abs(d) <= eps) {
+        if (atlas::math::abs(d) <= eps) {
             if (o < mn || o > mx) return isect;
             continue;
         }

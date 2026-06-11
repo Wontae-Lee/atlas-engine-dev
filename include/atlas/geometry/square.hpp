@@ -119,9 +119,9 @@ SquareGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p,
     const T u = center_to_point.dot(tangent);
     const T v = center_to_point.dot(bitangent);
 
-    return std::abs(signed_plane_offset) <= tolerance
-        && std::abs(u) <= half_side + tolerance
-        && std::abs(v) <= half_side + tolerance;
+    return atlas::math::abs(signed_plane_offset) <= tolerance
+        && atlas::math::abs(u) <= half_side + tolerance
+        && atlas::math::abs(v) <= half_side + tolerance;
 }
 
 template <typename T>
@@ -186,7 +186,7 @@ SquareGeometryOperator<T>::is_valid() const noexcept {
     return atlas::math::isfinite(*center)
         && atlas::math::isfinite(*normal)
         && normal->length_squared() > T(0)
-        && std::isfinite(static_cast<double>(*side_length))
+        && atlas::math::isfinite(*side_length)
         && *side_length > T(0);
 }
 
@@ -214,7 +214,7 @@ SquareGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
     const T epsilon     = std::numeric_limits<T>::epsilon();
 
     // Parallel or nearly parallel rays are treated as misses.
-    if (std::abs(denominator) <= epsilon) {
+    if (atlas::math::abs(denominator) <= epsilon) {
         return hit;
     }
 
@@ -234,7 +234,7 @@ SquareGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
     const T half_side              = (*side_length) * T(0.5);
 
     // Reject plane hits that fall outside the finite square extent.
-    if (std::abs(u) > half_side + epsilon || std::abs(v) > half_side + epsilon) {
+    if (atlas::math::abs(u) > half_side + epsilon || atlas::math::abs(v) > half_side + epsilon) {
         return hit;
     }
 
@@ -441,7 +441,7 @@ Square<T>::Builder::validate() const {
     // All scalar and vector components must be finite before construction.
     if (!atlas::math::isfinite(_center)
         || !atlas::math::isfinite(_normal)
-        || !std::isfinite(static_cast<double>(_side_length))) {
+        || !atlas::math::isfinite(_side_length)) {
         throw std::runtime_error("Square::Builder: parameters must be finite.");
     }
 

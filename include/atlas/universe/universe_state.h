@@ -7,7 +7,7 @@
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/core/macros.h>
-#include <atlas/math/vector/vector.h>
+#include <atlas/math/math.h>
 
 #include <cstddef>
 #include <typeindex>

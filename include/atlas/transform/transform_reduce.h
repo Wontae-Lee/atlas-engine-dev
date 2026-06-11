@@ -179,6 +179,7 @@ transform_reduce(InputIt first, InputIt last,
 #else
 
 #include <iterator>
+#include <optional>
 #include <type_traits>
 
 namespace detail {
@@ -220,13 +221,13 @@ namespace detail {
      *
      * Reduction logic inside each block:
      * @code
-     * local = init;
+     * local = empty;
      * for i in block:
-     *     local = binary_op(local, unary_op(first[i]));
+     *     local = local ? binary_op(local, unary_op(first[i])) : unary_op(first[i]);
      * @endcode
      *
-     * Partial results from different blocks are then merged using the same
-     * `binary_op`.
+     * Partial results from different blocks are merged using the same
+     * `binary_op`, and `init` is applied once to the final partial result.
      *
      * If the input range is empty, `init` is returned unchanged.
      */
@@ -244,18 +245,27 @@ namespace detail {
         using diff_t   = typename std::iterator_traits<InputIt>::difference_type;
         const diff_t n = std::distance(first, last);
 
-        return tbb::parallel_reduce(
+        const auto partial = tbb::parallel_reduce(
             tbb::blocked_range<diff_t>(0, n),
-            init,
-            [&](const tbb::blocked_range<diff_t>& r, T local) {
+            std::optional<T> {},
+            [&](const tbb::blocked_range<diff_t>& r, std::optional<T> local) {
                 for (diff_t i = r.begin(); i != r.end(); ++i) {
-                    local = binary_op(local, unary_op(first[i]));
+                    const T value = unary_op(first[i]);
+                    if (local) {
+                        *local = binary_op(*local, value);
+                    } else {
+                        local.emplace(value);
+                    }
                 }
                 return local;
             },
-            [&](const T& a, const T& b) {
-                return binary_op(a, b);
+            [&](const std::optional<T>& a, const std::optional<T>& b) -> std::optional<T> {
+                if (!a) return b;
+                if (!b) return a;
+                return std::optional<T> { binary_op(*a, *b) };
             });
+
+        return partial ? binary_op(init, *partial) : init;
     }
 
     /**

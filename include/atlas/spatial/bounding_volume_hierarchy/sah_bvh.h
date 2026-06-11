@@ -614,6 +614,20 @@ private:
     DeviceBuffer<TriangleContainer4<T>> d_triangles;
 
 private:
+    struct RangeBounds {
+        AABB<T> node;
+        AABB<T> centroid;
+        int count {};
+        bool degenerate {};
+    };
+
+    struct SplitChoice {
+        int axis {};
+        T cmin {};
+        T den {};
+        int split { -1 };
+    };
+
     /**
      * @brief Accumulates fast-winding aggregate data over a primitive range.
      */
@@ -630,6 +644,25 @@ private:
     merge_solid_angle_moment(BVHNode<T>& node,
                              const BVHNode<T>& left,
                              const BVHNode<T>& right) noexcept;
+
+    RangeBounds
+    compute_range_bounds(int start, int end) const;
+
+    int
+    make_leaf(int node_index,
+              int start,
+              int end,
+              const RangeBounds& bounds,
+              const HostBuffer<TriangleContainer4<T>>& triangles);
+
+    SplitChoice
+    choose_sah_split(int start, int end, const RangeBounds& bounds) const;
+
+    int
+    partition_sah_split(int start, int end, const SplitChoice& split);
+
+    int
+    make_internal(int node_index, int left_child, int right_child) noexcept;
 
     /**
      * @brief Recursively builds a BVH subtree over a primitive-index interval.

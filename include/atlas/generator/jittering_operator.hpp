@@ -147,8 +147,8 @@ JitteringOperator<T>::Builder::validate() const {
     }
 
     // Non-finite values would make random sampling invalid or undefined.
-    if (!std::isfinite(static_cast<double>(*_base_value))
-        || !std::isfinite(static_cast<double>(*_jitter_radius))) {
+    if (!atlas::math::isfinite(*_base_value)
+        || !atlas::math::isfinite(*_jitter_radius)) {
         throw std::runtime_error("JitteringOperator::Builder: parameters must be finite.");
     }
 

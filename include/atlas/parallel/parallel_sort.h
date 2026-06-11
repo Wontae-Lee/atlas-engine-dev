@@ -36,8 +36,8 @@
  * - device sorting falls back to the host implementation,
  * - serial fallback uses `std::sort`.
  *
- * For key-value sorting in non-CUDA builds, both host and device paths currently
- * use a serial index-based reorder implementation.
+     * For key-value sorting in non-CUDA builds, host and device paths sort the
+     * index permutation with TBB and then reorder the copied key-value ranges.
  *
  * ## Key-value sorting semantics
  * @ref parallel_sort_by_key sorts the key range in ascending order and reorders
@@ -60,6 +60,7 @@
 
 #include <algorithm>
 #include <atlas/parallel/parallel_for.h>
+#include <iterator>
 #include <numeric>
 #include <vector>
 
@@ -343,6 +344,52 @@ namespace detail {
         std::sort(first, last);
     }
 
+    template <typename KeyIt, typename ValueIt>
+    ATLAS_FORCE_INLINE void
+    parallel_sort_by_key_index_impl(KeyIt keys_first,
+                                    KeyIt keys_last,
+                                    ValueIt values_first,
+                                    const bool use_parallel_sort) {
+        using diff_t = typename std::iterator_traits<KeyIt>::difference_type;
+
+        diff_t n = std::distance(keys_first, keys_last);
+        if (n <= 1) return;
+
+        std::vector<diff_t> indices(static_cast<std::size_t>(n));
+        std::iota(indices.begin(), indices.end(), diff_t(0));
+
+        std::vector<typename std::iterator_traits<KeyIt>::value_type> key_tmp(static_cast<std::size_t>(n));
+        std::vector<typename std::iterator_traits<ValueIt>::value_type> val_tmp(static_cast<std::size_t>(n));
+        {
+            KeyIt k_it   = keys_first;
+            ValueIt v_it = values_first;
+            for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
+                key_tmp[static_cast<std::size_t>(i)] = *k_it;
+                val_tmp[static_cast<std::size_t>(i)] = *v_it;
+            }
+        }
+
+        const auto compare = [&key_tmp](diff_t a, diff_t b) {
+            return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
+        };
+
+        if (use_parallel_sort) {
+            tbb::parallel_sort(indices.begin(), indices.end(), compare);
+        } else {
+            std::sort(indices.begin(), indices.end(), compare);
+        }
+
+        {
+            KeyIt k_it   = keys_first;
+            ValueIt v_it = values_first;
+            for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
+                const diff_t idx = indices[static_cast<std::size_t>(i)];
+                *k_it            = key_tmp[static_cast<std::size_t>(idx)];
+                *v_it            = val_tmp[static_cast<std::size_t>(idx)];
+            }
+        }
+    }
+
     /**
      * @brief Serial fallback implementation for sorting keys and associated values together.
      *
@@ -363,47 +410,15 @@ namespace detail {
     template <typename KeyIt, typename ValueIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_by_key_serial_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
-        using diff_t = typename std::iterator_traits<KeyIt>::difference_type;
-
-        diff_t n = std::distance(keys_first, keys_last);
-        if (n <= 1) return;
-
-        std::vector<diff_t> indices(static_cast<std::size_t>(n));
-        std::iota(indices.begin(), indices.end(), diff_t(0));
-
-        std::vector<typename std::iterator_traits<KeyIt>::value_type> key_tmp(static_cast<std::size_t>(n));
-        std::vector<typename std::iterator_traits<ValueIt>::value_type> val_tmp(static_cast<std::size_t>(n));
-        {
-            KeyIt k_it   = keys_first;
-            ValueIt v_it = values_first;
-            for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
-                key_tmp[static_cast<std::size_t>(i)] = *k_it;
-                val_tmp[static_cast<std::size_t>(i)] = *v_it;
-            }
-        }
-
-        std::sort(indices.begin(),
-                  indices.end(),
-                  [&key_tmp](diff_t a, diff_t b) {
-                      return key_tmp[static_cast<std::size_t>(a)] < key_tmp[static_cast<std::size_t>(b)];
-                  });
-
-        {
-            KeyIt k_it   = keys_first;
-            ValueIt v_it = values_first;
-            for (diff_t i = 0; i < n; ++i, ++k_it, ++v_it) {
-                const diff_t idx = indices[static_cast<std::size_t>(i)];
-                *k_it            = key_tmp[static_cast<std::size_t>(idx)];
-                *v_it            = val_tmp[static_cast<std::size_t>(idx)];
-            }
-        }
+        detail::parallel_sort_by_key_index_impl(keys_first, keys_last, values_first, false);
     }
 
     /**
      * @brief Sort keys and associated values using the host backend in non-CUDA builds.
      *
      * @details
-     * This currently falls back to the serial index-based implementation.
+     * Sorts the copied index permutation with TBB, then scatters key-value pairs
+     * back into the original ranges.
      *
      * @param keys_first Iterator to the beginning of the key range.
      * @param keys_last Iterator to the end of the key range.
@@ -415,15 +430,15 @@ namespace detail {
     template <typename KeyIt, typename ValueIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_by_key_host_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
-        detail::parallel_sort_by_key_serial_impl(keys_first, keys_last, values_first);
+        detail::parallel_sort_by_key_index_impl(keys_first, keys_last, values_first, true);
     }
 
     /**
      * @brief Sort keys and associated values using the device backend in non-CUDA builds.
      *
      * @details
-     * Since no dedicated device backend is available, this currently falls back to
-     * the serial index-based implementation.
+     * Since no dedicated device backend is available, this uses the same TBB
+     * index-sort implementation as the host path.
      *
      * @param keys_first Iterator to the beginning of the key range.
      * @param keys_last Iterator to the end of the key range.
@@ -435,7 +450,7 @@ namespace detail {
     template <typename KeyIt, typename ValueIt>
     ATLAS_FORCE_INLINE void
     parallel_sort_by_key_device_impl(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
-        detail::parallel_sort_by_key_serial_impl(keys_first, keys_last, values_first);
+        detail::parallel_sort_by_key_index_impl(keys_first, keys_last, values_first, true);
     }
 
 } // namespace detail

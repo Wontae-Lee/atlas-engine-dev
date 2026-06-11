@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlas/math/constants.h>
 #include <atlas/math/vector/vector.h>
 #include <cmath>
 #include <cstddef>
@@ -663,6 +664,16 @@ namespace math {
     orthogonal_unit_vector(const Vector<T, 3>& normal,
                            const Vector<T, 3>& seed,
                            T min_length_squared = T(0)) noexcept;
+
+    /** @brief Builds a unit vector from polar/azimuthal angles around a unit axis. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 3>
+    spherical_direction(const Vector<T, 3>& unit_axis, T cos_theta, T phi) noexcept;
+
+    /** @brief Builds a unit vector from polar/azimuthal angles around the z axis. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 3>
+    spherical_direction(T cos_theta, T phi) noexcept;
 
     /** @brief Component-wise minimum (alias helper). */
     template <typename T>

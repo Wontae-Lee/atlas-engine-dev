@@ -337,7 +337,7 @@ PlaneGeometryOperator<T>::is_valid() const noexcept {
     const T n2 = (*normal).length_squared();
     return atlas::math::isfinite(*normal)
         && (n2 > T(0))
-        && std::isfinite(static_cast<double>(*offset));
+        && atlas::math::isfinite(*offset);
 }
 
 template <typename T>

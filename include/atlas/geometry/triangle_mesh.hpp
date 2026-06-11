@@ -530,7 +530,7 @@ TriangleMeshGeometryOperator<T>::winding_number(const atlas::math::Vector<T, 3>&
         solid_angle_sum += solid_angle(p, a, b, c);
     }
 
-    const T four_pi = T(4) * std::acos(T(-1));
+    const T four_pi = T(4) * static_cast<T>(atlas::pi);
 
     // Normalize total solid angle to get the winding number.
     return solid_angle_sum / four_pi;
@@ -544,15 +544,6 @@ TriangleMeshGeometryOperator<T>::has_bvh() const noexcept {
 #else
     return bvh_nodes && bvh_indices && bvh_tris && bvh_root >= 0;
 #endif
-}
-
-template <typename T>
-T
-TriangleMeshGeometryOperator<T>::bounds_distance_squared(
-    const atlas::spatial::AxisAlignedBoundingBox<T>& bounds,
-    const atlas::math::Vector<T, 3>& p) const noexcept {
-    const atlas::math::Vector<T, 3> cp = bounds.clamp(p);
-    return (cp - p).length_squared();
 }
 
 template <typename T>
@@ -624,7 +615,7 @@ TriangleMeshGeometryOperator<T>::closest_point_bvh(
         const int ni                         = stack[--sp];
         const atlas::spatial::BVHNode<T>& nd = bvh_nodes[ni];
 
-        if (bounds_distance_squared(nd.bounds, p) > best_d2) {
+        if (atlas::spatial::aabb_distance_squared(nd.bounds, p) > best_d2) {
             continue;
         }
 
@@ -668,21 +659,23 @@ TriangleMeshGeometryOperator<T>::closest_point_bvh(
         }
 
         if (left < 0) {
-            if (bounds_distance_squared(bvh_nodes[right].bounds, p) <= best_d2 && sp < 64) {
+            if (atlas::spatial::aabb_distance_squared(bvh_nodes[right].bounds, p) <= best_d2
+                && sp < 64) {
                 stack[sp++] = right;
             }
             continue;
         }
 
         if (right < 0) {
-            if (bounds_distance_squared(bvh_nodes[left].bounds, p) <= best_d2 && sp < 64) {
+            if (atlas::spatial::aabb_distance_squared(bvh_nodes[left].bounds, p) <= best_d2
+                && sp < 64) {
                 stack[sp++] = left;
             }
             continue;
         }
 
-        const T left_d2  = bounds_distance_squared(bvh_nodes[left].bounds, p);
-        const T right_d2 = bounds_distance_squared(bvh_nodes[right].bounds, p);
+        const T left_d2  = atlas::spatial::aabb_distance_squared(bvh_nodes[left].bounds, p);
+        const T right_d2 = atlas::spatial::aabb_distance_squared(bvh_nodes[right].bounds, p);
 
         const int near_child = (left_d2 <= right_d2) ? left : right;
         const int far_child  = (left_d2 <= right_d2) ? right : left;
@@ -719,7 +712,7 @@ TriangleMeshGeometryOperator<T>::approximate_solid_angle(
     }
 
     return node.solid_angle_normal_area.dot(r)
-        / (r2 * static_cast<T>(std::sqrt(r2)));
+        / (r2 * atlas::math::sqrt_nonnegative(r2));
 }
 
 template <typename T>
@@ -778,7 +771,7 @@ TriangleMeshGeometryOperator<T>::fast_winding_number_bvh(const atlas::math::Vect
         }
     }
 
-    const T four_pi = T(4) * std::acos(T(-1));
+    const T four_pi = T(4) * static_cast<T>(atlas::pi);
     return solid_angle_sum / four_pi;
 }
 
@@ -832,7 +825,7 @@ TriangleMeshGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>
         ? closest_point_bvh(p, nullptr, nullptr, std::numeric_limits<T>::max())
         : closest_point_linear(p, nullptr, nullptr, std::numeric_limits<T>::max());
 
-    const T dist = static_cast<T>(std::sqrt(best_d2));
+    const T dist = atlas::math::sqrt_nonnegative(best_d2);
 
     // Points numerically on the mesh surface have zero signed distance.
     if (dist <= std::numeric_limits<T>::epsilon()) {
@@ -842,7 +835,7 @@ TriangleMeshGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>
     const T winding = has_bvh()
         ? fast_winding_number_bvh(p)
         : winding_number(p);
-    const bool inside = std::abs(winding) > T(0.5);
+    const bool inside = atlas::math::abs(winding) > T(0.5);
 
     return inside ? -dist : dist;
 }
@@ -858,7 +851,7 @@ TriangleMeshGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, c
     const T winding = has_bvh()
         ? fast_winding_number_bvh(p)
         : winding_number(p);
-    const bool inside = std::abs(winding) > T(0.5);
+    const bool inside = atlas::math::abs(winding) > T(0.5);
 
     if (inside && tolerance >= T(0)) {
         return true;

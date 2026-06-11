@@ -39,7 +39,7 @@ generate_standard_normal_pair(atlas::default_random_engine<T>& engine,
 
     const T u2 = dist(engine);
 
-    const T r = std::sqrt(T(-2) * std::log(u1));
+    const T r = atlas::math::sqrt_nonnegative(T(-2) * std::log(u1));
 
     const T theta = T(2) * static_cast<T>(atlas::pi) * u2;
 
@@ -108,28 +108,10 @@ template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
 sample_uniform_hemisphere(const Vector3<T>& n, T u1, T u2) {
 
-    const T two_pi = T(2) * static_cast<T>(atlas::pi);
-
-    const T phi = two_pi * u2;
-
+    const T phi       = T(2) * static_cast<T>(atlas::pi) * u2;
     const T cos_theta = T(1) - u1;
 
-    const T sin_theta_2 = T(1) - cos_theta * cos_theta;
-
-    const T sin_theta = (sin_theta_2 > T(0)) ? std::sqrt(sin_theta_2) : T(0);
-
-    const T cos_phi = std::cos(phi);
-
-    const T sin_phi = std::sin(phi);
-
-    const T x = sin_theta * cos_phi;
-    const T y = sin_theta * sin_phi;
-    const T z = cos_theta;
-
-    Vector3<T> t, b;
-    atlas::sampling::build_orthonormal_basis(n, t, b);
-
-    return x * t + y * b + z * n;
+    return atlas::math::spherical_direction(n, cos_theta, phi);
 }
 
 /**
@@ -152,25 +134,10 @@ template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
 sample_cosine_hemisphere(const Vector3<T>& n, T u1, T u2) {
 
-    const T two_pi = T(2) * static_cast<T>(atlas::pi);
+    const T phi       = T(2) * static_cast<T>(atlas::pi) * u1;
+    const T cos_theta = atlas::math::sqrt_nonnegative(T(1) - u2);
 
-    const T phi = two_pi * u1;
-
-    const T cos_theta = std::sqrt(T(1) - u2);
-
-    const T sin_theta = std::sqrt(u2);
-
-    const T cos_phi = std::cos(phi);
-    const T sin_phi = std::sin(phi);
-
-    const T x = sin_theta * cos_phi;
-    const T y = sin_theta * sin_phi;
-    const T z = cos_theta;
-
-    Vector3<T> t, b;
-    atlas::sampling::build_orthonormal_basis(n, t, b);
-
-    return x * t + y * b + z * n;
+    return atlas::math::spherical_direction(n, cos_theta, phi);
 }
 
 /**
@@ -192,13 +159,9 @@ sample_random_unit_vector(atlas::default_random_engine<T>& engine) noexcept {
 
     const T cos_theta = T(2) * u1 - T(1);
 
-    const T sin_theta_2 = T(1) - cos_theta * cos_theta;
-
-    const T sin_theta = (sin_theta_2 > T(0)) ? std::sqrt(sin_theta_2) : T(0);
-
     const T phi = T(2) * static_cast<T>(atlas::pi) * u2;
 
-    return Vector3<T>(sin_theta * std::cos(phi), sin_theta * std::sin(phi), cos_theta);
+    return atlas::math::spherical_direction(cos_theta, phi);
 }
 
 /**
@@ -230,19 +193,9 @@ sample_directional_unit_vector(const Vector3<T>& incoming_direction,
 
     const T cos_theta = T(2) * std::pow(u1, T(1) / alpha) - T(1);
 
-    const T sin_theta_2 = T(1) - cos_theta * cos_theta;
-
-    const T sin_theta = (sin_theta_2 > T(0)) ? std::sqrt(sin_theta_2) : T(0);
-
     const T phi = T(2) * static_cast<T>(atlas::pi) * u2;
 
-    Vector3<T> tangent;
-    Vector3<T> bitangent;
-    atlas::sampling::build_orthonormal_basis(incoming_direction, tangent, bitangent);
-
-    return tangent * (sin_theta * std::cos(phi))
-        + bitangent * (sin_theta * std::sin(phi))
-        + incoming_direction * cos_theta;
+    return atlas::math::spherical_direction(incoming_direction, cos_theta, phi);
 }
 
 /**
@@ -263,7 +216,8 @@ sample_directional_unit_vector(const Vector3<T>& incoming_direction,
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
 sample_axis_count(T lower, T upper, T spacing) noexcept {
-    if (!std::isfinite(lower) || !std::isfinite(upper) || !std::isfinite(spacing) || spacing <= T(0))
+    if (!atlas::math::isfinite(lower) || !atlas::math::isfinite(upper) || !atlas::math::isfinite(spacing)
+        || spacing <= T(0))
         return 0;
 
     const T extent = upper - lower;

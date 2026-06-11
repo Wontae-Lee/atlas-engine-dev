@@ -558,7 +558,7 @@ TriangleGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexce
     const T det                          = e1.dot(pvec);
 
     // Near-zero determinant means the ray is parallel to the triangle plane.
-    if (static_cast<T>(std::fabs(static_cast<double>(det))) <= T(eps)) {
+    if (atlas::math::abs(det) <= T(eps)) {
         return result;
     }
 

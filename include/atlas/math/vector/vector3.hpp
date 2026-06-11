@@ -706,6 +706,36 @@ orthogonal_unit_vector(const Vector3<T>& normal,
 
 template <typename T>
 Vector3<T>
+spherical_direction(const Vector3<T>& unit_axis, const T cos_theta, const T phi) noexcept {
+    const auto tangents = unit_axis.tangential();
+    const Vector3<T> tangent   = std::get<0>(tangents);
+    const Vector3<T> bitangent = std::get<1>(tangents);
+
+    const T sin_theta = sqrt_nonnegative(T(1) - cos_theta * cos_theta);
+
+    using std::cos;
+    using std::sin;
+    const T cos_phi = static_cast<T>(cos(phi));
+    const T sin_phi = static_cast<T>(sin(phi));
+
+    return unit_axis * cos_theta + (tangent * cos_phi + bitangent * sin_phi) * sin_theta;
+}
+
+template <typename T>
+Vector3<T>
+spherical_direction(const T cos_theta, const T phi) noexcept {
+    const T sin_theta = sqrt_nonnegative(T(1) - cos_theta * cos_theta);
+
+    using std::cos;
+    using std::sin;
+    return Vector3<T>(
+        sin_theta * static_cast<T>(cos(phi)),
+        sin_theta * static_cast<T>(sin(phi)),
+        cos_theta);
+}
+
+template <typename T>
+Vector3<T>
 cmin(const Vector3<T>& a, const Vector3<T>& b) {
     return Vector3<T>((a.x < b.x) ? a.x : b.x,
                       (a.y < b.y) ? a.y : b.y,

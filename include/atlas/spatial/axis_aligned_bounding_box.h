@@ -865,6 +865,28 @@ merge_aabb(const AxisAlignedBoundingBox<T>& a,
     return out;
 }
 
+/**
+ * @brief Returns the squared distance from a point to an AABB.
+ *
+ * @details
+ * The distance is zero when @p point lies inside or on the boundary of @p bounds.
+ * The implementation projects the point onto the box and measures the squared
+ * distance to that projection.
+ *
+ * @param bounds Axis-aligned bounding box.
+ * @param point Query point.
+ * @return Squared Euclidean distance from @p point to @p bounds.
+ *
+ * @tparam T Floating-point scalar type.
+ */
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+aabb_distance_squared(const AxisAlignedBoundingBox<T>& bounds,
+                      const Vector3<T>& point) noexcept {
+    const Vector3<T> closest = bounds.clamp(point);
+    return (closest - point).length_squared();
+}
+
 } // namespace atlas::spatial
 
 namespace atlas {

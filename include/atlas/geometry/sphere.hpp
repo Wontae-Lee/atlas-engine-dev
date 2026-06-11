@@ -366,7 +366,7 @@ SphereGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
         return result;
     }
 
-    const T sqrt_disc = static_cast<T>(std::sqrt(disc));
+    const T sqrt_disc = atlas::math::sqrt_nonnegative(disc);
     const T inv2a     = T(0.5) / a;
 
     // Compute the near and far intersection distances.

@@ -150,13 +150,6 @@ private:
     has_bvh() const noexcept;
 
     /**
-     * @brief Compute the squared distance from a point to an AABB.
-     */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    bounds_distance_squared(const atlas::spatial::AxisAlignedBoundingBox<T>& bounds,
-                            const atlas::math::Vector<T, 3>& p) const noexcept;
-
-    /**
      * @brief Find the closest triangle point through direct triangle iteration.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T

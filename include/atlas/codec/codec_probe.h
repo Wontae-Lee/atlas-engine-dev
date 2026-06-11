@@ -1,6 +1,6 @@
 #pragma once
 
-#include <atlas/math/vector/vector3.h>
+#include <atlas/math/math.h>
 
 namespace atlas::system {
 

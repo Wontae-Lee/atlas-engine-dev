@@ -28,7 +28,7 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
     }
 
     // The one-dimensional thermal velocity standard deviation is sqrt(k_B T / m).
-    const T sigma = std::sqrt(
+    const T sigma = atlas::math::sqrt_nonnegative(
         static_cast<T>(atlas::boltzmann_constant) * temperature / molecular_mass);
     T x {};
     T y {};
@@ -54,7 +54,7 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const unsigned int seed,
         return Vector3<T>(T(0), T(0), T(0));
     }
 
-    const T sigma = std::sqrt(
+    const T sigma = atlas::math::sqrt_nonnegative(
         static_cast<T>(atlas::boltzmann_constant) * temperature / molecular_mass);
     atlas::default_random_engine<T> seeded_engine(seed);
     T x {};

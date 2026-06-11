@@ -267,7 +267,7 @@ CylinderGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p)
 
     // qx is radial signed excess; qy is axial signed excess.
     const T qx = rho - *radius;
-    const T qy = static_cast<T>(std::fabs(d.z)) - hz;
+    const T qy = atlas::math::abs(d.z) - hz;
 
     if (is_open_cylinder) {
         // Inside the finite axial range, an open cylinder only measures distance to the side wall.
@@ -276,7 +276,7 @@ CylinderGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p)
         }
 
         // Outside the axial range, measure distance to the nearest rim curve.
-        return static_cast<T>(std::sqrt(qx * qx + qy * qy));
+        return atlas::math::sqrt_nonnegative(qx * qx + qy * qy);
     }
 
     // Positive components represent the outside distance from the capped cylinder.
@@ -284,7 +284,7 @@ CylinderGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p)
     const T ay = (qy > T(0)) ? qy : T(0);
 
     // Euclidean distance to the closest exterior feature.
-    const T outside = static_cast<T>(std::sqrt(ax * ax + ay * ay));
+    const T outside = atlas::math::sqrt_nonnegative(ax * ax + ay * ay);
 
     // Interior distance is controlled by the larger signed constraint value.
     const T mxy    = (qx > qy) ? qx : qy;
@@ -308,7 +308,7 @@ CylinderGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const
     // Convert the query point to radial and axial signed offsets.
     const T rho = atlas::math::xy_length(d);
     const T qx  = rho - *radius;
-    const T qy  = static_cast<T>(std::fabs(d.z)) - hz;
+    const T qy  = atlas::math::abs(d.z) - hz;
 
     if (is_open_cylinder) {
         // Open cylinders ignore cap interiors and only require finite height plus radial tolerance.
@@ -351,7 +351,7 @@ CylinderGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, c
         const T zmin = (*center).z - hz;
         const T zmax = (*center).z + hz;
 
-        return std::abs(rho - *radius) <= tolerance
+        return atlas::math::abs(rho - *radius) <= tolerance
             && p.z >= zmin - tolerance
             && p.z <= zmax + tolerance;
     }
@@ -360,7 +360,7 @@ CylinderGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, c
     const atlas::math::Vector<T, 3> d = p - *center;
     const T rho                       = atlas::math::xy_length(d);
     const T radial                    = rho - *radius;
-    const T axial                     = static_cast<T>(std::fabs(d.z)) - hz;
+    const T axial                     = atlas::math::abs(d.z) - hz;
 
     if (radial <= T(0) && axial <= T(0)) {
         const T inside_distance = (radial > axial) ? radial : axial;
@@ -511,11 +511,11 @@ CylinderGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) 
     const atlas::math::Vector<T, 3> cp = closest_point(p);
     const T e                          = std::numeric_limits<T>::epsilon();
 
-    if (static_cast<T>(std::fabs(cp.z - zmin)) <= e) {
+    if (atlas::math::abs(cp.z - zmin) <= e) {
         return atlas::math::Vector<T, 3>(T(0), T(0), -T(1));
     }
 
-    if (static_cast<T>(std::fabs(cp.z - zmax)) <= e) {
+    if (atlas::math::abs(cp.z - zmax) <= e) {
         return atlas::math::Vector<T, 3>(T(0), T(0), T(1));
     }
 
@@ -625,7 +625,7 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
             const T disc = B * B - T(4) * A * C;
 
             if (disc >= T(0)) {
-                const T sqrt_disc = static_cast<T>(std::sqrt(disc));
+                const T sqrt_disc = atlas::math::sqrt_nonnegative(disc);
 
                 // Use the numerically stable quadratic form.
                 const T sign_b = (B >= T(0)) ? T(1) : T(-1);
@@ -669,7 +669,7 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
                     set_side_hit(t0);
                 }
 
-                if (!std::isfinite(best_t) && accept_side(t1)) {
+                if (!atlas::math::isfinite(best_t) && accept_side(t1)) {
                     set_side_hit(t1);
                 }
             }
@@ -710,7 +710,7 @@ CylinderGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noex
     }
 
     // Return a miss when no valid side or cap intersection was found.
-    if (!std::isfinite(best_t)) {
+    if (!atlas::math::isfinite(best_t)) {
         return out;
     }
 

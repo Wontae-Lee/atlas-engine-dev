@@ -49,7 +49,7 @@ CircleGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) con
     }
 
     // Clamp exterior projections to the circular boundary.
-    const T planar_len = static_cast<T>(std::sqrt(planar_len2));
+    const T planar_len = atlas::math::sqrt_nonnegative(planar_len2);
     return *center + planar * ((*radius) / planar_len);
 }
 
@@ -114,7 +114,7 @@ CircleGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p,
     T distance2 = plane_distance * plane_distance;
 
     if (planar_len2 > rr) {
-        const T radial_distance = static_cast<T>(std::sqrt(planar_len2)) - *radius;
+        const T radial_distance = atlas::math::sqrt_nonnegative(planar_len2) - *radius;
         distance2 += radial_distance * radial_distance;
     }
 
@@ -154,7 +154,7 @@ CircleGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p,
     T distance2 = plane_distance * plane_distance;
 
     if (planar_len2 > rr) {
-        const T radial_distance = static_cast<T>(std::sqrt(planar_len2)) - *radius;
+        const T radial_distance = atlas::math::sqrt_nonnegative(planar_len2) - *radius;
         distance2 += radial_distance * radial_distance;
     }
 
@@ -195,9 +195,9 @@ CircleGeometryOperator<T>::bound() const noexcept {
 
     // Each AABB extent is the disk radius scaled by the projection onto that axis.
     const atlas::math::Vector<T, 3> extent(
-        (*radius) * static_cast<T>(std::sqrt(std::max(T(0), T(1) - n.x * n.x))),
-        (*radius) * static_cast<T>(std::sqrt(std::max(T(0), T(1) - n.y * n.y))),
-        (*radius) * static_cast<T>(std::sqrt(std::max(T(0), T(1) - n.z * n.z))));
+        (*radius) * atlas::math::sqrt_nonnegative(T(1) - n.x * n.x),
+        (*radius) * atlas::math::sqrt_nonnegative(T(1) - n.y * n.y),
+        (*radius) * atlas::math::sqrt_nonnegative(T(1) - n.z * n.z));
 
     return atlas::spatial::AxisAlignedBoundingBox<T>(*center - extent, *center + extent);
 }
@@ -214,7 +214,7 @@ CircleGeometryOperator<T>::is_valid() const noexcept {
     return atlas::math::isfinite(*center)
         && atlas::math::isfinite(*normal)
         && normal->length_squared() > T(0)
-        && std::isfinite(static_cast<double>(*radius))
+        && atlas::math::isfinite(*radius)
         && *radius > T(0);
 }
 
@@ -232,10 +232,10 @@ CircleGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
     const T denom                      = nn.dot(ray.direction);
     const T eps                        = std::numeric_limits<T>::epsilon();
 
-    if (std::abs(denom) <= eps) {
+    if (atlas::math::abs(denom) <= eps) {
         // Parallel rays intersect only if they already lie on the circle plane.
         const T plane_distance = (ray.origin - *center).dot(nn);
-        if (std::abs(plane_distance) > eps) {
+        if (atlas::math::abs(plane_distance) > eps) {
             return result;
         }
 
