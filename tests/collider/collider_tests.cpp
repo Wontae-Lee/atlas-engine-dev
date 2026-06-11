@@ -4,6 +4,8 @@
 #include <atlas/generator/generate_operator.h>
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/plane.h>
+#include <atlas/memory/copy.h>
+#include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/sync/sync.h>
 #include <atlas/unit/unit.h>
 
@@ -383,7 +385,8 @@ TEST(Collider, CollideUpdatesInternalEnergyThroughSurfaceInteraction) {
 
     collider.collide(1.0f);
 
-    const auto actual = internal_energies.data()[0];
+    FluidInternalEnergy<float> actual {};
+    atlas::copy_device_to_host(atlas::raw_pointer_cast(internal_energies.data().data()), &actual, 1);
     EXPECT_NEAR(actual.translational, expected.translational, tol);
     EXPECT_NEAR(actual.rotational, expected.rotational, tol);
     EXPECT_NEAR(actual.vibrational, expected.vibrational, tol);
@@ -421,7 +424,8 @@ TEST(Collider, CollidePreservesInternalEnergyForIsothermalSurfaceInteraction) {
 
     collider.collide(1.0f);
 
-    const auto actual = internal_energies.data()[0];
+    FluidInternalEnergy<float> actual {};
+    atlas::copy_device_to_host(atlas::raw_pointer_cast(internal_energies.data().data()), &actual, 1);
     EXPECT_NEAR(actual.translational, incident_energy.translational, tol);
     EXPECT_NEAR(actual.rotational, incident_energy.rotational, tol);
     EXPECT_NEAR(actual.vibrational, incident_energy.vibrational, tol);

@@ -152,11 +152,25 @@ public:
 
 private:
     /**
+     * @brief Refreshes finite world-space bounds for collider units.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    refresh_unit_bounds() const;
+
+    /**
      * @brief Device buffer containing collider units.
      *
      * Each unit provides geometry, transform information, and optional kinematic behavior.
      */
     DeviceBuffer<Unit<T>> _units;
+
+    /**
+     * @brief Cached world-space AABBs used for broad-phase particle culling.
+     *
+     * Invalid entries represent units without finite bounds and must fall back to
+     * the full narrow-phase query.
+     */
+    mutable DeviceBuffer<atlas::spatial::AxisAlignedBoundingBox<T>> _unit_bounds;
 
     /**
      * @brief Host-side target fluid whose particle states are modified by collision processing.

@@ -5,10 +5,41 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 
+#include <limits>
 #include <stdexcept>
 #include <utility>
 
 namespace atlas::system {
+
+namespace detail {
+
+template <typename T>
+struct ColliderRefreshUnitBound {
+    const Unit<T>* units {};
+    atlas::spatial::AxisAlignedBoundingBox<T>* bounds {};
+
+    ATLAS_DEVICE void
+    operator()(const int unit_index) const {
+        const auto& unit = units[unit_index];
+        auto local_bound = unit.geometry_operator().bound();
+        auto& world_bound = bounds[unit_index];
+        world_bound.reset();
+
+        const bool finite_bound = local_bound.is_valid()
+            && atlas::math::isfinite(local_bound.lower_corner)
+            && atlas::math::isfinite(local_bound.upper_corner);
+
+        if (!finite_bound) {
+            return;
+        }
+
+        for (int corner = 0; corner < 8; ++corner) {
+            world_bound.merge(unit.sync_operator().sync_to_world(local_bound.corner(corner)));
+        }
+    }
+};
+
+} // namespace detail
 
 template <typename T>
 Collider<T>::Collider(DeviceBuffer<Unit<T>> units,
@@ -17,6 +48,7 @@ Collider<T>::Collider(DeviceBuffer<Unit<T>> units,
                       PostColliderType post_collider_type,
                       atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept
     : _units(std::move(units))
+    , _unit_bounds(_units.size())
     , _fluid(std::move(fluid))
     , _surface_interactions(std::move(surface_interactions))
     , _flips(std::move(flips))
@@ -60,11 +92,14 @@ Collider<T>::collide(const T dt) const {
         return;
     }
 
+    refresh_unit_bounds();
+
     // Build a compact device-side probe containing raw pointers to collider, fluid, and interaction data.
     // If any required fluid state is missing, no collision pass is performed.
     if (!make_probe()) {
         return;
     }
+
     const auto probe = _probe;
     const PostColliderKernel<T> post_collider_kernel(_post_collider_type);
 
@@ -78,6 +113,7 @@ Collider<T>::collide(const T dt) const {
             const Vector3<T> velocity  = probe.velocities[i];
             const Vector3<T> direction = velocity * dt;
             const T particle_speed     = velocity.length();
+            const bool unit_sweep      = post_collider_kernel.type == PostColliderType::precise;
 
             // Ignore nearly stationary particles because their swept segment is numerically degenerate.
             if (particle_speed * dt <= atlas::eps
@@ -96,29 +132,44 @@ Collider<T>::collide(const T dt) const {
 
             // Test the particle segment against every collider unit and keep only the nearest hit.
             for (int j = 0; j < probe.unit_count; ++j) {
-                const auto& unit    = probe.units[j];
-                const auto& sync_op = unit.sync_operator();
-                const auto& geom_op = unit.geometry_operator();
-                Vector3<T> sweep_direction {};
-                T sweep_speed {};
-                T sweep_length {};
+                const Unit<T>* unit = nullptr;
+                Vector3<T> sweep_direction = direction;
+                T sweep_speed              = particle_speed;
+                T sweep_length             = particle_speed * dt;
 
-                post_collider_kernel.sweep_motion(unit,
-                                                  p0,
-                                                  velocity,
-                                                  particle_speed,
-                                                  dt,
-                                                  sweep_direction,
-                                                  sweep_speed,
-                                                  sweep_length);
+                if (unit_sweep) {
+                    unit = probe.units + j;
+                    post_collider_kernel.sweep_motion(*unit,
+                                                      p0,
+                                                      velocity,
+                                                      particle_speed,
+                                                      dt,
+                                                      sweep_direction,
+                                                      sweep_speed,
+                                                      sweep_length);
+                }
 
                 if (sweep_length <= atlas::eps || sweep_speed <= atlas::eps) {
                     continue;
                 }
 
-                // Build the ray in world coordinates, then transform it into the local coordinate system
-                // of the current collider unit before evaluating the geometry intersection.
+                // Build a world-space ray and reject particles outside the unit AABB before loading
+                // the full unit and transforming into local coordinates for narrow-phase tracing.
                 const atlas::spatial::Ray<T> world_ray(p0, sweep_direction);
+                const auto& unit_bound = probe.unit_bounds[j];
+                if (unit_bound.is_valid()) {
+                    const auto bound_hit = unit_bound.trace(world_ray);
+                    if (!bound_hit.is_intersecting || bound_hit.enter > sweep_length) {
+                        continue;
+                    }
+                }
+
+                if (unit == nullptr) {
+                    unit = probe.units + j;
+                }
+
+                const auto& sync_op = unit->sync_operator();
+                const auto& geom_op = unit->geometry_operator();
                 const atlas::spatial::Ray<T> local_ray = sync_op.sync_to_local(world_ray);
                 const HitSurface<T> local_hit          = geom_op(local_ray);
 
@@ -146,8 +197,7 @@ Collider<T>::collide(const T dt) const {
 
             // If no collider surface is reached during this time step, move the particle freely.
             if (!any_hit || best_index < 0) {
-                probe.positions[i]  = p0 + direction;
-                probe.velocities[i] = velocity;
+                probe.positions[i] = p0 + direction;
                 return;
             }
 
@@ -221,6 +271,7 @@ Collider<T>::make_probe() const noexcept {
     }
 
     _probe.units                = atlas::raw_pointer_cast(_units.data());
+    _probe.unit_bounds          = atlas::raw_pointer_cast(_unit_bounds.data());
     _probe.surface_interactions = atlas::raw_pointer_cast(_surface_interactions.data());
     _probe.flips                = atlas::raw_pointer_cast(_flips.data());
     _probe.positions            = atlas::raw_pointer_cast(positions.data());
@@ -240,6 +291,26 @@ Collider<T>::make_probe() const noexcept {
     _probe.particle_count       = static_cast<int>(_fluid->particle_count());
 
     return true;
+}
+
+template <typename T>
+void
+Collider<T>::refresh_unit_bounds() const {
+    if (_unit_bounds.size() != _units.size()) {
+        _unit_bounds.resize(_units.size());
+    }
+
+    auto* units_ptr = atlas::raw_pointer_cast(_units.data());
+    auto* bounds_ptr = atlas::raw_pointer_cast(_unit_bounds.data());
+    const int unit_count = static_cast<int>(_units.size());
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        unit_count,
+        detail::ColliderRefreshUnitBound<T> {
+            units_ptr,
+            bounds_ptr
+        });
 }
 
 template <typename T>

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 namespace atlas::system {
@@ -21,16 +22,7 @@ maxwellian_unit_sample(const T u) noexcept {
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
 maxwellian_tangent_seed(const Vector3<T>& normal, const Vector3<T>& seed) noexcept {
-    Vector3<T> tangent = atlas::math::cross(normal, seed);
-
-    if (tangent.length_squared() <= T(atlas::tol)) {
-        const Vector3<T> axis = (std::abs(normal.x) < T(0.9))
-            ? Vector3<T>(T(1), T(0), T(0))
-            : Vector3<T>(T(0), T(1), T(0));
-        tangent = atlas::math::cross(normal, axis);
-    }
-
-    return atlas::math::normalize(tangent);
+    return atlas::math::orthogonal_unit_vector(normal, seed, T(atlas::tol));
 }
 
 } // namespace detail
@@ -210,11 +202,7 @@ MaxwellianSurfaceInteraction<T>::sample(const Vector3<T>& incident,
     const T vtan1    = vtangent * std::sin(theta);
     const T vtan2    = vtangent * std::cos(theta);
 
-    const T dot = atlas::math::dot(incident, normal);
-    Vector3<T> tangent1(
-        incident.x - dot * normal.x,
-        incident.y - dot * normal.y,
-        incident.z - dot * normal.z);
+    Vector3<T> tangent1 = atlas::math::reject(incident, normal);
 
     if (tangent1.length_squared() == T(0)) {
         tangent1 = detail::maxwellian_tangent_seed(normal, tangent_seed);
@@ -307,7 +295,7 @@ MaxwellianSurfaceInteraction<T>::sample_internal_energy_mode(const T incident,
                                                              const T sample,
                                                              const T theta_sample) const noexcept {
     const T wall_energy = static_cast<T>(atlas::boltzmann_constant) * _temperature;
-    const T safe_wall   = std::max(wall_energy, T(atlas::eps));
+    const T safe_wall   = wall_energy > T(0) ? wall_energy : std::numeric_limits<T>::min();
     const T safe_energy = std::max(incident, T(0));
     const T magnitude   = std::sqrt(safe_energy * (T(1) - acc) / safe_wall);
     const T radius      = std::sqrt(-acc * std::log(detail::maxwellian_unit_sample(sample)));
