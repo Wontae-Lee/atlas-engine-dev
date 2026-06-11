@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atlas/logging/logging.h>
-#include <atlas/memory/raw_pointer_cast.h>
 
 #include <stdexcept>
 #include <utility>
@@ -16,49 +15,23 @@ OctreeSearcher<T>::OctreeSearcher(UniverseHostPtr<T> universe, FluidHostPtr<T> f
 template <typename T>
 void
 OctreeSearcher<T>::build_neighbors(const int alive, const Vector3<T>* pos) {
-    // Fixed-width slots keep the device write pattern deterministic and allocation-free.
-    this->_neighbor_offsets.resize(static_cast<std::size_t>(alive + 1));
-    this->_neighbor_indices.resize(static_cast<std::size_t>(alive * alive));
-
-    auto* offsets = atlas::raw_pointer_cast(this->_neighbor_offsets.data());
-    auto* neighbors = atlas::raw_pointer_cast(this->_neighbor_indices.data());
-    const T radius = this->cell_size();
-    const T radius2 = radius * radius;
     const Vector3<T> center = (this->lower_corner() + this->_universe->upper_corner()) * T(0.5);
 
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
+    this->build_cell_neighbors(
         alive,
-        [=] ATLAS_DEVICE(const int i) {
-            const int base = i * alive;
-            const int ix = pos[i].x >= center.x ? 1 : 0;
-            const int iy = pos[i].y >= center.y ? 1 : 0;
-            const int iz = pos[i].z >= center.z ? 1 : 0;
-            offsets[i] = base;
-
-            for (int j = 0; j < alive; ++j) {
-                if (i == j) {
-                    neighbors[base + j] = -1;
-                    continue;
-                }
-
-                const int jx = pos[j].x >= center.x ? 1 : 0;
-                const int jy = pos[j].y >= center.y ? 1 : 0;
-                const int jz = pos[j].z >= center.z ? 1 : 0;
-
-                // The root octant test is the octree candidate filter before exact distance.
-                if (ix != jx || iy != jy || iz != jz) {
-                    neighbors[base + j] = -1;
-                    continue;
-                }
-
-                const Vector3<T> delta = pos[j] - pos[i];
-                neighbors[base + j] = delta.length_squared() <= radius2 ? j : -1;
-            }
+        pos,
+        [=] ATLAS_DEVICE(const int,
+                         const int,
+                         const Vector3<T>& pi,
+                         const Vector3<T>& pj) {
+            const int ix = pi.x >= center.x ? 1 : 0;
+            const int iy = pi.y >= center.y ? 1 : 0;
+            const int iz = pi.z >= center.z ? 1 : 0;
+            const int jx = pj.x >= center.x ? 1 : 0;
+            const int jy = pj.y >= center.y ? 1 : 0;
+            const int jz = pj.z >= center.z ? 1 : 0;
+            return ix == jx && iy == jy && iz == jz;
         });
-
-    this->_neighbor_offsets[static_cast<std::size_t>(alive)] = alive * alive;
-    this->_neighbor_count = alive * alive;
 }
 
 template <typename T>
@@ -75,7 +48,6 @@ OctreeSearcher<T>::build() {
     }
 
     this->prepare_grid_buffers(alive);
-    this->init_indices_iota(alive);
     this->compute_grid_keys(alive, positions);
     this->sort_by_key(alive);
     this->build_cell_ranges(alive);

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atlas/logging/logging.h>
-#include <atlas/memory/raw_pointer_cast.h>
 
 #include <stdexcept>
 #include <utility>
@@ -16,41 +15,18 @@ KdTreeSearcher<T>::KdTreeSearcher(UniverseHostPtr<T> universe, FluidHostPtr<T> f
 template <typename T>
 void
 KdTreeSearcher<T>::build_neighbors(const int alive, const Vector3<T>* pos) {
-    // Fixed-width slots keep the device write pattern deterministic and allocation-free.
-    this->_neighbor_offsets.resize(static_cast<std::size_t>(alive + 1));
-    this->_neighbor_indices.resize(static_cast<std::size_t>(alive * alive));
-
-    auto* offsets = atlas::raw_pointer_cast(this->_neighbor_offsets.data());
-    auto* neighbors = atlas::raw_pointer_cast(this->_neighbor_indices.data());
     const T radius = this->cell_size();
-    const T radius2 = radius * radius;
 
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
+    this->build_cell_neighbors(
         alive,
-        [=] ATLAS_DEVICE(const int i) {
-            const int base = i * alive;
-            offsets[i] = base;
-            for (int j = 0; j < alive; ++j) {
-                if (i == j) {
-                    neighbors[base + j] = -1;
-                    continue;
-                }
-
-                // KD-style pruning rejects candidates outside the radius on the split axis first.
-                const T dx = pos[j].x - pos[i].x;
-                if (dx < -radius || dx > radius) {
-                    neighbors[base + j] = -1;
-                    continue;
-                }
-
-                const Vector3<T> delta = pos[j] - pos[i];
-                neighbors[base + j] = delta.length_squared() <= radius2 ? j : -1;
-            }
+        pos,
+        [=] ATLAS_DEVICE(const int,
+                         const int,
+                         const Vector3<T>& pi,
+                         const Vector3<T>& pj) {
+            const T dx = pj.x - pi.x;
+            return dx >= -radius && dx <= radius;
         });
-
-    this->_neighbor_offsets[static_cast<std::size_t>(alive)] = alive * alive;
-    this->_neighbor_count = alive * alive;
 }
 
 template <typename T>
@@ -69,7 +45,6 @@ KdTreeSearcher<T>::build() {
     }
 
     this->prepare_grid_buffers(alive);
-    this->init_indices_iota(alive);
     this->compute_grid_keys(alive, positions);
     this->sort_by_key(alive);
     this->build_cell_ranges(alive);

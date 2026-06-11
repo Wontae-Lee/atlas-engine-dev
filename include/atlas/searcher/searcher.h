@@ -138,8 +138,7 @@ public:
      * @brief Returns per-particle offsets into neighbor_indices().
      *
      * Offsets follow a CSR-like convention: particle i owns the range
-     * [neighbor_offsets()[i], neighbor_offsets()[i + 1]). Invalid neighbor slots
-     * are stored as -1 inside that range.
+     * [neighbor_offsets()[i], neighbor_offsets()[i + 1]).
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual const int*
     neighbor_offsets() const noexcept;
@@ -147,8 +146,9 @@ public:
     /**
      * @brief Returns flattened particle-neighbor indices.
      *
-     * Each entry is either an active particle index or -1 when the algorithm's
-     * fixed output slot did not accept a candidate.
+     * Each entry is an active particle index. Implementations that reserve fixed
+     * slots may store -1 for rejected candidates, while compact implementations
+     * omit rejected candidates from the range.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual const int*
     neighbor_indices() const noexcept;
@@ -206,7 +206,7 @@ public:
     init_indices_iota(int alive);
 
     /**
-     * @brief Computes one clamped linear grid key per active particle.
+     * @brief Computes one clamped linear grid key per active particle and initializes indices.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     compute_grid_keys(int alive, const Vector3<T>* positions);
@@ -224,6 +224,20 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build_cell_ranges(int alive);
+
+protected:
+    /**
+     * @brief Builds a compact CSR neighbor list from nearby grid-cell candidates.
+     */
+    template <typename CandidateFilter>
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    build_cell_neighbors(int alive, const Vector3<T>* positions, CandidateFilter filter);
+
+    /**
+     * @brief Copies the final scanned neighbor count from device scratch storage.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE int
+    finalize_neighbor_offsets(int alive);
 
 protected:
     /**
@@ -272,6 +286,16 @@ protected:
      * @brief Flattened particle-neighbor slots.
      */
     DeviceBuffer<int> _neighbor_indices;
+
+    /**
+     * @brief Per-particle neighbor counts used while compacting neighbor slots.
+     */
+    DeviceBuffer<int> _neighbor_counts;
+
+    /**
+     * @brief Single-element scratch buffer for scanned neighbor totals.
+     */
+    DeviceBuffer<int> _neighbor_total_count;
 
     /**
      * @brief Total number of entries stored in _neighbor_indices.

@@ -103,7 +103,7 @@ TEST(SpatialHashingSearcher, BuildCreatesGridViewAndNeighborSlots) {
 
     searcher->build();
 
-    EXPECT_EQ(searcher->neighbor_count(), 16);
+    EXPECT_EQ(searcher->neighbor_count(), 4);
     EXPECT_TRUE(contains_neighbor(searcher, 0, 1));
     EXPECT_TRUE(contains_neighbor(searcher, 1, 0));
     EXPECT_TRUE(contains_neighbor(searcher, 2, 3));

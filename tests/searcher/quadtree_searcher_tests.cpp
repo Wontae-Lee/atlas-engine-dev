@@ -62,7 +62,7 @@ TEST(QuadtreeSearcher, BuildsThroughAbstractSearcherInterface) {
 
     ASSERT_NE(searcher, nullptr);
     EXPECT_NO_THROW(searcher->build());
-    EXPECT_EQ(searcher->neighbor_count(), 16);
+    EXPECT_EQ(searcher->neighbor_count(), 4);
     EXPECT_TRUE(vec_near(searcher->grid_size(), Vector3I(3, 3, 3), 0));
 }
 

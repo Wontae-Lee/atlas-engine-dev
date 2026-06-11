@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atlas/logging/logging.h>
-#include <atlas/memory/raw_pointer_cast.h>
 
 #include <stdexcept>
 #include <utility>
@@ -71,38 +70,15 @@ SpatialHashingSearcher<T>::build_cell_ranges(const int alive) {
 template <typename T>
 void
 SpatialHashingSearcher<T>::build_neighbors(const int alive, const Vector3<T>* pos) {
-    // Fixed-width slots avoid per-particle dynamic allocation during the device pass.
-    this->_neighbor_offsets.resize(static_cast<std::size_t>(alive + 1));
-    this->_neighbor_indices.resize(static_cast<std::size_t>(alive * alive));
-
-    auto* offsets  = atlas::raw_pointer_cast(this->_neighbor_offsets.data());
-    auto* neighbors = atlas::raw_pointer_cast(this->_neighbor_indices.data());
-    const T radius2 = this->cell_size() * this->cell_size();
-
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
+    this->build_cell_neighbors(
         alive,
-        [=] ATLAS_DEVICE(const int i) {
-            const int base = i * alive;
-            offsets[i] = base;
-            for (int j = 0; j < alive; ++j) {
-                if (i == j) {
-                    neighbors[base + j] = -1;
-                    continue;
-                }
-
-                // Spatial hashing uses the cell size as the exact neighbor radius.
-                const Vector3<T> delta = pos[j] - pos[i];
-                if (delta.length_squared() <= radius2) {
-                    neighbors[base + j] = j;
-                } else {
-                    neighbors[base + j] = -1;
-                }
-            }
+        pos,
+        [] ATLAS_DEVICE(const int,
+                        const int,
+                        const Vector3<T>&,
+                        const Vector3<T>&) {
+            return true;
         });
-
-    this->_neighbor_offsets[static_cast<std::size_t>(alive)] = alive * alive;
-    this->_neighbor_count = alive * alive;
 }
 
 template <typename T>
@@ -121,7 +97,6 @@ SpatialHashingSearcher<T>::build() {
     }
 
     prepare_buffers(alive);
-    init_indices_iota(alive);
     compute_keys(alive, positions);
     sort_by_key(alive);
     build_cell_ranges(alive);

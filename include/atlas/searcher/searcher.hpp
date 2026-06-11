@@ -1,15 +1,157 @@
 #pragma once
 
 #include <atlas/logging/logging.h>
+#include <atlas/memory/copy.h>
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/parallel/parallel_sort.h>
+#include <atlas/scan/exclusive_scan.h>
 
 #include <stdexcept>
 #include <utility>
 
 namespace atlas::system {
+
+namespace detail {
+
+template <typename T, typename CandidateFilter>
+struct SearcherNeighborCount {
+    int* counts {};
+    const int* indices {};
+    const int* start {};
+    const int* end {};
+    const Vector3<T>* positions {};
+    CandidateFilter filter {};
+    Vector3<T> lower_corner {};
+    T inverse_cell_size {};
+    T radius_squared {};
+    Vector3<int> grid_size {};
+    Vector3<int> low {};
+    Vector3<int> high {};
+
+    ATLAS_DEVICE void
+    operator()(const int i) const {
+        const Vector3<T> pi = positions[i];
+        const Vector3<T> rel = (pi - lower_corner) * inverse_cell_size;
+        const Vector3<int> cell = atlas::math::clamp(
+            atlas::math::floor(rel).template cast_to<int>(),
+            low,
+            high);
+
+        int count = 0;
+        for (int dz = -1; dz <= 1; ++dz) {
+            const int z = cell.z + dz;
+            if (z < 0 || z >= grid_size.z) continue;
+
+            for (int dy = -1; dy <= 1; ++dy) {
+                const int y = cell.y + dy;
+                if (y < 0 || y >= grid_size.y) continue;
+
+                for (int dx = -1; dx <= 1; ++dx) {
+                    const int x = cell.x + dx;
+                    if (x < 0 || x >= grid_size.x) continue;
+
+                    const std::uint32_t key = Searcher<T>::linear_key(x, y, z, grid_size);
+                    const int first = start[key];
+                    if (first < 0) continue;
+
+                    const int last = end[key];
+                    for (int cursor = first; cursor < last; ++cursor) {
+                        const int j = indices[cursor];
+                        if (j == i) continue;
+
+                        const Vector3<T> pj = positions[j];
+                        if (!filter(i, j, pi, pj)) continue;
+
+                        const Vector3<T> delta = pj - pi;
+                        if (delta.length_squared() <= radius_squared) {
+                            ++count;
+                        }
+                    }
+                }
+            }
+        }
+
+        counts[i] = count;
+    }
+};
+
+template <typename T, typename CandidateFilter>
+struct SearcherNeighborWrite {
+    int* neighbors {};
+    const int* offsets {};
+    const int* indices {};
+    const int* start {};
+    const int* end {};
+    const Vector3<T>* positions {};
+    CandidateFilter filter {};
+    Vector3<T> lower_corner {};
+    T inverse_cell_size {};
+    T radius_squared {};
+    Vector3<int> grid_size {};
+    Vector3<int> low {};
+    Vector3<int> high {};
+
+    ATLAS_DEVICE void
+    operator()(const int i) const {
+        const Vector3<T> pi = positions[i];
+        const Vector3<T> rel = (pi - lower_corner) * inverse_cell_size;
+        const Vector3<int> cell = atlas::math::clamp(
+            atlas::math::floor(rel).template cast_to<int>(),
+            low,
+            high);
+
+        int write = offsets[i];
+        for (int dz = -1; dz <= 1; ++dz) {
+            const int z = cell.z + dz;
+            if (z < 0 || z >= grid_size.z) continue;
+
+            for (int dy = -1; dy <= 1; ++dy) {
+                const int y = cell.y + dy;
+                if (y < 0 || y >= grid_size.y) continue;
+
+                for (int dx = -1; dx <= 1; ++dx) {
+                    const int x = cell.x + dx;
+                    if (x < 0 || x >= grid_size.x) continue;
+
+                    const std::uint32_t key = Searcher<T>::linear_key(x, y, z, grid_size);
+                    const int first = start[key];
+                    if (first < 0) continue;
+
+                    const int last = end[key];
+                    for (int cursor = first; cursor < last; ++cursor) {
+                        const int j = indices[cursor];
+                        if (j == i) continue;
+
+                        const Vector3<T> pj = positions[j];
+                        if (!filter(i, j, pi, pj)) continue;
+
+                        const Vector3<T> delta = pj - pi;
+                        if (delta.length_squared() <= radius_squared) {
+                            neighbors[write++] = j;
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
+struct SearcherNeighborTotal {
+    int* total {};
+    int* offsets {};
+    const int* counts {};
+    int alive {};
+    int last {};
+
+    ATLAS_DEVICE void
+    operator()(int) const {
+        total[0] = offsets[last] + counts[last];
+        offsets[alive] = total[0];
+    }
+};
+
+} // namespace detail
 
 template <typename T>
 Searcher<T>::Searcher(UniverseHostPtr<T> universe, FluidHostPtr<T> fluid)
@@ -160,6 +302,7 @@ template <typename T>
 void
 Searcher<T>::compute_grid_keys(const int alive, const Vector3<T>* positions) {
     auto* keys_ptr       = atlas::raw_pointer_cast(_keys.data());
+    auto* indices_ptr    = atlas::raw_pointer_cast(_indices.data());
     const Vector3<T> lc  = _universe->lower_corner();
     const T inv_h        = _universe->inverse_cell_size();
     const Vector3<int> gs = _universe->grid_size();
@@ -174,6 +317,7 @@ Searcher<T>::compute_grid_keys(const int alive, const Vector3<T>* positions) {
             Vector3<int> ijk     = atlas::math::floor(rel).template cast_to<int>();
             ijk                  = atlas::math::clamp(ijk, lo, hi);
             keys_ptr[i]          = Searcher<T>::linear_key(ijk.x, ijk.y, ijk.z, gs);
+            indices_ptr[i]       = i;
         });
 }
 
@@ -190,20 +334,18 @@ template <typename T>
 void
 Searcher<T>::build_cell_ranges(const int alive) {
     const auto num_of_cells = _universe->number_of_cells();
+    auto* start = atlas::raw_pointer_cast(_cell_start.data());
+    auto* end   = atlas::raw_pointer_cast(_cell_end.data());
 
-    // Empty cells are represented by -1 so consumers can test both range ends directly.
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        atlas::raw_pointer_cast(_cell_start.data()),
-        atlas::raw_pointer_cast(_cell_start.data()) + static_cast<std::ptrdiff_t>(num_of_cells),
-        -1);
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        atlas::raw_pointer_cast(_cell_end.data()),
-        atlas::raw_pointer_cast(_cell_end.data()) + static_cast<std::ptrdiff_t>(num_of_cells),
-        -1);
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        num_of_cells,
+        [=] ATLAS_DEVICE(const int cell) {
+            start[cell] = -1;
+            end[cell] = -1;
+        });
 
     const auto* keys = atlas::raw_pointer_cast(_keys.data());
-    auto* start      = atlas::raw_pointer_cast(_cell_start.data());
-    auto* end        = atlas::raw_pointer_cast(_cell_end.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -218,10 +360,112 @@ Searcher<T>::build_cell_ranges(const int alive) {
 }
 
 template <typename T>
+template <typename CandidateFilter>
+void
+Searcher<T>::build_cell_neighbors(const int alive,
+                                  const Vector3<T>* positions,
+                                  CandidateFilter filter) {
+    _neighbor_offsets.resize(static_cast<std::size_t>(alive + 1));
+    _neighbor_counts.resize(static_cast<std::size_t>(alive));
+
+    auto* counts = atlas::raw_pointer_cast(_neighbor_counts.data());
+    const auto* indices = atlas::raw_pointer_cast(_indices.data());
+    const auto* start = atlas::raw_pointer_cast(_cell_start.data());
+    const auto* end = atlas::raw_pointer_cast(_cell_end.data());
+    const Vector3<T> lc = _universe->lower_corner();
+    const T inv_h = _universe->inverse_cell_size();
+    const T radius2 = _universe->cell_size() * _universe->cell_size();
+    const Vector3<int> gs = _universe->grid_size();
+    const Vector3<int> lo { 0, 0, 0 };
+    const Vector3<int> hi = gs - Vector3<int> { 1, 1, 1 };
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        alive,
+        detail::SearcherNeighborCount<T, CandidateFilter> {
+            counts,
+            indices,
+            start,
+            end,
+            positions,
+            filter,
+            lc,
+            inv_h,
+            radius2,
+            gs,
+            lo,
+            hi
+        });
+
+    atlas::exclusive_scan<ExecutionPolicy::device>(
+        _neighbor_counts.begin(),
+        _neighbor_counts.begin() + static_cast<std::ptrdiff_t>(alive),
+        _neighbor_offsets.begin(),
+        0);
+
+    const int total = finalize_neighbor_offsets(alive);
+    _neighbor_count = total;
+    _neighbor_indices.resize(static_cast<std::size_t>(total));
+    if (total == 0) {
+        return;
+    }
+
+    auto* neighbors = atlas::raw_pointer_cast(_neighbor_indices.data());
+    const auto* offsets = atlas::raw_pointer_cast(_neighbor_offsets.data());
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        alive,
+        detail::SearcherNeighborWrite<T, CandidateFilter> {
+            neighbors,
+            offsets,
+            indices,
+            start,
+            end,
+            positions,
+            filter,
+            lc,
+            inv_h,
+            radius2,
+            gs,
+            lo,
+            hi
+        });
+}
+
+template <typename T>
+int
+Searcher<T>::finalize_neighbor_offsets(const int alive) {
+    if (_neighbor_total_count.size() < 1) {
+        _neighbor_total_count.resize(1);
+    }
+
+    auto* total = atlas::raw_pointer_cast(_neighbor_total_count.data());
+    auto* offsets = atlas::raw_pointer_cast(_neighbor_offsets.data());
+    const auto* counts = atlas::raw_pointer_cast(_neighbor_counts.data());
+    const int last = alive - 1;
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        1,
+        detail::SearcherNeighborTotal {
+            total,
+            offsets,
+            counts,
+            alive,
+            last
+        });
+
+    int host_total = 0;
+    atlas::copy_device_to_host(total, &host_total, 1);
+    return host_total;
+}
+
+template <typename T>
 void
 Searcher<T>::clear_neighbors() {
     _neighbor_offsets.resize(0);
     _neighbor_indices.resize(0);
+    _neighbor_counts.resize(0);
     _neighbor_count = 0;
 }
 
