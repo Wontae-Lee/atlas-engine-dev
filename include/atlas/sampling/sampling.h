@@ -17,21 +17,22 @@
 namespace atlas::sampling {
 
 /**
- * @brief Generates a standard normal random sample.
+ * @brief Generates two independent standard normal random samples.
  *
- * This function draws a single scalar sample from the standard normal
- * distribution with mean 0 and variance 1.
- *
- * The implementation uses two uniform random samples and applies the
- * Box-Muller transform.
+ * This function draws two scalar samples from the standard normal distribution
+ * with mean 0 and variance 1. The implementation uses two uniform random
+ * samples and applies one Box-Muller transform.
  *
  * @tparam T Floating-point scalar type.
  * @param engine Random engine used to generate uniform samples.
- * @return A scalar sample distributed approximately as N(0, 1).
+ * @param first First output sample distributed approximately as N(0, 1).
+ * @param second Second output sample distributed approximately as N(0, 1).
  */
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-generate_standard_normal(atlas::default_random_engine<T>& engine) {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+generate_standard_normal_pair(atlas::default_random_engine<T>& engine,
+                              T& first,
+                              T& second) {
     atlas::uniform_real_distribution<T> dist(T(0), T(1));
 
     const T u1 = std::max(dist(engine), static_cast<T>(eps));
@@ -42,7 +43,24 @@ generate_standard_normal(atlas::default_random_engine<T>& engine) {
 
     const T theta = T(2) * static_cast<T>(atlas::pi) * u2;
 
-    return r * std::cos(theta);
+    first  = r * std::cos(theta);
+    second = r * std::sin(theta);
+}
+
+/**
+ * @brief Generates a standard normal random sample.
+ *
+ * @tparam T Floating-point scalar type.
+ * @param engine Random engine used to generate uniform samples.
+ * @return A scalar sample distributed approximately as N(0, 1).
+ */
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+generate_standard_normal(atlas::default_random_engine<T>& engine) {
+    T first {};
+    T second {};
+    generate_standard_normal_pair(engine, first, second);
+    return first;
 }
 
 /**
@@ -66,16 +84,10 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
 build_orthonormal_basis(const Vector3<T>& n,
                         Vector3<T>& t,
                         Vector3<T>& b) {
-
-    if (std::abs(n.x) > std::abs(n.z)) {
-        t = Vector3<T>(-n.y, n.x, T(0));
-    } else {
-        t = Vector3<T>(T(0), -n.z, n.y);
+    if (!atlas::math::orthonormal_basis(n, t, b)) {
+        t = Vector3<T>(T(1), T(0), T(0));
+        b = Vector3<T>(T(0), T(1), T(0));
     }
-
-    t = math::normalize(t);
-
-    b = math::cross(n, t);
 }
 
 /**
@@ -96,7 +108,7 @@ template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
 sample_uniform_hemisphere(const Vector3<T>& n, T u1, T u2) {
 
-    const T two_pi = T(2) * M_PI;
+    const T two_pi = T(2) * static_cast<T>(atlas::pi);
 
     const T phi = two_pi * u2;
 
@@ -140,7 +152,7 @@ template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
 sample_cosine_hemisphere(const Vector3<T>& n, T u1, T u2) {
 
-    const T two_pi = T(2) * M_PI;
+    const T two_pi = T(2) * static_cast<T>(atlas::pi);
 
     const T phi = two_pi * u1;
 

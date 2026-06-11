@@ -1,6 +1,7 @@
 #pragma once
 #include <atlas/math/matrix/matrix.h>
 #include <atlas/math/vector/vector3.h>
+#include <cmath>
 #include <initializer_list>
 #include <type_traits>
 
@@ -583,6 +584,11 @@ public:
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     operator!=(const Quaternion& q) const noexcept;
 };
+
+/** @brief Returns true when all quaternion components are finite. */
+template <typename T>
+ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+isfinite(const Quaternion<T>& q) noexcept;
 
 } // namespace math
 

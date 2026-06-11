@@ -59,11 +59,11 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
  * device code.
  *
  * @note
- * The current overload accepts the tuple as a const reference and returns
- * the corresponding element using `auto` return type deduction.
+     * The current overload accepts the tuple as a const reference and preserves
+     * the reference category returned by the backend `get` implementation.
  */
 template <std::size_t I, typename Tuple>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE decltype(auto)
 get(const Tuple& t) {
     return thrust::get<I>(t);
 }
@@ -124,11 +124,11 @@ make_tuple(Ts... args) {
  * It delegates directly to `std::get<I>(...)`.
  *
  * @note
- * The current overload accepts the tuple as a const reference and returns
- * the corresponding element using `auto` return type deduction.
+     * The current overload accepts the tuple as a const reference and preserves
+     * the reference category returned by the backend `get` implementation.
  */
 template <std::size_t I, typename Tuple>
-inline auto
+inline decltype(auto)
 get(const Tuple& t) {
     return std::get<I>(t);
 }

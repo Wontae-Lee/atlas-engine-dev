@@ -182,8 +182,22 @@ Matrix<T, 4, 4>::set_zero() noexcept {
 template <typename T>
 void
 Matrix<T, 4, 4>::set_identity() noexcept {
-    set_zero();
-    m00 = m11 = m22 = m33 = T(1);
+    m00 = T(1);
+    m01 = T(0);
+    m02 = T(0);
+    m03 = T(0);
+    m10 = T(0);
+    m11 = T(1);
+    m12 = T(0);
+    m13 = T(0);
+    m20 = T(0);
+    m21 = T(0);
+    m22 = T(1);
+    m23 = T(0);
+    m30 = T(0);
+    m31 = T(0);
+    m32 = T(0);
+    m33 = T(1);
 }
 
 template <typename T>
@@ -232,8 +246,12 @@ Matrix<T, 4, 4>::mul(T s) noexcept {
 template <typename T>
 void
 Matrix<T, 4, 4>::div(T s) noexcept {
-    const T inv = T(1) / s;
-    for (int i = 0; i < 16; ++i) _data[i] *= inv;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / s;
+        for (int i = 0; i < 16; ++i) _data[i] *= inv;
+    } else {
+        for (int i = 0; i < 16; ++i) _data[i] /= s;
+    }
 }
 
 template <typename T>
@@ -639,8 +657,14 @@ operator*(T s, const Matrix<T, 4, 4>& a) {
 template <typename T>
 Matrix<T, 4, 4>
 operator/(const Matrix<T, 4, 4>& a, T s) {
-    const T inv = T(1) / s;
-    return a * inv;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / s;
+        return a * inv;
+    } else {
+        Matrix<T, 4, 4> out;
+        for (int i = 0; i < 16; ++i) out._data[i] = a._data[i] / s;
+        return out;
+    }
 }
 
 template <typename T>

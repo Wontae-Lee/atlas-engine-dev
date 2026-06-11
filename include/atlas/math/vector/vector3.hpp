@@ -130,10 +130,16 @@ Vector<T, 3>::mul(T v) noexcept {
 template <typename T>
 void
 Vector<T, 3>::div(T v) noexcept {
-    const T inv = T(1) / v;
-    x *= inv;
-    y *= inv;
-    z *= inv;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / v;
+        x *= inv;
+        y *= inv;
+        z *= inv;
+    } else {
+        x /= v;
+        y /= v;
+        z /= v;
+    }
 }
 
 template <typename T>
@@ -304,7 +310,8 @@ void
 Vector<T, 3>::normalize() noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return;
-    const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(ls)));
+    using std::sqrt;
+    const T inv = T(1) / static_cast<T>(sqrt(ls));
     x *= inv;
     y *= inv;
     z *= inv;
@@ -315,7 +322,8 @@ Vector<T, 3>
 Vector<T, 3>::normalized() const noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return *this;
-    const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(ls)));
+    using std::sqrt;
+    const T inv = T(1) / static_cast<T>(sqrt(ls));
     return Vector3<T>(x * inv, y * inv, z * inv);
 }
 
@@ -344,11 +352,13 @@ Vector<T, 3>::tangential() const noexcept {
     Vector t1;
     if (ax > ay) {
         const T d2  = x * x + z * z;
-        const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(d2 + (d2 == T(0) ? T(1) : T(0)))));
+        using std::sqrt;
+        const T inv = T(1) / static_cast<T>(sqrt(d2 + (d2 == T(0) ? T(1) : T(0))));
         t1          = Vector(-z * inv, T(0), x * inv);
     } else {
         const T d2  = y * y + z * z;
-        const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(d2 + (d2 == T(0) ? T(1) : T(0)))));
+        using std::sqrt;
+        const T inv = T(1) / static_cast<T>(sqrt(d2 + (d2 == T(0) ? T(1) : T(0))));
         t1          = Vector(T(0), z * inv, -y * inv);
     }
     const Vector t2 = cross(t1).normalized();
@@ -411,11 +421,13 @@ tangential(const Vector<T, 3>& normal) noexcept {
     Vector<T, 3> t1;
     if (ax > ay) {
         const T d2  = nx * nx + nz * nz;
-        const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(d2 + (d2 == T(0) ? T(1) : T(0)))));
+        using std::sqrt;
+        const T inv = T(1) / static_cast<T>(sqrt(d2 + (d2 == T(0) ? T(1) : T(0))));
         t1          = Vector<T, 3>(-nz * inv, T(0), nx * inv);
     } else {
         const T d2  = ny * ny + nz * nz;
-        const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(d2 + (d2 == T(0) ? T(1) : T(0)))));
+        using std::sqrt;
+        const T inv = T(1) / static_cast<T>(sqrt(d2 + (d2 == T(0) ? T(1) : T(0))));
         t1          = Vector<T, 3>(T(0), nz * inv, -ny * inv);
     }
     const Vector<T, 3> t2 = cross(normal, t1).normalized();
@@ -491,8 +503,12 @@ operator*(const Vector3<T>& a, const Vector3<T>& b) {
 template <typename T>
 Vector3<T>
 operator/(const Vector3<T>& a, T b) {
-    const T inv = T(1) / b;
-    return Vector3<T>(a.x * inv, a.y * inv, a.z * inv);
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / b;
+        return Vector3<T>(a.x * inv, a.y * inv, a.z * inv);
+    } else {
+        return Vector3<T>(a.x / b, a.y / b, a.z / b);
+    }
 }
 
 template <typename T>
@@ -553,6 +569,139 @@ abs(const Vector3<T>& v) {
     return Vector3<T>(std::abs(v.x),
                       std::abs(v.y),
                       std::abs(v.z));
+}
+
+template <typename T>
+bool
+isfinite(const Vector3<T>& v) noexcept {
+    return std::isfinite(static_cast<double>(v.x))
+        && std::isfinite(static_cast<double>(v.y))
+        && std::isfinite(static_cast<double>(v.z));
+}
+
+template <typename T>
+T
+xy_dot(const Vector3<T>& a, const Vector3<T>& b) noexcept {
+    if constexpr (std::is_floating_point_v<T>) {
+        return std::fma(a.y, b.y, a.x * b.x);
+    } else {
+        return a.x * b.x + a.y * b.y;
+    }
+}
+
+template <typename T>
+T
+xy_length_squared(const Vector3<T>& v) noexcept {
+    return xy_dot(v, v);
+}
+
+template <typename T>
+T
+xy_length(const Vector3<T>& v) noexcept {
+    using std::sqrt;
+    return static_cast<T>(sqrt(xy_length_squared(v)));
+}
+
+template <typename T>
+Vector3<T>
+normalized_or(const Vector3<T>& v,
+              const Vector3<T>& fallback,
+              const T min_length_squared) noexcept {
+    const T len2 = v.length_squared();
+    if (!(len2 > min_length_squared)) {
+        return fallback;
+    }
+
+    using std::sqrt;
+    return v * (T(1) / static_cast<T>(sqrt(len2)));
+}
+
+template <typename T>
+Vector3<T>
+xy_normalized_or(const Vector3<T>& v,
+                 const Vector3<T>& fallback,
+                 const T min_length_squared) noexcept {
+    const T len2 = xy_length_squared(v);
+    if (!(len2 > min_length_squared)) {
+        return fallback;
+    }
+
+    using std::sqrt;
+    const T inv = T(1) / static_cast<T>(sqrt(len2));
+    return Vector3<T>(v.x * inv, v.y * inv, T(0));
+}
+
+template <typename T>
+Vector3<T>
+reject(const Vector3<T>& v, const Vector3<T>& normal) noexcept {
+    return v - normal * v.dot(normal);
+}
+
+template <typename T>
+bool
+orthonormal_basis(const Vector3<T>& normal,
+                  Vector3<T>& unit_normal,
+                  Vector3<T>& tangent,
+                  Vector3<T>& bitangent,
+                  const T min_length_squared) noexcept {
+    const T normal_length_squared = normal.length_squared();
+    if (!(normal_length_squared > min_length_squared)) {
+        return false;
+    }
+
+    using std::sqrt;
+    unit_normal = normal * (T(1) / static_cast<T>(sqrt(normal_length_squared)));
+
+    const Vector3<T> axis = std::abs(unit_normal.z) < T(0.9)
+        ? Vector3<T>(T(0), T(0), T(1))
+        : Vector3<T>(T(0), T(1), T(0));
+
+    tangent = axis.cross(unit_normal);
+    const T tangent_length_squared = tangent.length_squared();
+    if (!(tangent_length_squared > min_length_squared)) {
+        return false;
+    }
+
+    tangent *= T(1) / static_cast<T>(sqrt(tangent_length_squared));
+
+    bitangent = unit_normal.cross(tangent);
+    const T bitangent_length_squared = bitangent.length_squared();
+    if (!(bitangent_length_squared > min_length_squared)) {
+        return false;
+    }
+
+    bitangent *= T(1) / static_cast<T>(sqrt(bitangent_length_squared));
+    return true;
+}
+
+template <typename T>
+bool
+orthonormal_basis(const Vector3<T>& normal,
+                  Vector3<T>& tangent,
+                  Vector3<T>& bitangent,
+                  const T min_length_squared) noexcept {
+    Vector3<T> unit_normal;
+    return orthonormal_basis(normal, unit_normal, tangent, bitangent, min_length_squared);
+}
+
+template <typename T>
+Vector3<T>
+orthogonal_unit_vector(const Vector3<T>& normal,
+                       const Vector3<T>& seed,
+                       const T min_length_squared) noexcept {
+    const Vector3<T> fallback(T(1), T(0), T(0));
+    Vector3<T> tangent = normal.cross(seed);
+    if (tangent.length_squared() > min_length_squared) {
+        return normalized_or(tangent, fallback, min_length_squared);
+    }
+
+    Vector3<T> unit_normal;
+    Vector3<T> bitangent;
+    if (orthonormal_basis(normal, unit_normal, tangent, bitangent, min_length_squared)) {
+        return tangent;
+    }
+
+    return fallback;
 }
 
 template <typename T>

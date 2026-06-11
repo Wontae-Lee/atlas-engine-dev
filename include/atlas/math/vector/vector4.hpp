@@ -138,11 +138,18 @@ Vector<T, 4>::mul(T v) noexcept {
 template <typename T>
 void
 Vector<T, 4>::div(T v) noexcept {
-    const T inv = T(1) / v;
-    x *= inv;
-    y *= inv;
-    z *= inv;
-    w *= inv;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / v;
+        x *= inv;
+        y *= inv;
+        z *= inv;
+        w *= inv;
+    } else {
+        x /= v;
+        y /= v;
+        z /= v;
+        w /= v;
+    }
 }
 
 template <typename T>
@@ -333,7 +340,8 @@ void
 Vector<T, 4>::normalize() noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return;
-    const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(ls)));
+    using std::sqrt;
+    const T inv = T(1) / static_cast<T>(sqrt(ls));
     x *= inv;
     y *= inv;
     z *= inv;
@@ -345,7 +353,8 @@ Vector<T, 4>
 Vector<T, 4>::normalized() const noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return *this;
-    const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(ls)));
+    using std::sqrt;
+    const T inv = T(1) / static_cast<T>(sqrt(ls));
     return Vector<T, 4>(x * inv, y * inv, z * inv, w * inv);
 }
 
@@ -474,8 +483,12 @@ operator*(const Vector<T, 4>& a, const Vector<T, 4>& b) {
 template <typename T>
 Vector<T, 4>
 operator/(const Vector<T, 4>& a, T b) {
-    const T inv = T(1) / b;
-    return Vector<T, 4>(a.x * inv, a.y * inv, a.z * inv, a.w * inv);
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / b;
+        return Vector<T, 4>(a.x * inv, a.y * inv, a.z * inv, a.w * inv);
+    } else {
+        return Vector<T, 4>(a.x / b, a.y / b, a.z / b, a.w / b);
+    }
 }
 
 template <typename T>

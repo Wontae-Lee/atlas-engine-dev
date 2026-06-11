@@ -120,9 +120,14 @@ Vector<T, 2>::mul(T v) noexcept {
 template <typename T>
 void
 Vector<T, 2>::div(T v) noexcept {
-    const T inv = T(1) / v;
-    x *= inv;
-    y *= inv;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / v;
+        x *= inv;
+        y *= inv;
+    } else {
+        x /= v;
+        y /= v;
+    }
 }
 
 template <typename T>
@@ -283,7 +288,8 @@ void
 Vector<T, 2>::normalize() noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return;
-    const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(ls)));
+    using std::sqrt;
+    const T inv = T(1) / static_cast<T>(sqrt(ls));
     x *= inv;
     y *= inv;
 }
@@ -293,7 +299,8 @@ Vector<T, 2>
 Vector<T, 2>::normalized() const noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return *this;
-    const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(ls)));
+    using std::sqrt;
+    const T inv = T(1) / static_cast<T>(sqrt(ls));
     return Vector<T, 2>(x * inv, y * inv);
 }
 
@@ -323,7 +330,8 @@ Vector<T, 2>::tangential() const noexcept {
     const T ls = length_squared();
     if (ls == T(0)) return Vector<T, 2>(T(0), T(0));
     Vector<T, 2> t(-y, x);
-    const T inv = T(1) / static_cast<T>(std::sqrt(static_cast<double>(t.x * t.x + t.y * t.y)));
+    using std::sqrt;
+    const T inv = T(1) / static_cast<T>(sqrt(t.x * t.x + t.y * t.y));
     return Vector<T, 2>(t.x * inv, t.y * inv);
 }
 
@@ -435,8 +443,12 @@ operator*(const Vector<T, 2>& a, const Vector<T, 2>& b) {
 template <typename T>
 Vector<T, 2>
 operator/(const Vector<T, 2>& a, T b) {
-    const T inv = T(1) / b;
-    return Vector<T, 2>(a.x * inv, a.y * inv);
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / b;
+        return Vector<T, 2>(a.x * inv, a.y * inv);
+    } else {
+        return Vector<T, 2>(a.x / b, a.y / b);
+    }
 }
 
 template <typename T>

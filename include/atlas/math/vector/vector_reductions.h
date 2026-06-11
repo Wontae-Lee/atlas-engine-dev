@@ -63,8 +63,17 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     const auto& e       = expr();
     const std::size_t n = e.size();
     T accum             = T(0);
-    ATLAS_UNROLL
-    for (std::size_t i = 0; i < n; ++i) accum += e[i] * e[i];
+    if constexpr (std::is_floating_point_v<T>) {
+        using std::fma;
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < n; ++i) {
+            const T v = e[i];
+            accum = fma(v, v, accum);
+        }
+    } else {
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < n; ++i) accum += e[i] * e[i];
+    }
     return accum;
 }
 
@@ -74,7 +83,8 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     expr_value_t<E>
     length(const E& expr) noexcept {
     using T = expr_value_t<E>;
-    return static_cast<T>(std::sqrt(length_squared(expr)));
+    using std::sqrt;
+    return static_cast<T>(sqrt(length_squared(expr)));
 }
 
 template <VectorExpressionType EA, VectorExpressionType EB>
@@ -88,8 +98,16 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     const auto& y       = b();
     const std::size_t n = x.size();
     T accum             = T(0);
-    ATLAS_UNROLL
-    for (std::size_t i = 0; i < n; ++i) accum += x[i] * y[i];
+    if constexpr (std::is_floating_point_v<T>) {
+        using std::fma;
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < n; ++i) {
+            accum = fma(static_cast<T>(x[i]), static_cast<T>(y[i]), accum);
+        }
+    } else {
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < n; ++i) accum += x[i] * y[i];
+    }
     return accum;
 }
 
@@ -100,7 +118,8 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     distance(const EA& a, const EB& b) noexcept {
     using T = std::common_type_t<expr_value_t<EA>,
                                  expr_value_t<EB>>;
-    return static_cast<T>(std::sqrt(length_squared(a - b)));
+    using std::sqrt;
+    return static_cast<T>(sqrt(length_squared(a - b)));
 }
 
 template <VectorExpressionType E>

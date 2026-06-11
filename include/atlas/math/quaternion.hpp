@@ -1,6 +1,7 @@
 #pragma once
 #include <cmath>
 #include <limits>
+#include <type_traits>
 namespace atlas::math {
 template <typename T>
 constexpr Quaternion<T>::Quaternion() noexcept
@@ -124,19 +125,20 @@ Quaternion<T>::data() noexcept {
 template <typename T>
 T
 Quaternion<T>::dot(const Quaternion& q) const noexcept {
-    return w * q.w + x * q.x + y * q.y + z * q.z;
+    return std::fma(z, q.z, std::fma(y, q.y, std::fma(x, q.x, w * q.w)));
 }
 
 template <typename T>
 T
 Quaternion<T>::length_squared() const noexcept {
-    return w * w + x * x + y * y + z * z;
+    return std::fma(z, z, std::fma(y, y, std::fma(x, x, w * w)));
 }
 
 template <typename T>
 T
 Quaternion<T>::length() const noexcept {
-    return std::sqrt(length_squared());
+    using std::sqrt;
+    return static_cast<T>(sqrt(length_squared()));
 }
 
 template <typename T>
@@ -186,10 +188,18 @@ Quaternion<T>::is_identity(T eps) const noexcept {
 template <typename T>
 Vector3<T>
 Quaternion<T>::rotate(const Vector3<T>& v) const noexcept {
-    Quaternion<T> qv(T(0), v.x, v.y, v.z);
-    Quaternion<T> inv = conjugate();
-    Quaternion<T> res = (*this) * qv * inv;
-    return Vector3<T>(res.x, res.y, res.z);
+    const T uxv_x = y * v.z - z * v.y;
+    const T uxv_y = z * v.x - x * v.z;
+    const T uxv_z = x * v.y - y * v.x;
+    const T uv = std::fma(z, v.z, std::fma(y, v.y, x * v.x));
+    const T uu = std::fma(z, z, std::fma(y, y, x * x));
+    const T scale = std::fma(w, w, -uu);
+    const T two_uv = T(2) * uv;
+    const T two_w = T(2) * w;
+    return Vector3<T>(
+        std::fma(two_w, uxv_x, std::fma(two_uv, x, scale * v.x)),
+        std::fma(two_w, uxv_y, std::fma(two_uv, y, scale * v.y)),
+        std::fma(two_w, uxv_z, std::fma(two_uv, z, scale * v.z)));
 }
 
 template <typename T>
@@ -367,6 +377,15 @@ template <typename T>
 bool
 Quaternion<T>::operator!=(const Quaternion& q) const noexcept {
     return !(*this == q);
+}
+
+template <typename T>
+bool
+isfinite(const Quaternion<T>& q) noexcept {
+    return std::isfinite(static_cast<double>(q.w))
+        && std::isfinite(static_cast<double>(q.x))
+        && std::isfinite(static_cast<double>(q.y))
+        && std::isfinite(static_cast<double>(q.z));
 }
 
 }

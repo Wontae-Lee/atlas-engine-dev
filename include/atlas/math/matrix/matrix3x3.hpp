@@ -197,8 +197,12 @@ Matrix<T, 3, 3>::mul(T s) noexcept {
 template <typename T>
 void
 Matrix<T, 3, 3>::div(T s) noexcept {
-    const T inv = T(1) / s;
-    for (int i = 0; i < 9; ++i) _data[i] *= inv;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / s;
+        for (int i = 0; i < 9; ++i) _data[i] *= inv;
+    } else {
+        for (int i = 0; i < 9; ++i) _data[i] /= s;
+    }
 }
 
 template <typename T>
@@ -418,16 +422,64 @@ Matrix<T, 3, 3>::mul(const Matrix& r) const noexcept {
 template <typename T>
 Vector<T, 3>
 Matrix<T, 3, 3>::mul(const Vector<T, 3>& v) const noexcept {
+    Vector<T, 3> out;
+    rotate(*this, v, out);
+    return out;
+}
+
+template <typename T>
+void
+rotate(const Matrix<T, 3, 3>& matrix, const Vector<T, 3>& input, Vector<T, 3>& output) noexcept {
+    const T x = input.x;
+    const T y = input.y;
+    const T z = input.z;
+
     if constexpr (std::is_floating_point_v<T>) {
-        return Vector<T, 3>(
-            std::fma(m01, v[1], std::fma(m02, v[2], m00 * v[0])),
-            std::fma(m11, v[1], std::fma(m12, v[2], m10 * v[0])),
-            std::fma(m21, v[1], std::fma(m22, v[2], m20 * v[0])));
+        output.x = std::fma(matrix.m01, y, std::fma(matrix.m02, z, matrix.m00 * x));
+        output.y = std::fma(matrix.m11, y, std::fma(matrix.m12, z, matrix.m10 * x));
+        output.z = std::fma(matrix.m21, y, std::fma(matrix.m22, z, matrix.m20 * x));
     } else {
-        return Vector<T, 3>(
-            m00 * v[0] + m01 * v[1] + m02 * v[2],
-            m10 * v[0] + m11 * v[1] + m12 * v[2],
-            m20 * v[0] + m21 * v[1] + m22 * v[2]);
+        output.x = matrix.m00 * x + matrix.m01 * y + matrix.m02 * z;
+        output.y = matrix.m10 * x + matrix.m11 * y + matrix.m12 * z;
+        output.z = matrix.m20 * x + matrix.m21 * y + matrix.m22 * z;
+    }
+}
+
+template <typename T>
+void
+rotate_translate(const Matrix<T, 3, 3>& matrix,
+                 const Vector<T, 3>& input,
+                 const Vector<T, 3>& offset,
+                 Vector<T, 3>& output) noexcept {
+    const T ox = offset.x;
+    const T oy = offset.y;
+    const T oz = offset.z;
+
+    rotate(matrix, input, output);
+
+    output.x += ox;
+    output.y += oy;
+    output.z += oz;
+}
+
+template <typename T>
+void
+rotate_subtract(const Matrix<T, 3, 3>& matrix,
+                const Vector<T, 3>& input,
+                const Vector<T, 3>& offset,
+                Vector<T, 3>& output) noexcept {
+    const T x = input.x - offset.x;
+    const T y = input.y - offset.y;
+    const T z = input.z - offset.z;
+
+    if constexpr (std::is_floating_point_v<T>) {
+        output.x = std::fma(matrix.m01, y, std::fma(matrix.m02, z, matrix.m00 * x));
+        output.y = std::fma(matrix.m11, y, std::fma(matrix.m12, z, matrix.m10 * x));
+        output.z = std::fma(matrix.m21, y, std::fma(matrix.m22, z, matrix.m20 * x));
+    } else {
+        output.x = matrix.m00 * x + matrix.m01 * y + matrix.m02 * z;
+        output.y = matrix.m10 * x + matrix.m11 * y + matrix.m12 * z;
+        output.z = matrix.m20 * x + matrix.m21 * y + matrix.m22 * z;
     }
 }
 
@@ -519,8 +571,14 @@ operator*(T s, const Matrix<T, 3, 3>& a) {
 template <typename T>
 Matrix<T, 3, 3>
 operator/(const Matrix<T, 3, 3>& a, T s) {
-    const T inv = T(1) / s;
-    return a * inv;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / s;
+        return a * inv;
+    } else {
+        Matrix<T, 3, 3> out;
+        for (int i = 0; i < 9; ++i) out._data[i] = a._data[i] / s;
+        return out;
+    }
 }
 
 template <typename T>

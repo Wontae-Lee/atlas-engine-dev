@@ -601,6 +601,69 @@ namespace math {
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 3>
     abs(const Vector<T, 3>& v);
 
+    /** @brief Returns true when all vector components are finite. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    isfinite(const Vector<T, 3>& v) noexcept;
+
+    /** @brief Returns the dot product of two vectors' x/y projections. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    xy_dot(const Vector<T, 3>& a, const Vector<T, 3>& b) noexcept;
+
+    /** @brief Returns the squared length of the vector's x/y projection. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    xy_length_squared(const Vector<T, 3>& v) noexcept;
+
+    /** @brief Returns the length of the vector's x/y projection. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    xy_length(const Vector<T, 3>& v) noexcept;
+
+    /** @brief Returns a normalized vector or @p fallback when the input is degenerate. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 3>
+    normalized_or(const Vector<T, 3>& v,
+                  const Vector<T, 3>& fallback,
+                  T min_length_squared = T(0)) noexcept;
+
+    /** @brief Returns a normalized x/y projection or @p fallback when the projection is degenerate. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 3>
+    xy_normalized_or(const Vector<T, 3>& v,
+                     const Vector<T, 3>& fallback,
+                     T min_length_squared = T(0)) noexcept;
+
+    /** @brief Removes the component of @p v along unit-length @p normal. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 3>
+    reject(const Vector<T, 3>& v, const Vector<T, 3>& normal) noexcept;
+
+    /** @brief Builds a unit normal and two tangent vectors from a nonzero normal. */
+    template <typename T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    orthonormal_basis(const Vector<T, 3>& normal,
+                      Vector<T, 3>& unit_normal,
+                      Vector<T, 3>& tangent,
+                      Vector<T, 3>& bitangent,
+                      T min_length_squared = T(0)) noexcept;
+
+    /** @brief Builds two tangent vectors from a nonzero normal. */
+    template <typename T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    orthonormal_basis(const Vector<T, 3>& normal,
+                      Vector<T, 3>& tangent,
+                      Vector<T, 3>& bitangent,
+                      T min_length_squared = T(0)) noexcept;
+
+    /** @brief Returns a unit vector orthogonal to @p normal, preferring @p seed when usable. */
+    template <typename T>
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 3>
+    orthogonal_unit_vector(const Vector<T, 3>& normal,
+                           const Vector<T, 3>& seed,
+                           T min_length_squared = T(0)) noexcept;
+
     /** @brief Component-wise minimum (alias helper). */
     template <typename T>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 3>

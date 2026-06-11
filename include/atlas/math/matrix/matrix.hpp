@@ -1,4 +1,6 @@
 #pragma once
+#include <cmath>
+#include <type_traits>
 namespace atlas::math {
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>::Matrix() noexcept {
@@ -121,8 +123,14 @@ Matrix<T, R, C>::mul(T v) noexcept {
 template <typename T, std::size_t R, std::size_t C>
 void
 Matrix<T, R, C>::div(T v) noexcept {
-    ATLAS_UNROLL
-    for (std::size_t i = 0; i < R * C; ++i) _data[i] /= v;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / v;
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < R * C; ++i) _data[i] *= inv;
+    } else {
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < R * C; ++i) _data[i] /= v;
+    }
 }
 
 template <typename T, std::size_t R, std::size_t C>
@@ -222,12 +230,18 @@ template <typename T, std::size_t R, std::size_t C, std::size_t K>
 Matrix<T, R, K>
 matmul(const Matrix<T, R, C>& a, const Matrix<T, C, K>& b) noexcept {
     Matrix<T, R, K> out;
-    out.set_zero();
     for (std::size_t r = 0; r < R; ++r) {
         for (std::size_t k = 0; k < K; ++k) {
             T acc = T(0);
-            for (std::size_t c = 0; c < C; ++c) {
-                acc = static_cast<T>(acc + a(r, c) * b(c, k));
+            if constexpr (std::is_floating_point_v<T>) {
+                using std::fma;
+                for (std::size_t c = 0; c < C; ++c) {
+                    acc = fma(a(r, c), b(c, k), acc);
+                }
+            } else {
+                for (std::size_t c = 0; c < C; ++c) {
+                    acc = static_cast<T>(acc + a(r, c) * b(c, k));
+                }
             }
             out(r, k) = acc;
         }
@@ -239,11 +253,17 @@ template <typename T, std::size_t R, std::size_t C>
 Vector<T, R>
 matmul(const Matrix<T, R, C>& a, const Vector<T, C>& x) noexcept {
     Vector<T, R> y;
-    y.set_zero();
     for (std::size_t r = 0; r < R; ++r) {
         T acc = T(0);
-        for (std::size_t c = 0; c < C; ++c) {
-            acc = static_cast<T>(acc + a(r, c) * x[c]);
+        if constexpr (std::is_floating_point_v<T>) {
+            using std::fma;
+            for (std::size_t c = 0; c < C; ++c) {
+                acc = fma(a(r, c), x[c], acc);
+            }
+        } else {
+            for (std::size_t c = 0; c < C; ++c) {
+                acc = static_cast<T>(acc + a(r, c) * x[c]);
+            }
         }
         y[r] = acc;
     }

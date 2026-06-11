@@ -112,8 +112,14 @@ Vector<T, N>::mul(T v) noexcept {
 template <typename T, std::size_t N>
 void
 Vector<T, N>::div(T v) noexcept {
-    ATLAS_UNROLL
-    for (std::size_t i = 0; i < N; ++i) _data[i] /= v;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / v;
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < N; ++i) _data[i] *= inv;
+    } else {
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < N; ++i) _data[i] /= v;
+    }
 }
 
 template <typename T, std::size_t N>
@@ -251,7 +257,8 @@ Vector<T, N>::length_squared() const noexcept {
 template <typename T, std::size_t N>
 T
 Vector<T, N>::length() const noexcept {
-    return static_cast<T>(std::sqrt(static_cast<double>(length_squared())));
+    using std::sqrt;
+    return static_cast<T>(sqrt(length_squared()));
 }
 
 template <typename T, std::size_t N>
@@ -316,17 +323,9 @@ template <typename T, std::size_t N>
 T
 Vector<T, N>::sum() const noexcept {
     T s = T(0);
-    if constexpr (std::is_floating_point_v<T>) {
-        using std::fma;
-        ATLAS_UNROLL
-        for (std::size_t i = 0; i < N; ++i) {
-            s = fma(_data[i], T(1), s);
-        }
-    } else {
-        ATLAS_UNROLL
-        for (std::size_t i = 0; i < N; ++i) {
-            s += _data[i];
-        }
+    ATLAS_UNROLL
+    for (std::size_t i = 0; i < N; ++i) {
+        s += _data[i];
     }
     return s;
 }

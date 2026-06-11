@@ -163,11 +163,18 @@ Matrix<T, 2, 2>::mul(T s) noexcept {
 template <typename T>
 void
 Matrix<T, 2, 2>::div(T s) noexcept {
-    const T inv = T(1) / s;
-    m00 *= inv;
-    m01 *= inv;
-    m10 *= inv;
-    m11 *= inv;
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / s;
+        m00 *= inv;
+        m01 *= inv;
+        m10 *= inv;
+        m11 *= inv;
+    } else {
+        m00 /= s;
+        m01 /= s;
+        m10 /= s;
+        m11 /= s;
+    }
 }
 
 template <typename T>
@@ -403,12 +410,20 @@ operator*(T s, const Matrix<T, 2, 2>& a) {
 template <typename T>
 Matrix<T, 2, 2>
 operator/(const Matrix<T, 2, 2>& a, T s) {
-    const T inv = T(1) / s;
-    return Matrix<T, 2, 2>(
-        a.m00 * inv,
-        a.m01 * inv,
-        a.m10 * inv,
-        a.m11 * inv);
+    if constexpr (std::is_floating_point_v<T>) {
+        const T inv = T(1) / s;
+        return Matrix<T, 2, 2>(
+            a.m00 * inv,
+            a.m01 * inv,
+            a.m10 * inv,
+            a.m11 * inv);
+    } else {
+        return Matrix<T, 2, 2>(
+            a.m00 / s,
+            a.m01 / s,
+            a.m10 / s,
+            a.m11 / s);
+    }
 }
 
 template <typename T>

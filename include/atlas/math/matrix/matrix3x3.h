@@ -523,6 +523,30 @@ namespace math {
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 3>
     operator*(const Matrix<T, 3, 3>& a, const Vector<T, 3>& v);
     /**
+     * @brief Writes the matrix-vector product into an existing vector.
+     */
+    template <typename T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    rotate(const Matrix<T, 3, 3>& matrix, const Vector<T, 3>& input, Vector<T, 3>& output) noexcept;
+    /**
+     * @brief Writes the matrix-vector product plus an offset into an existing vector.
+     */
+    template <typename T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    rotate_translate(const Matrix<T, 3, 3>& matrix,
+                     const Vector<T, 3>& input,
+                     const Vector<T, 3>& offset,
+                     Vector<T, 3>& output) noexcept;
+    /**
+     * @brief Writes the matrix-vector product of an offset-subtracted vector.
+     */
+    template <typename T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    rotate_subtract(const Matrix<T, 3, 3>& matrix,
+                    const Vector<T, 3>& input,
+                    const Vector<T, 3>& offset,
+                    Vector<T, 3>& output) noexcept;
+    /**
      * @brief Solves \f$Ax=b\f$ for a 3×3 system and writes result to `x`.
      *
      * @return `true` if solved; otherwise `false`.

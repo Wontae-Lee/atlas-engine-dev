@@ -25,7 +25,7 @@ namespace atlas::math {
  * - `argabsmin`, `argabsmax` (indices of smallest/largest absolute value)
  *
  * Numerical behavior:
- * - `length`/`distance` take the square root in `double` and cast back.
+ * - `length`/`distance` use the scalar type's square-root overload and cast back.
  * - Most reductions assume non-empty input when they access `e[0]`.
  *
  * @note
@@ -136,9 +136,18 @@ length_squared(const E& expr) noexcept {
     const auto& e       = expr();
     const std::size_t n = e.size();
     T acc               = T(0); // Start from zero.
-    ATLAS_UNROLL
-    for (std::size_t i = 0; i < n; ++i) {
-        acc += e[i] * e[i]; // Sum of squares.
+    if constexpr (std::is_floating_point_v<T>) {
+        using std::fma;
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < n; ++i) {
+            const T v = e[i];
+            acc = fma(v, v, acc);
+        }
+    } else {
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < n; ++i) {
+            acc += e[i] * e[i]; // Sum of squares.
+        }
     }
     return acc;
 }
@@ -150,13 +159,14 @@ length_squared(const E& expr) noexcept {
  * @return \f$\sqrt{\sum_i x_i^2}\f$.
  *
  * @note
- * The square root is computed in `double` and cast back to `expr_value_t<E>`.
+ * The square root is computed with the scalar type's overload and cast back to `expr_value_t<E>`.
  */
 template <MatrixExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE expr_value_t<E>
 length(const E& expr) noexcept {
     using T = expr_value_t<E>;
-    return static_cast<T>(std::sqrt(static_cast<double>(length_squared(expr))));
+    using std::sqrt;
+    return static_cast<T>(sqrt(length_squared(expr)));
 }
 // ------------------------------------------------------------
 // Dot / Distance
@@ -184,9 +194,17 @@ dot(const EA& a, const EB& b) noexcept {
     const auto& y       = b();      // Bind derived node for b.
     const std::size_t n = x.size(); // Iterate using size from a.
     T acc               = T(0);
-    ATLAS_UNROLL
-    for (std::size_t i = 0; i < n; ++i) {
-        acc += x[i] * y[i]; // Multiply element-wise and accumulate.
+    if constexpr (std::is_floating_point_v<T>) {
+        using std::fma;
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < n; ++i) {
+            acc = fma(static_cast<T>(x[i]), static_cast<T>(y[i]), acc);
+        }
+    } else {
+        ATLAS_UNROLL
+        for (std::size_t i = 0; i < n; ++i) {
+            acc += x[i] * y[i]; // Multiply element-wise and accumulate.
+        }
     }
     return acc;
 }
@@ -201,7 +219,7 @@ dot(const EA& a, const EB& b) noexcept {
  *
  * @details
  * Forms a lazy difference expression `diff = a - b`, then reduces it via `length_squared`.
- * The square root is computed in `double` and cast back to the common type.
+ * The square root is computed with the common scalar type's overload.
  *
  * @warning
  * Assumes both expressions have the same shape/size. No checks are performed.
@@ -211,7 +229,8 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE auto
 distance(const EA& a, const EB& b) noexcept {
     using T         = std::common_type_t<expr_value_t<EA>, expr_value_t<EB>>;
     const auto diff = a - b; // Lazy element-wise difference.
-    return static_cast<T>(std::sqrt(static_cast<double>(length_squared(diff))));
+    using std::sqrt;
+    return static_cast<T>(sqrt(length_squared(diff)));
 }
 // ------------------------------------------------------------
 // Argmin / Argmax
