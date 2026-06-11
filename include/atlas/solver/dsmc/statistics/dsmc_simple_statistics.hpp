@@ -2,8 +2,10 @@
 
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
+#include <atlas/sampling/sampling.h>
 
 #include <cmath>
+#include <cstdint>
 
 namespace atlas::system {
 
@@ -29,31 +31,57 @@ DsmcSimpleStatistics<T>::measure(const DsmcProbe<T>& probe,
             const int end = probe.cell_end_ptr[cell];
             const int count = end - begin;
 
-            T max_relative_squared = T(0);
-            for (int lhs_sorted_index = begin; lhs_sorted_index < end; ++lhs_sorted_index) {
-                const int particle_i = probe.indices_ptr[lhs_sorted_index];
-                for (int rhs_sorted_index = lhs_sorted_index + 1; rhs_sorted_index < end; ++rhs_sorted_index) {
-                    const int particle_j = probe.indices_ptr[rhs_sorted_index];
-                    const T relative_speed_squared =
-                        (probe.velocity_ptr[particle_i] - probe.velocity_ptr[particle_j]).length_squared();
-                    if (relative_speed_squared > max_relative_squared) {
-                        max_relative_squared = relative_speed_squared;
+            probe.number_particle_ptr[cell] = static_cast<T>(count);
+
+            // Load the persistent NTC majorant; take max(stored, sampled) to keep
+            // it monotonically non-decreasing (SPARTA-style majorant update rule).
+            T max_sigma_g = probe.max_sigma_g_ptr[cell];
+
+            // Keep tiny cells exact, but avoid the serial O(N^2) scan once the
+            // cell is large enough for the pair loop to dominate a GPU thread.
+            if (count >= 2) {
+                constexpr int SAMPLE_PAIRS = 8;
+                T max_relative_squared = T(0);
+                if (count < 5) {
+                    for (int lhs_local = 0; lhs_local < count; ++lhs_local) {
+                        const int pi = probe.indices_ptr[begin + lhs_local];
+                        for (int rhs_local = lhs_local + 1; rhs_local < count; ++rhs_local) {
+                            const int pj = probe.indices_ptr[begin + rhs_local];
+                            const T rel2 = (probe.velocity_ptr[pi] - probe.velocity_ptr[pj]).length_squared();
+                            if (rel2 > max_relative_squared) max_relative_squared = rel2;
+                        }
+                    }
+                } else {
+                    for (int k = 0; k < SAMPLE_PAIRS; ++k) {
+                        const auto k64 = static_cast<std::uint64_t>(k);
+                        const int lhs_local = atlas::sampling::sample_hashed_index(
+                            cell, count,
+                            probe.collision_seed + k64 * 2u + atlas::seed::DSMC_COLLISION_LHS_SALT);
+                        int rhs_local = atlas::sampling::sample_hashed_index(
+                            cell, count - 1,
+                            probe.collision_seed + k64 * 2u + 1u + atlas::seed::DSMC_COLLISION_RHS_SALT);
+                        if (rhs_local >= lhs_local) ++rhs_local;
+
+                        const int pi = probe.indices_ptr[begin + lhs_local];
+                        const int pj = probe.indices_ptr[begin + rhs_local];
+                        const T rel2 = (probe.velocity_ptr[pi] - probe.velocity_ptr[pj]).length_squared();
+                        if (rel2 > max_relative_squared) max_relative_squared = rel2;
                     }
                 }
+
+                const T max_relative_speed = max_relative_squared > T(0)
+                    ? static_cast<T>(std::sqrt(static_cast<double>(max_relative_squared)))
+                    : T(0);
+
+                probe.max_relative_speed_ptr[cell] = max_relative_speed;
+
+                // DsmcSimpleStatistics uses relative speed directly as sigma_g proxy.
+                // NTC majorant: take max of persistent value and sampled estimate.
+                if (max_relative_speed > max_sigma_g) {
+                    max_sigma_g = max_relative_speed;
+                    probe.max_sigma_g_ptr[cell] = max_sigma_g;
+                }
             }
-
-            const T max_relative_speed = max_relative_squared > T(0)
-                ? static_cast<T>(std::sqrt(static_cast<double>(max_relative_squared)))
-                : T(0);
-
-            probe.number_particle_ptr[cell] = static_cast<T>(count);
-            probe.max_relative_speed_ptr[cell] = max_relative_speed;
-
-            const T stored_max_sigma_g = probe.max_sigma_g_ptr[cell];
-            const T max_sigma_g = max_relative_speed > stored_max_sigma_g
-                ? max_relative_speed
-                : stored_max_sigma_g;
-            probe.max_sigma_g_ptr[cell] = max_sigma_g;
 
             if (count < 2 || !(max_sigma_g > T(0))) {
                 probe.collision_count_ptr[cell] = 0;

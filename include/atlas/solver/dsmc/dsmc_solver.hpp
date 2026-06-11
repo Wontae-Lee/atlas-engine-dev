@@ -213,29 +213,31 @@ DsmcSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
                 const T max_sigma_g = probe.max_sigma_g_ptr[cell];
                 const int begin = probe.cell_start_ptr[cell];
                 const int end = probe.cell_end_ptr[cell];
+                if (count < 2 || !(max_sigma_g > T(0)) || begin < 0 || end <= begin) {
+                    return;
+                }
+                if (end - begin < count) {
+                    return;
+                }
 
                 const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
                     + static_cast<std::uint64_t>(local_collision);
-                const int lhs_local = atlas::sampling::sample_hashed_index(
-                    cell,
-                    count,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_LHS_SALT);
-                int rhs_local = atlas::sampling::sample_hashed_index(
-                    cell,
-                    count - 1,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
-                if (rhs_local >= lhs_local) {
-                    ++rhs_local;
-                }
-
-                DsmcSolver<T>::collide_pair(
-                    probe,
-                    cell,
-                    local_collision,
-                    begin,
-                    end,
+                int lhs_local = 0;
+                int rhs_local = 0;
+                DsmcSolver<T>::sample_distinct_pair(
                     lhs_local,
                     rhs_local,
+                    cell,
+                    count,
+                    probe.collision_seed,
+                    stream);
+
+                DsmcSolver<T>::collide_indexed_pair(
+                    probe,
+                    cell,
+                    stream,
+                    probe.indices_ptr[begin + lhs_local],
+                    probe.indices_ptr[begin + rhs_local],
                     max_sigma_g);
             });
         return;
@@ -262,40 +264,32 @@ DsmcSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
 
             const int begin = probe.cell_start_ptr[cell];
             const int end   = probe.cell_end_ptr[cell];
+            if (begin < 0 || end <= begin) {
+                return;
+            }
+            if (end - begin < count) {
+                return;
+            }
+            const auto stream_base = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER;
 
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
-                // Build a deterministic random stream for this cell and collision attempt.
-                const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
-                    + static_cast<std::uint64_t>(local_collision);
-
-                // Sample the first local particle index uniformly from [0, count).
-                const int lhs_local = atlas::sampling::sample_hashed_index(
-                    cell,
-                    count,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_LHS_SALT);
-
-                // Sample the second local particle index from [0, count - 1).
-                const int rhs_sample = atlas::sampling::sample_hashed_index(
-                    cell,
-                    count - 1,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
-
-                int rhs_local = rhs_sample;
-
-                // Shift the second index so it never equals lhs_local.
-                if (rhs_local >= lhs_local) {
-                    ++rhs_local;
-                }
-
-                // Attempt one accepted/rejected DSMC collision for the sampled pair.
-                DsmcSolver<T>::collide_pair(
-                    probe,
-                    cell,
-                    local_collision,
-                    begin,
-                    end,
+                const auto stream = stream_base + static_cast<std::uint64_t>(local_collision);
+                int lhs_local = 0;
+                int rhs_local = 0;
+                DsmcSolver<T>::sample_distinct_pair(
                     lhs_local,
                     rhs_local,
+                    cell,
+                    count,
+                    probe.collision_seed,
+                    stream);
+
+                DsmcSolver<T>::collide_indexed_pair(
+                    probe,
+                    cell,
+                    stream,
+                    probe.indices_ptr[begin + lhs_local],
+                    probe.indices_ptr[begin + rhs_local],
                     max_sigma_g);
             }
         });
@@ -311,8 +305,6 @@ DsmcSolver<T>::collide_pair(const Probe& probe,
                             const int lhs_local,
                             const int rhs_local,
                             const T max_sigma_g) noexcept {
-
-    // Convert local cell indices into global particle indices.
     const int particle_i = particle_at(
         lhs_local,
         begin,
@@ -327,8 +319,27 @@ DsmcSolver<T>::collide_pair(const Probe& probe,
         probe.particle_count,
         probe.indices_ptr);
 
-    // Invalid sampled indices are rejected defensively.
-    if (particle_i < 0 || particle_j < 0) {
+    const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+        + static_cast<std::uint64_t>(local_collision);
+    return collide_indexed_pair(
+        probe,
+        cell,
+        stream,
+        particle_i,
+        particle_j,
+        max_sigma_g);
+}
+
+template <typename T>
+bool
+DsmcSolver<T>::collide_indexed_pair(const Probe& probe,
+                                    const int cell,
+                                    const std::uint64_t stream,
+                                    const int particle_i,
+                                    const int particle_j,
+                                    const T max_sigma_g) noexcept {
+
+    if (particle_i < 0 || particle_j < 0 || particle_i == particle_j) {
         return false;
     }
 
@@ -369,10 +380,6 @@ DsmcSolver<T>::collide_pair(const Probe& probe,
         accept_probability = T(1);
     }
 
-    // Reconstruct the deterministic stream used for this cell and local collision.
-    const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
-        + static_cast<std::uint64_t>(local_collision);
-
     // Sample the random value used for the acceptance-rejection test.
     const T accept_sample = atlas::sampling::sample_hashed_unit_interval<T>(
         cell,
@@ -394,6 +401,29 @@ DsmcSolver<T>::collide_pair(const Probe& probe,
     probe.velocity_ptr[particle_j] = rhs_velocity;
 
     return true;
+}
+
+template <typename T>
+void
+DsmcSolver<T>::sample_distinct_pair(int& lhs_local,
+                                    int& rhs_local,
+                                    const int cell,
+                                    const int count,
+                                    const std::uint64_t seed,
+                                    const std::uint64_t stream) noexcept {
+    lhs_local = atlas::sampling::sample_hashed_index(
+        cell,
+        count,
+        seed + stream + atlas::seed::DSMC_COLLISION_LHS_SALT);
+
+    rhs_local = atlas::sampling::sample_hashed_index(
+        cell,
+        count - 1,
+        seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
+
+    if (rhs_local >= lhs_local) {
+        ++rhs_local;
+    }
 }
 
 template <typename T>

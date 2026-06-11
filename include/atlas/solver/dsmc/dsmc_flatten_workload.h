@@ -11,6 +11,7 @@ public:
     atlas::DeviceBuffer<int> collision_offsets {};
     atlas::DeviceBuffer<int> collision_cells {};
     atlas::DeviceBuffer<int> filtered_collision_counts {};
+    atlas::DeviceBuffer<int> total_count_buffer {};
     int flattened_collision_count {};
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::DeviceBuffer<int>&

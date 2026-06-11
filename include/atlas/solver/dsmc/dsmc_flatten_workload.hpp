@@ -23,6 +23,7 @@ DsmcFlattenWorkload<T>::clear() {
     collision_offsets.resize(0);
     collision_cells.resize(0);
     filtered_collision_counts.resize(0);
+    total_count_buffer.resize(0);
     flattened_collision_count = 0;
 }
 
@@ -68,21 +69,35 @@ DsmcFlattenWorkload<T>::build(int* collision_count_ptr,
         collision_offsets.begin(),
         0);
 
-    const auto last_cell = static_cast<std::size_t>(num_of_cells - 1);
     const int* collision_offsets_ptr = atlas::raw_pointer_cast(collision_offsets.data());
-    int last_offset {};
-    int last_count {};
-    atlas::copy_device_to_host(collision_offsets_ptr + last_cell, &last_offset, 1);
-    atlas::copy_device_to_host(scheduled_collision_count_ptr + last_cell, &last_count, 1);
-    if (last_offset > std::numeric_limits<int>::max() - last_count) {
-        throw std::overflow_error("DsmcFlattenWorkload: flattened collision count exceeds int range.");
-    }
 
-    const int total_collisions = last_offset + last_count;
+    // Compute the total collision count on device (offsets[last] + counts[last]) and
+    // copy it with a single D2H transfer instead of two separate copies.
+    if (total_count_buffer.size() < 1) {
+        total_count_buffer.resize(1);
+    }
+    auto* total_ptr = atlas::raw_pointer_cast(total_count_buffer.data());
+    const auto last_cell = static_cast<std::size_t>(num_of_cells - 1);
+    atlas::parallel_for<atlas::ExecutionPolicy::device>(
+        0,
+        1,
+        [=] ATLAS_DEVICE(int) {
+            const int last_offset = collision_offsets_ptr[last_cell];
+            const int last_count  = scheduled_collision_count_ptr[last_cell];
+            total_ptr[0] = last_offset + last_count;
+        });
+
+    int total_collisions = 0;
+    atlas::copy_device_to_host(total_ptr, &total_collisions, 1);
+
     if (total_collisions <= 0) {
         collision_cells.resize(0);
         flattened_collision_count = 0;
         return false;
+    }
+
+    if (total_collisions > std::numeric_limits<int>::max() - 1) {
+        throw std::overflow_error("DsmcFlattenWorkload: flattened collision count exceeds int range.");
     }
 
     if (collision_cells.size() != static_cast<std::size_t>(total_collisions)) {
@@ -92,15 +107,21 @@ DsmcFlattenWorkload<T>::build(int* collision_count_ptr,
 
     auto* collision_cells_ptr = atlas::raw_pointer_cast(collision_cells.data());
 
+    // Fill collision_cells in a fully flat parallel fashion: each work item binary-
+    // searches the exclusive-scan offsets to find its owning cell, eliminating the
+    // serial inner loop and the load imbalance it caused for high-collision cells.
     atlas::parallel_for<atlas::ExecutionPolicy::device>(
         0,
-        num_of_cells,
-        [=] ATLAS_DEVICE(const int cell) {
-            const int offset = collision_offsets_ptr[cell];
-            const int count = scheduled_collision_count_ptr[cell];
-            for (int local = 0; local < count; ++local) {
-                collision_cells_ptr[offset + local] = cell;
+        total_collisions,
+        [=] ATLAS_DEVICE(const int work_index) {
+            int lo = 0;
+            int hi = num_of_cells;
+            while (lo < hi) {
+                const int mid = lo + (hi - lo) / 2;
+                if (collision_offsets_ptr[mid] <= work_index) lo = mid + 1;
+                else hi = mid;
             }
+            collision_cells_ptr[work_index] = lo - 1;
         });
 
     return true;

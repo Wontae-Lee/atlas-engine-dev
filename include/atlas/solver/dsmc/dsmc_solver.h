@@ -249,6 +249,32 @@ public:
                  T max_sigma_g) noexcept;
 
     /**
+     * @brief Attempts one DSMC collision between two global particle indices.
+     *
+     * @details
+     * This is the device hot path used after pair sampling has already resolved
+     * local cell offsets to global particle indices.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static bool
+    collide_indexed_pair(const Probe& probe,
+                         int cell,
+                         std::uint64_t stream,
+                         int particle_i,
+                         int particle_j,
+                         T max_sigma_g) noexcept;
+
+    /**
+     * @brief Samples two distinct local particle indices for one collision trial.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
+    sample_distinct_pair(int& lhs_local,
+                         int& rhs_local,
+                         int cell,
+                         int count,
+                         std::uint64_t seed,
+                         std::uint64_t stream) noexcept;
+
+    /**
      * @brief Returns the global particle index for a local cell particle index.
      *
      * @param nth Local particle index inside the cell.

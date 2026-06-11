@@ -46,29 +46,32 @@ DsmcEnergyExchangeSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
                 const T max_sigma_g = probe.max_sigma_g_ptr[cell];
                 const int begin = probe.cell_start_ptr[cell];
                 const int end = probe.cell_end_ptr[cell];
+                if (count < 2 || !(max_sigma_g > T(0)) || begin < 0 || end <= begin) {
+                    return;
+                }
+                if (end - begin < count) {
+                    return;
+                }
 
                 const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
                     + static_cast<std::uint64_t>(local_collision);
-                const int lhs_local = atlas::sampling::sample_hashed_index(
+                int lhs_local = 0;
+                int rhs_local = 0;
+                DsmcSolver<T>::sample_distinct_pair(
+                    lhs_local,
+                    rhs_local,
                     cell,
                     count,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_LHS_SALT);
-                int rhs_local = atlas::sampling::sample_hashed_index(
-                    cell,
-                    count - 1,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
-                if (rhs_local >= lhs_local) {
-                    ++rhs_local;
-                }
+                    probe.collision_seed,
+                    stream);
 
-                DsmcEnergyExchangeSolver<T>::collide_pair(
+                DsmcEnergyExchangeSolver<T>::collide_indexed_pair(
                     probe,
                     cell,
                     local_collision,
-                    begin,
-                    end,
-                    lhs_local,
-                    rhs_local,
+                    stream,
+                    probe.indices_ptr[begin + lhs_local],
+                    probe.indices_ptr[begin + rhs_local],
                     max_sigma_g);
             });
         return;
@@ -91,30 +94,33 @@ DsmcEnergyExchangeSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
 
             const int begin = probe.cell_start_ptr[cell];
             const int end = probe.cell_end_ptr[cell];
+            if (begin < 0 || end <= begin) {
+                return;
+            }
+            if (end - begin < count) {
+                return;
+            }
+            const auto stream_base = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER;
 
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
-                const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
-                    + static_cast<std::uint64_t>(local_collision);
-                const int lhs_local = atlas::sampling::sample_hashed_index(
+                const auto stream = stream_base + static_cast<std::uint64_t>(local_collision);
+                int lhs_local = 0;
+                int rhs_local = 0;
+                DsmcSolver<T>::sample_distinct_pair(
+                    lhs_local,
+                    rhs_local,
                     cell,
                     count,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_LHS_SALT);
-                int rhs_local = atlas::sampling::sample_hashed_index(
-                    cell,
-                    count - 1,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
-                if (rhs_local >= lhs_local) {
-                    ++rhs_local;
-                }
+                    probe.collision_seed,
+                    stream);
 
-                DsmcEnergyExchangeSolver<T>::collide_pair(
+                DsmcEnergyExchangeSolver<T>::collide_indexed_pair(
                     probe,
                     cell,
                     local_collision,
-                    begin,
-                    end,
-                    lhs_local,
-                    rhs_local,
+                    stream,
+                    probe.indices_ptr[begin + lhs_local],
+                    probe.indices_ptr[begin + rhs_local],
                     max_sigma_g);
             }
         });
@@ -132,7 +138,29 @@ DsmcEnergyExchangeSolver<T>::collide_pair(const Probe& probe,
                                           const T max_sigma_g) noexcept {
     const int particle_i = DsmcSolver<T>::particle_at(lhs_local, begin, end, probe.particle_count, probe.indices_ptr);
     const int particle_j = DsmcSolver<T>::particle_at(rhs_local, begin, end, probe.particle_count, probe.indices_ptr);
-    if (particle_i < 0 || particle_j < 0) {
+
+    const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+        + static_cast<std::uint64_t>(local_collision);
+    return DsmcEnergyExchangeSolver<T>::collide_indexed_pair(
+        probe,
+        cell,
+        local_collision,
+        stream,
+        particle_i,
+        particle_j,
+        max_sigma_g);
+}
+
+template <typename T>
+bool
+DsmcEnergyExchangeSolver<T>::collide_indexed_pair(const Probe& probe,
+                                                  const int cell,
+                                                  const int local_collision,
+                                                  const std::uint64_t stream,
+                                                  const int particle_i,
+                                                  const int particle_j,
+                                                  const T max_sigma_g) noexcept {
+    if (particle_i < 0 || particle_j < 0 || particle_i == particle_j) {
         return false;
     }
 
@@ -166,8 +194,6 @@ DsmcEnergyExchangeSolver<T>::collide_pair(const Probe& probe,
         accept_probability = T(1);
     }
 
-    const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
-        + static_cast<std::uint64_t>(local_collision);
     const T accept_sample = atlas::sampling::sample_hashed_unit_interval<T>(
         cell,
         probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_ACCEPT_SALT);

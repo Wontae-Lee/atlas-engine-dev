@@ -8,17 +8,18 @@
 namespace {
 
 struct DsmcStatisticsFixture {
-    atlas::DeviceBuffer<atlas::Vector3F> velocity { 2 };
-    atlas::DeviceBuffer<std::size_t> species { 2 };
-    atlas::DeviceBuffer<atlas::MaterialProperties<float>> properties { 1 };
-    atlas::DeviceBuffer<float> number_particle { 1 };
-    atlas::DeviceBuffer<float> max_relative_speed { 1 };
-    atlas::DeviceBuffer<float> max_sigma_g { 1 };
-    atlas::DeviceBuffer<float> collision_remainder { 1 };
-    atlas::DeviceBuffer<int> collision_count { 1 };
-    atlas::DeviceBuffer<int> indices { 2 };
-    atlas::DeviceBuffer<int> cell_start { 1 };
-    atlas::DeviceBuffer<int> cell_end { 1 };
+    atlas::DeviceBuffer<atlas::Vector3F> velocity = atlas::DeviceBuffer<atlas::Vector3F>(2);
+    atlas::DeviceBuffer<std::size_t> species = atlas::DeviceBuffer<std::size_t>(2);
+    atlas::DeviceBuffer<atlas::MaterialProperties<float>> properties =
+        atlas::DeviceBuffer<atlas::MaterialProperties<float>>(1);
+    atlas::DeviceBuffer<float> number_particle = atlas::DeviceBuffer<float>(1);
+    atlas::DeviceBuffer<float> max_relative_speed = atlas::DeviceBuffer<float>(1);
+    atlas::DeviceBuffer<float> max_sigma_g = atlas::DeviceBuffer<float>(1);
+    atlas::DeviceBuffer<float> collision_remainder = atlas::DeviceBuffer<float>(1);
+    atlas::DeviceBuffer<int> collision_count = atlas::DeviceBuffer<int>(1);
+    atlas::DeviceBuffer<int> indices = atlas::DeviceBuffer<int>(2);
+    atlas::DeviceBuffer<int> cell_start = atlas::DeviceBuffer<int>(1);
+    atlas::DeviceBuffer<int> cell_end = atlas::DeviceBuffer<int>(1);
     atlas::DsmcProbe<float> probe {};
 
     DsmcStatisticsFixture() {

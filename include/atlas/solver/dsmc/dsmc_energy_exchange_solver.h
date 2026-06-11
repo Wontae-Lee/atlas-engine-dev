@@ -29,6 +29,15 @@ public:
                  int rhs_local,
                  T max_sigma_g) noexcept;
 
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static bool
+    collide_indexed_pair(const Probe& probe,
+                         int cell,
+                         int local_collision,
+                         std::uint64_t stream,
+                         int particle_i,
+                         int particle_j,
+                         T max_sigma_g) noexcept;
+
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     sample_unit(int cell, int local_collision, std::uint64_t seed, std::uint64_t salt) noexcept;
 
