@@ -43,8 +43,7 @@ SourceSensorMatrics::export_csv(const std::filesystem::path& output_directory) c
     std::filesystem::create_directories(output_directory);
     std::ofstream out(output_directory / std::string(filename()));
     out << "step_index,source_unit_index,particle_count\n";
-    const HostBuffer<Record> records(_records.begin(), _records.end());
-    for (const auto& record : records) {
+    for (const auto& record : _records) {
         out << record.step_index << ','
             << record.unit_index << ','
             << record.particle_count << '\n';
@@ -61,8 +60,7 @@ SinkSensorMatrics::export_csv(const std::filesystem::path& output_directory) con
     std::filesystem::create_directories(output_directory);
     std::ofstream out(output_directory / std::string(filename()));
     out << "step_index,sink_unit_index,particle_count\n";
-    const HostBuffer<Record> records(_records.begin(), _records.end());
-    for (const auto& record : records) {
+    for (const auto& record : _records) {
         out << record.step_index << ','
             << record.unit_index << ','
             << record.particle_count << '\n';

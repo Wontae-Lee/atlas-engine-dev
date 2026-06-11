@@ -5,6 +5,7 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
+#include <atlas/spatial/transformed_bounds.h>
 
 #include <algorithm>
 #include <limits>
@@ -160,19 +161,14 @@ VolumeMeasurer<T>::measure_volume() {
             region.end    = grid_high;
             region.active = true;
 
-            const bool finite_bound = local_bound.is_valid()
-                && atlas::math::isfinite(local_bound.lower_corner)
-                && atlas::math::isfinite(local_bound.upper_corner);
+            const auto world_bound = atlas::spatial::transform_aabb(
+                local_bound,
+                [&unit] ATLAS_DEVICE(const Vector3<T>& point) {
+                    return unit.sync_operator().sync_to_world(point);
+                });
 
-            if (!finite_bound) {
+            if (!world_bound.is_valid()) {
                 return;
-            }
-
-            atlas::spatial::AxisAlignedBoundingBox<T> world_bound {};
-            world_bound.reset();
-
-            for (int corner = 0; corner < 8; ++corner) {
-                world_bound.merge(unit.sync_operator().sync_to_world(local_bound.corner(corner)));
             }
 
             if (!world_bound.overlaps(grid_bound)) {

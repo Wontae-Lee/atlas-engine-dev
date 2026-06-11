@@ -198,19 +198,15 @@ private:
     T _temperature { T(273.15) };
 
     /**
-     * @brief Cached local-space emission positions for each source unit.
-     *
-     * Each entry corresponds to one unit and stores the accepted local spawn
-     * positions generated for that unit.
+     * @brief Cached accepted particle count for each source unit.
      */
-    HostBuffer<DeviceBuffer<Vector3<T>>> _local_positions;
+    HostBuffer<int> _local_unit_counts;
 
     /**
      * @brief Flat contiguous device buffer of all local emission positions.
      *
-     * Concatenation of every per-unit position buffer from @ref _local_positions.
-     * Built by rebuild_cache() so emit() can launch a single GPU kernel instead
-     * of one kernel per unit.
+     * Built directly by rebuild_cache() so emit() can launch a single GPU
+     * kernel without per-unit staging buffers.
      */
     DeviceBuffer<Vector3<T>> _flat_local_positions;
 

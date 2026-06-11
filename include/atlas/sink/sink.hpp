@@ -5,6 +5,7 @@
 #include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/scan/exclusive_scan.h>
+#include <atlas/spatial/transformed_bounds.h>
 #include <atlas/tuple/tuple.h>
 #include <limits>
 #include <ranges>
@@ -25,18 +26,13 @@ struct SinkRefreshUnitBound {
         const auto& unit = units[unit_index];
         auto local_bound = unit.geometry_operator().bound();
         auto& world_bound = bounds[unit_index];
-        world_bound.reset();
-
-        const bool finite_bound = local_bound.is_valid()
-            && atlas::math::isfinite(local_bound.lower_corner)
-            && atlas::math::isfinite(local_bound.upper_corner);
-        if (!finite_bound) {
-            return;
-        }
-
-        for (int corner = 0; corner < 8; ++corner) {
-            world_bound.merge(unit.sync_operator().sync_to_world(local_bound.corner(corner)));
-        }
+        const auto transformed_bound = atlas::spatial::transform_aabb(
+            local_bound,
+            [&unit] ATLAS_DEVICE(const Vector3<T>& point) {
+                return unit.sync_operator().sync_to_world(point);
+            });
+        world_bound.lower_corner = transformed_bound.lower_corner;
+        world_bound.upper_corner = transformed_bound.upper_corner;
         if (expand > T(0)) {
             world_bound.expand(expand);
         }
@@ -454,7 +450,7 @@ Sink<T>::Builder::validate() const {
         throw std::runtime_error(
             "Sink::Builder: despawn types must have size 1 or match the unit count.");
     }
-    if (!std::isfinite(_tolerance)) {
+    if (!atlas::math::isfinite(_tolerance)) {
         throw std::runtime_error("Sink::Builder: tolerance must be finite.");
     }
 }

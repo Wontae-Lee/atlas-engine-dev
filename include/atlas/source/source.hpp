@@ -78,7 +78,7 @@ Source<T>::rebuild_cache() noexcept {
 
     if (_units.empty() || _spawn_types.empty() || _spawn_operators.empty() || !_fluid || _fluid->generators().empty()) {
         // Clear all cached data when required source inputs are unavailable.
-        _local_positions.clear();
+        _local_unit_counts.clear();
         _flat_local_positions.clear();
         _flat_unit_indices.clear();
         _local_particle_count = 0;
@@ -92,18 +92,25 @@ Source<T>::rebuild_cache() noexcept {
 
     const auto& generators = _fluid->generators();
 
-    // Copy device buffers to host-side buffers for deterministic cache construction.
+    // Copy CUDA device buffers once for deterministic host-side cache construction.
+#if defined(ATLAS_TASKING_CUDA)
     const HostBuffer<Unit<T>> units(_units.begin(), _units.end());
 
     const HostBuffer<SpawnOperator<T>> spawn_operators(
         _spawn_operators.begin(),
         _spawn_operators.end());
+#else
+    const auto& units           = _units;
+    const auto& spawn_operators = _spawn_operators;
+#endif
 
-    // Store one local-position buffer per source unit.
-    _local_positions.clear();
-    _local_positions.resize(units.size());
+    // Store per-unit counts for observer metrics while building one flat cache.
+    _local_unit_counts.clear();
+    _local_unit_counts.resize(units.size(), 0);
 
-    std::size_t total_count                = 0;
+    HostBuffer<Vector3<T>> flat_positions;
+    HostBuffer<int> flat_unit_indices;
+
     const std::size_t spawn_operator_count = spawn_operators.size();
 
     for (std::size_t i = 0; i < units.size(); ++i) {
@@ -121,13 +128,9 @@ Source<T>::rebuild_cache() noexcept {
         const int ny = atlas::sampling::sample_axis_count(lower.y, upper.y, _spacing);
         const int nz = atlas::sampling::sample_axis_count(lower.z, upper.z, _spacing);
 
-        HostBuffer<Vector3<T>> positions;
+        std::size_t accepted_count = 0;
 
         if (nx > 0 && ny > 0 && nz > 0) {
-            // Reserve the maximum possible number of grid samples inside the bounding box.
-            positions.reserve(
-                static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny) * static_cast<std::size_t>(nz));
-
             for (int iz = 0; iz < nz; ++iz) {
                 for (int iy = 0; iy < ny; ++iy) {
                     for (int ix = 0; ix < nx; ++ix) {
@@ -142,18 +145,16 @@ Source<T>::rebuild_cache() noexcept {
 
                         // Flip mode inverts the accepted region.
                         if (_flip ? !accepted : accepted) {
-                            positions.push_back(sample);
+                            flat_positions.push_back(sample);
+                            flat_unit_indices.push_back(static_cast<int>(i));
+                            ++accepted_count;
                         }
                     }
                 }
             }
         }
 
-        // Accumulate total particle capacity across all source units.
-        total_count += positions.size();
-
-        // Move accepted local positions into device storage for emission kernels.
-        _local_positions[i] = DeviceBuffer<Vector3<T>>(positions.begin(), positions.end());
+        _local_unit_counts[i] = static_cast<int>(accepted_count);
     }
 
     // Reset species shuffle buffers before rebuilding them.
@@ -161,7 +162,8 @@ Source<T>::rebuild_cache() noexcept {
     _shuffled_species.clear();
     _shuffle_keys.clear();
 
-    _local_particle_count = total_count;
+    const std::size_t total_count = flat_positions.size();
+    _local_particle_count         = total_count;
 
     if (total_count == 0) {
         // No cached particles are available for emission.
@@ -172,37 +174,14 @@ Source<T>::rebuild_cache() noexcept {
         return;
     }
 
-    // Build flat contiguous position and unit-index buffers so emit() can launch
-    // a single GPU kernel without searching per-unit offset ranges per particle.
-    {
-        // Compute per-unit start offsets on the host (values are host-known).
-        HostBuffer<int> host_offsets(_local_positions.size() + 1);
-        host_offsets[0] = 0;
-        for (std::size_t i = 0; i < _local_positions.size(); ++i) {
-            host_offsets[i + 1] = host_offsets[i] + static_cast<int>(_local_positions[i].size());
-        }
-
-        // Allocate the flat buffers and fill them with one D2D copy/fill kernel per unit.
-        _flat_local_positions.resize(total_count);
-        _flat_unit_indices.resize(total_count);
-        for (std::size_t i = 0; i < _local_positions.size(); ++i) {
-            const int unit_size = static_cast<int>(_local_positions[i].size());
-            if (unit_size == 0) {
-                continue;
-            }
-            const auto* src = atlas::raw_pointer_cast(_local_positions[i].data());
-            auto* dst = atlas::raw_pointer_cast(_flat_local_positions.data()) + host_offsets[i];
-            auto* unit_indices = atlas::raw_pointer_cast(_flat_unit_indices.data()) + host_offsets[i];
-            const int unit_index = static_cast<int>(i);
-            atlas::parallel_for<ExecutionPolicy::device>(
-                0,
-                unit_size,
-                [=] ATLAS_DEVICE(const int k) {
-                    dst[k]          = src[k];
-                    unit_indices[k] = unit_index;
-                });
-        }
-    }
+    // Move the host-built flat cache to device storage with one transfer per buffer.
+#if defined(ATLAS_TASKING_CUDA)
+    _flat_local_positions = DeviceBuffer<Vector3<T>>(flat_positions.begin(), flat_positions.end());
+    _flat_unit_indices    = DeviceBuffer<int>(flat_unit_indices.begin(), flat_unit_indices.end());
+#else
+    _flat_local_positions = std::move(flat_positions);
+    _flat_unit_indices    = std::move(flat_unit_indices);
+#endif
 
     // Allocate species assignment and shuffle buffers for all cached samples.
     _species_cache.resize(total_count);
@@ -344,8 +323,8 @@ Source<T>::emit() {
     // the host-side knowledge of each unit's position range.
     if (source_sensor_matrics != nullptr) {
         int offset = 0;
-        for (std::size_t u = 0; u < _local_positions.size(); ++u) {
-            const int unit_size = static_cast<int>(_local_positions[u].size());
+        for (std::size_t u = 0; u < _local_unit_counts.size(); ++u) {
+            const int unit_size = _local_unit_counts[u];
             const std::size_t start = static_cast<std::size_t>(offset);
             const std::size_t end   = start + static_cast<std::size_t>(unit_size);
             if (emit_count > start) {
@@ -590,17 +569,17 @@ Source<T>::Builder::validate() const {
     }
 
     // Source sampling spacing must be finite and strictly positive.
-    if (!std::isfinite(_spacing) || _spacing <= T(0)) {
+    if (!atlas::math::isfinite(_spacing) || _spacing <= T(0)) {
         throw std::runtime_error("Source::Builder: spacing must be finite and positive.");
     }
 
     // Geometric tolerance must be finite.
-    if (!std::isfinite(_tolerance)) {
+    if (!atlas::math::isfinite(_tolerance)) {
         throw std::runtime_error("Source::Builder: tolerance must be finite.");
     }
 
     // Emission temperature must be finite.
-    if (!std::isfinite(_temperature)) {
+    if (!atlas::math::isfinite(_temperature)) {
         throw std::runtime_error("Source::Builder: temperature must be finite.");
     }
 }
