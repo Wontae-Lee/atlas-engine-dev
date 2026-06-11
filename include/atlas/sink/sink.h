@@ -157,9 +157,23 @@ public:
 
 private:
     /**
+     * @brief Refreshes finite world-space bounds for sink units.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    refresh_unit_bounds() noexcept;
+
+    /**
      * @brief Sink units defining geometry and transforms used for despawn tests.
      */
     DeviceBuffer<Unit<T>> _units;
+
+    /**
+     * @brief Cached world-space AABBs used to cull sink despawn queries.
+     *
+     * Invalid entries represent units without finite bounds and fall back to the
+     * full despawn query.
+     */
+    DeviceBuffer<atlas::spatial::AxisAlignedBoundingBox<T>> _unit_bounds;
 
     /**
      * @brief Runtime despawn-type tags associated with the sink configuration.
@@ -235,6 +249,14 @@ private:
      * @brief Scratch buffer storing the matched sink-unit index for each particle.
      */
     DeviceBuffer<int> _despawned_unit_indices;
+
+    /**
+     * @brief Single-element scratch buffer used to compute the kept-particle count on device.
+     *
+     * Avoids two separate DeviceBuffer subscript D2H copies when computing
+     * `offsets[last] + keep[last]` at the end of the exclusive-scan pass.
+     */
+    DeviceBuffer<std::size_t> _total_count_buffer {};
 
     /**
      * @brief Cached probe populated by @ref make_probe.

@@ -21,6 +21,12 @@ struct SourceProbe {
     std::size_t* species {};
     int* active {};
 
+    // Flat contiguous array of all local emission positions across every unit.
+    const Vector3<T>* flat_local_positions {};
+
+    // Unit index for each entry in flat_local_positions.
+    const int* flat_unit_indices {};
+
     T temperature {};
     int property_count {};
     std::uint64_t emission_seed {};

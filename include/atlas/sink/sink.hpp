@@ -1,14 +1,50 @@
 #pragma once
 #include <atlas/iterator/zip_iterator.h>
+#include <atlas/memory/copy.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/scan/exclusive_scan.h>
 #include <atlas/tuple/tuple.h>
+#include <limits>
 #include <ranges>
 #include <stdexcept>
 #include <utility>
 namespace atlas::fluid {
+
+namespace detail {
+
+template <typename T>
+struct SinkRefreshUnitBound {
+    const Unit<T>* units {};
+    atlas::spatial::AxisAlignedBoundingBox<T>* bounds {};
+    T expand {};
+
+    ATLAS_DEVICE void
+    operator()(const int unit_index) const {
+        const auto& unit = units[unit_index];
+        auto local_bound = unit.geometry_operator().bound();
+        auto& world_bound = bounds[unit_index];
+        world_bound.reset();
+
+        const bool finite_bound = local_bound.is_valid()
+            && atlas::math::isfinite(local_bound.lower_corner)
+            && atlas::math::isfinite(local_bound.upper_corner);
+        if (!finite_bound) {
+            return;
+        }
+
+        for (int corner = 0; corner < 8; ++corner) {
+            world_bound.merge(unit.sync_operator().sync_to_world(local_bound.corner(corner)));
+        }
+        if (expand > T(0)) {
+            world_bound.expand(expand);
+        }
+    }
+};
+
+} // namespace detail
+
 template <typename T>
 Sink<T>::Sink(DeviceBuffer<Unit<T>> units,
               DeviceBuffer<DespawnType> despawn_types,
@@ -18,6 +54,7 @@ Sink<T>::Sink(DeviceBuffer<Unit<T>> units,
               const T tolerance,
               ObserverHostPtr observer) noexcept
     : _units(std::move(units))
+    , _unit_bounds(_units.size())
     , _despawn_types(std::move(despawn_types))
     , _despawn_operators(std::move(despawn_operators))
     , _fluid(std::move(fluid))
@@ -91,13 +128,34 @@ Sink<T>::sink(const T dt) {
             bool should_despawn    = false;
             int matched_unit_index = -1;
             for (int unit_index = 0; unit_index < probe.unit_count; ++unit_index) {
+                const int despawn_operator_index
+                    = (probe.despawn_operator_count == 1 || unit_index >= probe.despawn_operator_count) ? 0 : unit_index;
+                const auto& despawn_operator = probe.despawn_operators[despawn_operator_index];
+
+                const auto& unit_bound = probe.unit_bounds[unit_index];
+                if (unit_bound.is_valid()) {
+                    if (despawn_operator.type == DespawnType::Tracing) {
+                        if (probe.velocities == nullptr) {
+                            continue;
+                        }
+                        const Vector3<T>& velocity = probe.velocities[i];
+                        const T speed = velocity.length();
+                        if (!(probe.time_step > T(0)) || !(speed > T(0))) {
+                            continue;
+                        }
+                        const auto bound_hit = unit_bound.trace(atlas::spatial::Ray<T>(p, velocity));
+                        if (!bound_hit.is_intersecting || bound_hit.enter > speed * probe.time_step) {
+                            continue;
+                        }
+                    } else if (!unit_bound.contains(p)) {
+                        continue;
+                    }
+                }
+
                 const auto& unit        = probe.units[unit_index];
                 const auto& sync_op     = unit.sync_operator();
                 const auto& geometry_op = unit.geometry_operator();
-                const int despawn_operator_index
-                    = (probe.despawn_operator_count == 1 || unit_index >= probe.despawn_operator_count) ? 0 : unit_index;
                 const Vector3<T> local_p = sync_op.sync_to_local(p);
-                const auto& despawn_operator = probe.despawn_operators[despawn_operator_index];
                 Vector3<T> despawn_vector    = local_p;
                 T despawn_value              = probe.tolerance;
                 if (despawn_operator.type == DespawnType::Tracing) {
@@ -153,7 +211,10 @@ Sink<T>::make_probe(const T dt) noexcept {
         return false;
     }
 
+    refresh_unit_bounds();
+
     _probe.units                  = atlas::raw_pointer_cast(_units.data());
+    _probe.unit_bounds            = atlas::raw_pointer_cast(_unit_bounds.data());
     _probe.despawn_operators      = atlas::raw_pointer_cast(_despawn_operators.data());
     _probe.positions              = atlas::raw_pointer_cast(positions.data());
     if (velocity_state != nullptr && !velocity_state->data().empty()) {
@@ -167,6 +228,30 @@ Sink<T>::make_probe(const T dt) noexcept {
     _probe.tolerance              = _tolerance;
     _probe.time_step              = dt;
     return true;
+}
+
+template <typename T>
+void
+Sink<T>::refresh_unit_bounds() noexcept {
+    if (_units.empty()) {
+        _unit_bounds.clear();
+        return;
+    }
+    if (_unit_bounds.size() != _units.size()) {
+        _unit_bounds.resize(_units.size());
+    }
+    auto* units_ptr = atlas::raw_pointer_cast(_units.data());
+    auto* bounds_ptr = atlas::raw_pointer_cast(_unit_bounds.data());
+    const int unit_count = static_cast<int>(_units.size());
+    const T expand = _tolerance > T(0) ? _tolerance : T(0);
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        unit_count,
+        detail::SinkRefreshUnitBound<T> {
+            units_ptr,
+            bounds_ptr,
+            expand
+        });
 }
 
 template <typename T>
@@ -203,7 +288,23 @@ Sink<T>::compact_fluid_particles() {
         _keep.begin() + static_cast<std::ptrdiff_t>(count),
         _offsets.begin(),
         std::size_t { 0 });
-    const std::size_t kept = _offsets[count - 1] + _keep[count - 1];
+
+    // Compute kept = offsets[last] + keep[last] on device to avoid two separate
+    // D2H transfers from DeviceBuffer::operator[], which each stall the pipeline.
+    if (_total_count_buffer.size() < 1) {
+        _total_count_buffer.resize(1);
+    }
+    auto* total_ptr          = atlas::raw_pointer_cast(_total_count_buffer.data());
+    const auto* scan_offsets = atlas::raw_pointer_cast(_offsets.data());
+    const auto last          = static_cast<std::ptrdiff_t>(count - 1);
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        1,
+        [=] ATLAS_DEVICE(int) {
+            total_ptr[0] = scan_offsets[last] + keep_ptr[last];
+        });
+    std::size_t kept = 0;
+    atlas::copy_device_to_host(total_ptr, &kept, 1);
     if (kept == count) {
         _fluid->set_particle_count(kept);
         return;

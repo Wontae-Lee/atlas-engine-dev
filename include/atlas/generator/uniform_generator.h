@@ -107,6 +107,14 @@ struct UniformGenerateOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T min_value,
              T max_value) const;
+
+    /**
+     * @brief Generate a sample from a temporary engine initialized with @p seed.
+     */
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(unsigned int seed,
+             T min_value,
+             T max_value) const;
 };
 
 /**

@@ -36,6 +36,21 @@ JitteringGenerateOperator<T>::generate(const T,
 }
 
 template <typename T>
+Vector3<T>
+JitteringGenerateOperator<T>::generate(const unsigned int seed,
+                                       const T,
+                                       const T) const {
+    const T radius = jitter_radius < T(0) ? -jitter_radius : jitter_radius;
+    atlas::default_random_engine<T> seeded_engine(seed);
+    atlas::uniform_real_distribution<T> distribution(-radius, radius);
+
+    return Vector3<T>(
+        base_value + distribution(seeded_engine),
+        base_value + distribution(seeded_engine),
+        base_value + distribution(seeded_engine));
+}
+
+template <typename T>
 typename JitteringOperator<T>::Builder
 JitteringOperator<T>::builder() noexcept {
     // Return a fresh builder so callers can configure the jittering operator fluently.

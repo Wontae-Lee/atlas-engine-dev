@@ -13,6 +13,7 @@ Fluid<T>::builder() noexcept {
 template <typename T>
 Fluid<T>::Fluid(const size_t buffer_size)
     : _buffer_size(buffer_size) {
+    _states.reserve(4);
     emplace_state<FluidPositionState<T>>(buffer_size);
     emplace_state<FluidVelocityState<T>>(buffer_size);
     emplace_state<FluidSpeciesState<T>>(buffer_size);
@@ -68,6 +69,14 @@ Fluid<T>::observer() const noexcept {
 }
 
 template <typename T>
+template <typename StateT>
+const std::type_index&
+Fluid<T>::state_key() noexcept {
+    static const std::type_index key { typeid(StateT) };
+    return key;
+}
+
+template <typename T>
 void
 Fluid<T>::set_particle_count(const size_t particle_count) {
     if (particle_count > _buffer_size) {
@@ -84,7 +93,7 @@ Fluid<T>::emplace_state(Args&&... args) {
                   "StateT must derive from atlas::fluid::FluidState.");
     auto state = std::make_unique<StateT>(std::forward<Args>(args)...);
     auto* ptr  = state.get();
-    _states.insert_or_assign(typeid(StateT), std::move(state));
+    _states.insert_or_assign(state_key<StateT>(), std::move(state));
     return *ptr;
 }
 
@@ -97,7 +106,7 @@ Fluid<T>::set_state(std::unique_ptr<StateT> state) {
     if (state == nullptr) {
         throw std::invalid_argument("Fluid::set_state failed: state must not be null.");
     }
-    _states.insert_or_assign(typeid(StateT), std::move(state));
+    _states.insert_or_assign(state_key<StateT>(), std::move(state));
 }
 
 template <typename T>
@@ -106,7 +115,8 @@ StateT*
 Fluid<T>::state() noexcept {
     static_assert(std::is_base_of_v<FluidState, StateT>,
                   "StateT must derive from atlas::fluid::FluidState.");
-    auto it = _states.find(typeid(StateT));
+    const auto& key = state_key<StateT>();
+    auto it = _states.find(key);
     return it == _states.end() ? nullptr : static_cast<StateT*>(it->second.get());
 }
 
@@ -116,7 +126,8 @@ const StateT*
 Fluid<T>::state() const noexcept {
     static_assert(std::is_base_of_v<FluidState, StateT>,
                   "StateT must derive from atlas::fluid::FluidState.");
-    auto it = _states.find(typeid(StateT));
+    const auto& key = state_key<StateT>();
+    auto it = _states.find(key);
     return it == _states.end() ? nullptr : static_cast<const StateT*>(it->second.get());
 }
 
@@ -126,7 +137,7 @@ bool
 Fluid<T>::has_state() const noexcept {
     static_assert(std::is_base_of_v<FluidState, StateT>,
                   "StateT must derive from atlas::fluid::FluidState.");
-    return _states.contains(typeid(StateT));
+    return _states.contains(state_key<StateT>());
 }
 
 template <typename T>
@@ -135,7 +146,8 @@ std::unique_ptr<StateT>
 Fluid<T>::remove_state() {
     static_assert(std::is_base_of_v<FluidState, StateT>,
                   "StateT must derive from atlas::fluid::FluidState.");
-    auto it = _states.find(typeid(StateT));
+    const auto& key = state_key<StateT>();
+    auto it = _states.find(key);
     if (it == _states.end()) {
         return nullptr;
     }
@@ -167,6 +179,9 @@ Fluid<T>
 Fluid<T>::Builder::build() const {
     validate();
     Fluid<T> f(_buffer_size);
+    if (_temperature_state.has_value()) {
+        f._states.reserve(5);
+    }
     f._particle_properties = DeviceBuffer<MaterialProperties<T>>(_particles.begin(), _particles.end());
     f._generators          = DeviceBuffer<GenerateOperator<T>>(_generators.begin(), _generators.end());
     f._statistical_weight  = _statistical_weight;
@@ -207,7 +222,7 @@ Fluid<T>::Builder::make_host_shared() const {
 template <typename T>
 typename Fluid<T>::Builder&
 Fluid<T>::Builder::with_properties(const HostBuffer<MaterialProperties<T>>& properties) {
-    _particles = DeviceBuffer<MaterialProperties<T>>(properties.begin(), properties.end());
+    _particles = properties;
     return *this;
 }
 
@@ -216,6 +231,7 @@ typename Fluid<T>::Builder&
 Fluid<T>::Builder::with_generators(const HostBuffer<GeneratorHostPtr<T>>& generators) {
     _generators.clear();
     const int n = static_cast<int>(generators.size());
+    _generators.reserve(static_cast<std::size_t>(n));
     for (int i = 0; i < n; ++i) {
         _generators.push_back(
             generators[i] ? generators[i]->make_generate_operator() : GenerateOperator<T> {});
@@ -247,32 +263,17 @@ Fluid<T>::Builder::with_observer(ObserverHostPtr observer) noexcept {
 template <typename T>
 typename Fluid<T>::Builder&
 Fluid<T>::Builder::with_binary(const std::string& path) {
-    const auto snapshot = atlas::serialization::load_fluid_binary<T>(path);
+    auto snapshot       = atlas::serialization::load_fluid_binary<T>(path);
     _buffer_size        = snapshot.buffer_size;
     _particle_count     = snapshot.particle_count;
     _statistical_weight = snapshot.statistical_weight;
-    _particles          = DeviceBuffer<MaterialProperties<T>>(snapshot.properties.begin(), snapshot.properties.end());
-    _generators         = DeviceBuffer<GenerateOperator<T>>(snapshot.generators.begin(), snapshot.generators.end());
-    _position_state.reset();
-    _velocity_state.reset();
-    _species_state.reset();
-    _active_state.reset();
-    _temperature_state.reset();
-    if (snapshot.positions.has_value()) {
-        _position_state = DeviceBuffer<Vector3<T>>(snapshot.positions->begin(), snapshot.positions->end());
-    }
-    if (snapshot.velocities.has_value()) {
-        _velocity_state = DeviceBuffer<Vector3<T>>(snapshot.velocities->begin(), snapshot.velocities->end());
-    }
-    if (snapshot.species.has_value()) {
-        _species_state = DeviceBuffer<std::size_t>(snapshot.species->begin(), snapshot.species->end());
-    }
-    if (snapshot.active.has_value()) {
-        _active_state = DeviceBuffer<int>(snapshot.active->begin(), snapshot.active->end());
-    }
-    if (snapshot.temperature.has_value()) {
-        _temperature_state = DeviceBuffer<T>(snapshot.temperature->begin(), snapshot.temperature->end());
-    }
+    _particles          = std::move(snapshot.properties);
+    _generators         = std::move(snapshot.generators);
+    _position_state     = std::move(snapshot.positions);
+    _velocity_state     = std::move(snapshot.velocities);
+    _species_state      = std::move(snapshot.species);
+    _active_state       = std::move(snapshot.active);
+    _temperature_state  = std::move(snapshot.temperature);
     return *this;
 }
 
@@ -288,12 +289,13 @@ Fluid<T>::Builder::validate() const {
             "Fluid::Builder: statistical_weight must be positive.");
     }
     for (std::size_t i = 0; i < _particles.size(); ++i) {
-        const MaterialProperties<T> particle_property = _particles[i];
+        const MaterialProperties<T>& particle_property = _particles[i];
         if (!(particle_property.molecular_mass > T(0))) {
             throw std::runtime_error(
                 "Fluid::Builder: molecular_mass must be positive.");
         }
-        if (particle_property.mass != particle_property.molecular_mass * _statistical_weight) {
+        const T expected_mass = particle_property.molecular_mass * _statistical_weight;
+        if (particle_property.mass != expected_mass) {
             throw std::runtime_error(
                 "Fluid::Builder: particle mass does not match statistical weight.");
         }

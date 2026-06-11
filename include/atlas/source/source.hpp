@@ -7,7 +7,9 @@
 #include <atlas/sampling/sampling.h>
 #include <atlas/shuffle/shuffle_operator.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <stdexcept>
 #include <utility>
 
@@ -77,6 +79,8 @@ Source<T>::rebuild_cache() noexcept {
     if (_units.empty() || _spawn_types.empty() || _spawn_operators.empty() || !_fluid || _fluid->generators().empty()) {
         // Clear all cached data when required source inputs are unavailable.
         _local_positions.clear();
+        _flat_local_positions.clear();
+        _flat_unit_indices.clear();
         _local_particle_count = 0;
         _species_cache.clear();
         _shuffled_species.clear();
@@ -161,9 +165,43 @@ Source<T>::rebuild_cache() noexcept {
 
     if (total_count == 0) {
         // No cached particles are available for emission.
+        _flat_local_positions.clear();
+        _flat_unit_indices.clear();
         _shuffle_seed         = 0;
         _is_invalidated_cache = false;
         return;
+    }
+
+    // Build flat contiguous position and unit-index buffers so emit() can launch
+    // a single GPU kernel without searching per-unit offset ranges per particle.
+    {
+        // Compute per-unit start offsets on the host (values are host-known).
+        HostBuffer<int> host_offsets(_local_positions.size() + 1);
+        host_offsets[0] = 0;
+        for (std::size_t i = 0; i < _local_positions.size(); ++i) {
+            host_offsets[i + 1] = host_offsets[i] + static_cast<int>(_local_positions[i].size());
+        }
+
+        // Allocate the flat buffers and fill them with one D2D copy/fill kernel per unit.
+        _flat_local_positions.resize(total_count);
+        _flat_unit_indices.resize(total_count);
+        for (std::size_t i = 0; i < _local_positions.size(); ++i) {
+            const int unit_size = static_cast<int>(_local_positions[i].size());
+            if (unit_size == 0) {
+                continue;
+            }
+            const auto* src = atlas::raw_pointer_cast(_local_positions[i].data());
+            auto* dst = atlas::raw_pointer_cast(_flat_local_positions.data()) + host_offsets[i];
+            auto* unit_indices = atlas::raw_pointer_cast(_flat_unit_indices.data()) + host_offsets[i];
+            const int unit_index = static_cast<int>(i);
+            atlas::parallel_for<ExecutionPolicy::device>(
+                0,
+                unit_size,
+                [=] ATLAS_DEVICE(const int k) {
+                    dst[k]          = src[k];
+                    unit_indices[k] = unit_index;
+                });
+        }
     }
 
     // Allocate species assignment and shuffle buffers for all cached samples.
@@ -198,13 +236,12 @@ Source<T>::shuffle_species(const std::size_t count) {
         return;
     }
 
-    // Start from the deterministic species cache.
-    _shuffled_species = _species_cache;
-
     // Advance the seed so each emission step gets a different shuffled order.
     const std::uint64_t seed = _shuffle_seed++;
 
-    auto* keys = atlas::raw_pointer_cast(this->_shuffle_keys.data());
+    const auto* cache = atlas::raw_pointer_cast(this->_species_cache.data());
+    auto* shuffled = atlas::raw_pointer_cast(this->_shuffled_species.data());
+    auto* keys     = atlas::raw_pointer_cast(this->_shuffle_keys.data());
 
     const ShuffleOperator shuffle {};
 
@@ -212,14 +249,15 @@ Source<T>::shuffle_species(const std::size_t count) {
         static_cast<std::size_t>(0),
         count,
         [=] ATLAS_DEVICE(const std::size_t i) {
-            // Generate a sortable pseudo-random key for each species entry.
-            keys[i] = shuffle(static_cast<int>(i), seed);
+            // Copy and key only the species range that will be emitted this step.
+            shuffled[i] = cache[i];
+            keys[i]     = shuffle(static_cast<int>(i), seed);
         });
 
     // Sort species by pseudo-random keys to distribute species assignments.
     atlas::parallel_sort_by_key<ExecutionPolicy::device>(
         _shuffle_keys.begin(),
-        _shuffle_keys.end(),
+        _shuffle_keys.begin() + static_cast<std::ptrdiff_t>(count),
         _shuffled_species.begin());
 }
 
@@ -302,72 +340,53 @@ Source<T>::emit() {
 
     const ShuffleOperator shuffle {};
 
-    std::size_t species_offset = 0;
-    std::size_t emitted_count  = 0;
-    int dst_offset             = static_cast<int>(current_particle_count);
-
-    for (std::size_t unit_index = 0; unit_index < _local_positions.size(); ++unit_index) {
-        const auto& positions       = _local_positions[unit_index];
-        const std::size_t remaining = emit_count - emitted_count;
-
-        if (remaining == 0) {
-            break;
+    // Compute per-unit emission counts on the host for observer metrics using
+    // the host-side knowledge of each unit's position range.
+    if (source_sensor_matrics != nullptr) {
+        int offset = 0;
+        for (std::size_t u = 0; u < _local_positions.size(); ++u) {
+            const int unit_size = static_cast<int>(_local_positions[u].size());
+            const std::size_t start = static_cast<std::size_t>(offset);
+            const std::size_t end   = start + static_cast<std::size_t>(unit_size);
+            if (emit_count > start) {
+                emitted_per_unit[u] = std::min(emit_count, end) - start;
+            }
+            offset += unit_size;
         }
-
-        // Emit at most the remaining allowed number of particles from this unit.
-        const int count = static_cast<int>(positions.size() < remaining ? positions.size() : remaining);
-
-        if (count == 0) {
-            continue;
-        }
-
-        if (source_sensor_matrics != nullptr) {
-            // Store the per-unit emitted count for later observer recording.
-            emitted_per_unit[unit_index] = static_cast<std::size_t>(count);
-        }
-
-        const auto* local_positions = atlas::raw_pointer_cast(positions.data());
-
-        // Offset into the globally shuffled species array for this unit.
-        const auto* local_species = probe.shuffled_species + species_offset;
-
-        atlas::parallel_for<ExecutionPolicy::device>(
-            0,
-            count,
-            [=] ATLAS_DEVICE(const int i) {
-                const int dst    = dst_offset + i;
-                const size_t sid = local_species[i];
-
-                // Ignore invalid species ids defensively.
-                if (sid >= static_cast<std::size_t>(probe.property_count)) {
-                    return;
-                }
-
-                auto generator = probe.generators[sid];
-
-                // Reseed the velocity generator per destination particle for deterministic variation.
-                generator.reseed(static_cast<unsigned int>(shuffle(dst, probe.emission_seed)));
-
-                Vector3<T> world_pos;
-
-                // Convert local source sample coordinates into world-space coordinates.
-                probe.units[unit_index].sync_operator().sync_to_world(local_positions[i], world_pos);
-
-                // Write emitted particle state into the fluid buffers.
-                probe.positions[dst]  = world_pos;
-                probe.velocities[dst] = generator.generate(probe.temperature, probe.properties[sid].molecular_mass);
-                probe.species[dst]    = sid;
-                probe.active[dst]     = 1;
-            });
-
-        // Advance emission offsets for the next source unit.
-        species_offset += static_cast<std::size_t>(count);
-        emitted_count += static_cast<std::size_t>(count);
-        dst_offset += count;
     }
 
+    const int dst_offset = static_cast<int>(current_particle_count);
+
+    // Single flat kernel launch over all emit_count particles. Each thread reads
+    // its owning unit directly from the cache, avoiding per-particle offset searches.
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        static_cast<int>(emit_count),
+        [=] ATLAS_DEVICE(const int i) {
+            const int unit_index = probe.flat_unit_indices[i];
+            const int dst    = dst_offset + i;
+            const size_t sid = probe.shuffled_species[i];
+
+            if (sid >= static_cast<std::size_t>(probe.property_count)) {
+                return;
+            }
+
+            const auto sample_seed = static_cast<unsigned int>(shuffle(dst, probe.emission_seed));
+
+            Vector3<T> world_pos;
+            probe.units[unit_index].sync_operator().sync_to_world(probe.flat_local_positions[i], world_pos);
+
+            probe.positions[dst]  = world_pos;
+            probe.velocities[dst] = probe.generators[sid].generate(
+                sample_seed,
+                probe.temperature,
+                probe.properties[sid].molecular_mass);
+            probe.species[dst]    = sid;
+            probe.active[dst]     = 1;
+        });
+
     // Publish the new particle count after all emitted particle data has been written.
-    _fluid->set_particle_count(current_particle_count + emitted_count);
+    _fluid->set_particle_count(current_particle_count + emit_count);
 
     // Persist observer metrics for this emission step.
     record_source_metrics();
@@ -390,21 +409,24 @@ Source<T>::make_probe() noexcept {
     const auto& properties_buf = _fluid->particle_properties();
 
     if (positions_buf.empty() || velocities_buf.empty() || species_buf.empty() || active_buf.empty()
-        || generators_buf.empty() || properties_buf.empty()) {
+        || generators_buf.empty() || properties_buf.empty()
+        || _flat_local_positions.empty() || _flat_unit_indices.empty()) {
         return false;
     }
 
-    _probe.units            = atlas::raw_pointer_cast(_units.data());
-    _probe.generators       = atlas::raw_pointer_cast(generators_buf.data());
-    _probe.properties       = atlas::raw_pointer_cast(properties_buf.data());
-    _probe.shuffled_species = atlas::raw_pointer_cast(_shuffled_species.data());
-    _probe.positions        = atlas::raw_pointer_cast(positions_buf.data());
-    _probe.velocities       = atlas::raw_pointer_cast(velocities_buf.data());
-    _probe.species          = atlas::raw_pointer_cast(species_buf.data());
-    _probe.active           = atlas::raw_pointer_cast(active_buf.data());
-    _probe.temperature      = _temperature;
-    _probe.property_count   = static_cast<int>(properties_buf.size());
-    _probe.emission_seed    = _shuffle_seed;
+    _probe.units                  = atlas::raw_pointer_cast(_units.data());
+    _probe.generators             = atlas::raw_pointer_cast(generators_buf.data());
+    _probe.properties             = atlas::raw_pointer_cast(properties_buf.data());
+    _probe.shuffled_species       = atlas::raw_pointer_cast(_shuffled_species.data());
+    _probe.positions              = atlas::raw_pointer_cast(positions_buf.data());
+    _probe.velocities             = atlas::raw_pointer_cast(velocities_buf.data());
+    _probe.species                = atlas::raw_pointer_cast(species_buf.data());
+    _probe.active                 = atlas::raw_pointer_cast(active_buf.data());
+    _probe.flat_local_positions   = atlas::raw_pointer_cast(_flat_local_positions.data());
+    _probe.flat_unit_indices      = atlas::raw_pointer_cast(_flat_unit_indices.data());
+    _probe.temperature            = _temperature;
+    _probe.property_count         = static_cast<int>(properties_buf.size());
+    _probe.emission_seed          = _shuffle_seed;
 
     return true;
 }

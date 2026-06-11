@@ -53,6 +53,14 @@ struct JitteringGenerateOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T param0,
              T param1) const;
+
+    /**
+     * @brief Generate a jittered value from a temporary engine initialized with @p seed.
+     */
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(unsigned int seed,
+             T param0,
+             T param1) const;
 };
 
 /**

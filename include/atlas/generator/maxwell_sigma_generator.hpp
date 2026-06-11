@@ -22,11 +22,40 @@ MaxwellSigmaGenerateOperator<T>::generate(const T sigma) const {
         return Vector3<T>(T(0), T(0), T(0));
     }
 
+    T x {};
+    T y {};
+    T z {};
+    T unused {};
+    atlas::sampling::generate_standard_normal_pair<T>(engine, x, y);
+    atlas::sampling::generate_standard_normal_pair<T>(engine, z, unused);
+
     // Sample each velocity component independently from N(0, sigma^2).
     return Vector3<T>(
-        sigma * atlas::sampling::generate_standard_normal<T>(engine),
-        sigma * atlas::sampling::generate_standard_normal<T>(engine),
-        sigma * atlas::sampling::generate_standard_normal<T>(engine));
+        sigma * x,
+        sigma * y,
+        sigma * z);
+}
+
+template <typename T>
+Vector3<T>
+MaxwellSigmaGenerateOperator<T>::generate(const unsigned int seed,
+                                          const T sigma) const {
+    if (!(sigma > T(0))) {
+        return Vector3<T>(T(0), T(0), T(0));
+    }
+
+    atlas::default_random_engine<T> seeded_engine(seed);
+    T x {};
+    T y {};
+    T z {};
+    T unused {};
+    atlas::sampling::generate_standard_normal_pair<T>(seeded_engine, x, y);
+    atlas::sampling::generate_standard_normal_pair<T>(seeded_engine, z, unused);
+
+    return Vector3<T>(
+        sigma * x,
+        sigma * y,
+        sigma * z);
 }
 
 template <typename T>

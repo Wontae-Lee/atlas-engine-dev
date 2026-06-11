@@ -303,6 +303,22 @@ struct GenerateOperator final {
              T param1 = T(1)) const;
 
     /**
+     * @brief Generate a vector sample using a per-call seed without mutating this operator.
+     *
+     * This path is intended for parallel emission kernels where each particle has
+     * an independent seed and copying/reseeding the full operator would be wasteful.
+     *
+     * @param seed Seed used for this generated sample.
+     * @param param0 Primary generator parameter.
+     * @param param1 Secondary generator parameter. Defaults to `1`.
+     * @return Generated vector sample.
+     */
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(unsigned int seed,
+             T param0,
+             T param1 = T(1)) const;
+
+    /**
      * @brief Reseeds the active generator payload.
      *
      * @param seed Seed value applied to the active generator engine.

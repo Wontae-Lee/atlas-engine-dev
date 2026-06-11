@@ -1,6 +1,8 @@
 #include "../utilities/test_utils.h"
 
 #include <atlas/fluid/fluid_state.h>
+#include <atlas/memory/copy.h>
+#include <atlas/memory/raw_pointer_cast.h>
 
 #include <testkit/testkit.h>
 
@@ -120,12 +122,14 @@ TEST(FluidState, InternalEnergyStateCompactsKeptEntries) {
     state.compact(compact_indices, 2);
 
     // Assert: kept internal-energy values preserve their relative order.
-    EXPECT_NEAR(state.data()[0].translational, 4.0f, tol);
-    EXPECT_NEAR(state.data()[0].rotational, 5.0f, tol);
-    EXPECT_NEAR(state.data()[0].vibrational, 6.0f, tol);
-    EXPECT_NEAR(state.data()[1].translational, 10.0f, tol);
-    EXPECT_NEAR(state.data()[1].rotational, 11.0f, tol);
-    EXPECT_NEAR(state.data()[1].vibrational, 12.0f, tol);
+    FluidInternalEnergy<float> actual[2] {};
+    atlas::copy_device_to_host(atlas::raw_pointer_cast(state.data().data()), actual, 2);
+    EXPECT_NEAR(actual[0].translational, 4.0f, tol);
+    EXPECT_NEAR(actual[0].rotational, 5.0f, tol);
+    EXPECT_NEAR(actual[0].vibrational, 6.0f, tol);
+    EXPECT_NEAR(actual[1].translational, 10.0f, tol);
+    EXPECT_NEAR(actual[1].rotational, 11.0f, tol);
+    EXPECT_NEAR(actual[1].vibrational, 12.0f, tol);
 }
 
 TEST(FluidState, CompactWithZeroKeptLeavesExistingDataAccessible) {

@@ -206,6 +206,22 @@ private:
     HostBuffer<DeviceBuffer<Vector3<T>>> _local_positions;
 
     /**
+     * @brief Flat contiguous device buffer of all local emission positions.
+     *
+     * Concatenation of every per-unit position buffer from @ref _local_positions.
+     * Built by rebuild_cache() so emit() can launch a single GPU kernel instead
+     * of one kernel per unit.
+     */
+    DeviceBuffer<Vector3<T>> _flat_local_positions;
+
+    /**
+     * @brief Unit index for each flat local emission position.
+     *
+     * Entry i stores the source unit that owns _flat_local_positions[i].
+     */
+    DeviceBuffer<int> _flat_unit_indices;
+
+    /**
      * @brief Total number of cached local particle positions across all units.
      */
     std::size_t _local_particle_count = 0;

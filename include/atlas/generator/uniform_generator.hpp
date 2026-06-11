@@ -29,6 +29,20 @@ UniformGenerateOperator<T>::generate(const T min_value,
 }
 
 template <typename T>
+Vector3<T>
+UniformGenerateOperator<T>::generate(const unsigned int seed,
+                                     const T min_value,
+                                     const T max_value) const {
+    atlas::default_random_engine<T> seeded_engine(seed);
+    atlas::uniform_real_distribution<T> dist(min_value, max_value);
+
+    return Vector3<T>(
+        dist(seeded_engine),
+        dist(seeded_engine),
+        dist(seeded_engine));
+}
+
+template <typename T>
 typename UniformGenerator<T>::Builder
 UniformGenerator<T>::builder() noexcept {
     // Return a fresh builder so callers can configure the generator fluently.

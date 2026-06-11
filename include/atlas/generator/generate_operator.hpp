@@ -139,6 +139,25 @@ GenerateOperator<T>::generate(const T param0,
 }
 
 template <typename T>
+Vector3<T>
+GenerateOperator<T>::generate(const unsigned int seed,
+                              const T param0,
+                              const T param1) const {
+    switch (type) {
+    case GenerateType::uniform:
+        return uniform.generate(seed, param0, param1);
+    case GenerateType::jittering:
+        return jittering.generate(seed, param0, param1);
+    case GenerateType::maxwell_sigma:
+        return maxwell_sigma.generate(seed, param0);
+    case GenerateType::maxwell_boltzmann:
+        return maxwell_boltzmann.generate(seed, param0, param1);
+    default:
+        return Vector3<T>(T(0), T(0), T(0));
+    }
+}
+
+template <typename T>
 void
 GenerateOperator<T>::reseed(const unsigned int seed) noexcept {
     switch (type) {

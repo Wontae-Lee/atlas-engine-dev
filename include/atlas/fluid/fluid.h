@@ -288,6 +288,10 @@ public:
 private:
     friend class Builder;
 
+    template <typename StateT>
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE static const std::type_index&
+    state_key() noexcept;
+
     /**
      * @brief Device buffer storing particle/species material properties.
      */
@@ -429,14 +433,14 @@ private:
 
 private:
     /**
-     * @brief Builder-owned device buffer for material properties.
+     * @brief Builder-owned host staging buffer for material properties.
      */
-    DeviceBuffer<MaterialProperties<T>> _particles;
+    HostBuffer<MaterialProperties<T>> _particles;
 
     /**
-     * @brief Builder-owned device buffer for generator operators.
+     * @brief Builder-owned host staging buffer for generator operators.
      */
-    DeviceBuffer<GenerateOperator<T>> _generators;
+    HostBuffer<GenerateOperator<T>> _generators;
 
     /**
      * @brief Requested particle buffer capacity.
@@ -456,27 +460,27 @@ private:
     /**
      * @brief Optional position state restored from a binary snapshot.
      */
-    std::optional<DeviceBuffer<Vector3<T>>> _position_state;
+    std::optional<HostBuffer<Vector3<T>>> _position_state;
 
     /**
      * @brief Optional velocity state restored from a binary snapshot.
      */
-    std::optional<DeviceBuffer<Vector3<T>>> _velocity_state;
+    std::optional<HostBuffer<Vector3<T>>> _velocity_state;
 
     /**
      * @brief Optional species state restored from a binary snapshot.
      */
-    std::optional<DeviceBuffer<std::size_t>> _species_state;
+    std::optional<HostBuffer<std::size_t>> _species_state;
 
     /**
      * @brief Optional active-mask state restored from a binary snapshot.
      */
-    std::optional<DeviceBuffer<int>> _active_state;
+    std::optional<HostBuffer<int>> _active_state;
 
     /**
      * @brief Optional temperature state restored from a binary snapshot.
      */
-    std::optional<DeviceBuffer<T>> _temperature_state;
+    std::optional<HostBuffer<T>> _temperature_state;
 
     /**
      * @brief Optional active particle count restored from a binary snapshot.

@@ -131,6 +131,14 @@ struct MaxwellBoltzmannGenerateOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T temperature,
              T molecular_mass) const;
+
+    /**
+     * @brief Generate a sample from a temporary engine initialized with @p seed.
+     */
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(unsigned int seed,
+             T temperature,
+             T molecular_mass) const;
 };
 
 /**
