@@ -2,7 +2,6 @@
 
 #include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 
 #include <cmath>
@@ -48,7 +47,7 @@ SphSolver<T>::solve(const T dt) {
         throw std::invalid_argument("SphSolver: dt must be positive.");
     }
 
-    // Allocate and clear per-particle working buffers.
+    // Allocate per-particle working buffers; active entries are overwritten by later stages.
     if (!prepare_fields()) {
         reset_fields();
         return;
@@ -175,14 +174,6 @@ SphSolver<T>::prepare_fields() {
     _pressure.resize(static_cast<std::size_t>(particle_count));
     _acceleration.resize(static_cast<std::size_t>(particle_count));
 
-    // Clear transient particle fields before the current solve step.
-    atlas::parallel_fill<ExecutionPolicy::device>(_density.begin(), _density.end(), T(0));
-    atlas::parallel_fill<ExecutionPolicy::device>(_pressure.begin(), _pressure.end(), T(0));
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        _acceleration.begin(),
-        _acceleration.end(),
-        Vector3<T>(T(0), T(0), T(0)));
-
     // Clear universe outputs for this step.
     reset_fields();
 
@@ -253,28 +244,24 @@ SphSolver<T>::estimate_density() {
             const Vector3<int> base_cell = particle_cell(position, probe.lower_corner, probe.inverse_cell_size, probe.grid_size);
 
             const int neighbor_search_radius = search_radius(h, probe.cell_size);
-            T density                        = T(0);
+            const T h_squared                = h * h;
+            const Vector3<int> radius_cell(neighbor_search_radius);
+            const Vector3<int> min_cell = atlas::math::max(
+                base_cell - radius_cell,
+                Vector3<int>(0, 0, 0));
+            const Vector3<int> max_cell = atlas::math::min(
+                base_cell + radius_cell,
+                probe.grid_size - Vector3<int>(1, 1, 1));
+            const int y_stride = probe.grid_size.x;
+            const int z_stride = probe.grid_size.x * probe.grid_size.y;
+            T density          = T(0);
 
             // Visit all neighboring grid cells inside the smoothing-length search radius.
-            for (int dz = -neighbor_search_radius; dz <= neighbor_search_radius; ++dz) {
-                for (int dy = -neighbor_search_radius; dy <= neighbor_search_radius; ++dy) {
-                    for (int dx = -neighbor_search_radius; dx <= neighbor_search_radius; ++dx) {
-                        const Vector3<int> neighbor_cell = base_cell + Vector3<int>(dx, dy, dz);
-
-                        if (!valid_cell(neighbor_cell, probe.grid_size)) {
-                            continue;
-                        }
-
-                        const int cell = static_cast<int>(SpatialHashingSearcher<T>::linear_key(
-                            neighbor_cell.x,
-                            neighbor_cell.y,
-                            neighbor_cell.z,
-                            probe.grid_size));
-
-                        if (cell < 0 || cell >= probe.num_of_cells) {
-                            continue;
-                        }
-
+            for (int z = min_cell.z; z <= max_cell.z; ++z) {
+                const int z_offset = z * z_stride;
+                for (int y = min_cell.y; y <= max_cell.y; ++y) {
+                    int cell = z_offset + y * y_stride + min_cell.x;
+                    for (int x = min_cell.x; x <= max_cell.x; ++x, ++cell) {
                         const int begin = probe.cell_start_ptr[cell];
                         const int end   = probe.cell_end_ptr[cell];
 
@@ -291,11 +278,13 @@ SphSolver<T>::estimate_density() {
                             }
 
                             const Vector3<T> delta = position - probe.position_ptr[neighbor_index];
-                            const T radius         = delta.length();
+                            const T radius_squared = delta.length_squared();
 
-                            if (radius > h) {
+                            if (radius_squared > h_squared) {
                                 continue;
                             }
+
+                            const T radius = static_cast<T>(sqrt(radius_squared));
 
                             const std::size_t neighbor_species_index = probe.species_ptr[neighbor_index];
 
@@ -327,7 +316,7 @@ void
 SphSolver<T>::count_particles() {
     const auto probe = _probe;
 
-    // Count valid particles in each search cell.
+    // Searcher ranges contain active particles, so the range length is the cell count.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
@@ -340,17 +329,7 @@ SphSolver<T>::count_particles() {
                 return;
             }
 
-            int count = 0;
-
-            for (int sorted_index = begin; sorted_index < end; ++sorted_index) {
-                const int particle_index = probe.indices_ptr[sorted_index];
-
-                if (particle_index >= 0 && particle_index < probe.particle_count) {
-                    ++count;
-                }
-            }
-
-            probe.number_particle_ptr[cell] = static_cast<T>(count);
+            probe.number_particle_ptr[cell] = static_cast<T>(end - begin);
         });
 }
 
@@ -385,28 +364,24 @@ SphSolver<T>::accelerate(const T dt) {
             const Vector3<int> base_cell = particle_cell(position, probe.lower_corner, probe.inverse_cell_size, probe.grid_size);
 
             const int neighbor_search_radius = search_radius(h, probe.cell_size);
+            const T h_squared                = h * h;
+            const Vector3<int> radius_cell(neighbor_search_radius);
+            const Vector3<int> min_cell = atlas::math::max(
+                base_cell - radius_cell,
+                Vector3<int>(0, 0, 0));
+            const Vector3<int> max_cell = atlas::math::min(
+                base_cell + radius_cell,
+                probe.grid_size - Vector3<int>(1, 1, 1));
+            const int y_stride = probe.grid_size.x;
+            const int z_stride = probe.grid_size.x * probe.grid_size.y;
             Vector3<T> acceleration(T(0), T(0), T(0));
 
             // Accumulate pressure and viscosity interaction from neighbor particles.
-            for (int dz = -neighbor_search_radius; dz <= neighbor_search_radius; ++dz) {
-                for (int dy = -neighbor_search_radius; dy <= neighbor_search_radius; ++dy) {
-                    for (int dx = -neighbor_search_radius; dx <= neighbor_search_radius; ++dx) {
-                        const Vector3<int> neighbor_cell = base_cell + Vector3<int>(dx, dy, dz);
-
-                        if (!valid_cell(neighbor_cell, probe.grid_size)) {
-                            continue;
-                        }
-
-                        const int cell = static_cast<int>(SpatialHashingSearcher<T>::linear_key(
-                            neighbor_cell.x,
-                            neighbor_cell.y,
-                            neighbor_cell.z,
-                            probe.grid_size));
-
-                        if (cell < 0 || cell >= probe.num_of_cells) {
-                            continue;
-                        }
-
+            for (int z = min_cell.z; z <= max_cell.z; ++z) {
+                const int z_offset = z * z_stride;
+                for (int y = min_cell.y; y <= max_cell.y; ++y) {
+                    int cell = z_offset + y * y_stride + min_cell.x;
+                    for (int x = min_cell.x; x <= max_cell.x; ++x, ++cell) {
                         const int begin = probe.cell_start_ptr[cell];
                         const int end   = probe.cell_end_ptr[cell];
 
@@ -438,11 +413,13 @@ SphSolver<T>::accelerate(const T dt) {
                             }
 
                             const Vector3<T> delta = position - probe.position_ptr[neighbor_index];
-                            const T radius         = delta.length();
+                            const T radius_squared = delta.length_squared();
 
-                            if (!(radius > T(0)) || radius > h) {
+                            if (!(radius_squared > T(0)) || radius_squared > h_squared) {
                                 continue;
                             }
+
+                            const T radius = static_cast<T>(sqrt(radius_squared));
 
                             // Add pressure-gradient acceleration.
                             const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, h);
@@ -570,8 +547,8 @@ bool
 SphSolver<T>::valid_cell(const Vector3<int>& cell,
                          const Vector3<int>& grid_size) noexcept {
     // Check half-open grid bounds: [0, grid_size).
-    return cell.x >= 0 && cell.y >= 0 && cell.z >= 0
-        && cell.x < grid_size.x && cell.y < grid_size.y && cell.z < grid_size.z;
+    return atlas::math::all(cell >= Vector3<int>(0, 0, 0))
+        && atlas::math::all(cell < grid_size);
 }
 
 template <typename T>

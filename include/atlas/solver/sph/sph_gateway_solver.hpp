@@ -2,7 +2,6 @@
 
 #include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 
 #include <cmath>
@@ -64,7 +63,7 @@ SphGatewaySolver<T>::solve(const DeviceBuffer<int>* allocated_solver, const int 
         throw std::invalid_argument("SphGatewaySolver: dt must be positive.");
     }
 
-    // Allocate and clear all transient group buffers for this solve step.
+    // Allocate transient group buffers; representative slots are overwritten by later stages.
     if (!prepare_group_fields()) {
         reset_universe_fields();
         return;
@@ -191,43 +190,6 @@ SphGatewaySolver<T>::prepare_group_fields() {
     _group_pressure.resize(static_cast<std::size_t>(particle_count));
     _group_member_count.resize(static_cast<std::size_t>(particle_count));
     _group_species.resize(static_cast<std::size_t>(particle_count));
-
-    // Clear per-cell group counts.
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        _cell_group_count.begin(),
-        _cell_group_count.end(),
-        0);
-
-    // Clear vector-valued group buffers.
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        _group_position.begin(),
-        _group_position.end(),
-        Vector3<T>(T(0), T(0), T(0)));
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        _group_velocity.begin(),
-        _group_velocity.end(),
-        Vector3<T>(T(0), T(0), T(0)));
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        _group_updated_position.begin(),
-        _group_updated_position.end(),
-        Vector3<T>(T(0), T(0), T(0)));
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        _group_updated_velocity.begin(),
-        _group_updated_velocity.end(),
-        Vector3<T>(T(0), T(0), T(0)));
-
-    // Clear scalar group buffers.
-    atlas::parallel_fill<ExecutionPolicy::device>(_group_mass.begin(), _group_mass.end(), T(0));
-    atlas::parallel_fill<ExecutionPolicy::device>(_group_density.begin(), _group_density.end(), T(0));
-    atlas::parallel_fill<ExecutionPolicy::device>(_group_pressure.begin(), _group_pressure.end(), T(0));
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        _group_member_count.begin(),
-        _group_member_count.end(),
-        0);
-    atlas::parallel_fill<ExecutionPolicy::device>(
-        _group_species.begin(),
-        _group_species.end(),
-        std::size_t(0));
 
     // Clear universe outputs for this step.
     reset_universe_fields();
@@ -459,11 +421,12 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>
                 }
 
                 // Resolve material parameters for the representative group.
-                const auto& property     = probe.properties_ptr[species_index];
-                const T smoothing_length = smoothing_length_for(property, probe.cell_size);
-                const T rest_density     = rest_density_for(property);
-                const T pressure_coeff   = pressure_coefficient_for(property);
-                const Vector3<T> lhs_pos = group_position_ptr[lhs_index];
+                const auto& property                 = probe.properties_ptr[species_index];
+                const T smoothing_length             = smoothing_length_for(property, probe.cell_size);
+                const T smoothing_length_squared     = smoothing_length * smoothing_length;
+                const T rest_density                 = rest_density_for(property);
+                const T pressure_coeff               = pressure_coefficient_for(property);
+                const Vector3<T> lhs_pos             = group_position_ptr[lhs_index];
 
                 T density = T(0);
 
@@ -471,8 +434,14 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>
                 for (int rhs_group = 0; rhs_group < group_count; ++rhs_group) {
                     const int rhs_index         = begin + rhs_group;
                     const Vector3<T> delta      = lhs_pos - group_position_ptr[rhs_index];
-                    const T radius              = delta.length();
+                    const T radius_squared      = delta.length_squared();
                     const T representative_mass = group_mass_ptr[rhs_index];
+
+                    if (radius_squared > smoothing_length_squared) {
+                        continue;
+                    }
+
+                    const T radius = static_cast<T>(sqrt(radius_squared));
 
                     density += representative_mass * probe.kernel.density_weight(radius, smoothing_length);
                 }
@@ -537,12 +506,13 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
                 }
 
                 // Resolve representative material and state.
-                const auto& property     = probe.properties_ptr[species_index];
-                const T smoothing_length = smoothing_length_for(property, probe.cell_size);
-                const T viscosity        = property.dynamic_viscosity.value_or(T(0));
-                const T group_mass       = group_mass_ptr[lhs_index];
-                const Vector3<T> lhs_pos = group_position_ptr[lhs_index];
-                const Vector3<T> lhs_vel = group_velocity_ptr[lhs_index];
+                const auto& property                 = probe.properties_ptr[species_index];
+                const T smoothing_length             = smoothing_length_for(property, probe.cell_size);
+                const T smoothing_length_squared     = smoothing_length * smoothing_length;
+                const T viscosity                    = property.dynamic_viscosity.value_or(T(0));
+                const T group_mass                   = group_mass_ptr[lhs_index];
+                const Vector3<T> lhs_pos             = group_position_ptr[lhs_index];
+                const Vector3<T> lhs_vel             = group_velocity_ptr[lhs_index];
 
                 Vector3<T> acceleration(T(0), T(0), T(0));
 
@@ -560,11 +530,13 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
                     }
 
                     const Vector3<T> delta = lhs_pos - group_position_ptr[rhs_index];
-                    const T radius         = delta.length();
+                    const T radius_squared = delta.length_squared();
 
-                    if (!(radius > T(0)) || radius > smoothing_length) {
+                    if (!(radius_squared > T(0)) || radius_squared > smoothing_length_squared) {
                         continue;
                     }
+
+                    const T radius = static_cast<T>(sqrt(radius_squared));
 
                     // Add pressure-gradient acceleration.
                     const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, smoothing_length);
@@ -715,8 +687,8 @@ bool
 SphGatewaySolver<T>::is_valid_neighbor_cell(const Vector3<int>& cell,
                                             const Vector3<int>& grid_size) noexcept {
     // Check half-open grid bounds: [0, grid_size).
-    return cell.x >= 0 && cell.y >= 0 && cell.z >= 0
-        && cell.x < grid_size.x && cell.y < grid_size.y && cell.z < grid_size.z;
+    return atlas::math::all(cell >= Vector3<int>(0, 0, 0))
+        && atlas::math::all(cell < grid_size);
 }
 
 template <typename T>

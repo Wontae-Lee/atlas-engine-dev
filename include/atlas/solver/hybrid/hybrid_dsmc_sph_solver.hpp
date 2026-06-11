@@ -1067,8 +1067,8 @@ template <typename T>
 bool
 HybridDsmcSphSolver<T>::is_valid_neighbor_cell(const Vector3<int>& cell,
                                                const Vector3<int>& grid_size) noexcept {
-    return cell.x >= 0 && cell.y >= 0 && cell.z >= 0
-        && cell.x < grid_size.x && cell.y < grid_size.y && cell.z < grid_size.z;
+    return atlas::math::all(cell >= Vector3<int>(0, 0, 0))
+        && atlas::math::all(cell < grid_size);
 }
 
 template <typename T>

@@ -192,20 +192,24 @@ public:
     make_probe() noexcept;
 
     /**
-     * @brief Allocates and clears per-particle working fields for the current step.
+     * @brief Allocates per-particle working fields for the current step.
      *
-     * The working buffers are resized to `fluid->particle_count()` and cleared:
+     * The working buffers are resized to `fluid->particle_count()`:
      *
-     * - `_density` is filled with zero,
-     * - `_pressure` is filled with zero,
-     * - `_acceleration` is filled with zero vectors.
+     * - `_density`,
+     * - `_pressure`,
+     * - `_acceleration`.
+     *
+     * Active entries are overwritten by the density and acceleration stages.
+     * Avoiding an unconditional clear removes three full-buffer device writes per
+     * solve step.
      *
      * Universe output fields are reset by calling @ref reset_fields.
      *
      * If the particle count is not positive, all working buffers are cleared,
      * universe fields are reset, and the function returns `false`.
      *
-     * @retval true Working fields were allocated and cleared.
+     * @retval true Working fields were allocated.
      * @retval false Particle count was zero or negative.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE bool
@@ -372,7 +376,7 @@ private:
     /**
      * @brief Solver-owned per-particle density working buffer.
      *
-     * Resized and cleared by @ref prepare_fields, then populated by
+     * Resized by @ref prepare_fields, then populated by
      * @ref estimate_density.
      */
     DeviceBuffer<T> _density {};
@@ -380,7 +384,7 @@ private:
     /**
      * @brief Solver-owned per-particle pressure working buffer.
      *
-     * Resized and cleared by @ref prepare_fields, then populated by
+     * Resized by @ref prepare_fields, then populated by
      * @ref estimate_density.
      */
     DeviceBuffer<T> _pressure {};
@@ -388,7 +392,7 @@ private:
     /**
      * @brief Solver-owned per-particle acceleration working buffer.
      *
-     * Resized and cleared by @ref prepare_fields, then populated by
+     * Resized by @ref prepare_fields, then populated by
      * @ref accelerate.
      */
     DeviceBuffer<Vector3<T>> _acceleration {};

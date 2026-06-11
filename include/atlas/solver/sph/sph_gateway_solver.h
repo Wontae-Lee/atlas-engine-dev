@@ -354,7 +354,7 @@ public:
     initialize_context() noexcept;
 
     /**
-     * @brief Allocates and clears grouped-SPH working buffers for the current step.
+     * @brief Allocates grouped-SPH working buffers for the current step.
      *
      * @details
      * The solver allocates:
@@ -377,13 +377,13 @@ public:
      * representative_index = cell_begin + group_local;
      * @endcode
      *
-     * All group buffers are cleared to zero-equivalent values before the solve
-     * stages begin. Universe-side output fields are also reset.
+     * Representative slots are overwritten by the grouped solve stages, so the
+     * group buffers are not pre-cleared. Universe-side output fields are reset.
      *
      * If either particle count or cell count is not positive, all group buffers
      * are cleared, universe fields are reset, and the function returns `false`.
      *
-     * @retval true Group buffers were allocated and cleared.
+     * @retval true Group buffers were allocated.
      * @retval false Particle count or cell count was not positive.
      *
      * @post On success, transient group buffers are sized for the current solve step.
@@ -838,8 +838,8 @@ protected:
      * @brief Per-cell group count for the current solve step.
      *
      * @details
-     * This buffer has one entry per universe cell. It is resized and cleared by
-     * `prepare_group_fields()` and populated by `update_cell_particle_counts()`.
+     * This buffer has one entry per universe cell. It is resized by
+     * `prepare_group_fields()` and overwritten by `update_cell_particle_counts()`.
      */
     DeviceBuffer<int> _cell_group_count {};
 
