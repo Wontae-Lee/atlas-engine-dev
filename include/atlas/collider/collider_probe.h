@@ -15,6 +15,7 @@ struct ColliderProbe {
     const atlas::spatial::AxisAlignedBoundingBox<T>* unit_bounds {};
     const SurfaceInteractionKernel<T>* surface_interactions {};
     const std::uint8_t* flips {};
+    atlas::spatial::AxisAlignedBoundingBox<T> scene_bound {};
 
     Vector3<T>* positions {};
     Vector3<T>* velocities {};
@@ -27,6 +28,7 @@ struct ColliderProbe {
     int flip_count {};
     int material_count {};
     int particle_count {};
+    bool scene_bound_covers_units {};
 };
 
 }

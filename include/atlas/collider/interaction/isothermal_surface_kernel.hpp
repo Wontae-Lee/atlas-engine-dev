@@ -183,19 +183,19 @@ template <typename T>
 void
 IsothermalSurfaceInteraction<T>::Builder::validate() const {
     // Restitution scales outgoing speed, so it must be finite and non-negative.
-    if (!std::isfinite(_restitution) || _restitution < T(0)) {
+    if (!atlas::math::isfinite(_restitution) || _restitution < T(0)) {
         throw std::runtime_error(
             "IsothermalSurfaceInteraction::Builder: restitution must be finite and non-negative.");
     }
 
     // Momentum accommodation is used as a mixing probability, so it must lie within [0, 1].
-    if (!std::isfinite(_momentum_acc) || _momentum_acc < T(0) || _momentum_acc > T(1)) {
+    if (!atlas::math::isfinite(_momentum_acc) || _momentum_acc < T(0) || _momentum_acc > T(1)) {
         throw std::runtime_error(
             "IsothermalSurfaceInteraction::Builder: momentum_acc must be finite and within [0, 1].");
     }
 
     // Temperature is a physical scalar and must not be negative or non-finite.
-    if (!std::isfinite(_temperature) || _temperature < T(0)) {
+    if (!atlas::math::isfinite(_temperature) || _temperature < T(0)) {
         throw std::runtime_error(
             "IsothermalSurfaceInteraction::Builder: temperature must be finite and non-negative.");
     }

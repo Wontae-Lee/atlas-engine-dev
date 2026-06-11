@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atlas/logging/logging.h>
-#include <atlas/math/constants.h>
+#include <atlas/math/math.h>
 #include <atlas/sampling/sampling.h>
 
 #include <algorithm>
@@ -144,7 +144,8 @@ MaxwellianSurfaceInteraction<T>::vib_style() const noexcept {
 template <typename T>
 T
 MaxwellianSurfaceInteraction<T>::most_probable_speed() const noexcept {
-    return std::sqrt(T(2) * static_cast<T>(atlas::boltzmann_constant) * _temperature / _molecular_mass);
+    return atlas::math::sqrt_nonnegative(
+        T(2) * static_cast<T>(atlas::boltzmann_constant) * _temperature / _molecular_mass);
 }
 
 template <typename T>
@@ -196,9 +197,11 @@ MaxwellianSurfaceInteraction<T>::sample(const Vector3<T>& incident,
     }
 
     const T vrm      = most_probable_speed();
-    const T vperp    = vrm * std::sqrt(-std::log(detail::maxwellian_unit_sample(perpendicular_sample)));
+    const T vperp = vrm * atlas::math::sqrt_nonnegative(
+        -std::log(detail::maxwellian_unit_sample(perpendicular_sample)));
     const T theta    = T(2) * static_cast<T>(atlas::pi) * theta_sample;
-    const T vtangent = vrm * std::sqrt(-std::log(detail::maxwellian_unit_sample(tangent_sample)));
+    const T vtangent = vrm * atlas::math::sqrt_nonnegative(
+        -std::log(detail::maxwellian_unit_sample(tangent_sample)));
     const T vtan1    = vtangent * std::sin(theta);
     const T vtan2    = vtangent * std::cos(theta);
 
@@ -297,8 +300,8 @@ MaxwellianSurfaceInteraction<T>::sample_internal_energy_mode(const T incident,
     const T wall_energy = static_cast<T>(atlas::boltzmann_constant) * _temperature;
     const T safe_wall   = wall_energy > T(0) ? wall_energy : std::numeric_limits<T>::min();
     const T safe_energy = std::max(incident, T(0));
-    const T magnitude   = std::sqrt(safe_energy * (T(1) - acc) / safe_wall);
-    const T radius      = std::sqrt(-acc * std::log(detail::maxwellian_unit_sample(sample)));
+    const T magnitude   = atlas::math::sqrt_nonnegative(safe_energy * (T(1) - acc) / safe_wall);
+    const T radius      = atlas::math::sqrt_nonnegative(-acc * std::log(detail::maxwellian_unit_sample(sample)));
     const T phase       = std::cos(T(2) * static_cast<T>(atlas::pi) * theta_sample);
 
     return safe_wall * (radius * radius + magnitude * magnitude + T(2) * radius * magnitude * phase);
@@ -476,21 +479,21 @@ MaxwellianSurfaceInteraction<T>::Builder::make_host_shared() const {
 template <typename T>
 void
 MaxwellianSurfaceInteraction<T>::Builder::validate() const {
-    if (!std::isfinite(_temperature) || _temperature <= T(0)) {
+    if (!atlas::math::isfinite(_temperature) || _temperature <= T(0)) {
         throw std::runtime_error(
             "MaxwellianSurfaceInteraction::Builder: temperature must be finite and positive.");
     }
 
-    if (!std::isfinite(_molecular_mass) || _molecular_mass <= T(0)) {
+    if (!atlas::math::isfinite(_molecular_mass) || _molecular_mass <= T(0)) {
         throw std::runtime_error(
             "MaxwellianSurfaceInteraction::Builder: molecular_mass must be finite and positive.");
     }
 
     const bool invalid_accommodation =
-        !std::isfinite(_momentum_acc) || _momentum_acc < T(0) || _momentum_acc > T(1)
-        || !std::isfinite(_trans_acc) || _trans_acc < T(0) || _trans_acc > T(1)
-        || !std::isfinite(_rot_acc) || _rot_acc < T(0) || _rot_acc > T(1)
-        || !std::isfinite(_vib_acc) || _vib_acc < T(0) || _vib_acc > T(1);
+        !atlas::math::isfinite(_momentum_acc) || _momentum_acc < T(0) || _momentum_acc > T(1)
+        || !atlas::math::isfinite(_trans_acc) || _trans_acc < T(0) || _trans_acc > T(1)
+        || !atlas::math::isfinite(_rot_acc) || _rot_acc < T(0) || _rot_acc > T(1)
+        || !atlas::math::isfinite(_vib_acc) || _vib_acc < T(0) || _vib_acc > T(1);
 
     if (invalid_accommodation) {
         throw std::runtime_error(

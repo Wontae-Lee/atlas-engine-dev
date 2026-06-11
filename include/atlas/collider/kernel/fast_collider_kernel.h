@@ -6,7 +6,7 @@
  */
 
 #include <atlas/collider/interaction/surface_interaction_kernel.h>
-#include <atlas/math/constants.h>
+#include <atlas/math/math.h>
 #include <atlas/unit/unit.h>
 
 namespace atlas::system {

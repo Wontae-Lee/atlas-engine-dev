@@ -151,11 +151,45 @@ public:
     make_probe() const noexcept;
 
 private:
+    struct ParticleHit {
+        bool found {};
+        T distance {};
+        T time {};
+        T speed {};
+        Vector3<T> position {};
+        Vector3<T> normal {};
+        int unit_index { -1 };
+    };
+
     /**
      * @brief Refreshes finite world-space bounds for collider units.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     refresh_unit_bounds() const;
+
+    /**
+     * @brief Finds the closest collider hit for one particle sweep.
+     */
+    ATLAS_DEVICE static ParticleHit
+    trace_particle(const ColliderProbe& probe,
+                   const PostColliderKernel<T>& post_collider_kernel,
+                   const Vector3<T>& p0,
+                   const Vector3<T>& velocity,
+                   const Vector3<T>& direction,
+                   T particle_speed,
+                   T particle_sweep_length,
+                   T dt);
+
+    /**
+     * @brief Applies the selected surface response to one particle hit.
+     */
+    ATLAS_DEVICE static void
+    apply_particle_hit(const ColliderProbe& probe,
+                       const PostColliderKernel<T>& post_collider_kernel,
+                       int particle_index,
+                       const Vector3<T>& velocity,
+                       const ParticleHit& hit,
+                       T dt);
 
     /**
      * @brief Device buffer containing collider units.
@@ -171,6 +205,16 @@ private:
      * the full narrow-phase query.
      */
     mutable DeviceBuffer<atlas::spatial::AxisAlignedBoundingBox<T>> _unit_bounds;
+
+    /**
+     * @brief Cached world-space AABB enclosing all finite unit bounds.
+     */
+    mutable atlas::spatial::AxisAlignedBoundingBox<T> _scene_bound {};
+
+    /**
+     * @brief Whether _scene_bound covers every collider unit.
+     */
+    mutable bool _scene_bound_covers_units {};
 
     /**
      * @brief Host-side target fluid whose particle states are modified by collision processing.
