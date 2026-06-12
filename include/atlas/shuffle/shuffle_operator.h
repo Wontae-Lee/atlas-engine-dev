@@ -56,4 +56,19 @@
 
 #include <cstdint>
 
+namespace atlas {
+
+class ShuffleOperator final {
+public:
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE std::uint64_t
+    shuffle_key(int index,
+                std::uint64_t seed) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE std::uint64_t
+    operator()(int index,
+               std::uint64_t seed) const noexcept;
+};
+
+} // namespace atlas
+
 #include <atlas/shuffle/shuffle_operator.hpp>

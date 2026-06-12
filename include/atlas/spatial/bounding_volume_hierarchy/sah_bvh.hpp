@@ -221,7 +221,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(
     }
 
     const Vector3<T> ext  = centroid_bounds.extents();
-    const bool degenerate = atlas::all(ext <= eps);
+    const bool degenerate = atlas::all(ext <= T(eps));
     const int count       = end - start;
 
     // Stop splitting when the node is small enough or centroids cannot separate.

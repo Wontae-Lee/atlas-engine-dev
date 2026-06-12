@@ -10,6 +10,7 @@
  */
 
 #include <atlas/core/macros.h>
+#include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/solver/solver.h>
 #include <atlas/solver/sph/sph_kernel.h>
 #include <atlas/solver/sph/sph_probe.h>

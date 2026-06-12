@@ -357,6 +357,7 @@ target_include_directories(atlas-serialization
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         PRIVATE
         "${ATLAS_PROTO_OUTPUT_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobj"
 )
 
 target_link_libraries(atlas-serialization

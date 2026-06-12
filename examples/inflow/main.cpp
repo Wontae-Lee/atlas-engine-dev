@@ -55,7 +55,7 @@ main() {
                         .build();
 
     // Configure the velocity generator for newly spawned particles.
-    generators[0] = fluid::MaxwellBoltzmannGenerator<T>::builder()
+    generators[0] = MaxwellBoltzmannGenerator<T>::builder()
                         // Use 300 K as the thermal temperature of the injected gas.
                         .with_temperature(300.0f)
 
@@ -95,7 +95,7 @@ main() {
     // box domain, and the circular source disk.
 
     // Build the open cylinder used as the inward-facing collider wall.
-    const auto cylinder_geometry = geometry::Cylinder<T>::builder()
+    const auto cylinder_geometry = Cylinder<T>::builder()
                                        // Center the cylinder at the origin.
                                        .with_center(Vector3F(0, 0, 0))
 
@@ -113,7 +113,7 @@ main() {
 
     // Build the simulation domain from the cylinder's axis-aligned bounds.
     const auto bounds          = cylinder_geometry->bound();
-    const auto domain_geometry = geometry::Box<T>::builder()
+    const auto domain_geometry = Box<T>::builder()
                                      // Match the cylinder lower bound.
                                      .with_lower_corner(bounds.lower_corner)
 
@@ -124,7 +124,7 @@ main() {
                                      .make_host_shared();
 
     // Build the circular source near the +z side of the cylinder.
-    const auto source_geometry = geometry::Circle<T>::builder()
+    const auto source_geometry = Circle<T>::builder()
                                      // Place the source disk near the positive z side.
                                      .with_center(Vector3F(0.0f, 0.0f, 3.6f))
 
@@ -176,7 +176,7 @@ main() {
         universe,
         fluid,
         searcher,
-        system::DsmcKernelType::hard_sphere);
+        DsmcKernelType::hard_sphere);
 
     // Configure the field measurer.
     const auto measurer = BoltzmanMeasurer<T>::builder()
@@ -264,7 +264,7 @@ main() {
     // This block defines how particles enter, leave, and interact with geometry.
 
     // Configure circular surface particle injection.
-    const auto source = fluid::Source<T>::builder()
+    const auto source = Source<T>::builder()
                             // Use the source unit as the injection region.
                             .with_units(HostBuffer<Unit<T>> { *source_unit })
 
@@ -275,12 +275,12 @@ main() {
                             .with_observer(observer)
 
                             // Spawn particles on the surface of the source geometry.
-                            .with_spawn_types(HostBuffer<fluid::SpawnType> {
-                                fluid::SpawnType::Surface,
+                            .with_spawn_types(HostBuffer<SpawnType> {
+                                SpawnType::Surface,
                             })
 
                             // Use a surface spawn operator matching the selected spawn type.
-                            .with_spawn_operator(fluid::SpawnOperator<T>(fluid::SpawnType::Surface))
+                            .with_spawn_operator(SpawnOperator<T>(SpawnType::Surface))
 
                             // Set the approximate particle spacing on the source disk.
                             .with_spacing(0.015f)
@@ -292,7 +292,7 @@ main() {
                             .make_host_shared();
 
     // Configure particle removal at the cylinder bounding box.
-    const auto sink = fluid::Sink<T>::builder()
+    const auto sink = Sink<T>::builder()
                           // Use the domain unit as the sink reference region.
                           .with_units(HostBuffer<Unit<T>> { *domain_unit })
 
@@ -303,12 +303,12 @@ main() {
                           .with_observer(observer)
 
                           // Evaluate despawning using the volume of the domain geometry.
-                          .with_despawn_types(HostBuffer<fluid::DespawnType> {
-                              fluid::DespawnType::Volume,
+                          .with_despawn_types(HostBuffer<DespawnType> {
+                              DespawnType::Volume,
                           })
 
                           // Use a volume despawn operator matching the selected despawn type.
-                          .with_despawn_operator(fluid::DespawnOperator<T>(fluid::DespawnType::Volume))
+                          .with_despawn_operator(DespawnOperator<T>(DespawnType::Volume))
 
                           // Flip the volume test so particles outside the domain are removed.
                           .with_flip(true)
@@ -326,10 +326,10 @@ main() {
 
                               // Define one surface-interaction model for the cylinder wall.
                               .with_surface_interactions(
-                                  HostBuffer<system::IsothermalSurfaceInteraction<T>> {
-                                      system::IsothermalSurfaceInteraction<T>::builder()
+                                  HostBuffer<IsothermalSurfaceInteraction<T>> {
+                                      IsothermalSurfaceInteraction<T>::builder()
                                           // Use cosine-weighted diffuse reflection.
-                                          .with_diffuse_sampling(system::DiffuseSampling::CosineWeighted)
+                                          .with_diffuse_sampling(DiffuseSampling::CosineWeighted)
 
                                           // Preserve incident speed magnitude.
                                           .with_restitution(1.0f)

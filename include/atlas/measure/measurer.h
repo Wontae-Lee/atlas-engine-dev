@@ -200,7 +200,7 @@ protected:
     /**
      * @brief Cached probe populated by @ref make_probe.
      */
-    MeasurerProbe _probe {};
+    MeasurerProbe<T> _probe {};
 };
 
 } // namespace atlas

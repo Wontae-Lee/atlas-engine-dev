@@ -44,4 +44,4 @@ public:
 
 } // namespace atlas::detail
 
-#include <atlas/solver/sph/sph_probe_builder.hpp>
+#include <atlas/solver/sph/detail/sph_probe_builder.hpp>

@@ -5,7 +5,6 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
-#include <atlas/spatial/transformed_bounds.h>
 
 #include <algorithm>
 #include <limits>

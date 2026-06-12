@@ -43,4 +43,4 @@ public:
 
 } // namespace atlas::detail
 
-#include <atlas/solver/dsmc/dsmc_probe_builder.hpp>
+#include <atlas/solver/dsmc/detail/dsmc_probe_builder.hpp>

@@ -6,8 +6,8 @@
 #include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/sampling/sampling.h>
-#include <atlas/solver/dsmc/dsmc_probe_builder.h>
-#include <atlas/solver/sph/sph_probe_builder.h>
+#include <atlas/solver/dsmc/detail/dsmc_probe_builder.h>
+#include <atlas/solver/sph/detail/sph_probe_builder.h>
 
 #include <cmath>
 #include <cstddef>

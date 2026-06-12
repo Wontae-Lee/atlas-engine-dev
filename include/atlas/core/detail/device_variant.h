@@ -76,7 +76,7 @@ struct DeviceVariant final {
 
 private:
     template <typename Case, typename... Rest, typename... Args>
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
+    ATLAS_ALL_DEVICE static void
     construct_by_tag(Owner& owner, const Tag tag, const Args&... args) noexcept {
         if (tag == Case::tag) {
             using Payload = typename Case::payload_type;
@@ -92,7 +92,7 @@ private:
     }
 
     template <typename Payload, typename Case, typename... Rest>
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
+    ATLAS_ALL_DEVICE static void
     construct_by_payload(Owner& owner, const Payload& payload) noexcept {
         if constexpr (std::is_same_v<Payload, typename Case::payload_type>) {
             owner.type = Case::tag;
@@ -107,7 +107,7 @@ private:
     }
 
     template <typename Case, typename... Rest>
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
+    ATLAS_ALL_DEVICE static void
     copy_by_tag(Owner& owner, const Owner& other, const Tag tag) noexcept {
         if (tag == Case::tag) {
             using Payload = typename Case::payload_type;
@@ -123,7 +123,7 @@ private:
     }
 
     template <typename Case, typename... Rest>
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
+    ATLAS_ALL_DEVICE static void
     destroy_by_tag(Owner& owner, const Tag tag) noexcept {
         if (tag == Case::tag) {
             using Payload = typename Case::payload_type;

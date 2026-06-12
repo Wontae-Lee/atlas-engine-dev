@@ -1,12 +1,22 @@
 #pragma once
 #include <atlas/parallel/parallel_for.h>
 
-namespace atlas {
-
 #if defined(ATLAS_TASKING_CUDA)
 
 #include <thrust/execution_policy.h>
 #include <thrust/transform_reduce.h>
+
+#else
+
+#include <iterator>
+#include <optional>
+#include <type_traits>
+
+#endif
+
+namespace atlas {
+
+#if defined(ATLAS_TASKING_CUDA)
 
 namespace detail {
 
@@ -177,10 +187,6 @@ transform_reduce(InputIt first, InputIt last,
 }
 
 #else
-
-#include <iterator>
-#include <optional>
-#include <type_traits>
 
 namespace detail {
 

@@ -249,7 +249,7 @@ template <typename T>
 Vector3<T>
 AxisAlignedBoundingBox<T>::clamp(const Vector3<T>& point) const noexcept {
     // Project the point onto the box by clamping each coordinate.
-    return clamp(point, lower_corner, upper_corner);
+    return atlas::clamp(point, lower_corner, upper_corner);
 }
 
 template <typename T>
@@ -257,6 +257,22 @@ bool
 AxisAlignedBoundingBox<T>::is_empty() const noexcept {
     // A box is empty when at least one axis has non-positive length.
     return any(upper_corner <= lower_corner);
+}
+
+template <typename T, typename TransformPoint>
+AxisAlignedBoundingBox<T>
+transform_aabb(const AxisAlignedBoundingBox<T>& bound,
+               TransformPoint transform) noexcept {
+    AxisAlignedBoundingBox<T> transformed {};
+    if (!bound.is_valid()) {
+        return transformed;
+    }
+
+    for (int corner = 0; corner < 8; ++corner) {
+        transformed.merge(transform(bound.corner(static_cast<std::size_t>(corner))));
+    }
+
+    return transformed;
 }
 
 } // namespace atlas

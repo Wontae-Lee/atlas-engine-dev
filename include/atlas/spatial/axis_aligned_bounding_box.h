@@ -47,6 +47,7 @@
 #include <atlas/math/math.h>
 #include <atlas/spatial/ray.h>
 
+#include <cstddef>
 #include <limits>
 
 namespace atlas {
@@ -886,6 +887,22 @@ aabb_distance_squared(const AxisAlignedBoundingBox<T>& bounds,
     const Vector3<T> closest = bounds.clamp(point);
     return (closest - point).length_squared();
 }
+
+/**
+ * @brief Transforms an AABB by applying a point transform to all eight corners.
+ *
+ * @param bound Input axis-aligned bound in the source coordinate space.
+ * @param transform Point transform applied to each source-space corner.
+ * @return AABB enclosing all transformed corners, or an invalid box when
+ *         @p bound is invalid.
+ *
+ * @tparam T Floating-point scalar type.
+ * @tparam TransformPoint Callable returning a transformed Vector3<T>.
+ */
+template <typename T, typename TransformPoint>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AxisAlignedBoundingBox<T>
+transform_aabb(const AxisAlignedBoundingBox<T>& bound,
+               TransformPoint transform) noexcept;
 
 } // namespace atlas
 

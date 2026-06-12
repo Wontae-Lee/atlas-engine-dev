@@ -3,7 +3,7 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/sampling/sampling.h>
-#include <atlas/solver/dsmc/dsmc_probe_builder.h>
+#include <atlas/solver/dsmc/detail/dsmc_probe_builder.h>
 
 #include <cstddef>
 #include <cstdint>

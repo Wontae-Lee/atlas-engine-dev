@@ -11,6 +11,7 @@ using atlas::RayF;
 using atlas::Vector3F;
 using atlas::make_aabb;
 using atlas::merge_aabb;
+using atlas::transform_aabb;
 using atlas::test::vec_near;
 using atlas::tol;
 
@@ -141,4 +142,36 @@ TEST(AxisAlignedBoundingBox, FreeHelpersMakeAndMergeAabbWork) {
     EXPECT_TRUE(merged.is_valid());
     EXPECT_TRUE(vec_near(merged.lower_corner, Vector3F(-1, -1, -1), tol));
     EXPECT_TRUE(vec_near(merged.upper_corner, Vector3F(3, 4, 5), tol));
+}
+
+TEST(AxisAlignedBoundingBox, TransformAabbEnclosesTransformedCorners) {
+    // Arrange: create a unit box and a transform that mirrors and translates points.
+    const AABBF box(Vector3F(-1, -2, 0), Vector3F(2, 1, 3));
+
+    // Act: transform every corner and collect the enclosing AABB.
+    const auto transformed = transform_aabb(
+        box,
+        [] ATLAS_ALL_DEVICE (const Vector3F& p) noexcept {
+            return Vector3F(-p.x + 1.0f, p.y * 2.0f, p.z + 4.0f);
+        });
+
+    // Assert: the resulting bounds conservatively enclose every transformed corner.
+    EXPECT_TRUE(transformed.is_valid());
+    EXPECT_TRUE(vec_near(transformed.lower_corner, Vector3F(-1, -4, 4), tol));
+    EXPECT_TRUE(vec_near(transformed.upper_corner, Vector3F(2, 2, 7), tol));
+}
+
+TEST(AxisAlignedBoundingBox, TransformAabbKeepsInvalidInputInvalid) {
+    // Arrange: default construction creates an invalid empty bound.
+    const AABBF box;
+
+    // Act: transform an invalid bound.
+    const auto transformed = transform_aabb(
+        box,
+        [] ATLAS_ALL_DEVICE (const Vector3F& p) noexcept {
+            return p;
+        });
+
+    // Assert: invalid inputs return an empty invalid output.
+    EXPECT_FALSE(transformed.is_valid());
 }

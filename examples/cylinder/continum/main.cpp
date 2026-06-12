@@ -50,7 +50,7 @@ main() {
                         .build();
 
     // Configure the velocity generator for newly spawned particles.
-    generators[0] = fluid::JitteringOperator<T>::builder()
+    generators[0] = JitteringOperator<T>::builder()
                         // Inject particles with a positive x-direction base velocity.
                         .with_base_value(2.4f)
 
@@ -123,7 +123,7 @@ main() {
                                 .with_searcher(searcher)
 
                                 // Use the cubic spline kernel for SPH interpolation.
-                                .with_kernel_type(system::SphKernelType::cubic_spline)
+                                .with_kernel_type(SphKernelType::cubic_spline)
 
                                 // Allocate the solver in host-managed shared ownership.
                                 .make_host_shared();
@@ -172,7 +172,7 @@ main() {
     //   - cylinder_geometry: an internal solid obstacle used by the collider.
 
     // Full simulation box used as the outer control volume.
-    const auto domain_geometry = geometry::Box<T>::builder()
+    const auto domain_geometry = Box<T>::builder()
                                      // Match the lower corner of the universe domain.
                                      .with_lower_corner(Vector3F(-5.0f, -2.0f, -1.2f))
 
@@ -183,7 +183,7 @@ main() {
                                      .make_host_shared();
 
     // Local source box where new particles are injected.
-    const auto source_geometry = geometry::Box<T>::builder()
+    const auto source_geometry = Box<T>::builder()
                                      // Place the source near the left side of the domain.
                                      .with_lower_corner(Vector3F(-4.5f, -0.7f, -0.2f))
 
@@ -194,7 +194,7 @@ main() {
                                      .make_host_shared();
 
     // Cylindrical obstacle placed near the center of the domain.
-    const auto cylinder_geometry = geometry::Cylinder<T>::builder()
+    const auto cylinder_geometry = Cylinder<T>::builder()
                                        // Center the cylinder at the origin.
                                        .with_center(Vector3F(0, 0, 0))
 
@@ -253,7 +253,7 @@ main() {
     //   - collider: handles particle-surface interaction with the cylinder.
 
     // Configure particle injection.
-    const auto source = fluid::Source<T>::builder()
+    const auto source = Source<T>::builder()
                             // Use the source unit as the injection region.
                             .with_units(HostBuffer<Unit<T>> { *source_unit })
 
@@ -261,12 +261,12 @@ main() {
                             .with_fluid(fluid)
 
                             // Spawn particles throughout the volume of the source geometry.
-                            .with_spawn_types(HostBuffer<fluid::SpawnType> {
-                                fluid::SpawnType::Volume,
+                            .with_spawn_types(HostBuffer<SpawnType> {
+                                SpawnType::Volume,
                             })
 
                             // Use a volume spawn operator matching the selected spawn type.
-                            .with_spawn_operator(fluid::SpawnOperator<T>(fluid::SpawnType::Volume))
+                            .with_spawn_operator(SpawnOperator<T>(SpawnType::Volume))
 
                             // Set the approximate particle spacing inside the source region.
                             .with_spacing(0.16f)
@@ -278,7 +278,7 @@ main() {
                             .make_host_shared();
 
     // Configure particle removal at the domain boundary.
-    const auto sink = fluid::Sink<T>::builder()
+    const auto sink = Sink<T>::builder()
                           // Use the full domain unit as the sink reference region.
                           .with_units(HostBuffer<Unit<T>> { *domain_unit })
 
@@ -286,12 +286,12 @@ main() {
                           .with_fluid(fluid)
 
                           // Evaluate despawning using the volume of the domain geometry.
-                          .with_despawn_types(HostBuffer<fluid::DespawnType> {
-                              fluid::DespawnType::Volume,
+                          .with_despawn_types(HostBuffer<DespawnType> {
+                              DespawnType::Volume,
                           })
 
                           // Use a volume despawn operator matching the selected despawn type.
-                          .with_despawn_operator(fluid::DespawnOperator<T>(fluid::DespawnType::Volume))
+                          .with_despawn_operator(DespawnOperator<T>(DespawnType::Volume))
 
                           // Flip the volume test so particles outside the domain are removed
                           // instead of particles inside the domain.

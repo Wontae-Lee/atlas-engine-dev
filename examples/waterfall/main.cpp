@@ -47,7 +47,7 @@ main() {
                                  .build();
 
     // Configure the source generator.
-    generators[0] = fluid::JitteringOperator<T>::builder()
+    generators[0] = JitteringOperator<T>::builder()
                         // Center generated values on a negative base velocity.
                         .with_base_value(-2.8f)
 
@@ -117,7 +117,7 @@ main() {
                                 .with_searcher(searcher)
 
                                 // Use the cubic spline kernel for SPH interpolation.
-                                .with_kernel_type(system::SphKernelType::cubic_spline)
+                                .with_kernel_type(SphKernelType::cubic_spline)
 
                                 // Allocate the solver in host-managed shared ownership.
                                 .make_host_shared();
@@ -149,7 +149,7 @@ main() {
     // collider mesh.
 
     // Build the outer domain box.
-    const auto domain_geometry = geometry::Box<T>::builder()
+    const auto domain_geometry = Box<T>::builder()
                                      // Define the lower corner of the simulation domain.
                                      .with_lower_corner(Vector3F(-40.0f, -20.0f, -10.0f))
 
@@ -160,7 +160,7 @@ main() {
                                      .make_host_shared();
 
     // Build the volume source box.
-    const auto source_geometry = geometry::Box<T>::builder()
+    const auto source_geometry = Box<T>::builder()
                                      // Define the lower corner of the source region.
                                      .with_lower_corner(Vector3F(5.5f, -14.5f, 3.2f))
 
@@ -189,9 +189,9 @@ main() {
         triangle.c()   = c;
 
         const Vector3F face_center = (a + b + c) / static_cast<T>(3);
-        const Vector3F face_normal = math::cross(triangle.b() - triangle.a(), triangle.c() - triangle.a());
+        const Vector3F face_normal = cross(triangle.b() - triangle.a(), triangle.c() - triangle.a());
 
-        if (math::dot(face_normal, opposite_vertex - face_center) > static_cast<T>(0)) {
+        if (dot(face_normal, opposite_vertex - face_center) > static_cast<T>(0)) {
             std::swap(triangle.b(), triangle.c());
         }
     };
@@ -201,7 +201,7 @@ main() {
     write_face(2, v0, v2, v3, v1);
     write_face(3, v1, v3, v2, v0);
 
-    const auto tetrahedron_geometry = geometry::TriangleMesh<T>::builder()
+    const auto tetrahedron_geometry = TriangleMesh<T>::builder()
                                           // Attach the generated tetrahedron faces.
                                           .with_triangles(std::move(triangles))
 
@@ -260,7 +260,7 @@ main() {
     // This block defines volume spawning, domain removal, and collider handling.
 
     // Create the volume source that spawns particles inside the source box.
-    const auto source = fluid::Source<T>::builder()
+    const auto source = Source<T>::builder()
                             // Use the source unit as the injection region.
                             .with_units(HostBuffer<Unit<T>> { *source_unit })
 
@@ -268,12 +268,12 @@ main() {
                             .with_fluid(fluid)
 
                             // Spawn particles throughout the volume of the source geometry.
-                            .with_spawn_types(HostBuffer<fluid::SpawnType> {
-                                fluid::SpawnType::Volume,
+                            .with_spawn_types(HostBuffer<SpawnType> {
+                                SpawnType::Volume,
                             })
 
                             // Use a volume spawn operator matching the selected spawn type.
-                            .with_spawn_operator(fluid::SpawnOperator<T>(fluid::SpawnType::Volume))
+                            .with_spawn_operator(SpawnOperator<T>(SpawnType::Volume))
 
                             // Set the approximate particle spacing inside the source region.
                             .with_spacing(1.0f)
@@ -285,7 +285,7 @@ main() {
                             .make_host_shared();
 
     // Create the sink that removes particles outside the domain box.
-    const auto sink = fluid::Sink<T>::builder()
+    const auto sink = Sink<T>::builder()
                           // Use the domain unit as the sink reference region.
                           .with_units(HostBuffer<Unit<T>> { *domain_unit })
 
@@ -293,12 +293,12 @@ main() {
                           .with_fluid(fluid)
 
                           // Evaluate despawning using the volume of the domain geometry.
-                          .with_despawn_types(HostBuffer<fluid::DespawnType> {
-                              fluid::DespawnType::Volume,
+                          .with_despawn_types(HostBuffer<DespawnType> {
+                              DespawnType::Volume,
                           })
 
                           // Use a volume despawn operator matching the selected despawn type.
-                          .with_despawn_operator(fluid::DespawnOperator<T>(fluid::DespawnType::Volume))
+                          .with_despawn_operator(DespawnOperator<T>(DespawnType::Volume))
 
                           // Flip the volume test so particles outside the domain are removed.
                           .with_flip(true)

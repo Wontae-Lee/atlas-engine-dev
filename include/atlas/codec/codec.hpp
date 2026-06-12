@@ -1,7 +1,7 @@
 #pragma once
 
+#include <atlas/codec/detail/codec_probe_builder.h>
 #include <atlas/logging/logging.h>
-#include <atlas/memory/raw_pointer_cast.h>
 
 #include <cstddef>
 #include <stdexcept>
@@ -103,43 +103,14 @@ Codec<T>::fixed_region() const noexcept {
 template <typename T>
 bool
 Codec<T>::make_probe() noexcept {
-    _probe = {};
-
-    if (!_universe || !_fluid || !_searcher) {
-        return false;
-    }
-
-    auto* temperature_state     = _universe->template state<UniverseTemperatureState<T>>();
-    auto* number_particle_state = _universe->template state<UniverseNumberParticleState<T>>();
-    auto* knudsen_number_state  = _universe->template state<UniverseKnudsenNumberState<T>>();
-
-    _probe.temperature_ptr = temperature_state != nullptr
-        ? atlas::raw_pointer_cast(temperature_state->data().data())
-        : nullptr;
-    _probe.number_particle_ptr = number_particle_state != nullptr
-        ? atlas::raw_pointer_cast(number_particle_state->data().data())
-        : nullptr;
-    _probe.knudsen_number_ptr = knudsen_number_state != nullptr
-        ? atlas::raw_pointer_cast(knudsen_number_state->data().data())
-        : nullptr;
-    _probe.allocated_solver_ptr = d_allocated_solver.empty()
-        ? nullptr
-        : atlas::raw_pointer_cast(d_allocated_solver.data());
-    _probe.fixed_solver_ptr = d_fixed_solver.empty()
-        ? nullptr
-        : atlas::raw_pointer_cast(d_fixed_solver.data());
-    _probe.fixed_region_ptr = d_fixed_region.empty()
-        ? nullptr
-        : atlas::raw_pointer_cast(d_fixed_region.data());
-    _probe.indices_ptr = _searcher->indices();
-    _probe.cell_start_ptr = _searcher->cell_start();
-    _probe.cell_end_ptr = _searcher->cell_end();
-    _probe.particle_count = static_cast<int>(_fluid->particle_count());
-    _probe.num_of_cells = _universe->number_of_cells();
-    _probe.cell_volume = _universe->cell_volume();
-    _probe.statistical_weight = _fluid->statistical_weight();
-
-    return _probe.num_of_cells > 0;
+    return detail::CodecProbeBuilder<T>::make(
+        _probe,
+        _universe,
+        _fluid,
+        _searcher,
+        d_allocated_solver,
+        d_fixed_solver,
+        d_fixed_region);
 }
 
 } // namespace atlas

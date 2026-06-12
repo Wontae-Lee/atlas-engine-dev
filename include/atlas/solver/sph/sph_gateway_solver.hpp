@@ -3,7 +3,7 @@
 #include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/solver/sph/sph_probe_builder.h>
+#include <atlas/solver/sph/detail/sph_probe_builder.h>
 
 #include <cstddef>
 #include <stdexcept>

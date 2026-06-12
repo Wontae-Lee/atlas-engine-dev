@@ -2,7 +2,7 @@
 
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/spatial/transformed_bounds.h>
+#include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/transform/transform_reduce.h>
 
 namespace atlas::detail {

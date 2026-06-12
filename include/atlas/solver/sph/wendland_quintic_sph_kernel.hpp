@@ -75,4 +75,4 @@ WendlandQuinticSphKernel<T>::viscosity_laplacian(const T radius,
         * (T(1) - T(4) * q);
 }
 
-} // namespace atlasㅂ
+} // namespace atlas

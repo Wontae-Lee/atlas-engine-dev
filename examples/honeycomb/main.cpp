@@ -58,7 +58,7 @@ main() {
                                  .build();
 
     // Configure the velocity generator for newly spawned particles.
-    generators[0] = fluid::MaxwellBoltzmannGenerator<T>::builder()
+    generators[0] = MaxwellBoltzmannGenerator<T>::builder()
                         // Use 300 K as the thermal temperature of the injected gas.
                         .with_temperature(300.0f)
 
@@ -104,12 +104,12 @@ main() {
                                      / "honeycomb.obj";
 
     // Load the raw triangle mesh from disk.
-    auto mesh = geometry::TriangleMesh<T>::builder()
+    auto mesh = TriangleMesh<T>::builder()
                     .load_from_obj(honeycomb_mesh_path.string())
                     .build();
 
     // Compute the raw mesh bounds before recentering.
-    spatial::AxisAlignedBoundingBox<T> raw_bounds;
+    AxisAlignedBoundingBox<T> raw_bounds;
     for (const auto& triangle : mesh.triangles) {
         raw_bounds.merge(triangle.a());
         raw_bounds.merge(triangle.b());
@@ -125,7 +125,7 @@ main() {
         transformed_triangle.b()                   = (triangle.b() - raw_center) * 1.0f;
         transformed_triangle.c()                   = (triangle.c() - raw_center) * 1.0f;
 
-        Vector3F geometric_normal = math::cross(
+        Vector3F geometric_normal = cross(
             transformed_triangle.b() - transformed_triangle.a(),
             transformed_triangle.c() - transformed_triangle.a());
 
@@ -145,13 +145,13 @@ main() {
 
     // Store the processed triangles in the mesh geometry.
     mesh.set_triangles(processed_triangles);
-    const auto honeycomb_geometry = make_host_shared<geometry::TriangleMesh<T>>(std::move(mesh));
+    const auto honeycomb_geometry = make_host_shared<TriangleMesh<T>>(std::move(mesh));
 
     // Build a padded box domain from the honeycomb mesh bounds.
     const auto honeycomb_bounds = honeycomb_geometry->bound();
     const Vector3F domain_center = honeycomb_bounds.center();
     const Vector3F domain_half_extents = honeycomb_bounds.extents() * (1.5f * 0.5f);
-    const auto domain_geometry = geometry::Box<T>::builder()
+    const auto domain_geometry = Box<T>::builder()
                                      .with_lower_corner(domain_center - domain_half_extents)
                                      .with_upper_corner(domain_center + domain_half_extents)
                                      .make_host_shared();
@@ -162,7 +162,7 @@ main() {
     const T source_radius = std::max(
         T(0.05),
         T(0.5) * std::min(domain_extents.x, domain_extents.z) * T(0.95));
-    const auto source_geometry = geometry::Circle<T>::builder()
+    const auto source_geometry = Circle<T>::builder()
                                      .with_center(Vector3F(0.0f, domain_bounds.lower_corner.y + 0.10f, 0.0f))
                                      .with_normal(Vector3F(0.0f, 1.0f, 0.0f))
                                      .with_radius(source_radius)
@@ -207,7 +207,7 @@ main() {
         universe,
         fluid,
         searcher,
-        system::DsmcKernelType::hard_sphere);
+        DsmcKernelType::hard_sphere);
 
     // Configure the field measurer.
     const auto measurer = BoltzmanMeasurer<T>::builder()
@@ -295,7 +295,7 @@ main() {
     // This block defines how particles enter, leave, and interact with geometry.
 
     // Configure circular surface particle injection.
-    const auto source = fluid::Source<T>::builder()
+    const auto source = Source<T>::builder()
                             // Use the source unit as the injection region.
                             .with_units(HostBuffer<Unit<T>> { *source_unit })
 
@@ -306,12 +306,12 @@ main() {
                             .with_observer(observer)
 
                             // Spawn particles on the surface of the source geometry.
-                            .with_spawn_types(HostBuffer<fluid::SpawnType> {
-                                fluid::SpawnType::Surface,
+                            .with_spawn_types(HostBuffer<SpawnType> {
+                                SpawnType::Surface,
                             })
 
                             // Use a surface spawn operator matching the selected spawn type.
-                            .with_spawn_operator(fluid::SpawnOperator<T>(fluid::SpawnType::Surface))
+                            .with_spawn_operator(SpawnOperator<T>(SpawnType::Surface))
 
                             // Set the approximate particle spacing on the source disk.
                             .with_spacing(0.1f)
@@ -323,7 +323,7 @@ main() {
                             .make_host_shared();
 
     // Configure particle removal at the padded domain boundary.
-    const auto sink = fluid::Sink<T>::builder()
+    const auto sink = Sink<T>::builder()
                           // Use the padded domain unit as the sink reference region.
                           .with_units(HostBuffer<Unit<T>> { *domain_unit })
 
@@ -334,12 +334,12 @@ main() {
                           .with_observer(observer)
 
                           // Evaluate despawning using the volume of the domain geometry.
-                          .with_despawn_types(HostBuffer<fluid::DespawnType> {
-                              fluid::DespawnType::Volume,
+                          .with_despawn_types(HostBuffer<DespawnType> {
+                              DespawnType::Volume,
                           })
 
                           // Use a volume despawn operator matching the selected despawn type.
-                          .with_despawn_operator(fluid::DespawnOperator<T>(fluid::DespawnType::Volume))
+                          .with_despawn_operator(DespawnOperator<T>(DespawnType::Volume))
 
                           // Flip the volume test so particles outside the domain are removed.
                           .with_flip(true)
@@ -357,10 +357,10 @@ main() {
 
                               // Define one surface-interaction model for the honeycomb mesh.
                               .with_surface_interactions(
-                                  HostBuffer<system::IsothermalSurfaceInteraction<T>> {
-                                      system::IsothermalSurfaceInteraction<T>::builder()
+                                  HostBuffer<IsothermalSurfaceInteraction<T>> {
+                                      IsothermalSurfaceInteraction<T>::builder()
                                           // Use cosine-weighted diffuse reflection.
-                                          .with_diffuse_sampling(system::DiffuseSampling::CosineWeighted)
+                                          .with_diffuse_sampling(DiffuseSampling::CosineWeighted)
 
                                           // Preserve incident speed magnitude.
                                           .with_restitution(1.0f)
