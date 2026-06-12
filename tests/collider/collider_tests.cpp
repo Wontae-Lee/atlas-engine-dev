@@ -26,10 +26,10 @@ using atlas::Plane;
 using atlas::Sync;
 using atlas::Unit;
 using atlas::Vector3F;
-using atlas::fluid::FluidInternalEnergyState;
-using atlas::fluid::FluidPositionState;
-using atlas::fluid::FluidSpeciesState;
-using atlas::fluid::FluidVelocityState;
+using atlas::FluidInternalEnergyState;
+using atlas::FluidPositionState;
+using atlas::FluidSpeciesState;
+using atlas::FluidVelocityState;
 using atlas::test::vec_near;
 using atlas::tol;
 

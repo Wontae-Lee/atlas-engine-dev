@@ -32,7 +32,7 @@ struct SampleSet final {
 
 Scalar
 unit_sample(const int index, const std::uint64_t seed) {
-    return atlas::sampling::sample_hashed_unit_interval<Scalar>(index, seed);
+    return atlas::sample_hashed_unit_interval<Scalar>(index, seed);
 }
 
 std::array<SampleSet, kSampleCount>
@@ -44,7 +44,7 @@ make_samples() {
         const Scalar ny = unit_sample(i, 0x43u) * Scalar(2) - Scalar(1);
         const Scalar nz = unit_sample(i, 0x65u) * Scalar(2) - Scalar(1);
         Vector normal(nx, ny, nz);
-        normal = atlas::math::normalize(normal);
+        normal = atlas::normalize(normal);
 
         samples[i] = SampleSet {
             Vector(
@@ -70,7 +70,7 @@ Vector
 sparta_reference(const atlas::MaxwellianSurfaceInteraction<Scalar>& interaction,
                  const SampleSet& sample) {
     if (sample.branch > interaction.momentum_acc()) {
-        return atlas::math::reflected(sample.incident, sample.normal);
+        return atlas::reflected(sample.incident, sample.normal);
     }
 
     const Scalar vrm      = std::sqrt(Scalar(2) * atlas::boltzmann_constant
@@ -81,21 +81,21 @@ sparta_reference(const atlas::MaxwellianSurfaceInteraction<Scalar>& interaction,
     const Scalar vtan1    = vtangent * std::sin(theta);
     const Scalar vtan2    = vtangent * std::cos(theta);
 
-    const Scalar dot = atlas::math::dot(sample.incident, sample.normal);
+    const Scalar dot = atlas::dot(sample.incident, sample.normal);
     Vector tangent1 = sample.incident - sample.normal * dot;
 
     if (tangent1.length_squared() == Scalar(0)) {
-        tangent1 = atlas::math::cross(sample.normal, sample.tangent_seed);
+        tangent1 = atlas::cross(sample.normal, sample.tangent_seed);
         if (tangent1.length_squared() <= atlas::tol) {
             const Vector axis = (std::abs(sample.normal.x) < Scalar(0.9))
                 ? Vector(Scalar(1), Scalar(0), Scalar(0))
                 : Vector(Scalar(0), Scalar(1), Scalar(0));
-            tangent1 = atlas::math::cross(sample.normal, axis);
+            tangent1 = atlas::cross(sample.normal, axis);
         }
     }
 
-    tangent1 = atlas::math::normalize(tangent1);
-    const Vector tangent2 = atlas::math::cross(sample.normal, tangent1);
+    tangent1 = atlas::normalize(tangent1);
+    const Vector tangent2 = atlas::cross(sample.normal, tangent1);
 
     return sample.normal * vperp + tangent1 * vtan1 + tangent2 * vtan2;
 }

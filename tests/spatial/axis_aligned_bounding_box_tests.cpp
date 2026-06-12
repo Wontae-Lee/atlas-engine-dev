@@ -9,8 +9,8 @@ namespace {
 using atlas::AABBF;
 using atlas::RayF;
 using atlas::Vector3F;
-using atlas::spatial::make_aabb;
-using atlas::spatial::merge_aabb;
+using atlas::make_aabb;
+using atlas::merge_aabb;
 using atlas::test::vec_near;
 using atlas::tol;
 

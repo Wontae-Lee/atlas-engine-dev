@@ -43,7 +43,7 @@ TriangleLayer<T>::build_geometry(std::vector<Vector3<T>>& pos) {
 
     // This layer only supports single-triangle geometry.
     // Any other geometry type produces no output.
-    if (q.type != atlas::geometry::GeometryType::Triangle) return;
+    if (q.type != atlas::GeometryType::Triangle) return;
 
     // Access the concrete triangle operator from the tagged geometry union.
     auto& t = q.triangle;

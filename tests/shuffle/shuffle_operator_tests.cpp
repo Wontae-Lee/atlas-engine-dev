@@ -7,12 +7,12 @@
 namespace {
 
 using atlas::ShuffleOperator;
-using atlas::seed::SHUFFLE_HASH_FINAL_SHIFT;
-using atlas::seed::SHUFFLE_HASH_FIRST_MULTIPLIER;
-using atlas::seed::SHUFFLE_HASH_FIRST_SHIFT;
-using atlas::seed::SHUFFLE_HASH_INDEX_OFFSET;
-using atlas::seed::SHUFFLE_HASH_SECOND_MULTIPLIER;
-using atlas::seed::SHUFFLE_HASH_SECOND_SHIFT;
+using atlas::SHUFFLE_HASH_FINAL_SHIFT;
+using atlas::SHUFFLE_HASH_FIRST_MULTIPLIER;
+using atlas::SHUFFLE_HASH_FIRST_SHIFT;
+using atlas::SHUFFLE_HASH_INDEX_OFFSET;
+using atlas::SHUFFLE_HASH_SECOND_MULTIPLIER;
+using atlas::SHUFFLE_HASH_SECOND_SHIFT;
 
 } // namespace
 

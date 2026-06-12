@@ -15,8 +15,8 @@ using atlas::TriangleContainer4;
 using atlas::Vector3F;
 using atlas::device_shared_ptr;
 using atlas::host_shared_ptr;
-using atlas::spatial::BoundingVolumeHierachy;
-using atlas::spatial::BvhGeometryOperator;
+using atlas::BoundingVolumeHierachy;
+using atlas::BvhGeometryOperator;
 
 class DummyBvh final : public BoundingVolumeHierachy<float> {
 public:

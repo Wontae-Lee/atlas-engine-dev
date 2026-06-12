@@ -10,7 +10,7 @@ namespace {
 using atlas::HostBuffer;
 using atlas::TriangleContainer4;
 using atlas::Vector3F;
-using atlas::spatial::SurfaceAreaHeuristicBoundingVolumeHierachy;
+using atlas::SurfaceAreaHeuristicBoundingVolumeHierachy;
 
 using SahBvh = SurfaceAreaHeuristicBoundingVolumeHierachy<float>;
 

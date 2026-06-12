@@ -11,15 +11,15 @@ namespace {
 using atlas::HostBuffer;
 using atlas::TriangleContainer4;
 using atlas::Vector3F;
-using atlas::seed::MORTON_EXPAND_BITS_FINAL_MASK;
-using atlas::seed::MORTON_EXPAND_BITS_FINAL_MULTIPLIER;
-using atlas::seed::MORTON_EXPAND_BITS_FIRST_MASK;
-using atlas::seed::MORTON_EXPAND_BITS_FIRST_MULTIPLIER;
-using atlas::seed::MORTON_EXPAND_BITS_SECOND_MASK;
-using atlas::seed::MORTON_EXPAND_BITS_SECOND_MULTIPLIER;
-using atlas::seed::MORTON_EXPAND_BITS_THIRD_MASK;
-using atlas::seed::MORTON_EXPAND_BITS_THIRD_MULTIPLIER;
-using atlas::spatial::LinearBoundingVolumeHierachy;
+using atlas::MORTON_EXPAND_BITS_FINAL_MASK;
+using atlas::MORTON_EXPAND_BITS_FINAL_MULTIPLIER;
+using atlas::MORTON_EXPAND_BITS_FIRST_MASK;
+using atlas::MORTON_EXPAND_BITS_FIRST_MULTIPLIER;
+using atlas::MORTON_EXPAND_BITS_SECOND_MASK;
+using atlas::MORTON_EXPAND_BITS_SECOND_MULTIPLIER;
+using atlas::MORTON_EXPAND_BITS_THIRD_MASK;
+using atlas::MORTON_EXPAND_BITS_THIRD_MULTIPLIER;
+using atlas::LinearBoundingVolumeHierachy;
 
 using Lbvh = LinearBoundingVolumeHierachy<float>;
 

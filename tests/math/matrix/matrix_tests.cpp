@@ -4,7 +4,7 @@
 #include <testkit/testkit.h>
 
 TEST(MatrixRC, DefaultConstructorIsZero) {
-    using M = atlas::math::Matrix<double, 2, 3>;
+    using M = atlas::Matrix<double, 2, 3>;
     const M m;
 
     for (std::size_t i = 0; i < 2 * 3; ++i) {
@@ -13,7 +13,7 @@ TEST(MatrixRC, DefaultConstructorIsZero) {
 }
 
 TEST(MatrixRC, ScalarFillConstructorFillsAllEntries) {
-    using M = atlas::math::Matrix<double, 2, 3>;
+    using M = atlas::Matrix<double, 2, 3>;
     const M m(3.5);
 
     for (std::size_t i = 0; i < 2 * 3; ++i) {
@@ -22,7 +22,7 @@ TEST(MatrixRC, ScalarFillConstructorFillsAllEntries) {
 }
 
 TEST(MatrixRC, InitializerListPadsWithZeroAndIsRowMajor) {
-    using M = atlas::math::Matrix<double, 2, 3>;
+    using M = atlas::Matrix<double, 2, 3>;
     const M m { 1.0, 2.0, 3.0, 4.0 };
 
     EXPECT_DOUBLE_EQ(m[0], 1.0);
@@ -44,7 +44,7 @@ TEST(MatrixRC, InitializerListPadsWithZeroAndIsRowMajor) {
 }
 
 TEST(MatrixRC, OperatorAndAtAreMutable) {
-    using M = atlas::math::Matrix<double, 2, 3>;
+    using M = atlas::Matrix<double, 2, 3>;
     M m;
 
     m(1, 2) = 7.0;
@@ -58,7 +58,7 @@ TEST(MatrixRC, OperatorAndAtAreMutable) {
 }
 
 TEST(MatrixRC, SetFillAndSetZero) {
-    using M = atlas::math::Matrix<double, 2, 3>;
+    using M = atlas::Matrix<double, 2, 3>;
     M m;
 
     m.set(4.0);
@@ -73,7 +73,7 @@ TEST(MatrixRC, SetFillAndSetZero) {
 }
 
 TEST(MatrixRC, SetValuesWritesRowMajorOrder) {
-    using M = atlas::math::Matrix<double, 2, 3>;
+    using M = atlas::Matrix<double, 2, 3>;
     M m;
     m.set_values(
         1.0,
@@ -100,7 +100,7 @@ TEST(MatrixRC, SetValuesWritesRowMajorOrder) {
 
 TEST(MatrixRC, ScalarOpsInPlace) {
     constexpr auto eps = static_cast<double>(atlas::eps);
-    using M            = atlas::math::Matrix<double, 2, 3>;
+    using M            = atlas::Matrix<double, 2, 3>;
 
     M m;
     m.set_values(
@@ -130,7 +130,7 @@ TEST(MatrixRC, ScalarOpsInPlace) {
 
 TEST(MatrixRC, MatrixOpsAreElementWiseInPlace) {
     constexpr auto eps = static_cast<double>(atlas::eps);
-    using M            = atlas::math::Matrix<double, 2, 3>;
+    using M            = atlas::Matrix<double, 2, 3>;
 
     M a;
     a.set_values(
@@ -168,7 +168,7 @@ TEST(MatrixRC, MatrixOpsAreElementWiseInPlace) {
 }
 
 TEST(MatrixRC, ExactEquality) {
-    using M = atlas::math::Matrix<double, 2, 3>;
+    using M = atlas::Matrix<double, 2, 3>;
 
     const M a { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
     const M b { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
@@ -181,9 +181,9 @@ TEST(MatrixRC, ExactEquality) {
 TEST(MatrixRC, Matmul_MatrixMatrix) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    using A = atlas::math::Matrix<double, 2, 3>;
-    using B = atlas::math::Matrix<double, 3, 4>;
-    using C = atlas::math::Matrix<double, 2, 4>;
+    using A = atlas::Matrix<double, 2, 3>;
+    using B = atlas::Matrix<double, 3, 4>;
+    using C = atlas::Matrix<double, 2, 4>;
 
     const A a {
         1.0,
@@ -209,7 +209,7 @@ TEST(MatrixRC, Matmul_MatrixMatrix) {
         18.0
     };
 
-    const C out = atlas::math::matmul<double, 2, 3, 4>(a, b);
+    const C out = atlas::matmul<double, 2, 3, 4>(a, b);
 
     EXPECT_TRUE(atlas::test::near(out(0, 0), 1.0 * 7.0 + 2.0 * 11.0 + 3.0 * 15.0, eps));
     EXPECT_TRUE(atlas::test::near(out(0, 1), 1.0 * 8.0 + 2.0 * 12.0 + 3.0 * 16.0, eps));
@@ -225,9 +225,9 @@ TEST(MatrixRC, Matmul_MatrixMatrix) {
 TEST(MatrixRC, Matmul_MatrixVector) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    using A = atlas::math::Matrix<double, 2, 3>;
-    using X = atlas::math::Vector<double, 3>;
-    using Y = atlas::math::Vector<double, 2>;
+    using A = atlas::Matrix<double, 2, 3>;
+    using X = atlas::Vector<double, 3>;
+    using Y = atlas::Vector<double, 2>;
 
     const A a {
         1.0,
@@ -240,7 +240,7 @@ TEST(MatrixRC, Matmul_MatrixVector) {
 
     const X x(7.0, 8.0, 9.0);
 
-    const Y y = atlas::math::matmul<double, 2, 3>(a, x);
+    const Y y = atlas::matmul<double, 2, 3>(a, x);
 
     EXPECT_TRUE(atlas::test::near(y[0], 1.0 * 7.0 + 2.0 * 8.0 + 3.0 * 9.0, eps));
     EXPECT_TRUE(atlas::test::near(y[1], 4.0 * 7.0 + 5.0 * 8.0 + 6.0 * 9.0, eps));

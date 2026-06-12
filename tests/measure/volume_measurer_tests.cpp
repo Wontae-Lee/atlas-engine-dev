@@ -19,7 +19,7 @@ using atlas::Unit;
 using atlas::Universe;
 using atlas::Vector3F;
 using atlas::VolumeMeasurer;
-using atlas::universe::UniverseVolumeState;
+using atlas::UniverseVolumeState;
 
 auto
 make_universe() {

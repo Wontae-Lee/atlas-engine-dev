@@ -8,7 +8,7 @@
 
 namespace {
 
-using ColliderProbe = atlas::system::ColliderProbe<float>;
+using ColliderProbe = atlas::ColliderProbe<float>;
 
 static_assert(std::is_same_v<atlas::ColliderProbe<float>, ColliderProbe>);
 

@@ -13,7 +13,7 @@
 #include <string>
 #include <type_traits>
 
-namespace atlas::serialization {
+namespace atlas {
 namespace {
 
     /**
@@ -315,7 +315,7 @@ namespace {
     MaterialProperties<T>
     read_material_property(const atlas::proto::MaterialProperty& source) {
         MaterialProperties<T> material {};
-        material.type                 = static_cast<atlas::system::MaterialType::Value>(source.type());
+        material.type                 = static_cast<atlas::MaterialType::Value>(source.type());
         material.mass                 = static_cast<T>(source.mass());
         material.molecular_mass       = static_cast<T>(source.molecular_mass());
         material.translational_energy = read_optional_double<T>(source.translational_energy());
@@ -341,13 +341,13 @@ namespace {
      * @return Matching protobuf generator type.
      */
     atlas::proto::GeneratorType
-    to_proto_generator_type(const fluid::GenerateType type) {
+    to_proto_generator_type(const GenerateType type) {
         switch (type) {
-        case fluid::GenerateType::maxwell_sigma:
+        case GenerateType::maxwell_sigma:
             return atlas::proto::GENERATOR_MAXWELL_SIGMA;
-        case fluid::GenerateType::maxwell_boltzmann:
+        case GenerateType::maxwell_boltzmann:
             return atlas::proto::GENERATOR_MAXWELL_BOLTZMANN;
-        case fluid::GenerateType::uniform:
+        case GenerateType::uniform:
             return atlas::proto::GENERATOR_UNIFORM;
         default:
             throw std::runtime_error("Unsupported generator operator type.");
@@ -362,16 +362,16 @@ namespace {
      * @return Decoded generator operator.
      */
     template <typename T>
-    fluid::GenerateOperator<T>
+    GenerateOperator<T>
     read_generator(const atlas::proto::GeneratorOperator& source) {
         switch (source.type()) {
         case atlas::proto::GENERATOR_UNIFORM:
-            return fluid::GenerateOperator<T>(fluid::UniformGenerateOperator<T>(source.seed()));
+            return GenerateOperator<T>(UniformGenerateOperator<T>(source.seed()));
         case atlas::proto::GENERATOR_MAXWELL_SIGMA:
-            return fluid::GenerateOperator<T>(fluid::MaxwellSigmaGenerateOperator<T>(source.seed()));
+            return GenerateOperator<T>(MaxwellSigmaGenerateOperator<T>(source.seed()));
         case atlas::proto::GENERATOR_MAXWELL_BOLTZMANN:
-            return fluid::GenerateOperator<T>(
-                fluid::MaxwellBoltzmannGenerateOperator<T>(
+            return GenerateOperator<T>(
+                MaxwellBoltzmannGenerateOperator<T>(
                     source.seed(),
                     read_vector3<T>(source.bulk_velocity())));
         default:
@@ -389,17 +389,17 @@ namespace {
     template <typename T>
     void
     set_generator(atlas::proto::GeneratorOperator* target,
-                  const fluid::GenerateOperator<T>& source) {
+                  const GenerateOperator<T>& source) {
         target->set_type(to_proto_generator_type(source.type));
 
         switch (source.type) {
-        case fluid::GenerateType::uniform:
+        case GenerateType::uniform:
             target->set_seed(source.uniform.seed);
             break;
-        case fluid::GenerateType::maxwell_sigma:
+        case GenerateType::maxwell_sigma:
             target->set_seed(source.maxwell_sigma.seed);
             break;
-        case fluid::GenerateType::maxwell_boltzmann:
+        case GenerateType::maxwell_boltzmann:
             target->set_seed(source.maxwell_boltzmann.seed);
             set_vector3(target->mutable_bulk_velocity(), source.maxwell_boltzmann.bulk_velocity);
             break;
@@ -543,7 +543,7 @@ namespace {
 
 template <typename T>
 void
-save_fluid_binary(const atlas::fluid::Fluid<T>& fluid, std::string_view path) {
+save_fluid_binary(const atlas::Fluid<T>& fluid, std::string_view path) {
     atlas::proto::FluidSnapshot snapshot;
     snapshot.set_version(kAtlasSnapshotVersion);
     snapshot.set_scalar_type(protobuf_scalar_type<T>());
@@ -562,7 +562,7 @@ save_fluid_binary(const atlas::fluid::Fluid<T>& fluid, std::string_view path) {
     }
 
     {
-        HostBuffer<fluid::GenerateOperator<T>> generator_operators(
+        HostBuffer<GenerateOperator<T>> generator_operators(
             fluid.generators().begin(),
             fluid.generators().end());
 
@@ -573,35 +573,35 @@ save_fluid_binary(const atlas::fluid::Fluid<T>& fluid, std::string_view path) {
 
     std::size_t known_state_count = 0;
 
-    if (const auto* position_state = fluid.template state<atlas::fluid::FluidPositionState<T>>();
+    if (const auto* position_state = fluid.template state<atlas::FluidPositionState<T>>();
         position_state != nullptr) {
         const HostBuffer<Vector3<T>> positions(position_state->data().begin(), position_state->data().end());
         set_vector_raw_buffer(snapshot.mutable_positions(), positions);
         ++known_state_count;
     }
 
-    if (const auto* velocity_state = fluid.template state<atlas::fluid::FluidVelocityState<T>>();
+    if (const auto* velocity_state = fluid.template state<atlas::FluidVelocityState<T>>();
         velocity_state != nullptr) {
         const HostBuffer<Vector3<T>> velocities(velocity_state->data().begin(), velocity_state->data().end());
         set_vector_raw_buffer(snapshot.mutable_velocities(), velocities);
         ++known_state_count;
     }
 
-    if (const auto* species_state = fluid.template state<atlas::fluid::FluidSpeciesState<T>>();
+    if (const auto* species_state = fluid.template state<atlas::FluidSpeciesState<T>>();
         species_state != nullptr) {
         const HostBuffer<std::size_t> species(species_state->data().begin(), species_state->data().end());
         set_raw_buffer(snapshot.mutable_species(), species);
         ++known_state_count;
     }
 
-    if (const auto* active_state = fluid.template state<atlas::fluid::FluidActiveState<T>>();
+    if (const auto* active_state = fluid.template state<atlas::FluidActiveState<T>>();
         active_state != nullptr) {
         const HostBuffer<int> active(active_state->data().begin(), active_state->data().end());
         set_raw_buffer(snapshot.mutable_active(), active);
         ++known_state_count;
     }
 
-    if (const auto* temperature_state = fluid.template state<atlas::fluid::FluidTemperatureState<T>>();
+    if (const auto* temperature_state = fluid.template state<atlas::FluidTemperatureState<T>>();
         temperature_state != nullptr) {
         const HostBuffer<T> temperature(temperature_state->data().begin(), temperature_state->data().end());
         set_raw_buffer(snapshot.mutable_temperature(), temperature);
@@ -687,7 +687,7 @@ load_fluid_binary(std::string_view path) {
 
 template <typename T>
 void
-save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_view path) {
+save_universe_binary(const atlas::Universe<T>& universe, std::string_view path) {
     atlas::proto::UniverseSnapshot snapshot;
     snapshot.set_version(kAtlasSnapshotVersion);
     snapshot.set_scalar_type(protobuf_scalar_type<T>());
@@ -697,7 +697,7 @@ save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_v
 
     std::size_t known_state_count = 0;
 
-    if (const auto* temperature_state = universe.template state<atlas::universe::UniverseTemperatureState<T>>();
+    if (const auto* temperature_state = universe.template state<atlas::UniverseTemperatureState<T>>();
         temperature_state != nullptr) {
         append_universe_scalar_state(
             &snapshot,
@@ -706,7 +706,7 @@ save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_v
         ++known_state_count;
     }
 
-    if (const auto* bulk_velocity_state = universe.template state<atlas::universe::UniverseBulkVelocityState<T>>();
+    if (const auto* bulk_velocity_state = universe.template state<atlas::UniverseBulkVelocityState<T>>();
         bulk_velocity_state != nullptr) {
         append_universe_vector_state(
             &snapshot,
@@ -715,7 +715,7 @@ save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_v
         ++known_state_count;
     }
 
-    if (const auto* field_force_state = universe.template state<atlas::universe::UniverseFieldForceState<T>>();
+    if (const auto* field_force_state = universe.template state<atlas::UniverseFieldForceState<T>>();
         field_force_state != nullptr) {
         append_universe_vector_state(
             &snapshot,
@@ -724,7 +724,7 @@ save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_v
         ++known_state_count;
     }
 
-    if (const auto* max_relative_speed_state = universe.template state<atlas::universe::UniverseMaxRelativeSpeedState<T>>();
+    if (const auto* max_relative_speed_state = universe.template state<atlas::UniverseMaxRelativeSpeedState<T>>();
         max_relative_speed_state != nullptr) {
         append_universe_scalar_state(
             &snapshot,
@@ -733,7 +733,7 @@ save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_v
         ++known_state_count;
     }
 
-    if (const auto* thermal_energy_state = universe.template state<atlas::universe::UniverseThermalEnergyState<T>>();
+    if (const auto* thermal_energy_state = universe.template state<atlas::UniverseThermalEnergyState<T>>();
         thermal_energy_state != nullptr) {
         append_universe_scalar_state(
             &snapshot,
@@ -742,7 +742,7 @@ save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_v
         ++known_state_count;
     }
 
-    if (const auto* number_particle_state = universe.template state<atlas::universe::UniverseNumberParticleState<T>>();
+    if (const auto* number_particle_state = universe.template state<atlas::UniverseNumberParticleState<T>>();
         number_particle_state != nullptr) {
         append_universe_scalar_state(
             &snapshot,
@@ -751,7 +751,7 @@ save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_v
         ++known_state_count;
     }
 
-    if (const auto* collision_count_state = universe.template state<atlas::universe::UniverseCollisionCountState<int>>();
+    if (const auto* collision_count_state = universe.template state<atlas::UniverseCollisionCountState<int>>();
         collision_count_state != nullptr) {
         append_universe_int_state(
             &snapshot,
@@ -760,7 +760,7 @@ save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_v
         ++known_state_count;
     }
 
-    if (const auto* knudsen_number_state = universe.template state<atlas::universe::UniverseKnudsenNumberState<T>>();
+    if (const auto* knudsen_number_state = universe.template state<atlas::UniverseKnudsenNumberState<T>>();
         knudsen_number_state != nullptr) {
         append_universe_scalar_state(
             &snapshot,
@@ -829,17 +829,17 @@ load_universe_binary(std::string_view path) {
 }
 
 template void
-save_fluid_binary<float>(const atlas::fluid::Fluid<float>&, std::string_view);
+save_fluid_binary<float>(const atlas::Fluid<float>&, std::string_view);
 template void
-save_fluid_binary<double>(const atlas::fluid::Fluid<double>&, std::string_view);
+save_fluid_binary<double>(const atlas::Fluid<double>&, std::string_view);
 template FluidBinarySnapshot<float> load_fluid_binary<float>(std::string_view);
 template FluidBinarySnapshot<double> load_fluid_binary<double>(std::string_view);
 
 template void
-save_universe_binary<float>(const atlas::universe::Universe<float>&, std::string_view);
+save_universe_binary<float>(const atlas::Universe<float>&, std::string_view);
 template void
-save_universe_binary<double>(const atlas::universe::Universe<double>&, std::string_view);
+save_universe_binary<double>(const atlas::Universe<double>&, std::string_view);
 template UniverseBinarySnapshot<float> load_universe_binary<float>(std::string_view);
 template UniverseBinarySnapshot<double> load_universe_binary<double>(std::string_view);
 
-} // namespace atlas::serialization
+} // namespace atlas

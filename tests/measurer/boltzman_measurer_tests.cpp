@@ -16,10 +16,10 @@ using atlas::SpatialHashingSearcherHostPtr;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
-using atlas::fluid::FluidTemperatureState;
-using atlas::universe::UniverseBulkVelocityState;
-using atlas::universe::UniverseTemperatureState;
-using atlas::universe::UniverseThermalEnergyState;
+using atlas::FluidTemperatureState;
+using atlas::UniverseBulkVelocityState;
+using atlas::UniverseTemperatureState;
+using atlas::UniverseThermalEnergyState;
 
 UniverseHostPtr<float>
 make_universe() {

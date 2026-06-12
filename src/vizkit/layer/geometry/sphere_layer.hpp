@@ -28,7 +28,7 @@ SphereLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
     if (!this->_unit) return;
 
     const auto& q = this->_unit->geometry_operator();
-    if (q.type != atlas::geometry::GeometryType::Sphere) return;
+    if (q.type != atlas::GeometryType::Sphere) return;
 
     const auto& s = q.sphere;
     if (!s.center || !s.radius) return;
@@ -97,7 +97,7 @@ SphereLayer<T>::Builder::validate() const {
     if (!_unit) throw std::runtime_error("SphereLayer: unit null");
 
     const auto& query = _unit->geometry_operator();
-    if (query.type != atlas::geometry::GeometryType::Sphere) {
+    if (query.type != atlas::GeometryType::Sphere) {
         throw std::runtime_error("SphereLayer: query type must be Sphere");
     }
 

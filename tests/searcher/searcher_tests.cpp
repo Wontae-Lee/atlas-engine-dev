@@ -11,7 +11,7 @@ using atlas::FluidHostPtr;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
 using atlas::Vector3I;
-using atlas::system::Searcher;
+using atlas::Searcher;
 using atlas::test::searcher::ExposedSearcher;
 using atlas::test::searcher::copy_values;
 using atlas::test::searcher::make_fluid;

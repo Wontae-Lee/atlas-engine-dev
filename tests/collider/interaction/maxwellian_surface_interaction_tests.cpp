@@ -15,7 +15,7 @@ using atlas::FluidInternalEnergy;
 using atlas::MaterialProperties;
 using atlas::Vector3F;
 using atlas::boltzmann_constant;
-using atlas::math::reflected;
+using atlas::reflected;
 using atlas::test::is_finite_vec;
 using atlas::test::vec_near;
 using atlas::tol;

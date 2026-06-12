@@ -8,7 +8,7 @@ namespace {
 
 using atlas::AABBF;
 using atlas::Vector3F;
-using atlas::spatial::BVHNode;
+using atlas::BVHNode;
 using atlas::test::vec_near;
 using atlas::tol;
 

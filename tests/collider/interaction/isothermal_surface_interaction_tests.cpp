@@ -9,8 +9,8 @@ namespace {
 using atlas::IsothermalSurfaceInteraction;
 using atlas::tol;
 using atlas::Vector3F;
-using atlas::math::reflected;
-using atlas::system::DiffuseSampling;
+using atlas::reflected;
+using atlas::DiffuseSampling;
 using atlas::test::is_finite_vec;
 using atlas::test::vec_near;
 

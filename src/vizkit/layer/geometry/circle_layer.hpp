@@ -81,7 +81,7 @@ CircleLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 
     // This layer only supports circle geometry.
     // Any other geometry type produces no output.
-    if (query.type != atlas::geometry::GeometryType::Circle) return;
+    if (query.type != atlas::GeometryType::Circle) return;
 
     // Access the concrete circle operator stored inside the tagged geometry union.
     const auto& circle = query.circle;
@@ -192,7 +192,7 @@ CircleLayer<T>::Builder::validate() const {
     const auto& query = _unit->geometry_operator();
 
     // The bound unit must actually hold circle geometry.
-    if (query.type != atlas::geometry::GeometryType::Circle) {
+    if (query.type != atlas::GeometryType::Circle) {
         throw std::runtime_error("CircleLayer: query type must be Circle");
     }
 

@@ -21,8 +21,8 @@ using atlas::PostColliderType;
 using atlas::Sync;
 using atlas::Unit;
 using atlas::Vector3F;
-using atlas::fluid::FluidPositionState;
-using atlas::fluid::FluidVelocityState;
+using atlas::FluidPositionState;
+using atlas::FluidVelocityState;
 using atlas::test::vec_near;
 using atlas::tol;
 

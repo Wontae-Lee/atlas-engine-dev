@@ -60,7 +60,7 @@ PlaneLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 
     // This layer only supports plane geometry.
     // Any other geometry type produces no output.
-    if (query.type != atlas::geometry::GeometryType::Plane) return;
+    if (query.type != atlas::GeometryType::Plane) return;
 
     // Access the concrete plane operator from the tagged geometry union.
     const auto& plane = query.plane;
@@ -187,7 +187,7 @@ PlaneLayer<T>::Builder::validate() const {
     const auto& query = _unit->geometry_operator();
 
     // The bound unit must actually contain plane geometry.
-    if (query.type != atlas::geometry::GeometryType::Plane) {
+    if (query.type != atlas::GeometryType::Plane) {
         throw std::runtime_error("PlaneLayer: query type must be Plane");
     }
 

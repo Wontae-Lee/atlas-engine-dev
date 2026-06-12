@@ -14,7 +14,7 @@ using atlas::Plane;
 using atlas::Sync;
 using atlas::Unit;
 using atlas::Vector3F;
-using atlas::system::DtRemainColliderKernel;
+using atlas::DtRemainColliderKernel;
 using atlas::test::vec_near;
 using atlas::tol;
 

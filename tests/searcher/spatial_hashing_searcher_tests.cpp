@@ -13,7 +13,7 @@ namespace {
 using atlas::SearcherHostPtr;
 using atlas::Vector3F;
 using atlas::Vector3I;
-using atlas::system::SpatialHashingSearcher;
+using atlas::SpatialHashingSearcher;
 using atlas::test::searcher::contains_neighbor;
 using atlas::test::searcher::copy_values;
 using atlas::test::searcher::make_fluid;
@@ -130,7 +130,7 @@ TEST(SpatialHashingSearcher, BuildIsSkippedUntilInvalidated) {
     searcher->build();
     ASSERT_TRUE(contains_neighbor(searcher, 0, 1));
 
-    auto& positions = fluid->state<atlas::fluid::FluidPositionState<float>>()->data();
+    auto& positions = fluid->state<atlas::FluidPositionState<float>>()->data();
     positions[1] = Vector3F(0.90f, 0.90f, 0.90f);
 
     searcher->build();

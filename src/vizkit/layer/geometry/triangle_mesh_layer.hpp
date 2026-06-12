@@ -43,7 +43,7 @@ TriangleMeshLayer<T>::build_geometry(std::vector<Vector3<T>>& pos) {
 
     // This layer only supports triangle-mesh geometry.
     // Any other geometry type produces no output.
-    if (q.type != atlas::geometry::GeometryType::TriangleMesh) return;
+    if (q.type != atlas::GeometryType::TriangleMesh) return;
 
     // Access the concrete triangle-mesh operator from the tagged geometry union.
     auto& m = q.triangle_mesh;

@@ -18,13 +18,13 @@ using atlas::SearcherHostPtr;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
 using atlas::Vector3I;
-using atlas::fluid::Fluid;
-using atlas::fluid::FluidPositionState;
-using atlas::universe::Universe;
+using atlas::Fluid;
+using atlas::FluidPositionState;
+using atlas::Universe;
 
-class ExposedSearcher final : public atlas::system::Searcher<float> {
+class ExposedSearcher final : public atlas::Searcher<float> {
 public:
-    using Base = atlas::system::Searcher<float>;
+    using Base = atlas::Searcher<float>;
 
     ExposedSearcher() = default;
 

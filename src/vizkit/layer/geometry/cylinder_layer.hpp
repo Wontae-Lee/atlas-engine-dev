@@ -47,7 +47,7 @@ CylinderLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 
     // This layer only supports cylinder geometry.
     // Any other geometry type produces no output.
-    if (query.type != atlas::geometry::GeometryType::Cylinder) return;
+    if (query.type != atlas::GeometryType::Cylinder) return;
 
     // Access the concrete cylinder operator from the tagged geometry union.
     const auto& cyl = query.cylinder;
@@ -185,7 +185,7 @@ CylinderLayer<T>::Builder::validate() const {
     const auto& query = _unit->geometry_operator();
 
     // The bound unit must actually describe cylinder geometry.
-    if (query.type != atlas::geometry::GeometryType::Cylinder) {
+    if (query.type != atlas::GeometryType::Cylinder) {
         throw std::runtime_error("CylinderLayer: query type must be Cylinder");
     }
 
