@@ -44,33 +44,28 @@ DsmcProbeBuilder<T>::make(DsmcProbe<T>& probe,
         state != nullptr && state->data().size() >= fluid->particle_count()) {
         probe.internal_energy_ptr = atlas::raw_pointer_cast(state->data().data());
     }
-    probe.species_ptr = atlas::raw_pointer_cast(fluid->template state<FluidSpeciesState<T>>()->data().data());
-    probe.properties_ptr = atlas::raw_pointer_cast(fluid->particle_properties().data());
-    probe.number_particle_ptr =
-        atlas::raw_pointer_cast(universe->template state<UniverseNumberParticleState<T>>()->data().data());
-    probe.max_relative_speed_ptr =
-        atlas::raw_pointer_cast(universe->template state<UniverseMaxRelativeSpeedState<T>>()->data().data());
-    probe.max_sigma_g_ptr =
-        atlas::raw_pointer_cast(universe->template state<UniverseMaxSigmaGState<T>>()->data().data());
-    probe.collision_remainder_ptr =
-        atlas::raw_pointer_cast(universe->template state<UniverseCollisionRemainderState<T>>()->data().data());
-    probe.collision_count_ptr =
-        atlas::raw_pointer_cast(universe->template state<UniverseCollisionCountState<int>>()->data().data());
-    probe.indices_ptr = searcher->indices();
-    probe.cell_start_ptr = searcher->cell_start();
-    probe.cell_end_ptr = searcher->cell_end();
+    probe.species_ptr             = atlas::raw_pointer_cast(fluid->template state<FluidSpeciesState<T>>()->data().data());
+    probe.properties_ptr          = atlas::raw_pointer_cast(fluid->particle_properties().data());
+    probe.number_particle_ptr     = atlas::raw_pointer_cast(universe->template state<UniverseNumberParticleState<T>>()->data().data());
+    probe.max_relative_speed_ptr  = atlas::raw_pointer_cast(universe->template state<UniverseMaxRelativeSpeedState<T>>()->data().data());
+    probe.max_sigma_g_ptr         = atlas::raw_pointer_cast(universe->template state<UniverseMaxSigmaGState<T>>()->data().data());
+    probe.collision_remainder_ptr = atlas::raw_pointer_cast(universe->template state<UniverseCollisionRemainderState<T>>()->data().data());
+    probe.collision_count_ptr     = atlas::raw_pointer_cast(universe->template state<UniverseCollisionCountState<int>>()->data().data());
+    probe.indices_ptr             = searcher->indices();
+    probe.cell_start_ptr          = searcher->cell_start();
+    probe.cell_end_ptr            = searcher->cell_end();
     if (auto* state = universe->template state<UniverseVolumeState<T>>();
         state != nullptr && state->data().size() == static_cast<std::size_t>(universe->number_of_cells())) {
         probe.universe_volume_ptr = atlas::raw_pointer_cast(state->data().data());
     }
-    probe.particle_count = static_cast<int>(fluid->particle_count());
-    probe.species_count = static_cast<int>(fluid->particle_properties().size());
-    probe.num_of_cells = universe->number_of_cells();
-    probe.cell_volume = universe->cell_volume();
+    probe.particle_count     = static_cast<int>(fluid->particle_count());
+    probe.species_count      = static_cast<int>(fluid->particle_properties().size());
+    probe.num_of_cells       = universe->number_of_cells();
+    probe.cell_volume        = universe->cell_volume();
     probe.statistical_weight = fluid->statistical_weight();
-    probe.kernel = kernel;
-    probe.collision_seed = collision_seed;
+    probe.kernel             = kernel;
+    probe.collision_seed     = collision_seed;
     return true;
 }
 
-} // namespace atlas::detail
+}

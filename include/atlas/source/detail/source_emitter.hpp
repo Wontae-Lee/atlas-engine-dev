@@ -14,8 +14,8 @@ SourceEmitter<T>::emit(const SourceProbe<T>& probe,
         0,
         static_cast<int>(emit_count),
         [=] ATLAS_DEVICE(const int i) {
-            const int unit_index = device_probe.flat_unit_indices[i];
-            const int dst        = static_cast<int>(dst_offset) + i;
+            const int unit_index  = device_probe.flat_unit_indices[i];
+            const int dst         = static_cast<int>(dst_offset) + i;
             const std::size_t sid = device_probe.shuffled_species[i];
 
             if (sid >= static_cast<std::size_t>(device_probe.property_count)) {
@@ -39,4 +39,4 @@ SourceEmitter<T>::emit(const SourceProbe<T>& probe,
         });
 }
 
-} // namespace atlas::detail
+}

@@ -47,4 +47,4 @@ DtRemainColliderKernel<T>::operator()(Vector3<T>& position,
     position = offset_position + reflected * remaining;
 }
 
-} // namespace atlas
+}

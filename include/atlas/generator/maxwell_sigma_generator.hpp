@@ -92,4 +92,4 @@ MaxwellSigmaGenerator<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas
+}

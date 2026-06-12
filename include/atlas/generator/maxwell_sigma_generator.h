@@ -1,44 +1,7 @@
 #pragma once
 
-/**
- * @file maxwell_sigma_generator.h
- * @brief Declares Maxwell-sigma particle-velocity generation operators and host-side generator types.
- *
- * @details
- * This header defines:
- * - @ref atlas::MaxwellSigmaGenerateOperator, a lightweight backend-portable
- *   operator for sampling velocity vectors from a Maxwell-style distribution with
- *   a shared standard deviation parameter, and
- * - @ref atlas::MaxwellSigmaGenerator, a host-side polymorphic generator
- *   that owns the corresponding runtime parameters and can export a portable
- *   @ref GenerateOperator.
- *
- * ## Distribution model
- * The Maxwell-sigma generator uses a single scalar parameter, \f$\sigma\f$, to
- * control the spread of the sampled velocity distribution. In practice, this is
- * useful when the emission law is naturally expressed in terms of a shared
- * Gaussian scale rather than explicit thermodynamic parameters such as temperature
- * and molecular mass.
- *
- * ## Host/device split
- * Atlas separates this generation law into two complementary forms:
- * - a host-side @ref MaxwellSigmaGenerator used for runtime configuration,
- *   introspection, and direct host-side sampling,
- * - a backend-friendly @ref MaxwellSigmaGenerateOperator that can be embedded
- *   inside @ref GenerateOperator and executed in backend kernels.
- *
- * ## Construction
- * The host-side generator may be:
- * - constructed directly from `sigma` and an optional seed, or
- * - built through the nested fluent @ref Builder.
- *
- * ---
- *
- * @tparam T Floating-point scalar type used for parameters and generated velocities.
- */
-
-#include <atlas/generator/generator.h>
 #include <atlas/generator/generate_operator.h>
+#include <atlas/generator/generator.h>
 #include <atlas/math/math.h>
 
 #include <optional>
@@ -53,8 +16,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit
-    MaxwellSigmaGenerator(
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit MaxwellSigmaGenerator(
         T sigma,
         unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
@@ -107,6 +69,6 @@ private:
     unsigned int _seed = atlas::DEFAULT_UNSIGNED_INT_SEED;
 };
 
-} // namespace atlas
+}
 
 #include <atlas/generator/maxwell_sigma_generator.hpp>

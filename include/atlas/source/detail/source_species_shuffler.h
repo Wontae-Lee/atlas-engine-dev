@@ -12,9 +12,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Produces per-emission shuffled species assignments.
- */
 template <typename T>
 class SourceSpeciesShuffler final {
 public:
@@ -26,6 +23,6 @@ public:
             std::size_t count) const;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/source/detail/source_species_shuffler.hpp>

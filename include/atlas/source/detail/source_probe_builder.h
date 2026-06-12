@@ -13,9 +13,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Builds device-readable source emission probes.
- */
 template <typename T>
 class SourceProbeBuilder final {
 public:
@@ -30,6 +27,6 @@ public:
           SourceProbe<T>& probe) const noexcept;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/source/detail/source_probe_builder.hpp>

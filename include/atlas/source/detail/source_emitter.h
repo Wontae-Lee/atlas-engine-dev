@@ -9,9 +9,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Writes emitted source particles into fluid state buffers.
- */
 template <typename T>
 class SourceEmitter final {
 public:
@@ -19,6 +16,6 @@ public:
     emit(const SourceProbe<T>& probe, std::size_t dst_offset, std::size_t emit_count) const;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/source/detail/source_emitter.hpp>

@@ -96,29 +96,26 @@ Unit<T>::dynamic() const noexcept {
 template <typename T>
 void
 Unit<T>::update(T dt) noexcept {
-    // Ignore invalid or zero time steps.
+
     if (!(dt > T(0))) return;
 
     if (_velocity.has_value()) {
-        // Integrate linear velocity from acceleration when acceleration is available.
+
         if (_acceleration.has_value()) {
             *_velocity += (*_acceleration) * dt;
         }
 
-        // Apply linear displacement over the current time step.
         move((*_velocity) * dt);
     }
 
     if (_angular_velocity.has_value()) {
-        // Integrate angular velocity from angular acceleration when available.
+
         if (_angular_acceleration.has_value()) {
             *_angular_velocity += (*_angular_acceleration) * dt;
         }
 
-        // The angular velocity magnitude gives the angular speed.
         const T omega = _angular_velocity->length();
 
-        // Apply rotation only when the angular speed is non-zero.
         if (omega > T(0)) {
             rotate(*_angular_velocity, omega * dt);
         }
@@ -128,33 +125,29 @@ Unit<T>::update(T dt) noexcept {
 template <typename T>
 void
 Unit<T>::move(const atlas::Vector<T, 3>& delta) noexcept {
-    // Accumulate the displacement into the synchronization transform.
+
     _sync_operator.translation += delta;
 }
 
 template <typename T>
 void
 Unit<T>::rotate(const atlas::Vector<T, 3>& axis, T angle_rad) noexcept {
-    // Use the squared length to avoid an unnecessary square root for the zero-axis test.
+
     const T axis_len2 = axis.length_squared();
 
-    // A zero-length axis cannot define a valid axis-angle rotation.
     if (axis_len2 <= T(0)) return;
 
-    // Normalize the axis before constructing the incremental rotation quaternion.
     const atlas::Vector<T, 3> normalized_axis = atlas::normalized_or(
         axis,
         atlas::Vector<T, 3>(T(0), T(0), T(0)));
 
-    // Build the incremental rotation represented by the normalized axis and angle.
     const atlas::Quaternion<T> rotation = atlas::Quaternion<T>::from_axis_angle(normalized_axis, angle_rad);
 
-    // Apply the incremental rotation and renormalize to reduce numerical drift.
     _sync_operator.orientation = (rotation * _sync_operator.orientation).normalized();
 
-    // Rebuild dependent transform matrices after the orientation update.
     _sync_operator.rebuild_matrices();
 }
+
 template <typename T>
 void
 Unit<T>::canonicalize_kinematics(
@@ -302,4 +295,4 @@ Unit<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas
+}

@@ -13,9 +13,9 @@ PreciseColliderKernel<T>::sweep_motion(const Unit<T>& unit,
                                        T& sweep_speed,
                                        T& sweep_length) const noexcept {
     const Vector3<T> relative_velocity = incident - FastColliderKernel<T>::surface_velocity(unit, origin);
-    sweep_direction = relative_velocity * dt;
-    sweep_speed     = relative_velocity.length();
-    sweep_length    = sweep_speed * dt;
+    sweep_direction                    = relative_velocity * dt;
+    sweep_speed                        = relative_velocity.length();
+    sweep_length                       = sweep_speed * dt;
 }
 
 template <typename T>
@@ -43,4 +43,4 @@ PreciseColliderKernel<T>::operator()(Vector3<T>& position,
         interaction);
 }
 
-} // namespace atlas
+}

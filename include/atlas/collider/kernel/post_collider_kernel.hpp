@@ -4,31 +4,31 @@ namespace atlas {
 
 namespace detail {
 
-template <typename T>
-using PostColliderVariant = DeviceVariant<
-    PostColliderKernel<T>,
-    PostColliderType,
-    PostColliderType::fast,
-    DeviceVariantCase<
+    template <typename T>
+    using PostColliderVariant = DeviceVariant<
         PostColliderKernel<T>,
         PostColliderType,
         PostColliderType::fast,
-        FastColliderKernel<T>,
-        &PostColliderKernel<T>::fast>,
-    DeviceVariantCase<
-        PostColliderKernel<T>,
-        PostColliderType,
-        PostColliderType::dt_remain,
-        DtRemainColliderKernel<T>,
-        &PostColliderKernel<T>::dt_remain>,
-    DeviceVariantCase<
-        PostColliderKernel<T>,
-        PostColliderType,
-        PostColliderType::precise,
-        PreciseColliderKernel<T>,
-        &PostColliderKernel<T>::precise>>;
+        DeviceVariantCase<
+            PostColliderKernel<T>,
+            PostColliderType,
+            PostColliderType::fast,
+            FastColliderKernel<T>,
+            &PostColliderKernel<T>::fast>,
+        DeviceVariantCase<
+            PostColliderKernel<T>,
+            PostColliderType,
+            PostColliderType::dt_remain,
+            DtRemainColliderKernel<T>,
+            &PostColliderKernel<T>::dt_remain>,
+        DeviceVariantCase<
+            PostColliderKernel<T>,
+            PostColliderType,
+            PostColliderType::precise,
+            PreciseColliderKernel<T>,
+            &PostColliderKernel<T>::precise>>;
 
-} // namespace detail
+}
 
 template <typename T>
 PostColliderKernel<T>::PostColliderKernel() noexcept {
@@ -117,4 +117,4 @@ PostColliderKernel<T>::copy_from(const PostColliderKernel& other) noexcept {
     detail::PostColliderVariant<T>::copy_construct(*this, other);
 }
 
-} // namespace atlas
+}

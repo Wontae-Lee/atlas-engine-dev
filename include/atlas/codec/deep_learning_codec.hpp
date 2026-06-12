@@ -18,7 +18,7 @@ template <typename T>
 DeepLearningCodec<T>::DeepLearningCodec(UniverseHostPtr<T> domain,
                                         FluidHostPtr<T> fluid,
                                         SpatialHashingSearcherHostPtr<T> searcher)
-    : Codec<T>(std::move(domain), std::move(fluid), std::move(searcher)) {}
+    : Codec<T>(std::move(domain), std::move(fluid), std::move(searcher)) { }
 
 template <typename T>
 void
@@ -116,4 +116,4 @@ DeepLearningCodec<T>::Builder::make_host_shared() const {
     return codec;
 }
 
-} // namespace atlas
+}

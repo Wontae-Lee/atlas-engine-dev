@@ -19,17 +19,17 @@ ColliderBoundCache<T>::refresh(const DeviceBuffer<Unit<T>>& units) {
         _unit_bounds.resize(units.size());
     }
 
-    auto* units_ptr = atlas::raw_pointer_cast(units.data());
-    auto* bounds_ptr = atlas::raw_pointer_cast(_unit_bounds.data());
+    auto* units_ptr      = atlas::raw_pointer_cast(units.data());
+    auto* bounds_ptr     = atlas::raw_pointer_cast(_unit_bounds.data());
     const int unit_count = static_cast<int>(units.size());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         unit_count,
         [units_ptr, bounds_ptr] ATLAS_DEVICE(const int unit_index) {
-            const auto& unit = units_ptr[unit_index];
-            auto local_bound = unit.geometry_operator().bound();
-            auto& world_bound = bounds_ptr[unit_index];
+            const auto& unit             = units_ptr[unit_index];
+            auto local_bound             = unit.geometry_operator().bound();
+            auto& world_bound            = bounds_ptr[unit_index];
             const auto transformed_bound = atlas::transform_aabb(
                 local_bound,
                 [&unit] ATLAS_DEVICE(const Vector3<T>& point) {
@@ -81,4 +81,4 @@ ColliderBoundCache<T>::covers_units() const noexcept {
     return _covers_units;
 }
 
-} // namespace atlas::detail
+}

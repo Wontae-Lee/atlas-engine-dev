@@ -71,12 +71,10 @@ DsmcFlattenWorkload<T>::build(int* collision_count_ptr,
 
     const int* collision_offsets_ptr = atlas::raw_pointer_cast(collision_offsets.data());
 
-    // Compute the total collision count on device (offsets[last] + counts[last]) and
-    // copy it with a single D2H transfer instead of two separate copies.
     if (total_count_buffer.size() < 1) {
         total_count_buffer.resize(1);
     }
-    auto* total_ptr = atlas::raw_pointer_cast(total_count_buffer.data());
+    auto* total_ptr      = atlas::raw_pointer_cast(total_count_buffer.data());
     const auto last_cell = static_cast<std::size_t>(num_of_cells - 1);
     atlas::parallel_for<atlas::ExecutionPolicy::device>(
         0,
@@ -84,7 +82,7 @@ DsmcFlattenWorkload<T>::build(int* collision_count_ptr,
         [=] ATLAS_DEVICE(int) {
             const int last_offset = collision_offsets_ptr[last_cell];
             const int last_count  = scheduled_collision_count_ptr[last_cell];
-            total_ptr[0] = last_offset + last_count;
+            total_ptr[0]          = last_offset + last_count;
         });
 
     int total_collisions = 0;
@@ -107,9 +105,6 @@ DsmcFlattenWorkload<T>::build(int* collision_count_ptr,
 
     auto* collision_cells_ptr = atlas::raw_pointer_cast(collision_cells.data());
 
-    // Fill collision_cells in a fully flat parallel fashion: each work item binary-
-    // searches the exclusive-scan offsets to find its owning cell, eliminating the
-    // serial inner loop and the load imbalance it caused for high-collision cells.
     atlas::parallel_for<atlas::ExecutionPolicy::device>(
         0,
         total_collisions,
@@ -119,7 +114,8 @@ DsmcFlattenWorkload<T>::build(int* collision_count_ptr,
             while (lo < hi) {
                 const int mid = lo + (hi - lo) / 2;
                 if (collision_offsets_ptr[mid] <= work_index) lo = mid + 1;
-                else hi = mid;
+                else
+                    hi = mid;
             }
             collision_cells_ptr[work_index] = lo - 1;
         });
@@ -127,4 +123,4 @@ DsmcFlattenWorkload<T>::build(int* collision_count_ptr,
     return true;
 }
 
-} // namespace atlas
+}

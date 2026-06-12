@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file sph_probe_builder.h
- * @brief Declares helper routines that populate SphProbe.
- */
-
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/searcher/searcher.h>
@@ -16,11 +11,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Populates the device-side SPH probe from solver-owned state.
- *
- * @tparam T Floating-point scalar type used by the solver.
- */
 template <typename T>
 class SphProbeBuilder final {
     static_assert(std::is_floating_point_v<T>, "SphProbeBuilder requires a floating-point T");
@@ -42,6 +32,6 @@ public:
          const SphKernel<T>& kernel) noexcept;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/solver/sph/detail/sph_probe_builder.hpp>

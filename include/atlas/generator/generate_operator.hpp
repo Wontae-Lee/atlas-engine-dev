@@ -3,37 +3,37 @@ namespace atlas {
 
 namespace detail {
 
-template <typename T>
-using GenerateOperatorVariant = DeviceVariant<
-    GenerateOperator<T>,
-    GenerateType,
-    GenerateType::uniform,
-    DeviceVariantCase<
+    template <typename T>
+    using GenerateOperatorVariant = DeviceVariant<
         GenerateOperator<T>,
         GenerateType,
         GenerateType::uniform,
-        UniformGenerateOperator<T>,
-        &GenerateOperator<T>::uniform>,
-    DeviceVariantCase<
-        GenerateOperator<T>,
-        GenerateType,
-        GenerateType::jittering,
-        JitteringGenerateOperator<T>,
-        &GenerateOperator<T>::jittering>,
-    DeviceVariantCase<
-        GenerateOperator<T>,
-        GenerateType,
-        GenerateType::maxwell_sigma,
-        MaxwellSigmaGenerateOperator<T>,
-        &GenerateOperator<T>::maxwell_sigma>,
-    DeviceVariantCase<
-        GenerateOperator<T>,
-        GenerateType,
-        GenerateType::maxwell_boltzmann,
-        MaxwellBoltzmannGenerateOperator<T>,
-        &GenerateOperator<T>::maxwell_boltzmann>>;
+        DeviceVariantCase<
+            GenerateOperator<T>,
+            GenerateType,
+            GenerateType::uniform,
+            UniformGenerateOperator<T>,
+            &GenerateOperator<T>::uniform>,
+        DeviceVariantCase<
+            GenerateOperator<T>,
+            GenerateType,
+            GenerateType::jittering,
+            JitteringGenerateOperator<T>,
+            &GenerateOperator<T>::jittering>,
+        DeviceVariantCase<
+            GenerateOperator<T>,
+            GenerateType,
+            GenerateType::maxwell_sigma,
+            MaxwellSigmaGenerateOperator<T>,
+            &GenerateOperator<T>::maxwell_sigma>,
+        DeviceVariantCase<
+            GenerateOperator<T>,
+            GenerateType,
+            GenerateType::maxwell_boltzmann,
+            MaxwellBoltzmannGenerateOperator<T>,
+            &GenerateOperator<T>::maxwell_boltzmann>>;
 
-} // namespace detail
+}
 
 template <typename T>
 GenerateOperator<T>::GenerateOperator() noexcept {
@@ -76,26 +76,22 @@ GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
 }
 
 template <typename T>
-GenerateOperator<T>::GenerateOperator(const UniformGenerateOperator<T>& op)
-{
+GenerateOperator<T>::GenerateOperator(const UniformGenerateOperator<T>& op) {
     detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GenerateOperator<T>::GenerateOperator(const JitteringGenerateOperator<T>& op)
-{
+GenerateOperator<T>::GenerateOperator(const JitteringGenerateOperator<T>& op) {
     detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GenerateOperator<T>::GenerateOperator(const MaxwellSigmaGenerateOperator<T>& op)
-{
+GenerateOperator<T>::GenerateOperator(const MaxwellSigmaGenerateOperator<T>& op) {
     detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GenerateOperator<T>::GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>& op)
-{
+GenerateOperator<T>::GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>& op) {
     detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
 }
 

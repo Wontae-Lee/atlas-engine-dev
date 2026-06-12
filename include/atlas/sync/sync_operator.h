@@ -17,8 +17,7 @@ public:
     Matrix3x3<T> orientation_matrix;
     Matrix3x3<T> inverse_orientation_matrix;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr
-    SyncOperator() noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr SyncOperator() noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     SyncOperator(const Vector3<T>& translation_,
@@ -70,6 +69,6 @@ public:
     sync_to_local(const atlas::Ray<T>& world_ray) const noexcept;
 };
 
-} // namespace atlas
+}
 
 #include <atlas/sync/sync_operator.hpp>

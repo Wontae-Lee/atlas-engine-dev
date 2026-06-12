@@ -11,7 +11,6 @@ BvhGeometryOperator<T>
 LinearBoundingVolumeHierachy<T>::make_geometry_operator() const {
     BvhGeometryOperator<T> op;
 
-    // Expose device-side BVH buffers through raw pointers.
     op.bvh_nodes   = atlas::raw_pointer_cast(d_nodes.data());
     op.bvh_indices = atlas::raw_pointer_cast(d_indices.data());
     op.bvh_tris    = atlas::raw_pointer_cast(d_triangles.data());
@@ -23,14 +22,14 @@ LinearBoundingVolumeHierachy<T>::make_geometry_operator() const {
 template <typename T>
 void
 LinearBoundingVolumeHierachy<T>::set_leaf_size(const int leaf_size) noexcept {
-    // Keep at least one primitive per leaf.
+
     _leaf_size = (leaf_size < 1) ? 1 : leaf_size;
 }
 
 template <typename T>
 void
 LinearBoundingVolumeHierachy<T>::set_morton_bits(int morton_bits) noexcept {
-    // Clamp Morton quantization bits to the supported 30-bit Morton layout.
+
     if (morton_bits < 1) morton_bits = 1;
     if (morton_bits > 10) morton_bits = 10;
 
@@ -136,14 +135,14 @@ LinearBoundingVolumeHierachy<T>::merge_solid_angle_moment(
 template <typename T>
 int
 LinearBoundingVolumeHierachy<T>::leaf_node_index(const int k, const int n) noexcept {
-    // In a 2n-1 node LBVH layout, leaves are stored after the n-1 internal nodes.
+
     return (n - 1) + k;
 }
 
 template <typename T>
 unsigned
 LinearBoundingVolumeHierachy<T>::expand_bits(unsigned v) noexcept {
-    // Interleave lower 10 bits with two zero bits between each original bit.
+
     v = (v * atlas::MORTON_EXPAND_BITS_FIRST_MULTIPLIER)
         & atlas::MORTON_EXPAND_BITS_FIRST_MASK;
     v = (v * atlas::MORTON_EXPAND_BITS_SECOND_MULTIPLIER)
@@ -159,7 +158,7 @@ LinearBoundingVolumeHierachy<T>::expand_bits(unsigned v) noexcept {
 template <typename T>
 int
 LinearBoundingVolumeHierachy<T>::clz32(const uint32_t x) noexcept {
-    // Count leading zero bits in a 32-bit integer.
+
     if (x == 0u) return 32;
 
     int n      = 0;
@@ -176,7 +175,7 @@ LinearBoundingVolumeHierachy<T>::clz32(const uint32_t x) noexcept {
 template <typename T>
 int
 LinearBoundingVolumeHierachy<T>::clz64(const uint64_t x) noexcept {
-    // Count leading zero bits in a 64-bit integer.
+
     if (x == 0u) return 64;
 
     int n      = 0;
@@ -199,19 +198,16 @@ LinearBoundingVolumeHierachy<T>::morton3(
     const Vector3<T>& minp = cb.lower_corner;
     const Vector3<T>& maxp = cb.upper_corner;
 
-    // Compute centroid bounds extent.
     const Vector3<T> ext {
         maxp.x - minp.x,
         maxp.y - minp.y,
         maxp.z - minp.z
     };
 
-    // Normalize the point into [0, 1]^3 inside the centroid bounds.
     T nx = (ext.x > T(0)) ? (p.x - minp.x) / ext.x : T(0);
     T ny = (ext.y > T(0)) ? (p.y - minp.y) / ext.y : T(0);
     T nz = (ext.z > T(0)) ? (p.z - minp.z) / ext.z : T(0);
 
-    // Clamp normalized coordinates to the valid Morton domain.
     if (nx < T(0)) nx = T(0);
     if (nx > T(1)) nx = T(1);
     if (ny < T(0)) ny = T(0);
@@ -219,13 +215,11 @@ LinearBoundingVolumeHierachy<T>::morton3(
     if (nz < T(0)) nz = T(0);
     if (nz > T(1)) nz = T(1);
 
-    // Quantize normalized coordinates to the requested bit resolution.
     const unsigned maxq = (1u << bits) - 1u;
     const auto ix       = static_cast<unsigned>(nx * maxq + T(0.5));
     const auto iy       = static_cast<unsigned>(ny * maxq + T(0.5));
     const auto iz       = static_cast<unsigned>(nz * maxq + T(0.5));
 
-    // Expand bits and interleave x, y, and z into a 30-bit Morton code.
     const unsigned xx = expand_bits(ix);
     const unsigned yy = expand_bits(iy);
     const unsigned zz = expand_bits(iz);
@@ -240,16 +234,14 @@ LinearBoundingVolumeHierachy<T>::delta_lcp(
     const int n,
     const int i,
     const int j) noexcept {
-    // Out-of-range neighbors are treated as invalid.
+
     if (j < 0 || j >= n) return -1;
 
     const uint64_t a = keys[i];
     const uint64_t b = keys[j];
 
-    // Identical keys have the maximum common prefix length.
     if (a == b) return 64;
 
-    // The leading zeros of xor(a, b) give the common prefix length.
     return clz64(a ^ b);
 }
 
@@ -262,14 +254,12 @@ LinearBoundingVolumeHierachy<T>::find_split(
     const uint32_t first_code = codes[first];
     const uint32_t last_code  = codes[last];
 
-    // Equal Morton codes cannot be separated by prefix length, so split midway.
     if (first_code == last_code) return (first + last) >> 1;
 
     const int common_prefix = clz32(first_code ^ last_code);
     int split               = first;
     int step                = last - first;
 
-    // Binary search for the last index with a longer prefix than the range prefix.
     do {
         step                = (step + 1) >> 1;
         const int new_split = split + step;
@@ -289,7 +279,6 @@ void
 LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& triangles) {
     const int n = static_cast<int>(triangles.size());
 
-    // Start from a clean tree before rebuilding.
     reset();
 
     if (n <= 0) return;
@@ -304,13 +293,11 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         [this, &triangles](int i) {
             TriangleGeometryOperator<T> tri_op;
 
-            // Build a lightweight triangle operator over the input triangle storage.
             tri_op.a = &triangles[i].a();
             tri_op.b = &triangles[i].b();
             tri_op.c = &triangles[i].c();
             tri_op.n = &triangles[i].d();
 
-            // Cache primitive bounds, centroids, and original primitive indices.
             const AABB<T> b  = tri_op.bound();
             h_prim_bounds[i] = b;
             h_centroids[i]   = tri_op.centroid();
@@ -319,7 +306,6 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
 
     AABB<T> centroid_bounds;
 
-    // Compute bounds over all primitive centroids for Morton normalization.
     for (int i = 0; i < n; ++i) {
         centroid_bounds.merge(h_centroids[i]);
     }
@@ -330,13 +316,11 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         0,
         n,
         [this, &morton, &centroid_bounds](int i) {
-            // Compute Morton code from the normalized primitive centroid.
             morton[i] = morton3(h_centroids[i], centroid_bounds, _morton_bits);
         });
 
     HostBuffer<int> order(n);
 
-    // Initialize sortable primitive order.
     for (int i = 0; i < n; ++i) {
         order[i] = i;
     }
@@ -345,7 +329,6 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         order.begin(),
         order.end(),
         [&](const int a, const int b) {
-            // Sort by Morton code, then by primitive id for deterministic ties.
             if (morton[a] != morton[b]) return morton[a] < morton[b];
 
             return a < b;
@@ -358,19 +341,15 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
     for (int i = 0; i < n; ++i) {
         const int oi = order[i];
 
-        // Store sorted Morton codes and unique 64-bit keys for LCP tests.
         morton_sorted[i] = morton[oi];
-        keys_sorted[i]   =
-            (static_cast<uint64_t>(morton_sorted[i]) << 32)
+        keys_sorted[i]   = (static_cast<uint64_t>(morton_sorted[i]) << 32)
             | static_cast<uint32_t>(i);
 
         indices_sorted[i] = h_indices[oi];
     }
 
-    // Replace primitive order with Morton-sorted primitive indices.
     h_indices = indices_sorted;
 
-    // LBVH uses n - 1 internal nodes and n leaf nodes.
     h_nodes.resize(std::max(1, 2 * n - 1), BVHNode<T>());
 
     for (int k = 0; k < n; ++k) {
@@ -378,17 +357,16 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         const int pid    = h_indices[k];
         BVHNode<T>& leaf = h_nodes[ni];
 
-        // Initialize one primitive per leaf in Morton order.
         leaf.is_leaf = true;
         leaf.left = leaf.right = -1;
-        leaf.start = k;
-        leaf.count = 1;
-        leaf.bounds = h_prim_bounds[pid];
+        leaf.start             = k;
+        leaf.count             = 1;
+        leaf.bounds            = h_prim_bounds[pid];
         assign_solid_angle_moment(leaf, triangles[pid]);
     }
 
     if (n == 1) {
-        // A single primitive tree consists only of one leaf root.
+
         _root       = leaf_node_index(0, n);
         d_nodes     = h_nodes;
         d_indices   = h_indices;
@@ -398,17 +376,15 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
     }
 
     for (int i = 0; i < n - 1; ++i) {
-        // Determine range direction by comparing common prefixes with neighbors.
+
         const int dl = delta_lcp(keys_sorted, n, i, i - 1);
         const int dr = delta_lcp(keys_sorted, n, i, i + 1);
         const int d  = (dr > dl) ? 1 : -1;
 
-        // Find the minimum prefix length that defines the current range boundary.
         const int delta_min = delta_lcp(keys_sorted, n, i, i - d);
 
         int lmax = 2;
 
-        // Exponentially grow the candidate range while prefix length remains valid.
         while (delta_lcp(keys_sorted, n, i, i + lmax * d) > delta_min) {
             lmax <<= 1;
         }
@@ -416,7 +392,6 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         int t    = 0;
         int step = lmax;
 
-        // Binary search the exact range length.
         do {
             step = (step + 1) >> 1;
 
@@ -429,19 +404,16 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         const int first = std::min(i, j);
         const int last  = std::max(i, j);
 
-        // Find the split position inside the Morton-code range.
         const int split = find_split(morton_sorted, first, last);
 
         const int left_is_leaf  = (split == first) ? 1 : 0;
         const int right_is_leaf = (split + 1 == last) ? 1 : 0;
 
-        // Convert split positions to either leaf-node indices or internal-node indices.
         const int left_child  = left_is_leaf ? leaf_node_index(split, n) : split;
         const int right_child = right_is_leaf ? leaf_node_index(split + 1, n) : (split + 1);
 
         BVHNode<T>& in = h_nodes[i];
 
-        // Store internal node topology.
         in.is_leaf = false;
         in.left    = left_child;
         in.right   = right_child;
@@ -449,7 +421,6 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         in.count   = 0;
     }
 
-    // Build internal node bounds bottom-up after topology is known.
     for (int i = n - 2; i >= 0; --i) {
         BVHNode<T>& in      = h_nodes[i];
         const BVHNode<T>& L = h_nodes[in.left];
@@ -460,10 +431,8 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         merge_solid_angle_moment(in, L, R);
     }
 
-    // Internal node 0 is the LBVH root for n > 1.
     _root = 0;
 
-    // Upload completed hierarchy and primitives to device buffers.
     d_nodes     = h_nodes;
     d_indices   = h_indices;
     d_triangles = triangles;
@@ -472,7 +441,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
 template <typename T>
 void
 LinearBoundingVolumeHierachy<T>::reset() {
-    // Clear host and device data before rebuilding.
+
     h_nodes.clear();
     h_indices.clear();
     h_centroids.clear();
@@ -485,4 +454,4 @@ LinearBoundingVolumeHierachy<T>::reset() {
     _root = -1;
 }
 
-} // namespace atlas
+}

@@ -23,8 +23,7 @@ System<T>::System(FluidHostPtr<T> fluid,
     , _collider(std::move(collider))
     , _orchestrator(std::move(orchestrator))
     , _dt(dt) {
-    // Cache state pointers once so time_integration() can skip the per-step
-    // unordered_map lookup that state<>() would otherwise perform.
+
     if (_fluid) {
         _cached_position_state = _fluid->template state<FluidPositionState<T>>();
         _cached_velocity_state = _fluid->template state<FluidVelocityState<T>>();
@@ -49,7 +48,7 @@ System<T>::update() {
 template <typename T>
 void
 System<T>::emit() {
-    // Inject new particles when a source is available.
+
     if (_source) {
         _source->update(_dt);
     }
@@ -58,7 +57,7 @@ System<T>::emit() {
 template <typename T>
 void
 System<T>::orchestrate() {
-    // Apply solver-side updates such as search, measurement, force, and collision setup.
+
     if (_orchestrator) {
         _orchestrator->update(_dt);
     }
@@ -67,11 +66,11 @@ System<T>::orchestrate() {
 template <typename T>
 void
 System<T>::advect() {
-    // Use the collider-specific update path when a collider is available.
+
     if (_collider) {
         _collider->update(_dt);
     } else {
-        // Fall back to simple position integration.
+
         time_integration();
     }
 }
@@ -79,7 +78,7 @@ System<T>::advect() {
 template <typename T>
 void
 System<T>::remove() {
-    // Remove particles through the sink when one is available.
+
     if (_sink) {
         _sink->update(_dt);
     }
@@ -88,25 +87,20 @@ System<T>::remove() {
 template <typename T>
 void
 System<T>::time_integration() {
-    // Integration requires a valid fluid object and positive time step.
+
     if (!_fluid || !(_dt > T(0))) {
         return;
     }
 
-    // Use the cached state pointers resolved at construction to avoid a
-    // per-step unordered_map lookup through state<>().
     if (!_cached_position_state || !_cached_velocity_state) {
         return;
     }
 
-    // Read particle_count once; it is used both as the early-exit guard and
-    // as the kernel range, eliminating the previous double call.
     const int particle_count = static_cast<int>(_fluid->particle_count());
     if (particle_count == 0) {
         return;
     }
 
-    // Extract raw device-accessible pointers for the parallel kernel.
     auto* positions_ptr        = atlas::raw_pointer_cast(_cached_position_state->data().data());
     const auto* velocities_ptr = atlas::raw_pointer_cast(_cached_velocity_state->data().data());
     const T dt                 = _dt;
@@ -115,7 +109,6 @@ System<T>::time_integration() {
         0,
         particle_count,
         [positions_ptr, velocities_ptr, dt] ATLAS_DEVICE(const int i) {
-            // Explicit Euler position update: x += v * dt.
             positions_ptr[i] += velocities_ptr[i] * dt;
         });
 }
@@ -184,12 +177,11 @@ System<T>::Builder::with_dt(const T dt) noexcept {
 template <typename T>
 void
 System<T>::Builder::validate() const {
-    // A system cannot advance particles without a fluid container.
+
     if (!_fluid) {
         throw std::runtime_error("System::Builder: fluid must not be null.");
     }
 
-    // The simulation time step must be strictly positive.
     if (!(_dt > T(0))) {
         throw std::runtime_error("System::Builder: dt must be positive.");
     }
@@ -218,4 +210,4 @@ System<T>::Builder::make_host_shared() const {
         _dt);
 }
 
-} // namespace atlas
+}

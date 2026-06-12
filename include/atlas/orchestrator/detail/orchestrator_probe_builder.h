@@ -11,9 +11,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Builds device-readable orchestration probes from runtime owners.
- */
 template <typename T>
 class OrchestratorProbeBuilder final {
 public:
@@ -40,6 +37,6 @@ private:
     load_gravity_data(const UniverseHostPtr<T>& universe, OrchestratorProbe<T>& probe) const noexcept;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/orchestrator/detail/orchestrator_probe_builder.hpp>

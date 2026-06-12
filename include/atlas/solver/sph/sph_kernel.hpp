@@ -3,31 +3,31 @@ namespace atlas {
 
 namespace detail {
 
-template <typename T>
-using SphKernelVariant = DeviceVariant<
-    SphKernel<T>,
-    SphKernelType,
-    SphKernelType::standard,
-    DeviceVariantCase<
+    template <typename T>
+    using SphKernelVariant = DeviceVariant<
         SphKernel<T>,
         SphKernelType,
         SphKernelType::standard,
-        StandardSphKernel<T>,
-        &SphKernel<T>::standard>,
-    DeviceVariantCase<
-        SphKernel<T>,
-        SphKernelType,
-        SphKernelType::cubic_spline,
-        CubicSplineSphKernel<T>,
-        &SphKernel<T>::cubic_spline>,
-    DeviceVariantCase<
-        SphKernel<T>,
-        SphKernelType,
-        SphKernelType::wendland_quintic,
-        WendlandQuinticSphKernel<T>,
-        &SphKernel<T>::wendland_quintic>>;
+        DeviceVariantCase<
+            SphKernel<T>,
+            SphKernelType,
+            SphKernelType::standard,
+            StandardSphKernel<T>,
+            &SphKernel<T>::standard>,
+        DeviceVariantCase<
+            SphKernel<T>,
+            SphKernelType,
+            SphKernelType::cubic_spline,
+            CubicSplineSphKernel<T>,
+            &SphKernel<T>::cubic_spline>,
+        DeviceVariantCase<
+            SphKernel<T>,
+            SphKernelType,
+            SphKernelType::wendland_quintic,
+            WendlandQuinticSphKernel<T>,
+            &SphKernel<T>::wendland_quintic>>;
 
-} // namespace detail
+}
 
 template <typename T>
 SphKernel<T>::SphKernel() noexcept {
@@ -69,20 +69,17 @@ SphKernel<T>::copy_from(const SphKernel& other) noexcept {
 }
 
 template <typename T>
-SphKernel<T>::SphKernel(const StandardSphKernel<T>& op)
-{
+SphKernel<T>::SphKernel(const StandardSphKernel<T>& op) {
     detail::SphKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-SphKernel<T>::SphKernel(const CubicSplineSphKernel<T>& op)
-{
+SphKernel<T>::SphKernel(const CubicSplineSphKernel<T>& op) {
     detail::SphKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-SphKernel<T>::SphKernel(const WendlandQuinticSphKernel<T>& op)
-{
+SphKernel<T>::SphKernel(const WendlandQuinticSphKernel<T>& op) {
     detail::SphKernelVariant<T>::construct_payload(*this, op);
 }
 

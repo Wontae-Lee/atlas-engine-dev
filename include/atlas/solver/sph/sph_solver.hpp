@@ -17,7 +17,7 @@ SphSolver<T>::SphSolver(UniverseHostPtr<T> universe,
                         SearcherHostPtr<T> searcher,
                         const SphKernelType kernel_type) noexcept
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher)) {
-    // Initialize the runtime SPH kernel and ensure required universe output states exist.
+
     _kernel = SphKernel<T>(kernel_type);
     ensure_states();
 }
@@ -25,53 +25,46 @@ SphSolver<T>::SphSolver(UniverseHostPtr<T> universe,
 template <typename T>
 typename SphSolver<T>::Builder
 SphSolver<T>::builder() noexcept {
-    // Return a fresh builder for fluent solver construction.
+
     return Builder {};
 }
 
 template <typename T>
 SphKernelType
 SphSolver<T>::kernel_type() const noexcept {
-    // Expose the kernel type stored by the runtime kernel wrapper.
+
     return _kernel.type;
 }
 
 template <typename T>
 void
 SphSolver<T>::solve(const T dt) {
-    // Validate dependencies, required fluid states, universe states, and searcher ordering.
+
     if (!initialize_context()) {
         return;
     }
 
-    // SPH velocity integration requires a positive time step.
     if (!(dt > T(0))) {
         throw std::invalid_argument("SphSolver: dt must be positive.");
     }
 
-    // Allocate per-particle working buffers; active entries are overwritten by later stages.
     if (!prepare_fields()) {
         reset_fields();
         return;
     }
 
-    // Refresh the cached probe containing raw device pointers for kernel execution.
     if (!make_probe()) {
         return;
     }
 
-    // Compute density/pressure and particle counts.
     update();
 
-    // Compute acceleration, update particle velocity, and write cell force output.
     accelerate(dt);
 }
 
 template <typename T>
 void
 SphSolver<T>::solve(const DeviceBuffer<int>*, const int, const T) {
-    // Plain SPH solver does not support solver-index filtering.
-    // Filtered execution is implemented by specialized solvers.
 }
 
 template <typename T>
@@ -101,7 +94,7 @@ SphSolver<T>::ensure_states() {
 template <typename T>
 bool
 SphSolver<T>::initialize_context() noexcept {
-    // Required runtime dependencies must exist before launching SPH kernels.
+
     if (!this->_universe || !this->_fluid || !this->_searcher) {
         reset_fields();
         _density.resize(0);
@@ -118,7 +111,6 @@ SphSolver<T>::initialize_context() noexcept {
         return false;
     }
 
-    // Ensure output states exist and rebuild spatial hashing for the current particles.
     ensure_states();
     this->_searcher->build();
 
@@ -141,7 +133,7 @@ SphSolver<T>::make_probe() noexcept {
 template <typename T>
 bool
 SphSolver<T>::prepare_fields() {
-    // No particle means no SPH update.
+
     const int particle_count = static_cast<int>(this->_fluid->particle_count());
     if (particle_count <= 0) {
         _density.resize(0);
@@ -151,12 +143,10 @@ SphSolver<T>::prepare_fields() {
         return false;
     }
 
-    // Allocate one working entry per particle.
     _density.resize(static_cast<std::size_t>(particle_count));
     _pressure.resize(static_cast<std::size_t>(particle_count));
     _acceleration.resize(static_cast<std::size_t>(particle_count));
 
-    // Clear universe outputs for this step.
     reset_fields();
 
     return true;
@@ -177,7 +167,7 @@ SphSolver<T>::reset_fields() {
 template <typename T>
 void
 SphSolver<T>::update() {
-    // First compute particle density and pressure, then update cell particle counts.
+
     estimate_density();
     count_particles();
 }
@@ -185,16 +175,14 @@ SphSolver<T>::update() {
 template <typename T>
 void
 SphSolver<T>::estimate_density() {
-    const auto probe = _probe;
+    const auto probe   = _probe;
     auto* density_ptr  = atlas::raw_pointer_cast(_density.data());
     auto* pressure_ptr = atlas::raw_pointer_cast(_pressure.data());
 
-    // Compute density and pressure independently for each particle.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.particle_count,
         [=] ATLAS_DEVICE(const int particle_index) {
-            // Skip particles with invalid species.
             const std::size_t species_index = probe.species_ptr[particle_index];
             if (species_index >= static_cast<std::size_t>(probe.num_of_properties)) {
                 density_ptr[particle_index]  = T(0);
@@ -202,7 +190,6 @@ SphSolver<T>::estimate_density() {
                 return;
             }
 
-            // SPH uses the searcher cell size as the kernel support.
             const auto& property      = probe.properties_ptr[species_index];
             const T h                 = probe.cell_size;
             const T h_squared         = h * h;
@@ -241,12 +228,10 @@ SphSolver<T>::estimate_density() {
                 density += neighbor_mass * probe.kernel.density_weight(radius, h);
             }
 
-            // Use rest density as a fallback for isolated or numerically invalid particles.
             if (!(density > T(0))) {
                 density = rest_density;
             }
 
-            // Store density and equation-of-state pressure.
             density_ptr[particle_index]  = density;
             pressure_ptr[particle_index] = k * (density - rest_density);
         });
@@ -257,7 +242,6 @@ void
 SphSolver<T>::count_particles() {
     const auto probe = _probe;
 
-    // Searcher ranges contain active particles, so the range length is the cell count.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
@@ -277,24 +261,21 @@ SphSolver<T>::count_particles() {
 template <typename T>
 void
 SphSolver<T>::accelerate(const T dt) {
-    const auto probe = _probe;
+    const auto probe         = _probe;
     const auto* density_ptr  = atlas::raw_pointer_cast(_density.data());
     const auto* pressure_ptr = atlas::raw_pointer_cast(_pressure.data());
     auto* acceleration_ptr   = atlas::raw_pointer_cast(_acceleration.data());
 
-    // Compute particle acceleration and update particle velocity.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.particle_count,
         [=] ATLAS_DEVICE(const int particle_index) {
-            // Skip particles with invalid species.
             const std::size_t species_index = probe.species_ptr[particle_index];
             if (species_index >= static_cast<std::size_t>(probe.num_of_properties)) {
                 acceleration_ptr[particle_index] = Vector3<T>(T(0), T(0), T(0));
                 return;
             }
 
-            // Resolve material properties and particle state.
             const auto& property      = probe.properties_ptr[species_index];
             const T h                 = probe.cell_size;
             const T h_squared         = h * h;
@@ -338,7 +319,6 @@ SphSolver<T>::accelerate(const T dt) {
 
                 const T radius = atlas::sqrt_nonnegative(radius_squared);
 
-                // Add pressure-gradient acceleration.
                 const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, h);
 
                 const T pressure_term = (pressure_ptr[particle_index] + pressure_ptr[neighbor_index])
@@ -346,7 +326,6 @@ SphSolver<T>::accelerate(const T dt) {
 
                 acceleration -= grad * (neighbor_mass * pressure_term);
 
-                // Add viscosity acceleration when the material viscosity is enabled.
                 if (mu > T(0)) {
                     const T laplacian = probe.kernel.viscosity_laplacian(radius, h);
 
@@ -355,17 +334,14 @@ SphSolver<T>::accelerate(const T dt) {
                 }
             }
 
-            // Invalid mass disables acceleration for this particle.
             if (!(mass > T(0))) {
                 acceleration = Vector3<T>(T(0), T(0), T(0));
             }
 
-            // Store acceleration and explicitly update velocity.
             acceleration_ptr[particle_index]   = acceleration;
             probe.velocity_ptr[particle_index] = velocity + acceleration * dt;
         });
 
-    // Convert particle accelerations into per-cell averaged force output.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
@@ -423,7 +399,7 @@ SphSolver<T>::pressure_coefficient(const MaterialProperties<T>& property) noexce
 template <typename T>
 typename SphSolver<T>::Builder&
 SphSolver<T>::Builder::with_universe(UniverseHostPtr<T> universe) noexcept {
-    // Store universe dependency.
+
     _universe = std::move(universe);
     return *this;
 }
@@ -431,7 +407,7 @@ SphSolver<T>::Builder::with_universe(UniverseHostPtr<T> universe) noexcept {
 template <typename T>
 typename SphSolver<T>::Builder&
 SphSolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
-    // Store fluid dependency.
+
     _fluid = std::move(fluid);
     return *this;
 }
@@ -439,7 +415,7 @@ SphSolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 template <typename T>
 typename SphSolver<T>::Builder&
 SphSolver<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
-    // Store searcher dependency.
+
     _searcher = std::move(searcher);
     return *this;
 }
@@ -447,7 +423,7 @@ SphSolver<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
 template <typename T>
 typename SphSolver<T>::Builder&
 SphSolver<T>::Builder::with_kernel_type(const SphKernelType kernel_type) noexcept {
-    // Store selected SPH kernel type.
+
     _kernel_type = kernel_type;
     return *this;
 }
@@ -455,7 +431,7 @@ SphSolver<T>::Builder::with_kernel_type(const SphKernelType kernel_type) noexcep
 template <typename T>
 void
 SphSolver<T>::Builder::validate() const {
-    // Builder requires all runtime dependencies.
+
     if (!_universe) {
         throw std::runtime_error("SphSolver::Builder: universe must not be null.");
     }
@@ -472,7 +448,7 @@ SphSolver<T>::Builder::validate() const {
 template <typename T>
 SphSolver<T>
 SphSolver<T>::Builder::build() const {
-    // Validate configuration and construct a solver value.
+
     validate();
     return SphSolver<T>(_universe, _fluid, _searcher, _kernel_type);
 }
@@ -480,9 +456,9 @@ SphSolver<T>::Builder::build() const {
 template <typename T>
 atlas::host_shared_ptr<SphSolver<T>>
 SphSolver<T>::Builder::make_host_shared() const {
-    // Validate configuration and construct a host-shared solver.
+
     validate();
     return atlas::make_host_shared<SphSolver<T>>(_universe, _fluid, _searcher, _kernel_type);
 }
 
-} // namespace atlas
+}

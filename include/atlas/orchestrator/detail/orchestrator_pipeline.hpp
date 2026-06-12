@@ -54,4 +54,4 @@ OrchestratorPipeline<T>::run(Orchestrator<T>& orchestrator, const T dt) const {
     _solve.run(orchestrator, dt);
 }
 
-} // namespace atlas::detail
+}

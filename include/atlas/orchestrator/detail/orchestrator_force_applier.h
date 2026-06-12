@@ -6,9 +6,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Applies force-related universe states through an orchestration probe.
- */
 template <typename T>
 class OrchestratorForceApplier final {
 public:
@@ -32,6 +29,6 @@ private:
     force_cell_count(const OrchestratorProbe<T>& probe, bool gravity, bool field_force) const noexcept;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/orchestrator/detail/orchestrator_force_applier.hpp>

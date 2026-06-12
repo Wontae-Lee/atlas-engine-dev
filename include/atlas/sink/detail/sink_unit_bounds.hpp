@@ -10,9 +10,9 @@ struct SinkRefreshUnitBound final {
 
     ATLAS_DEVICE void
     operator()(const int unit_index) const {
-        const auto& unit = units[unit_index];
-        const auto local_bound = unit.geometry_operator().bound();
-        auto& world_bound = bounds[unit_index];
+        const auto& unit             = units[unit_index];
+        const auto local_bound       = unit.geometry_operator().bound();
+        auto& world_bound            = bounds[unit_index];
         const auto transformed_bound = atlas::transform_aabb(
             local_bound,
             [&unit] ATLAS_DEVICE(const Vector3<T>& point) {
@@ -42,10 +42,10 @@ SinkUnitBounds<T>::refresh(const DeviceBuffer<Unit<T>>& units,
         unit_bounds.resize(units.size());
     }
 
-    auto* units_ptr = atlas::raw_pointer_cast(units.data());
-    auto* bounds_ptr = atlas::raw_pointer_cast(unit_bounds.data());
+    auto* units_ptr      = atlas::raw_pointer_cast(units.data());
+    auto* bounds_ptr     = atlas::raw_pointer_cast(unit_bounds.data());
     const int unit_count = static_cast<int>(units.size());
-    const T expand = tolerance > T(0) ? tolerance : T(0);
+    const T expand       = tolerance > T(0) ? tolerance : T(0);
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -53,8 +53,7 @@ SinkUnitBounds<T>::refresh(const DeviceBuffer<Unit<T>>& units,
         SinkRefreshUnitBound<T> {
             units_ptr,
             bounds_ptr,
-            expand
-        });
+            expand });
 }
 
-} // namespace atlas::detail
+}

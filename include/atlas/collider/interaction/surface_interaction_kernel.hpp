@@ -4,25 +4,25 @@ namespace atlas {
 
 namespace detail {
 
-template <typename T>
-using SurfaceInteractionVariant = DeviceVariant<
-    SurfaceInteractionKernel<T>,
-    SurfaceInteractionType,
-    SurfaceInteractionType::isothermal,
-    DeviceVariantCase<
+    template <typename T>
+    using SurfaceInteractionVariant = DeviceVariant<
         SurfaceInteractionKernel<T>,
         SurfaceInteractionType,
         SurfaceInteractionType::isothermal,
-        IsothermalSurfaceInteraction<T>,
-        &SurfaceInteractionKernel<T>::isothermal>,
-    DeviceVariantCase<
-        SurfaceInteractionKernel<T>,
-        SurfaceInteractionType,
-        SurfaceInteractionType::maxwellian,
-        MaxwellianSurfaceInteraction<T>,
-        &SurfaceInteractionKernel<T>::maxwellian>>;
+        DeviceVariantCase<
+            SurfaceInteractionKernel<T>,
+            SurfaceInteractionType,
+            SurfaceInteractionType::isothermal,
+            IsothermalSurfaceInteraction<T>,
+            &SurfaceInteractionKernel<T>::isothermal>,
+        DeviceVariantCase<
+            SurfaceInteractionKernel<T>,
+            SurfaceInteractionType,
+            SurfaceInteractionType::maxwellian,
+            MaxwellianSurfaceInteraction<T>,
+            &SurfaceInteractionKernel<T>::maxwellian>>;
 
-} // namespace detail
+}
 
 template <typename T>
 SurfaceInteractionKernel<T>::SurfaceInteractionKernel() noexcept {
@@ -31,15 +31,13 @@ SurfaceInteractionKernel<T>::SurfaceInteractionKernel() noexcept {
 
 template <typename T>
 SurfaceInteractionKernel<T>::SurfaceInteractionKernel(
-    const IsothermalSurfaceInteraction<T>& interaction) noexcept
-{
+    const IsothermalSurfaceInteraction<T>& interaction) noexcept {
     detail::SurfaceInteractionVariant<T>::construct_payload(*this, interaction);
 }
 
 template <typename T>
 SurfaceInteractionKernel<T>::SurfaceInteractionKernel(
-    const MaxwellianSurfaceInteraction<T>& interaction) noexcept
-{
+    const MaxwellianSurfaceInteraction<T>& interaction) noexcept {
     detail::SurfaceInteractionVariant<T>::construct_payload(*this, interaction);
 }
 
@@ -103,4 +101,4 @@ SurfaceInteractionKernel<T>::copy_from(const SurfaceInteractionKernel& other) no
     detail::SurfaceInteractionVariant<T>::copy_construct(*this, other);
 }
 
-} // namespace atlas
+}

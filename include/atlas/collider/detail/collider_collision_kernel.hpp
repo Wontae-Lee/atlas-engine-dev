@@ -85,7 +85,7 @@ ColliderCollisionKernel<T>::closest_hit(const ColliderProbe<T>& probe,
     }
 
     for (int unit_index = 0; unit_index < probe.unit_count; ++unit_index) {
-        const Unit<T>* unit = nullptr;
+        const Unit<T>* unit        = nullptr;
         Vector3<T> sweep_direction = sweep.direction;
         T sweep_speed              = sweep.speed;
         T sweep_length             = sweep.length;
@@ -109,7 +109,7 @@ ColliderCollisionKernel<T>::closest_hit(const ColliderProbe<T>& probe,
         const atlas::Ray<T> world_ray = moving_surface_sweep
             ? atlas::Ray<T>(sweep.origin, sweep_direction)
             : particle_ray;
-        const auto& unit_bound = probe.unit_bounds[unit_index];
+        const auto& unit_bound        = probe.unit_bounds[unit_index];
         if (unit_bound.is_valid()) {
             const auto bound_hit = unit_bound.trace(world_ray);
             if (!bound_hit.is_intersecting || bound_hit.enter > sweep_length) {
@@ -121,10 +121,10 @@ ColliderCollisionKernel<T>::closest_hit(const ColliderProbe<T>& probe,
             unit = probe.units + unit_index;
         }
 
-        const auto& sync_op = unit->sync_operator();
-        const auto& geom_op = unit->geometry_operator();
+        const auto& sync_op           = unit->sync_operator();
+        const auto& geom_op           = unit->geometry_operator();
         const atlas::Ray<T> local_ray = sync_op.sync_to_local(world_ray);
-        const HitSurface<T> local_hit          = geom_op(local_ray);
+        const HitSurface<T> local_hit = geom_op(local_ray);
 
         if (!local_hit.is_intersecting || local_hit.distance > sweep_length) {
             continue;
@@ -154,17 +154,16 @@ ColliderCollisionKernel<T>::resolve_hit(const ColliderProbe<T>& probe,
                                         const ParticleSweep& sweep,
                                         const ColliderHit<T>& hit,
                                         const T dt) {
-    const int interaction_index =
-        (probe.interaction_count == 1 || hit.unit_index >= probe.interaction_count)
-            ? 0
-            : hit.unit_index;
-    const int flip_index = (probe.flip_count == 1 || hit.unit_index >= probe.flip_count)
+    const int interaction_index = (probe.interaction_count == 1 || hit.unit_index >= probe.interaction_count)
         ? 0
         : hit.unit_index;
-    const bool flip_normal = probe.flip_count > 0 && probe.flips[flip_index] != std::uint8_t { 0 };
+    const int flip_index        = (probe.flip_count == 1 || hit.unit_index >= probe.flip_count)
+               ? 0
+               : hit.unit_index;
+    const bool flip_normal      = probe.flip_count > 0 && probe.flips[flip_index] != std::uint8_t { 0 };
     const Vector3<T> hit_normal = flip_normal ? -hit.normal : hit.normal;
-    const auto& hit_unit = probe.units[hit.unit_index];
-    const auto& interaction = probe.surface_interactions[interaction_index];
+    const auto& hit_unit        = probe.units[hit.unit_index];
+    const auto& interaction     = probe.surface_interactions[interaction_index];
 
     post_collider_kernel(
         probe.positions[particle_index],
@@ -187,7 +186,7 @@ ColliderCollisionKernel<T>::resolve_hit(const ColliderProbe<T>& probe,
         return;
     }
 
-    const Vector3<T> wall_velocity = FastColliderKernel<T>::surface_velocity(hit_unit, hit.position);
+    const Vector3<T> wall_velocity          = FastColliderKernel<T>::surface_velocity(hit_unit, hit.position);
     probe.internal_energies[particle_index] = interaction.internal_energy(
         probe.internal_energies[particle_index],
         sweep.velocity - wall_velocity,
@@ -195,4 +194,4 @@ ColliderCollisionKernel<T>::resolve_hit(const ColliderProbe<T>& probe,
         probe.materials[species_index]);
 }
 
-} // namespace atlas::detail
+}

@@ -54,4 +54,4 @@ FastColliderKernel<T>::operator()(Vector3<T>& position,
     velocity = interaction(relative_incident, hit_normal) + wall_velocity;
 }
 
-} // namespace atlas
+}

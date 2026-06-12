@@ -1,48 +1,9 @@
 #pragma once
 
-/**
- * @file maxwell_boltzmann_generator.h
- * @brief Declares Maxwell-Boltzmann particle-velocity generation operators and host-side generator types.
- *
- * @details
- * This header defines:
- * - @ref atlas::MaxwellBoltzmannGenerateOperator, a backend-portable
- *   operator that samples particle velocities according to a Maxwell-Boltzmann
- *   distribution, and
- * - @ref atlas::MaxwellBoltzmannGenerator, a host-side generator class
- *   that owns the corresponding runtime parameters and can export a portable
- *   @ref GenerateOperator.
- *
- * ## Physical interpretation
- * The Maxwell-Boltzmann distribution is commonly used to model thermal particle
- * velocities for gases in equilibrium or near-equilibrium settings.
- *
- * In this formulation, sampled velocities are influenced by:
- * - a thermal temperature,
- * - a molecular mass,
- * - an optional bulk or drift velocity that shifts the distribution mean.
- *
- * ## Host/device split
- * Atlas separates this generation law into two complementary representations:
- * - a host-side polymorphic generator object for runtime configuration and
- *   direct host sampling,
- * - a compact backend-friendly operator for use inside device kernels or
- *   backend-parallel emission code.
- *
- * ## Construction
- * The host-side generator may be:
- * - constructed directly from its physical parameters, or
- * - built through the nested fluent @ref Builder.
- *
- * ---
- *
- * @tparam T Floating-point scalar type used for parameters and generated velocities.
- */
-
 #include <atlas/math/math.h>
 
-#include <atlas/generator/generator.h>
 #include <atlas/generator/generate_operator.h>
+#include <atlas/generator/generator.h>
 #include <optional>
 
 namespace atlas {
@@ -60,7 +21,7 @@ public:
         T temperature,
         T molecular_mass,
         const Vector3<T>& bulk_velocity = Vector3<T>(T(0), T(0), T(0)),
-        unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
+        unsigned int seed               = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD Vector3<T>
     generate() const override;
@@ -121,6 +82,6 @@ private:
     unsigned int _seed = atlas::DEFAULT_UNSIGNED_INT_SEED;
 };
 
-} // namespace atlas
+}
 
 #include <atlas/generator/maxwell_boltzmann_generator.hpp>

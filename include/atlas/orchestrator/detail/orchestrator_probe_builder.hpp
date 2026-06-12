@@ -116,4 +116,4 @@ OrchestratorProbeBuilder<T>::load_gravity_data(const UniverseHostPtr<T>& univers
     probe.gravity_cell_count = static_cast<int>(gravity.size());
 }
 
-} // namespace atlas::detail
+}

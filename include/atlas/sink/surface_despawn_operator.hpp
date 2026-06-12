@@ -10,4 +10,4 @@ SurfaceDespawnOperator<T>::despawn(const atlas::GeometryOperator<T>& query,
     return query.is_on_surface(particle, tolerance);
 }
 
-} // namespace atlas
+}

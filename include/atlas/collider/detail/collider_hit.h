@@ -1,20 +1,10 @@
 #pragma once
 
-/**
- * @file collider_hit.h
- * @brief Defines the selected surface hit used by collider collision kernels.
- */
-
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 
 namespace atlas::detail {
 
-/**
- * @brief Closest collider hit selected for one particle sweep.
- *
- * @tparam T Floating-point scalar type used by the collider.
- */
 template <typename T>
 struct ColliderHit final {
     T distance {};
@@ -29,4 +19,4 @@ struct ColliderHit final {
     }
 };
 
-} // namespace atlas::detail
+}

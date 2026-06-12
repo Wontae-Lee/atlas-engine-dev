@@ -57,4 +57,4 @@ SourceProbeBuilder<T>::build(const FluidHostPtr<T>& fluid,
     return true;
 }
 
-} // namespace atlas::detail
+}

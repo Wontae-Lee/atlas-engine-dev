@@ -95,7 +95,7 @@ SourceCacheBuilder<T>::rebuild(const DeviceBuffer<Unit<T>>& units,
     shuffle_keys.clear();
 
     const std::size_t total_count = host_flat_positions.size();
-    local_particle_count         = total_count;
+    local_particle_count          = total_count;
 
     if (total_count == 0) {
         flat_local_positions.clear();
@@ -108,8 +108,8 @@ SourceCacheBuilder<T>::rebuild(const DeviceBuffer<Unit<T>>& units,
     flat_local_positions = DeviceBuffer<Vector3<T>>(host_flat_positions.begin(), host_flat_positions.end());
     flat_unit_indices    = DeviceBuffer<int>(host_flat_unit_indices.begin(), host_flat_unit_indices.end());
 #else
-    flat_local_positions = std::move(host_flat_positions);
-    flat_unit_indices    = std::move(host_flat_unit_indices);
+    flat_local_positions             = std::move(host_flat_positions);
+    flat_unit_indices                = std::move(host_flat_unit_indices);
 #endif
 
     species_cache.resize(total_count);
@@ -150,4 +150,4 @@ SourceCacheBuilder<T>::clear(HostBuffer<int>& local_unit_counts,
     shuffle_seed = 0;
 }
 
-} // namespace atlas::detail
+}

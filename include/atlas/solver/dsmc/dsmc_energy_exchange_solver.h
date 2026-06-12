@@ -7,7 +7,7 @@ namespace atlas {
 template <typename T>
 class DsmcEnergyExchangeSolver final : public DsmcSolver<T> {
 public:
-    using Base = DsmcSolver<T>;
+    using Base  = DsmcSolver<T>;
     using Probe = typename Base::Probe;
     using Base::Base;
 
@@ -121,7 +121,7 @@ private:
     DsmcCollisionWorkloadType _workload_type { DsmcCollisionWorkloadType::cell };
 };
 
-} // namespace atlas
+}
 
 namespace atlas {
 template <typename T>
@@ -130,6 +130,6 @@ using DsmcEnergyExchangeSolverHostPtr = atlas::host_shared_ptr<atlas::DsmcEnergy
 template <typename T>
 using DsmcEnergyExchangeSolverDevicePtr = atlas::device_shared_ptr<atlas::DsmcEnergyExchangeSolver<T>>;
 
-} // namespace atlas
+}
 
 #include <atlas/solver/dsmc/dsmc_energy_exchange_solver.hpp>

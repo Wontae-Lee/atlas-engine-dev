@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file device_variant.h
- * @brief Shared lifecycle helpers for device-portable tagged unions.
- */
-
 #include <atlas/core/macros.h>
 
 #include <new>
@@ -19,12 +14,12 @@ template <typename Owner,
           typename Tag,
           Tag TagValue,
           typename Payload,
-          Payload Owner::* Member>
+          Payload Owner::*Member>
 struct DeviceVariantCase final {
     using payload_type = Payload;
 
-    static constexpr Tag tag = TagValue;
-    static constexpr Payload Owner::* member = Member;
+    static constexpr Tag tag                = TagValue;
+    static constexpr Payload Owner::*member = Member;
 };
 
 template <typename Owner,
@@ -95,7 +90,7 @@ private:
     ATLAS_ALL_DEVICE static void
     construct_by_payload(Owner& owner, const Payload& payload) noexcept {
         if constexpr (std::is_same_v<Payload, typename Case::payload_type>) {
-            owner.type = Case::tag;
+            owner.type          = Case::tag;
             using ActivePayload = typename Case::payload_type;
             new (&(owner.*Case::member)) ActivePayload(payload);
             return;
@@ -137,4 +132,4 @@ private:
     }
 };
 
-} // namespace atlas::detail
+}

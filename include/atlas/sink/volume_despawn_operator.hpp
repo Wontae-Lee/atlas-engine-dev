@@ -10,4 +10,4 @@ VolumeDespawnOperator<T>::despawn(const atlas::GeometryOperator<T>& query,
     return query.is_inside(particle, tolerance);
 }
 
-} // namespace atlas
+}

@@ -37,7 +37,7 @@ KdTreeSearcher<T>::build() {
     }
 
     const Vector3<T>* positions = this->position_ptr();
-    const int alive = this->active_count();
+    const int alive             = this->active_count();
 
     if (!positions || alive <= 0) {
         this->reset();
@@ -95,4 +95,4 @@ KdTreeSearcher<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<KdTreeSearcher<T>>(_universe, _fluid);
 }
 
-} // namespace atlas
+}

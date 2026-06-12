@@ -188,14 +188,14 @@ Quaternion<T>::is_identity(T eps) const noexcept {
 template <typename T>
 Vector3<T>
 Quaternion<T>::rotate(const Vector3<T>& v) const noexcept {
-    const T uxv_x = y * v.z - z * v.y;
-    const T uxv_y = z * v.x - x * v.z;
-    const T uxv_z = x * v.y - y * v.x;
-    const T uv = std::fma(z, v.z, std::fma(y, v.y, x * v.x));
-    const T uu = std::fma(z, z, std::fma(y, y, x * x));
-    const T scale = std::fma(w, w, -uu);
+    const T uxv_x  = y * v.z - z * v.y;
+    const T uxv_y  = z * v.x - x * v.z;
+    const T uxv_z  = x * v.y - y * v.x;
+    const T uv     = std::fma(z, v.z, std::fma(y, v.y, x * v.x));
+    const T uu     = std::fma(z, z, std::fma(y, y, x * x));
+    const T scale  = std::fma(w, w, -uu);
     const T two_uv = T(2) * uv;
-    const T two_w = T(2) * w;
+    const T two_w  = T(2) * w;
     return Vector3<T>(
         std::fma(two_w, uxv_x, std::fma(two_uv, x, scale * v.x)),
         std::fma(two_w, uxv_y, std::fma(two_uv, y, scale * v.y)),

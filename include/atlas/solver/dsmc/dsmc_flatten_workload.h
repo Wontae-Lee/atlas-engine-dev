@@ -24,9 +24,9 @@ public:
     build(int* collision_count_ptr,
           int num_of_cells,
           const int* allocated_solver_ptr = nullptr,
-          int index = 0);
+          int index                       = 0);
 };
 
-} // namespace atlas
+}
 
 #include <atlas/solver/dsmc/dsmc_flatten_workload.hpp>

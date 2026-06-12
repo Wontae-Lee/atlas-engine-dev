@@ -143,11 +143,11 @@ VolumeMeasurer<T>::measure_volume() {
     const atlas::AxisAlignedBoundingBox<int> grid_index_bound { grid_low, grid_high };
     const Vector3<int> expand { 1, 1, 1 };
 
-    auto* units_ptr = atlas::raw_pointer_cast(_units.data());
-    auto* regions_ptr = atlas::raw_pointer_cast(_unit_regions.data());
-    const auto unit_count = static_cast<int>(_units.size());
+    auto* units_ptr         = atlas::raw_pointer_cast(_units.data());
+    auto* regions_ptr       = atlas::raw_pointer_cast(_unit_regions.data());
+    const auto unit_count   = static_cast<int>(_units.size());
     const int xy_cell_count = grid_size.x * grid_size.y;
-    auto* volume_ptr = atlas::raw_pointer_cast(volume.data());
+    auto* volume_ptr        = atlas::raw_pointer_cast(volume.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -155,10 +155,10 @@ VolumeMeasurer<T>::measure_volume() {
         [=] ATLAS_DEVICE(const int unit_index) {
             const auto& unit = units_ptr[unit_index];
             auto local_bound = unit.geometry_operator().bound();
-            auto& region = regions_ptr[unit_index];
-            region.begin  = grid_low;
-            region.end    = grid_high;
-            region.active = true;
+            auto& region     = regions_ptr[unit_index];
+            region.begin     = grid_low;
+            region.end       = grid_high;
+            region.active    = true;
 
             const auto world_bound = atlas::transform_aabb(
                 local_bound,
@@ -213,7 +213,7 @@ VolumeMeasurer<T>::measure_volume() {
                         continue;
                     }
 
-                    const auto& unit = units_ptr[unit_index];
+                    const auto& unit             = units_ptr[unit_index];
                     const Vector3<T> local_point = unit.sync_operator().sync_to_local(sample_point);
                     if (unit.geometry_operator().is_inside(local_point, T(0))) {
                         ++occupied_samples;
@@ -277,4 +277,4 @@ VolumeMeasurer<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<VolumeMeasurer<T>>(build());
 }
 
-} // namespace atlas
+}

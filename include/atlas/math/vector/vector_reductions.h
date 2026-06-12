@@ -68,7 +68,7 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
         ATLAS_UNROLL
         for (std::size_t i = 0; i < n; ++i) {
             const T v = e[i];
-            accum = fma(v, v, accum);
+            accum     = fma(v, v, accum);
         }
     } else {
         ATLAS_UNROLL
@@ -197,4 +197,5 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     }
     return idx;
 }
+
 }

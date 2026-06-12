@@ -16,7 +16,7 @@ OrchestratorForceApplier<T>::apply_all(const OrchestratorProbe<T>& probe, const 
         0,
         force_cell_count(probe, gravity, field_force),
         [=] ATLAS_DEVICE(const int cell) {
-            const bool gravity_cell    = gravity && cell < probe.gravity_cell_count;
+            const bool gravity_cell     = gravity && cell < probe.gravity_cell_count;
             const bool field_force_cell = field_force && cell < probe.field_force_cell_count;
 
             if (!gravity_cell && !field_force_cell) {
@@ -170,4 +170,4 @@ OrchestratorForceApplier<T>::force_cell_count(const OrchestratorProbe<T>& probe,
     return cell_count;
 }
 
-} // namespace atlas::detail
+}

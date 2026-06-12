@@ -149,4 +149,4 @@ TypeStore<Base>::cend() const noexcept {
     return _values.cend();
 }
 
-} // namespace atlas
+}

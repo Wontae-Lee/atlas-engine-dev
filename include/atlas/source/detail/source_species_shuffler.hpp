@@ -37,4 +37,4 @@ SourceSpeciesShuffler<T>::shuffle(const DeviceBuffer<std::size_t>& species_cache
         shuffled_species.begin());
 }
 
-} // namespace atlas::detail
+}

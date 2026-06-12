@@ -6,31 +6,31 @@ namespace atlas {
 
 namespace detail {
 
-template <typename T>
-using DsmcKernelVariant = DeviceVariant<
-    DsmcKernel<T>,
-    DsmcKernelType,
-    DsmcKernelType::hard_sphere,
-    DeviceVariantCase<
+    template <typename T>
+    using DsmcKernelVariant = DeviceVariant<
         DsmcKernel<T>,
         DsmcKernelType,
         DsmcKernelType::hard_sphere,
-        HardSphereKernel<T>,
-        &DsmcKernel<T>::hard_sphere>,
-    DeviceVariantCase<
-        DsmcKernel<T>,
-        DsmcKernelType,
-        DsmcKernelType::variable_hard_sphere,
-        VariableHardSphereKernel<T>,
-        &DsmcKernel<T>::variable_hard_sphere>,
-    DeviceVariantCase<
-        DsmcKernel<T>,
-        DsmcKernelType,
-        DsmcKernelType::variable_soft_sphere,
-        VariableSoftSphereKernel<T>,
-        &DsmcKernel<T>::variable_soft_sphere>>;
+        DeviceVariantCase<
+            DsmcKernel<T>,
+            DsmcKernelType,
+            DsmcKernelType::hard_sphere,
+            HardSphereKernel<T>,
+            &DsmcKernel<T>::hard_sphere>,
+        DeviceVariantCase<
+            DsmcKernel<T>,
+            DsmcKernelType,
+            DsmcKernelType::variable_hard_sphere,
+            VariableHardSphereKernel<T>,
+            &DsmcKernel<T>::variable_hard_sphere>,
+        DeviceVariantCase<
+            DsmcKernel<T>,
+            DsmcKernelType,
+            DsmcKernelType::variable_soft_sphere,
+            VariableSoftSphereKernel<T>,
+            &DsmcKernel<T>::variable_soft_sphere>>;
 
-} // namespace detail
+}
 
 template <typename T>
 DsmcKernel<T>::DsmcKernel() noexcept {
@@ -72,20 +72,17 @@ DsmcKernel<T>::copy_from(const DsmcKernel& other) noexcept {
 }
 
 template <typename T>
-DsmcKernel<T>::DsmcKernel(const HardSphereKernel<T>& op)
-{
+DsmcKernel<T>::DsmcKernel(const HardSphereKernel<T>& op) {
     detail::DsmcKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-DsmcKernel<T>::DsmcKernel(const VariableHardSphereKernel<T>& op)
-{
+DsmcKernel<T>::DsmcKernel(const VariableHardSphereKernel<T>& op) {
     detail::DsmcKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-DsmcKernel<T>::DsmcKernel(const VariableSoftSphereKernel<T>& op)
-{
+DsmcKernel<T>::DsmcKernel(const VariableSoftSphereKernel<T>& op) {
     detail::DsmcKernelVariant<T>::construct_payload(*this, op);
 }
 
@@ -101,7 +98,7 @@ DsmcKernel<T>::pair_parameters(const MaterialProperties<T>& lhs,
         return pair;
     }
 
-    pair.reduced_mass = lhs_mass * rhs_mass / mass_sum;
+    pair.reduced_mass    = lhs_mass * rhs_mass / mass_sum;
     pair.viscosity_index = (lhs.viscosity_index.value_or(T(0.5))
                             + rhs.viscosity_index.value_or(T(0.5)))
         * T(0.5);
@@ -177,6 +174,5 @@ DsmcKernel<T>::sigma_g(const MaterialProperties<T>* properties_ptr,
                relative_speed)
         * relative_speed;
 }
-
 
 }

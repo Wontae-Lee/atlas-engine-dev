@@ -70,7 +70,7 @@ Sink<T>::sink(const T dt) {
         return;
     }
 
-    const auto probe = _probe;
+    const auto probe                = _probe;
     int* despawned_unit_indices_ptr = nullptr;
     if (sink_sensor_matrics != nullptr) {
         if (_despawned_unit_indices.size() != probe.particle_count) {
@@ -114,7 +114,7 @@ Sink<T>::make_probe(const T dt) noexcept {
                                 _tolerance,
                                 dt,
                                 _probe);
-} // namespace atlas
+}
 
 template <typename T>
 void

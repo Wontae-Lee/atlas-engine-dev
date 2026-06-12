@@ -40,28 +40,26 @@ SphProbeBuilder<T>::make(SphProbe<T>& probe,
         return false;
     }
 
-    probe.position_ptr = atlas::raw_pointer_cast(fluid->template state<FluidPositionState<T>>()->data().data());
-    probe.velocity_ptr = atlas::raw_pointer_cast(fluid->template state<FluidVelocityState<T>>()->data().data());
-    probe.species_ptr = atlas::raw_pointer_cast(fluid->template state<FluidSpeciesState<T>>()->data().data());
-    probe.properties_ptr = atlas::raw_pointer_cast(fluid->particle_properties().data());
-    probe.number_particle_ptr =
-        atlas::raw_pointer_cast(universe->template state<UniverseNumberParticleState<T>>()->data().data());
-    probe.field_force_ptr =
-        atlas::raw_pointer_cast(universe->template state<UniverseFieldForceState<T>>()->data().data());
-    probe.indices_ptr = searcher->indices();
-    probe.cell_start_ptr = searcher->cell_start();
-    probe.cell_end_ptr = searcher->cell_end();
+    probe.position_ptr         = atlas::raw_pointer_cast(fluid->template state<FluidPositionState<T>>()->data().data());
+    probe.velocity_ptr         = atlas::raw_pointer_cast(fluid->template state<FluidVelocityState<T>>()->data().data());
+    probe.species_ptr          = atlas::raw_pointer_cast(fluid->template state<FluidSpeciesState<T>>()->data().data());
+    probe.properties_ptr       = atlas::raw_pointer_cast(fluid->particle_properties().data());
+    probe.number_particle_ptr  = atlas::raw_pointer_cast(universe->template state<UniverseNumberParticleState<T>>()->data().data());
+    probe.field_force_ptr      = atlas::raw_pointer_cast(universe->template state<UniverseFieldForceState<T>>()->data().data());
+    probe.indices_ptr          = searcher->indices();
+    probe.cell_start_ptr       = searcher->cell_start();
+    probe.cell_end_ptr         = searcher->cell_end();
     probe.neighbor_offsets_ptr = searcher->neighbor_offsets();
     probe.neighbor_indices_ptr = searcher->neighbor_indices();
-    probe.lower_corner = searcher->lower_corner();
-    probe.grid_size = searcher->grid_size();
-    probe.inverse_cell_size = searcher->inverse_cell_size();
-    probe.cell_size = searcher->cell_size();
-    probe.particle_count = static_cast<int>(fluid->particle_count());
-    probe.num_of_cells = universe->number_of_cells();
-    probe.num_of_properties = static_cast<int>(fluid->particle_properties().size());
-    probe.kernel = kernel;
+    probe.lower_corner         = searcher->lower_corner();
+    probe.grid_size            = searcher->grid_size();
+    probe.inverse_cell_size    = searcher->inverse_cell_size();
+    probe.cell_size            = searcher->cell_size();
+    probe.particle_count       = static_cast<int>(fluid->particle_count());
+    probe.num_of_cells         = universe->number_of_cells();
+    probe.num_of_properties    = static_cast<int>(fluid->particle_properties().size());
+    probe.kernel               = kernel;
     return true;
 }
 
-} // namespace atlas::detail
+}

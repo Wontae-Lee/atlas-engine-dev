@@ -3,7 +3,7 @@
 ## General AI Instructions
 
 * Respond in Korean unless the user asks for another language.
-* Write source-code comments in English.
+* Do not write source-code comments unless the user explicitly asks for them. When requested, write source-code comments in English.
 * Make changes bold enough to fully satisfy the requested behavior. Do not preserve broken structure just to keep a diff small.
 * Keep edits focused on the requested behavior, but do not treat minimal line count as a goal.
 * Preserve existing style, naming, include order, file layout, and backend portability.
@@ -20,16 +20,18 @@
 * Implement only the requested algorithm or behavior.
 * Prefer structures and patterns that experienced C++ programmers would immediately recognize: clear ownership boundaries, direct control flow, cohesive classes, paired declaration/definition files, and role-named helpers.
 * Follow the nearest sibling module's organization before inventing a new layout. Keep helper types close to the owner they support, and split them out only when the role is substantial and named clearly, such as a kernel, builder, probe builder, interaction, or policy.
-* Keep code concise and direct; avoid unnecessary temporary variables, redundant branches, and verbose comments.
+* Keep code concise and direct; avoid unnecessary temporary variables and redundant branches.
 * Prefer concise class and function names, but optimize for readable control flow over raw name length.
 * Keep member function names short and natural when the class context already supplies meaning. Prefer names like `apply_collision` over overly explicit names such as `accept_and_scatter_pair` or `particle_index_at_offset`.
+* In class declarations and definitions, keep member functions ordered as constructors/destructor, the class's core functions, setters, then getters.
+* Keep member variables ordered by type when no nearer sibling layout is more specific: `bool`, integer, floating-point, `HostBuffer<T>`, then `DeviceBuffer<T>`.
 * Function names should clearly distinguish each algorithmic step. Avoid near-duplicate names that differ only by a generic suffix or repeated verb, such as `execute_*_trial` and `execute_*_pair`, when more specific step names would make the call flow easier to scan.
 * Do not split code into many tiny helpers just to shorten individual functions. A readable implementation should make the algorithmic flow understandable at the call site.
 * Do not add defensive checks, fallback paths, ownership guards, recovery branches, diagnostic-only state, or debug scaffolding unless requested or necessary to preserve an existing local contract.
 * Do not silently repair invalid states by resetting, zeroing, clamping, skipping required work, or mutating unrelated data unless that is part of the requested algorithm.
 * Avoid mutating shared solver, universe, fluid, or searcher state from guard branches. Update only the state owned by the requested algorithmic step.
 * Keep temporary logging, counters, assertions, probes, timing code, and instrumentation-only fields out of production code unless requested.
-* Use Doxygen-style comments for public APIs or files that already follow that convention.
+* If the user explicitly asks for source-code comments, use Doxygen-style comments for public APIs or files that already follow that convention.
 
 ## Project Overview
 
@@ -125,7 +127,7 @@ When writing setup code or tests, set capacity with `Fluid<T>::Builder::with_buf
 * Keep declarations and definitions synchronized.
 * CUDA translation units use `.cu`; CPU translation units use `.cpp`.
 * Do not silently rename existing public spellings such as `MatrialProperties` or `sensor_matrics` unless the task explicitly requests a rename.
-* `include/atlas/system/system.h` and `include/atlas/system/system.hpp` should keep this order: constructors/destructor, major runtime functions, setters, getters, clear functions.
+* `include/atlas/system/system.h` and `include/atlas/system/system.hpp` should follow the standard class member order.
 
 Current `include/atlas/` modules include:
 

@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file collider_probe_builder.h
- * @brief Declares helper routines that populate ColliderProbe.
- */
-
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/collider/collider_probe.h>
 #include <atlas/core/macros.h>
@@ -17,11 +12,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Populates the device-side collision probe from Collider-owned state.
- *
- * @tparam T Floating-point scalar type used by the collider.
- */
 template <typename T>
 class ColliderProbeBuilder final {
     static_assert(std::is_floating_point_v<T>, "ColliderProbeBuilder requires a floating-point T");
@@ -40,6 +30,6 @@ public:
          const FluidHostPtr<T>& fluid) noexcept;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/collider/detail/collider_probe_builder.hpp>

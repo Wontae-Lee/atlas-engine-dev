@@ -10,9 +10,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Builds device-readable sink probes.
- */
 template <typename T>
 class SinkProbeBuilder final {
 public:
@@ -27,6 +24,6 @@ public:
           SinkProbe<T>& probe) const noexcept;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/sink/detail/sink_probe_builder.hpp>

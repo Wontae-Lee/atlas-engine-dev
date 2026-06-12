@@ -40,7 +40,7 @@ OctreeSearcher<T>::build() {
     if (!this->_is_invalidated) return;
 
     const Vector3<T>* positions = this->position_ptr();
-    const int alive = this->active_count();
+    const int alive             = this->active_count();
 
     if (!positions || alive <= 0) {
         this->reset();
@@ -57,7 +57,9 @@ OctreeSearcher<T>::build() {
 
 template <typename T>
 typename OctreeSearcher<T>::Builder
-OctreeSearcher<T>::builder() noexcept { return Builder {}; }
+OctreeSearcher<T>::builder() noexcept {
+    return Builder {};
+}
 
 template <typename T>
 typename OctreeSearcher<T>::Builder&
@@ -96,4 +98,4 @@ OctreeSearcher<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<OctreeSearcher<T>>(_universe, _fluid);
 }
 
-} // namespace atlas
+}

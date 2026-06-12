@@ -121,4 +121,4 @@ MaxwellBoltzmannGenerator<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas
+}

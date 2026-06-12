@@ -13,42 +13,36 @@ namespace atlas {
 template <typename T>
 atlas::Vector<T, 3>
 CircleGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
-    // Without all circle parameters, there is no meaningful projection target.
+
     if (!center || !normal || !radius) {
         return p;
     }
 
     const T n2 = normal->length_squared();
 
-    // Degenerate normals or non-positive radii cannot define a valid circle disk.
     if (n2 <= T(0) || *radius <= T(0)) {
         return p;
     }
 
-    // Normalize the plane normal before computing the orthogonal projection.
     const atlas::Vector<T, 3> n = atlas::normalized_or(
         *normal,
         atlas::Vector<T, 3>(T(0), T(0), T(1)));
 
     const atlas::Vector<T, 3> offset = p - *center;
-    const T plane_distance                 = offset.dot(n);
+    const T plane_distance           = offset.dot(n);
 
-    // Project the point offset onto the circle plane.
     const atlas::Vector<T, 3> planar = offset - n * plane_distance;
-    const T planar_len2                    = planar.length_squared();
-    const T rr                             = (*radius) * (*radius);
+    const T planar_len2              = planar.length_squared();
+    const T rr                       = (*radius) * (*radius);
 
-    // Points projected inside the disk use the direct plane projection.
     if (planar_len2 <= rr) {
         return p - n * plane_distance;
     }
 
-    // If the projected direction is numerically undefined, choose a stable fallback point.
     if (planar_len2 <= std::numeric_limits<T>::epsilon()) {
         return *center + atlas::Vector<T, 3>(*radius, T(0), T(0));
     }
 
-    // Clamp exterior projections to the circular boundary.
     const T planar_len = atlas::sqrt_nonnegative(planar_len2);
     return *center + planar * ((*radius) / planar_len);
 }
@@ -56,7 +50,7 @@ CircleGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const noe
 template <typename T>
 atlas::Vector<T, 3>
 CircleGeometryOperator<T>::closest_normal(const atlas::Vector<T, 3>&) const noexcept {
-    // Fall back to the global z-axis when the stored normal is unavailable.
+
     if (!normal) {
         return atlas::Vector<T, 3>(T(0), T(0), T(1));
     }
@@ -69,17 +63,15 @@ CircleGeometryOperator<T>::closest_normal(const atlas::Vector<T, 3>&) const noex
 template <typename T>
 T
 CircleGeometryOperator<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
-    // Invalid circle parameters represent an infinitely distant surface.
+
     if (!center || !normal || !radius) {
         return std::numeric_limits<T>::infinity();
     }
 
-    // Distance magnitude is measured to the closest point on the disk.
     const atlas::Vector<T, 3> cp = closest_point(p);
     const atlas::Vector<T, 3> nn = closest_normal(p);
-    const T magnitude                  = (p - cp).length();
+    const T magnitude            = (p - cp).length();
 
-    // The sign is determined by which side of the disk plane the point lies on.
     const T side = (p - *center).dot(nn);
 
     return (side >= T(0)) ? magnitude : -magnitude;
@@ -89,7 +81,7 @@ template <typename T>
 bool
 CircleGeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p,
                                      const T tolerance) const noexcept {
-    // Invalid circle parameters cannot classify points.
+
     if (!center || !normal || !radius || !(*radius > T(0))) {
         return false;
     }
@@ -105,11 +97,11 @@ CircleGeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p,
         atlas::Vector<T, 3>(T(0), T(0), T(1)));
 
     const atlas::Vector<T, 3> offset = p - *center;
-    const T plane_distance                 = offset.dot(n);
+    const T plane_distance           = offset.dot(n);
     const atlas::Vector<T, 3> planar = offset - n * plane_distance;
-    const T planar_len2                    = planar.length_squared();
-    const T rr                             = (*radius) * (*radius);
-    const T tolerance2                     = tolerance * tolerance;
+    const T planar_len2              = planar.length_squared();
+    const T rr                       = (*radius) * (*radius);
+    const T tolerance2               = tolerance * tolerance;
 
     T distance2 = plane_distance * plane_distance;
 
@@ -129,7 +121,7 @@ template <typename T>
 bool
 CircleGeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p,
                                          const T tolerance) const noexcept {
-    // Invalid circle parameters or negative tolerances cannot accept surface points.
+
     if (!center || !normal || !radius || !(*radius > T(0)) || tolerance < T(0)) {
         return false;
     }
@@ -145,11 +137,11 @@ CircleGeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p,
         atlas::Vector<T, 3>(T(0), T(0), T(1)));
 
     const atlas::Vector<T, 3> offset = p - *center;
-    const T plane_distance                 = offset.dot(n);
+    const T plane_distance           = offset.dot(n);
     const atlas::Vector<T, 3> planar = offset - n * plane_distance;
-    const T planar_len2                    = planar.length_squared();
-    const T rr                             = (*radius) * (*radius);
-    const T tolerance2                     = tolerance * tolerance;
+    const T planar_len2              = planar.length_squared();
+    const T rr                       = (*radius) * (*radius);
+    const T tolerance2               = tolerance * tolerance;
 
     T distance2 = plane_distance * plane_distance;
 
@@ -164,36 +156,32 @@ CircleGeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p,
 template <typename T>
 atlas::Vector<T, 3>
 CircleGeometryOperator<T>::centroid() const noexcept {
-    // Invalid or unbound centers fall back to the origin.
+
     if (!center) {
         return atlas::Vector<T, 3>(T(0), T(0), T(0));
     }
 
-    // The centroid of a circle disk is its center.
     return *center;
 }
 
 template <typename T>
 atlas::AxisAlignedBoundingBox<T>
 CircleGeometryOperator<T>::bound() const noexcept {
-    // Without all parameters, an axis-aligned bound cannot be constructed.
+
     if (!center || !normal || !radius) {
         return atlas::AxisAlignedBoundingBox<T>();
     }
 
     const T n2 = normal->length_squared();
 
-    // Degenerate disks collapse to a point bound at the center.
     if (n2 <= T(0) || *radius <= T(0)) {
         return atlas::AxisAlignedBoundingBox<T>(*center, *center);
     }
 
-    // Normalize the disk normal before projecting the radius onto world axes.
     const atlas::Vector<T, 3> n = atlas::normalized_or(
         *normal,
         atlas::Vector<T, 3>(T(0), T(0), T(1)));
 
-    // Each AABB extent is the disk radius scaled by the projection onto that axis.
     const atlas::Vector<T, 3> extent(
         (*radius) * atlas::sqrt_nonnegative(T(1) - n.x * n.x),
         (*radius) * atlas::sqrt_nonnegative(T(1) - n.y * n.y),
@@ -205,12 +193,11 @@ CircleGeometryOperator<T>::bound() const noexcept {
 template <typename T>
 bool
 CircleGeometryOperator<T>::is_valid() const noexcept {
-    // A valid circle requires bound parameter storage.
+
     if (!center || !normal || !radius) {
         return false;
     }
 
-    // All geometric parameters must be finite, with a non-zero normal and positive radius.
     return atlas::isfinite(*center)
         && atlas::isfinite(*normal)
         && normal->length_squared() > T(0)
@@ -223,23 +210,21 @@ HitSurface<T>
 CircleGeometryOperator<T>::trace(const atlas::Ray<T>& ray) const noexcept {
     HitSurface<T> result {};
 
-    // Invalid disks produce a default non-intersecting hit result.
     if (!is_valid()) {
         return result;
     }
 
     const atlas::Vector<T, 3> nn = closest_normal(ray.origin);
-    const T denom                      = nn.dot(ray.direction);
-    const T eps                        = std::numeric_limits<T>::epsilon();
+    const T denom                = nn.dot(ray.direction);
+    const T eps                  = std::numeric_limits<T>::epsilon();
 
     if (atlas::abs(denom) <= eps) {
-        // Parallel rays intersect only if they already lie on the circle plane.
+
         const T plane_distance = (ray.origin - *center).dot(nn);
         if (atlas::abs(plane_distance) > eps) {
             return result;
         }
 
-        // A coplanar ray is accepted only when its origin lies inside the disk.
         if ((ray.origin - *center).length_squared() > (*radius) * (*radius)) {
             return result;
         }
@@ -252,17 +237,14 @@ CircleGeometryOperator<T>::trace(const atlas::Ray<T>& ray) const noexcept {
         return result;
     }
 
-    // Intersect the ray with the supporting plane of the disk.
     const T t = ((*center - ray.origin).dot(nn)) / denom;
 
-    // Reject intersections behind the ray origin.
     if (t < T(0)) {
         return result;
     }
 
     const atlas::Vector<T, 3> hit_point = ray.point_at(t);
 
-    // Reject plane hits outside the circular disk radius.
     if ((hit_point - *center).length_squared() > (*radius) * (*radius)) {
         return result;
     }
@@ -278,7 +260,7 @@ CircleGeometryOperator<T>::trace(const atlas::Ray<T>& ray) const noexcept {
 template <typename T>
 HitSurface<T>
 CircleGeometryOperator<T>::operator()(const atlas::Ray<T>& ray) const noexcept {
-    // Allow the operator object to be used directly as a ray-intersection functor.
+
     return trace(ray);
 }
 
@@ -311,7 +293,7 @@ Circle<T>::Circle(Circle&& other) noexcept
 template <typename T>
 Circle<T>&
 Circle<T>::operator=(const Circle& other) noexcept {
-    // Avoid unnecessary rebinding on self-assignment.
+
     if (this == &other) {
         return *this;
     }
@@ -326,7 +308,7 @@ Circle<T>::operator=(const Circle& other) noexcept {
 template <typename T>
 Circle<T>&
 Circle<T>::operator=(Circle&& other) noexcept {
-    // Avoid unnecessary rebinding on self move-assignment.
+
     if (this == &other) {
         return *this;
     }
@@ -351,7 +333,7 @@ Circle<T>::make_circle_operator() const noexcept {
 template <typename T>
 typename Circle<T>::Builder
 Circle<T>::builder() noexcept {
-    // Return a fresh builder so callers can configure the circle fluently.
+
     return Builder {};
 }
 
@@ -412,14 +394,14 @@ Circle<T>::is_valid() const noexcept {
 template <typename T>
 GeometryType
 Circle<T>::type() const noexcept {
-    // Identify this geometry as a circle disk.
+
     return GeometryType::Circle;
 }
 
 template <typename T>
 Circle<T>
 Circle<T>::Builder::build() const {
-    // Validate circle parameters before constructing the geometry.
+
     validate();
 
     Circle<T> circle {};
@@ -433,7 +415,7 @@ Circle<T>::Builder::build() const {
 template <typename T>
 atlas::host_shared_ptr<Circle<T>>
 Circle<T>::Builder::make_host_shared() const {
-    // Build a validated circle and store it in host-managed shared ownership.
+
     auto circle = build();
     return atlas::make_host_shared<Circle<T>>(std::move(circle));
 }
@@ -441,7 +423,7 @@ Circle<T>::Builder::make_host_shared() const {
 template <typename T>
 typename Circle<T>::Builder&
 Circle<T>::Builder::with_center(const Vector3<T>& center_) noexcept {
-    // Store the center point used to position the disk.
+
     _center = center_;
     return *this;
 }
@@ -449,7 +431,7 @@ Circle<T>::Builder::with_center(const Vector3<T>& center_) noexcept {
 template <typename T>
 typename Circle<T>::Builder&
 Circle<T>::Builder::with_normal(const Vector3<T>& normal_) noexcept {
-    // Store the disk normal used to define the supporting plane orientation.
+
     _normal = normal_;
     return *this;
 }
@@ -457,7 +439,7 @@ Circle<T>::Builder::with_normal(const Vector3<T>& normal_) noexcept {
 template <typename T>
 typename Circle<T>::Builder&
 Circle<T>::Builder::with_radius(const T radius_) noexcept {
-    // Store the positive radius used to define the disk extent.
+
     _radius = radius_;
     return *this;
 }
@@ -467,7 +449,6 @@ void
 Circle<T>::Builder::validate() const {
     CircleGeometryOperator<T> op;
 
-    // Validate using the same operator logic used by constructed Circle instances.
     op.center = atlas::raw_pointer_cast(&_center);
     op.normal = atlas::raw_pointer_cast(&_normal);
     op.radius = atlas::raw_pointer_cast(&_radius);
@@ -477,4 +458,4 @@ Circle<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas
+}

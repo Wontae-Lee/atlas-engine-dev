@@ -14,6 +14,6 @@ public:
             T dt) const override;
 };
 
-} // namespace atlas
+}
 
 #include <atlas/solver/dsmc/statistics/dsmc_simple_statistics.hpp>

@@ -113,11 +113,11 @@
 #include <atlas/sink/surface_despawn_operator.h>
 #include <atlas/sink/tracing_despawn_operator.h>
 #include <atlas/sink/volume_despawn_operator.h>
+#include <atlas/solver/dsmc/detail/dsmc_probe_builder.h>
 #include <atlas/solver/dsmc/dsmc_energy_exchange_solver.h>
 #include <atlas/solver/dsmc/dsmc_flatten_workload.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
 #include <atlas/solver/dsmc/dsmc_probe.h>
-#include <atlas/solver/dsmc/detail/dsmc_probe_builder.h>
 #include <atlas/solver/dsmc/dsmc_simple_solver.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>
@@ -129,10 +129,10 @@
 #include <atlas/solver/hybrid/hybrid_dsmc_sph_solver.h>
 #include <atlas/solver/solver.h>
 #include <atlas/solver/sph/cubic_spline_sph_kernel.h>
+#include <atlas/solver/sph/detail/sph_probe_builder.h>
 #include <atlas/solver/sph/sph_gateway_solver.h>
 #include <atlas/solver/sph/sph_kernel.h>
 #include <atlas/solver/sph/sph_probe.h>
-#include <atlas/solver/sph/detail/sph_probe_builder.h>
 #include <atlas/solver/sph/sph_solver.h>
 #include <atlas/solver/sph/standard_sph_kernel.h>
 #include <atlas/solver/sph/wendland_quintic_sph_kernel.h>

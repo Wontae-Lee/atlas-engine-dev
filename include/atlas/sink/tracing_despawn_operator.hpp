@@ -16,4 +16,4 @@ TracingDespawnOperator<T>::despawn(const atlas::GeometryOperator<T>& query,
     return hit.is_intersecting && hit.distance >= T(0) && hit.distance <= speed * time;
 }
 
-} // namespace atlas
+}

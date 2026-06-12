@@ -14,9 +14,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Compacts fluid state storage using the active mask.
- */
 template <typename T>
 class SinkFluidCompactor final {
 public:
@@ -28,6 +25,6 @@ public:
             DeviceBuffer<std::size_t>& total_count_buffer) const;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/sink/detail/sink_fluid_compactor.hpp>

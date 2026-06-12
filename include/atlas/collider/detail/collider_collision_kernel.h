@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file collider_collision_kernel.h
- * @brief Declares the device collision pass used by Collider.
- */
-
 #include <atlas/collider/collider_probe.h>
 #include <atlas/collider/detail/collider_hit.h>
 #include <atlas/collider/kernel/post_collider_kernel.h>
@@ -16,16 +11,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Runs the per-particle collider sweep and surface-response pass.
- *
- * This kernel layer follows the collider algorithm in three explicit steps:
- * 1. build the particle sweep for the current time step,
- * 2. find the closest collider hit along that sweep,
- * 3. resolve the selected hit with the configured post-collider policy.
- *
- * @tparam T Floating-point scalar type used by collision geometry and states.
- */
 template <typename T>
 class ColliderCollisionKernel final {
     static_assert(std::is_floating_point_v<T>, "ColliderCollisionKernel requires a floating-point T");
@@ -62,6 +47,6 @@ private:
                 T dt);
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/collider/detail/collider_collision_kernel.hpp>

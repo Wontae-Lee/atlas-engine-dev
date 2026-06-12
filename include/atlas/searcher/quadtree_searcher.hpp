@@ -38,7 +38,7 @@ QuadtreeSearcher<T>::build() {
     if (!this->_is_invalidated) return;
 
     const Vector3<T>* positions = this->position_ptr();
-    const int alive = this->active_count();
+    const int alive             = this->active_count();
 
     if (!positions || alive <= 0) {
         this->reset();
@@ -55,7 +55,9 @@ QuadtreeSearcher<T>::build() {
 
 template <typename T>
 typename QuadtreeSearcher<T>::Builder
-QuadtreeSearcher<T>::builder() noexcept { return Builder {}; }
+QuadtreeSearcher<T>::builder() noexcept {
+    return Builder {};
+}
 
 template <typename T>
 typename QuadtreeSearcher<T>::Builder&
@@ -94,4 +96,4 @@ QuadtreeSearcher<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<QuadtreeSearcher<T>>(_universe, _fluid);
 }
 
-} // namespace atlas
+}

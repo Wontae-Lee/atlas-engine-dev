@@ -113,4 +113,4 @@ Codec<T>::make_probe() noexcept {
         d_fixed_region);
 }
 
-} // namespace atlas
+}

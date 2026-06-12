@@ -7,9 +7,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Marks sink-removed particles inactive.
- */
 template <typename T>
 class SinkParticleDespawner final {
 public:
@@ -17,6 +14,6 @@ public:
     apply(const SinkProbe<T>& probe, int* removed_unit_indices) const;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/sink/detail/sink_particle_despawner.hpp>

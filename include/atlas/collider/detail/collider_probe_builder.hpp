@@ -20,11 +20,11 @@ ColliderProbeBuilder<T>::make(ColliderProbe<T>& probe,
         return false;
     }
 
-    auto& positions  = fluid->template state<atlas::FluidPositionState<T>>()->data();
-    auto& velocities = fluid->template state<atlas::FluidVelocityState<T>>()->data();
-    auto& species    = fluid->template state<atlas::FluidSpeciesState<T>>()->data();
+    auto& positions             = fluid->template state<atlas::FluidPositionState<T>>()->data();
+    auto& velocities            = fluid->template state<atlas::FluidVelocityState<T>>()->data();
+    auto& species               = fluid->template state<atlas::FluidSpeciesState<T>>()->data();
     auto* internal_energy_state = fluid->template state<atlas::FluidInternalEnergyState<T>>();
-    auto& materials = fluid->particle_properties();
+    auto& materials             = fluid->particle_properties();
 
     if (positions.empty() || velocities.empty() || species.empty() || fluid->particle_count() <= 0) {
         return false;
@@ -55,4 +55,4 @@ ColliderProbeBuilder<T>::make(ColliderProbe<T>& probe,
     return true;
 }
 
-} // namespace atlas::detail
+}

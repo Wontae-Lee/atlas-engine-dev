@@ -13,19 +13,19 @@ namespace atlas {
 
 namespace detail {
 
-template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-maxwellian_unit_sample(const T u) noexcept {
-    return std::max(u, static_cast<T>(atlas::eps));
-}
+    template <typename T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
+    maxwellian_unit_sample(const T u) noexcept {
+        return std::max(u, static_cast<T>(atlas::eps));
+    }
 
-template <typename T>
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
-maxwellian_tangent_seed(const Vector3<T>& normal, const Vector3<T>& seed) noexcept {
-    return atlas::orthogonal_unit_vector(normal, seed, T(atlas::tol));
-}
+    template <typename T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
+    maxwellian_tangent_seed(const Vector3<T>& normal, const Vector3<T>& seed) noexcept {
+        return atlas::orthogonal_unit_vector(normal, seed, T(atlas::tol));
+    }
 
-} // namespace detail
+}
 
 template <typename T>
 typename MaxwellianSurfaceInteraction<T>::Builder
@@ -197,11 +197,9 @@ MaxwellianSurfaceInteraction<T>::sample(const Vector3<T>& incident,
     }
 
     const T vrm      = most_probable_speed();
-    const T vperp = vrm * atlas::sqrt_nonnegative(
-        -std::log(detail::maxwellian_unit_sample(perpendicular_sample)));
+    const T vperp    = vrm * atlas::sqrt_nonnegative(-std::log(detail::maxwellian_unit_sample(perpendicular_sample)));
     const T theta    = T(2) * static_cast<T>(atlas::pi) * theta_sample;
-    const T vtangent = vrm * atlas::sqrt_nonnegative(
-        -std::log(detail::maxwellian_unit_sample(tangent_sample)));
+    const T vtangent = vrm * atlas::sqrt_nonnegative(-std::log(detail::maxwellian_unit_sample(tangent_sample)));
     const T vtan1    = vtangent * std::sin(theta);
     const T vtan2    = vtangent * std::cos(theta);
 
@@ -321,8 +319,8 @@ MaxwellianSurfaceInteraction<T>::sample_diffuse_rotational_energy(
         const T rot_temperature = material.rotational_temperature.has_value()
             ? *material.rotational_temperature
             : _temperature;
-        const T quantum = std::max(rot_temperature, T(atlas::eps));
-        const T sample = detail::maxwellian_unit_sample(
+        const T quantum         = std::max(rot_temperature, T(atlas::eps));
+        const T sample          = detail::maxwellian_unit_sample(
             atlas::sample_hashed_unit_interval(seed, T(14.11)));
         const int level = static_cast<int>(-std::log(sample) * _temperature / quantum);
         return static_cast<T>(level) * static_cast<T>(atlas::boltzmann_constant) * quantum;
@@ -345,8 +343,8 @@ MaxwellianSurfaceInteraction<T>::sample_diffuse_vibrational_energy(
         const T vib_temperature = material.characteristic_vibrational_temperature.has_value()
             ? *material.characteristic_vibrational_temperature
             : _temperature;
-        const T quantum = std::max(vib_temperature, T(atlas::eps));
-        const T sample = detail::maxwellian_unit_sample(
+        const T quantum         = std::max(vib_temperature, T(atlas::eps));
+        const T sample          = detail::maxwellian_unit_sample(
             atlas::sample_hashed_unit_interval(seed, T(16.37)));
         const int level = static_cast<int>(-std::log(sample) * _temperature / quantum);
         return static_cast<T>(level) * static_cast<T>(atlas::boltzmann_constant) * quantum;
@@ -374,8 +372,8 @@ MaxwellianSurfaceInteraction<T>::sample_diffuse_smooth_energy(const int dof,
     for (int i = 0;; ++i) {
         const T energy_sample = atlas::sample_hashed_unit_interval(seed, salt + T(i) * T(0.37));
         const T accept_sample = atlas::sample_hashed_unit_interval(seed, salt + T(i) * T(0.37) + T(0.19));
-        const T erm = T(10) * energy_sample;
-        const T b = std::pow(erm / a, a) * std::exp(a - erm);
+        const T erm           = T(10) * energy_sample;
+        const T b             = std::pow(erm / a, a) * std::exp(a - erm);
         if (b > accept_sample) {
             return erm * static_cast<T>(atlas::boltzmann_constant) * _temperature;
         }
@@ -489,8 +487,7 @@ MaxwellianSurfaceInteraction<T>::Builder::validate() const {
             "MaxwellianSurfaceInteraction::Builder: molecular_mass must be finite and positive.");
     }
 
-    const bool invalid_accommodation =
-        !atlas::isfinite(_momentum_acc) || _momentum_acc < T(0) || _momentum_acc > T(1)
+    const bool invalid_accommodation = !atlas::isfinite(_momentum_acc) || _momentum_acc < T(0) || _momentum_acc > T(1)
         || !atlas::isfinite(_trans_acc) || _trans_acc < T(0) || _trans_acc > T(1)
         || !atlas::isfinite(_rot_acc) || _rot_acc < T(0) || _rot_acc > T(1)
         || !atlas::isfinite(_vib_acc) || _vib_acc < T(0) || _vib_acc > T(1);
@@ -501,4 +498,4 @@ MaxwellianSurfaceInteraction<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas
+}

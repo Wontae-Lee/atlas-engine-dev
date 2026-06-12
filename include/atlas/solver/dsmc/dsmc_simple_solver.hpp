@@ -82,4 +82,4 @@ DsmcSimpleSolver<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<DsmcSimpleSolver<T>>(_universe, _fluid, _searcher, _kernel_type, _workload_type);
 }
 
-} // namespace atlas
+}

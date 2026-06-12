@@ -18,7 +18,6 @@ Universe<T>::Universe(const Vector3<T>& lower_corner,
     , _upper_corner(upper_corner)
     , _cell_size(cell_size) {
 
-    // Precompute grid metrics used by solvers and searchers.
     _cell_volume  = _cell_size * _cell_size * _cell_size;
     _inv_h        = T(1) / _cell_size;
     _grid_size    = compute_grid_size(_lower_corner, _upper_corner, _inv_h);
@@ -37,7 +36,8 @@ Universe<T>::compute_grid_size(const Vector3<T>& lower_corner,
                                const Vector3<T>& upper_corner,
                                const T inverse_cell_size) noexcept {
     return atlas::floor((upper_corner - lower_corner) * inverse_cell_size)
-        .template cast_to<int>() + Vector3<int>(1, 1, 1);
+               .template cast_to<int>()
+        + Vector3<int>(1, 1, 1);
 }
 
 template <typename T>
@@ -145,7 +145,7 @@ Universe<T>::states() const noexcept {
 template <typename T>
 void
 Universe<T>::save(const std::string_view path) const {
-    // Serialize the complete universe snapshot to disk.
+
     atlas::save_universe_binary(*this, path);
 }
 
@@ -154,12 +154,10 @@ Universe<T>
 Universe<T>::Builder::build() const {
     validate();
 
-    // Build the base universe first, then attach optional states.
     auto universe      = Universe<T>(_lower_corner, _upper_corner, _cell_size);
     universe._observer = _observer;
 
-    const auto restored_state_count =
-        static_cast<std::size_t>(_temperature_state.has_value())
+    const auto restored_state_count = static_cast<std::size_t>(_temperature_state.has_value())
         + static_cast<std::size_t>(_bulk_velocity_state.has_value())
         + static_cast<std::size_t>(_field_force_state.has_value())
         + static_cast<std::size_t>(_max_relative_speed_state.has_value())
@@ -225,7 +223,7 @@ Universe<T>::Builder::build() const {
 template <typename T>
 atlas::host_shared_ptr<Universe<T>>
 Universe<T>::Builder::make_host_shared() const {
-    // Move the built universe into host-managed shared storage.
+
     auto universe = build();
     return atlas::make_host_shared<Universe<T>>(std::move(universe));
 }
@@ -236,7 +234,6 @@ Universe<T>::Builder::with_geometry(const GeometryHostPtr<T>& geometry) {
     atlas::check<std::invalid_argument>(geometry != nullptr)
         << "Universe::Builder::with_geometry requires a non-null geometry.";
 
-    // Use the geometry bounds as the universe domain.
     auto op       = make_device_geometry_view(*geometry);
     auto bound    = op.bound();
     _lower_corner = bound.lower_corner;
@@ -275,7 +272,7 @@ Universe<T>::Builder::with_observer(ObserverHostPtr observer) noexcept {
 template <typename T>
 typename Universe<T>::Builder&
 Universe<T>::Builder::with_binary(const std::string& path) {
-    // Load geometry and optional states from a serialized snapshot.
+
     auto snapshot = atlas::load_universe_binary<T>(path);
 
     _lower_corner = snapshot.lower_corner;
@@ -297,12 +294,11 @@ Universe<T>::Builder::with_binary(const std::string& path) {
 template <typename T>
 void
 Universe<T>::Builder::validate() const {
-    // Cell size must define a valid positive grid spacing.
+
     atlas::check<std::invalid_argument>(_cell_size > T(0))
         << "Universe::Builder validation failed: cell_size must be > 0. "
         << "cell_size=" << _cell_size;
 
-    // The Universe must have positive extent on every axis.
     atlas::check<std::invalid_argument>(
         atlas::all(_upper_corner > _lower_corner))
         << "Universe::Builder validation failed: upper_corner must be greater than lower_corner on all axes. "
@@ -311,7 +307,6 @@ Universe<T>::Builder::validate() const {
 
     const T inv_h = T(1) / _cell_size;
 
-    // Compute the grid resolution implied by the Universe and cell size.
     const Vector3<int> gs = Universe<T>::compute_grid_size(_lower_corner, _upper_corner, inv_h);
 
     atlas::check<std::invalid_argument>(atlas::all(gs >= Vector3<int>(1, 1, 1)))
@@ -326,7 +321,6 @@ Universe<T>::Builder::validate() const {
         << "Universe::Builder validation failed: grid_size components must be positive. "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
 
-    // Use 64-bit arithmetic to detect overflow before storing as int.
     const long long cells64 = nx * ny * nz;
 
     atlas::check<std::invalid_argument>(
@@ -336,4 +330,4 @@ Universe<T>::Builder::validate() const {
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
 }
 
-} // namespace atlas
+}

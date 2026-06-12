@@ -107,4 +107,4 @@ JitteringOperator<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<JitteringOperator<T>>(build());
 }
 
-} // namespace atlas
+}

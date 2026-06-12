@@ -20,7 +20,7 @@ DsmcSolver<T>::DsmcSolver(UniverseHostPtr<T> universe,
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher))
     , _kernel(DsmcKernel<T>(kernel_type))
     , _workload_type(workload_type) {
-    // Make sure all per-cell DSMC states exist before the first solve step.
+
     ensure_states();
 }
 
@@ -28,7 +28,6 @@ template <typename T>
 void
 DsmcSolver<T>::solve(const T dt) {
 
-    // Process all cells when no external solver-allocation map is provided.
     solve(nullptr, 0, dt);
 }
 
@@ -38,19 +37,14 @@ DsmcSolver<T>::solve(const DeviceBuffer<int>* allocated_solver,
                      const int index,
                      const T dt) {
 
-    // Ensure that the universe has the required DSMC state buffers.
     ensure_states();
 
-    // Rebuild the spatial hash so cell particle ranges match the current positions.
     this->_searcher->build();
 
-    // Cache all raw pointers and scalar constants needed by device-side kernels.
     make_probe();
 
-    // Measure cell-local collision bounds and sample the number of collision trials.
     measure_collision_statistics(allocated_solver, index, dt);
 
-    // Apply stochastic DSMC pair collisions using the measured cell statistics.
     apply_collision(allocated_solver, index, dt);
 }
 
@@ -138,7 +132,6 @@ template <typename T>
 DsmcKernelType
 DsmcSolver<T>::kernel_type() const noexcept {
 
-    // The kernel stores the selected DSMC collision model type.
     return _kernel.type;
 }
 
@@ -158,7 +151,7 @@ template <typename T>
 void
 DsmcSolver<T>::apply_flattened_collision(const DeviceBuffer<int>* allocated_solver,
                                          const int index) {
-    const auto probe = _probe;
+    const auto probe                = _probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr
         ? atlas::raw_pointer_cast(allocated_solver->data())
         : nullptr;
@@ -167,20 +160,20 @@ DsmcSolver<T>::apply_flattened_collision(const DeviceBuffer<int>* allocated_solv
         return;
     }
 
-    const int* collision_offsets_ptr = atlas::raw_pointer_cast(_flatten_workload.collision_offsets.data());
-    const int* collision_cells_ptr = atlas::raw_pointer_cast(_flatten_workload.collision_cells.data());
+    const int* collision_offsets_ptr    = atlas::raw_pointer_cast(_flatten_workload.collision_offsets.data());
+    const int* collision_cells_ptr      = atlas::raw_pointer_cast(_flatten_workload.collision_cells.data());
     const int flattened_collision_count = _flatten_workload.flattened_collision_count;
 
     atlas::parallel_for<atlas::ExecutionPolicy::device>(
         0,
         flattened_collision_count,
         [=] ATLAS_DEVICE(const int work_index) {
-            const int cell = collision_cells_ptr[work_index];
+            const int cell            = collision_cells_ptr[work_index];
             const int local_collision = work_index - collision_offsets_ptr[cell];
-            const int count = static_cast<int>(probe.number_particle_ptr[cell]);
-            const T max_sigma_g = probe.max_sigma_g_ptr[cell];
-            const int begin = probe.cell_start_ptr[cell];
-            const int end = probe.cell_end_ptr[cell];
+            const int count           = static_cast<int>(probe.number_particle_ptr[cell]);
+            const T max_sigma_g       = probe.max_sigma_g_ptr[cell];
+            const int begin           = probe.cell_start_ptr[cell];
+            const int end             = probe.cell_end_ptr[cell];
             if (count < 2 || !(max_sigma_g > T(0)) || begin < 0 || end <= begin) {
                 return;
             }
@@ -220,7 +213,7 @@ DsmcSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
         return;
     }
 
-    const auto probe = _probe;
+    const auto probe                = _probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr
         ? atlas::raw_pointer_cast(allocated_solver->data())
         : nullptr;
@@ -229,17 +222,14 @@ DsmcSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
-            // Skip cells not handled by this solver instance.
             if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
 
-            // Read the collision statistics measured in the previous pass.
             const int collisions = probe.collision_count_ptr[cell];
             const int count      = static_cast<int>(probe.number_particle_ptr[cell]);
             const T max_sigma_g  = probe.max_sigma_g_ptr[cell];
 
-            // Nothing to do if there are no trials, too few particles, or no valid collision bound.
             if (collisions <= 0 || count < 2 || !(max_sigma_g > T(0))) {
                 return;
             }
@@ -256,8 +246,8 @@ DsmcSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
 
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
                 const auto stream = stream_base + static_cast<std::uint64_t>(local_collision);
-                int lhs_local = 0;
-                int rhs_local = 0;
+                int lhs_local     = 0;
+                int rhs_local     = 0;
                 DsmcSolver<T>::sample_distinct_pair(
                     lhs_local,
                     rhs_local,
@@ -332,37 +322,31 @@ DsmcSolver<T>::collide_indexed_pair(const Probe& probe,
         return false;
     }
 
-    // Load velocities into local variables so the collision kernel can update them.
     Vector3<T> lhs_velocity = probe.velocity_ptr[particle_i];
     Vector3<T> rhs_velocity = probe.velocity_ptr[particle_j];
 
-    // Evaluate the actual sigma*g value for this sampled pair.
     const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
-    const T sigma_g = probe.kernel.sigma_g(
+    const T sigma_g                = probe.kernel.sigma_g(
         probe.properties_ptr,
         species_i,
         species_j,
         relative_speed_squared);
 
-    // A non-positive collision-rate term cannot produce a valid collision.
     if (!(sigma_g > T(0))) {
         return false;
     }
 
-    // SPARTA-style majorants are persistent and grow when a sampled pair exceeds them.
     T local_max_sigma_g = max_sigma_g;
     if (sigma_g > local_max_sigma_g) {
-        local_max_sigma_g = sigma_g;
+        local_max_sigma_g           = sigma_g;
         probe.max_sigma_g_ptr[cell] = sigma_g;
     }
 
-    // Accept with probability sigma_g / max_sigma_g, clamped to one for safety.
     T accept_probability = sigma_g / local_max_sigma_g;
     if (accept_probability > T(1)) {
         accept_probability = T(1);
     }
 
-    // Sample the random value used for the acceptance-rejection test.
     const T accept_sample = atlas::sample_hashed_unit_interval<T>(
         cell,
         probe.collision_seed + stream + atlas::DSMC_COLLISION_ACCEPT_SALT);
@@ -371,14 +355,12 @@ DsmcSolver<T>::collide_indexed_pair(const Probe& probe,
         return false;
     }
 
-    // Apply the selected collision model to the accepted pair.
     probe.kernel(
         lhs_velocity,
         rhs_velocity,
         probe.properties_ptr[species_i],
         probe.properties_ptr[species_j]);
 
-    // Write the post-collision velocities back to the fluid state.
     probe.velocity_ptr[particle_i] = lhs_velocity;
     probe.velocity_ptr[particle_j] = rhs_velocity;
 
@@ -416,18 +398,14 @@ DsmcSolver<T>::particle_at(const int nth,
                            const int particle_count,
                            const int* indices_ptr) noexcept {
 
-    // Convert a local cell offset to the corresponding sorted particle-array index.
     const int sorted_index = begin + nth;
 
-    // Reject invalid local offsets and out-of-range sorted indices.
     if (nth < 0 || sorted_index < begin || sorted_index >= end) {
         return -1;
     }
 
-    // Resolve the global particle index from the searcher's sorted index buffer.
     const int particle_index = indices_ptr[sorted_index];
 
-    // Validate the resolved global particle index before returning it.
     return (particle_index >= 0 && particle_index < particle_count) ? particle_index : -1;
 }
 

@@ -20,63 +20,59 @@ SphGatewaySolver<T>::SphGatewaySolver(UniverseHostPtr<T> universe,
     : Solver<T>(std::move(universe), std::move(fluid), std::move(searcher))
     , _kernel(kernel_type)
     , _group_particle_count(group_particle_count > 0 ? group_particle_count : 5) {
-    // Ensure per-cell output states exist when a universe is already attached.
+
     ensure_states();
 }
 
 template <typename T>
 typename SphGatewaySolver<T>::Builder
 SphGatewaySolver<T>::builder() noexcept {
-    // Return a fresh builder for fluent solver construction.
+
     return Builder {};
 }
 
 template <typename T>
 SphKernelType
 SphGatewaySolver<T>::kernel_type() const noexcept {
-    // Expose the kernel type stored by the runtime kernel wrapper.
+
     return _kernel.type;
 }
 
 template <typename T>
 int
 SphGatewaySolver<T>::group_particle_count() const noexcept {
-    // Return the configured target number of particles per representative group.
+
     return _group_particle_count;
 }
 
 template <typename T>
 void
 SphGatewaySolver<T>::solve(const T dt) {
-    // Run the grouped SPH solver over all cells.
+
     solve(nullptr, 0, dt);
 }
 
 template <typename T>
 void
 SphGatewaySolver<T>::solve(const DeviceBuffer<int>* allocated_solver, const int index, const T dt) {
-    // Validate dependencies, required fluid states, universe states, and searcher ordering.
+
     if (!initialize_context()) {
         return;
     }
 
-    // Representative velocity integration requires a positive time step.
     if (!(dt > T(0))) {
         throw std::invalid_argument("SphGatewaySolver: dt must be positive.");
     }
 
-    // Allocate transient group buffers; representative slots are overwritten by later stages.
     if (!prepare_group_fields()) {
         reset_universe_fields();
         return;
     }
 
-    // Refresh one shared SPH probe and reuse it across all grouped stages.
     if (!make_probe()) {
         return;
     }
 
-    // Run the grouped-SPH pipeline.
     update_cell_particle_counts(allocated_solver, index);
     build_group_representatives(allocated_solver, index);
     estimate_group_density_and_pressure(allocated_solver, index);
@@ -111,7 +107,7 @@ SphGatewaySolver<T>::ensure_states() {
 template <typename T>
 bool
 SphGatewaySolver<T>::initialize_context() noexcept {
-    // Required runtime dependencies must exist before launching grouped-SPH kernels.
+
     if (!this->_universe || !this->_fluid || !this->_searcher) {
         reset_universe_fields();
         _cell_group_count.resize(0);
@@ -142,7 +138,6 @@ SphGatewaySolver<T>::initialize_context() noexcept {
         return false;
     }
 
-    // Ensure output states exist and rebuild spatial hashing for the current particles.
     ensure_states();
     this->_searcher->build();
 
@@ -155,7 +150,6 @@ SphGatewaySolver<T>::prepare_group_fields() {
     const int particle_count = static_cast<int>(this->_fluid->particle_count());
     const int num_of_cells   = this->_universe->number_of_cells();
 
-    // No particle or no cell means there is no grouped update to perform.
     if (particle_count <= 0 || num_of_cells <= 0) {
         _cell_group_count.resize(0);
         _group_position.resize(0);
@@ -171,7 +165,6 @@ SphGatewaySolver<T>::prepare_group_fields() {
         return false;
     }
 
-    // Allocate one group-count entry per cell and one representative slot per particle.
     _cell_group_count.resize(static_cast<std::size_t>(num_of_cells));
     _group_position.resize(static_cast<std::size_t>(particle_count));
     _group_velocity.resize(static_cast<std::size_t>(particle_count));
@@ -183,7 +176,6 @@ SphGatewaySolver<T>::prepare_group_fields() {
     _group_member_count.resize(static_cast<std::size_t>(particle_count));
     _group_species.resize(static_cast<std::size_t>(particle_count));
 
-    // Clear universe outputs for this step.
     reset_universe_fields();
 
     return true;
@@ -218,24 +210,21 @@ template <typename T>
 void
 SphGatewaySolver<T>::update_cell_particle_counts(const DeviceBuffer<int>* allocated_solver,
                                                  const int index) {
-    const auto probe = _probe;
+    const auto probe                = _probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
-    auto* cell_group_count_ptr     = atlas::raw_pointer_cast(_cell_group_count.data());
-    const int group_particle_count = _group_particle_count;
+    auto* cell_group_count_ptr      = atlas::raw_pointer_cast(_cell_group_count.data());
+    const int group_particle_count  = _group_particle_count;
 
-    // Count particles and required representative groups for each selected cell.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
-            // Cells assigned to another solver are excluded from this gateway stage.
             if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 probe.number_particle_ptr[cell] = T(0);
                 cell_group_count_ptr[cell]      = 0;
                 return;
             }
 
-            // Use the searcher's sorted range to count cell-local particles.
             const int begin = probe.cell_start_ptr[cell];
             const int end   = probe.cell_end_ptr[cell];
             const int count = (begin >= 0 && end > begin) ? (end - begin) : 0;
@@ -249,10 +238,9 @@ template <typename T>
 void
 SphGatewaySolver<T>::build_group_representatives(const DeviceBuffer<int>* allocated_solver,
                                                  const int index) {
-    const auto probe = _probe;
+    const auto probe                = _probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
 
-    // Expose group buffers to the device kernel.
     auto* group_position_ptr         = atlas::raw_pointer_cast(_group_position.data());
     auto* group_velocity_ptr         = atlas::raw_pointer_cast(_group_velocity.data());
     auto* group_updated_pos_ptr      = atlas::raw_pointer_cast(_group_updated_position.data());
@@ -263,12 +251,10 @@ SphGatewaySolver<T>::build_group_representatives(const DeviceBuffer<int>* alloca
     const auto* cell_group_count_ptr = atlas::raw_pointer_cast(_cell_group_count.data());
     const int group_particle_count   = _group_particle_count;
 
-    // Build deterministic representatives from sorted particle chunks.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
-            // Skip cells assigned to another solver.
             if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
@@ -281,10 +267,9 @@ SphGatewaySolver<T>::build_group_representatives(const DeviceBuffer<int>* alloca
             }
 
             for (int group_local = 0; group_local < group_count; ++group_local) {
-                // Store each representative at the beginning of the cell range.
+
                 const int representative_index = begin + group_local;
 
-                // Convert the local group id into a sorted-particle subrange.
                 const int sorted_begin         = begin + group_local * group_particle_count;
                 const int candidate_sorted_end = sorted_begin + group_particle_count;
                 const int sorted_end           = candidate_sorted_end < probe.cell_end_ptr[cell]
@@ -297,7 +282,6 @@ SphGatewaySolver<T>::build_group_representatives(const DeviceBuffer<int>* alloca
                 int member_count                   = 0;
                 std::size_t representative_species = 0;
 
-                // Accumulate member particle data for this representative group.
                 for (int sorted_index = sorted_begin; sorted_index < sorted_end; ++sorted_index) {
                     const int particle_index = probe.indices_ptr[sorted_index];
 
@@ -305,7 +289,6 @@ SphGatewaySolver<T>::build_group_representatives(const DeviceBuffer<int>* alloca
                         continue;
                     }
 
-                    // Use the first valid member's species as the representative species.
                     if (member_count == 0) {
                         representative_species = probe.species_ptr[particle_index];
                     }
@@ -314,7 +297,6 @@ SphGatewaySolver<T>::build_group_representatives(const DeviceBuffer<int>* alloca
                     velocity_sum += probe.velocity_ptr[particle_index];
                     ++member_count;
 
-                    // Add mass only when the particle species has valid material data.
                     const std::size_t species_index = probe.species_ptr[particle_index];
                     if (species_index < static_cast<std::size_t>(probe.num_of_properties)) {
                         mass_sum += probe.properties_ptr[species_index].mass;
@@ -325,7 +307,6 @@ SphGatewaySolver<T>::build_group_representatives(const DeviceBuffer<int>* alloca
                     continue;
                 }
 
-                // Store representative mean state and group metadata.
                 const Vector3<T> mean_position = position_sum / static_cast<T>(member_count);
                 const Vector3<T> mean_velocity = velocity_sum / static_cast<T>(member_count);
 
@@ -344,7 +325,7 @@ template <typename T>
 void
 SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>* allocated_solver,
                                                          const int index) {
-    const auto probe = _probe;
+    const auto probe                = _probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
 
     const auto* group_position_ptr   = atlas::raw_pointer_cast(_group_position.data());
@@ -354,12 +335,10 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>
     auto* group_pressure_ptr         = atlas::raw_pointer_cast(_group_pressure.data());
     const auto* cell_group_count_ptr = atlas::raw_pointer_cast(_cell_group_count.data());
 
-    // Estimate density and pressure for each group representative.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
-            // Skip cells assigned to another solver.
             if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
@@ -375,24 +354,21 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>
                 const int lhs_index             = begin + lhs_group;
                 const std::size_t species_index = group_species_ptr[lhs_index];
 
-                // Invalid representative species disables this group.
                 if (species_index >= static_cast<std::size_t>(probe.num_of_properties)) {
                     group_density_ptr[lhs_index]  = T(0);
                     group_pressure_ptr[lhs_index] = T(0);
                     continue;
                 }
 
-                // Resolve material parameters for the representative group.
-                const auto& property                 = probe.properties_ptr[species_index];
-                const T cell_size                    = probe.cell_size;
-                const T cell_size_squared            = cell_size * cell_size;
-                const T rest_density                 = rest_density_for(property);
-                const T pressure_coeff               = pressure_coefficient_for(property);
-                const Vector3<T> lhs_pos             = group_position_ptr[lhs_index];
+                const auto& property      = probe.properties_ptr[species_index];
+                const T cell_size         = probe.cell_size;
+                const T cell_size_squared = cell_size * cell_size;
+                const T rest_density      = rest_density_for(property);
+                const T pressure_coeff    = pressure_coefficient_for(property);
+                const Vector3<T> lhs_pos  = group_position_ptr[lhs_index];
 
                 T density = T(0);
 
-                // Accumulate density contributions from representatives in the same cell.
                 for (int rhs_group = 0; rhs_group < group_count; ++rhs_group) {
                     const int rhs_index         = begin + rhs_group;
                     const Vector3<T> delta      = lhs_pos - group_position_ptr[rhs_index];
@@ -408,12 +384,10 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>
                     density += representative_mass * probe.kernel.density_weight(radius, cell_size);
                 }
 
-                // Fall back to rest density when the estimate is invalid.
                 if (!(density > T(0))) {
                     density = rest_density;
                 }
 
-                // Store group density and equation-of-state pressure.
                 group_density_ptr[lhs_index]  = density;
                 group_pressure_ptr[lhs_index] = pressure_coeff * (density - rest_density);
             }
@@ -425,7 +399,7 @@ void
 SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solver,
                                          const int index,
                                          const T dt) {
-    const auto probe = _probe;
+    const auto probe                = _probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
 
     const auto* group_position_ptr   = atlas::raw_pointer_cast(_group_position.data());
@@ -438,12 +412,10 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
     auto* group_updated_vel_ptr      = atlas::raw_pointer_cast(_group_updated_velocity.data());
     const auto* cell_group_count_ptr = atlas::raw_pointer_cast(_cell_group_count.data());
 
-    // Update group representative velocities and write per-cell force output.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
-            // Skip cells assigned to another solver.
             if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
@@ -467,18 +439,16 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
                     continue;
                 }
 
-                // Resolve representative material and state.
-                const auto& property                 = probe.properties_ptr[species_index];
-                const T cell_size                    = probe.cell_size;
-                const T cell_size_squared            = cell_size * cell_size;
-                const T viscosity                    = property.dynamic_viscosity.value_or(T(0));
-                const T group_mass                   = group_mass_ptr[lhs_index];
-                const Vector3<T> lhs_pos             = group_position_ptr[lhs_index];
-                const Vector3<T> lhs_vel             = group_velocity_ptr[lhs_index];
+                const auto& property      = probe.properties_ptr[species_index];
+                const T cell_size         = probe.cell_size;
+                const T cell_size_squared = cell_size * cell_size;
+                const T viscosity         = property.dynamic_viscosity.value_or(T(0));
+                const T group_mass        = group_mass_ptr[lhs_index];
+                const Vector3<T> lhs_pos  = group_position_ptr[lhs_index];
+                const Vector3<T> lhs_vel  = group_velocity_ptr[lhs_index];
 
                 Vector3<T> acceleration(T(0), T(0), T(0));
 
-                // Accumulate pressure and viscosity terms from other groups in the same cell.
                 for (int rhs_group = 0; rhs_group < group_count; ++rhs_group) {
                     if (lhs_group == rhs_group) {
                         continue;
@@ -500,7 +470,6 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
 
                     const T radius = atlas::sqrt_nonnegative(radius_squared);
 
-                    // Add pressure-gradient acceleration.
                     const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, cell_size);
 
                     const T pressure_term = (group_pressure_ptr[lhs_index] + group_pressure_ptr[rhs_index])
@@ -508,7 +477,6 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
 
                     acceleration -= grad * (group_mass_ptr[rhs_index] * pressure_term);
 
-                    // Add viscosity acceleration when the material viscosity is enabled.
                     if (viscosity > T(0)) {
                         const T laplacian = probe.kernel.viscosity_laplacian(radius, cell_size);
 
@@ -521,18 +489,15 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
                     continue;
                 }
 
-                // Update representative velocity only; position remains unchanged here.
                 const Vector3<T> updated_velocity = lhs_vel + acceleration * dt;
 
                 group_updated_vel_ptr[lhs_index] = updated_velocity;
                 group_updated_pos_ptr[lhs_index] = lhs_pos;
 
-                // Accumulate force-like output for the cell.
                 cell_force += acceleration * group_mass;
                 ++active_group_count;
             }
 
-            // Store averaged group force for this cell.
             probe.field_force_ptr[cell] = active_group_count > 0
                 ? cell_force / static_cast<T>(active_group_count)
                 : Vector3<T>(T(0), T(0), T(0));
@@ -543,19 +508,17 @@ template <typename T>
 void
 SphGatewaySolver<T>::scatter_group_states_to_particles(const DeviceBuffer<int>* allocated_solver,
                                                        const int index) {
-    const auto probe = _probe;
+    const auto probe                = _probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr ? atlas::raw_pointer_cast(allocated_solver->data()) : nullptr;
 
     const auto* group_updated_vel_ptr = atlas::raw_pointer_cast(_group_updated_velocity.data());
     const auto* cell_group_count_ptr  = atlas::raw_pointer_cast(this->_cell_group_count.data());
     const int group_particle_count    = _group_particle_count;
 
-    // Copy each representative velocity back to its member particles.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.num_of_cells,
         [=] ATLAS_DEVICE(const int cell) {
-            // Skip cells assigned to another solver.
             if (allocated_solver_ptr != nullptr && allocated_solver_ptr[cell] != index) {
                 return;
             }
@@ -570,7 +533,6 @@ SphGatewaySolver<T>::scatter_group_states_to_particles(const DeviceBuffer<int>* 
             for (int group_local = 0; group_local < group_count; ++group_local) {
                 const int representative_index = begin + group_local;
 
-                // Reconstruct the same sorted-particle subrange used during grouping.
                 const int sorted_begin         = begin + group_local * group_particle_count;
                 const int candidate_sorted_end = sorted_begin + group_particle_count;
                 const int sorted_end           = candidate_sorted_end < probe.cell_end_ptr[cell]
@@ -584,7 +546,6 @@ SphGatewaySolver<T>::scatter_group_states_to_particles(const DeviceBuffer<int>* 
                         continue;
                     }
 
-                    // Apply the group representative velocity to the particle.
                     probe.velocity_ptr[particle_index] = group_updated_vel_ptr[representative_index];
                 }
             }
@@ -607,7 +568,7 @@ template <typename T>
 int
 SphGatewaySolver<T>::group_count_for_cell(const int particle_count,
                                           const int group_particle_count) noexcept {
-    // Use ceiling division to compute the number of required groups.
+
     if (particle_count <= 0 || group_particle_count <= 0) {
         return 0;
     }
@@ -618,7 +579,7 @@ SphGatewaySolver<T>::group_count_for_cell(const int particle_count,
 template <typename T>
 typename SphGatewaySolver<T>::Builder&
 SphGatewaySolver<T>::Builder::with_universe(UniverseHostPtr<T> universe) noexcept {
-    // Store universe dependency.
+
     _universe = std::move(universe);
     return *this;
 }
@@ -626,7 +587,7 @@ SphGatewaySolver<T>::Builder::with_universe(UniverseHostPtr<T> universe) noexcep
 template <typename T>
 typename SphGatewaySolver<T>::Builder&
 SphGatewaySolver<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
-    // Store fluid dependency.
+
     _fluid = std::move(fluid);
     return *this;
 }
@@ -635,7 +596,7 @@ template <typename T>
 typename SphGatewaySolver<T>::Builder&
 SphGatewaySolver<T>::Builder::with_searcher(
     SearcherHostPtr<T> searcher) noexcept {
-    // Store searcher dependency.
+
     _searcher = std::move(searcher);
     return *this;
 }
@@ -643,7 +604,7 @@ SphGatewaySolver<T>::Builder::with_searcher(
 template <typename T>
 typename SphGatewaySolver<T>::Builder&
 SphGatewaySolver<T>::Builder::with_kernel_type(const SphKernelType kernel_type) noexcept {
-    // Store selected SPH kernel type.
+
     _kernel_type = kernel_type;
     return *this;
 }
@@ -652,7 +613,7 @@ template <typename T>
 typename SphGatewaySolver<T>::Builder&
 SphGatewaySolver<T>::Builder::with_group_particle_count(
     const int group_particle_count) noexcept {
-    // Store target group size; validation checks positivity later.
+
     _group_particle_count = group_particle_count;
     return *this;
 }
@@ -660,7 +621,7 @@ SphGatewaySolver<T>::Builder::with_group_particle_count(
 template <typename T>
 void
 SphGatewaySolver<T>::Builder::validate() const {
-    // Builder requires all runtime dependencies.
+
     if (!_universe) {
         throw std::runtime_error("SphGatewaySolver::Builder: universe must not be null.");
     }
@@ -681,7 +642,7 @@ SphGatewaySolver<T>::Builder::validate() const {
 template <typename T>
 SphGatewaySolver<T>
 SphGatewaySolver<T>::Builder::build() const {
-    // Validate configuration and construct a solver value.
+
     validate();
 
     return SphGatewaySolver<T>(
@@ -695,7 +656,7 @@ SphGatewaySolver<T>::Builder::build() const {
 template <typename T>
 atlas::host_shared_ptr<SphGatewaySolver<T>>
 SphGatewaySolver<T>::Builder::make_host_shared() const {
-    // Validate configuration and construct a host-shared solver.
+
     validate();
 
     return atlas::make_host_shared<SphGatewaySolver<T>>(
@@ -706,4 +667,4 @@ SphGatewaySolver<T>::Builder::make_host_shared() const {
         _group_particle_count);
 }
 
-} // namespace atlas
+}

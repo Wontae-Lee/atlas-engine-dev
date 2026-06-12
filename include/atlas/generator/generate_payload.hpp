@@ -121,4 +121,4 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const unsigned int seed,
     return atlas::sample_normal_vector<T>(seeded_engine, sigma) + this->bulk_velocity;
 }
 
-} // namespace atlas
+}

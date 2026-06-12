@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file generate_operator.h
- * @brief Declares a backend-portable tagged-union wrapper for particle generation laws.
- */
-
 #include <atlas/core/detail/device_variant.h>
 #include <atlas/generator/generate_payload.h>
 
@@ -43,8 +38,7 @@ struct GenerateOperator final {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE GenerateOperator&
     operator=(const GenerateOperator& other) noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    ~GenerateOperator() noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~GenerateOperator() noexcept;
 
     ATLAS_HOST
     GenerateOperator(const UniformGenerateOperator<T>& op);
@@ -77,7 +71,7 @@ struct GenerateOperator final {
     copy_from(const GenerateOperator& other) noexcept;
 };
 
-} // namespace atlas
+}
 
 #if defined(ATLAS_TASKING_CUDA)
 namespace thrust {
@@ -85,7 +79,7 @@ namespace thrust {
 template <typename T>
 struct proclaim_trivially_relocatable<atlas::GenerateOperator<T>> : true_type { };
 
-} // namespace thrust
+}
 #endif
 
 #include <atlas/generator/generate_operator.hpp>

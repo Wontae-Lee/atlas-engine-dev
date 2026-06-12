@@ -18,6 +18,6 @@ public:
             T dt) const;
 };
 
-} // namespace atlas
+}
 
 #include <atlas/solver/dsmc/statistics/dsmc_statistics.hpp>

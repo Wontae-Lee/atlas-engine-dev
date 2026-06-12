@@ -351,12 +351,12 @@ Vector<T, 3>::tangential() const noexcept {
     const T ax = std::abs(x), ay = std::abs(y), az = std::abs(z);
     Vector t1;
     if (ax > ay) {
-        const T d2  = x * x + z * z;
+        const T d2 = x * x + z * z;
         using std::sqrt;
         const T inv = T(1) / static_cast<T>(sqrt(d2 + (d2 == T(0) ? T(1) : T(0))));
         t1          = Vector(-z * inv, T(0), x * inv);
     } else {
-        const T d2  = y * y + z * z;
+        const T d2 = y * y + z * z;
         using std::sqrt;
         const T inv = T(1) / static_cast<T>(sqrt(d2 + (d2 == T(0) ? T(1) : T(0))));
         t1          = Vector(T(0), z * inv, -y * inv);
@@ -420,12 +420,12 @@ tangential(const Vector<T, 3>& normal) noexcept {
     const T ax = std::abs(nx), ay = std::abs(ny), az = std::abs(nz);
     Vector<T, 3> t1;
     if (ax > ay) {
-        const T d2  = nx * nx + nz * nz;
+        const T d2 = nx * nx + nz * nz;
         using std::sqrt;
         const T inv = T(1) / static_cast<T>(sqrt(d2 + (d2 == T(0) ? T(1) : T(0))));
         t1          = Vector<T, 3>(-nz * inv, T(0), nx * inv);
     } else {
-        const T d2  = ny * ny + nz * nz;
+        const T d2 = ny * ny + nz * nz;
         using std::sqrt;
         const T inv = T(1) / static_cast<T>(sqrt(d2 + (d2 == T(0) ? T(1) : T(0))));
         t1          = Vector<T, 3>(T(0), nz * inv, -ny * inv);
@@ -656,7 +656,7 @@ orthonormal_basis(const Vector3<T>& normal,
         ? Vector3<T>(T(0), T(0), T(1))
         : Vector3<T>(T(0), T(1), T(0));
 
-    tangent = axis.cross(unit_normal);
+    tangent                        = axis.cross(unit_normal);
     const T tangent_length_squared = tangent.length_squared();
     if (!(tangent_length_squared > min_length_squared)) {
         return false;
@@ -664,7 +664,7 @@ orthonormal_basis(const Vector3<T>& normal,
 
     tangent *= T(1) / static_cast<T>(sqrt(tangent_length_squared));
 
-    bitangent = unit_normal.cross(tangent);
+    bitangent                        = unit_normal.cross(tangent);
     const T bitangent_length_squared = bitangent.length_squared();
     if (!(bitangent_length_squared > min_length_squared)) {
         return false;
@@ -707,7 +707,7 @@ orthogonal_unit_vector(const Vector3<T>& normal,
 template <typename T>
 Vector3<T>
 spherical_direction(const Vector3<T>& unit_axis, const T cos_theta, const T phi) noexcept {
-    const auto tangents = unit_axis.tangential();
+    const auto tangents        = unit_axis.tangential();
     const Vector3<T> tangent   = std::get<0>(tangents);
     const Vector3<T> bitangent = std::get<1>(tangents);
 

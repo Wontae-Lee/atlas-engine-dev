@@ -89,7 +89,7 @@ SpatialHashingSearcher<T>::build() {
     }
 
     const Vector3<T>* positions = this->position_ptr();
-    const int alive = this->active_count();
+    const int alive             = this->active_count();
 
     if (!positions || alive <= 0) {
         reset();
@@ -183,4 +183,4 @@ SpatialHashingSearcher<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<SpatialHashingSearcher<T>>(_universe, _fluid);
 }
 
-} // namespace atlas
+}

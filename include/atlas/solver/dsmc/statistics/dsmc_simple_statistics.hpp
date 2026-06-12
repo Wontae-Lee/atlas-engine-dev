@@ -29,20 +29,16 @@ DsmcSimpleStatistics<T>::measure(const DsmcProbe<T>& probe,
             }
 
             const int begin = probe.cell_start_ptr[cell];
-            const int end = probe.cell_end_ptr[cell];
+            const int end   = probe.cell_end_ptr[cell];
             const int count = end - begin;
 
             probe.number_particle_ptr[cell] = static_cast<T>(count);
 
-            // Load the persistent NTC majorant; take max(stored, sampled) to keep
-            // it monotonically non-decreasing (SPARTA-style majorant update rule).
             T max_sigma_g = probe.max_sigma_g_ptr[cell];
 
-            // Keep tiny cells exact, but avoid the serial O(N^2) scan once the
-            // cell is large enough for the pair loop to dominate a GPU thread.
             if (count >= 2) {
                 constexpr int SAMPLE_PAIRS = 8;
-                T max_relative_squared = T(0);
+                T max_relative_squared     = T(0);
                 if (count < 5) {
                     for (int lhs_local = 0; lhs_local < count; ++lhs_local) {
                         const int pi = probe.indices_ptr[begin + lhs_local];
@@ -54,12 +50,14 @@ DsmcSimpleStatistics<T>::measure(const DsmcProbe<T>& probe,
                     }
                 } else {
                     for (int k = 0; k < SAMPLE_PAIRS; ++k) {
-                        const auto k64 = static_cast<std::uint64_t>(k);
+                        const auto k64      = static_cast<std::uint64_t>(k);
                         const int lhs_local = atlas::sample_hashed_index(
-                            cell, count,
+                            cell,
+                            count,
                             probe.collision_seed + k64 * 2u + atlas::DSMC_COLLISION_LHS_SALT);
                         int rhs_local = atlas::sample_hashed_index(
-                            cell, count - 1,
+                            cell,
+                            count - 1,
                             probe.collision_seed + k64 * 2u + 1u + atlas::DSMC_COLLISION_RHS_SALT);
                         if (rhs_local >= lhs_local) ++rhs_local;
 
@@ -74,10 +72,8 @@ DsmcSimpleStatistics<T>::measure(const DsmcProbe<T>& probe,
 
                 probe.max_relative_speed_ptr[cell] = max_relative_speed;
 
-                // DsmcSimpleStatistics uses relative speed directly as sigma_g proxy.
-                // NTC majorant: take max of persistent value and sampled estimate.
                 if (max_relative_speed > max_sigma_g) {
-                    max_sigma_g = max_relative_speed;
+                    max_sigma_g                 = max_relative_speed;
                     probe.max_sigma_g_ptr[cell] = max_sigma_g;
                 }
             }
@@ -88,9 +84,9 @@ DsmcSimpleStatistics<T>::measure(const DsmcProbe<T>& probe,
             }
 
             const T ntc_pair_count = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
-            const T cell_volume = probe.universe_volume_ptr != nullptr
-                ? probe.universe_volume_ptr[cell]
-                : probe.cell_volume;
+            const T cell_volume    = probe.universe_volume_ptr != nullptr
+                   ? probe.universe_volume_ptr[cell]
+                   : probe.cell_volume;
 
             if (!(cell_volume > T(0))) {
                 probe.collision_count_ptr[cell] = 0;
@@ -108,9 +104,9 @@ DsmcSimpleStatistics<T>::measure(const DsmcProbe<T>& probe,
                 return;
             }
 
-            const T ntc_count = expected_count + probe.collision_remainder_ptr[cell];
-            const T base_count = std::floor(ntc_count);
-            const int collisions = static_cast<int>(base_count);
+            const T ntc_count                   = expected_count + probe.collision_remainder_ptr[cell];
+            const T base_count                  = std::floor(ntc_count);
+            const int collisions                = static_cast<int>(base_count);
             probe.collision_remainder_ptr[cell] = ntc_count - base_count;
 
             probe.collision_count_ptr[cell] = collisions;
@@ -119,4 +115,4 @@ DsmcSimpleStatistics<T>::measure(const DsmcProbe<T>& probe,
     return true;
 }
 
-} // namespace atlas
+}

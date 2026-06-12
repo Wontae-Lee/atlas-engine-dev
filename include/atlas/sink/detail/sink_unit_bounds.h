@@ -9,9 +9,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Refreshes world-space bounds for sink units.
- */
 template <typename T>
 class SinkUnitBounds final {
 public:
@@ -21,6 +18,6 @@ public:
             T tolerance) const noexcept;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/sink/detail/sink_unit_bounds.hpp>

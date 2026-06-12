@@ -1,52 +1,11 @@
 #pragma once
 
-/**
- * @file uniform_generator.h
- * @brief Declares uniform particle-velocity generation operators and host-side generator types.
- *
- * @details
- * This header defines:
- * - @ref atlas::UniformGenerateOperator, a backend-portable operator for
- *   sampling velocity vectors with independently uniform components, and
- * - @ref atlas::UniformGenerator, a host-side polymorphic generator that
- *   owns the corresponding runtime parameters and exports a portable
- *   @ref GenerateOperator.
- *
- * ## Distribution model
- * The uniform generator samples each velocity component independently from a
- * uniform distribution:
- * \f[
- * v_i \sim \mathcal{U}(\text{min}, \text{max})
- * \f]
- * for each axis \f$i \in \{x,y,z\}\f$.
- *
- * This is useful for:
- * - randomized initialization,
- * - bounded velocity injection,
- * - testing and debugging emission pipelines.
- *
- * ## Host/device split
- * Atlas separates this generation law into:
- * - a host-side @ref UniformGenerator used for configuration and direct sampling,
- * - a backend-friendly @ref UniformGenerateOperator embedded in
- *   @ref GenerateOperator for device-side emission.
- *
- * ## Construction
- * The host-side generator may be:
- * - constructed directly from minimum and maximum bounds, or
- * - built through the nested fluent @ref Builder.
- *
- * ---
- *
- * @tparam T Floating-point scalar type used for parameters and generated velocities.
- */
-
 #include <atlas/math/math.h>
 
 #include <optional>
 
-#include <atlas/generator/generator.h>
 #include <atlas/generator/generate_operator.h>
+#include <atlas/generator/generator.h>
 
 namespace atlas {
 
@@ -118,6 +77,6 @@ private:
     unsigned int _seed = atlas::DEFAULT_UNSIGNED_INT_SEED;
 };
 
-} // namespace atlas
+}
 
 #include <atlas/generator/uniform_generator.hpp>

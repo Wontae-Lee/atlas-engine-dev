@@ -32,7 +32,7 @@ Orchestrator<T>::builder() noexcept {
 template <typename T>
 void
 Orchestrator<T>::search() {
-    // Rebuild the spatial search structure when a searcher is available.
+
     if (_searcher) {
         _searcher->build();
     }
@@ -41,7 +41,7 @@ Orchestrator<T>::search() {
 template <typename T>
 void
 Orchestrator<T>::classify() {
-    // Update solver allocation or particle classification when a codec is available.
+
     if (_codec) {
         _codec->update();
     }
@@ -50,7 +50,7 @@ Orchestrator<T>::classify() {
 template <typename T>
 void
 Orchestrator<T>::measure() {
-    // Evaluate measurement states before force application and solver execution.
+
     if (_measurer) {
         _measurer->measure();
     }
@@ -59,7 +59,7 @@ Orchestrator<T>::measure() {
 template <typename T>
 void
 Orchestrator<T>::measure(const T dt) {
-    // Time-aware measurers use dt, while legacy measurers forward to measure().
+
     if (_measurer) {
         _measurer->measure(dt);
     }
@@ -68,12 +68,11 @@ Orchestrator<T>::measure(const T dt) {
 template <typename T>
 void
 Orchestrator<T>::solve(const T dt) {
-    // Nothing can be solved without registered solvers.
+
     if (_solvers.empty()) {
         return;
     }
 
-    // If no codec is available, run every solver on the full particle set.
     if (!_codec) {
         for (const auto& solver : _solvers) {
             if (!solver) continue;
@@ -84,7 +83,6 @@ Orchestrator<T>::solve(const T dt) {
         return;
     }
 
-    // When a codec exists, each solver receives the solver-allocation map.
     const auto* allocated_solver = &_codec->allocated_solver();
     const int solver_count       = static_cast<int>(_solvers.size());
 
@@ -98,7 +96,7 @@ Orchestrator<T>::solve(const T dt) {
 template <typename T>
 void
 Orchestrator<T>::update(const T dt) {
-    // Forward the public update call to the complete orchestration sequence.
+
     orchestrate(dt);
 }
 
@@ -136,7 +134,7 @@ Orchestrator<T>::make_probe() noexcept {
 template <typename T>
 void
 Orchestrator<T>::orchestrate(const T dt) {
-    // Execute the named solver-side orchestration pipeline.
+
     _pipeline.run(*this, dt);
 }
 
@@ -264,7 +262,7 @@ Orchestrator<T>::Builder::with_solver(SolveHostPtr<T> solver) noexcept {
 template <typename T>
 void
 Orchestrator<T>::Builder::validate() const {
-    // Solvers are optional as a collection, but inserted solver entries must be valid.
+
     for (const auto& solver : _solvers) {
         if (!solver) {
             throw std::runtime_error("Orchestrator::Builder: solver must not be null.");
@@ -275,7 +273,7 @@ Orchestrator<T>::Builder::validate() const {
 template <typename T>
 void
 Orchestrator<T>::Builder::ensure_gravity_state() const {
-    // Gravity state is created only when both universe and gravity value are available.
+
     if (!_universe || !_gravity.has_value()) {
         return;
     }
@@ -286,7 +284,6 @@ Orchestrator<T>::Builder::ensure_gravity_state() const {
         return;
     }
 
-    // If the gravity state already exists, resize it if necessary and refill it.
     if (_universe->template has_state<atlas::UniverseGravityState<T>>()) {
         auto* gravity_state = _universe->template state<atlas::UniverseGravityState<T>>();
 
@@ -304,7 +301,6 @@ Orchestrator<T>::Builder::ensure_gravity_state() const {
         return;
     }
 
-    // Otherwise, create a new gravity state and initialize every cell with the same value.
     _universe->template emplace_state<atlas::UniverseGravityState<T>>(number_of_cells);
 
     auto* gravity_state = _universe->template state<atlas::UniverseGravityState<T>>();
@@ -343,4 +339,4 @@ Orchestrator<T>::Builder::make_host_shared() const {
         _solvers);
 }
 
-} // namespace atlas
+}

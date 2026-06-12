@@ -20,37 +20,37 @@ CodecProbeBuilder<T>::make(CodecProbe<T>& probe,
         return false;
     }
 
-    auto* temperature_state = universe->template state<UniverseTemperatureState<T>>();
+    auto* temperature_state     = universe->template state<UniverseTemperatureState<T>>();
     auto* number_particle_state = universe->template state<UniverseNumberParticleState<T>>();
-    auto* knudsen_number_state = universe->template state<UniverseKnudsenNumberState<T>>();
+    auto* knudsen_number_state  = universe->template state<UniverseKnudsenNumberState<T>>();
 
-    probe.temperature_ptr = temperature_state != nullptr
-        ? atlas::raw_pointer_cast(temperature_state->data().data())
-        : nullptr;
-    probe.number_particle_ptr = number_particle_state != nullptr
-        ? atlas::raw_pointer_cast(number_particle_state->data().data())
-        : nullptr;
-    probe.knudsen_number_ptr = knudsen_number_state != nullptr
-        ? atlas::raw_pointer_cast(knudsen_number_state->data().data())
-        : nullptr;
+    probe.temperature_ptr      = temperature_state != nullptr
+             ? atlas::raw_pointer_cast(temperature_state->data().data())
+             : nullptr;
+    probe.number_particle_ptr  = number_particle_state != nullptr
+         ? atlas::raw_pointer_cast(number_particle_state->data().data())
+         : nullptr;
+    probe.knudsen_number_ptr   = knudsen_number_state != nullptr
+          ? atlas::raw_pointer_cast(knudsen_number_state->data().data())
+          : nullptr;
     probe.allocated_solver_ptr = allocated_solver.empty()
         ? nullptr
         : atlas::raw_pointer_cast(allocated_solver.data());
-    probe.fixed_solver_ptr = fixed_solver.empty()
-        ? nullptr
-        : atlas::raw_pointer_cast(fixed_solver.data());
-    probe.fixed_region_ptr = fixed_region.empty()
-        ? nullptr
-        : atlas::raw_pointer_cast(fixed_region.data());
-    probe.indices_ptr = searcher->indices();
-    probe.cell_start_ptr = searcher->cell_start();
-    probe.cell_end_ptr = searcher->cell_end();
-    probe.particle_count = static_cast<int>(fluid->particle_count());
-    probe.num_of_cells = universe->number_of_cells();
-    probe.cell_volume = universe->cell_volume();
-    probe.statistical_weight = fluid->statistical_weight();
+    probe.fixed_solver_ptr     = fixed_solver.empty()
+            ? nullptr
+            : atlas::raw_pointer_cast(fixed_solver.data());
+    probe.fixed_region_ptr     = fixed_region.empty()
+            ? nullptr
+            : atlas::raw_pointer_cast(fixed_region.data());
+    probe.indices_ptr          = searcher->indices();
+    probe.cell_start_ptr       = searcher->cell_start();
+    probe.cell_end_ptr         = searcher->cell_end();
+    probe.particle_count       = static_cast<int>(fluid->particle_count());
+    probe.num_of_cells         = universe->number_of_cells();
+    probe.cell_volume          = universe->cell_volume();
+    probe.statistical_weight   = fluid->statistical_weight();
 
     return probe.num_of_cells > 0;
 }
 
-} // namespace atlas::detail
+}

@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file fast_collider_kernel.h
- * @brief Declares the fast post-collider placement kernel.
- */
-
 #include <atlas/collider/interaction/surface_interaction_kernel.h>
 #include <atlas/math/math.h>
 #include <atlas/unit/unit.h>
@@ -44,9 +39,9 @@ public:
                const SurfaceInteractionKernel<T>& interaction) const noexcept;
 };
 
-} // namespace atlas
+}
 
 namespace atlas {
-} // namespace atlas
+}
 
 #include <atlas/collider/kernel/fast_collider_kernel.hpp>

@@ -8,12 +8,6 @@
 
 namespace atlas {
 
-/**
- * @brief Raw device-readable view used by sink despawn kernels.
- *
- * The probe does not own storage. All pointers refer to sink configuration,
- * cached unit bounds, or fluid state buffers for the current sink step.
- */
 template <typename T>
 struct SinkProbe {
     const Unit<T>* units {};
@@ -32,4 +26,4 @@ struct SinkProbe {
     T time_step {};
 };
 
-} // namespace atlas
+}

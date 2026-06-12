@@ -18,7 +18,7 @@ Triangle<T>::Triangle(const Vector3<T>& a_,
     : a(a_)
     , b(b_)
     , c(c_) {
-    // Compute the geometric normal from the vertex winding.
+
     normal = atlas::normalized_or(
         cross(b - a, c - a),
         Vector3<T>(T(0), T(0), T(0)));
@@ -43,7 +43,7 @@ Triangle<T>::Triangle(Triangle&& other) noexcept
 template <typename T>
 Triangle<T>&
 Triangle<T>::operator=(const Triangle& other) noexcept {
-    // Avoid unnecessary rebinding on self-assignment.
+
     if (this == &other) {
         return *this;
     }
@@ -59,7 +59,7 @@ Triangle<T>::operator=(const Triangle& other) noexcept {
 template <typename T>
 Triangle<T>&
 Triangle<T>::operator=(Triangle&& other) noexcept {
-    // Avoid self move-assignment.
+
     if (this == &other) {
         return *this;
     }
@@ -87,7 +87,7 @@ Triangle<T>::make_triangle_operator() const noexcept {
 template <typename T>
 typename Triangle<T>::Builder
 Triangle<T>::builder() noexcept {
-    // Return a fresh builder for fluent triangle construction.
+
     return Builder {};
 }
 
@@ -148,7 +148,7 @@ Triangle<T>::is_valid() const noexcept {
 template <typename T>
 GeometryType
 Triangle<T>::type() const noexcept {
-    // Identify this geometry as a triangle.
+
     return GeometryType::Triangle;
 }
 
@@ -157,12 +157,11 @@ void
 Triangle<T>::set_vertices(const Vector3<T>& a_,
                           const Vector3<T>& b_,
                           const Vector3<T>& c_) noexcept {
-    // Replace all triangle vertices at once.
+
     a = a_;
     b = b_;
     c = c_;
 
-    // Recompute the normal from the updated vertex winding.
     normal = atlas::normalized_or(
         cross(b - a, c - a),
         Vector3<T>(T(0), T(0), T(0)));
@@ -171,12 +170,11 @@ Triangle<T>::set_vertices(const Vector3<T>& a_,
 template <typename T>
 bool
 Triangle<T>::barycentric(const Vector3<T>& p, T& u, T& v, T& w) const noexcept {
-    // Build edge vectors and the point offset from vertex a.
+
     const Vector3<T> v0 = b - a;
     const Vector3<T> v1 = c - a;
     const Vector3<T> v2 = p - a;
 
-    // Precompute dot products used by the barycentric coordinate solve.
     const T d00   = v0.dot(v0);
     const T d01   = v0.dot(v1);
     const T d11   = v1.dot(v1);
@@ -185,14 +183,13 @@ Triangle<T>::barycentric(const Vector3<T>& p, T& u, T& v, T& w) const noexcept {
     const T denom = d00 * d11 - d01 * d01;
 
     if (denom == T(0)) {
-        // Degenerate triangles cannot provide reliable barycentric coordinates.
+
         u = T(1);
         v = T(0);
         w = T(0);
         return false;
     }
 
-    // Solve barycentric coordinates in the triangle basis.
     const T inv = T(1) / denom;
     v           = (d11 * d20 - d01 * d21) * inv;
     w           = (d00 * d21 - d01 * d20) * inv;
@@ -204,7 +201,7 @@ Triangle<T>::barycentric(const Vector3<T>& p, T& u, T& v, T& w) const noexcept {
 template <typename T>
 Triangle<T>
 Triangle<T>::Builder::build() const {
-    // Validate the triangle vertices before constructing the final object.
+
     validate();
 
     Triangle<T> t {};
@@ -213,10 +210,10 @@ Triangle<T>::Builder::build() const {
     t.c = _c;
 
     if (_normal.has_value()) {
-        // Use the explicitly supplied normal when provided.
+
         t.normal = *_normal;
     } else {
-        // Otherwise derive the normal from the triangle vertex winding.
+
         t.normal = atlas::normalized_or(
             cross(t.b - t.a, t.c - t.a),
             Vector3<T>(T(0), T(0), T(0)));
@@ -228,7 +225,7 @@ Triangle<T>::Builder::build() const {
 template <typename T>
 atlas::host_shared_ptr<Triangle<T>>
 Triangle<T>::Builder::make_host_shared() const {
-    // Build a validated triangle and store it in host-managed shared ownership.
+
     auto t = build();
     return atlas::make_host_shared<Triangle<T>>(std::move(t));
 }
@@ -236,7 +233,7 @@ Triangle<T>::Builder::make_host_shared() const {
 template <typename T>
 typename Triangle<T>::Builder&
 Triangle<T>::Builder::with_a(const Vector3<T>& a_) noexcept {
-    // Store vertex a for the later build() call.
+
     _a = a_;
     return *this;
 }
@@ -244,7 +241,7 @@ Triangle<T>::Builder::with_a(const Vector3<T>& a_) noexcept {
 template <typename T>
 typename Triangle<T>::Builder&
 Triangle<T>::Builder::with_b(const Vector3<T>& b_) noexcept {
-    // Store vertex b for the later build() call.
+
     _b = b_;
     return *this;
 }
@@ -252,7 +249,7 @@ Triangle<T>::Builder::with_b(const Vector3<T>& b_) noexcept {
 template <typename T>
 typename Triangle<T>::Builder&
 Triangle<T>::Builder::with_c(const Vector3<T>& c_) noexcept {
-    // Store vertex c for the later build() call.
+
     _c = c_;
     return *this;
 }
@@ -262,7 +259,7 @@ typename Triangle<T>::Builder&
 Triangle<T>::Builder::with_vertices(const Vector3<T>& a_,
                                     const Vector3<T>& b_,
                                     const Vector3<T>& c_) noexcept {
-    // Store all triangle vertices at once.
+
     _a = a_;
     _b = b_;
     _c = c_;
@@ -272,7 +269,7 @@ Triangle<T>::Builder::with_vertices(const Vector3<T>& a_,
 template <typename T>
 typename Triangle<T>::Builder&
 Triangle<T>::Builder::with_normal(const Vector3<T>& normal_) noexcept {
-    // Store an optional explicit normal for the later build() call.
+
     _normal = normal_;
     return *this;
 }
@@ -282,7 +279,6 @@ void
 Triangle<T>::Builder::validate() const {
     atlas::TriangleGeometryOperator<T> op;
 
-    // Validate through the same operator logic used by constructed Triangle instances.
     op.a = atlas::raw_pointer_cast(&_a);
     op.b = atlas::raw_pointer_cast(&_b);
     op.c = atlas::raw_pointer_cast(&_c);
@@ -295,7 +291,7 @@ Triangle<T>::Builder::validate() const {
 template <typename T>
 atlas::Vector<T, 3>
 TriangleGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
-    // Without valid vertices, there is no meaningful projection target.
+
     if (!a || !b || !c) {
         return p;
     }
@@ -304,12 +300,10 @@ TriangleGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const n
     const atlas::Vector<T, 3> v1 = *b;
     const atlas::Vector<T, 3> v2 = *c;
 
-    // Triangle edge vectors from v0.
     const atlas::Vector<T, 3> ab = v1 - v0;
     const atlas::Vector<T, 3> ac = v2 - v0;
     const atlas::Vector<T, 3> ap = p - v0;
 
-    // Test whether the closest point is vertex v0.
     const T d1 = ab.dot(ap);
     const T d2 = ac.dot(ap);
 
@@ -317,16 +311,14 @@ TriangleGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const n
         return v0;
     }
 
-    // Test whether the closest point is vertex v1.
     const atlas::Vector<T, 3> bp = p - v1;
-    const T d3                         = ab.dot(bp);
-    const T d4                         = ac.dot(bp);
+    const T d3                   = ab.dot(bp);
+    const T d4                   = ac.dot(bp);
 
     if (d3 >= T(0) && d4 <= d3) {
         return v1;
     }
 
-    // Test whether the closest point lies on edge v0-v1.
     const T vc = d1 * d4 - d3 * d2;
 
     if (vc <= T(0) && d1 >= T(0) && d3 <= T(0)) {
@@ -334,16 +326,14 @@ TriangleGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const n
         return v0 + ab * vv;
     }
 
-    // Test whether the closest point is vertex v2.
     const atlas::Vector<T, 3> cpv = p - v2;
-    const T d5                          = ab.dot(cpv);
-    const T d6                          = ac.dot(cpv);
+    const T d5                    = ab.dot(cpv);
+    const T d6                    = ac.dot(cpv);
 
     if (d6 >= T(0) && d5 <= d6) {
         return v2;
     }
 
-    // Test whether the closest point lies on edge v0-v2.
     const T vb = d5 * d2 - d1 * d6;
 
     if (vb <= T(0) && d2 >= T(0) && d6 <= T(0)) {
@@ -351,7 +341,6 @@ TriangleGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const n
         return v0 + ac * ww;
     }
 
-    // Test whether the closest point lies on edge v1-v2.
     const T va = d3 * d6 - d5 * d4;
 
     if (va <= T(0) && (d4 - d3) >= T(0) && (d5 - d6) >= T(0)) {
@@ -359,7 +348,6 @@ TriangleGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const n
         return v1 + (v2 - v1) * ww;
     }
 
-    // The closest point lies inside the triangle face region.
     const T denom = T(1) / (va + vb + vc);
     const T vv    = vb * denom;
     const T ww    = vc * denom;
@@ -370,17 +358,15 @@ TriangleGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const n
 template <typename T>
 atlas::Vector<T, 3>
 TriangleGeometryOperator<T>::closest_normal(const atlas::Vector<T, 3>&) const noexcept {
-    // Prefer the primary stored normal pointer when available.
+
     if (normal) {
         return *normal;
     }
 
-    // Fall back to the legacy/alias normal pointer when available.
     if (n) {
         return *n;
     }
 
-    // Without valid vertices, return a deterministic default normal.
     if (!a || !b || !c) {
         return atlas::Vector<T, 3>(T(0), T(0), T(1));
     }
@@ -393,18 +379,16 @@ TriangleGeometryOperator<T>::closest_normal(const atlas::Vector<T, 3>&) const no
 template <typename T>
 T
 TriangleGeometryOperator<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
-    // Invalid geometry is treated as infinitely far away.
+
     if (!a || !b || !c) {
         return std::numeric_limits<T>::infinity();
     }
 
-    // Use the triangle normal to determine the side of the supporting plane.
     const atlas::Vector<T, 3> nn = closest_normal(p);
-    const T sd_plane                   = (p - (*a)).dot(nn);
+    const T sd_plane             = (p - (*a)).dot(nn);
 
-    // Distance magnitude is measured to the finite triangle.
     const atlas::Vector<T, 3> cp = closest_point(p);
-    const T d                          = (p - cp).length();
+    const T d                    = (p - cp).length();
 
     return (sd_plane >= T(0)) ? d : -d;
 }
@@ -412,28 +396,25 @@ TriangleGeometryOperator<T>::signed_distance(const atlas::Vector<T, 3>& p) const
 template <typename T>
 bool
 TriangleGeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Invalid geometry cannot contain any point.
+
     if (!a || !b || !c) {
         return false;
     }
 
-    // Use the bound normal if available; otherwise compute one from the vertices.
     const atlas::Vector<T, 3>* normal_ptr = normal ? normal : n;
     atlas::Vector<T, 3> nn                = normal_ptr ? *normal_ptr
-                                                             : atlas::cross((*b) - (*a), (*c) - (*a));
+                                                       : atlas::cross((*b) - (*a), (*c) - (*a));
 
     const T nn_len2 = nn.length_squared();
 
-    // Degenerate normals cannot define a valid inside half-space.
     if (nn_len2 <= T(0)) {
         return false;
     }
 
-    // Determine which side of the triangle plane the point lies on.
     const T side = (p - (*a)).dot(nn);
 
     if (side <= T(0)) {
-        // Points on the inward side are accepted for non-negative tolerance.
+
         if (tolerance >= T(0)) {
             return true;
         }
@@ -441,9 +422,8 @@ TriangleGeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p, const T tol
         return false;
     }
 
-    // Closest point on the finite triangle is needed only for tolerance-band checks.
     const atlas::Vector<T, 3> cp = closest_point(p);
-    const T d2                         = (p - cp).length_squared();
+    const T d2                   = (p - cp).length_squared();
 
     return side <= T(0) ? d2 >= tolerance * tolerance
                         : d2 <= tolerance * tolerance;
@@ -452,7 +432,7 @@ TriangleGeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p, const T tol
 template <typename T>
 bool
 TriangleGeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Surface membership only needs unsigned distance to the finite triangle.
+
     if (!a || !b || !c || tolerance < T(0)) {
         return false;
     }
@@ -464,24 +444,22 @@ TriangleGeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p, const T
 template <typename T>
 atlas::Vector<T, 3>
 TriangleGeometryOperator<T>::centroid() const noexcept {
-    // Invalid geometry falls back to the origin as a neutral centroid.
+
     if (!a || !b || !c) {
         return atlas::Vector<T, 3>(T(0), T(0), T(0));
     }
 
-    // The centroid is the arithmetic mean of the three vertices.
     return ((*a) + (*b) + (*c)) * (T(1) / T(3));
 }
 
 template <typename T>
 atlas::AxisAlignedBoundingBox<T>
 TriangleGeometryOperator<T>::bound() const noexcept {
-    // Invalid geometry returns an empty/default bounding box.
+
     if (!a || !b || !c) {
         return atlas::AxisAlignedBoundingBox<T>();
     }
 
-    // Compute component-wise minimum and maximum corners over all vertices.
     const atlas::Vector<T, 3> mn = atlas::cmin(*a, atlas::cmin(*b, *c));
     const atlas::Vector<T, 3> mx = atlas::cmax(*a, atlas::cmax(*b, *c));
 
@@ -491,12 +469,11 @@ TriangleGeometryOperator<T>::bound() const noexcept {
 template <typename T>
 bool
 TriangleGeometryOperator<T>::is_valid() const noexcept {
-    // All three vertex pointers must be bound before validation can succeed.
+
     if (!a || !b || !c) {
         return false;
     }
 
-    // A valid triangle must have nonzero area.
     const atlas::Vector<T, 3> nn = atlas::cross((*b) - (*a), (*c) - (*a));
     return nn.length_squared() > T(0);
 }
@@ -506,7 +483,6 @@ HitSurface<T>
 TriangleGeometryOperator<T>::trace(const atlas::Ray<T>& r) const noexcept {
     HitSurface<T> result {};
 
-    // Invalid geometry produces a default non-intersecting hit result.
     if (!a || !b || !c) {
         return result;
     }
@@ -515,51 +491,42 @@ TriangleGeometryOperator<T>::trace(const atlas::Ray<T>& r) const noexcept {
     const atlas::Vector<T, 3> v1 = *b;
     const atlas::Vector<T, 3> v2 = *c;
 
-    // Edge vectors used by the Moller-Trumbore intersection test.
     const atlas::Vector<T, 3> e1 = v1 - v0;
     const atlas::Vector<T, 3> e2 = v2 - v0;
 
-    // Compute determinant term from the ray direction and second edge.
     const atlas::Vector<T, 3> pvec = atlas::cross(r.direction, e2);
-    const T det                          = e1.dot(pvec);
+    const T det                    = e1.dot(pvec);
 
-    // Near-zero determinant means the ray is parallel to the triangle plane.
     if (atlas::abs(det) <= T(eps)) {
         return result;
     }
 
     const T inv_det = T(1) / det;
 
-    // Compute the first barycentric coordinate.
     const atlas::Vector<T, 3> tvec = r.origin - v0;
-    const T u                            = tvec.dot(pvec) * inv_det;
+    const T u                      = tvec.dot(pvec) * inv_det;
 
     if (u < T(0) || u > T(1)) {
         return result;
     }
 
-    // Compute the second barycentric coordinate.
     const atlas::Vector<T, 3> qvec = atlas::cross(tvec, e1);
-    const T v                            = r.direction.dot(qvec) * inv_det;
+    const T v                      = r.direction.dot(qvec) * inv_det;
 
     if (v < T(0) || (u + v) > T(1)) {
         return result;
     }
 
-    // Compute the ray distance to the triangle plane.
     const T t = e2.dot(qvec) * inv_det;
 
-    // Ignore hits at or behind the ray origin.
     if (t < T(eps)) {
         return result;
     }
 
-    // Populate the hit record with the valid triangle intersection.
     result.is_intersecting = true;
     result.distance        = t;
     result.point           = r.point_at(t);
 
-    // Use the bound normal if present; otherwise compute the geometric normal.
     const atlas::Vector<T, 3>* normal_ptr = normal ? normal : n;
     atlas::Vector<T, 3> normal_vec        = normal_ptr ? *normal_ptr : atlas::cross(e1, e2);
 
@@ -573,8 +540,8 @@ TriangleGeometryOperator<T>::trace(const atlas::Ray<T>& r) const noexcept {
 template <typename T>
 HitSurface<T>
 TriangleGeometryOperator<T>::operator()(const atlas::Ray<T>& ray) const noexcept {
-    // Allow the operator object to be used directly as a ray-intersection functor.
+
     return trace(ray);
 }
 
-} // namespace atlas
+}

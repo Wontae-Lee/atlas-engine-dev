@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file precise_collider_kernel.h
- * @brief Declares the moving-surface-aware post-collider placement kernel.
- */
-
 #include <atlas/collider/kernel/dt_remain_collider_kernel.h>
 
 namespace atlas {
@@ -38,9 +33,9 @@ public:
                const SurfaceInteractionKernel<T>& interaction) const noexcept;
 };
 
-} // namespace atlas
+}
 
 namespace atlas {
-} // namespace atlas
+}
 
 #include <atlas/collider/kernel/precise_collider_kernel.hpp>

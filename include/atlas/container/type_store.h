@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file type_store.h
- * @brief Declares a small type-indexed ownership container.
- */
-
 #include <atlas/core/macros.h>
 
 #include <cstddef>
@@ -19,16 +14,16 @@ namespace atlas {
 template <typename Base>
 class TypeStore final {
 public:
-    using key_type      = std::type_index;
-    using mapped_type   = std::unique_ptr<Base>;
-    using storage_type  = std::unordered_map<key_type, mapped_type>;
-    using iterator      = typename storage_type::iterator;
+    using key_type       = std::type_index;
+    using mapped_type    = std::unique_ptr<Base>;
+    using storage_type   = std::unordered_map<key_type, mapped_type>;
+    using iterator       = typename storage_type::iterator;
     using const_iterator = typename storage_type::const_iterator;
 
-    TypeStore()                       = default;
-    TypeStore(const TypeStore&)       = delete;
-    TypeStore(TypeStore&&) noexcept   = default;
-    ~TypeStore()                      = default;
+    TypeStore()                     = default;
+    TypeStore(const TypeStore&)     = delete;
+    TypeStore(TypeStore&&) noexcept = default;
+    ~TypeStore()                    = default;
 
     TypeStore&
     operator=(const TypeStore&)
@@ -99,6 +94,6 @@ private:
     storage_type _values;
 };
 
-} // namespace atlas
+}
 
 #include <atlas/container/type_store.hpp>

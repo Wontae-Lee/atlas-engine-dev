@@ -200,9 +200,9 @@ HybridDsmcSphSolver<T>::make_probe() noexcept {
 
     _probe.pairing_without_replacement = _pairing_without_replacement;
 
-    _probe.grouping_length         = _grouping_length;
-    _probe.sph_particle_threshold  = _sph_particle_threshold;
-    _probe.collision_seed          = collision_seed;
+    _probe.grouping_length        = _grouping_length;
+    _probe.sph_particle_threshold = _sph_particle_threshold;
+    _probe.collision_seed         = collision_seed;
 
     return true;
 }
@@ -292,12 +292,12 @@ HybridDsmcSphSolver<T>::reset_states() {
 template <typename T>
 void
 HybridDsmcSphSolver<T>::classify_particles() {
-    const auto probe = _probe;
-    auto* sph_candidate_ptr     = atlas::raw_pointer_cast(_sph_candidate.data());
-    auto* group_owner_ptr       = atlas::raw_pointer_cast(_group_owner.data());
-    auto* dsmc_particle_count   = atlas::raw_pointer_cast(_dsmc_particle_count.data());
-    const T grouping_length2    = probe.grouping_length * probe.grouping_length;
-    const int grouping_radius   = Searcher<T>::search_radius_for(probe.grouping_length, probe.sph.cell_size);
+    const auto probe          = _probe;
+    auto* sph_candidate_ptr   = atlas::raw_pointer_cast(_sph_candidate.data());
+    auto* group_owner_ptr     = atlas::raw_pointer_cast(_group_owner.data());
+    auto* dsmc_particle_count = atlas::raw_pointer_cast(_dsmc_particle_count.data());
+    const T grouping_length2  = probe.grouping_length * probe.grouping_length;
+    const int grouping_radius = Searcher<T>::search_radius_for(probe.grouping_length, probe.sph.cell_size);
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -315,7 +315,7 @@ HybridDsmcSphSolver<T>::classify_particles() {
                             continue;
                         }
 
-                        const int flat = static_cast<int>(Searcher<T>::linear_key(cell, probe.sph.grid_size));
+                        const int flat  = static_cast<int>(Searcher<T>::linear_key(cell, probe.sph.grid_size));
                         const int begin = probe.sph.cell_start_ptr[flat];
                         const int end   = probe.sph.cell_end_ptr[flat];
                         if (begin < 0 || end <= begin) {
@@ -323,7 +323,7 @@ HybridDsmcSphSolver<T>::classify_particles() {
                         }
 
                         for (int sorted = begin; sorted < end; ++sorted) {
-                            const int other = probe.sph.indices_ptr[sorted];
+                            const int other        = probe.sph.indices_ptr[sorted];
                             const Vector3<T> delta = pos - probe.sph.position_ptr[other];
                             if (delta.length_squared() <= grouping_length2) {
                                 ++count;
@@ -362,7 +362,7 @@ HybridDsmcSphSolver<T>::classify_particles() {
                             continue;
                         }
 
-                        const int flat = static_cast<int>(Searcher<T>::linear_key(cell, probe.sph.grid_size));
+                        const int flat  = static_cast<int>(Searcher<T>::linear_key(cell, probe.sph.grid_size));
                         const int begin = probe.sph.cell_start_ptr[flat];
                         const int end   = probe.sph.cell_end_ptr[flat];
                         if (begin < 0 || end <= begin) {
@@ -382,7 +382,7 @@ HybridDsmcSphSolver<T>::classify_particles() {
 
                             const int other_heat = sph_candidate_ptr[other];
                             if (other_heat > owner_heat || (other_heat == owner_heat && other < owner)) {
-                                owner = other;
+                                owner      = other;
                                 owner_heat = other_heat;
                             }
                         }
@@ -397,14 +397,14 @@ HybridDsmcSphSolver<T>::classify_particles() {
 template <typename T>
 void
 HybridDsmcSphSolver<T>::build_sph_groups() {
-    const auto probe = _probe;
-    const auto* group_owner_ptr = atlas::raw_pointer_cast(_group_owner.data());
-    auto* group_member_count_ptr = atlas::raw_pointer_cast(_group_member_count.data());
-    auto* group_position_ptr = atlas::raw_pointer_cast(_group_position.data());
-    auto* group_velocity_ptr = atlas::raw_pointer_cast(_group_velocity.data());
+    const auto probe                 = _probe;
+    const auto* group_owner_ptr      = atlas::raw_pointer_cast(_group_owner.data());
+    auto* group_member_count_ptr     = atlas::raw_pointer_cast(_group_member_count.data());
+    auto* group_position_ptr         = atlas::raw_pointer_cast(_group_position.data());
+    auto* group_velocity_ptr         = atlas::raw_pointer_cast(_group_velocity.data());
     auto* group_updated_velocity_ptr = atlas::raw_pointer_cast(_group_updated_velocity.data());
-    auto* group_mass_ptr = atlas::raw_pointer_cast(_group_mass.data());
-    auto* group_species_ptr = atlas::raw_pointer_cast(_group_species.data());
+    auto* group_mass_ptr             = atlas::raw_pointer_cast(_group_mass.data());
+    auto* group_species_ptr          = atlas::raw_pointer_cast(_group_species.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -433,7 +433,7 @@ HybridDsmcSphSolver<T>::build_sph_groups() {
             Vector3<T> position_sum(T(0), T(0), T(0));
             Vector3<T> velocity_sum(T(0), T(0), T(0));
             T mass_sum = T(0);
-            int count = 0;
+            int count  = 0;
 
             for (int member = 0; member < probe.sph.particle_count; ++member) {
                 if (group_owner_ptr[member] != particle) {
@@ -454,23 +454,23 @@ HybridDsmcSphSolver<T>::build_sph_groups() {
                 return;
             }
 
-            group_position_ptr[particle] = position_sum / static_cast<T>(count);
-            group_velocity_ptr[particle] = velocity_sum / static_cast<T>(count);
+            group_position_ptr[particle]         = position_sum / static_cast<T>(count);
+            group_velocity_ptr[particle]         = velocity_sum / static_cast<T>(count);
             group_updated_velocity_ptr[particle] = group_velocity_ptr[particle];
-            group_mass_ptr[particle] = mass_sum;
+            group_mass_ptr[particle]             = mass_sum;
         });
 }
 
 template <typename T>
 void
 HybridDsmcSphSolver<T>::estimate_group_density_and_pressure() {
-    const auto probe = _probe;
+    const auto probe                   = _probe;
     const auto* group_member_count_ptr = atlas::raw_pointer_cast(_group_member_count.data());
-    const auto* group_position_ptr = atlas::raw_pointer_cast(_group_position.data());
-    const auto* group_mass_ptr = atlas::raw_pointer_cast(_group_mass.data());
-    const auto* group_species_ptr = atlas::raw_pointer_cast(_group_species.data());
-    auto* group_density_ptr = atlas::raw_pointer_cast(_group_density.data());
-    auto* group_pressure_ptr = atlas::raw_pointer_cast(_group_pressure.data());
+    const auto* group_position_ptr     = atlas::raw_pointer_cast(_group_position.data());
+    const auto* group_mass_ptr         = atlas::raw_pointer_cast(_group_mass.data());
+    const auto* group_species_ptr      = atlas::raw_pointer_cast(_group_species.data());
+    auto* group_density_ptr            = atlas::raw_pointer_cast(_group_density.data());
+    auto* group_pressure_ptr           = atlas::raw_pointer_cast(_group_pressure.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -485,12 +485,12 @@ HybridDsmcSphSolver<T>::estimate_group_density_and_pressure() {
                 return;
             }
 
-            const auto& property = probe.sph.properties_ptr[species];
-            const T cell_size = probe.sph.cell_size;
-            const T rest_density = rest_density_for(property);
+            const auto& property   = probe.sph.properties_ptr[species];
+            const T cell_size      = probe.sph.cell_size;
+            const T rest_density   = rest_density_for(property);
             const T pressure_coeff = pressure_coefficient_for(property);
-            const int begin = probe.sph.neighbor_offsets_ptr[lhs];
-            const int end = probe.sph.neighbor_offsets_ptr[lhs + 1];
+            const int begin        = probe.sph.neighbor_offsets_ptr[lhs];
+            const int end          = probe.sph.neighbor_offsets_ptr[lhs + 1];
 
             T density = group_mass_ptr[lhs] * probe.sph.kernel.density_weight(T(0), cell_size);
 
@@ -501,7 +501,7 @@ HybridDsmcSphSolver<T>::estimate_group_density_and_pressure() {
                 }
 
                 const Vector3<T> delta = group_position_ptr[lhs] - group_position_ptr[rhs];
-                const T radius = delta.length();
+                const T radius         = delta.length();
                 density += group_mass_ptr[rhs] * probe.sph.kernel.density_weight(radius, cell_size);
             }
 
@@ -509,7 +509,7 @@ HybridDsmcSphSolver<T>::estimate_group_density_and_pressure() {
                 density = rest_density;
             }
 
-            group_density_ptr[lhs] = density;
+            group_density_ptr[lhs]  = density;
             group_pressure_ptr[lhs] = pressure_coeff * (density - rest_density);
         });
 }
@@ -517,15 +517,15 @@ HybridDsmcSphSolver<T>::estimate_group_density_and_pressure() {
 template <typename T>
 void
 HybridDsmcSphSolver<T>::update_group_motion(const T dt) {
-    const auto probe = _probe;
+    const auto probe                   = _probe;
     const auto* group_member_count_ptr = atlas::raw_pointer_cast(_group_member_count.data());
-    const auto* group_position_ptr = atlas::raw_pointer_cast(_group_position.data());
-    const auto* group_velocity_ptr = atlas::raw_pointer_cast(_group_velocity.data());
-    const auto* group_mass_ptr = atlas::raw_pointer_cast(_group_mass.data());
-    const auto* group_density_ptr = atlas::raw_pointer_cast(_group_density.data());
-    const auto* group_pressure_ptr = atlas::raw_pointer_cast(_group_pressure.data());
-    const auto* group_species_ptr = atlas::raw_pointer_cast(_group_species.data());
-    auto* group_updated_velocity_ptr = atlas::raw_pointer_cast(_group_updated_velocity.data());
+    const auto* group_position_ptr     = atlas::raw_pointer_cast(_group_position.data());
+    const auto* group_velocity_ptr     = atlas::raw_pointer_cast(_group_velocity.data());
+    const auto* group_mass_ptr         = atlas::raw_pointer_cast(_group_mass.data());
+    const auto* group_density_ptr      = atlas::raw_pointer_cast(_group_density.data());
+    const auto* group_pressure_ptr     = atlas::raw_pointer_cast(_group_pressure.data());
+    const auto* group_species_ptr      = atlas::raw_pointer_cast(_group_species.data());
+    auto* group_updated_velocity_ptr   = atlas::raw_pointer_cast(_group_updated_velocity.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -541,10 +541,10 @@ HybridDsmcSphSolver<T>::update_group_motion(const T dt) {
             }
 
             const auto& property = probe.sph.properties_ptr[species];
-            const T cell_size = probe.sph.cell_size;
-            const T viscosity = property.dynamic_viscosity.value_or(T(0));
-            const int begin = probe.sph.neighbor_offsets_ptr[lhs];
-            const int end = probe.sph.neighbor_offsets_ptr[lhs + 1];
+            const T cell_size    = probe.sph.cell_size;
+            const T viscosity    = property.dynamic_viscosity.value_or(T(0));
+            const int begin      = probe.sph.neighbor_offsets_ptr[lhs];
+            const int end        = probe.sph.neighbor_offsets_ptr[lhs + 1];
             Vector3<T> acceleration(T(0), T(0), T(0));
 
             for (int neighbor_offset = begin; neighbor_offset < end; ++neighbor_offset) {
@@ -555,7 +555,7 @@ HybridDsmcSphSolver<T>::update_group_motion(const T dt) {
                 }
 
                 const Vector3<T> delta = group_position_ptr[lhs] - group_position_ptr[rhs];
-                const T radius = delta.length();
+                const T radius         = delta.length();
                 if (!(radius > T(0)) || radius > cell_size) {
                     continue;
                 }
@@ -579,8 +579,8 @@ HybridDsmcSphSolver<T>::update_group_motion(const T dt) {
 template <typename T>
 void
 HybridDsmcSphSolver<T>::scatter_group_states_to_particles() {
-    const auto probe = _probe;
-    const auto* group_owner_ptr = atlas::raw_pointer_cast(_group_owner.data());
+    const auto probe                       = _probe;
+    const auto* group_owner_ptr            = atlas::raw_pointer_cast(_group_owner.data());
     const auto* group_updated_velocity_ptr = atlas::raw_pointer_cast(_group_updated_velocity.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
@@ -597,17 +597,17 @@ HybridDsmcSphSolver<T>::scatter_group_states_to_particles() {
 template <typename T>
 void
 HybridDsmcSphSolver<T>::build_dsmc_groups() {
-    const auto probe = _probe;
-    const auto* group_owner_ptr = atlas::raw_pointer_cast(_group_owner.data());
-    auto* dsmc_group_owner_ptr = atlas::raw_pointer_cast(_dsmc_group_owner.data());
+    const auto probe                  = _probe;
+    const auto* group_owner_ptr       = atlas::raw_pointer_cast(_group_owner.data());
+    auto* dsmc_group_owner_ptr        = atlas::raw_pointer_cast(_dsmc_group_owner.data());
     auto* dsmc_group_member_count_ptr = atlas::raw_pointer_cast(_dsmc_group_member_count.data());
-    const int dsmc_count = _dsmc_particle_count.empty() ? 0 : _dsmc_particle_count[0];
+    const int dsmc_count              = _dsmc_particle_count.empty() ? 0 : _dsmc_particle_count[0];
 
     if (dsmc_count <= 0) {
         return;
     }
 
-    const T grouping_length2 = probe.grouping_length * probe.grouping_length;
+    const T grouping_length2  = probe.grouping_length * probe.grouping_length;
     const int grouping_radius = Searcher<T>::search_radius_for(probe.grouping_length, probe.sph.cell_size);
 
     atlas::parallel_for<ExecutionPolicy::device>(
@@ -619,8 +619,8 @@ HybridDsmcSphSolver<T>::build_dsmc_groups() {
             }
 
             const Vector3<T> pos = probe.sph.position_ptr[particle];
-            const auto center = Searcher<T>::cell_for(pos, probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
-            int owner = particle;
+            const auto center    = Searcher<T>::cell_for(pos, probe.sph.lower_corner, probe.sph.inverse_cell_size, probe.sph.grid_size);
+            int owner            = particle;
 
             for (int z = -grouping_radius; z <= grouping_radius; ++z) {
                 for (int y = -grouping_radius; y <= grouping_radius; ++y) {
@@ -630,9 +630,9 @@ HybridDsmcSphSolver<T>::build_dsmc_groups() {
                             continue;
                         }
 
-                        const int flat = static_cast<int>(Searcher<T>::linear_key(cell, probe.sph.grid_size));
+                        const int flat  = static_cast<int>(Searcher<T>::linear_key(cell, probe.sph.grid_size));
                         const int begin = probe.sph.cell_start_ptr[flat];
-                        const int end = probe.sph.cell_end_ptr[flat];
+                        const int end   = probe.sph.cell_end_ptr[flat];
                         if (begin < 0 || end <= begin) {
                             continue;
                         }
@@ -681,13 +681,13 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc(const T dt) {
 template <typename T>
 void
 HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
-    const auto probe = _probe;
-    const auto* dsmc_group_owner_ptr = atlas::raw_pointer_cast(_dsmc_group_owner.data());
+    const auto probe                  = _probe;
+    const auto* dsmc_group_owner_ptr  = atlas::raw_pointer_cast(_dsmc_group_owner.data());
     auto* dsmc_group_member_count_ptr = atlas::raw_pointer_cast(_dsmc_group_member_count.data());
-    auto* dsmc_collision_count_ptr = atlas::raw_pointer_cast(_dsmc_collision_count.data());
-    auto* max_relative_speed_ptr = atlas::raw_pointer_cast(_dsmc_max_relative_speed.data());
-    auto* max_sigma_g_ptr = atlas::raw_pointer_cast(_dsmc_max_sigma_g.data());
-    const int dsmc_count = _dsmc_particle_count.empty() ? 0 : _dsmc_particle_count[0];
+    auto* dsmc_collision_count_ptr    = atlas::raw_pointer_cast(_dsmc_collision_count.data());
+    auto* max_relative_speed_ptr      = atlas::raw_pointer_cast(_dsmc_max_relative_speed.data());
+    auto* max_sigma_g_ptr             = atlas::raw_pointer_cast(_dsmc_max_sigma_g.data());
+    const int dsmc_count              = _dsmc_particle_count.empty() ? 0 : _dsmc_particle_count[0];
 
     if (dsmc_count < 2 || probe.dsmc.properties_ptr == nullptr) {
         return;
@@ -708,7 +708,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
             }
 
             T max_relative_squared = T(0);
-            T max_sigma_g = T(0);
+            T max_sigma_g          = T(0);
 
             for (int lhs = 0; lhs < probe.dsmc.particle_count; ++lhs) {
                 if (dsmc_group_owner_ptr[lhs] != owner) {
@@ -720,17 +720,17 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
                         continue;
                     }
 
-                    const auto species_i = probe.dsmc.species_ptr[lhs];
-                    const auto species_j = probe.dsmc.species_ptr[rhs];
+                    const auto species_i           = probe.dsmc.species_ptr[lhs];
+                    const auto species_j           = probe.dsmc.species_ptr[rhs];
                     const T relative_speed_squared = (probe.dsmc.velocity_ptr[lhs] - probe.dsmc.velocity_ptr[rhs]).length_squared();
                     if (relative_speed_squared > max_relative_squared) {
                         max_relative_squared = relative_speed_squared;
                     }
 
                     const T sigma_g = probe.dsmc.kernel.sigma_g(probe.dsmc.properties_ptr,
-                        species_i,
-                        species_j,
-                        relative_speed_squared);
+                                                                species_i,
+                                                                species_j,
+                                                                relative_speed_squared);
                     if (sigma_g > max_sigma_g) {
                         max_sigma_g = sigma_g;
                     }
@@ -738,13 +738,13 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
             }
 
             max_relative_speed_ptr[owner] = atlas::sqrt_nonnegative(max_relative_squared);
-            max_sigma_g_ptr[owner] = max_sigma_g;
+            max_sigma_g_ptr[owner]        = max_sigma_g;
 
             if (!(max_sigma_g > T(0))) {
                 return;
             }
 
-            const T pair_count = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
+            const T pair_count          = static_cast<T>(count) * static_cast<T>(count - 1) * T(0.5);
             const T expected_collisions = pair_count * max_sigma_g * probe.dsmc.statistical_weight * dt / group_volume;
             if (expected_collisions >= static_cast<T>(std::numeric_limits<int>::max())) {
                 dsmc_collision_count_ptr[owner] = probe.pairing_without_replacement
@@ -754,7 +754,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
             }
 
             int collision_count = static_cast<int>(std::floor(expected_collisions));
-            const T remainder = expected_collisions - static_cast<T>(collision_count);
+            const T remainder   = expected_collisions - static_cast<T>(collision_count);
             if (remainder > T(0)
                 && atlas::sample_hashed_unit_interval<T>(owner, probe.collision_seed) < remainder) {
                 ++collision_count;
@@ -774,19 +774,19 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
 template <typename T>
 void
 HybridDsmcSphSolver<T>::apply_random_grouped_dsmc_collisions() {
-    const auto probe = _probe;
-    const auto* dsmc_group_owner_ptr = atlas::raw_pointer_cast(_dsmc_group_owner.data());
+    const auto probe                  = _probe;
+    const auto* dsmc_group_owner_ptr  = atlas::raw_pointer_cast(_dsmc_group_owner.data());
     auto* dsmc_group_member_count_ptr = atlas::raw_pointer_cast(_dsmc_group_member_count.data());
-    auto* dsmc_collision_count_ptr = atlas::raw_pointer_cast(_dsmc_collision_count.data());
-    auto* max_sigma_g_ptr = atlas::raw_pointer_cast(_dsmc_max_sigma_g.data());
+    auto* dsmc_collision_count_ptr    = atlas::raw_pointer_cast(_dsmc_collision_count.data());
+    auto* max_sigma_g_ptr             = atlas::raw_pointer_cast(_dsmc_max_sigma_g.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.dsmc.particle_count,
         [=] ATLAS_DEVICE(const int owner) {
-            const int count = dsmc_group_member_count_ptr[owner];
+            const int count           = dsmc_group_member_count_ptr[owner];
             const int collision_count = dsmc_collision_count_ptr[owner];
-            const T max_sigma_g = max_sigma_g_ptr[owner];
+            const T max_sigma_g       = max_sigma_g_ptr[owner];
 
             if (count < 2 || collision_count <= 0 || !(max_sigma_g > T(0))) {
                 return;
@@ -813,7 +813,7 @@ HybridDsmcSphSolver<T>::apply_random_grouped_dsmc_collisions() {
 
                 int lhs_particle = -1;
                 int rhs_particle = -1;
-                int local_index = 0;
+                int local_index  = 0;
 
                 for (int particle = 0; particle < probe.dsmc.particle_count; ++particle) {
                     if (dsmc_group_owner_ptr[particle] != owner) {
@@ -833,15 +833,15 @@ HybridDsmcSphSolver<T>::apply_random_grouped_dsmc_collisions() {
                     continue;
                 }
 
-                const auto species_i = probe.dsmc.species_ptr[lhs_particle];
-                const auto species_j = probe.dsmc.species_ptr[rhs_particle];
-                Vector3<T> lhs_velocity = probe.dsmc.velocity_ptr[lhs_particle];
-                Vector3<T> rhs_velocity = probe.dsmc.velocity_ptr[rhs_particle];
+                const auto species_i           = probe.dsmc.species_ptr[lhs_particle];
+                const auto species_j           = probe.dsmc.species_ptr[rhs_particle];
+                Vector3<T> lhs_velocity        = probe.dsmc.velocity_ptr[lhs_particle];
+                Vector3<T> rhs_velocity        = probe.dsmc.velocity_ptr[rhs_particle];
                 const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
-                const T sigma_g = probe.dsmc.kernel.sigma_g(probe.dsmc.properties_ptr,
-                    species_i,
-                    species_j,
-                    relative_speed_squared);
+                const T sigma_g                = probe.dsmc.kernel.sigma_g(probe.dsmc.properties_ptr,
+                                                            species_i,
+                                                            species_j,
+                                                            relative_speed_squared);
 
                 T accept_probability = T(0);
                 if (sigma_g > T(0)) {
@@ -874,19 +874,19 @@ HybridDsmcSphSolver<T>::apply_random_grouped_dsmc_collisions() {
 template <typename T>
 void
 HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
-    const auto probe = _probe;
-    const auto* dsmc_group_owner_ptr = atlas::raw_pointer_cast(_dsmc_group_owner.data());
+    const auto probe                  = _probe;
+    const auto* dsmc_group_owner_ptr  = atlas::raw_pointer_cast(_dsmc_group_owner.data());
     auto* dsmc_group_member_count_ptr = atlas::raw_pointer_cast(_dsmc_group_member_count.data());
-    auto* dsmc_collision_count_ptr = atlas::raw_pointer_cast(_dsmc_collision_count.data());
-    auto* max_sigma_g_ptr = atlas::raw_pointer_cast(_dsmc_max_sigma_g.data());
+    auto* dsmc_collision_count_ptr    = atlas::raw_pointer_cast(_dsmc_collision_count.data());
+    auto* max_sigma_g_ptr             = atlas::raw_pointer_cast(_dsmc_max_sigma_g.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         probe.dsmc.particle_count,
         [=] ATLAS_DEVICE(const int owner) {
-            const int count = dsmc_group_member_count_ptr[owner];
+            const int count           = dsmc_group_member_count_ptr[owner];
             const int collision_count = dsmc_collision_count_ptr[owner];
-            const T max_sigma_g = max_sigma_g_ptr[owner];
+            const T max_sigma_g       = max_sigma_g_ptr[owner];
 
             if (count < 2 || collision_count <= 0 || !(max_sigma_g > T(0))) {
                 return;
@@ -908,7 +908,7 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
 
                 int lhs_particle = -1;
                 int rhs_particle = -1;
-                int local_index = 0;
+                int local_index  = 0;
 
                 for (int particle = 0; particle < probe.dsmc.particle_count; ++particle) {
                     if (dsmc_group_owner_ptr[particle] != owner) {
@@ -928,15 +928,15 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
                     continue;
                 }
 
-                const auto species_i = probe.dsmc.species_ptr[lhs_particle];
-                const auto species_j = probe.dsmc.species_ptr[rhs_particle];
-                Vector3<T> lhs_velocity = probe.dsmc.velocity_ptr[lhs_particle];
-                Vector3<T> rhs_velocity = probe.dsmc.velocity_ptr[rhs_particle];
+                const auto species_i           = probe.dsmc.species_ptr[lhs_particle];
+                const auto species_j           = probe.dsmc.species_ptr[rhs_particle];
+                Vector3<T> lhs_velocity        = probe.dsmc.velocity_ptr[lhs_particle];
+                Vector3<T> rhs_velocity        = probe.dsmc.velocity_ptr[rhs_particle];
                 const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
-                const T sigma_g = probe.dsmc.kernel.sigma_g(probe.dsmc.properties_ptr,
-                    species_i,
-                    species_j,
-                    relative_speed_squared);
+                const T sigma_g                = probe.dsmc.kernel.sigma_g(probe.dsmc.properties_ptr,
+                                                            species_i,
+                                                            species_j,
+                                                            relative_speed_squared);
 
                 T accept_probability = T(0);
                 if (sigma_g > T(0)) {
@@ -1000,18 +1000,15 @@ HybridDsmcSphSolver<T>::select_pair_offsets_without_replacement(int& lhs_local,
 
     int stride = count == 2
         ? 1
-        : 1 + atlas::sample_hashed_index(
-              selector,
-              count - 1,
-              seed + atlas::DSMC_COLLISION_RHS_SALT);
+        : 1 + atlas::sample_hashed_index(selector, count - 1, seed + atlas::DSMC_COLLISION_RHS_SALT);
 
     for (;;) {
         int a = stride;
         int b = count;
         while (b != 0) {
             const int next = a % b;
-            a = b;
-            b = next;
+            a              = b;
+            b              = next;
         }
 
         if (a == 1) {
@@ -1026,8 +1023,8 @@ HybridDsmcSphSolver<T>::select_pair_offsets_without_replacement(int& lhs_local,
 
     const auto lhs_offset = static_cast<std::int64_t>(2 * local_pair) * static_cast<std::int64_t>(stride);
     const auto rhs_offset = static_cast<std::int64_t>(2 * local_pair + 1) * static_cast<std::int64_t>(stride);
-    lhs_local = static_cast<int>((static_cast<std::int64_t>(offset) + lhs_offset) % count);
-    rhs_local = static_cast<int>((static_cast<std::int64_t>(offset) + rhs_offset) % count);
+    lhs_local             = static_cast<int>((static_cast<std::int64_t>(offset) + lhs_offset) % count);
+    rhs_local             = static_cast<int>((static_cast<std::int64_t>(offset) + rhs_offset) % count);
 }
 
 template <typename T>
@@ -1136,4 +1133,4 @@ HybridDsmcSphSolver<T>::Builder::make_host_shared() const {
         _pairing_without_replacement);
 }
 
-} // namespace atlas
+}

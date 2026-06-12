@@ -12,11 +12,6 @@
 
 namespace atlas {
 
-/**
- * @brief Atomically add an integer with relaxed ordering.
- *
- * @return The value stored at @p address before the addition.
- */
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
 atomic_fetch_add_relaxed(int* address, const int value) noexcept {
 #if defined(ATLAS_TASKING_CUDA) && defined(__CUDA_ARCH__)
@@ -27,11 +22,6 @@ atomic_fetch_add_relaxed(int* address, const int value) noexcept {
 #endif
 }
 
-/**
- * @brief Atomically compare and exchange an integer with acquire semantics.
- *
- * @return The value stored at @p address before the compare/exchange attempt.
- */
 ATLAS_DEVICE ATLAS_FORCE_INLINE int
 atomic_compare_exchange_acquire(int* address, const int expected, const int desired) noexcept {
 #if defined(ATLAS_TASKING_CUDA)
@@ -54,11 +44,6 @@ atomic_compare_exchange_acquire(int* address, const int expected, const int desi
 #endif
 }
 
-/**
- * @brief Atomically exchange an integer with release semantics.
- *
- * @return The value stored at @p address before the exchange.
- */
 ATLAS_DEVICE ATLAS_FORCE_INLINE int
 atomic_exchange_release(int* address, const int desired) noexcept {
 #if defined(ATLAS_TASKING_CUDA)
@@ -69,4 +54,4 @@ atomic_exchange_release(int* address, const int desired) noexcept {
 #endif
 }
 
-} // namespace atlas
+}

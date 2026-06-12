@@ -14,7 +14,7 @@ SinkFluidCompactor<T>::compact(const FluidHostPtr<T>& fluid,
         return;
     }
 
-    auto& active = active_state->data();
+    auto& active     = active_state->data();
     const auto count = fluid->particle_count();
     if (count == 0) {
         return;
@@ -31,7 +31,7 @@ SinkFluidCompactor<T>::compact(const FluidHostPtr<T>& fluid,
     }
 
     const auto* active_ptr = atlas::raw_pointer_cast(active.data());
-    auto* keep_ptr = atlas::raw_pointer_cast(keep.data());
+    auto* keep_ptr         = atlas::raw_pointer_cast(keep.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         std::size_t { 0 },
@@ -50,9 +50,9 @@ SinkFluidCompactor<T>::compact(const FluidHostPtr<T>& fluid,
         total_count_buffer.resize(1);
     }
 
-    auto* total_ptr = atlas::raw_pointer_cast(total_count_buffer.data());
+    auto* total_ptr          = atlas::raw_pointer_cast(total_count_buffer.data());
     const auto* scan_offsets = atlas::raw_pointer_cast(offsets.data());
-    const auto last = static_cast<std::ptrdiff_t>(count - 1);
+    const auto last          = static_cast<std::ptrdiff_t>(count - 1);
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -79,7 +79,7 @@ SinkFluidCompactor<T>::compact(const FluidHostPtr<T>& fluid,
     }
 
     const auto* offsets_ptr = atlas::raw_pointer_cast(offsets.data());
-    auto* indices_ptr = atlas::raw_pointer_cast(compact_indices.data());
+    auto* indices_ptr       = atlas::raw_pointer_cast(compact_indices.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
         std::size_t { 0 },
@@ -104,4 +104,4 @@ SinkFluidCompactor<T>::compact(const FluidHostPtr<T>& fluid,
     fluid->set_particle_count(kept);
 }
 
-} // namespace atlas::detail
+}

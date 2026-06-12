@@ -21,7 +21,7 @@ template <typename T>
 void
 DsmcEnergyExchangeSolver<T>::apply_flattened_collision(const DeviceBuffer<int>* allocated_solver,
                                                        const int index) {
-    const auto probe = this->_probe;
+    const auto probe                = this->_probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr
         ? atlas::raw_pointer_cast(allocated_solver->data())
         : nullptr;
@@ -30,20 +30,20 @@ DsmcEnergyExchangeSolver<T>::apply_flattened_collision(const DeviceBuffer<int>* 
         return;
     }
 
-    const int* collision_offsets_ptr = atlas::raw_pointer_cast(this->_flatten_workload.collision_offsets.data());
-    const int* collision_cells_ptr = atlas::raw_pointer_cast(this->_flatten_workload.collision_cells.data());
+    const int* collision_offsets_ptr    = atlas::raw_pointer_cast(this->_flatten_workload.collision_offsets.data());
+    const int* collision_cells_ptr      = atlas::raw_pointer_cast(this->_flatten_workload.collision_cells.data());
     const int flattened_collision_count = this->_flatten_workload.flattened_collision_count;
 
     atlas::parallel_for<atlas::ExecutionPolicy::device>(
         0,
         flattened_collision_count,
         [=] ATLAS_DEVICE(const int work_index) {
-            const int cell = collision_cells_ptr[work_index];
+            const int cell            = collision_cells_ptr[work_index];
             const int local_collision = work_index - collision_offsets_ptr[cell];
-            const int count = static_cast<int>(probe.number_particle_ptr[cell]);
-            const T max_sigma_g = probe.max_sigma_g_ptr[cell];
-            const int begin = probe.cell_start_ptr[cell];
-            const int end = probe.cell_end_ptr[cell];
+            const int count           = static_cast<int>(probe.number_particle_ptr[cell]);
+            const T max_sigma_g       = probe.max_sigma_g_ptr[cell];
+            const int begin           = probe.cell_start_ptr[cell];
+            const int end             = probe.cell_end_ptr[cell];
             if (count < 2 || !(max_sigma_g > T(0)) || begin < 0 || end <= begin) {
                 return;
             }
@@ -84,7 +84,7 @@ DsmcEnergyExchangeSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
         return;
     }
 
-    const auto probe = this->_probe;
+    const auto probe                = this->_probe;
     const int* allocated_solver_ptr = allocated_solver != nullptr
         ? atlas::raw_pointer_cast(allocated_solver->data())
         : nullptr;
@@ -98,14 +98,14 @@ DsmcEnergyExchangeSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
             }
 
             const int collisions = probe.collision_count_ptr[cell];
-            const int count = static_cast<int>(probe.number_particle_ptr[cell]);
-            const T max_sigma_g = probe.max_sigma_g_ptr[cell];
+            const int count      = static_cast<int>(probe.number_particle_ptr[cell]);
+            const T max_sigma_g  = probe.max_sigma_g_ptr[cell];
             if (collisions <= 0 || count < 2 || !(max_sigma_g > T(0))) {
                 return;
             }
 
             const int begin = probe.cell_start_ptr[cell];
-            const int end = probe.cell_end_ptr[cell];
+            const int end   = probe.cell_end_ptr[cell];
             if (begin < 0 || end <= begin) {
                 return;
             }
@@ -116,8 +116,8 @@ DsmcEnergyExchangeSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
 
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
                 const auto stream = stream_base + static_cast<std::uint64_t>(local_collision);
-                int lhs_local = 0;
-                int rhs_local = 0;
+                int lhs_local     = 0;
+                int rhs_local     = 0;
                 DsmcSolver<T>::sample_distinct_pair(
                     lhs_local,
                     rhs_local,
@@ -183,10 +183,10 @@ DsmcEnergyExchangeSolver<T>::collide_indexed_pair(const Probe& probe,
         return false;
     }
 
-    Vector3<T> lhs_velocity = probe.velocity_ptr[particle_i];
-    Vector3<T> rhs_velocity = probe.velocity_ptr[particle_j];
+    Vector3<T> lhs_velocity        = probe.velocity_ptr[particle_i];
+    Vector3<T> rhs_velocity        = probe.velocity_ptr[particle_j];
     const T relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
-    const T sigma_g = probe.kernel.sigma_g(
+    const T sigma_g                = probe.kernel.sigma_g(
         probe.properties_ptr,
         species_i,
         species_j,
@@ -197,7 +197,7 @@ DsmcEnergyExchangeSolver<T>::collide_indexed_pair(const Probe& probe,
 
     T local_max_sigma_g = max_sigma_g;
     if (sigma_g > local_max_sigma_g) {
-        local_max_sigma_g = sigma_g;
+        local_max_sigma_g           = sigma_g;
         probe.max_sigma_g_ptr[cell] = sigma_g;
     }
 
@@ -355,7 +355,7 @@ DsmcEnergyExchangeSolver<T>::exchange_internal_energy(const Probe& probe,
                                                       const T relative_speed_squared) noexcept {
     const auto& lhs_material = probe.properties_ptr[species_i];
     const auto& rhs_material = probe.properties_ptr[species_j];
-    const auto pair = DsmcKernel<T>::pair_parameters(lhs_material, rhs_material);
+    const auto pair          = DsmcKernel<T>::pair_parameters(lhs_material, rhs_material);
     if (!pair.valid) {
         return T(0);
     }
@@ -399,7 +399,7 @@ DsmcEnergyExchangeSolver<T>::exchange_particle_internal_energy(const Probe& prob
                                                                T& e_dispose) noexcept {
     auto energy = probe.internal_energy_ptr[particle];
 
-    const int rot_dof = material.rotational_dof.value_or(0);
+    const int rot_dof       = material.rotational_dof.value_or(0);
     const T rot_probability = DsmcEnergyExchangeSolver<T>::rotational_relaxation_probability(
         material,
         e_dispose + energy.rotational,
@@ -408,26 +408,20 @@ DsmcEnergyExchangeSolver<T>::exchange_particle_internal_energy(const Probe& prob
         && DsmcEnergyExchangeSolver<T>::sample_unit(cell, local_collision, probe.collision_seed, salt_base) <= rot_probability) {
         e_dispose += energy.rotational;
         if (rot_dof == 2) {
-            const T exponent = T(2.5) - omega;
-            const T u = DsmcEnergyExchangeSolver<T>::sample_unit(cell, local_collision, probe.collision_seed, salt_base + 1u);
+            const T exponent  = T(2.5) - omega;
+            const T u         = DsmcEnergyExchangeSolver<T>::sample_unit(cell, local_collision, probe.collision_seed, salt_base + 1u);
             energy.rotational = exponent > T(0)
                 ? (T(1) - std::pow(u, T(1) / exponent)) * e_dispose
                 : T(0);
         } else {
-            energy.rotational = e_dispose * DsmcEnergyExchangeSolver<T>::sample_bl(
-                static_cast<T>(rot_dof) * T(0.5) - T(1),
-                T(1.5) - omega,
-                cell,
-                local_collision,
-                probe.collision_seed,
-                salt_base + 2u);
+            energy.rotational = e_dispose * DsmcEnergyExchangeSolver<T>::sample_bl(static_cast<T>(rot_dof) * T(0.5) - T(1), T(1.5) - omega, cell, local_collision, probe.collision_seed, salt_base + 2u);
         }
         e_dispose -= energy.rotational;
     } else if (rot_dof <= 0) {
         energy.rotational = T(0);
     }
 
-    const int vib_dof = material.vibrational_dof.value_or(0);
+    const int vib_dof       = material.vibrational_dof.value_or(0);
     const T vib_probability = DsmcEnergyExchangeSolver<T>::vibrational_relaxation_probability(
         material,
         e_dispose + energy.vibrational,
@@ -436,36 +430,30 @@ DsmcEnergyExchangeSolver<T>::exchange_particle_internal_energy(const Probe& prob
         && DsmcEnergyExchangeSolver<T>::sample_unit(cell, local_collision, probe.collision_seed, salt_base + 17u) <= vib_probability) {
         e_dispose += energy.vibrational;
         if (vib_dof == 2) {
-            const T exponent = T(2.5) - omega;
-            const T u = DsmcEnergyExchangeSolver<T>::sample_unit(cell, local_collision, probe.collision_seed, salt_base + 18u);
+            const T exponent   = T(2.5) - omega;
+            const T u          = DsmcEnergyExchangeSolver<T>::sample_unit(cell, local_collision, probe.collision_seed, salt_base + 18u);
             energy.vibrational = exponent > T(0)
                 ? (T(1) - std::pow(u, T(1) / exponent)) * e_dispose
                 : T(0);
         } else {
-            energy.vibrational = e_dispose * DsmcEnergyExchangeSolver<T>::sample_bl(
-                static_cast<T>(vib_dof) * T(0.5) - T(1),
-                T(1.5) - omega,
-                cell,
-                local_collision,
-                probe.collision_seed,
-                salt_base + 19u);
+            energy.vibrational = e_dispose * DsmcEnergyExchangeSolver<T>::sample_bl(static_cast<T>(vib_dof) * T(0.5) - T(1), T(1.5) - omega, cell, local_collision, probe.collision_seed, salt_base + 19u);
         }
         e_dispose -= energy.vibrational;
     } else if (vib_dof <= 0) {
         energy.vibrational = T(0);
     }
 
-    energy.translational = e_dispose;
+    energy.translational                = e_dispose;
     probe.internal_energy_ptr[particle] = energy;
 }
 
 template <typename T>
 void
 DsmcEnergyExchangeSolver<T>::rescale_relative_velocity(Vector3<T>& lhs_velocity,
-                                                        Vector3<T>& rhs_velocity,
-                                                        const MaterialProperties<T>& lhs,
-                                                        const MaterialProperties<T>& rhs,
-                                                        const T translational_energy) noexcept {
+                                                       Vector3<T>& rhs_velocity,
+                                                       const MaterialProperties<T>& lhs,
+                                                       const MaterialProperties<T>& rhs,
+                                                       const T translational_energy) noexcept {
     const T lhs_mass = lhs.molecular_mass;
     const T rhs_mass = rhs.molecular_mass;
     const T mass_sum = lhs_mass + rhs_mass;
@@ -480,14 +468,14 @@ DsmcEnergyExchangeSolver<T>::rescale_relative_velocity(Vector3<T>& lhs_velocity,
     }
 
     const Vector3<T> relative = lhs_velocity - rhs_velocity;
-    const T speed = relative.length();
+    const T speed             = relative.length();
     if (!(speed > T(0))) {
         return;
     }
 
-    const T target_speed = atlas::sqrt_nonnegative(T(2) * translational_energy / reduced_mass);
+    const T target_speed                = atlas::sqrt_nonnegative(T(2) * translational_energy / reduced_mass);
     const Vector3<T> scattered_relative = relative * (target_speed / speed);
-    const Vector3<T> center = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
+    const Vector3<T> center             = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
 
     lhs_velocity = center + scattered_relative * (rhs_mass / mass_sum);
     rhs_velocity = center - scattered_relative * (lhs_mass / mass_sum);
@@ -556,4 +544,4 @@ DsmcEnergyExchangeSolver<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<DsmcEnergyExchangeSolver<T>>(_universe, _fluid, _searcher, _kernel_type, _workload_type);
 }
 
-} // namespace atlas
+}

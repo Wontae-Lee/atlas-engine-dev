@@ -15,9 +15,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Rebuilds cached local source samples and base species assignment.
- */
 template <typename T>
 class SourceCacheBuilder final {
 public:
@@ -50,6 +47,6 @@ private:
           std::uint64_t& shuffle_seed) const noexcept;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/source/detail/source_cache_builder.hpp>

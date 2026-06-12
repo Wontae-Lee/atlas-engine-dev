@@ -1,10 +1,5 @@
 #pragma once
 
-/**
- * @file codec_probe_builder.h
- * @brief Declares helper routines that populate CodecProbe.
- */
-
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/codec/codec_probe.h>
 #include <atlas/core/macros.h>
@@ -16,11 +11,6 @@
 
 namespace atlas::detail {
 
-/**
- * @brief Populates the device-side codec probe from codec-owned state.
- *
- * @tparam T Floating-point scalar type used by the codec.
- */
 template <typename T>
 class CodecProbeBuilder final {
     static_assert(std::is_floating_point_v<T>, "CodecProbeBuilder requires a floating-point T");
@@ -36,6 +26,6 @@ public:
          const DeviceBuffer<int>& fixed_region) noexcept;
 };
 
-} // namespace atlas::detail
+}
 
 #include <atlas/codec/detail/codec_probe_builder.hpp>

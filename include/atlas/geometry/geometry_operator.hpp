@@ -4,61 +4,61 @@ namespace atlas {
 
 namespace detail {
 
-template <typename T>
-using GeometryOperatorVariant = DeviceVariant<
-    GeometryOperator<T>,
-    GeometryType,
-    GeometryType::Sphere,
-    DeviceVariantCase<
-        GeometryOperator<T>,
-        GeometryType,
-        GeometryType::Box,
-        BoxGeometryOperator<T>,
-        &GeometryOperator<T>::box>,
-    DeviceVariantCase<
-        GeometryOperator<T>,
-        GeometryType,
-        GeometryType::Circle,
-        CircleGeometryOperator<T>,
-        &GeometryOperator<T>::circle>,
-    DeviceVariantCase<
-        GeometryOperator<T>,
-        GeometryType,
-        GeometryType::Cylinder,
-        CylinderGeometryOperator<T>,
-        &GeometryOperator<T>::cylinder>,
-    DeviceVariantCase<
-        GeometryOperator<T>,
-        GeometryType,
-        GeometryType::Plane,
-        PlaneGeometryOperator<T>,
-        &GeometryOperator<T>::plane>,
-    DeviceVariantCase<
+    template <typename T>
+    using GeometryOperatorVariant = DeviceVariant<
         GeometryOperator<T>,
         GeometryType,
         GeometryType::Sphere,
-        SphereGeometryOperator<T>,
-        &GeometryOperator<T>::sphere>,
-    DeviceVariantCase<
-        GeometryOperator<T>,
-        GeometryType,
-        GeometryType::Square,
-        SquareGeometryOperator<T>,
-        &GeometryOperator<T>::square>,
-    DeviceVariantCase<
-        GeometryOperator<T>,
-        GeometryType,
-        GeometryType::Triangle,
-        TriangleGeometryOperator<T>,
-        &GeometryOperator<T>::triangle>,
-    DeviceVariantCase<
-        GeometryOperator<T>,
-        GeometryType,
-        GeometryType::TriangleMesh,
-        TriangleMeshGeometryOperator<T>,
-        &GeometryOperator<T>::triangle_mesh>>;
+        DeviceVariantCase<
+            GeometryOperator<T>,
+            GeometryType,
+            GeometryType::Box,
+            BoxGeometryOperator<T>,
+            &GeometryOperator<T>::box>,
+        DeviceVariantCase<
+            GeometryOperator<T>,
+            GeometryType,
+            GeometryType::Circle,
+            CircleGeometryOperator<T>,
+            &GeometryOperator<T>::circle>,
+        DeviceVariantCase<
+            GeometryOperator<T>,
+            GeometryType,
+            GeometryType::Cylinder,
+            CylinderGeometryOperator<T>,
+            &GeometryOperator<T>::cylinder>,
+        DeviceVariantCase<
+            GeometryOperator<T>,
+            GeometryType,
+            GeometryType::Plane,
+            PlaneGeometryOperator<T>,
+            &GeometryOperator<T>::plane>,
+        DeviceVariantCase<
+            GeometryOperator<T>,
+            GeometryType,
+            GeometryType::Sphere,
+            SphereGeometryOperator<T>,
+            &GeometryOperator<T>::sphere>,
+        DeviceVariantCase<
+            GeometryOperator<T>,
+            GeometryType,
+            GeometryType::Square,
+            SquareGeometryOperator<T>,
+            &GeometryOperator<T>::square>,
+        DeviceVariantCase<
+            GeometryOperator<T>,
+            GeometryType,
+            GeometryType::Triangle,
+            TriangleGeometryOperator<T>,
+            &GeometryOperator<T>::triangle>,
+        DeviceVariantCase<
+            GeometryOperator<T>,
+            GeometryType,
+            GeometryType::TriangleMesh,
+            TriangleMeshGeometryOperator<T>,
+            &GeometryOperator<T>::triangle_mesh>>;
 
-} // namespace detail
+}
 
 template <typename T>
 GeometryOperator<T>::GeometryOperator() noexcept {
@@ -83,50 +83,42 @@ GeometryOperator<T>::~GeometryOperator() noexcept {
 }
 
 template <typename T>
-GeometryOperator<T>::GeometryOperator(const BoxGeometryOperator<T>& op)
-{
+GeometryOperator<T>::GeometryOperator(const BoxGeometryOperator<T>& op) {
     detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GeometryOperator<T>::GeometryOperator(const CircleGeometryOperator<T>& op)
-{
+GeometryOperator<T>::GeometryOperator(const CircleGeometryOperator<T>& op) {
     detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GeometryOperator<T>::GeometryOperator(const CylinderGeometryOperator<T>& op)
-{
+GeometryOperator<T>::GeometryOperator(const CylinderGeometryOperator<T>& op) {
     detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GeometryOperator<T>::GeometryOperator(const PlaneGeometryOperator<T>& op)
-{
+GeometryOperator<T>::GeometryOperator(const PlaneGeometryOperator<T>& op) {
     detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GeometryOperator<T>::GeometryOperator(const SphereGeometryOperator<T>& op)
-{
+GeometryOperator<T>::GeometryOperator(const SphereGeometryOperator<T>& op) {
     detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GeometryOperator<T>::GeometryOperator(const SquareGeometryOperator<T>& op)
-{
+GeometryOperator<T>::GeometryOperator(const SquareGeometryOperator<T>& op) {
     detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GeometryOperator<T>::GeometryOperator(const TriangleGeometryOperator<T>& op)
-{
+GeometryOperator<T>::GeometryOperator(const TriangleGeometryOperator<T>& op) {
     detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-GeometryOperator<T>::GeometryOperator(const TriangleMeshGeometryOperator<T>& op)
-{
+GeometryOperator<T>::GeometryOperator(const TriangleMeshGeometryOperator<T>& op) {
     detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 

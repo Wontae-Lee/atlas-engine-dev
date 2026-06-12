@@ -31,4 +31,4 @@ struct ColliderProbe {
     bool scene_bound_covers_units {};
 };
 
-} // namespace atlas
+}

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <atlas/core/macros.h>
-#include <atlas/solver/hybrid/hybrid_dsmc_sph_probe.h>
 #include <atlas/solver/dsmc/dsmc_solver.h>
+#include <atlas/solver/hybrid/hybrid_dsmc_sph_probe.h>
 #include <atlas/solver/sph/sph_solver.h>
 
 #include <cstddef>
@@ -25,13 +25,13 @@ public:
 
     ATLAS_HOST ATLAS_FORCE_INLINE
     HybridDsmcSphSolver(UniverseHostPtr<T> universe,
-                         FluidHostPtr<T> fluid,
-                         SearcherHostPtr<T> searcher,
-                         T grouping_length,
-                         int sph_particle_threshold,
-                         SphKernelType sph_kernel_type = SphKernelType::standard,
-                         DsmcKernelType dsmc_kernel_type = DsmcKernelType::hard_sphere,
-                         bool pairing_without_replacement = false) noexcept;
+                        FluidHostPtr<T> fluid,
+                        SearcherHostPtr<T> searcher,
+                        T grouping_length,
+                        int sph_particle_threshold,
+                        SphKernelType sph_kernel_type    = SphKernelType::standard,
+                        DsmcKernelType dsmc_kernel_type  = DsmcKernelType::hard_sphere,
+                        bool pairing_without_replacement = false) noexcept;
 
     ~HybridDsmcSphSolver() override = default;
 
@@ -196,7 +196,7 @@ private:
     bool _pairing_without_replacement {};
 };
 
-} // namespace atlas
+}
 
 namespace atlas {
 template <typename T>
@@ -205,6 +205,6 @@ using HybridDsmcSphSolverHostPtr = atlas::host_shared_ptr<atlas::HybridDsmcSphSo
 template <typename T>
 using HybridDsmcSphSolverDevicePtr = atlas::device_shared_ptr<atlas::HybridDsmcSphSolver<T>>;
 
-} // namespace atlas
+}
 
 #include <atlas/solver/hybrid/hybrid_dsmc_sph_solver.hpp>

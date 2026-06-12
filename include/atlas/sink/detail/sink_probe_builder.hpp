@@ -19,14 +19,14 @@ SinkProbeBuilder<T>::build(const FluidHostPtr<T>& fluid,
     }
 
     auto* position_state = fluid->template state<atlas::FluidPositionState<T>>();
-    auto* active_state = fluid->template state<atlas::FluidActiveState<T>>();
+    auto* active_state   = fluid->template state<atlas::FluidActiveState<T>>();
 
     if (position_state == nullptr || active_state == nullptr) {
         return false;
     }
 
-    auto& positions = position_state->data();
-    auto& active = active_state->data();
+    auto& positions      = position_state->data();
+    auto& active         = active_state->data();
     auto* velocity_state = fluid->template state<atlas::FluidVelocityState<T>>();
 
     if (positions.empty() || active.empty() || fluid->particle_count() == 0 || unit_bounds.empty()) {
@@ -53,4 +53,4 @@ SinkProbeBuilder<T>::build(const FluidHostPtr<T>& fluid,
     return true;
 }
 
-} // namespace atlas::detail
+}

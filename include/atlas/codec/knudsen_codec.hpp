@@ -217,20 +217,19 @@ KnudsenCodec<T>::Builder::make_host_shared() const {
 }
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE
-bool
+ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
 KnudsenCodec<T>::fixed_cell(const CodecProbe<T>& probe, const int cell) noexcept {
     return probe.fixed_region_ptr != nullptr && probe.fixed_region_ptr[cell] == 1;
 }
 
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE
-T
-KnudsenCodec<T>::knudsen_number(const T particle_count,
-                                const T statistical_weight,
-                                const T cell_volume,
-                                const T characteristic_length,
-                                const T representative_collision_cross_sectional_area) noexcept {
+    T
+    KnudsenCodec<T>::knudsen_number(const T particle_count,
+                                    const T statistical_weight,
+                                    const T cell_volume,
+                                    const T characteristic_length,
+                                    const T representative_collision_cross_sectional_area) noexcept {
     const T number_density = cell_volume > T(0)
         ? particle_count * statistical_weight / cell_volume
         : T(0);
@@ -249,8 +248,7 @@ KnudsenCodec<T>::knudsen_number(const T particle_count,
 }
 
 template <typename T>
-ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE
-int
+ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE int
 KnudsenCodec<T>::solver_index(const T kn, const T* splits, const int split_count) noexcept {
     int index = 0;
     while (index < split_count && !(kn < splits[index])) {
@@ -259,4 +257,4 @@ KnudsenCodec<T>::solver_index(const T kn, const T* splits, const int split_count
     return index;
 }
 
-} // namespace atlas
+}
