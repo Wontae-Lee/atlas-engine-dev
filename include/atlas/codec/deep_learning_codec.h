@@ -8,7 +8,7 @@
 #include <atlas/codec/codec.h>
 #include <atlas/universe/universe.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Codec specialization intended for deep-learning-based representations.
@@ -219,17 +219,10 @@ private:
     DeviceBuffer<int> _fixed_region {};
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::system::DeepLearningCodec.
- *
- * @tparam T Scalar type used by the codec.
- */
-template <typename T>
-using DeepLearningCodec = system::DeepLearningCodec<T>;
 
 /**
  * @brief Host-side shared pointer alias for DeepLearningCodec.
@@ -237,7 +230,7 @@ using DeepLearningCodec = system::DeepLearningCodec<T>;
  * @tparam T Scalar type used by the codec.
  */
 template <typename T>
-using DeepLearningCodecHostPtr = atlas::host_shared_ptr<system::DeepLearningCodec<T>>;
+using DeepLearningCodecHostPtr = atlas::host_shared_ptr<DeepLearningCodec<T>>;
 
 /**
  * @brief Device-side shared pointer alias for DeepLearningCodec.
@@ -245,7 +238,7 @@ using DeepLearningCodecHostPtr = atlas::host_shared_ptr<system::DeepLearningCode
  * @tparam T Scalar type used by the codec.
  */
 template <typename T>
-using DeepLearningCodecDevicePtr = atlas::device_shared_ptr<system::DeepLearningCodec<T>>;
+using DeepLearningCodecDevicePtr = atlas::device_shared_ptr<DeepLearningCodec<T>>;
 
 } // namespace atlas
 

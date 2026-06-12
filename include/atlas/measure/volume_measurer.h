@@ -11,7 +11,7 @@
 #include <atlas/measure/measurer.h>
 #include <atlas/unit/unit.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Measures cell-wise free volume after subtracting solid unit occupancy.
@@ -46,7 +46,7 @@ private:
 
         ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
         contains(const Vector3<int>& cell) const noexcept {
-            return active && atlas::math::all((cell >= begin) & (cell <= end));
+            return active && atlas::all((cell >= begin) & (cell <= end));
         }
     };
 
@@ -205,17 +205,10 @@ private:
     int _samples_per_axis { 4 };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::system::VolumeMeasurer.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using VolumeMeasurer = atlas::system::VolumeMeasurer<T>;
 
 /**
  * @brief Host shared-pointer alias for VolumeMeasurer.
@@ -223,7 +216,7 @@ using VolumeMeasurer = atlas::system::VolumeMeasurer<T>;
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using VolumeMeasurerHostPtr = atlas::host_shared_ptr<atlas::system::VolumeMeasurer<T>>;
+using VolumeMeasurerHostPtr = atlas::host_shared_ptr<atlas::VolumeMeasurer<T>>;
 
 /**
  * @brief Device shared-pointer alias for VolumeMeasurer.
@@ -231,7 +224,7 @@ using VolumeMeasurerHostPtr = atlas::host_shared_ptr<atlas::system::VolumeMeasur
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using VolumeMeasurerDevicePtr = atlas::device_shared_ptr<atlas::system::VolumeMeasurer<T>>;
+using VolumeMeasurerDevicePtr = atlas::device_shared_ptr<atlas::VolumeMeasurer<T>>;
 
 } // namespace atlas
 

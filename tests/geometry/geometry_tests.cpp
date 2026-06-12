@@ -27,7 +27,7 @@ using atlas::TriangleContainer4;
 using atlas::TriangleMesh;
 using atlas::Vector3F;
 using atlas::eps;
-using atlas::geometry::GeometryType;
+using atlas::GeometryType;
 using atlas::test::is_finite_vec;
 
 template <typename T>
@@ -42,7 +42,7 @@ expect_geometry_interface(const GeometryHostPtr<T>& geometry,
     EXPECT_EQ(base.type(), expected_type);
     EXPECT_TRUE(base.is_valid());
 
-    const auto operator_view = base.make_geometry_operator();
+    const auto operator_view = atlas::make_device_geometry_view(base);
     (void)operator_view;
 
     const auto closest_point = base.closest_point(query_point);

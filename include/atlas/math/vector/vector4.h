@@ -7,7 +7,6 @@
 #include <type_traits>
 
 namespace atlas {
-namespace math {
 
     /**
      * @brief Specialized 4D vector with named components and common vector operations.
@@ -545,11 +544,8 @@ namespace math {
     template <typename T>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 4>
     cmax(const Vector<T, 4>& a, const Vector<T, 4>& b);
-
-} // namespace math
-
 template <typename T>
-using Vector4  = math::Vector<T, 4>;
+using Vector4  = Vector<T, 4>;
 using Vector4F = Vector4<float>;
 using Vector4D = Vector4<double>;
 using Point4UI = Vector4<std::uint32_t>;

@@ -5,7 +5,7 @@
 
 #include <cstddef>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 struct OrchestratorProbe {
@@ -27,8 +27,4 @@ struct OrchestratorProbe {
 }
 
 namespace atlas {
-
-template <typename T>
-using OrchestratorProbe = atlas::system::OrchestratorProbe<T>;
-
 }

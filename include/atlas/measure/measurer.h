@@ -15,7 +15,7 @@
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/universe/universe.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Identifies the category of data produced by a measurer.
@@ -74,8 +74,6 @@ enum class MeasureModeType : int {
 template <typename T>
 class Measurer {
 public:
-    using MeasurerProbe = atlas::system::MeasurerProbe<T>;
-
     /**
      * @brief Constructs an empty measurer.
      *
@@ -205,38 +203,33 @@ protected:
     MeasurerProbe _probe {};
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for `atlas::system::MeasureModeType`.
+ * @brief Convenience alias for `atlas::MeasureModeType`.
  */
-using MeasureModeType = atlas::system::MeasureModeType;
-
 /**
- * @brief Convenience alias for `atlas::system::Measurer`.
+ * @brief Convenience alias for `atlas::Measurer`.
+ *
+ * @tparam T Scalar type used by the measurer.
+ */
+/**
+ * @brief Host-side shared pointer alias for `atlas::Measurer`.
  *
  * @tparam T Scalar type used by the measurer.
  */
 template <typename T>
-using Measurer = atlas::system::Measurer<T>;
+using MeasurerHostPtr = atlas::host_shared_ptr<atlas::Measurer<T>>;
 
 /**
- * @brief Host-side shared pointer alias for `atlas::system::Measurer`.
+ * @brief Device-side shared pointer alias for `atlas::Measurer`.
  *
  * @tparam T Scalar type used by the measurer.
  */
 template <typename T>
-using MeasurerHostPtr = atlas::host_shared_ptr<atlas::system::Measurer<T>>;
-
-/**
- * @brief Device-side shared pointer alias for `atlas::system::Measurer`.
- *
- * @tparam T Scalar type used by the measurer.
- */
-template <typename T>
-using MeasurerDevicePtr = atlas::device_shared_ptr<atlas::system::Measurer<T>>;
+using MeasurerDevicePtr = atlas::device_shared_ptr<atlas::Measurer<T>>;
 
 } // namespace atlas
 

@@ -6,7 +6,7 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 typename KnudsenCodec<T>::Builder
@@ -35,8 +35,8 @@ KnudsenCodec<T>::KnudsenCodec(UniverseHostPtr<T> domain,
     // Ensure that the universe owns a per-cell Knudsen number state.
     // The encoder writes computed Kn values into this state.
     const auto num_of_cells = this->_universe->number_of_cells();
-    if (!this->_universe->template has_state<atlas::universe::UniverseKnudsenNumberState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseKnudsenNumberState<T>>(
+    if (!this->_universe->template has_state<atlas::UniverseKnudsenNumberState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseKnudsenNumberState<T>>(
             static_cast<std::size_t>(num_of_cells));
     }
 
@@ -319,4 +319,4 @@ KnudsenCodec<T>::Builder::make_host_shared() const {
     return codec;
 }
 
-} // namespace atlas::system
+} // namespace atlas

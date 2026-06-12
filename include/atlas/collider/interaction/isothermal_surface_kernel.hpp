@@ -6,7 +6,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 typename IsothermalSurfaceInteraction<T>::Builder
@@ -84,8 +84,8 @@ IsothermalSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
     }
 
     // Compute the deterministic specular reflection direction from the surface normal.
-    const Vector3<T> specular_dir  = atlas::math::reflected(incident, normal);
-    const Vector3<T> specular_unit = atlas::math::normalize(specular_dir);
+    const Vector3<T> specular_dir  = atlas::reflected(incident, normal);
+    const Vector3<T> specular_unit = atlas::normalize(specular_dir);
 
     // With zero accommodation, the interaction reduces to pure specular reflection.
     if (_momentum_acc <= T(0)) {
@@ -93,30 +93,30 @@ IsothermalSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
     }
 
     // Generate deterministic pseudo-random samples from the local collision state.
-    const T u1 = atlas::sampling::sample_hashed_unit_interval(
+    const T u1 = atlas::sample_hashed_unit_interval(
         incident,
-        T(atlas::seed::RANDOM_HASH_SALT_DIFFUSE_U1));
+        T(atlas::RANDOM_HASH_SALT_DIFFUSE_U1));
 
-    const T u2 = atlas::sampling::sample_hashed_unit_interval(
+    const T u2 = atlas::sample_hashed_unit_interval(
         normal + incident,
-        T(atlas::seed::RANDOM_HASH_SALT_DIFFUSE_U2));
+        T(atlas::RANDOM_HASH_SALT_DIFFUSE_U2));
 
     Vector3<T> diffuse_dir {};
 
     // Sample a diffuse outgoing direction from the selected hemisphere distribution.
     if (_diffuse_sampling == DiffuseSampling::CosineWeighted) {
-        diffuse_dir = atlas::sampling::sample_cosine_hemisphere(normal, u1, u2);
+        diffuse_dir = atlas::sample_cosine_hemisphere(normal, u1, u2);
     } else {
-        diffuse_dir = atlas::sampling::sample_uniform_hemisphere(normal, u1, u2);
+        diffuse_dir = atlas::sample_uniform_hemisphere(normal, u1, u2);
     }
 
     // Draw the reflection branch: diffuse with probability momentum_acc, otherwise specular.
-    const T mix = atlas::sampling::sample_hashed_unit_interval(
-        incident + normal * T(atlas::seed::RANDOM_HASH_NORMAL_SCALE_FOR_MIX),
-        T(atlas::seed::RANDOM_HASH_SALT_MIX));
+    const T mix = atlas::sample_hashed_unit_interval(
+        incident + normal * T(atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX),
+        T(atlas::RANDOM_HASH_SALT_MIX));
 
     const Vector3<T> out_unit = (mix < _momentum_acc)
-        ? atlas::math::normalize(diffuse_dir)
+        ? atlas::normalize(diffuse_dir)
         : specular_unit;
 
     // Preserve the incident speed up to the restitution coefficient.
@@ -183,22 +183,22 @@ template <typename T>
 void
 IsothermalSurfaceInteraction<T>::Builder::validate() const {
     // Restitution scales outgoing speed, so it must be finite and non-negative.
-    if (!atlas::math::isfinite(_restitution) || _restitution < T(0)) {
+    if (!atlas::isfinite(_restitution) || _restitution < T(0)) {
         throw std::runtime_error(
             "IsothermalSurfaceInteraction::Builder: restitution must be finite and non-negative.");
     }
 
     // Momentum accommodation is used as a mixing probability, so it must lie within [0, 1].
-    if (!atlas::math::isfinite(_momentum_acc) || _momentum_acc < T(0) || _momentum_acc > T(1)) {
+    if (!atlas::isfinite(_momentum_acc) || _momentum_acc < T(0) || _momentum_acc > T(1)) {
         throw std::runtime_error(
             "IsothermalSurfaceInteraction::Builder: momentum_acc must be finite and within [0, 1].");
     }
 
     // Temperature is a physical scalar and must not be negative or non-finite.
-    if (!atlas::math::isfinite(_temperature) || _temperature < T(0)) {
+    if (!atlas::isfinite(_temperature) || _temperature < T(0)) {
         throw std::runtime_error(
             "IsothermalSurfaceInteraction::Builder: temperature must be finite and non-negative.");
     }
 }
 
-} // namespace atlas::system
+} // namespace atlas

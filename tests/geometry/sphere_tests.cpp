@@ -11,7 +11,7 @@ namespace {
 using atlas::Ray;
 using atlas::Sphere;
 using atlas::Vector3F;
-using atlas::geometry::GeometryType;
+using atlas::GeometryType;
 using atlas::test::vec_near;
 using atlas::tol;
 
@@ -59,8 +59,8 @@ TEST(Sphere, CentroidBoundOperatorAndTraceWork) {
 
     const Vector3F center = sphere.centroid();
     const auto bounds = sphere.bound();
-    const auto geometry_operator = sphere.make_geometry_operator();
-    const auto hit = sphere.make_geometry_operator().trace(Ray<float>(Vector3F(5, 2, 3), Vector3F(-1, 0, 0)));
+    const auto geometry_operator = sphere.make_device_geometry_view();
+    const auto hit = sphere.make_device_geometry_view().trace(Ray<float>(Vector3F(5, 2, 3), Vector3F(-1, 0, 0)));
 
     EXPECT_TRUE(vec_near(center, Vector3F(1, 2, 3), tol));
     EXPECT_TRUE(vec_near(bounds.lower_corner, Vector3F(-1, 0, 1), tol));

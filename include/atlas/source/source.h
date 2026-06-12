@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace atlas::fluid {
+namespace atlas {
 
 /**
  * @brief Particle emission source for a fluid.
@@ -48,8 +48,6 @@ class Source final {
     static_assert(std::is_floating_point_v<T>, "Source requires a floating-point T");
 
 public:
-    using SourceProbe = atlas::fluid::SourceProbe<T>;
-
     /**
      * @brief Builder for configuring and constructing Source objects.
      */
@@ -459,17 +457,10 @@ private:
     T _temperature { T(273.15) };
 };
 
-} // namespace atlas::fluid
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::fluid::Source.
- *
- * @tparam T Floating-point scalar type used by the source.
- */
-template <typename T>
-using Source = atlas::fluid::Source<T>;
 
 /**
  * @brief Host-side shared pointer alias for Source.

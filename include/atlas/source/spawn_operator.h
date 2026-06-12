@@ -7,7 +7,7 @@
 
 #include <atlas/math/math.h>
 
-namespace atlas::fluid {
+namespace atlas {
 
 /**
  * @brief Runtime tag identifying the spawn acceptance rule.
@@ -44,7 +44,7 @@ struct SurfaceSpawnOperator final {
      * @return True if the particle is on the surface within tolerance.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
-    spawn(const atlas::geometry::GeometryOperator<T>& query,
+    spawn(const atlas::GeometryOperator<T>& query,
           const Vector3<T>& particle,
           T tolerance = T(0)) noexcept;
 };
@@ -69,7 +69,7 @@ struct VolumeSpawnOperator final {
      * @return True if the particle is inside within tolerance.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
-    spawn(const atlas::geometry::GeometryOperator<T>& query,
+    spawn(const atlas::GeometryOperator<T>& query,
           const Vector3<T>& particle,
           T tolerance = T(0)) noexcept;
 };
@@ -163,11 +163,11 @@ struct SpawnOperator final {
      * @return True if the particle is accepted for spawning.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    spawn(const atlas::geometry::GeometryOperator<T>& query,
+    spawn(const atlas::GeometryOperator<T>& query,
           const Vector3<T>& particle,
           T tolerance = T(0)) const noexcept;
 };
 
-} // namespace atlas::fluid
+} // namespace atlas
 
 #include <atlas/source/spawn_operator.hpp>

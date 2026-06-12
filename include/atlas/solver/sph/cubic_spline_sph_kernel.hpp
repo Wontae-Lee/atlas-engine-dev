@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 T
@@ -83,4 +83,4 @@ CubicSplineSphKernel<T>::viscosity_laplacian(const T radius, const T cell_size) 
     return alpha * (T(2) - T(2) * q);
 }
 
-} // namespace atlas::system
+} // namespace atlas

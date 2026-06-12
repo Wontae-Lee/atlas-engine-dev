@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 namespace detail {
 
@@ -244,15 +244,15 @@ Searcher<T>::cell_for(const Vector3<T>& position,
                       const Vector3<T>& lower_corner,
                       const T inverse_cell_size,
                       const Vector3<int>& grid_size) noexcept {
-    auto cell = atlas::math::floor((position - lower_corner) * inverse_cell_size).template cast_to<int>();
-    return atlas::math::clamp(cell, Vector3<int>(0, 0, 0), grid_size - Vector3<int>(1, 1, 1));
+    auto cell = atlas::floor((position - lower_corner) * inverse_cell_size).template cast_to<int>();
+    return atlas::clamp(cell, Vector3<int>(0, 0, 0), grid_size - Vector3<int>(1, 1, 1));
 }
 
 template <typename T>
 bool
 Searcher<T>::contains_cell(const Vector3<int>& cell, const Vector3<int>& grid_size) noexcept {
-    return atlas::math::all(cell >= Vector3<int>(0, 0, 0))
-        && atlas::math::all(cell < grid_size);
+    return atlas::all(cell >= Vector3<int>(0, 0, 0))
+        && atlas::all(cell < grid_size);
 }
 
 template <typename T>
@@ -268,7 +268,7 @@ Searcher<T>::position_ptr() const noexcept {
         return nullptr;
     }
 
-    const auto* position_state = _fluid->template state<atlas::fluid::FluidPositionState<T>>();
+    const auto* position_state = _fluid->template state<atlas::FluidPositionState<T>>();
     if (!position_state || position_state->data().empty()) {
         return nullptr;
     }
@@ -465,4 +465,4 @@ Searcher<T>::clear_neighbors() {
     _neighbor_count = 0;
 }
 
-} // namespace atlas::system
+} // namespace atlas

@@ -1,5 +1,5 @@
 #pragma once
-namespace atlas::fluid {
+namespace atlas {
 
 template <typename T>
 DespawnOperator<T>::DespawnOperator(const DespawnType type) noexcept
@@ -26,7 +26,7 @@ DespawnOperator<T>::DespawnOperator(const TracingDespawnOperator<T>& op)
 
 template <typename T>
 bool
-DespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
+DespawnOperator<T>::despawn(const atlas::GeometryOperator<T>& query,
                             const Vector3<T>& vector,
                             const T value) const noexcept {
     switch (type) {
@@ -43,7 +43,7 @@ DespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
 
 template <typename T>
 bool
-DespawnOperator<T>::despawn(const atlas::geometry::GeometryOperator<T>& query,
+DespawnOperator<T>::despawn(const atlas::GeometryOperator<T>& query,
                             const Vector3<T>& position,
                             const Vector3<T>& vector,
                             const T value) const noexcept {

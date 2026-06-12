@@ -5,7 +5,7 @@
 #include <initializer_list>
 #include <type_traits>
 
-namespace atlas ::math {
+namespace atlas {
 
 /**
  * @brief Quaternion rotation primitive for 3D orientation and interpolation.
@@ -590,14 +590,8 @@ template <typename T>
 ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
 isfinite(const Quaternion<T>& q) noexcept;
 
-} // namespace math
-
-namespace atlas {
-
-template <typename T>
-using Quaternion  = math::Quaternion<T>;
-using QuaternionF = math::Quaternion<float>;
-using QuaternionD = math::Quaternion<double>;
+using QuaternionF = Quaternion<float>;
+using QuaternionD = Quaternion<double>;
 
 } // namespace atlas
 

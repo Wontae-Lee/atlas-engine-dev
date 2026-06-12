@@ -13,7 +13,7 @@ using atlas::Ray;
 using atlas::TriangleContainer4;
 using atlas::TriangleMesh;
 using atlas::Vector3F;
-using atlas::geometry::GeometryType;
+using atlas::GeometryType;
 using atlas::test::is_finite_vec;
 using atlas::test::vec_near;
 using atlas::tol;
@@ -65,7 +65,7 @@ TEST(TriangleMesh, ClassificationCentroidBoundAndOperatorWork) {
 
     const Vector3F center = mesh.centroid();
     const auto bounds = mesh.bound();
-    const auto geometry_operator = mesh.make_geometry_operator();
+    const auto geometry_operator = mesh.make_device_geometry_view();
 
     EXPECT_TRUE(is_finite_vec(center));
     EXPECT_TRUE(bounds.is_valid());
@@ -77,7 +77,7 @@ TEST(TriangleMesh, TraceHitsMesh) {
                           .with_triangles(make_triangles())
                           .build();
 
-    const auto hit = mesh.make_geometry_operator().trace(Ray<float>(Vector3F(0.25f, 0.25f, 1.0f), Vector3F(0, 0, -1)));
+    const auto hit = mesh.make_device_geometry_view().trace(Ray<float>(Vector3F(0.25f, 0.25f, 1.0f), Vector3F(0, 0, -1)));
 
     EXPECT_TRUE(hit.is_intersecting);
     EXPECT_TRUE(is_finite_vec(hit.point));

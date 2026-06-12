@@ -7,7 +7,7 @@
 
 #include <atlas/searcher/searcher.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Quadtree-style particle searcher using XY domain partitioning.
@@ -124,18 +124,14 @@ private:
     FluidHostPtr<T> _fluid {};
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
-
-template <typename T>
-using QuadtreeSearcher = atlas::system::QuadtreeSearcher<T>;
-
 /**
  * @brief Host shared pointer alias using the common Searcher interface.
  */
 template <typename T>
-using QuadtreeSearcherHostPtr = atlas::host_shared_ptr<atlas::system::Searcher<T>>;
+using QuadtreeSearcherHostPtr = atlas::host_shared_ptr<atlas::Searcher<T>>;
 
 } // namespace atlas
 

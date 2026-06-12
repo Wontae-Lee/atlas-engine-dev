@@ -6,7 +6,7 @@
 #include <cstddef>
 #include <type_traits>
 
-namespace atlas::math {
+namespace atlas {
 
 /**
  * @file vector_statistics.h
@@ -595,4 +595,4 @@ minmax_scale(const E& expr, expr_value_t<E> a, expr_value_t<E> b) noexcept {
     return VectorUnaryOperator<T, E, ScaleOp>(expr(), ScaleOp { vmin, (b - a) / range, a });
 }
 
-} // namespace atlas::math
+} // namespace atlas

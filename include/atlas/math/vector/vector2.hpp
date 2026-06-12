@@ -1,5 +1,5 @@
 #pragma once
-namespace atlas::math {
+namespace atlas {
 template <typename T>
 constexpr Vector<T, 2>::Vector() noexcept
     : x(T(0))

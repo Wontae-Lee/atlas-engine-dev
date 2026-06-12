@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <initializer_list>
 #include <type_traits>
-namespace atlas::math {
+namespace atlas {
 template <typename T, std::size_t N>
 Vector<T, N>::Vector() noexcept {
     ATLAS_UNROLL
@@ -357,7 +357,7 @@ Vector<T, N>::max() const noexcept {
 template <typename T, std::size_t N>
 std::size_t
 Vector<T, N>::major_axis() const noexcept {
-    return math::argabsmax(*this);
+    return argabsmax(*this);
 }
 
 template <typename T, std::size_t N>

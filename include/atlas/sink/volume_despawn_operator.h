@@ -7,7 +7,7 @@
 
 #include <atlas/geometry/geometry_operator.h>
 
-namespace atlas::fluid {
+namespace atlas {
 
 /**
  * @brief Stateless despawn policy that removes particles inside a geometry region.
@@ -32,11 +32,11 @@ struct VolumeDespawnOperator final {
      * @return True if the particle lies inside within tolerance.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
-    despawn(const atlas::geometry::GeometryOperator<T>& query,
+    despawn(const atlas::GeometryOperator<T>& query,
             const Vector3<T>& particle,
             T tolerance = T(0)) noexcept;
 };
 
-} // namespace atlas::fluid
+} // namespace atlas
 
 #include <atlas/sink/volume_despawn_operator.hpp>

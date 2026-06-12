@@ -7,7 +7,7 @@
 
 #include <atlas/collider/kernel/dt_remain_collider_kernel.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 class PreciseColliderKernel final {
@@ -38,6 +38,9 @@ public:
                const SurfaceInteractionKernel<T>& interaction) const noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas
+
+namespace atlas {
+} // namespace atlas
 
 #include <atlas/collider/kernel/precise_collider_kernel.hpp>

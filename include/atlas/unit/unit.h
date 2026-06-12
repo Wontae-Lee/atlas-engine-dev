@@ -8,7 +8,7 @@
 #include <optional>
 #include <type_traits>
 
-namespace atlas::physics {
+namespace atlas {
 
 /**
  * @brief Represents a physical unit that couples geometry, synchronization state,
@@ -503,17 +503,10 @@ private:
     std::optional<Vector<T, 3>> _angular_acceleration;
 };
 
-} // namespace atlas::physics
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::physics::Unit.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using Unit = atlas::physics::Unit<T>;
 
 /**
  * @brief Host shared pointer alias for Unit.

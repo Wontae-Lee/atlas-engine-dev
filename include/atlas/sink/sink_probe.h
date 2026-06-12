@@ -6,12 +6,12 @@
 
 #include <cstddef>
 
-namespace atlas::fluid {
+namespace atlas {
 
 template <typename T>
 struct SinkProbe {
     const Unit<T>* units {};
-    const atlas::spatial::AxisAlignedBoundingBox<T>* unit_bounds {};
+    const atlas::AxisAlignedBoundingBox<T>* unit_bounds {};
     const DespawnOperator<T>* despawn_operators {};
     const Vector3<T>* positions {};
     const Vector3<T>* velocities {};
@@ -29,8 +29,4 @@ struct SinkProbe {
 }
 
 namespace atlas {
-
-template <typename T>
-using SinkProbe = atlas::fluid::SinkProbe<T>;
-
 }

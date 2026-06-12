@@ -24,11 +24,12 @@
  * - `WendlandQuinticSphKernel<T>`
  */
 
+#include <atlas/core/detail/device_variant.h>
 #include <atlas/solver/sph/cubic_spline_sph_kernel.h>
 #include <atlas/solver/sph/standard_sph_kernel.h>
 #include <atlas/solver/sph/wendland_quintic_sph_kernel.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Identifies the concrete SPH smoothing kernel stored in `SphKernel<T>`.
@@ -310,6 +311,6 @@ private:
     copy_from(const SphKernel& other) noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 #include <atlas/solver/sph/sph_kernel.hpp>

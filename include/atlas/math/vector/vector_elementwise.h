@@ -5,7 +5,7 @@
 #include <cmath>
 #include <type_traits>
 
-namespace atlas::math {
+namespace atlas {
 
 /**
  * @file vector_elementwise.h
@@ -438,4 +438,4 @@ refract(const EI& i, const EN& n, expr_value_t<EI> eta) noexcept {
     return i * eta - n * (eta * d + static_cast<T>(std::sqrt(k)));
 }
 
-} // namespace atlas::math
+} // namespace atlas

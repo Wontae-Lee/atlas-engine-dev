@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atlas::spatial {
+namespace atlas {
 
 template <typename T, typename TransformPoint>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
@@ -19,4 +19,4 @@ transform_aabb(const AxisAlignedBoundingBox<T>& bound,
     return transformed;
 }
 
-} // namespace atlas::spatial
+} // namespace atlas

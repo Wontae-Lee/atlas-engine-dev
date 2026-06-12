@@ -9,7 +9,7 @@
 #include <tiny_obj_loader.h>
 #include <utility>
 
-namespace atlas::geometry {
+namespace atlas {
 
 template <typename T>
 TriangleMesh<T>::TriangleMesh(const HostBuffer<TriangleContainer4<T>>& triangles_) noexcept
@@ -233,11 +233,10 @@ TriangleMesh<T>::update_operator() const {
 
 template <typename T>
 GeometryOperator<T>
-TriangleMesh<T>::make_geometry_operator() const {
+TriangleMesh<T>::make_device_geometry_view() const {
     // Ensure flattened query buffers are ready before exposing the operator.
     ensure_query_cache();
 
-    // Return a type-erased geometry operator backed by this mesh operator.
     return GeometryOperator<T>(_operator);
 }
 
@@ -297,17 +296,17 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
             }
 
             // Convert OBJ vertex positions into Atlas vector coordinates.
-            const atlas::math::Vector<T, 3> a(
+            const atlas::Vector<T, 3> a(
                 static_cast<T>(v[o0 + 0]),
                 static_cast<T>(v[o0 + 1]),
                 static_cast<T>(v[o0 + 2]));
 
-            const atlas::math::Vector<T, 3> b(
+            const atlas::Vector<T, 3> b(
                 static_cast<T>(v[o1 + 0]),
                 static_cast<T>(v[o1 + 1]),
                 static_cast<T>(v[o1 + 2]));
 
-            const atlas::math::Vector<T, 3> c(
+            const atlas::Vector<T, 3> c(
                 static_cast<T>(v[o2 + 0]),
                 static_cast<T>(v[o2 + 1]),
                 static_cast<T>(v[o2 + 2]));
@@ -320,9 +319,9 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
             tc.c() = c;
 
             // Compute and store a normalized triangle normal in the fourth slot.
-            tc.d() = atlas::math::normalized_or(
-                atlas::math::cross(b - a, c - a),
-                atlas::math::Vector<T, 3>(T(0), T(0), T(1)));
+            tc.d() = atlas::normalized_or(
+                atlas::cross(b - a, c - a),
+                atlas::Vector<T, 3>(T(0), T(0), T(1)));
 
             // Append the loaded triangle to the mesh.
             triangles.push_back(tc);
@@ -347,49 +346,49 @@ TriangleMesh<T>::load_from_obj(const std::string& filename, const bool verbose) 
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-TriangleMesh<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
+atlas::Vector<T, 3>
+TriangleMesh<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
     // Delegate closest-point queries to the bound mesh operator.
     return _operator.closest_point(p);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-TriangleMesh<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
+atlas::Vector<T, 3>
+TriangleMesh<T>::closest_normal(const atlas::Vector<T, 3>& p) const noexcept {
     // Delegate closest-normal queries to the bound mesh operator.
     return _operator.closest_normal(p);
 }
 
 template <typename T>
 T
-TriangleMesh<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
+TriangleMesh<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
     // Delegate signed-distance queries to the bound mesh operator.
     return _operator.signed_distance(p);
 }
 
 template <typename T>
 bool
-TriangleMesh<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+TriangleMesh<T>::is_inside(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
     // Delegate containment checks to the bound mesh operator.
     return _operator.is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
-TriangleMesh<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+TriangleMesh<T>::is_on_surface(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
     // Delegate surface-membership checks to the bound mesh operator.
     return _operator.is_on_surface(p, tolerance);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
+atlas::Vector<T, 3>
 TriangleMesh<T>::centroid() const noexcept {
     // Delegate centroid computation to the bound mesh operator.
     return _operator.centroid();
 }
 
 template <typename T>
-atlas::spatial::AxisAlignedBoundingBox<T>
+atlas::AxisAlignedBoundingBox<T>
 TriangleMesh<T>::bound() const noexcept {
     // Delegate bounding-box construction to the bound mesh operator.
     return _operator.bound();
@@ -479,14 +478,14 @@ TriangleMesh<T>::Builder::validate() const {
 
 template <typename T>
 T
-TriangleMeshGeometryOperator<T>::solid_angle(const atlas::math::Vector<T, 3>& p,
-                                             const atlas::math::Vector<T, 3>& a,
-                                             const atlas::math::Vector<T, 3>& b,
-                                             const atlas::math::Vector<T, 3>& c) const noexcept {
+TriangleMeshGeometryOperator<T>::solid_angle(const atlas::Vector<T, 3>& p,
+                                             const atlas::Vector<T, 3>& a,
+                                             const atlas::Vector<T, 3>& b,
+                                             const atlas::Vector<T, 3>& c) const noexcept {
     // Express all triangle vertices relative to the query point.
-    const atlas::math::Vector<T, 3> va = a - p;
-    const atlas::math::Vector<T, 3> vb = b - p;
-    const atlas::math::Vector<T, 3> vc = c - p;
+    const atlas::Vector<T, 3> va = a - p;
+    const atlas::Vector<T, 3> vb = b - p;
+    const atlas::Vector<T, 3> vc = c - p;
 
     const T la = va.length();
     const T lb = vb.length();
@@ -500,7 +499,7 @@ TriangleMeshGeometryOperator<T>::solid_angle(const atlas::math::Vector<T, 3>& p,
     }
 
     // Oriented tetrahedral volume term for the solid-angle numerator.
-    const T numerator = va.dot(atlas::math::cross(vb, vc));
+    const T numerator = va.dot(atlas::cross(vb, vc));
 
     // Robust denominator for the triangle solid angle formula.
     const T denominator = la * lb * lc
@@ -513,7 +512,7 @@ TriangleMeshGeometryOperator<T>::solid_angle(const atlas::math::Vector<T, 3>& p,
 
 template <typename T>
 T
-TriangleMeshGeometryOperator<T>::winding_number(const atlas::math::Vector<T, 3>& p) const noexcept {
+TriangleMeshGeometryOperator<T>::winding_number(const atlas::Vector<T, 3>& p) const noexcept {
     T solid_angle_sum = T(0);
 
     for (int t = 0; t < triangle_count; ++t) {
@@ -522,9 +521,9 @@ TriangleMeshGeometryOperator<T>::winding_number(const atlas::math::Vector<T, 3>&
         const int i1 = indices[3 * t + 1];
         const int i2 = indices[3 * t + 2];
 
-        const atlas::math::Vector<T, 3>& a = vertices[i0];
-        const atlas::math::Vector<T, 3>& b = vertices[i1];
-        const atlas::math::Vector<T, 3>& c = vertices[i2];
+        const atlas::Vector<T, 3>& a = vertices[i0];
+        const atlas::Vector<T, 3>& b = vertices[i1];
+        const atlas::Vector<T, 3>& c = vertices[i2];
 
         // Accumulate the oriented solid angle contribution.
         solid_angle_sum += solid_angle(p, a, b, c);
@@ -549,9 +548,9 @@ TriangleMeshGeometryOperator<T>::has_bvh() const noexcept {
 template <typename T>
 T
 TriangleMeshGeometryOperator<T>::closest_point_linear(
-    const atlas::math::Vector<T, 3>& p,
-    atlas::math::Vector<T, 3>* best_point,
-    atlas::math::Vector<T, 3>* best_normal,
+    const atlas::Vector<T, 3>& p,
+    atlas::Vector<T, 3>* best_point,
+    atlas::Vector<T, 3>* best_normal,
     T limit) const noexcept {
     if (!vertices || !indices || triangle_count <= 0) {
         return limit;
@@ -565,15 +564,15 @@ TriangleMeshGeometryOperator<T>::closest_point_linear(
         const int i1 = indices[3 * t + 1];
         const int i2 = indices[3 * t + 2];
 
-        const atlas::math::Vector<T, 3>& a = vertices[i0];
-        const atlas::math::Vector<T, 3>& b = vertices[i1];
-        const atlas::math::Vector<T, 3>& c = vertices[i2];
+        const atlas::Vector<T, 3>& a = vertices[i0];
+        const atlas::Vector<T, 3>& b = vertices[i1];
+        const atlas::Vector<T, 3>& c = vertices[i2];
 
         tri.a = &a;
         tri.b = &b;
         tri.c = &c;
 
-        const atlas::math::Vector<T, 3> cp = tri.closest_point(p);
+        const atlas::Vector<T, 3> cp = tri.closest_point(p);
         const T d2                         = (cp - p).length_squared();
 
         if (d2 < best_d2) {
@@ -584,9 +583,9 @@ TriangleMeshGeometryOperator<T>::closest_point_linear(
             }
 
             if (best_normal) {
-                *best_normal = atlas::math::normalized_or(
-                    atlas::math::cross(b - a, c - a),
-                    atlas::math::Vector<T, 3>(T(0), T(0), T(1)));
+                *best_normal = atlas::normalized_or(
+                    atlas::cross(b - a, c - a),
+                    atlas::Vector<T, 3>(T(0), T(0), T(1)));
             }
         }
     }
@@ -597,9 +596,9 @@ TriangleMeshGeometryOperator<T>::closest_point_linear(
 template <typename T>
 T
 TriangleMeshGeometryOperator<T>::closest_point_bvh(
-    const atlas::math::Vector<T, 3>& p,
-    atlas::math::Vector<T, 3>* best_point,
-    atlas::math::Vector<T, 3>* best_normal,
+    const atlas::Vector<T, 3>& p,
+    atlas::Vector<T, 3>* best_point,
+    atlas::Vector<T, 3>* best_normal,
     T limit) const noexcept {
     if (!has_bvh()) {
         return limit;
@@ -613,9 +612,9 @@ TriangleMeshGeometryOperator<T>::closest_point_bvh(
 
     while (sp) {
         const int ni                         = stack[--sp];
-        const atlas::spatial::BVHNode<T>& nd = bvh_nodes[ni];
+        const atlas::BVHNode<T>& nd = bvh_nodes[ni];
 
-        if (atlas::spatial::aabb_distance_squared(nd.bounds, p) > best_d2) {
+        if (atlas::aabb_distance_squared(nd.bounds, p) > best_d2) {
             continue;
         }
 
@@ -632,7 +631,7 @@ TriangleMeshGeometryOperator<T>::closest_point_bvh(
                 tri_op.c = &tri.c();
                 tri_op.n = &tri.d();
 
-                const atlas::math::Vector<T, 3> cp = tri_op.closest_point(p);
+                const atlas::Vector<T, 3> cp = tri_op.closest_point(p);
                 const T d2                         = (cp - p).length_squared();
 
                 if (d2 < best_d2) {
@@ -659,7 +658,7 @@ TriangleMeshGeometryOperator<T>::closest_point_bvh(
         }
 
         if (left < 0) {
-            if (atlas::spatial::aabb_distance_squared(bvh_nodes[right].bounds, p) <= best_d2
+            if (atlas::aabb_distance_squared(bvh_nodes[right].bounds, p) <= best_d2
                 && sp < 64) {
                 stack[sp++] = right;
             }
@@ -667,15 +666,15 @@ TriangleMeshGeometryOperator<T>::closest_point_bvh(
         }
 
         if (right < 0) {
-            if (atlas::spatial::aabb_distance_squared(bvh_nodes[left].bounds, p) <= best_d2
+            if (atlas::aabb_distance_squared(bvh_nodes[left].bounds, p) <= best_d2
                 && sp < 64) {
                 stack[sp++] = left;
             }
             continue;
         }
 
-        const T left_d2  = atlas::spatial::aabb_distance_squared(bvh_nodes[left].bounds, p);
-        const T right_d2 = atlas::spatial::aabb_distance_squared(bvh_nodes[right].bounds, p);
+        const T left_d2  = atlas::aabb_distance_squared(bvh_nodes[left].bounds, p);
+        const T right_d2 = atlas::aabb_distance_squared(bvh_nodes[right].bounds, p);
 
         const int near_child = (left_d2 <= right_d2) ? left : right;
         const int far_child  = (left_d2 <= right_d2) ? right : left;
@@ -697,14 +696,14 @@ TriangleMeshGeometryOperator<T>::closest_point_bvh(
 template <typename T>
 T
 TriangleMeshGeometryOperator<T>::approximate_solid_angle(
-    const atlas::spatial::BVHNode<T>& node,
-    const atlas::math::Vector<T, 3>& p) const noexcept {
+    const atlas::BVHNode<T>& node,
+    const atlas::Vector<T, 3>& p) const noexcept {
     if (!(node.solid_angle_area > T(0))) {
         return T(0);
     }
 
-    const atlas::math::Vector<T, 3> center = node.solid_angle_moment / node.solid_angle_area;
-    const atlas::math::Vector<T, 3> r      = center - p;
+    const atlas::Vector<T, 3> center = node.solid_angle_moment / node.solid_angle_area;
+    const atlas::Vector<T, 3> r      = center - p;
     const T r2                             = r.length_squared();
 
     if (!(r2 > std::numeric_limits<T>::epsilon())) {
@@ -712,12 +711,12 @@ TriangleMeshGeometryOperator<T>::approximate_solid_angle(
     }
 
     return node.solid_angle_normal_area.dot(r)
-        / (r2 * atlas::math::sqrt_nonnegative(r2));
+        / (r2 * atlas::sqrt_nonnegative(r2));
 }
 
 template <typename T>
 T
-TriangleMeshGeometryOperator<T>::fast_winding_number_bvh(const atlas::math::Vector<T, 3>& p) const noexcept {
+TriangleMeshGeometryOperator<T>::fast_winding_number_bvh(const atlas::Vector<T, 3>& p) const noexcept {
     if (!has_bvh()) {
         return winding_number(p);
     }
@@ -733,13 +732,13 @@ TriangleMeshGeometryOperator<T>::fast_winding_number_bvh(const atlas::math::Vect
 
     while (sp) {
         const int ni                         = stack[--sp];
-        const atlas::spatial::BVHNode<T>& nd = bvh_nodes[ni];
+        const atlas::BVHNode<T>& nd = bvh_nodes[ni];
 
         if (!(nd.solid_angle_area > T(0))) {
             continue;
         }
 
-        const atlas::math::Vector<T, 3> center = nd.solid_angle_moment / nd.solid_angle_area;
+        const atlas::Vector<T, 3> center = nd.solid_angle_moment / nd.solid_angle_area;
         const T distance2                      = (center - p).length_squared();
         const T size2                          = nd.bounds.diagonal_length_squared();
 
@@ -776,14 +775,14 @@ TriangleMeshGeometryOperator<T>::fast_winding_number_bvh(const atlas::math::Vect
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-TriangleMeshGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
+atlas::Vector<T, 3>
+TriangleMeshGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
     // Without valid mesh data, there is no meaningful projection target.
     if (!vertices || !indices || triangle_count <= 0) {
         return p;
     }
 
-    atlas::math::Vector<T, 3> best_cp = p;
+    atlas::Vector<T, 3> best_cp = p;
 
     if (has_bvh()) {
         closest_point_bvh(p, &best_cp, nullptr, std::numeric_limits<T>::max());
@@ -795,14 +794,14 @@ TriangleMeshGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& 
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-TriangleMeshGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
+atlas::Vector<T, 3>
+TriangleMeshGeometryOperator<T>::closest_normal(const atlas::Vector<T, 3>& p) const noexcept {
     // Invalid mesh data falls back to a deterministic normal.
     if (!vertices || !indices || triangle_count <= 0) {
-        return atlas::math::Vector<T, 3>(T(0), T(0), T(1));
+        return atlas::Vector<T, 3>(T(0), T(0), T(1));
     }
 
-    atlas::math::Vector<T, 3> best_n(T(0), T(0), T(1));
+    atlas::Vector<T, 3> best_n(T(0), T(0), T(1));
 
     if (has_bvh()) {
         closest_point_bvh(p, nullptr, &best_n, std::numeric_limits<T>::max());
@@ -815,7 +814,7 @@ TriangleMeshGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&
 
 template <typename T>
 T
-TriangleMeshGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
+TriangleMeshGeometryOperator<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
     // Invalid mesh data is treated as infinitely far away.
     if (!vertices || !indices || triangle_count <= 0) {
         return std::numeric_limits<T>::infinity();
@@ -825,7 +824,7 @@ TriangleMeshGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>
         ? closest_point_bvh(p, nullptr, nullptr, std::numeric_limits<T>::max())
         : closest_point_linear(p, nullptr, nullptr, std::numeric_limits<T>::max());
 
-    const T dist = atlas::math::sqrt_nonnegative(best_d2);
+    const T dist = atlas::sqrt_nonnegative(best_d2);
 
     // Points numerically on the mesh surface have zero signed distance.
     if (dist <= std::numeric_limits<T>::epsilon()) {
@@ -835,14 +834,14 @@ TriangleMeshGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>
     const T winding = has_bvh()
         ? fast_winding_number_bvh(p)
         : winding_number(p);
-    const bool inside = atlas::math::abs(winding) > T(0.5);
+    const bool inside = atlas::abs(winding) > T(0.5);
 
     return inside ? -dist : dist;
 }
 
 template <typename T>
 bool
-TriangleMeshGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+TriangleMeshGeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
     // Invalid mesh data cannot contain any point.
     if (!vertices || !indices || triangle_count <= 0) {
         return false;
@@ -851,7 +850,7 @@ TriangleMeshGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, c
     const T winding = has_bvh()
         ? fast_winding_number_bvh(p)
         : winding_number(p);
-    const bool inside = atlas::math::abs(winding) > T(0.5);
+    const bool inside = atlas::abs(winding) > T(0.5);
 
     if (inside && tolerance >= T(0)) {
         return true;
@@ -874,7 +873,7 @@ TriangleMeshGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, c
 
 template <typename T>
 bool
-TriangleMeshGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+TriangleMeshGeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
     // Surface membership only needs unsigned closest-surface distance.
     if (!vertices || !indices || triangle_count <= 0 || tolerance < T(0)) {
         return false;
@@ -891,14 +890,14 @@ TriangleMeshGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& 
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
+atlas::Vector<T, 3>
 TriangleMeshGeometryOperator<T>::centroid() const noexcept {
     // Invalid mesh data falls back to the origin as a neutral centroid.
     if (!vertices || !indices || triangle_count <= 0) {
-        return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
+        return atlas::Vector<T, 3>(T(0), T(0), T(0));
     }
 
-    atlas::math::Vector<T, 3> sum(T(0), T(0), T(0));
+    atlas::Vector<T, 3> sum(T(0), T(0), T(0));
 
     for (int t = 0; t < triangle_count; ++t) {
         // Resolve the current triangle vertices from the flattened buffers.
@@ -906,9 +905,9 @@ TriangleMeshGeometryOperator<T>::centroid() const noexcept {
         const int i1 = indices[3 * t + 1];
         const int i2 = indices[3 * t + 2];
 
-        const atlas::math::Vector<T, 3>& a = vertices[i0];
-        const atlas::math::Vector<T, 3>& b = vertices[i1];
-        const atlas::math::Vector<T, 3>& c = vertices[i2];
+        const atlas::Vector<T, 3>& a = vertices[i0];
+        const atlas::Vector<T, 3>& b = vertices[i1];
+        const atlas::Vector<T, 3>& c = vertices[i2];
 
         // Accumulate the centroid of each triangle.
         sum += (a + b + c) * (T(1) / T(3));
@@ -919,17 +918,17 @@ TriangleMeshGeometryOperator<T>::centroid() const noexcept {
 }
 
 template <typename T>
-atlas::spatial::AxisAlignedBoundingBox<T>
+atlas::AxisAlignedBoundingBox<T>
 TriangleMeshGeometryOperator<T>::bound() const noexcept {
     // Invalid mesh data returns an empty/default bounding box.
     if (!vertices || !indices || triangle_count <= 0) {
-        return atlas::spatial::AxisAlignedBoundingBox<T>();
+        return atlas::AxisAlignedBoundingBox<T>();
     }
 
     // Initialize min and max corners from the first referenced vertex.
     const int i0                 = indices[0];
-    atlas::math::Vector<T, 3> mn = vertices[i0];
-    atlas::math::Vector<T, 3> mx = vertices[i0];
+    atlas::Vector<T, 3> mn = vertices[i0];
+    atlas::Vector<T, 3> mx = vertices[i0];
 
     for (int t = 0; t < triangle_count; ++t) {
         // Resolve all vertices of the current triangle.
@@ -938,16 +937,16 @@ TriangleMeshGeometryOperator<T>::bound() const noexcept {
         const int j2 = indices[3 * t + 2];
 
         // Expand the AABB by each triangle vertex.
-        mn = atlas::math::cmin(mn, vertices[j0]);
-        mn = atlas::math::cmin(mn, vertices[j1]);
-        mn = atlas::math::cmin(mn, vertices[j2]);
+        mn = atlas::cmin(mn, vertices[j0]);
+        mn = atlas::cmin(mn, vertices[j1]);
+        mn = atlas::cmin(mn, vertices[j2]);
 
-        mx = atlas::math::cmax(mx, vertices[j0]);
-        mx = atlas::math::cmax(mx, vertices[j1]);
-        mx = atlas::math::cmax(mx, vertices[j2]);
+        mx = atlas::cmax(mx, vertices[j0]);
+        mx = atlas::cmax(mx, vertices[j1]);
+        mx = atlas::cmax(mx, vertices[j2]);
     }
 
-    return atlas::spatial::AxisAlignedBoundingBox<T>(mn, mx);
+    return atlas::AxisAlignedBoundingBox<T>(mn, mx);
 }
 
 template <typename T>
@@ -972,7 +971,7 @@ TriangleMeshGeometryOperator<T>::is_valid() const noexcept {
         // Reject degenerate triangles with near-zero area.
         const auto ab = vertices[j1] - vertices[j0];
         const auto ac = vertices[j2] - vertices[j0];
-        const auto n  = atlas::math::cross(ab, ac);
+        const auto n  = atlas::cross(ab, ac);
 
         if (!(n.length_squared() > static_cast<T>(atlas::eps))) {
             return false;
@@ -984,7 +983,7 @@ TriangleMeshGeometryOperator<T>::is_valid() const noexcept {
 
 template <typename T>
 HitSurface<T>
-TriangleMeshGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexcept {
+TriangleMeshGeometryOperator<T>::trace(const atlas::Ray<T>& r) const noexcept {
     HitSurface<T> out {};
 
 #if defined(ATLAS_TASKING_CUDA) && !defined(__CUDA_ARCH__)
@@ -1006,9 +1005,9 @@ TriangleMeshGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const no
             const int i1 = indices[3 * t + 1];
             const int i2 = indices[3 * t + 2];
 
-            const atlas::math::Vector<T, 3>& a = vertices[i0];
-            const atlas::math::Vector<T, 3>& b = vertices[i1];
-            const atlas::math::Vector<T, 3>& c = vertices[i2];
+            const atlas::Vector<T, 3>& a = vertices[i0];
+            const atlas::Vector<T, 3>& b = vertices[i1];
+            const atlas::Vector<T, 3>& c = vertices[i2];
 
             tri_op.a = &a;
             tri_op.b = &b;
@@ -1031,8 +1030,8 @@ TriangleMeshGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const no
 
     // Track the nearest triangle hit found during BVH traversal.
     T best_t = std::numeric_limits<T>::max();
-    atlas::math::Vector<T, 3> best_p {};
-    atlas::math::Vector<T, 3> best_n {};
+    atlas::Vector<T, 3> best_p {};
+    atlas::Vector<T, 3> best_n {};
     bool found = false;
 
     // Use a fixed-size traversal stack for iterative BVH traversal.
@@ -1043,7 +1042,7 @@ TriangleMeshGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const no
     while (sp) {
         // Pop the next BVH node from the traversal stack.
         const int ni                         = stack[--sp];
-        const atlas::spatial::BVHNode<T>& nd = bvh_nodes[ni];
+        const atlas::BVHNode<T>& nd = bvh_nodes[ni];
 
         // Reject nodes whose bounding boxes are missed or farther than the best hit.
         const auto hit = nd.bounds.trace(r);
@@ -1105,9 +1104,9 @@ TriangleMeshGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const no
 
 template <typename T>
 HitSurface<T>
-TriangleMeshGeometryOperator<T>::operator()(const atlas::spatial::Ray<T>& ray) const noexcept {
+TriangleMeshGeometryOperator<T>::operator()(const atlas::Ray<T>& ray) const noexcept {
     // Allow the operator object to be used directly as a ray-intersection functor.
     return trace(ray);
 }
 
-} // namespace atlas::geometry
+} // namespace atlas

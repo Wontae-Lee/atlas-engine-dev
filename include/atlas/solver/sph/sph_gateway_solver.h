@@ -5,7 +5,7 @@
  * @brief Declares the grouped SPH gateway solver.
  *
  * @details
- * This header defines @ref atlas::system::SphGatewaySolver, a reduced SPH solver
+ * This header defines @ref atlas::SphGatewaySolver, a reduced SPH solver
  * variant that operates on deterministic per-cell group representatives instead
  * of directly updating every particle through full particle-neighbor SPH
  * interactions.
@@ -24,7 +24,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/solver/sph/sph_solver.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Grouped SPH solver that updates particles through per-cell representatives.
@@ -1044,33 +1044,30 @@ private:
     int _group_particle_count { 5 };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for `atlas::system::SphGatewaySolver`.
+ * @brief Convenience alias for `atlas::SphGatewaySolver`.
+ *
+ * @tparam T Floating-point scalar type used by the grouped SPH solver.
+ */
+/**
+ * @brief Host-side shared pointer alias for `atlas::SphGatewaySolver`.
  *
  * @tparam T Floating-point scalar type used by the grouped SPH solver.
  */
 template <typename T>
-using SphGatewaySolver = atlas::system::SphGatewaySolver<T>;
+using SphGatewaySolverHostPtr = atlas::host_shared_ptr<atlas::SphGatewaySolver<T>>;
 
 /**
- * @brief Host-side shared pointer alias for `atlas::system::SphGatewaySolver`.
+ * @brief Device-side shared pointer alias for `atlas::SphGatewaySolver`.
  *
  * @tparam T Floating-point scalar type used by the grouped SPH solver.
  */
 template <typename T>
-using SphGatewaySolverHostPtr = atlas::host_shared_ptr<atlas::system::SphGatewaySolver<T>>;
-
-/**
- * @brief Device-side shared pointer alias for `atlas::system::SphGatewaySolver`.
- *
- * @tparam T Floating-point scalar type used by the grouped SPH solver.
- */
-template <typename T>
-using SphGatewaySolverDevicePtr = atlas::device_shared_ptr<atlas::system::SphGatewaySolver<T>>;
+using SphGatewaySolverDevicePtr = atlas::device_shared_ptr<atlas::SphGatewaySolver<T>>;
 
 } // namespace atlas
 

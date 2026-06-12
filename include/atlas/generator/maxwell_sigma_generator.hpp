@@ -1,62 +1,9 @@
 #pragma once
 
 #include <atlas/logging/logging.h>
-#include <atlas/sampling/sampling.h>
-
 #include <stdexcept>
 
-namespace atlas::fluid {
-
-template <typename T>
-MaxwellSigmaGenerateOperator<T>::MaxwellSigmaGenerateOperator(const unsigned int seed) noexcept
-    : seed(seed)
-    , engine(seed) {
-    // Initialize the random engine with a fixed seed for reproducible samples.
-}
-
-template <typename T>
-Vector3<T>
-MaxwellSigmaGenerateOperator<T>::generate(const T sigma) const {
-    // A non-positive sigma cannot define a valid normal velocity distribution.
-    if (!(sigma > T(0))) {
-        return Vector3<T>(T(0), T(0), T(0));
-    }
-
-    T x {};
-    T y {};
-    T z {};
-    T unused {};
-    atlas::sampling::generate_standard_normal_pair<T>(engine, x, y);
-    atlas::sampling::generate_standard_normal_pair<T>(engine, z, unused);
-
-    // Sample each velocity component independently from N(0, sigma^2).
-    return Vector3<T>(
-        sigma * x,
-        sigma * y,
-        sigma * z);
-}
-
-template <typename T>
-Vector3<T>
-MaxwellSigmaGenerateOperator<T>::generate(const unsigned int seed,
-                                          const T sigma) const {
-    if (!(sigma > T(0))) {
-        return Vector3<T>(T(0), T(0), T(0));
-    }
-
-    atlas::default_random_engine<T> seeded_engine(seed);
-    T x {};
-    T y {};
-    T z {};
-    T unused {};
-    atlas::sampling::generate_standard_normal_pair<T>(seeded_engine, x, y);
-    atlas::sampling::generate_standard_normal_pair<T>(seeded_engine, z, unused);
-
-    return Vector3<T>(
-        sigma * x,
-        sigma * y,
-        sigma * z);
-}
+namespace atlas {
 
 template <typename T>
 typename MaxwellSigmaGenerator<T>::Builder
@@ -164,4 +111,4 @@ MaxwellSigmaGenerator<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::fluid
+} // namespace atlas

@@ -14,7 +14,7 @@
 #include <cmath>
 #include <cstdint>
 
-namespace atlas::sampling {
+namespace atlas {
 
 /**
  * @brief Generates two independent standard normal random samples.
@@ -39,7 +39,7 @@ generate_standard_normal_pair(atlas::default_random_engine<T>& engine,
 
     const T u2 = dist(engine);
 
-    const T r = atlas::math::sqrt_nonnegative(T(-2) * std::log(u1));
+    const T r = atlas::sqrt_nonnegative(T(-2) * std::log(u1));
 
     const T theta = T(2) * static_cast<T>(atlas::pi) * u2;
 
@@ -84,7 +84,7 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
 build_orthonormal_basis(const Vector3<T>& n,
                         Vector3<T>& t,
                         Vector3<T>& b) {
-    if (!atlas::math::orthonormal_basis(n, t, b)) {
+    if (!atlas::orthonormal_basis(n, t, b)) {
         t = Vector3<T>(T(1), T(0), T(0));
         b = Vector3<T>(T(0), T(1), T(0));
     }
@@ -111,7 +111,7 @@ sample_uniform_hemisphere(const Vector3<T>& n, T u1, T u2) {
     const T phi       = T(2) * static_cast<T>(atlas::pi) * u2;
     const T cos_theta = T(1) - u1;
 
-    return atlas::math::spherical_direction(n, cos_theta, phi);
+    return atlas::spherical_direction(n, cos_theta, phi);
 }
 
 /**
@@ -135,9 +135,9 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3<T>
 sample_cosine_hemisphere(const Vector3<T>& n, T u1, T u2) {
 
     const T phi       = T(2) * static_cast<T>(atlas::pi) * u1;
-    const T cos_theta = atlas::math::sqrt_nonnegative(T(1) - u2);
+    const T cos_theta = atlas::sqrt_nonnegative(T(1) - u2);
 
-    return atlas::math::spherical_direction(n, cos_theta, phi);
+    return atlas::spherical_direction(n, cos_theta, phi);
 }
 
 /**
@@ -161,7 +161,7 @@ sample_random_unit_vector(atlas::default_random_engine<T>& engine) noexcept {
 
     const T phi = T(2) * static_cast<T>(atlas::pi) * u2;
 
-    return atlas::math::spherical_direction(cos_theta, phi);
+    return atlas::spherical_direction(cos_theta, phi);
 }
 
 /**
@@ -195,7 +195,7 @@ sample_directional_unit_vector(const Vector3<T>& incoming_direction,
 
     const T phi = T(2) * static_cast<T>(atlas::pi) * u2;
 
-    return atlas::math::spherical_direction(incoming_direction, cos_theta, phi);
+    return atlas::spherical_direction(incoming_direction, cos_theta, phi);
 }
 
 /**
@@ -216,7 +216,7 @@ sample_directional_unit_vector(const Vector3<T>& incoming_direction,
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
 sample_axis_count(T lower, T upper, T spacing) noexcept {
-    if (!atlas::math::isfinite(lower) || !atlas::math::isfinite(upper) || !atlas::math::isfinite(spacing)
+    if (!atlas::isfinite(lower) || !atlas::isfinite(upper) || !atlas::isfinite(spacing)
         || spacing <= T(0))
         return 0;
 
@@ -245,12 +245,12 @@ template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
 sample_hashed_unit_interval(const Vector3<T>& seed, const T salt) noexcept {
 
-    const T phase = seed.x * T(atlas::seed::RANDOM_HASH_PHASE_COEFF_X)
-        + seed.y * T(atlas::seed::RANDOM_HASH_PHASE_COEFF_Y)
-        + seed.z * T(atlas::seed::RANDOM_HASH_PHASE_COEFF_Z)
+    const T phase = seed.x * T(atlas::RANDOM_HASH_PHASE_COEFF_X)
+        + seed.y * T(atlas::RANDOM_HASH_PHASE_COEFF_Y)
+        + seed.z * T(atlas::RANDOM_HASH_PHASE_COEFF_Z)
         + salt;
 
-    const T value = std::sin(phase) * T(atlas::seed::RANDOM_HASH_VALUE_SCALE);
+    const T value = std::sin(phase) * T(atlas::RANDOM_HASH_VALUE_SCALE);
 
     return value - std::floor(value);
 }
@@ -259,8 +259,8 @@ template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
 sample_hashed_unit_interval(const int index, const std::uint64_t seed) noexcept {
     const std::uint64_t value = atlas::ShuffleOperator {}(index, seed);
-    return static_cast<T>(value >> atlas::seed::RANDOM_HASH_UNIT_INTERVAL_SHIFT)
-        * T(atlas::seed::RANDOM_HASH_UNIT_INTERVAL_SCALE);
+    return static_cast<T>(value >> atlas::RANDOM_HASH_UNIT_INTERVAL_SHIFT)
+        * T(atlas::RANDOM_HASH_UNIT_INTERVAL_SCALE);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
@@ -275,4 +275,4 @@ sample_hashed_index(const int index,
     return static_cast<int>(value % static_cast<std::uint64_t>(upper_bound));
 }
 
-} // namespace atlas::sampling
+} // namespace atlas

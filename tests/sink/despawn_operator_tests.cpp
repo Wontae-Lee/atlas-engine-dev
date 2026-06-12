@@ -11,8 +11,8 @@ namespace {
 using atlas::Box;
 using atlas::GeometryOperator;
 using atlas::Vector3F;
-using atlas::fluid::DespawnOperator;
-using atlas::fluid::DespawnType;
+using atlas::DespawnOperator;
+using atlas::DespawnType;
 
 GeometryOperator<float>
 make_box_operator() {
@@ -20,7 +20,7 @@ make_box_operator() {
                                 .with_lower_corner(Vector3F(-1, -1, -1))
                                 .with_upper_corner(Vector3F(1, 1, 1))
                                 .build();
-    return box.make_geometry_operator();
+    return box.make_device_geometry_view();
 }
 
 } // namespace

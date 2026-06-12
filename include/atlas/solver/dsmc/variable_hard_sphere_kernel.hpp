@@ -6,7 +6,7 @@
 
 #include <cmath>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 T
@@ -108,16 +108,16 @@ VariableHardSphereKernel<T>::operator()(Vector3<T>& lhs_velocity,
 
     // Build a deterministic pair-dependent seed.
     // This avoids per-thread RNG state while still producing reproducible samples.
-    const Vector3<T> sample_seed = relative + center * T(atlas::seed::RANDOM_HASH_NORMAL_SCALE_FOR_MIX)
+    const Vector3<T> sample_seed = relative + center * T(atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX)
         + Vector3<T>(lhs_mass, rhs_mass, lhs_mass + rhs_mass);
 
     // Generate two hash-based pseudo-random samples in [0, 1].
-    const T u1 = atlas::sampling::sample_hashed_unit_interval(
+    const T u1 = atlas::sample_hashed_unit_interval(
         sample_seed,
-        T(atlas::seed::RANDOM_HASH_SALT_DIFFUSE_U1));
-    const T u2 = atlas::sampling::sample_hashed_unit_interval(
+        T(atlas::RANDOM_HASH_SALT_DIFFUSE_U1));
+    const T u2 = atlas::sample_hashed_unit_interval(
         sample_seed + axis,
-        T(atlas::seed::RANDOM_HASH_SALT_DIFFUSE_U2));
+        T(atlas::RANDOM_HASH_SALT_DIFFUSE_U2));
 
     // Sample the polar scattering angle.
     // With scattering_parameter = 1, this reduces to isotropic HS scattering:
@@ -128,7 +128,7 @@ VariableHardSphereKernel<T>::operator()(Vector3<T>& lhs_velocity,
     const T phi = T(2) * static_cast<T>(atlas::pi) * u2;
 
     // Rotate the relative-velocity direction while preserving its magnitude.
-    const Vector3<T> scattered_axis     = atlas::math::spherical_direction(axis, cos_chi, phi);
+    const Vector3<T> scattered_axis     = atlas::spherical_direction(axis, cos_chi, phi);
     const Vector3<T> scattered_relative = scattered_axis * speed;
 
     // Reconstruct post-collision velocities from the center-of-mass frame.
@@ -136,4 +136,4 @@ VariableHardSphereKernel<T>::operator()(Vector3<T>& lhs_velocity,
     rhs_velocity = center - scattered_relative * (lhs_mass / mass_sum);
 }
 
-} // namespace atlas::system
+} // namespace atlas

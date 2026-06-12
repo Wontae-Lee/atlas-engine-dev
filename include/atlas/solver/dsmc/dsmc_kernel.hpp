@@ -2,46 +2,55 @@
 
 #include <atlas/math/math.h>
 
-namespace atlas::system {
+namespace atlas {
+
+namespace detail {
+
 template <typename T>
-DsmcKernel<T>::DsmcKernel() noexcept
-    : type(DsmcKernelType::hard_sphere) {
-    new (&hard_sphere) HardSphereKernel<T> {};
+using DsmcKernelVariant = DeviceVariant<
+    DsmcKernel<T>,
+    DsmcKernelType,
+    DsmcKernelType::hard_sphere,
+    DeviceVariantCase<
+        DsmcKernel<T>,
+        DsmcKernelType,
+        DsmcKernelType::hard_sphere,
+        HardSphereKernel<T>,
+        &DsmcKernel<T>::hard_sphere>,
+    DeviceVariantCase<
+        DsmcKernel<T>,
+        DsmcKernelType,
+        DsmcKernelType::variable_hard_sphere,
+        VariableHardSphereKernel<T>,
+        &DsmcKernel<T>::variable_hard_sphere>,
+    DeviceVariantCase<
+        DsmcKernel<T>,
+        DsmcKernelType,
+        DsmcKernelType::variable_soft_sphere,
+        VariableSoftSphereKernel<T>,
+        &DsmcKernel<T>::variable_soft_sphere>>;
+
+} // namespace detail
+
+template <typename T>
+DsmcKernel<T>::DsmcKernel() noexcept {
+    detail::DsmcKernelVariant<T>::construct(*this, DsmcKernelType::hard_sphere);
 }
 
 template <typename T>
-DsmcKernel<T>::DsmcKernel(const DsmcKernelType type) noexcept
-    : type(type) {
-    switch (type) {
-    case DsmcKernelType::hard_sphere:
-        new (&hard_sphere) HardSphereKernel<T> {};
-        return;
-    case DsmcKernelType::variable_hard_sphere:
-        new (&variable_hard_sphere) VariableHardSphereKernel<T> {};
-        return;
-    case DsmcKernelType::variable_soft_sphere:
-        new (&variable_soft_sphere) VariableSoftSphereKernel<T> {};
-        return;
-    default:
-        this->type = DsmcKernelType::hard_sphere;
-        new (&hard_sphere) HardSphereKernel<T> {};
-        return;
-    }
+DsmcKernel<T>::DsmcKernel(const DsmcKernelType type) noexcept {
+    detail::DsmcKernelVariant<T>::construct(*this, type);
 }
 
 template <typename T>
-DsmcKernel<T>::DsmcKernel(const DsmcKernel& other) noexcept
-    : type(other.type) {
-    copy_from(other);
+DsmcKernel<T>::DsmcKernel(const DsmcKernel& other) noexcept {
+    detail::DsmcKernelVariant<T>::copy_construct(*this, other);
 }
 
 template <typename T>
 DsmcKernel<T>&
 DsmcKernel<T>::operator=(const DsmcKernel& other) noexcept {
-    if (this == &other) return *this;
-    destroy_active();
-    type = other.type;
-    copy_from(other);
+    detail::DsmcKernelVariant<T>::assign(*this, other);
     return *this;
 }
 
@@ -53,58 +62,31 @@ DsmcKernel<T>::~DsmcKernel() noexcept {
 template <typename T>
 void
 DsmcKernel<T>::destroy_active() noexcept {
-    switch (type) {
-    case DsmcKernelType::hard_sphere:
-        hard_sphere.~HardSphereKernel<T>();
-        return;
-    case DsmcKernelType::variable_hard_sphere:
-        variable_hard_sphere.~VariableHardSphereKernel<T>();
-        return;
-    case DsmcKernelType::variable_soft_sphere:
-        variable_soft_sphere.~VariableSoftSphereKernel<T>();
-        return;
-    default:
-        hard_sphere.~HardSphereKernel<T>();
-        return;
-    }
+    detail::DsmcKernelVariant<T>::destroy(*this);
 }
 
 template <typename T>
 void
 DsmcKernel<T>::copy_from(const DsmcKernel& other) noexcept {
-    switch (type) {
-    case DsmcKernelType::hard_sphere:
-        new (&hard_sphere) HardSphereKernel<T>(other.hard_sphere);
-        return;
-    case DsmcKernelType::variable_hard_sphere:
-        new (&variable_hard_sphere) VariableHardSphereKernel<T>(other.variable_hard_sphere);
-        return;
-    case DsmcKernelType::variable_soft_sphere:
-        new (&variable_soft_sphere) VariableSoftSphereKernel<T>(other.variable_soft_sphere);
-        return;
-    default:
-        type = DsmcKernelType::hard_sphere;
-        new (&hard_sphere) HardSphereKernel<T>(other.hard_sphere);
-        return;
-    }
+    detail::DsmcKernelVariant<T>::copy_construct(*this, other);
 }
 
 template <typename T>
 DsmcKernel<T>::DsmcKernel(const HardSphereKernel<T>& op)
-    : type(DsmcKernelType::hard_sphere) {
-    new (&hard_sphere) HardSphereKernel<T>(op);
+{
+    detail::DsmcKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 DsmcKernel<T>::DsmcKernel(const VariableHardSphereKernel<T>& op)
-    : type(DsmcKernelType::variable_hard_sphere) {
-    new (&variable_hard_sphere) VariableHardSphereKernel<T>(op);
+{
+    detail::DsmcKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 DsmcKernel<T>::DsmcKernel(const VariableSoftSphereKernel<T>& op)
-    : type(DsmcKernelType::variable_soft_sphere) {
-    new (&variable_soft_sphere) VariableSoftSphereKernel<T>(op);
+{
+    detail::DsmcKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
@@ -187,7 +169,7 @@ DsmcKernel<T>::sigma_g(const MaterialProperties<T>* properties_ptr,
         return T(0);
     }
 
-    const T relative_speed = atlas::math::sqrt_nonnegative(relative_speed_squared);
+    const T relative_speed = atlas::sqrt_nonnegative(relative_speed_squared);
     return DsmcKernel<T>::cross_section(
                type,
                properties_ptr[species_i],

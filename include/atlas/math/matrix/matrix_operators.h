@@ -2,7 +2,7 @@
 #include <atlas/math/detail/ops.h>
 #include <atlas/math/matrix/matrix_expression.h>
 #include <type_traits>
-namespace atlas::math {
+namespace atlas {
 /**
  * @file matrix_operators.h
  * @brief Operator overloads and convenience aliases for matrix expression templates.
@@ -11,7 +11,7 @@ namespace atlas::math {
  * This header provides:
  * - Shorthand type aliases (e.g., `MatrixAdd`, `MatrixNeg`) that bind generic expression node
  *   templates (`MatrixUnaryOperator`, `MatrixBinaryOperator`, `MatrixScalarRight`,
- *   `MatrixScalarLeft`) to specific operator functors in `atlas::math::detail`.
+ *   `MatrixScalarLeft`) to specific operator functors in `atlas::detail`.
  * - Free-function operator overloads for natural math syntax on matrix expressions.
  * - A `cast_to<To>(expr)` helper for lane-wise element type conversion.
  *
@@ -329,4 +329,4 @@ operator/(expr_value_t<E> s, const E& e) noexcept {
     using T = expr_value_t<E>;
     return MatrixDivScalarL<T, E>(s, e());
 }
-} // namespace atlas::math
+} // namespace atlas

@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Common base for particle search structures.
@@ -335,13 +335,9 @@ protected:
     bool _is_invalidated { true };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
-
-template <typename T>
-using Searcher = atlas::system::Searcher<T>;
-
 template <typename T>
 using SearcherHostPtr = atlas::host_shared_ptr<Searcher<T>>;
 

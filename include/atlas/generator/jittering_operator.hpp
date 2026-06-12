@@ -1,54 +1,9 @@
 #pragma once
 
-#include <atlas/random/uniform_real_distribution.h>
-
 #include <cmath>
 #include <stdexcept>
 
-namespace atlas::fluid {
-
-template <typename T>
-JitteringGenerateOperator<T>::JitteringGenerateOperator(const unsigned int seed,
-                                                        const T base_value,
-                                                        const T jitter_radius) noexcept
-    : seed(seed)
-    , base_value(base_value)
-    , jitter_radius(jitter_radius)
-    , engine(seed) {
-    // Initialize the random engine with a fixed seed for reproducible jitter samples.
-}
-
-template <typename T>
-Vector3<T>
-JitteringGenerateOperator<T>::generate(const T,
-                                       const T) const {
-    // Treat a negative radius as its absolute value to keep the sampling interval valid.
-    const T radius = jitter_radius < T(0) ? -jitter_radius : jitter_radius;
-
-    // Sample each coordinate independently within [-radius, radius].
-    atlas::uniform_real_distribution<T> distribution(-radius, radius);
-
-    // Add coordinate-wise jitter around the configured base value.
-    return Vector3<T>(
-        base_value + distribution(engine),
-        base_value + distribution(engine),
-        base_value + distribution(engine));
-}
-
-template <typename T>
-Vector3<T>
-JitteringGenerateOperator<T>::generate(const unsigned int seed,
-                                       const T,
-                                       const T) const {
-    const T radius = jitter_radius < T(0) ? -jitter_radius : jitter_radius;
-    atlas::default_random_engine<T> seeded_engine(seed);
-    atlas::uniform_real_distribution<T> distribution(-radius, radius);
-
-    return Vector3<T>(
-        base_value + distribution(seeded_engine),
-        base_value + distribution(seeded_engine),
-        base_value + distribution(seeded_engine));
-}
+namespace atlas {
 
 template <typename T>
 typename JitteringOperator<T>::Builder
@@ -147,8 +102,8 @@ JitteringOperator<T>::Builder::validate() const {
     }
 
     // Non-finite values would make random sampling invalid or undefined.
-    if (!atlas::math::isfinite(*_base_value)
-        || !atlas::math::isfinite(*_jitter_radius)) {
+    if (!atlas::isfinite(*_base_value)
+        || !atlas::isfinite(*_jitter_radius)) {
         throw std::runtime_error("JitteringOperator::Builder: parameters must be finite.");
     }
 
@@ -175,4 +130,4 @@ JitteringOperator<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<JitteringOperator<T>>(build());
 }
 
-} // namespace atlas::fluid
+} // namespace atlas

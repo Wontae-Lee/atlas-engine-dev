@@ -9,7 +9,7 @@
 
 #include <cstddef>
 
-namespace atlas::spatial {
+namespace atlas {
 
 /**
  * @brief Transforms an AABB by applying a point transform to all eight corners.
@@ -27,11 +27,11 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AxisAlignedBoundingBox<T>
 transform_aabb(const AxisAlignedBoundingBox<T>& bound,
                TransformPoint transform) noexcept;
 
-} // namespace atlas::spatial
+} // namespace atlas
 
 namespace atlas {
 
-using atlas::spatial::transform_aabb;
+using atlas::transform_aabb;
 
 } // namespace atlas
 

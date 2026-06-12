@@ -3,7 +3,7 @@
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/core/macros.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 class DsmcFlattenWorkload final {
@@ -26,13 +26,6 @@ public:
           const int* allocated_solver_ptr = nullptr,
           int index = 0);
 };
-
-} // namespace atlas::system
-
-namespace atlas {
-
-template <typename T>
-using DsmcFlattenWorkload = atlas::system::DsmcFlattenWorkload<T>;
 
 } // namespace atlas
 

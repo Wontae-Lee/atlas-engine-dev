@@ -5,7 +5,7 @@
  * @brief Declares an oriented circle geometry primitive and its lightweight query/trace operator.
  *
  * @details
- * This header defines @ref atlas::geometry::Circle, a planar circular geometry
+ * This header defines @ref atlas::Circle, a planar circular geometry
  * embedded in 3D space and represented by:
  * - a center point,
  * - an orientation normal,
@@ -60,7 +60,7 @@
 
 #include <type_traits>
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Lightweight non-owning geometry operator for querying and tracing a circle.
@@ -97,7 +97,7 @@ struct CircleGeometryOperator {
      * @details
      * Non-owning pointer to the world-space center point of the circle.
      */
-    const atlas::math::Vector<T, 3>* center = nullptr;
+    const atlas::Vector<T, 3>* center = nullptr;
 
     /**
      * @brief Pointer to the circle normal.
@@ -105,7 +105,7 @@ struct CircleGeometryOperator {
      * @details
      * Non-owning pointer to the world-space orientation normal of the circle plane.
      */
-    const atlas::math::Vector<T, 3>* normal = nullptr;
+    const atlas::Vector<T, 3>* normal = nullptr;
 
     /**
      * @brief Pointer to the circle radius.
@@ -126,8 +126,8 @@ struct CircleGeometryOperator {
      * @param p Query point in world space.
      * @return Closest point on the circle.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the closest normal associated with the circle at a query point.
@@ -140,8 +140,8 @@ struct CircleGeometryOperator {
      * @param p Query point in world space.
      * @return Closest geometric normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the signed distance from a query point to the circle.
@@ -155,7 +155,7 @@ struct CircleGeometryOperator {
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Test whether a point lies inside the finite circle within a tolerance.
@@ -170,7 +170,7 @@ struct CircleGeometryOperator {
      * @return `true` if the point is classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Test whether a point lies on the circle surface within a tolerance.
@@ -180,7 +180,7 @@ struct CircleGeometryOperator {
      * @return `true` if the point is classified as lying on the surface.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Return the centroid of the circle.
@@ -190,7 +190,7 @@ struct CircleGeometryOperator {
      *
      * @return Circle centroid.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept;
 
     /**
@@ -201,7 +201,7 @@ struct CircleGeometryOperator {
      *
      * @return Axis-aligned bounding box enclosing the circle.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept;
 
     /**
@@ -229,7 +229,7 @@ struct CircleGeometryOperator {
      * @return Surface hit record describing the intersection result.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+    trace(const atlas::Ray<T>& ray) const noexcept;
 
     /**
      * @brief Function-call alias for @ref trace.
@@ -238,7 +238,7 @@ struct CircleGeometryOperator {
      * @return Surface hit record.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+    operator()(const atlas::Ray<T>& ray) const noexcept;
 };
 
 /**
@@ -275,7 +275,7 @@ struct CircleGeometryOperator {
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-class Circle final : public Geometry<T> {
+class Circle final : public Geometry<T>, public DeviceGeometryViewFactory<T> {
     static_assert(std::is_floating_point_v<T>, "Circle requires a floating-point T");
 
 public:
@@ -349,10 +349,6 @@ public:
     /**
      * @brief Copy constructor.
      *
-     * @details
-     * Copies geometric parameters and rebinds the cached operator so that its
-     * internal pointers reference this object rather than the source object.
-     *
      * @param other Source circle.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
@@ -360,9 +356,6 @@ public:
 
     /**
      * @brief Move constructor.
-     *
-     * @details
-     * Moves geometric parameters and rebinds the cached operator to this object.
      *
      * @param other Source circle.
      */
@@ -372,9 +365,6 @@ public:
     /**
      * @brief Copy assignment operator.
      *
-     * @details
-     * Copies geometric parameters and refreshes the cached operator binding.
-     *
      * @param other Source circle.
      * @return `*this`.
      */
@@ -383,9 +373,6 @@ public:
 
     /**
      * @brief Move assignment operator.
-     *
-     * @details
-     * Moves geometric parameters and refreshes the cached operator binding.
      *
      * @param other Source circle.
      * @return `*this`.
@@ -408,7 +395,7 @@ public:
      * @return Bound geometry operator.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE GeometryOperator<T>
-    make_geometry_operator() const override;
+    make_device_geometry_view() const override;
 
     /**
      * @brief Compute the closest point on the circle to a query point.
@@ -416,8 +403,8 @@ public:
      * @param p Query point.
      * @return Closest point on the circle.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Compute the closest normal associated with the circle.
@@ -425,8 +412,8 @@ public:
      * @param p Query point.
      * @return Closest geometric normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Compute the signed distance from a query point to the circle.
@@ -435,7 +422,7 @@ public:
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Test whether a point lies inside the circle within a tolerance.
@@ -445,7 +432,7 @@ public:
      * @return `true` if classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Test whether a point lies on the circle surface within a tolerance.
@@ -455,14 +442,14 @@ public:
      * @return `true` if classified as on the surface; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Return the centroid of the circle.
      *
      * @return Circle centroid.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept override;
 
     /**
@@ -470,7 +457,7 @@ public:
      *
      * @return Axis-aligned bounding box enclosing the circle.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept override;
 
     /**
@@ -500,22 +487,10 @@ private:
     friend class Builder;
 
     /**
-     * @brief Bind the cached operator to this circle's storage.
-     *
-     * @details
-     * Refreshes the raw-pointer fields of @ref _operator so that they reference
-     * this instance's geometric parameters.
+     * @brief Creates a lightweight runtime operator bound to this circle's current parameters.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    bind_operator() noexcept;
-
-    /**
-     * @brief Cached non-owning geometry operator bound to this circle.
-     *
-     * @details
-     * Stores raw pointers to @ref center, @ref normal, and @ref radius.
-     */
-    mutable CircleGeometryOperator<T> _operator {};
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE CircleGeometryOperator<T>
+    make_circle_operator() const noexcept;
 };
 
 /**
@@ -629,43 +604,36 @@ private:
     T _radius { T(1) };
 };
 
-} // namespace atlas::geometry
+} // namespace atlas
 
 namespace atlas {
 
+
 /**
- * @brief Convenience alias for @ref atlas::geometry::Circle.
+ * @brief Common specialization of @ref atlas::Circle for `float`.
+ */
+using CircleF = Circle<float>;
+
+/**
+ * @brief Common specialization of @ref atlas::Circle for `double`.
+ */
+using CircleD = Circle<double>;
+
+/**
+ * @brief Convenience alias for a host-owned shared pointer to @ref atlas::Circle.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using Circle = geometry::Circle<T>;
+using CircleHostPtr = atlas::host_shared_ptr<Circle<T>>;
 
 /**
- * @brief Common specialization of @ref atlas::geometry::Circle for `float`.
- */
-using CircleF = geometry::Circle<float>;
-
-/**
- * @brief Common specialization of @ref atlas::geometry::Circle for `double`.
- */
-using CircleD = geometry::Circle<double>;
-
-/**
- * @brief Convenience alias for a host-owned shared pointer to @ref atlas::geometry::Circle.
+ * @brief Convenience alias for a device-owned shared pointer to @ref atlas::Circle.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using CircleHostPtr = atlas::host_shared_ptr<geometry::Circle<T>>;
-
-/**
- * @brief Convenience alias for a device-owned shared pointer to @ref atlas::geometry::Circle.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using CircleDevicePtr = atlas::device_shared_ptr<geometry::Circle<T>>;
+using CircleDevicePtr = atlas::device_shared_ptr<Circle<T>>;
 
 } // namespace atlas
 

@@ -18,13 +18,14 @@
  * plus a union of concrete kernel objects.
  */
 
+#include <atlas/core/detail/device_variant.h>
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_soft_sphere_kernel.h>
 
 #include <cstdint>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Identifies the concrete DSMC collision kernel stored in `DsmcKernel<T>`.
@@ -267,6 +268,6 @@ public:
     copy_from(const DsmcKernel& other) noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 #include <atlas/solver/dsmc/dsmc_kernel.hpp>

@@ -1,7 +1,7 @@
 #pragma once
 #include <stdexcept>
 #include <utility>
-namespace atlas::system {
+namespace atlas {
 template <typename T>
 typename MaterialProperties<T>::Builder
 MaterialProperties<T>::builder() noexcept {

@@ -6,9 +6,9 @@
  *
  * @details
  * This header defines:
- * - @ref atlas::system::MaterialType, a lightweight categorical tag describing
+ * - @ref atlas::MaterialType, a lightweight categorical tag describing
  *   the physical class of a material or species,
- * - @ref atlas::system::MatrialProperties, a value object that stores the
+ * - @ref atlas::MatrialProperties, a value object that stores the
  *   physical parameters associated with a simulation material/species,
  * - a nested fluent @ref Builder used to stage and validate material-property
  *   construction.
@@ -58,7 +58,7 @@
 
 #include <optional>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Categorical classification of a material/species entity.
@@ -898,40 +898,29 @@ private:
     std::optional<int> _charge;
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Convenience alias for @ref atlas::system::MaterialType.
- */
-using MaterialType = system::MaterialType;
 
-/**
- * @brief Convenience alias for @ref atlas::system::MatrialProperties.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using MaterialProperties = system::MaterialProperties<T>;
 
 /**
  * @brief Convenience alias for a host-owned shared pointer to
- *        @ref atlas::system::MatrialProperties.
+ *        @ref atlas::MatrialProperties.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MatrialPropertiesHostPtr = atlas::host_shared_ptr<system::MaterialProperties<T>>;
+using MatrialPropertiesHostPtr = atlas::host_shared_ptr<MaterialProperties<T>>;
 
 /**
  * @brief Convenience alias for a device-owned shared pointer to
- *        @ref atlas::system::MatrialProperties.
+ *        @ref atlas::MatrialProperties.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using MatrialPropertiesDevicePtr = atlas::device_shared_ptr<system::MaterialProperties<T>>;
+using MatrialPropertiesDevicePtr = atlas::device_shared_ptr<MaterialProperties<T>>;
 
 } // namespace atlas
 

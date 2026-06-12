@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
-namespace atlas::fluid {
+namespace atlas {
 template <typename T>
 typename Fluid<T>::Builder
 Fluid<T>::builder() noexcept {
@@ -59,7 +59,7 @@ Fluid<T>::statistical_weight() const noexcept {
 template <typename T>
 void
 Fluid<T>::save(const std::string_view path) const {
-    atlas::serialization::save_fluid_binary(*this, path);
+    atlas::save_fluid_binary(*this, path);
 }
 
 template <typename T>
@@ -90,7 +90,7 @@ template <typename StateT, typename... Args>
 StateT&
 Fluid<T>::emplace_state(Args&&... args) {
     static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::fluid::FluidState.");
+                  "StateT must derive from atlas::FluidState.");
     auto state = std::make_unique<StateT>(std::forward<Args>(args)...);
     auto* ptr  = state.get();
     _states.insert_or_assign(state_key<StateT>(), std::move(state));
@@ -102,7 +102,7 @@ template <typename StateT>
 void
 Fluid<T>::set_state(std::unique_ptr<StateT> state) {
     static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::fluid::FluidState.");
+                  "StateT must derive from atlas::FluidState.");
     if (state == nullptr) {
         throw std::invalid_argument("Fluid::set_state failed: state must not be null.");
     }
@@ -114,7 +114,7 @@ template <typename StateT>
 StateT*
 Fluid<T>::state() noexcept {
     static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::fluid::FluidState.");
+                  "StateT must derive from atlas::FluidState.");
     const auto& key = state_key<StateT>();
     auto it = _states.find(key);
     return it == _states.end() ? nullptr : static_cast<StateT*>(it->second.get());
@@ -125,7 +125,7 @@ template <typename StateT>
 const StateT*
 Fluid<T>::state() const noexcept {
     static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::fluid::FluidState.");
+                  "StateT must derive from atlas::FluidState.");
     const auto& key = state_key<StateT>();
     auto it = _states.find(key);
     return it == _states.end() ? nullptr : static_cast<const StateT*>(it->second.get());
@@ -136,7 +136,7 @@ template <typename StateT>
 bool
 Fluid<T>::has_state() const noexcept {
     static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::fluid::FluidState.");
+                  "StateT must derive from atlas::FluidState.");
     return _states.contains(state_key<StateT>());
 }
 
@@ -145,7 +145,7 @@ template <typename StateT>
 std::unique_ptr<StateT>
 Fluid<T>::remove_state() {
     static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::fluid::FluidState.");
+                  "StateT must derive from atlas::FluidState.");
     const auto& key = state_key<StateT>();
     auto it = _states.find(key);
     if (it == _states.end()) {
@@ -263,7 +263,7 @@ Fluid<T>::Builder::with_observer(ObserverHostPtr observer) noexcept {
 template <typename T>
 typename Fluid<T>::Builder&
 Fluid<T>::Builder::with_binary(const std::string& path) {
-    auto snapshot       = atlas::serialization::load_fluid_binary<T>(path);
+    auto snapshot       = atlas::load_fluid_binary<T>(path);
     _buffer_size        = snapshot.buffer_size;
     _particle_count     = snapshot.particle_count;
     _statistical_weight = snapshot.statistical_weight;

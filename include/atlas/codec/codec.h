@@ -15,7 +15,7 @@
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/universe/universe.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Abstract base class for codec-driven simulation classification and decoding.
@@ -45,9 +45,6 @@ namespace atlas::system {
  */
 template <typename T>
 class Codec {
-public:
-    using CodecProbe = atlas::system::CodecProbe<T>;
-
 public:
     /**
      * @brief Constructs an empty codec.
@@ -290,33 +287,30 @@ protected:
     CodecProbe _probe {};
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for `atlas::system::Codec`.
+ * @brief Convenience alias for `atlas::Codec`.
+ *
+ * @tparam T Scalar type used by the codec.
+ */
+/**
+ * @brief Host-side shared pointer alias for `atlas::Codec`.
  *
  * @tparam T Scalar type used by the codec.
  */
 template <typename T>
-using Codec = system::Codec<T>;
+using CodecHostPtr = atlas::host_shared_ptr<Codec<T>>;
 
 /**
- * @brief Host-side shared pointer alias for `atlas::system::Codec`.
+ * @brief Device-side shared pointer alias for `atlas::Codec`.
  *
  * @tparam T Scalar type used by the codec.
  */
 template <typename T>
-using CodecHostPtr = atlas::host_shared_ptr<system::Codec<T>>;
-
-/**
- * @brief Device-side shared pointer alias for `atlas::system::Codec`.
- *
- * @tparam T Scalar type used by the codec.
- */
-template <typename T>
-using CodecDevicePtr = atlas::device_shared_ptr<system::Codec<T>>;
+using CodecDevicePtr = atlas::device_shared_ptr<Codec<T>>;
 
 } // namespace atlas
 

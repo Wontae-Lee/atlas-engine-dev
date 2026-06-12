@@ -5,7 +5,7 @@
  * @brief Declares a Morton-code-based linear bounding volume hierarchy.
  *
  * @details
- * This header defines @ref atlas::spatial::LinearBoundingVolumeHierachy, a
+ * This header defines @ref atlas::LinearBoundingVolumeHierachy, a
  * concrete BVH implementation that constructs a binary hierarchy from
  * Morton-sorted triangle primitives.
  *
@@ -80,7 +80,7 @@
 #include <atlas/random/seed.h>
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
 
-namespace atlas::spatial {
+namespace atlas {
 
 /**
  * @brief Morton-code-based linear bounding volume hierarchy for triangle primitives.
@@ -724,7 +724,7 @@ private:
     find_split(const HostBuffer<uint32_t>& codes, int first, int last) noexcept;
 };
 
-} // namespace atlas::spatial
+} // namespace atlas
 
 namespace atlas {
 
@@ -732,13 +732,13 @@ namespace atlas {
  * @brief Convenience alias for the LBVH implementation.
  *
  * @details
- * Exposes @ref atlas::spatial::LinearBoundingVolumeHierachy in the top-level
+ * Exposes @ref atlas::LinearBoundingVolumeHierachy in the top-level
  * atlas namespace.
  *
  * @tparam T Floating-point scalar used by the geometry.
  */
 template <typename T>
-using LBVH = spatial::LinearBoundingVolumeHierachy<T>;
+using LBVH = LinearBoundingVolumeHierachy<T>;
 
 } // namespace atlas
 

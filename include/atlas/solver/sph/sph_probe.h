@@ -5,7 +5,7 @@
 
 #include <cstddef>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 struct SphProbe {
@@ -36,11 +36,7 @@ using SphSolverProbe = SphProbe<T>;
 }
 
 namespace atlas {
-
 template <typename T>
-using SphProbe = atlas::system::SphProbe<T>;
-
-template <typename T>
-using SphSolverProbe = atlas::system::SphProbe<T>;
+using SphSolverProbe = atlas::SphProbe<T>;
 
 }

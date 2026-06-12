@@ -1,10 +1,10 @@
 #pragma once
 
-namespace atlas::fluid {
+namespace atlas {
 
 template <typename T>
 bool
-SurfaceSpawnOperator<T>::spawn(const atlas::geometry::GeometryOperator<T>& query,
+SurfaceSpawnOperator<T>::spawn(const atlas::GeometryOperator<T>& query,
                                const Vector3<T>& particle,
                                const T tolerance) noexcept {
     // Accept particles that lie on the queried geometry surface.
@@ -13,7 +13,7 @@ SurfaceSpawnOperator<T>::spawn(const atlas::geometry::GeometryOperator<T>& query
 
 template <typename T>
 bool
-VolumeSpawnOperator<T>::spawn(const atlas::geometry::GeometryOperator<T>& query,
+VolumeSpawnOperator<T>::spawn(const atlas::GeometryOperator<T>& query,
                               const Vector3<T>& particle,
                               const T tolerance) noexcept {
     // Accept particles that lie inside the queried geometry volume.
@@ -41,7 +41,7 @@ SpawnOperator<T>::SpawnOperator(const VolumeSpawnOperator<T>& op)
 
 template <typename T>
 bool
-SpawnOperator<T>::spawn(const atlas::geometry::GeometryOperator<T>& query,
+SpawnOperator<T>::spawn(const atlas::GeometryOperator<T>& query,
                         const Vector3<T>& particle,
                         const T tolerance) const noexcept {
     // Dispatch the spawn test based on the stored spawn mode.
@@ -57,4 +57,4 @@ SpawnOperator<T>::spawn(const atlas::geometry::GeometryOperator<T>& query,
     }
 }
 
-} // namespace atlas::fluid
+} // namespace atlas

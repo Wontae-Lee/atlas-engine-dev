@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 QuadtreeSearcher<T>::QuadtreeSearcher(UniverseHostPtr<T> universe, FluidHostPtr<T> fluid)
@@ -94,4 +94,4 @@ QuadtreeSearcher<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<QuadtreeSearcher<T>>(_universe, _fluid);
 }
 
-} // namespace atlas::system
+} // namespace atlas

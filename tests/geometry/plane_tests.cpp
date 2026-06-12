@@ -11,7 +11,7 @@ namespace {
 using atlas::Plane;
 using atlas::Ray;
 using atlas::Vector3F;
-using atlas::geometry::GeometryType;
+using atlas::GeometryType;
 using atlas::test::vec_near;
 using atlas::tol;
 
@@ -62,8 +62,8 @@ TEST(Plane, ClassificationCentroidBoundAndTraceWork) {
 
     const Vector3F center = plane.centroid();
     const auto bounds = plane.bound();
-    const auto geometry_operator = plane.make_geometry_operator();
-    const auto hit = plane.make_geometry_operator().trace(Ray<float>(Vector3F(0, 5, 0), Vector3F(0, -1, 0)));
+    const auto geometry_operator = plane.make_device_geometry_view();
+    const auto hit = plane.make_device_geometry_view().trace(Ray<float>(Vector3F(0, 5, 0), Vector3F(0, -1, 0)));
 
     EXPECT_TRUE(vec_near(center, Vector3F(0, 0, 0), tol));
     EXPECT_EQ(plane.type(), geometry_operator.type);

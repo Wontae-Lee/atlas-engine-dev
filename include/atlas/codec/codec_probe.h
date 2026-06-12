@@ -2,7 +2,7 @@
 
 #include <atlas/math/math.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 struct CodecProbe {
@@ -24,8 +24,4 @@ struct CodecProbe {
 }
 
 namespace atlas {
-
-template <typename T>
-using CodecProbe = atlas::system::CodecProbe<T>;
-
 }

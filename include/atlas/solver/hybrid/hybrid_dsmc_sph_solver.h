@@ -9,14 +9,14 @@
 #include <cstdint>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 class HybridDsmcSphSolver final : public Solver<T> {
 public:
     using SphSolverProbe = typename SphSolver<T>::SphSolverProbe;
-    using DsmcProbe      = ::atlas::system::DsmcProbe<T>;
-    using HybridProbe    = atlas::system::HybridDsmcSphProbe<T>;
+    using DsmcProbe      = ::atlas::DsmcProbe<T>;
+    using HybridProbe    = atlas::HybridDsmcSphProbe<T>;
 
     class Builder;
 
@@ -196,18 +196,14 @@ private:
     bool _pairing_without_replacement {};
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
+template <typename T>
+using HybridDsmcSphSolverHostPtr = atlas::host_shared_ptr<atlas::HybridDsmcSphSolver<T>>;
 
 template <typename T>
-using HybridDsmcSphSolver = atlas::system::HybridDsmcSphSolver<T>;
-
-template <typename T>
-using HybridDsmcSphSolverHostPtr = atlas::host_shared_ptr<atlas::system::HybridDsmcSphSolver<T>>;
-
-template <typename T>
-using HybridDsmcSphSolverDevicePtr = atlas::device_shared_ptr<atlas::system::HybridDsmcSphSolver<T>>;
+using HybridDsmcSphSolverDevicePtr = atlas::device_shared_ptr<atlas::HybridDsmcSphSolver<T>>;
 
 } // namespace atlas
 

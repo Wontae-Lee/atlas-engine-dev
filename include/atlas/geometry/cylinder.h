@@ -5,7 +5,7 @@
  * @brief Declares an axis-aligned cylinder geometry primitive and its lightweight query/trace operator.
  *
  * @details
- * This header defines @ref atlas::geometry::Cylinder, a finite right circular
+ * This header defines @ref atlas::Cylinder, a finite right circular
  * cylinder embedded in 3D space and represented by:
  * - a center point,
  * - a radius,
@@ -64,7 +64,7 @@
 
 #include <type_traits>
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Lightweight non-owning geometry operator for querying and tracing a cylinder.
@@ -103,7 +103,7 @@ struct CylinderGeometryOperator {
      * @details
      * Non-owning pointer to the world-space center point of the cylinder.
      */
-    const atlas::math::Vector<T, 3>* center = nullptr;
+    const atlas::Vector<T, 3>* center = nullptr;
 
     /**
      * @brief Pointer to the cylinder radius.
@@ -145,8 +145,8 @@ struct CylinderGeometryOperator {
      * @param p Query point in world space.
      * @return Closest point on the cylinder.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the closest outward normal associated with the cylinder.
@@ -162,8 +162,8 @@ struct CylinderGeometryOperator {
      * @param p Query point in world space.
      * @return Closest geometric normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the signed distance from a query point to the cylinder.
@@ -177,7 +177,7 @@ struct CylinderGeometryOperator {
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Test whether a point lies inside the cylinder within a tolerance.
@@ -193,7 +193,7 @@ struct CylinderGeometryOperator {
      * @return `true` if the point is classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Test whether a point lies on the cylinder surface within a tolerance.
@@ -203,7 +203,7 @@ struct CylinderGeometryOperator {
      * @return `true` if the point is classified as lying on the surface.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Return the centroid of the cylinder.
@@ -213,7 +213,7 @@ struct CylinderGeometryOperator {
      *
      * @return Cylinder centroid.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept;
 
     /**
@@ -225,7 +225,7 @@ struct CylinderGeometryOperator {
      *
      * @return Axis-aligned bounding box enclosing the cylinder.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept;
 
     /**
@@ -257,7 +257,7 @@ struct CylinderGeometryOperator {
      * @return Surface hit record describing the intersection result.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+    trace(const atlas::Ray<T>& ray) const noexcept;
 
     /**
      * @brief Function-call alias for @ref trace.
@@ -266,7 +266,7 @@ struct CylinderGeometryOperator {
      * @return Surface hit record.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+    operator()(const atlas::Ray<T>& ray) const noexcept;
 };
 
 /**
@@ -306,7 +306,7 @@ struct CylinderGeometryOperator {
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-class Cylinder final : public Geometry<T> {
+class Cylinder final : public Geometry<T>, public DeviceGeometryViewFactory<T> {
     static_assert(std::is_floating_point_v<T>, "Cylinder requires a floating-point T");
 
 public:
@@ -386,10 +386,6 @@ public:
     /**
      * @brief Copy constructor.
      *
-     * @details
-     * Copies geometric parameters and rebinds the cached operator so that its
-     * internal pointers reference this object rather than the source object.
-     *
      * @param other Source cylinder.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
@@ -397,9 +393,6 @@ public:
 
     /**
      * @brief Move constructor.
-     *
-     * @details
-     * Moves geometric parameters and rebinds the cached operator to this object.
      *
      * @param other Source cylinder.
      */
@@ -409,9 +402,6 @@ public:
     /**
      * @brief Copy assignment operator.
      *
-     * @details
-     * Copies geometric parameters and refreshes the cached operator binding.
-     *
      * @param other Source cylinder.
      * @return `*this`.
      */
@@ -420,9 +410,6 @@ public:
 
     /**
      * @brief Move assignment operator.
-     *
-     * @details
-     * Moves geometric parameters and refreshes the cached operator binding.
      *
      * @param other Source cylinder.
      * @return `*this`.
@@ -445,7 +432,7 @@ public:
      * @return Bound geometry operator.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE GeometryOperator<T>
-    make_geometry_operator() const override;
+    make_device_geometry_view() const override;
 
     /**
      * @brief Compute the closest point on the cylinder to a query point.
@@ -453,8 +440,8 @@ public:
      * @param p Query point.
      * @return Closest point on the cylinder.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Compute the closest outward normal associated with the cylinder.
@@ -462,8 +449,8 @@ public:
      * @param p Query point.
      * @return Closest geometric normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Compute the signed distance from a query point to the cylinder.
@@ -472,7 +459,7 @@ public:
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Test whether a point lies inside the cylinder within a tolerance.
@@ -482,7 +469,7 @@ public:
      * @return `true` if classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Test whether a point lies on the cylinder surface within a tolerance.
@@ -492,14 +479,14 @@ public:
      * @return `true` if classified as on the surface; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Return the centroid of the cylinder.
      *
      * @return Cylinder centroid.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept override;
 
     /**
@@ -507,7 +494,7 @@ public:
      *
      * @return Axis-aligned bounding box enclosing the cylinder.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept override;
 
     /**
@@ -537,22 +524,10 @@ private:
     friend class Builder;
 
     /**
-     * @brief Bind the cached operator to this cylinder's storage.
-     *
-     * @details
-     * Refreshes the raw-pointer fields of @ref _operator so that they reference
-     * this instance's geometric parameters.
+     * @brief Creates a lightweight runtime operator bound to this cylinder's current parameters.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    bind_operator() noexcept;
-
-    /**
-     * @brief Cached non-owning geometry operator bound to this cylinder.
-     *
-     * @details
-     * Stores raw pointers to @ref center, @ref radius, and @ref height.
-     */
-    mutable CylinderGeometryOperator<T> _operator {};
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE CylinderGeometryOperator<T>
+    make_cylinder_operator() const noexcept;
 };
 
 /**
@@ -679,43 +654,36 @@ private:
     bool _open = false;
 };
 
-} // namespace atlas::geometry
+} // namespace atlas
 
 namespace atlas {
 
+
 /**
- * @brief Convenience alias for @ref atlas::geometry::Cylinder.
+ * @brief Common specialization of @ref atlas::Cylinder for `float`.
+ */
+using CylinderF = Cylinder<float>;
+
+/**
+ * @brief Common specialization of @ref atlas::Cylinder for `double`.
+ */
+using CylinderD = Cylinder<double>;
+
+/**
+ * @brief Convenience alias for a host-owned shared pointer to @ref atlas::Cylinder.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using Cylinder = geometry::Cylinder<T>;
+using CylinderHostPtr = atlas::host_shared_ptr<Cylinder<T>>;
 
 /**
- * @brief Common specialization of @ref atlas::geometry::Cylinder for `float`.
- */
-using CylinderF = geometry::Cylinder<float>;
-
-/**
- * @brief Common specialization of @ref atlas::geometry::Cylinder for `double`.
- */
-using CylinderD = geometry::Cylinder<double>;
-
-/**
- * @brief Convenience alias for a host-owned shared pointer to @ref atlas::geometry::Cylinder.
+ * @brief Convenience alias for a device-owned shared pointer to @ref atlas::Cylinder.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using CylinderHostPtr = atlas::host_shared_ptr<geometry::Cylinder<T>>;
-
-/**
- * @brief Convenience alias for a device-owned shared pointer to @ref atlas::geometry::Cylinder.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using CylinderDevicePtr = atlas::device_shared_ptr<geometry::Cylinder<T>>;
+using CylinderDevicePtr = atlas::device_shared_ptr<Cylinder<T>>;
 
 } // namespace atlas
 

@@ -5,7 +5,7 @@
  * @brief Declares a Knudsen-number-based codec for cell-wise solver classification.
  *
  * @details
- * This file defines @ref atlas::system::KnudsenCodec, a codec specialization that
+ * This file defines @ref atlas::KnudsenCodec, a codec specialization that
  * computes a cell-wise Knudsen number and maps the resulting scalar field to
  * discrete solver allocation indices.
  *
@@ -116,7 +116,7 @@
 #include <atlas/codec/codec.h>
 #include <atlas/universe/universe.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Codec for Knudsen-number-based cell classification.
@@ -786,33 +786,26 @@ private:
     DeviceBuffer<int> _fixed_region {};
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Convenience alias for @ref atlas::system::KnudsenCodec.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using KnudsenCodec = system::KnudsenCodec<T>;
 
 /**
- * @brief Host shared pointer alias for @ref atlas::system::KnudsenCodec.
+ * @brief Host shared pointer alias for @ref atlas::KnudsenCodec.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using KnudsenCodecHostPtr = atlas::host_shared_ptr<system::KnudsenCodec<T>>;
+using KnudsenCodecHostPtr = atlas::host_shared_ptr<KnudsenCodec<T>>;
 
 /**
- * @brief Device shared pointer alias for @ref atlas::system::KnudsenCodec.
+ * @brief Device shared pointer alias for @ref atlas::KnudsenCodec.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using KnudsenCodecDevicePtr = atlas::device_shared_ptr<system::KnudsenCodec<T>>;
+using KnudsenCodecDevicePtr = atlas::device_shared_ptr<KnudsenCodec<T>>;
 
 } // namespace atlas
 

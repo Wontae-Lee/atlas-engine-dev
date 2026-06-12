@@ -10,7 +10,7 @@
 
 #include <type_traits>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Diffuse hemisphere sampling mode used for surface scattering.
@@ -314,17 +314,9 @@ private:
     T _temperature { T(273.15) };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
-
-/**
- * @brief Alias for atlas::system::IsothermalSurfaceInteraction.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using IsothermalSurfaceInteraction = atlas::system::IsothermalSurfaceInteraction<T>;
 
 /**
  * @brief Host-side shared pointer alias for IsothermalSurfaceInteraction.

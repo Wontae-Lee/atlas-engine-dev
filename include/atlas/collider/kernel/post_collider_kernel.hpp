@@ -1,42 +1,54 @@
 #pragma once
 
-namespace atlas::system {
+namespace atlas {
+
+namespace detail {
 
 template <typename T>
-PostColliderKernel<T>::PostColliderKernel() noexcept
-    : type(PostColliderType::fast)
-    , fast() {
+using PostColliderVariant = DeviceVariant<
+    PostColliderKernel<T>,
+    PostColliderType,
+    PostColliderType::fast,
+    DeviceVariantCase<
+        PostColliderKernel<T>,
+        PostColliderType,
+        PostColliderType::fast,
+        FastColliderKernel<T>,
+        &PostColliderKernel<T>::fast>,
+    DeviceVariantCase<
+        PostColliderKernel<T>,
+        PostColliderType,
+        PostColliderType::dt_remain,
+        DtRemainColliderKernel<T>,
+        &PostColliderKernel<T>::dt_remain>,
+    DeviceVariantCase<
+        PostColliderKernel<T>,
+        PostColliderType,
+        PostColliderType::precise,
+        PreciseColliderKernel<T>,
+        &PostColliderKernel<T>::precise>>;
+
+} // namespace detail
+
+template <typename T>
+PostColliderKernel<T>::PostColliderKernel() noexcept {
+    detail::PostColliderVariant<T>::construct(*this, PostColliderType::fast);
 }
 
 template <typename T>
-PostColliderKernel<T>::PostColliderKernel(const PostColliderType type_) noexcept
-    : type(type_) {
-    switch (type) {
-    case PostColliderType::fast:
-        new (&fast) FastColliderKernel<T>();
-        break;
-    case PostColliderType::dt_remain:
-        new (&dt_remain) DtRemainColliderKernel<T>();
-        break;
-    case PostColliderType::precise:
-        new (&precise) PreciseColliderKernel<T>();
-        break;
-    }
+PostColliderKernel<T>::PostColliderKernel(const PostColliderType type_) noexcept {
+    detail::PostColliderVariant<T>::construct(*this, type_);
 }
 
 template <typename T>
 PostColliderKernel<T>::PostColliderKernel(const PostColliderKernel& other) noexcept {
-    copy_from(other);
+    detail::PostColliderVariant<T>::copy_construct(*this, other);
 }
 
 template <typename T>
 PostColliderKernel<T>&
 PostColliderKernel<T>::operator=(const PostColliderKernel& other) noexcept {
-    if (this != &other) {
-        destroy_active();
-        copy_from(other);
-    }
-
+    detail::PostColliderVariant<T>::assign(*this, other);
     return *this;
 }
 
@@ -96,35 +108,13 @@ PostColliderKernel<T>::operator()(Vector3<T>& position,
 template <typename T>
 void
 PostColliderKernel<T>::destroy_active() noexcept {
-    switch (type) {
-    case PostColliderType::fast:
-        fast.~FastColliderKernel<T>();
-        break;
-    case PostColliderType::dt_remain:
-        dt_remain.~DtRemainColliderKernel<T>();
-        break;
-    case PostColliderType::precise:
-        precise.~PreciseColliderKernel<T>();
-        break;
-    }
+    detail::PostColliderVariant<T>::destroy(*this);
 }
 
 template <typename T>
 void
 PostColliderKernel<T>::copy_from(const PostColliderKernel& other) noexcept {
-    type = other.type;
-
-    switch (type) {
-    case PostColliderType::fast:
-        new (&fast) FastColliderKernel<T>(other.fast);
-        break;
-    case PostColliderType::dt_remain:
-        new (&dt_remain) DtRemainColliderKernel<T>(other.dt_remain);
-        break;
-    case PostColliderType::precise:
-        new (&precise) PreciseColliderKernel<T>(other.precise);
-        break;
-    }
+    detail::PostColliderVariant<T>::copy_construct(*this, other);
 }
 
-} // namespace atlas::system
+} // namespace atlas

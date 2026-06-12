@@ -5,7 +5,7 @@
  * @brief Declares the abstract geometry interface and related convenience aliases used throughout Atlas.
  *
  * @details
- * This header defines @ref atlas::geometry::Geometry, the abstract base class
+ * This header defines @ref atlas::Geometry, the abstract base class
  * implemented by all queryable geometric primitives in Atlas.
  *
  * A geometry object represents a spatial primitive that supports a standard set
@@ -16,8 +16,7 @@
  * - containment and surface tests,
  * - centroid queries,
  * - axis-aligned bounding-box queries,
- * - runtime type identification,
- * - export of a value-type @ref GeometryOperator for backend-portable execution.
+ * - runtime type identification.
  *
  * ## Role in the Atlas geometry system
  * The @ref Geometry interface provides a uniform abstraction for analytic and
@@ -31,7 +30,7 @@
  * This common interface allows higher-level systems to:
  * - manipulate heterogeneous geometry objects polymorphically on the host,
  * - request geometric queries without knowing the concrete primitive type,
- * - construct backend-portable operators through @ref make_geometry_operator.
+ * - classify points relative to a primitive.
  *
  * ## Host/device split
  * Atlas separates geometry usage into two complementary forms:
@@ -40,8 +39,9 @@
  *   @ref GeometryOperator.
  *
  * The owning object is convenient for host-side configuration, storage, and
- * polymorphic dispatch. The value-type operator is intended for backend code
- * where dynamic polymorphism and host ownership are undesirable.
+ * polymorphic dispatch. Device-view export is opt-in through
+ * @ref DeviceGeometryViewFactory so host-only geometries are not forced to
+ * provide backend operator state.
  *
  * ## Query semantics
  * Each concrete geometry implementation defines the exact semantics of:
@@ -66,20 +66,40 @@
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <type_traits>
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Forward declaration of the value-type backend-portable geometry operator.
  *
  * @details
- * Concrete geometry objects can export a @ref GeometryOperator through
- * @ref Geometry::make_geometry_operator so runtime code can perform queries
- * without relying on host-side ownership or virtual dispatch.
+ * Concrete geometry-view factories can export a @ref GeometryOperator so
+ * runtime code can perform queries without relying on host-side ownership or
+ * virtual dispatch.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
 struct GeometryOperator;
+
+/**
+ * @brief Opt-in interface for geometries that can export a backend device view.
+ *
+ * @details
+ * This interface is intentionally separate from @ref Geometry. A geometry can
+ * participate in host-side polymorphic queries without promising that it can be
+ * lowered to a value-type backend representation.
+ *
+ * @tparam T Floating-point scalar type.
+ */
+template <typename T>
+class DeviceGeometryViewFactory {
+public:
+    DeviceGeometryViewFactory() = default;
+    virtual ~DeviceGeometryViewFactory() = default;
+
+    ATLAS_HOST ATLAS_NODISCARD virtual GeometryOperator<T>
+    make_device_geometry_view() const = 0;
+};
 
 /**
  * @brief Abstract base class for queryable geometric primitives.
@@ -95,20 +115,18 @@ struct GeometryOperator;
  * - inside/surface classification,
  * - centroid computation,
  * - axis-aligned bounding-box generation,
- * - runtime type reporting,
- * - export of a backend-portable @ref GeometryOperator.
+ * - runtime type reporting.
  *
  * ## Design intent
  * This interface enables host-side polymorphic use of heterogeneous geometries
- * while still supporting efficient backend execution through exported operator
- * objects.
+ * Device execution is supported by concrete types that additionally implement
+ * @ref DeviceGeometryViewFactory.
  *
  * ## Typical usage
  * A caller may use a geometry object to:
  * - perform host-side point or distance queries directly,
  * - retrieve a bounding box for acceleration structures,
- * - classify points relative to a primitive,
- * - construct a @ref GeometryOperator for device-side runtime use.
+ * - classify points relative to a primitive.
  *
  * ## Validity expectations
  * Concrete implementations are responsible for defining what it means for a
@@ -142,26 +160,13 @@ public:
     virtual ~Geometry() = default;
 
     /**
-     * @brief Create a value-type operator for host/device runtime queries.
-     *
-     * @details
-     * Returns a backend-portable @ref GeometryOperator that captures the concrete
-     * geometry state in a form suitable for runtime code without host-side
-     * ownership or virtual dispatch.
-     *
-     * @return Value-type geometry operator bound to this geometry instance.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE virtual atlas::geometry::GeometryOperator<T>
-    make_geometry_operator() const = 0;
-
-    /**
      * @brief Compute the closest point on the geometry to a query point.
      *
      * @param p Query point in world space.
      * @return Closest point on the geometry.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept = 0;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept = 0;
 
     /**
      * @brief Compute the closest geometric normal associated with a query point.
@@ -173,8 +178,8 @@ public:
      * @param p Query point in world space.
      * @return Closest geometric normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept = 0;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept = 0;
 
     /**
      * @brief Compute the signed distance from a query point to the geometry.
@@ -188,7 +193,7 @@ public:
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept = 0;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept = 0;
 
     /**
      * @brief Test whether a point lies inside the geometry within a tolerance.
@@ -198,7 +203,7 @@ public:
      * @return `true` if the point is classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept = 0;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance) const noexcept = 0;
 
     /**
      * @brief Test whether a point lies on the geometry surface within a tolerance.
@@ -208,14 +213,14 @@ public:
      * @return `true` if the point is classified as being on the surface; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept = 0;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance) const noexcept = 0;
 
     /**
      * @brief Return the centroid of the geometry.
      *
      * @return Geometric centroid of the primitive.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual atlas::Vector<T, 3>
     centroid() const noexcept = 0;
 
     /**
@@ -227,7 +232,7 @@ public:
      *
      * @return Axis-aligned bounding box enclosing the geometry.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE virtual atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept = 0;
 
     /**
@@ -255,46 +260,36 @@ public:
     type() const noexcept = 0;
 };
 
-} // namespace atlas::geometry
-
-namespace atlas {
-
 /**
- * @brief Convenience alias for @ref atlas::geometry::GeometryOperator.
+ * @brief Export a backend device view from a geometry that supports it.
+ *
+ * @details
+ * The implementation is provided after @ref GeometryOperator is complete.
  *
  * @tparam T Floating-point scalar type.
+ * @param geometry Host-side geometry object.
+ * @return Value-type geometry operator bound to @p geometry.
  */
 template <typename T>
-using GeometryOperator = geometry::GeometryOperator<T>;
-
-/**
- * @brief Convenience alias for @ref atlas::geometry::Geometry.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using Geometry = geometry::Geometry<T>;
+ATLAS_HOST ATLAS_NODISCARD GeometryOperator<T>
+make_device_geometry_view(const Geometry<T>& geometry);
 
 /**
  * @brief Convenience alias for a host-owned shared pointer to
- *        @ref atlas::geometry::Geometry.
+ *        @ref atlas::Geometry.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using GeometryHostPtr = atlas::host_shared_ptr<geometry::Geometry<T>>;
+using GeometryHostPtr = atlas::host_shared_ptr<Geometry<T>>;
 
 /**
  * @brief Convenience alias for a device-owned shared pointer to
- *        @ref atlas::geometry::Geometry.
+ *        @ref atlas::Geometry.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using GeometryDevicePtr = atlas::device_shared_ptr<geometry::Geometry<T>>;
+using GeometryDevicePtr = atlas::device_shared_ptr<Geometry<T>>;
 
 } // namespace atlas
-
-namespace atlas::spatial {
-
-}

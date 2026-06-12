@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <type_traits>
-namespace atlas::math {
+namespace atlas {
 /**
  * @file matrix_statistics.h
  * @brief Statistical utilities for matrix expressions (mean/variance/covariance, softmax, z-score, min-max scaling).
@@ -39,7 +39,7 @@ namespace atlas::math {
  * - Paired-input functions (`covariance_*`, `correlation`) assume `x.size() == y.size()`.
  * - `normalize_minmax` depends on `min(expr)` / `max(expr)` from `matrix/reductions.h`.
  *
- * @see atlas::math::sum, atlas::math::min, atlas::math::max
+ * @see atlas::sum, atlas::min, atlas::max
  */
 // ------------------------------------------------------------
 // Mean
@@ -486,4 +486,4 @@ normalize_minmax(const E& expr, expr_value_t<E> a, expr_value_t<E> b) noexcept {
     };
     return MatrixUnaryOperator<T, E, ScaleOp>(expr(), ScaleOp { vmin, (b - a) / range, a });
 }
-} // namespace atlas::math
+} // namespace atlas

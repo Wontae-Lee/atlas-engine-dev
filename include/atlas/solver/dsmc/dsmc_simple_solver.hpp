@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 typename DsmcSimpleSolver<T>::Builder
@@ -82,4 +82,4 @@ DsmcSimpleSolver<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<DsmcSimpleSolver<T>>(_universe, _fluid, _searcher, _kernel_type, _workload_type);
 }
 
-} // namespace atlas::system
+} // namespace atlas

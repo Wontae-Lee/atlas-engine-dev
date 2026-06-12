@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 VolumeMeasurer<T>::VolumeMeasurer(UniverseHostPtr<T> universe,
@@ -75,9 +75,9 @@ VolumeMeasurer<T>::ensure_state() {
 
     const auto number_of_cells = static_cast<std::size_t>(this->_universe->number_of_cells());
 
-    if (auto* state = this->_universe->template state<atlas::universe::UniverseVolumeState<T>>();
+    if (auto* state = this->_universe->template state<atlas::UniverseVolumeState<T>>();
         state == nullptr) {
-        this->_universe->template emplace_state<atlas::universe::UniverseVolumeState<T>>(number_of_cells);
+        this->_universe->template emplace_state<atlas::UniverseVolumeState<T>>(number_of_cells);
     } else if (state->data().size() != number_of_cells) {
         state->data().resize(number_of_cells);
     }
@@ -102,7 +102,7 @@ VolumeMeasurer<T>::update_units(const T dt) noexcept {
 template <typename T>
 void
 VolumeMeasurer<T>::measure_volume() {
-    auto* state = this->_universe->template state<atlas::universe::UniverseVolumeState<T>>();
+    auto* state = this->_universe->template state<atlas::UniverseVolumeState<T>>();
     if (state == nullptr) {
         return;
     }
@@ -137,11 +137,11 @@ VolumeMeasurer<T>::measure_volume() {
     _unit_regions.resize(_units.size());
     const Vector3<int> grid_low { 0, 0, 0 };
     const Vector3<int> grid_high = grid_size - Vector3<int> { 1, 1, 1 };
-    const atlas::spatial::AxisAlignedBoundingBox<T> grid_bound {
+    const atlas::AxisAlignedBoundingBox<T> grid_bound {
         lower_corner,
         lower_corner + grid_size.template cast_to<T>() * cell_size
     };
-    const atlas::spatial::AxisAlignedBoundingBox<int> grid_index_bound { grid_low, grid_high };
+    const atlas::AxisAlignedBoundingBox<int> grid_index_bound { grid_low, grid_high };
     const Vector3<int> expand { 1, 1, 1 };
 
     auto* units_ptr = atlas::raw_pointer_cast(_units.data());
@@ -161,7 +161,7 @@ VolumeMeasurer<T>::measure_volume() {
             region.end    = grid_high;
             region.active = true;
 
-            const auto world_bound = atlas::spatial::transform_aabb(
+            const auto world_bound = atlas::transform_aabb(
                 local_bound,
                 [&unit] ATLAS_DEVICE(const Vector3<T>& point) {
                     return unit.sync_operator().sync_to_world(point);
@@ -177,11 +177,11 @@ VolumeMeasurer<T>::measure_volume() {
             }
 
             region.begin = grid_index_bound.clamp(
-                atlas::math::floor((world_bound.lower_corner - lower_corner) * inv_cell_size)
+                atlas::floor((world_bound.lower_corner - lower_corner) * inv_cell_size)
                     .template cast_to<int>()
                 - expand);
             region.end = grid_index_bound.clamp(
-                atlas::math::floor((world_bound.upper_corner - lower_corner) * inv_cell_size)
+                atlas::floor((world_bound.upper_corner - lower_corner) * inv_cell_size)
                     .template cast_to<int>()
                 + expand);
         });
@@ -278,4 +278,4 @@ VolumeMeasurer<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<VolumeMeasurer<T>>(build());
 }
 
-} // namespace atlas::system
+} // namespace atlas

@@ -6,12 +6,12 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 struct DsmcProbe {
     Vector3<T>* velocity_ptr {};
-    fluid::FluidInternalEnergy<T>* internal_energy_ptr {};
+    FluidInternalEnergy<T>* internal_energy_ptr {};
     const std::size_t* species_ptr {};
     const MaterialProperties<T>* properties_ptr {};
     T* number_particle_ptr {};
@@ -35,8 +35,4 @@ struct DsmcProbe {
 }
 
 namespace atlas {
-
-template <typename T>
-using DsmcProbe = atlas::system::DsmcProbe<T>;
-
 }

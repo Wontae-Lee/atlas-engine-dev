@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <type_traits>
 
-namespace atlas::math {
+namespace atlas {
 template <VectorExpressionType E>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     expr_value_t<E>

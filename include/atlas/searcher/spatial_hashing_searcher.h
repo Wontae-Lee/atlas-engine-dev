@@ -2,7 +2,7 @@
 
 #include <atlas/searcher/searcher.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief GPU-oriented spatial hashing searcher for particle neighborhood queries.
@@ -283,13 +283,6 @@ private:
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::system::SpatialHashingSearcher.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using SpatialHashingSearcher = system::SpatialHashingSearcher<T>;
 
 /**
  * @brief Host shared pointer alias for SpatialHashingSearcher.
@@ -297,7 +290,7 @@ using SpatialHashingSearcher = system::SpatialHashingSearcher<T>;
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using SpatialHashingSearcherHostPtr = atlas::host_shared_ptr<system::Searcher<T>>;
+using SpatialHashingSearcherHostPtr = atlas::host_shared_ptr<Searcher<T>>;
 
 /**
  * @brief Device shared pointer alias for SpatialHashingSearcher.
@@ -305,7 +298,7 @@ using SpatialHashingSearcherHostPtr = atlas::host_shared_ptr<system::Searcher<T>
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using SpatialHashingSearcherDevicePtr = atlas::device_shared_ptr<system::SpatialHashingSearcher<T>>;
+using SpatialHashingSearcherDevicePtr = atlas::device_shared_ptr<SpatialHashingSearcher<T>>;
 
 }
 

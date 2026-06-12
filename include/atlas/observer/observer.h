@@ -16,7 +16,7 @@
 #include <typeindex>
 #include <unordered_map>
 
-namespace atlas::observer {
+namespace atlas {
 
 /**
  * @brief Runtime registry of heterogeneous metric containers.
@@ -150,13 +150,11 @@ private:
     std::size_t _sink_reserve_count   = 0;
 };
 
-} // namespace atlas::observer
+} // namespace atlas
 
 namespace atlas {
-
-using Observer          = observer::Observer;
-using ObserverHostPtr   = host_shared_ptr<observer::Observer>;
-using ObserverDevicePtr = device_shared_ptr<observer::Observer>;
+using ObserverHostPtr   = host_shared_ptr<Observer>;
+using ObserverDevicePtr = device_shared_ptr<Observer>;
 
 } // namespace atlas
 

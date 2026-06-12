@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 OctreeSearcher<T>::OctreeSearcher(UniverseHostPtr<T> universe, FluidHostPtr<T> fluid)
@@ -96,4 +96,4 @@ OctreeSearcher<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<OctreeSearcher<T>>(_universe, _fluid);
 }
 
-} // namespace atlas::system
+} // namespace atlas

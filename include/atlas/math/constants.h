@@ -10,7 +10,6 @@ namespace atlas {
 // ------------------------------------------------------------
 // Numerical constants (math)
 // ------------------------------------------------------------
-namespace math {
     // Double-precision epsilon used as a small tolerance in comparisons.
     // Typical use: avoid treating near-zero as non-zero in robust predicates.
     constexpr double k_epsilon_d = 1e-12;
@@ -26,7 +25,6 @@ namespace math {
 
     // "Very far" sentinel distance in single precision.
     constexpr float k_farthest_f = 1e30f;
-}
 
 // ------------------------------------------------------------
 // Global convenience aliases
@@ -45,11 +43,11 @@ constexpr double boltzmann_constant = 1.380649e-23;
 
 // Default floating epsilon used across the codebase (single-precision).
 // Handy for "nearly zero" checks without spelling out the namespace.
-constexpr double eps = math::k_epsilon_d;
+constexpr double eps = k_epsilon_d;
 
 // Default "far distance" sentinel (single-precision).
 // Often used as an initial "best t" for ray hits, etc.
-constexpr double far = math::k_farthest_d;
+constexpr double far = k_farthest_d;
 
 // IEEE +infinity for float (useful as an unbounded sentinel).
 constexpr double inf = std::numeric_limits<double>::infinity();
@@ -59,8 +57,6 @@ constexpr double inf = std::numeric_limits<double>::infinity();
 constexpr double tol = 1e-6;
 
 constexpr double gravity = 9.80665;
-
-namespace math {
 
 // ------------------------------------------------------------
 // Scalar helpers (math)
@@ -96,7 +92,4 @@ sqrt_nonnegative(const T value) noexcept {
     using std::sqrt;
     return value > T(0) ? static_cast<T>(sqrt(value)) : T(0);
 }
-
-} // namespace math
-
 } // namespace atlas

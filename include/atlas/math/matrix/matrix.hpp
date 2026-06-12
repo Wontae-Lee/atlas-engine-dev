@@ -1,7 +1,7 @@
 #pragma once
 #include <cmath>
 #include <type_traits>
-namespace atlas::math {
+namespace atlas {
 template <typename T, std::size_t R, std::size_t C>
 Matrix<T, R, C>::Matrix() noexcept {
     ATLAS_UNROLL

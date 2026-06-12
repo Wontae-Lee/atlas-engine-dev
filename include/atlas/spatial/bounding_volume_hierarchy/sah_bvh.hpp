@@ -7,7 +7,7 @@
 #include <cmath>
 #include <limits>
 
-namespace atlas::spatial {
+namespace atlas {
 
 template <typename T>
 BvhGeometryOperator<T>
@@ -119,7 +119,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(
         0,
         n,
         [this, &triangles](int i) {
-            geometry::TriangleGeometryOperator<T> tri_op;
+            TriangleGeometryOperator<T> tri_op;
 
             // Build a lightweight triangle operator over the input triangle storage.
             tri_op.a = &triangles[i].a();
@@ -171,7 +171,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::assign_solid_angle_moment(
         const Vector3<T>& b = triangles[pid].b();
         const Vector3<T>& c = triangles[pid].c();
 
-        const Vector3<T> normal_area = atlas::math::cross(b - a, c - a) * T(0.5);
+        const Vector3<T> normal_area = atlas::cross(b - a, c - a) * T(0.5);
         const T area                 = normal_area.length();
 
         if (!(area > T(0))) {
@@ -221,7 +221,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(
     }
 
     const Vector3<T> ext  = centroid_bounds.extents();
-    const bool degenerate = atlas::math::all(ext <= eps);
+    const bool degenerate = atlas::all(ext <= eps);
     const int count       = end - start;
 
     // Stop splitting when the node is small enough or centroids cannot separate.
@@ -258,7 +258,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(
         return node_index;
     }
 
-    HostBuffer<sah::Bin<T>> bins(_num_of_bins);
+    HostBuffer<Bin<T>> bins(_num_of_bins);
 
     // Assign primitives to centroid bins along the selected split axis.
     for (int i = start; i < end; ++i) {
@@ -414,4 +414,4 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::reset() {
     _root = -1;
 }
 
-} // namespace atlas::spatial
+} // namespace atlas

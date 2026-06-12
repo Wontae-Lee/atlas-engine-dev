@@ -11,14 +11,14 @@
 #include <ranges>
 #include <stdexcept>
 #include <utility>
-namespace atlas::fluid {
+namespace atlas {
 
 namespace detail {
 
 template <typename T>
 struct SinkRefreshUnitBound {
     const Unit<T>* units {};
-    atlas::spatial::AxisAlignedBoundingBox<T>* bounds {};
+    atlas::AxisAlignedBoundingBox<T>* bounds {};
     T expand {};
 
     ATLAS_DEVICE void
@@ -26,7 +26,7 @@ struct SinkRefreshUnitBound {
         const auto& unit = units[unit_index];
         auto local_bound = unit.geometry_operator().bound();
         auto& world_bound = bounds[unit_index];
-        const auto transformed_bound = atlas::spatial::transform_aabb(
+        const auto transformed_bound = atlas::transform_aabb(
             local_bound,
             [&unit] ATLAS_DEVICE(const Vector3<T>& point) {
                 return unit.sync_operator().sync_to_world(point);
@@ -139,7 +139,7 @@ Sink<T>::sink(const T dt) {
                         if (!(probe.time_step > T(0)) || !(speed > T(0))) {
                             continue;
                         }
-                        const auto bound_hit = unit_bound.trace(atlas::spatial::Ray<T>(p, velocity));
+                        const auto bound_hit = unit_bound.trace(atlas::Ray<T>(p, velocity));
                         if (!bound_hit.is_intersecting || bound_hit.enter > speed * probe.time_step) {
                             continue;
                         }
@@ -199,9 +199,9 @@ Sink<T>::make_probe(const T dt) noexcept {
         return false;
     }
 
-    auto& positions = _fluid->template state<atlas::fluid::FluidPositionState<T>>()->data();
-    auto& active    = _fluid->template state<atlas::fluid::FluidActiveState<T>>()->data();
-    auto* velocity_state = _fluid->template state<atlas::fluid::FluidVelocityState<T>>();
+    auto& positions = _fluid->template state<atlas::FluidPositionState<T>>()->data();
+    auto& active    = _fluid->template state<atlas::FluidActiveState<T>>()->data();
+    auto* velocity_state = _fluid->template state<atlas::FluidVelocityState<T>>();
 
     if (positions.empty() || active.empty() || _fluid->particle_count() == 0) {
         return false;
@@ -253,7 +253,7 @@ Sink<T>::refresh_unit_bounds() noexcept {
 template <typename T>
 void
 Sink<T>::compact_fluid_particles() {
-    auto* active_state = _fluid->template state<atlas::fluid::FluidActiveState<T>>();
+    auto* active_state = _fluid->template state<atlas::FluidActiveState<T>>();
     if (active_state == nullptr) {
         return;
     }
@@ -450,7 +450,7 @@ Sink<T>::Builder::validate() const {
         throw std::runtime_error(
             "Sink::Builder: despawn types must have size 1 or match the unit count.");
     }
-    if (!atlas::math::isfinite(_tolerance)) {
+    if (!atlas::isfinite(_tolerance)) {
         throw std::runtime_error("Sink::Builder: tolerance must be finite.");
     }
 }

@@ -1,5 +1,5 @@
 #pragma once
-namespace atlas::spatial {
+namespace atlas {
 template <typename T>
 Ray<T>::Ray() noexcept
     : origin(Vector3<T>(T(0), T(0), T(0)))
@@ -9,7 +9,7 @@ Ray<T>::Ray() noexcept
 template <typename T>
 Ray<T>::Ray(const Vector3<T>& origin_, const Vector3<T>& direction_) noexcept
     : origin(origin_)
-    , direction(atlas::math::normalized_or(
+    , direction(atlas::normalized_or(
           direction_,
           Vector3<T>(T(0), T(0), T(0)))) {
 }

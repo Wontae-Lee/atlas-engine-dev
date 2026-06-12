@@ -6,7 +6,6 @@
 #include <type_traits>
 
 namespace atlas {
-namespace math {
 
     /**
      * @brief Fixed-size N-dimensional vector with expression-template support.
@@ -461,12 +460,6 @@ namespace math {
         /// @brief Contiguous storage for `N` components (aligned for SIMD-friendly access).
         alignas(32) T _data[N];
     };
-
-} // namespace math
-
-template <typename T, std::size_t N>
-using Vector = atlas::math::Vector<T, N>;
-
 } // namespace atlas
 
 #include <atlas/math/vector/vector.hpp>

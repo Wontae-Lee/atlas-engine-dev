@@ -6,7 +6,7 @@
 
 #include <utility>
 
-namespace atlas::fluid {
+namespace atlas {
 
 template <typename Buffer>
 void
@@ -345,4 +345,4 @@ FluidInternalEnergyState<T>::data() const noexcept {
     return _internal_energy;
 }
 
-} // namespace atlas::fluid
+} // namespace atlas

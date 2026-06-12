@@ -11,7 +11,7 @@
  *
  * The main type is:
  *
- * - @ref atlas::spatial::SurfaceAreaHeuristicBoundingVolumeHierachy
+ * - @ref atlas::SurfaceAreaHeuristicBoundingVolumeHierachy
  *
  * The builder stores construction data on the host and uploads traversal-ready
  * data to device buffers after construction. A lightweight
@@ -72,9 +72,7 @@
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
 
-namespace atlas::spatial {
-
-namespace sah {
+namespace atlas {
 
     /**
      * @brief Temporary centroid bin used during binned SAH split evaluation.
@@ -151,9 +149,6 @@ namespace sah {
          */
         int count = 0;
     };
-
-} // namespace sah
-
 /**
  * @brief Surface-area-heuristic bounding volume hierarchy for triangle primitives.
  *
@@ -718,7 +713,7 @@ private:
                     const HostBuffer<TriangleContainer4<T>>& triangles);
 };
 
-} // namespace atlas::spatial
+} // namespace atlas
 
 namespace atlas {
 
@@ -726,13 +721,13 @@ namespace atlas {
  * @brief Convenience alias for the SAH BVH implementation.
  *
  * @details
- * Exposes @ref atlas::spatial::SurfaceAreaHeuristicBoundingVolumeHierachy in the
+ * Exposes @ref atlas::SurfaceAreaHeuristicBoundingVolumeHierachy in the
  * top-level atlas namespace.
  *
  * @tparam T Floating-point scalar used by the geometry.
  */
 template <typename T>
-using SAHBVH = spatial::SurfaceAreaHeuristicBoundingVolumeHierachy<T>;
+using SAHBVH = SurfaceAreaHeuristicBoundingVolumeHierachy<T>;
 
 } // namespace atlas
 

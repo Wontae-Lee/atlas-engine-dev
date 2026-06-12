@@ -1,5 +1,5 @@
 #pragma once
-namespace atlas::math {
+namespace atlas {
 template <typename T>
 constexpr Matrix<T, 2, 2>::Matrix() noexcept
     : m00(T(0))

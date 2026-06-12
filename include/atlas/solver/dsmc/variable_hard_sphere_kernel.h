@@ -5,7 +5,7 @@
  * @brief Declares a Variable Hard Sphere style collision kernel for DSMC solvers.
  *
  * @details
- * This file defines @ref atlas::system::VariableHardSphereKernel, a lightweight
+ * This file defines @ref atlas::VariableHardSphereKernel, a lightweight
  * DSMC collision-kernel component that evaluates the Bird VHS total collision
  * cross section and applies an elastic post-collision scattering update.
  *
@@ -24,7 +24,7 @@
 #include <atlas/material/material_properties.h>
 #include <atlas/math/math.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Variable Hard Sphere style DSMC collision kernel.
@@ -128,6 +128,6 @@ public:
                const MaterialProperties<T>& rhs) const noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 #include <atlas/solver/dsmc/variable_hard_sphere_kernel.hpp>

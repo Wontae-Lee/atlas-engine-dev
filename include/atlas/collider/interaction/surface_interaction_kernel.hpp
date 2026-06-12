@@ -1,42 +1,57 @@
 #pragma once
 
-#include <new>
+namespace atlas {
 
-namespace atlas::system {
+namespace detail {
 
 template <typename T>
-SurfaceInteractionKernel<T>::SurfaceInteractionKernel() noexcept
-    : type(SurfaceInteractionType::isothermal)
-    , isothermal() {
+using SurfaceInteractionVariant = DeviceVariant<
+    SurfaceInteractionKernel<T>,
+    SurfaceInteractionType,
+    SurfaceInteractionType::isothermal,
+    DeviceVariantCase<
+        SurfaceInteractionKernel<T>,
+        SurfaceInteractionType,
+        SurfaceInteractionType::isothermal,
+        IsothermalSurfaceInteraction<T>,
+        &SurfaceInteractionKernel<T>::isothermal>,
+    DeviceVariantCase<
+        SurfaceInteractionKernel<T>,
+        SurfaceInteractionType,
+        SurfaceInteractionType::maxwellian,
+        MaxwellianSurfaceInteraction<T>,
+        &SurfaceInteractionKernel<T>::maxwellian>>;
+
+} // namespace detail
+
+template <typename T>
+SurfaceInteractionKernel<T>::SurfaceInteractionKernel() noexcept {
+    detail::SurfaceInteractionVariant<T>::construct(*this, SurfaceInteractionType::isothermal);
 }
 
 template <typename T>
 SurfaceInteractionKernel<T>::SurfaceInteractionKernel(
     const IsothermalSurfaceInteraction<T>& interaction) noexcept
-    : type(SurfaceInteractionType::isothermal)
-    , isothermal(interaction) {
+{
+    detail::SurfaceInteractionVariant<T>::construct_payload(*this, interaction);
 }
 
 template <typename T>
 SurfaceInteractionKernel<T>::SurfaceInteractionKernel(
     const MaxwellianSurfaceInteraction<T>& interaction) noexcept
-    : type(SurfaceInteractionType::maxwellian)
-    , maxwellian(interaction) {
+{
+    detail::SurfaceInteractionVariant<T>::construct_payload(*this, interaction);
 }
 
 template <typename T>
 SurfaceInteractionKernel<T>::SurfaceInteractionKernel(const SurfaceInteractionKernel& other) noexcept {
-    copy_from(other);
+    detail::SurfaceInteractionVariant<T>::copy_construct(*this, other);
 }
 
 template <typename T>
 SurfaceInteractionKernel<T>&
 SurfaceInteractionKernel<T>::operator=(const SurfaceInteractionKernel& other) noexcept {
-    if (this != &other) {
-        destroy_active();
-        copy_from(other);
-    }
-
+    detail::SurfaceInteractionVariant<T>::assign(*this, other);
     return *this;
 }
 
@@ -60,9 +75,9 @@ SurfaceInteractionKernel<T>::operator()(const Vector3<T>& incident,
 }
 
 template <typename T>
-fluid::FluidInternalEnergy<T>
+FluidInternalEnergy<T>
 SurfaceInteractionKernel<T>::internal_energy(
-    const fluid::FluidInternalEnergy<T>& incident_energy,
+    const FluidInternalEnergy<T>& incident_energy,
     const Vector3<T>& incident_velocity,
     const Vector3<T>& normal,
     const MaterialProperties<T>& material) const noexcept {
@@ -79,29 +94,13 @@ SurfaceInteractionKernel<T>::internal_energy(
 template <typename T>
 void
 SurfaceInteractionKernel<T>::destroy_active() noexcept {
-    switch (type) {
-    case SurfaceInteractionType::isothermal:
-        isothermal.~IsothermalSurfaceInteraction<T>();
-        break;
-    case SurfaceInteractionType::maxwellian:
-        maxwellian.~MaxwellianSurfaceInteraction<T>();
-        break;
-    }
+    detail::SurfaceInteractionVariant<T>::destroy(*this);
 }
 
 template <typename T>
 void
 SurfaceInteractionKernel<T>::copy_from(const SurfaceInteractionKernel& other) noexcept {
-    type = other.type;
-
-    switch (type) {
-    case SurfaceInteractionType::isothermal:
-        new (&isothermal) IsothermalSurfaceInteraction<T>(other.isothermal);
-        break;
-    case SurfaceInteractionType::maxwellian:
-        new (&maxwellian) MaxwellianSurfaceInteraction<T>(other.maxwellian);
-        break;
-    }
+    detail::SurfaceInteractionVariant<T>::copy_construct(*this, other);
 }
 
-} // namespace atlas::system
+} // namespace atlas

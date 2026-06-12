@@ -4,7 +4,7 @@
 #include <atlas/geometry/geometry_operator.h>
 #include <atlas/memory/raw_pointer_cast.h>
 
-namespace atlas::spatial {
+namespace atlas {
 
 template <typename T>
 BvhGeometryOperator<T>
@@ -106,7 +106,7 @@ LinearBoundingVolumeHierachy<T>::assign_solid_angle_moment(
     const Vector3<T>& b = triangle.b();
     const Vector3<T>& c = triangle.c();
 
-    const Vector3<T> normal_area = atlas::math::cross(b - a, c - a) * T(0.5);
+    const Vector3<T> normal_area = atlas::cross(b - a, c - a) * T(0.5);
     const T area                 = normal_area.length();
 
     node.solid_angle_moment      = Vector3<T>(T(0), T(0), T(0));
@@ -144,14 +144,14 @@ template <typename T>
 unsigned
 LinearBoundingVolumeHierachy<T>::expand_bits(unsigned v) noexcept {
     // Interleave lower 10 bits with two zero bits between each original bit.
-    v = (v * atlas::seed::MORTON_EXPAND_BITS_FIRST_MULTIPLIER)
-        & atlas::seed::MORTON_EXPAND_BITS_FIRST_MASK;
-    v = (v * atlas::seed::MORTON_EXPAND_BITS_SECOND_MULTIPLIER)
-        & atlas::seed::MORTON_EXPAND_BITS_SECOND_MASK;
-    v = (v * atlas::seed::MORTON_EXPAND_BITS_THIRD_MULTIPLIER)
-        & atlas::seed::MORTON_EXPAND_BITS_THIRD_MASK;
-    v = (v * atlas::seed::MORTON_EXPAND_BITS_FINAL_MULTIPLIER)
-        & atlas::seed::MORTON_EXPAND_BITS_FINAL_MASK;
+    v = (v * atlas::MORTON_EXPAND_BITS_FIRST_MULTIPLIER)
+        & atlas::MORTON_EXPAND_BITS_FIRST_MASK;
+    v = (v * atlas::MORTON_EXPAND_BITS_SECOND_MULTIPLIER)
+        & atlas::MORTON_EXPAND_BITS_SECOND_MASK;
+    v = (v * atlas::MORTON_EXPAND_BITS_THIRD_MULTIPLIER)
+        & atlas::MORTON_EXPAND_BITS_THIRD_MASK;
+    v = (v * atlas::MORTON_EXPAND_BITS_FINAL_MULTIPLIER)
+        & atlas::MORTON_EXPAND_BITS_FINAL_MASK;
 
     return v;
 }
@@ -302,7 +302,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
         0,
         n,
         [this, &triangles](int i) {
-            geometry::TriangleGeometryOperator<T> tri_op;
+            TriangleGeometryOperator<T> tri_op;
 
             // Build a lightweight triangle operator over the input triangle storage.
             tri_op.a = &triangles[i].a();
@@ -485,4 +485,4 @@ LinearBoundingVolumeHierachy<T>::reset() {
     _root = -1;
 }
 
-} // namespace atlas::spatial
+} // namespace atlas

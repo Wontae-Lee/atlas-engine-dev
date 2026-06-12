@@ -7,29 +7,29 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::geometry {
+namespace atlas {
 
 template <typename T>
-atlas::math::Vector<T, 3>
-BoxGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
+atlas::Vector<T, 3>
+BoxGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
     // Without valid box corners, there is no meaningful projection target.
     if (!lower_corner || !upper_corner) {
         return p;
     }
 
-    const atlas::math::Vector<T, 3>& lo = *lower_corner;
-    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+    const atlas::Vector<T, 3>& lo = *lower_corner;
+    const atlas::Vector<T, 3>& hi = *upper_corner;
 
     // Clamp the point to the box bounds to get the closest point for exterior queries.
-    atlas::math::Vector<T, 3> cp = atlas::math::clamp(p, lo, hi);
+    atlas::Vector<T, 3> cp = atlas::clamp(p, lo, hi);
 
-    const bool inside = atlas::math::all(p >= lo)
-        && atlas::math::all(p <= hi);
+    const bool inside = atlas::all(p >= lo)
+        && atlas::all(p <= hi);
 
     if (inside) {
         // For interior points, project to the nearest box face instead of returning p.
-        const atlas::math::Vector<T, 3> l_to_p = p - lo;
-        const atlas::math::Vector<T, 3> p_to_u = hi - p;
+        const atlas::Vector<T, 3> l_to_p = p - lo;
+        const atlas::Vector<T, 3> p_to_u = hi - p;
 
         // Select whether the nearest face lies on the lower or upper side.
         const bool hit_lower = (l_to_p.min() < p_to_u.min());
@@ -46,25 +46,25 @@ BoxGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const 
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-BoxGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
+atlas::Vector<T, 3>
+BoxGeometryOperator<T>::closest_normal(const atlas::Vector<T, 3>& p) const noexcept {
     // Invalid geometry cannot provide a reliable surface normal.
     if (!lower_corner || !upper_corner) {
-        return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
+        return atlas::Vector<T, 3>(T(0), T(0), T(0));
     }
 
-    const atlas::math::Vector<T, 3>& lo = *lower_corner;
-    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+    const atlas::Vector<T, 3>& lo = *lower_corner;
+    const atlas::Vector<T, 3>& hi = *upper_corner;
 
-    const bool inside = atlas::math::all(p >= lo)
-        && atlas::math::all(p <= hi);
+    const bool inside = atlas::all(p >= lo)
+        && atlas::all(p <= hi);
 
-    atlas::math::Vector<T, 3> n(T(0));
+    atlas::Vector<T, 3> n(T(0));
 
     if (inside) {
         // Interior normals point toward the nearest box face.
-        const atlas::math::Vector<T, 3> l_to_p = p - lo;
-        const atlas::math::Vector<T, 3> p_to_u = hi - p;
+        const atlas::Vector<T, 3> l_to_p = p - lo;
+        const atlas::Vector<T, 3> p_to_u = hi - p;
 
         // Select the nearest lower or upper face.
         const bool hit_lower = (l_to_p.min() < p_to_u.min());
@@ -79,11 +79,11 @@ BoxGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const
     }
 
     // Exterior normals are determined from the clamped closest point on the box.
-    const atlas::math::Vector<T, 3> cp = atlas::math::clamp(p, lo, hi);
-    const atlas::math::Vector<T, 3> d  = p - cp;
+    const atlas::Vector<T, 3> cp = atlas::clamp(p, lo, hi);
+    const atlas::Vector<T, 3> d  = p - cp;
 
     // Use the dominant separation axis to select the closest face normal.
-    const std::size_t axis = atlas::math::abs(d).major_axis();
+    const std::size_t axis = atlas::abs(d).major_axis();
 
     n[axis] = (d[axis] >= T(0)) ? T(1) : T(-1);
     return n;
@@ -91,22 +91,22 @@ BoxGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const
 
 template <typename T>
 T
-BoxGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
+BoxGeometryOperator<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
     // Invalid geometry is treated as infinitely far away.
     if (!lower_corner || !upper_corner) {
         return atlas::inf;
     }
 
-    const atlas::math::Vector<T, 3>& lo = *lower_corner;
-    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+    const atlas::Vector<T, 3>& lo = *lower_corner;
+    const atlas::Vector<T, 3>& hi = *upper_corner;
 
-    const bool inside = atlas::math::all(p >= lo)
-        && atlas::math::all(p <= hi);
+    const bool inside = atlas::all(p >= lo)
+        && atlas::all(p <= hi);
 
     if (inside) {
         // Inside the box, distance is negative and equals the nearest face distance.
-        const atlas::math::Vector<T, 3> l_to_p = p - lo;
-        const atlas::math::Vector<T, 3> p_to_u = hi - p;
+        const atlas::Vector<T, 3> l_to_p = p - lo;
+        const atlas::Vector<T, 3> p_to_u = hi - p;
 
         const T m1 = l_to_p.min();
         const T m2 = p_to_u.min();
@@ -115,42 +115,42 @@ BoxGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) cons
     }
 
     // Outside the box, distance is the Euclidean distance to the clamped point.
-    const atlas::math::Vector<T, 3> cp = atlas::math::clamp(p, lo, hi);
+    const atlas::Vector<T, 3> cp = atlas::clamp(p, lo, hi);
     return (cp - p).length();
 }
 
 template <typename T>
 bool
-BoxGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p,
+BoxGeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p,
                                   const T tolerance) const noexcept {
     // Invalid geometry cannot contain any point.
     if (!lower_corner || !upper_corner) {
         return false;
     }
 
-    const atlas::math::Vector<T, 3>& lo = *lower_corner;
-    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+    const atlas::Vector<T, 3>& lo = *lower_corner;
+    const atlas::Vector<T, 3>& hi = *upper_corner;
 
     // Expand the box by tolerance to make boundary checks numerically robust.
-    return atlas::math::all(p >= lo - tolerance)
-        && atlas::math::all(p <= hi + tolerance);
+    return atlas::all(p >= lo - tolerance)
+        && atlas::all(p <= hi + tolerance);
 }
 
 template <typename T>
 bool
-BoxGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p,
+BoxGeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p,
                                       const T tolerance) const noexcept {
     // Invalid geometry or negative tolerances cannot accept surface points.
     if (!lower_corner || !upper_corner || tolerance < T(0)) {
         return false;
     }
 
-    const atlas::math::Vector<T, 3>& lo = *lower_corner;
-    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+    const atlas::Vector<T, 3>& lo = *lower_corner;
+    const atlas::Vector<T, 3>& hi = *upper_corner;
     const T tolerance2                  = tolerance * tolerance;
 
-    const bool inside = atlas::math::all(p >= lo)
-        && atlas::math::all(p <= hi);
+    const bool inside = atlas::all(p >= lo)
+        && atlas::all(p <= hi);
 
     if (inside) {
         const T dx = (p.x - lo.x < hi.x - p.x) ? p.x - lo.x : hi.x - p.x;
@@ -176,11 +176,11 @@ BoxGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p,
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
+atlas::Vector<T, 3>
 BoxGeometryOperator<T>::centroid() const noexcept {
     // Invalid geometry falls back to the origin as a neutral centroid.
     if (!lower_corner || !upper_corner) {
-        return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
+        return atlas::Vector<T, 3>(T(0), T(0), T(0));
     }
 
     // The centroid of an axis-aligned box is the midpoint of its opposite corners.
@@ -188,15 +188,15 @@ BoxGeometryOperator<T>::centroid() const noexcept {
 }
 
 template <typename T>
-atlas::spatial::AxisAlignedBoundingBox<T>
+atlas::AxisAlignedBoundingBox<T>
 BoxGeometryOperator<T>::bound() const noexcept {
     // Invalid geometry returns an empty/default bounding box.
     if (!lower_corner || !upper_corner) {
-        return atlas::spatial::AxisAlignedBoundingBox<T>();
+        return atlas::AxisAlignedBoundingBox<T>();
     }
 
     // A box is already represented by its axis-aligned lower and upper bounds.
-    return atlas::spatial::AxisAlignedBoundingBox<T>(*lower_corner, *upper_corner);
+    return atlas::AxisAlignedBoundingBox<T>(*lower_corner, *upper_corner);
 }
 
 template <typename T>
@@ -207,18 +207,18 @@ BoxGeometryOperator<T>::is_valid() const noexcept {
         return false;
     }
 
-    const atlas::math::Vector<T, 3>& lo = *lower_corner;
-    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+    const atlas::Vector<T, 3>& lo = *lower_corner;
+    const atlas::Vector<T, 3>& hi = *upper_corner;
 
     // Each upper coordinate must be greater than or equal to the matching lower coordinate.
-    return atlas::math::isfinite(lo)
-        && atlas::math::isfinite(hi)
-        && atlas::math::all(hi >= lo);
+    return atlas::isfinite(lo)
+        && atlas::isfinite(hi)
+        && atlas::all(hi >= lo);
 }
 
 template <typename T>
 HitSurface<T>
-BoxGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexcept {
+BoxGeometryOperator<T>::trace(const atlas::Ray<T>& r) const noexcept {
     HitSurface<T> result {};
 
     // Invalid geometry produces a default non-intersecting hit result.
@@ -226,19 +226,19 @@ BoxGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexcept {
         return result;
     }
 
-    const atlas::math::Vector<T, 3>& lo = *lower_corner;
-    const atlas::math::Vector<T, 3>& hi = *upper_corner;
+    const atlas::Vector<T, 3>& lo = *lower_corner;
+    const atlas::Vector<T, 3>& hi = *upper_corner;
 
     // Compute reciprocal ray directions for the slab intersection test.
-    const atlas::math::Vector<T, 3> inv_dir = T(1) / r.direction;
+    const atlas::Vector<T, 3> inv_dir = T(1) / r.direction;
 
     // Intersect the ray with the lower and upper slabs on each axis.
-    const atlas::math::Vector<T, 3> t0 = (lo - r.origin) * inv_dir;
-    const atlas::math::Vector<T, 3> t1 = (hi - r.origin) * inv_dir;
+    const atlas::Vector<T, 3> t0 = (lo - r.origin) * inv_dir;
+    const atlas::Vector<T, 3> t1 = (hi - r.origin) * inv_dir;
 
     // Sort entry and exit distances per axis.
-    const atlas::math::Vector<T, 3> tmin_v = atlas::math::cmin(t0, t1);
-    const atlas::math::Vector<T, 3> tmax_v = atlas::math::cmax(t0, t1);
+    const atlas::Vector<T, 3> tmin_v = atlas::cmin(t0, t1);
+    const atlas::Vector<T, 3> tmax_v = atlas::cmax(t0, t1);
 
     // The ray enters after all lower slab crossings and exits before any upper slab crossing.
     const T t_enter = tmin_v.max();
@@ -256,7 +256,7 @@ BoxGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexcept {
     // Select the face axis that produced the active entry or exit distance.
     const std::size_t axis = use_enter ? tmin_v.major_axis() : tmax_v.minor_axis();
 
-    atlas::math::Vector<T, 3> n(T(0));
+    atlas::Vector<T, 3> n(T(0));
 
     // Orient the normal outward from the hit face.
     const T dir = r.direction[axis];
@@ -274,7 +274,7 @@ BoxGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& r) const noexcept {
 
 template <typename T>
 HitSurface<T>
-BoxGeometryOperator<T>::operator()(const atlas::spatial::Ray<T>& ray) const noexcept {
+BoxGeometryOperator<T>::operator()(const atlas::Ray<T>& ray) const noexcept {
     // Allow the operator object to be used directly as a ray-intersection functor.
     return trace(ray);
 }
@@ -283,8 +283,6 @@ template <typename T>
 Box<T>::Box() noexcept
     : lower_corner(T(-1), T(-1), T(-1))
     , upper_corner(T(+1), T(+1), T(+1)) {
-    // Bind the geometry operator to this box's corner storage.
-    bind_operator();
 }
 
 template <typename T>
@@ -292,25 +290,18 @@ Box<T>::Box(const Vector3<T>& lower_corner_,
             const Vector3<T>& upper_corner_) noexcept
     : lower_corner(lower_corner_)
     , upper_corner(upper_corner_) {
-    // Bind the geometry operator after initializing the custom box corners.
-    bind_operator();
 }
 
 template <typename T>
 Box<T>::Box(const Box& other) noexcept
     : lower_corner(other.lower_corner)
     , upper_corner(other.upper_corner) {
-    // Rebind the operator because copied raw pointers must point to this object.
-    bind_operator();
 }
 
 template <typename T>
 Box<T>::Box(Box&& other) noexcept
     : lower_corner(std::move(other.lower_corner))
     , upper_corner(std::move(other.upper_corner)) {
-    // Rebind both objects so each operator points to its own corner storage.
-    bind_operator();
-    other.bind_operator();
 }
 
 template <typename T>
@@ -323,9 +314,6 @@ Box<T>::operator=(const Box& other) noexcept {
 
     lower_corner = other.lower_corner;
     upper_corner = other.upper_corner;
-
-    // Rebind after assignment because operator pointers must target this object.
-    bind_operator();
 
     return *this;
 }
@@ -341,19 +329,16 @@ Box<T>::operator=(Box&& other) noexcept {
     lower_corner = std::move(other.lower_corner);
     upper_corner = std::move(other.upper_corner);
 
-    // Rebind both objects after moving corner storage.
-    bind_operator();
-    other.bind_operator();
-
     return *this;
 }
 
 template <typename T>
-void
-Box<T>::bind_operator() noexcept {
-    // Keep the lightweight operator synchronized with this box's corner storage.
-    _operator.lower_corner = atlas::raw_pointer_cast(&lower_corner);
-    _operator.upper_corner = atlas::raw_pointer_cast(&upper_corner);
+BoxGeometryOperator<T>
+Box<T>::make_box_operator() const noexcept {
+    BoxGeometryOperator<T> op {};
+    op.lower_corner = atlas::raw_pointer_cast(&lower_corner);
+    op.upper_corner = atlas::raw_pointer_cast(&upper_corner);
+    return op;
 }
 
 template <typename T>
@@ -365,65 +350,56 @@ Box<T>::builder() noexcept {
 
 template <typename T>
 GeometryOperator<T>
-Box<T>::make_geometry_operator() const {
-    // Return a type-erased geometry operator backed by this box operator.
-    return GeometryOperator<T>(_operator);
+Box<T>::make_device_geometry_view() const {
+    return GeometryOperator<T>(make_box_operator());
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-Box<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Delegate closest-point queries to the bound box operator.
-    return _operator.closest_point(p);
+atlas::Vector<T, 3>
+Box<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
+    return make_box_operator().closest_point(p);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-Box<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Delegate closest-normal queries to the bound box operator.
-    return _operator.closest_normal(p);
+atlas::Vector<T, 3>
+Box<T>::closest_normal(const atlas::Vector<T, 3>& p) const noexcept {
+    return make_box_operator().closest_normal(p);
 }
 
 template <typename T>
 T
-Box<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Delegate signed-distance queries to the bound box operator.
-    return _operator.signed_distance(p);
+Box<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
+    return make_box_operator().signed_distance(p);
 }
 
 template <typename T>
 bool
-Box<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Delegate inside tests to the bound box operator.
-    return _operator.is_inside(p, tolerance);
+Box<T>::is_inside(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
+    return make_box_operator().is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
-Box<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Delegate surface tests to the bound box operator.
-    return _operator.is_on_surface(p, tolerance);
+Box<T>::is_on_surface(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
+    return make_box_operator().is_on_surface(p, tolerance);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
+atlas::Vector<T, 3>
 Box<T>::centroid() const noexcept {
-    // Delegate centroid queries to the bound box operator.
-    return _operator.centroid();
+    return make_box_operator().centroid();
 }
 
 template <typename T>
-atlas::spatial::AxisAlignedBoundingBox<T>
+atlas::AxisAlignedBoundingBox<T>
 Box<T>::bound() const noexcept {
-    // Delegate bounding-box construction to the bound box operator.
-    return _operator.bound();
+    return make_box_operator().bound();
 }
 
 template <typename T>
 bool
 Box<T>::is_valid() const noexcept {
-    // Delegate validity checks to the bound box operator.
-    return _operator.is_valid();
+    return make_box_operator().is_valid();
 }
 
 template <typename T>
@@ -442,9 +418,6 @@ Box<T>::Builder::build() const {
     Box<T> b {};
     b.lower_corner = _lower_corner;
     b.upper_corner = _upper_corner;
-
-    // Rebind because the builder assigns corners after default construction.
-    b.bind_operator();
 
     return b;
 }
@@ -476,7 +449,7 @@ Box<T>::Builder::with_upper_corner(const Vector3<T>& upper_corner_) noexcept {
 template <typename T>
 void
 Box<T>::Builder::validate() const {
-    atlas::geometry::BoxGeometryOperator<T> op;
+    atlas::BoxGeometryOperator<T> op;
 
     // Validate using the same operator logic used by constructed Box instances.
     op.lower_corner = atlas::raw_pointer_cast(&_lower_corner);
@@ -487,4 +460,4 @@ Box<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::geometry
+} // namespace atlas

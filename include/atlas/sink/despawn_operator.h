@@ -10,7 +10,7 @@
 #include <atlas/sink/tracing_despawn_operator.h>
 #include <atlas/sink/volume_despawn_operator.h>
 
-namespace atlas::fluid {
+namespace atlas {
 
 /**
  * @brief Runtime tag identifying which despawn rule is active.
@@ -146,7 +146,7 @@ struct DespawnOperator final {
      * @return True if the particle should be removed.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    despawn(const atlas::geometry::GeometryOperator<T>& query,
+    despawn(const atlas::GeometryOperator<T>& query,
             const Vector3<T>& vector,
             T value = T(0)) const noexcept;
 
@@ -164,12 +164,12 @@ struct DespawnOperator final {
      * @return True if the particle should be removed.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    despawn(const atlas::geometry::GeometryOperator<T>& query,
+    despawn(const atlas::GeometryOperator<T>& query,
             const Vector3<T>& position,
             const Vector3<T>& vector,
             T value = T(0)) const noexcept;
 };
 
-} // namespace atlas::fluid
+} // namespace atlas
 
 #include <atlas/sink/despawn_operator.hpp>

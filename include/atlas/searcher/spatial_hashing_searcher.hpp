@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 SpatialHashingSearcher<T>::SpatialHashingSearcher(UniverseHostPtr<T> universe,
@@ -183,4 +183,4 @@ SpatialHashingSearcher<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<SpatialHashingSearcher<T>>(_universe, _fluid);
 }
 
-} // namespace atlas::system
+} // namespace atlas

@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <type_traits>
 
-namespace atlas::math {
+namespace atlas {
 
 /**
  * @file vector_expression.h
@@ -429,4 +429,4 @@ private:
     const EF& _f; // False branch expression (referenced, not owned).
 };
 
-} // namespace atlas::math
+} // namespace atlas

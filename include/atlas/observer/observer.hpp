@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::observer {
+namespace atlas {
 
 inline Observer::Builder
 Observer::builder() noexcept {
@@ -17,7 +17,7 @@ SensorMatricsT&
 Observer::emplace_sensor_matrics(Args&&... args) {
     // Ensure only SensorMatrics-derived types can be stored in the observer.
     static_assert(std::is_base_of_v<SensorMatrics, SensorMatricsT>,
-                  "SensorMatricsT must derive from atlas::observer::SensorMatrics.");
+                  "SensorMatricsT must derive from atlas::SensorMatrics.");
 
     // Construct the requested sensor matrics type with forwarded arguments.
     auto sensor_matrics = std::make_unique<SensorMatricsT>(std::forward<Args>(args)...);
@@ -37,7 +37,7 @@ void
 Observer::set_sensor_matrics(std::unique_ptr<SensorMatricsT> sensor_matrics) {
     // Ensure only SensorMatrics-derived types can be stored in the observer.
     static_assert(std::is_base_of_v<SensorMatrics, SensorMatricsT>,
-                  "SensorMatricsT must derive from atlas::observer::SensorMatrics.");
+                  "SensorMatricsT must derive from atlas::SensorMatrics.");
 
     // Reject null ownership transfer because the observer must store valid matrics objects.
     if (sensor_matrics == nullptr) {
@@ -53,7 +53,7 @@ SensorMatricsT*
 Observer::sensor_matrics() noexcept {
     // Ensure callers request a valid SensorMatrics-derived type.
     static_assert(std::is_base_of_v<SensorMatrics, SensorMatricsT>,
-                  "SensorMatricsT must derive from atlas::observer::SensorMatrics.");
+                  "SensorMatricsT must derive from atlas::SensorMatrics.");
 
     // Look up the stored matrics object by its concrete runtime type.
     const auto it = _sensor_matrics.find(typeid(SensorMatricsT));
@@ -67,7 +67,7 @@ const SensorMatricsT*
 Observer::sensor_matrics() const noexcept {
     // Ensure callers request a valid SensorMatrics-derived type.
     static_assert(std::is_base_of_v<SensorMatrics, SensorMatricsT>,
-                  "SensorMatricsT must derive from atlas::observer::SensorMatrics.");
+                  "SensorMatricsT must derive from atlas::SensorMatrics.");
 
     // Look up the stored matrics object by its concrete runtime type.
     const auto it = _sensor_matrics.find(typeid(SensorMatricsT));
@@ -81,7 +81,7 @@ bool
 Observer::has_sensor_matrics() const noexcept {
     // Ensure callers query a valid SensorMatrics-derived type.
     static_assert(std::is_base_of_v<SensorMatrics, SensorMatricsT>,
-                  "SensorMatricsT must derive from atlas::observer::SensorMatrics.");
+                  "SensorMatricsT must derive from atlas::SensorMatrics.");
 
     // Check whether a matrics instance of the requested concrete type is registered.
     return _sensor_matrics.contains(typeid(SensorMatricsT));
@@ -92,7 +92,7 @@ std::unique_ptr<SensorMatricsT>
 Observer::remove_sensor_matrics() {
     // Ensure only SensorMatrics-derived types can be removed through this API.
     static_assert(std::is_base_of_v<SensorMatrics, SensorMatricsT>,
-                  "SensorMatricsT must derive from atlas::observer::SensorMatrics.");
+                  "SensorMatricsT must derive from atlas::SensorMatrics.");
 
     // Locate the matrics object associated with the requested concrete type.
     const auto it = _sensor_matrics.find(typeid(SensorMatricsT));
@@ -182,4 +182,4 @@ Observer::Builder::make_host_shared() const {
     return atlas::make_host_shared<Observer>(std::move(observer));
 }
 
-} // namespace atlas::observer
+} // namespace atlas

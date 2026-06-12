@@ -1,4 +1,6 @@
 #pragma once
+
+#include <atlas/geometry/geometry_operator.h>
 #include <atlas/logging/logging.h>
 #include <atlas/memory/memory.h>
 #include <atlas/serialization/protobuf_snapshot.h>
@@ -6,7 +8,7 @@
 #include <limits>
 #include <utility>
 
-namespace atlas::universe {
+namespace atlas {
 
 template <typename T>
 Universe<T>::Universe(const Vector3<T>& lower_corner,
@@ -42,7 +44,7 @@ Vector3<int>
 Universe<T>::compute_grid_size(const Vector3<T>& lower_corner,
                                const Vector3<T>& upper_corner,
                                const T inverse_cell_size) noexcept {
-    return atlas::math::floor((upper_corner - lower_corner) * inverse_cell_size)
+    return atlas::floor((upper_corner - lower_corner) * inverse_cell_size)
         .template cast_to<int>() + Vector3<int>(1, 1, 1);
 }
 
@@ -51,7 +53,7 @@ template <typename StateT, typename... Args>
 StateT&
 Universe<T>::emplace_state(Args&&... args) {
     static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::universe::State.");
+                  "StateT must derive from atlas::State.");
 
     // Construct and register the state by its concrete type.
     auto state = std::make_unique<StateT>(std::forward<Args>(args)...);
@@ -65,7 +67,7 @@ template <typename StateT>
 void
 Universe<T>::set_state(std::unique_ptr<StateT> state) {
     static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::universe::State.");
+                  "StateT must derive from atlas::State.");
 
     // Null states are rejected to keep the registry valid.
     atlas::check<std::invalid_argument>(state != nullptr)
@@ -79,7 +81,7 @@ template <typename StateT>
 StateT*
 Universe<T>::state() noexcept {
     static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::universe::State.");
+                  "StateT must derive from atlas::State.");
 
     // Return nullptr when the requested state is not registered.
     const auto& key = state_key<StateT>();
@@ -92,7 +94,7 @@ template <typename StateT>
 const StateT*
 Universe<T>::state() const noexcept {
     static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::universe::State.");
+                  "StateT must derive from atlas::State.");
 
     // Const-qualified lookup for read-only access.
     const auto& key = state_key<StateT>();
@@ -105,7 +107,7 @@ template <typename StateT>
 bool
 Universe<T>::has_state() const noexcept {
     static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::universe::State.");
+                  "StateT must derive from atlas::State.");
 
     // Check whether a state of the requested concrete type exists.
     return _states.contains(state_key<StateT>());
@@ -116,7 +118,7 @@ template <typename StateT>
 std::unique_ptr<StateT>
 Universe<T>::remove_state() {
     static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::universe::State.");
+                  "StateT must derive from atlas::State.");
 
     const auto& key = state_key<StateT>();
     auto it = _states.find(key);
@@ -194,7 +196,7 @@ template <typename T>
 void
 Universe<T>::save(const std::string_view path) const {
     // Serialize the complete universe snapshot to disk.
-    atlas::serialization::save_universe_binary(*this, path);
+    atlas::save_universe_binary(*this, path);
 }
 
 template <typename T>
@@ -280,9 +282,12 @@ Universe<T>::Builder::make_host_shared() const {
 
 template <typename T>
 typename Universe<T>::Builder&
-Universe<T>::Builder::with_geometry(const GeometryHostPtr<T>& geometry) noexcept {
+Universe<T>::Builder::with_geometry(const GeometryHostPtr<T>& geometry) {
+    atlas::check<std::invalid_argument>(geometry != nullptr)
+        << "Universe::Builder::with_geometry requires a non-null geometry.";
+
     // Use the geometry bounds as the universe domain.
-    auto op       = geometry->make_geometry_operator();
+    auto op       = make_device_geometry_view(*geometry);
     auto bound    = op.bound();
     _lower_corner = bound.lower_corner;
     _upper_corner = bound.upper_corner;
@@ -321,7 +326,7 @@ template <typename T>
 typename Universe<T>::Builder&
 Universe<T>::Builder::with_binary(const std::string& path) {
     // Load geometry and optional states from a serialized snapshot.
-    auto snapshot = atlas::serialization::load_universe_binary<T>(path);
+    auto snapshot = atlas::load_universe_binary<T>(path);
 
     _lower_corner = snapshot.lower_corner;
     _upper_corner = snapshot.upper_corner;
@@ -349,7 +354,7 @@ Universe<T>::Builder::validate() const {
 
     // The Universe must have positive extent on every axis.
     atlas::check<std::invalid_argument>(
-        atlas::math::all(_upper_corner > _lower_corner))
+        atlas::all(_upper_corner > _lower_corner))
         << "Universe::Builder validation failed: upper_corner must be greater than lower_corner on all axes. "
         << "lower=(" << _lower_corner.x << "," << _lower_corner.y << "," << _lower_corner.z << "), "
         << "upper=(" << _upper_corner.x << "," << _upper_corner.y << "," << _upper_corner.z << ")";
@@ -359,7 +364,7 @@ Universe<T>::Builder::validate() const {
     // Compute the grid resolution implied by the Universe and cell size.
     const Vector3<int> gs = Universe<T>::compute_grid_size(_lower_corner, _upper_corner, inv_h);
 
-    atlas::check<std::invalid_argument>(atlas::math::all(gs >= Vector3<int>(1, 1, 1)))
+    atlas::check<std::invalid_argument>(atlas::all(gs >= Vector3<int>(1, 1, 1)))
         << "Universe::Builder validation failed: computed grid_size must be >= 1 on all axes. "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
 
@@ -381,4 +386,4 @@ Universe<T>::Builder::validate() const {
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
 }
 
-} // namespace atlas::universe
+} // namespace atlas

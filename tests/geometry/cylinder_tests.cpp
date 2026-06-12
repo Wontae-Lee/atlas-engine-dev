@@ -10,7 +10,7 @@ namespace {
 
 using atlas::Cylinder;
 using atlas::Vector3F;
-using atlas::geometry::GeometryType;
+using atlas::GeometryType;
 using atlas::test::vec_near;
 using atlas::tol;
 
@@ -73,7 +73,7 @@ TEST(Cylinder, CentroidBoundAndOperatorWork) {
 
     const Vector3F center = cylinder.centroid();
     const auto bounds = cylinder.bound();
-    const auto geometry_operator = cylinder.make_geometry_operator();
+    const auto geometry_operator = cylinder.make_device_geometry_view();
 
     EXPECT_TRUE(vec_near(center, Vector3F(1, 2, 3), tol));
     EXPECT_TRUE(vec_near(bounds.lower_corner, Vector3F(-1, 0, 1), tol));

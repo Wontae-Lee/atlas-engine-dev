@@ -11,7 +11,7 @@ namespace {
 using atlas::Ray;
 using atlas::Triangle;
 using atlas::Vector3F;
-using atlas::geometry::GeometryType;
+using atlas::GeometryType;
 using atlas::test::vec_near;
 using atlas::tol;
 
@@ -59,7 +59,7 @@ TEST(Triangle, ClassificationCentroidBoundAndOperatorWork) {
 
     const Vector3F center = triangle.centroid();
     const auto bounds = triangle.bound();
-    const auto geometry_operator = triangle.make_geometry_operator();
+    const auto geometry_operator = triangle.make_device_geometry_view();
 
     EXPECT_TRUE(vec_near(center, Vector3F(1.0f / 3.0f, 1.0f / 3.0f, 0.0f), tol));
     EXPECT_TRUE(bounds.is_valid());
@@ -69,7 +69,7 @@ TEST(Triangle, ClassificationCentroidBoundAndOperatorWork) {
 TEST(Triangle, TraceHitsFrontFace) {
     const auto triangle = make_triangle();
 
-    const auto hit = triangle.make_geometry_operator().trace(Ray<float>(Vector3F(0.2f, 0.2f, 1.0f), Vector3F(0, 0, -1)));
+    const auto hit = triangle.make_device_geometry_view().trace(Ray<float>(Vector3F(0.2f, 0.2f, 1.0f), Vector3F(0, 0, -1)));
 
     EXPECT_TRUE(hit.is_intersecting);
     EXPECT_NEAR(hit.distance, 1.0f, tol);

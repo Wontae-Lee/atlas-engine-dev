@@ -2,7 +2,7 @@
 
 #include <atlas/math/math.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 struct MeasurerProbe {
@@ -22,8 +22,4 @@ struct MeasurerProbe {
 }
 
 namespace atlas {
-
-template <typename T>
-using MeasurerProbe = atlas::system::MeasurerProbe<T>;
-
 }

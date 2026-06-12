@@ -1,46 +1,9 @@
 #pragma once
 
 #include <atlas/logging/logging.h>
-#include <atlas/random/uniform_real_distribution.h>
-
 #include <stdexcept>
 
-namespace atlas::fluid {
-
-template <typename T>
-UniformGenerateOperator<T>::UniformGenerateOperator(const unsigned int seed) noexcept
-    : seed(seed)
-    , engine(seed) {
-    // Initialize the random engine with a fixed seed for reproducible samples.
-}
-
-template <typename T>
-Vector3<T>
-UniformGenerateOperator<T>::generate(const T min_value,
-                                     const T max_value) const {
-    // Create a uniform distribution over the configured scalar interval.
-    atlas::uniform_real_distribution<T> dist(min_value, max_value);
-
-    // Sample each vector component independently from the same interval.
-    return Vector3<T>(
-        dist(engine),
-        dist(engine),
-        dist(engine));
-}
-
-template <typename T>
-Vector3<T>
-UniformGenerateOperator<T>::generate(const unsigned int seed,
-                                     const T min_value,
-                                     const T max_value) const {
-    atlas::default_random_engine<T> seeded_engine(seed);
-    atlas::uniform_real_distribution<T> dist(min_value, max_value);
-
-    return Vector3<T>(
-        dist(seeded_engine),
-        dist(seeded_engine),
-        dist(seeded_engine));
-}
+namespace atlas {
 
 template <typename T>
 typename UniformGenerator<T>::Builder
@@ -160,4 +123,4 @@ UniformGenerator<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::fluid
+} // namespace atlas

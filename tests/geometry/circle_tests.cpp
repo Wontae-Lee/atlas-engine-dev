@@ -11,7 +11,7 @@ namespace {
 using atlas::Circle;
 using atlas::Ray;
 using atlas::Vector3F;
-using atlas::geometry::GeometryType;
+using atlas::GeometryType;
 using atlas::test::vec_near;
 using atlas::tol;
 
@@ -83,9 +83,9 @@ TEST(Circle, InsideSurfaceCentroidAndBoundWork) {
 TEST(Circle, GeometryOperatorAndTraceWork) {
     const Circle<float> circle(Vector3F(0, 0, 0), Vector3F(0, 0, 1), 2.0f);
 
-    const auto geometry_operator = circle.make_geometry_operator();
+    const auto geometry_operator = circle.make_device_geometry_view();
     const Ray<float> ray(Vector3F(0, 0, 5), Vector3F(0, 0, -1));
-    const auto hit = circle.make_geometry_operator().trace(ray);
+    const auto hit = circle.make_device_geometry_view().trace(ray);
 
     EXPECT_EQ(circle.type(), geometry_operator.type);
     EXPECT_TRUE(hit.is_intersecting);

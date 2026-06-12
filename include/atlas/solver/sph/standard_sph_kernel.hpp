@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 T
@@ -63,4 +63,4 @@ StandardSphKernel<T>::viscosity_laplacian(const T radius, const T cell_size) noe
            * cell_size * cell_size * cell_size);
 }
 
-} // namespace atlas::system
+} // namespace atlas

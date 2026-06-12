@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::physics {
+namespace atlas {
 
 template <typename T>
 constexpr Sync<T>::Sync() noexcept
@@ -18,7 +18,7 @@ constexpr Sync<T>::Sync(const Vector3<T>& translation_,
 }
 
 template <typename T>
-Sync<T>::Sync(const atlas::physics::SyncOperator<T>& op) noexcept
+Sync<T>::Sync(const atlas::SyncOperator<T>& op) noexcept
     : sync_operator(op) {
 }
 
@@ -111,13 +111,13 @@ Sync<T>::set_pose(const Vector3<T>& translation_,
 }
 
 template <typename T>
-const atlas::physics::SyncOperator<T>&
+const atlas::SyncOperator<T>&
 Sync<T>::sync() const noexcept {
     return sync_operator;
 }
 
 template <typename T>
-atlas::physics::SyncOperator<T>
+atlas::SyncOperator<T>
 Sync<T>::make_sync_operator() const noexcept {
     // Return a lightweight copy for operator-style use.
     return sync_operator;
@@ -136,7 +136,7 @@ Sync<T>::Builder::with_rigid_pose(const Vector3<T>& translation_,
 
 template <typename T>
 typename Sync<T>::Builder&
-Sync<T>::Builder::with_sync_operator(const atlas::physics::SyncOperator<T>& op) noexcept {
+Sync<T>::Builder::with_sync_operator(const atlas::SyncOperator<T>& op) noexcept {
     // Store a complete sync operator instead of separate pose components.
     _operator          = op;
     _has_sync_operator = true;
@@ -151,13 +151,13 @@ Sync<T>::Builder::validate() const {
     const Quaternion<T>& orientation = _has_sync_operator ? _operator.orientation : _orientation;
 
     // Translation must contain only finite values.
-    if (!atlas::math::isfinite(translation)) {
+    if (!atlas::isfinite(translation)) {
         throw std::runtime_error(
             "Sync::Builder: translation contains non-finite values.");
     }
 
     // Orientation must contain only finite values.
-    if (!atlas::math::isfinite(orientation)) {
+    if (!atlas::isfinite(orientation)) {
         throw std::runtime_error(
             "Sync::Builder: orientation contains non-finite values.");
     }
@@ -183,7 +183,7 @@ Sync<T>::Builder::build() const {
         s.sync_operator = _operator;
         s.rebuild_matrices();
     } else {
-        s.sync_operator = atlas::physics::SyncOperator<T>(_translation, _orientation);
+        s.sync_operator = atlas::SyncOperator<T>(_translation, _orientation);
     }
 
     return s;
@@ -196,4 +196,4 @@ Sync<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<Sync<T>>(std::move(s));
 }
 
-} // namespace atlas::physics
+} // namespace atlas

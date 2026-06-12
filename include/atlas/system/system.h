@@ -4,7 +4,7 @@
  * @file system.h
  * @brief Declares the top-level simulation System driver.
  *
- * This file defines atlas::system::System, which coordinates the major runtime
+ * This file defines atlas::System, which coordinates the major runtime
  * subsystems used during one simulation step. The system owns references to
  * fluid state, universe/domain state, particle sources and sinks, optional
  * collider logic, and optional orchestration logic.
@@ -26,7 +26,7 @@
 
 #include <type_traits>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Coordinates the major runtime subsystems of a particle simulation.
@@ -443,8 +443,8 @@ private:
      * state objects are owned by the fluid and remain valid for the lifetime of
      * the system.
      */
-    fluid::FluidPositionState<T>* _cached_position_state {};
-    fluid::FluidVelocityState<T>* _cached_velocity_state {};
+    FluidPositionState<T>* _cached_position_state {};
+    FluidVelocityState<T>* _cached_velocity_state {};
 };
 
 /**
@@ -687,29 +687,20 @@ private:
     T _dt { static_cast<T>(0.01) };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::system::System.
- *
- * This alias exposes the system type directly in the atlas namespace.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using System = system::System<T>;
 
 /**
  * @brief Host shared pointer alias for System.
  *
- * This alias represents a host-managed shared pointer to atlas::system::System.
+ * This alias represents a host-managed shared pointer to atlas::System.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using SystemHostPtr = atlas::host_shared_ptr<system::System<T>>;
+using SystemHostPtr = atlas::host_shared_ptr<System<T>>;
 
 } // namespace atlas
 

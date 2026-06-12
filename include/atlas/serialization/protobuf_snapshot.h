@@ -9,17 +9,17 @@
 #include <optional>
 #include <string_view>
 
-namespace atlas::fluid {
+namespace atlas {
 template <typename T>
 class Fluid;
 }
 
-namespace atlas::universe {
+namespace atlas {
 template <typename T>
 class Universe;
 }
 
-namespace atlas::serialization {
+namespace atlas {
 
 /**
  * @brief Serializable binary snapshot of a fluid instance.
@@ -36,7 +36,7 @@ struct FluidBinarySnapshot final {
     T statistical_weight       = T(1);
 
     HostBuffer<MaterialProperties<T>> properties;
-    HostBuffer<fluid::GenerateOperator<T>> generators;
+    HostBuffer<GenerateOperator<T>> generators;
 
     std::optional<HostBuffer<Vector3<T>>> positions;
     std::optional<HostBuffer<Vector3<T>>> velocities;
@@ -78,7 +78,7 @@ struct UniverseBinarySnapshot final {
  */
 template <typename T>
 void
-save_fluid_binary(const atlas::fluid::Fluid<T>& fluid, std::string_view path);
+save_fluid_binary(const atlas::Fluid<T>& fluid, std::string_view path);
 
 /**
  * @brief Load a protobuf-based binary snapshot into a fluid snapshot structure.
@@ -100,7 +100,7 @@ load_fluid_binary(std::string_view path);
  */
 template <typename T>
 void
-save_universe_binary(const atlas::universe::Universe<T>& universe, std::string_view path);
+save_universe_binary(const atlas::Universe<T>& universe, std::string_view path);
 
 /**
  * @brief Load a protobuf-based binary snapshot into a universe snapshot structure.
@@ -113,4 +113,4 @@ template <typename T>
 UniverseBinarySnapshot<T>
 load_universe_binary(std::string_view path);
 
-} // namespace atlas::serialization
+} // namespace atlas

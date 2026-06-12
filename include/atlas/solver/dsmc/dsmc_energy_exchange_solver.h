@@ -2,7 +2,7 @@
 
 #include <atlas/solver/dsmc/dsmc_solver.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 class DsmcEnergyExchangeSolver final : public DsmcSolver<T> {
@@ -121,18 +121,14 @@ private:
     DsmcCollisionWorkloadType _workload_type { DsmcCollisionWorkloadType::cell };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
+template <typename T>
+using DsmcEnergyExchangeSolverHostPtr = atlas::host_shared_ptr<atlas::DsmcEnergyExchangeSolver<T>>;
 
 template <typename T>
-using DsmcEnergyExchangeSolver = atlas::system::DsmcEnergyExchangeSolver<T>;
-
-template <typename T>
-using DsmcEnergyExchangeSolverHostPtr = atlas::host_shared_ptr<atlas::system::DsmcEnergyExchangeSolver<T>>;
-
-template <typename T>
-using DsmcEnergyExchangeSolverDevicePtr = atlas::device_shared_ptr<atlas::system::DsmcEnergyExchangeSolver<T>>;
+using DsmcEnergyExchangeSolverDevicePtr = atlas::device_shared_ptr<atlas::DsmcEnergyExchangeSolver<T>>;
 
 } // namespace atlas
 

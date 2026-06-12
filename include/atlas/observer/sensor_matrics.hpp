@@ -1,6 +1,6 @@
 #pragma once
 #include <fstream>
-namespace atlas::observer {
+namespace atlas {
 inline ParticleCountSensorMatrics::ParticleCountSensorMatrics(const std::size_t reserve_count) {
     if (reserve_count > 0) {
         _records.reserve(reserve_count);

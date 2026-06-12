@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <initializer_list>
 #include <type_traits>
-namespace atlas ::math {
+namespace atlas {
 /**
  * @brief Fixed-size dense matrix with expression-template assignment support.
  *
@@ -403,9 +403,6 @@ matmul(const Matrix<T, R, C>& a, const Matrix<T, C, K>& b) noexcept;
 template <typename T, std::size_t R, std::size_t C>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, R>
 matmul(const Matrix<T, R, C>& a, const Vector<T, C>& x) noexcept;
-} // namespace math
-namespace atlas {
-template <typename T, std::size_t R, std::size_t C>
-using Matrix = math::Matrix<T, R, C>;
+
 } // namespace atlas
 #include <atlas/math/matrix/matrix.hpp>

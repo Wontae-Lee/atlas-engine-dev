@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 void
@@ -47,4 +47,4 @@ DtRemainColliderKernel<T>::operator()(Vector3<T>& position,
     position = offset_position + reflected * remaining;
 }
 
-} // namespace atlas::system
+} // namespace atlas

@@ -2,7 +2,7 @@
 
 #include <atlas/solver/dsmc/statistics/dsmc_statistics.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 class DsmcSimpleStatistics final : public DsmcStatistics<T> {
@@ -13,13 +13,6 @@ public:
             int index,
             T dt) const override;
 };
-
-} // namespace atlas::system
-
-namespace atlas {
-
-template <typename T>
-using DsmcSimpleStatistics = atlas::system::DsmcSimpleStatistics<T>;
 
 } // namespace atlas
 

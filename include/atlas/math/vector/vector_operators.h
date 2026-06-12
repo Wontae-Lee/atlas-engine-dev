@@ -4,7 +4,7 @@
 #include <atlas/math/vector/vector_expression.h>
 #include <type_traits>
 
-namespace atlas::math {
+namespace atlas {
 
 /**
  * @file operators.h
@@ -14,7 +14,7 @@ namespace atlas::math {
  * This header defines:
  * 1) Type aliases (`VectorAdd`, `VectorMul`, ...) that bind expression-node templates
  *    (`VectorUnaryOperator`, `VectorBinaryOperator`, `VectorScalarBinaryOperator`) to
- *    specific operator functors from `atlas::math::detail`.
+ *    specific operator functors from `atlas::detail`.
  * 2) Free-function operator overloads (`+`, `-`, `*`, `/`, comparisons, logical ops)
  *    that build **lazy expression nodes** instead of performing immediate computation.
  *
@@ -31,8 +31,8 @@ namespace atlas::math {
  * that reference temporaries from a function unless the evaluation happens before the
  * temporaries are destroyed.
  *
- * @see atlas::math::VectorExpression, atlas::math::VectorUnaryOperator,
- *      atlas::math::VectorBinaryOperator, atlas::math::VectorScalarBinaryOperator
+ * @see atlas::VectorExpression, atlas::VectorUnaryOperator,
+ *      atlas::VectorBinaryOperator, atlas::VectorScalarBinaryOperator
  */
 
 // ------------------------------------------------------------
@@ -617,4 +617,4 @@ operator|(const VectorExpression<bool, EL>& l, const VectorExpression<bool, ER>&
     return VectorOr<EL, ER>(l(), r());
 }
 
-} // namespace atlas::math
+} // namespace atlas

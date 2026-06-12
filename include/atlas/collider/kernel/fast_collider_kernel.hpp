@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 Vector3<T>
@@ -14,7 +14,7 @@ FastColliderKernel<T>::surface_velocity(const Unit<T>& unit,
 
     if (unit.angular_velocity().has_value()) {
         const Vector3<T> radius = surface_point - unit.sync_operator().translation;
-        velocity += atlas::math::cross(*unit.angular_velocity(), radius);
+        velocity += atlas::cross(*unit.angular_velocity(), radius);
     }
 
     return velocity;
@@ -54,4 +54,4 @@ FastColliderKernel<T>::operator()(Vector3<T>& position,
     velocity = interaction(relative_incident, hit_normal) + wall_velocity;
 }
 
-} // namespace atlas::system
+} // namespace atlas

@@ -1,44 +1,53 @@
 #pragma once
-namespace atlas::system {
+namespace atlas {
+
+namespace detail {
+
 template <typename T>
-SphKernel<T>::SphKernel() noexcept
-    : type(SphKernelType::standard) {
-    new (&standard) StandardSphKernel<T> {};
+using SphKernelVariant = DeviceVariant<
+    SphKernel<T>,
+    SphKernelType,
+    SphKernelType::standard,
+    DeviceVariantCase<
+        SphKernel<T>,
+        SphKernelType,
+        SphKernelType::standard,
+        StandardSphKernel<T>,
+        &SphKernel<T>::standard>,
+    DeviceVariantCase<
+        SphKernel<T>,
+        SphKernelType,
+        SphKernelType::cubic_spline,
+        CubicSplineSphKernel<T>,
+        &SphKernel<T>::cubic_spline>,
+    DeviceVariantCase<
+        SphKernel<T>,
+        SphKernelType,
+        SphKernelType::wendland_quintic,
+        WendlandQuinticSphKernel<T>,
+        &SphKernel<T>::wendland_quintic>>;
+
+} // namespace detail
+
+template <typename T>
+SphKernel<T>::SphKernel() noexcept {
+    detail::SphKernelVariant<T>::construct(*this, SphKernelType::standard);
 }
 
 template <typename T>
-SphKernel<T>::SphKernel(const SphKernelType type) noexcept
-    : type(type) {
-    switch (type) {
-    case SphKernelType::standard:
-        new (&standard) StandardSphKernel<T> {};
-        return;
-    case SphKernelType::cubic_spline:
-        new (&cubic_spline) CubicSplineSphKernel<T> {};
-        return;
-    case SphKernelType::wendland_quintic:
-        new (&wendland_quintic) WendlandQuinticSphKernel<T> {};
-        return;
-    default:
-        this->type = SphKernelType::standard;
-        new (&standard) StandardSphKernel<T> {};
-        return;
-    }
+SphKernel<T>::SphKernel(const SphKernelType type) noexcept {
+    detail::SphKernelVariant<T>::construct(*this, type);
 }
 
 template <typename T>
-SphKernel<T>::SphKernel(const SphKernel& other) noexcept
-    : type(other.type) {
-    copy_from(other);
+SphKernel<T>::SphKernel(const SphKernel& other) noexcept {
+    detail::SphKernelVariant<T>::copy_construct(*this, other);
 }
 
 template <typename T>
 SphKernel<T>&
 SphKernel<T>::operator=(const SphKernel& other) noexcept {
-    if (this == &other) return *this;
-    destroy_active();
-    type = other.type;
-    copy_from(other);
+    detail::SphKernelVariant<T>::assign(*this, other);
     return *this;
 }
 
@@ -50,58 +59,31 @@ SphKernel<T>::~SphKernel() noexcept {
 template <typename T>
 void
 SphKernel<T>::destroy_active() noexcept {
-    switch (type) {
-    case SphKernelType::standard:
-        standard.~StandardSphKernel<T>();
-        return;
-    case SphKernelType::cubic_spline:
-        cubic_spline.~CubicSplineSphKernel<T>();
-        return;
-    case SphKernelType::wendland_quintic:
-        wendland_quintic.~WendlandQuinticSphKernel<T>();
-        return;
-    default:
-        standard.~StandardSphKernel<T>();
-        return;
-    }
+    detail::SphKernelVariant<T>::destroy(*this);
 }
 
 template <typename T>
 void
 SphKernel<T>::copy_from(const SphKernel& other) noexcept {
-    switch (type) {
-    case SphKernelType::standard:
-        new (&standard) StandardSphKernel<T>(other.standard);
-        return;
-    case SphKernelType::cubic_spline:
-        new (&cubic_spline) CubicSplineSphKernel<T>(other.cubic_spline);
-        return;
-    case SphKernelType::wendland_quintic:
-        new (&wendland_quintic) WendlandQuinticSphKernel<T>(other.wendland_quintic);
-        return;
-    default:
-        type = SphKernelType::standard;
-        new (&standard) StandardSphKernel<T>(other.standard);
-        return;
-    }
+    detail::SphKernelVariant<T>::copy_construct(*this, other);
 }
 
 template <typename T>
 SphKernel<T>::SphKernel(const StandardSphKernel<T>& op)
-    : type(SphKernelType::standard) {
-    new (&standard) StandardSphKernel<T>(op);
+{
+    detail::SphKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 SphKernel<T>::SphKernel(const CubicSplineSphKernel<T>& op)
-    : type(SphKernelType::cubic_spline) {
-    new (&cubic_spline) CubicSplineSphKernel<T>(op);
+{
+    detail::SphKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 SphKernel<T>::SphKernel(const WendlandQuinticSphKernel<T>& op)
-    : type(SphKernelType::wendland_quintic) {
-    new (&wendland_quintic) WendlandQuinticSphKernel<T>(op);
+{
+    detail::SphKernelVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>

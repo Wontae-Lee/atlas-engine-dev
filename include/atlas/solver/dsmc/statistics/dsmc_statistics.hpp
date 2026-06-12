@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 bool
@@ -63,12 +63,12 @@ DsmcStatistics<T>::measure(const DsmcProbe<T>& probe,
                 } else {
                     for (int k = 0; k < SAMPLE_PAIRS; ++k) {
                         const auto k64 = static_cast<std::uint64_t>(k);
-                        const int lhs_local = atlas::sampling::sample_hashed_index(
+                        const int lhs_local = atlas::sample_hashed_index(
                             cell, count,
-                            probe.collision_seed + k64 * 2u + atlas::seed::DSMC_COLLISION_LHS_SALT);
-                        int rhs_local = atlas::sampling::sample_hashed_index(
+                            probe.collision_seed + k64 * 2u + atlas::DSMC_COLLISION_LHS_SALT);
+                        int rhs_local = atlas::sample_hashed_index(
                             cell, count - 1,
-                            probe.collision_seed + k64 * 2u + 1u + atlas::seed::DSMC_COLLISION_RHS_SALT);
+                            probe.collision_seed + k64 * 2u + 1u + atlas::DSMC_COLLISION_RHS_SALT);
                         if (rhs_local >= lhs_local) ++rhs_local;
 
                         const int pi = probe.indices_ptr[begin + lhs_local];
@@ -83,7 +83,7 @@ DsmcStatistics<T>::measure(const DsmcProbe<T>& probe,
                     }
                 }
 
-                probe.max_relative_speed_ptr[cell] = atlas::math::sqrt_nonnegative(max_relative_squared);
+                probe.max_relative_speed_ptr[cell] = atlas::sqrt_nonnegative(max_relative_squared);
 
                 // NTC majorant: take max of the persistent value and the current sample.
                 if (sampled_max_sigma_g > max_sigma_g) {
@@ -129,4 +129,4 @@ DsmcStatistics<T>::measure(const DsmcProbe<T>& probe,
     return true;
 }
 
-} // namespace atlas::system
+} // namespace atlas

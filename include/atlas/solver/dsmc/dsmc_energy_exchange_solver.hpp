@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 typename DsmcEnergyExchangeSolver<T>::Builder
@@ -51,7 +51,7 @@ DsmcEnergyExchangeSolver<T>::apply_flattened_collision(const DeviceBuffer<int>* 
                 return;
             }
 
-            const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+            const auto stream = static_cast<std::uint64_t>(cell) * atlas::DSMC_CELL_STREAM_MULTIPLIER
                 + static_cast<std::uint64_t>(local_collision);
             int lhs_local = 0;
             int rhs_local = 0;
@@ -112,7 +112,7 @@ DsmcEnergyExchangeSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_
             if (end - begin < count) {
                 return;
             }
-            const auto stream_base = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER;
+            const auto stream_base = static_cast<std::uint64_t>(cell) * atlas::DSMC_CELL_STREAM_MULTIPLIER;
 
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
                 const auto stream = stream_base + static_cast<std::uint64_t>(local_collision);
@@ -151,7 +151,7 @@ DsmcEnergyExchangeSolver<T>::collide_pair(const Probe& probe,
     const int particle_i = DsmcSolver<T>::particle_at(lhs_local, begin, end, probe.particle_count, probe.indices_ptr);
     const int particle_j = DsmcSolver<T>::particle_at(rhs_local, begin, end, probe.particle_count, probe.indices_ptr);
 
-    const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+    const auto stream = static_cast<std::uint64_t>(cell) * atlas::DSMC_CELL_STREAM_MULTIPLIER
         + static_cast<std::uint64_t>(local_collision);
     return DsmcEnergyExchangeSolver<T>::collide_indexed_pair(
         probe,
@@ -206,9 +206,9 @@ DsmcEnergyExchangeSolver<T>::collide_indexed_pair(const Probe& probe,
         accept_probability = T(1);
     }
 
-    const T accept_sample = atlas::sampling::sample_hashed_unit_interval<T>(
+    const T accept_sample = atlas::sample_hashed_unit_interval<T>(
         cell,
-        probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_ACCEPT_SALT);
+        probe.collision_seed + stream + atlas::DSMC_COLLISION_ACCEPT_SALT);
     if (accept_sample >= accept_probability) {
         return false;
     }
@@ -247,9 +247,9 @@ DsmcEnergyExchangeSolver<T>::sample_unit(const int cell,
                                          const int local_collision,
                                          const std::uint64_t seed,
                                          const std::uint64_t salt) noexcept {
-    const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+    const auto stream = static_cast<std::uint64_t>(cell) * atlas::DSMC_CELL_STREAM_MULTIPLIER
         + static_cast<std::uint64_t>(local_collision);
-    return atlas::sampling::sample_hashed_unit_interval<T>(cell, seed + stream + salt);
+    return atlas::sample_hashed_unit_interval<T>(cell, seed + stream + salt);
 }
 
 template <typename T>
@@ -305,7 +305,7 @@ DsmcEnergyExchangeSolver<T>::rotational_relaxation_probability(const MaterialPro
             const T tr = collision_energy / denominator;
             if (tr > T(0)) {
                 const T probability = (T(1)
-                                       + material.rotational_relaxation_c2.value() / atlas::math::sqrt_nonnegative(tr)
+                                       + material.rotational_relaxation_c2.value() / atlas::sqrt_nonnegative(tr)
                                        + material.rotational_relaxation_c3.value() / tr)
                     / material.rotational_relaxation_c1.value();
                 return probability < T(0) ? T(0) : (probability > T(1) ? T(1) : probability);
@@ -485,7 +485,7 @@ DsmcEnergyExchangeSolver<T>::rescale_relative_velocity(Vector3<T>& lhs_velocity,
         return;
     }
 
-    const T target_speed = atlas::math::sqrt_nonnegative(T(2) * translational_energy / reduced_mass);
+    const T target_speed = atlas::sqrt_nonnegative(T(2) * translational_energy / reduced_mass);
     const Vector3<T> scattered_relative = relative * (target_speed / speed);
     const Vector3<T> center = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
 
@@ -556,4 +556,4 @@ DsmcEnergyExchangeSolver<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<DsmcEnergyExchangeSolver<T>>(_universe, _fluid, _searcher, _kernel_type, _workload_type);
 }
 
-} // namespace atlas::system
+} // namespace atlas

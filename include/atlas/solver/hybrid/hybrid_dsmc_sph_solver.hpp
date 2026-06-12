@@ -11,7 +11,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 HybridDsmcSphSolver<T>::HybridDsmcSphSolver(UniverseHostPtr<T> universe,
@@ -107,28 +107,28 @@ HybridDsmcSphSolver<T>::ensure_states() {
 
     const auto number_of_cells = static_cast<std::size_t>(this->_universe->number_of_cells());
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseNumberParticleState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseNumberParticleState<T>>(number_of_cells);
+    if (!this->_universe->template has_state<atlas::UniverseNumberParticleState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseNumberParticleState<T>>(number_of_cells);
     }
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseFieldForceState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseFieldForceState<T>>(number_of_cells);
+    if (!this->_universe->template has_state<atlas::UniverseFieldForceState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseFieldForceState<T>>(number_of_cells);
     }
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseMaxRelativeSpeedState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseMaxRelativeSpeedState<T>>(number_of_cells);
+    if (!this->_universe->template has_state<atlas::UniverseMaxRelativeSpeedState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseMaxRelativeSpeedState<T>>(number_of_cells);
     }
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseMaxSigmaGState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseMaxSigmaGState<T>>(number_of_cells);
+    if (!this->_universe->template has_state<atlas::UniverseMaxSigmaGState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseMaxSigmaGState<T>>(number_of_cells);
     }
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseCollisionRemainderState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseCollisionRemainderState<T>>(number_of_cells);
+    if (!this->_universe->template has_state<atlas::UniverseCollisionRemainderState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseCollisionRemainderState<T>>(number_of_cells);
     }
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseCollisionCountState<int>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseCollisionCountState<int>>(number_of_cells);
+    if (!this->_universe->template has_state<atlas::UniverseCollisionCountState<int>>()) {
+        this->_universe->template emplace_state<atlas::UniverseCollisionCountState<int>>(number_of_cells);
     }
 }
 
@@ -140,9 +140,9 @@ HybridDsmcSphSolver<T>::initialize_context() noexcept {
         return false;
     }
 
-    auto* position_state = this->_fluid->template state<atlas::fluid::FluidPositionState<T>>();
-    auto* velocity_state = this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>();
-    auto* species_state  = this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
+    auto* position_state = this->_fluid->template state<atlas::FluidPositionState<T>>();
+    auto* velocity_state = this->_fluid->template state<atlas::FluidVelocityState<T>>();
+    auto* species_state  = this->_fluid->template state<atlas::FluidSpeciesState<T>>();
 
     if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr) {
         reset_states();
@@ -159,12 +159,12 @@ bool
 HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe = {};
 
-    _probe.sph.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidPositionState<T>>()->data().data());
-    _probe.sph.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data().data());
-    _probe.sph.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>()->data().data());
+    _probe.sph.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidPositionState<T>>()->data().data());
+    _probe.sph.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidVelocityState<T>>()->data().data());
+    _probe.sph.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidSpeciesState<T>>()->data().data());
     _probe.sph.properties_ptr      = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
-    _probe.sph.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()->data().data());
-    _probe.sph.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>()->data().data());
+    _probe.sph.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseNumberParticleState<T>>()->data().data());
+    _probe.sph.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseFieldForceState<T>>()->data().data());
     _probe.sph.indices_ptr          = this->_searcher->indices();
     _probe.sph.cell_start_ptr       = this->_searcher->cell_start();
     _probe.sph.cell_end_ptr         = this->_searcher->cell_end();
@@ -179,22 +179,22 @@ HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe.sph.num_of_properties    = static_cast<int>(this->_fluid->particle_properties().size());
     _probe.sph.kernel               = _sph_kernel;
 
-    _probe.dsmc.velocity_ptr            = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data().data());
-    if (auto* internal_energy_state = this->_fluid->template state<atlas::fluid::FluidInternalEnergyState<T>>();
+    _probe.dsmc.velocity_ptr            = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidVelocityState<T>>()->data().data());
+    if (auto* internal_energy_state = this->_fluid->template state<atlas::FluidInternalEnergyState<T>>();
         internal_energy_state != nullptr && internal_energy_state->data().size() >= this->_fluid->particle_count()) {
         _probe.dsmc.internal_energy_ptr = atlas::raw_pointer_cast(internal_energy_state->data().data());
     }
-    _probe.dsmc.species_ptr             = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>()->data().data());
+    _probe.dsmc.species_ptr             = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidSpeciesState<T>>()->data().data());
     _probe.dsmc.properties_ptr          = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
-    _probe.dsmc.number_particle_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()->data().data());
-    _probe.dsmc.max_relative_speed_ptr  = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseMaxRelativeSpeedState<T>>()->data().data());
-    _probe.dsmc.max_sigma_g_ptr         = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseMaxSigmaGState<T>>()->data().data());
-    _probe.dsmc.collision_remainder_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseCollisionRemainderState<T>>()->data().data());
-    _probe.dsmc.collision_count_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseCollisionCountState<int>>()->data().data());
+    _probe.dsmc.number_particle_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseNumberParticleState<T>>()->data().data());
+    _probe.dsmc.max_relative_speed_ptr  = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseMaxRelativeSpeedState<T>>()->data().data());
+    _probe.dsmc.max_sigma_g_ptr         = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseMaxSigmaGState<T>>()->data().data());
+    _probe.dsmc.collision_remainder_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseCollisionRemainderState<T>>()->data().data());
+    _probe.dsmc.collision_count_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseCollisionCountState<int>>()->data().data());
     _probe.dsmc.indices_ptr             = this->_searcher->indices();
     _probe.dsmc.cell_start_ptr          = this->_searcher->cell_start();
     _probe.dsmc.cell_end_ptr            = this->_searcher->cell_end();
-    if (auto* volume_state = this->_universe->template state<atlas::universe::UniverseVolumeState<T>>();
+    if (auto* volume_state = this->_universe->template state<atlas::UniverseVolumeState<T>>();
         volume_state != nullptr && volume_state->data().size() == static_cast<std::size_t>(this->_universe->number_of_cells())) {
         _probe.dsmc.universe_volume_ptr = atlas::raw_pointer_cast(volume_state->data().data());
     }
@@ -289,22 +289,22 @@ HybridDsmcSphSolver<T>::reset_states() {
 
     ensure_states();
 
-    if (auto* state = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()) {
+    if (auto* state = this->_universe->template state<atlas::UniverseNumberParticleState<T>>()) {
         state->reset();
     }
-    if (auto* state = this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>()) {
+    if (auto* state = this->_universe->template state<atlas::UniverseFieldForceState<T>>()) {
         state->reset();
     }
-    if (auto* state = this->_universe->template state<atlas::universe::UniverseMaxRelativeSpeedState<T>>()) {
+    if (auto* state = this->_universe->template state<atlas::UniverseMaxRelativeSpeedState<T>>()) {
         state->reset();
     }
-    if (auto* state = this->_universe->template state<atlas::universe::UniverseMaxSigmaGState<T>>()) {
+    if (auto* state = this->_universe->template state<atlas::UniverseMaxSigmaGState<T>>()) {
         state->reset();
     }
-    if (auto* state = this->_universe->template state<atlas::universe::UniverseCollisionRemainderState<T>>()) {
+    if (auto* state = this->_universe->template state<atlas::UniverseCollisionRemainderState<T>>()) {
         state->reset();
     }
-    if (auto* state = this->_universe->template state<atlas::universe::UniverseCollisionCountState<int>>()) {
+    if (auto* state = this->_universe->template state<atlas::UniverseCollisionCountState<int>>()) {
         state->reset();
     }
 }
@@ -757,7 +757,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
                 }
             }
 
-            max_relative_speed_ptr[owner] = atlas::math::sqrt_nonnegative(max_relative_squared);
+            max_relative_speed_ptr[owner] = atlas::sqrt_nonnegative(max_relative_squared);
             max_sigma_g_ptr[owner] = max_sigma_g;
 
             if (!(max_sigma_g > T(0))) {
@@ -776,7 +776,7 @@ HybridDsmcSphSolver<T>::measure_grouped_dsmc_statistics(const T dt) {
             int collision_count = static_cast<int>(std::floor(expected_collisions));
             const T remainder = expected_collisions - static_cast<T>(collision_count);
             if (remainder > T(0)
-                && atlas::sampling::sample_hashed_unit_interval<T>(owner, probe.collision_seed) < remainder) {
+                && atlas::sample_hashed_unit_interval<T>(owner, probe.collision_seed) < remainder) {
                 ++collision_count;
             }
 
@@ -813,20 +813,20 @@ HybridDsmcSphSolver<T>::apply_random_grouped_dsmc_collisions() {
             }
 
             for (int collision = 0; collision < collision_count; ++collision) {
-                const auto stream = static_cast<std::uint64_t>(owner) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+                const auto stream = static_cast<std::uint64_t>(owner) * atlas::DSMC_CELL_STREAM_MULTIPLIER
                     + static_cast<std::uint64_t>(collision);
 
                 int lhs_local = -1;
                 int rhs_local = -1;
 
-                lhs_local = atlas::sampling::sample_hashed_index(
+                lhs_local = atlas::sample_hashed_index(
                     owner,
                     count,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_LHS_SALT);
-                rhs_local = atlas::sampling::sample_hashed_index(
+                    probe.collision_seed + stream + atlas::DSMC_COLLISION_LHS_SALT);
+                rhs_local = atlas::sample_hashed_index(
                     owner,
                     count - 1,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
+                    probe.collision_seed + stream + atlas::DSMC_COLLISION_RHS_SALT);
                 if (rhs_local >= lhs_local) {
                     ++rhs_local;
                 }
@@ -871,9 +871,9 @@ HybridDsmcSphSolver<T>::apply_random_grouped_dsmc_collisions() {
                     }
                 }
 
-                const T accept_sample = atlas::sampling::sample_hashed_unit_interval<T>(
+                const T accept_sample = atlas::sample_hashed_unit_interval<T>(
                     owner,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_ACCEPT_SALT);
+                    probe.collision_seed + stream + atlas::DSMC_COLLISION_ACCEPT_SALT);
 
                 if (!(accept_sample < accept_probability)) {
                     continue;
@@ -913,7 +913,7 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
             }
 
             for (int collision = 0; collision < collision_count; ++collision) {
-                const auto stream = static_cast<std::uint64_t>(owner) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+                const auto stream = static_cast<std::uint64_t>(owner) * atlas::DSMC_CELL_STREAM_MULTIPLIER
                     + static_cast<std::uint64_t>(collision);
 
                 int lhs_local = -1;
@@ -966,9 +966,9 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
                     }
                 }
 
-                const T accept_sample = atlas::sampling::sample_hashed_unit_interval<T>(
+                const T accept_sample = atlas::sample_hashed_unit_interval<T>(
                     owner,
-                    probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_ACCEPT_SALT);
+                    probe.collision_seed + stream + atlas::DSMC_COLLISION_ACCEPT_SALT);
 
                 if (!(accept_sample < accept_probability)) {
                     continue;
@@ -1016,17 +1016,17 @@ HybridDsmcSphSolver<T>::select_pair_offsets_without_replacement(int& lhs_local,
         return;
     }
 
-    const int offset = atlas::sampling::sample_hashed_index(
+    const int offset = atlas::sample_hashed_index(
         selector,
         count,
-        seed + atlas::seed::DSMC_COLLISION_LHS_SALT);
+        seed + atlas::DSMC_COLLISION_LHS_SALT);
 
     int stride = count == 2
         ? 1
-        : 1 + atlas::sampling::sample_hashed_index(
+        : 1 + atlas::sample_hashed_index(
               selector,
               count - 1,
-              seed + atlas::seed::DSMC_COLLISION_RHS_SALT);
+              seed + atlas::DSMC_COLLISION_RHS_SALT);
 
     for (;;) {
         int a = stride;
@@ -1159,4 +1159,4 @@ HybridDsmcSphSolver<T>::Builder::make_host_shared() const {
         _pairing_without_replacement);
 }
 
-} // namespace atlas::system
+} // namespace atlas

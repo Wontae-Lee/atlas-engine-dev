@@ -9,7 +9,7 @@
 #include <atlas/math/math.h>
 #include <atlas/unit/unit.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 class FastColliderKernel final {
@@ -44,6 +44,9 @@ public:
                const SurfaceInteractionKernel<T>& interaction) const noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas
+
+namespace atlas {
+} // namespace atlas
 
 #include <atlas/collider/kernel/fast_collider_kernel.hpp>

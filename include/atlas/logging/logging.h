@@ -40,7 +40,7 @@ enum class LoggingLevel : uint8_t {
  * @details
  * `Logger` is designed for stream-style usage:
  * @code
- * atlas::logger::info() << "step=" << step << ", value=" << value;
+ * atlas::info() << "step=" << step << ", value=" << value;
  * @endcode
  *
  * The object accumulates streamed text into an internal buffer and flushes the
@@ -193,8 +193,6 @@ public:
     unmute();
 };
 
-namespace logger {
-
     /**
      * @brief Create an info-level logger.
      *
@@ -238,9 +236,6 @@ namespace logger {
     debug(std::source_location loc = std::source_location::current()) {
         return Logger(LoggingLevel::Debug, loc);
     }
-
-} // namespace logger
-
 namespace detail {
 
     /**
@@ -376,8 +371,6 @@ public:
     unmute() { }
 };
 
-namespace logger {
-
     /**
      * @brief Return a no-op info logger when logging is disabled.
      *
@@ -421,9 +414,6 @@ namespace logger {
     debug(std::source_location = std::source_location::current()) {
         return make_null_logger();
     }
-
-} // namespace logger
-
 #endif
 
 namespace detail {

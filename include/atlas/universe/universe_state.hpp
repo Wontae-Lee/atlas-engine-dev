@@ -1,7 +1,7 @@
 #pragma once
 #include <atlas/parallel/parallel_fill.h>
 
-namespace atlas::universe {
+namespace atlas {
 template <typename Buffer>
 ATLAS_HOST ATLAS_FORCE_INLINE void
 UniverseState::reset_buffer(Buffer& buffer) {

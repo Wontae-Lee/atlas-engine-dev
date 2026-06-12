@@ -12,7 +12,7 @@
 
 #include <type_traits>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief SPARTA-style internal-energy sampling mode for wall collisions.
@@ -265,8 +265,8 @@ public:
      * @param incident Incident per-particle internal energy.
      * @return Post-collision internal energy.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE fluid::FluidInternalEnergy<T>
-    internal_energy(const fluid::FluidInternalEnergy<T>& incident) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy<T>
+    internal_energy(const FluidInternalEnergy<T>& incident) const noexcept;
 
     /**
      * @brief Computes deterministic post-collision internal energy for a surface hit.
@@ -279,8 +279,8 @@ public:
      * @param normal Outward unit surface normal.
      * @return Post-collision internal energy.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE fluid::FluidInternalEnergy<T>
-    internal_energy(const fluid::FluidInternalEnergy<T>& incident_energy,
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy<T>
+    internal_energy(const FluidInternalEnergy<T>& incident_energy,
                     const Vector3<T>& incident_velocity,
                     const Vector3<T>& normal) const noexcept;
 
@@ -298,8 +298,8 @@ public:
      * @param material Species material properties for the colliding particle.
      * @return Post-collision internal energy.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE fluid::FluidInternalEnergy<T>
-    internal_energy(const fluid::FluidInternalEnergy<T>& incident_energy,
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy<T>
+    internal_energy(const FluidInternalEnergy<T>& incident_energy,
                     const Vector3<T>& incident_velocity,
                     const Vector3<T>& normal,
                     const MaterialProperties<T>& material) const noexcept;
@@ -321,8 +321,8 @@ public:
      * @param vib_theta_sample Uniform sample for vibrational energy phase.
      * @return Post-collision internal energy.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE fluid::FluidInternalEnergy<T>
-    sample_internal_energy(const fluid::FluidInternalEnergy<T>& incident,
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy<T>
+    sample_internal_energy(const FluidInternalEnergy<T>& incident,
                            T trans_sample,
                            T trans_theta_sample,
                            T rot_sample,
@@ -477,15 +477,9 @@ private:
     MaxwellianInternalEnergyStyle _vib_style { MaxwellianInternalEnergyStyle::smooth };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
-
-using MaxwellianInternalEnergyStyle = atlas::system::MaxwellianInternalEnergyStyle;
-
-template <typename T>
-using MaxwellianSurfaceInteraction = atlas::system::MaxwellianSurfaceInteraction<T>;
-
 template <typename T>
 using MaxwellianSurfaceInteractionHostPtr = atlas::host_shared_ptr<MaxwellianSurfaceInteraction<T>>;
 

@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace atlas::fluid {
+namespace atlas {
 
 /**
  * @brief Removes particles from a target fluid according to configured sink units.
@@ -50,8 +50,6 @@ class Sink final {
     static_assert(std::is_floating_point_v<T>, "Sink requires a floating-point T");
 
 public:
-    using SinkProbe = atlas::fluid::SinkProbe<T>;
-
     /**
      * @brief Builder for validated Sink construction.
      */
@@ -173,7 +171,7 @@ private:
      * Invalid entries represent units without finite bounds and fall back to the
      * full despawn query.
      */
-    DeviceBuffer<atlas::spatial::AxisAlignedBoundingBox<T>> _unit_bounds;
+    DeviceBuffer<atlas::AxisAlignedBoundingBox<T>> _unit_bounds;
 
     /**
      * @brief Runtime despawn-type tags associated with the sink configuration.
@@ -451,17 +449,10 @@ private:
     T _tolerance = T(0);
 };
 
-} // namespace atlas::fluid
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::fluid::Sink.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using Sink = atlas::fluid::Sink<T>;
 
 /**
  * @brief Host-side shared pointer alias for Sink.

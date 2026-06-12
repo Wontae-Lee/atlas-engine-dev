@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::physics {
+namespace atlas {
 
 template <typename T>
 Unit<T>::Unit(atlas::GeometryOperator<T> geometry_operator,
@@ -127,14 +127,14 @@ Unit<T>::update(T dt) noexcept {
 
 template <typename T>
 void
-Unit<T>::move(const atlas::math::Vector<T, 3>& delta) noexcept {
+Unit<T>::move(const atlas::Vector<T, 3>& delta) noexcept {
     // Accumulate the displacement into the synchronization transform.
     _sync_operator.translation += delta;
 }
 
 template <typename T>
 void
-Unit<T>::rotate(const atlas::math::Vector<T, 3>& axis, T angle_rad) noexcept {
+Unit<T>::rotate(const atlas::Vector<T, 3>& axis, T angle_rad) noexcept {
     // Use the squared length to avoid an unnecessary square root for the zero-axis test.
     const T axis_len2 = axis.length_squared();
 
@@ -142,12 +142,12 @@ Unit<T>::rotate(const atlas::math::Vector<T, 3>& axis, T angle_rad) noexcept {
     if (axis_len2 <= T(0)) return;
 
     // Normalize the axis before constructing the incremental rotation quaternion.
-    const atlas::math::Vector<T, 3> normalized_axis = atlas::math::normalized_or(
+    const atlas::Vector<T, 3> normalized_axis = atlas::normalized_or(
         axis,
-        atlas::math::Vector<T, 3>(T(0), T(0), T(0)));
+        atlas::Vector<T, 3>(T(0), T(0), T(0)));
 
     // Build the incremental rotation represented by the normalized axis and angle.
-    const atlas::math::Quaternion<T> rotation = atlas::math::Quaternion<T>::from_axis_angle(normalized_axis, angle_rad);
+    const atlas::Quaternion<T> rotation = atlas::Quaternion<T>::from_axis_angle(normalized_axis, angle_rad);
 
     // Apply the incremental rotation and renormalize to reduce numerical drift.
     _sync_operator.orientation = (rotation * _sync_operator.orientation).normalized();
@@ -187,7 +187,7 @@ Unit<T>::Builder::with_geometry(const atlas::GeometryHostPtr<T>& geometry) {
     }
 
     _geometry          = geometry;
-    _geometry_operator = geometry->make_geometry_operator();
+    _geometry_operator = make_device_geometry_view(*geometry);
 
     return *this;
 }
@@ -206,21 +206,21 @@ Unit<T>::Builder::with_sync(const SyncHostPtr<T>& sync) {
 
 template <typename T>
 typename Unit<T>::Builder&
-Unit<T>::Builder::with_velocity(const atlas::math::Vector<T, 3>& v) noexcept {
+Unit<T>::Builder::with_velocity(const atlas::Vector<T, 3>& v) noexcept {
     _velocity = v;
     return *this;
 }
 
 template <typename T>
 typename Unit<T>::Builder&
-Unit<T>::Builder::with_acceleration(const atlas::math::Vector<T, 3>& a) noexcept {
+Unit<T>::Builder::with_acceleration(const atlas::Vector<T, 3>& a) noexcept {
     _acceleration = a;
     return *this;
 }
 
 template <typename T>
 typename Unit<T>::Builder&
-Unit<T>::Builder::with_angular_velocity(const atlas::math::Vector<T, 3>& w) noexcept {
+Unit<T>::Builder::with_angular_velocity(const atlas::Vector<T, 3>& w) noexcept {
     _angular_velocity = w;
     return *this;
 }
@@ -228,7 +228,7 @@ Unit<T>::Builder::with_angular_velocity(const atlas::math::Vector<T, 3>& w) noex
 template <typename T>
 typename Unit<T>::Builder&
 Unit<T>::Builder::with_angular_acceleration(
-    const atlas::math::Vector<T, 3>& alpha) noexcept {
+    const atlas::Vector<T, 3>& alpha) noexcept {
     _angular_acceleration = alpha;
     return *this;
 }
@@ -302,4 +302,4 @@ Unit<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::physics
+} // namespace atlas

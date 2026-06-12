@@ -4,7 +4,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/solver/dsmc/dsmc_probe.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 class DsmcStatistics {
@@ -17,13 +17,6 @@ public:
             int index,
             T dt) const;
 };
-
-} // namespace atlas::system
-
-namespace atlas {
-
-template <typename T>
-using DsmcStatistics = atlas::system::DsmcStatistics<T>;
 
 } // namespace atlas
 

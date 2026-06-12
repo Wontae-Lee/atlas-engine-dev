@@ -18,7 +18,7 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace atlas::universe {
+namespace atlas {
 
 /**
  * @brief Regular Cartesian simulation domain with cell-based state storage.
@@ -363,9 +363,11 @@ public:
      *
      * @param geometry Host shared pointer to a geometry object.
      * @return Reference to this builder.
+     *
+     * @throw std::invalid_argument Thrown if geometry is null.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_geometry(const GeometryHostPtr<T>& geometry) noexcept;
+    with_geometry(const GeometryHostPtr<T>& geometry);
 
     /**
      * @brief Sets the lower corner of the universe.
@@ -483,17 +485,10 @@ private:
     std::optional<HostBuffer<T>> _knudsen_number_state;
 };
 
-} // namespace atlas::universe
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::universe::Universe.
- *
- * @tparam T Floating-point scalar type used by the universe.
- */
-template <typename T>
-using Universe = atlas::universe::Universe<T>;
 
 /**
  * @brief Host-side shared pointer alias for Universe.
@@ -501,7 +496,7 @@ using Universe = atlas::universe::Universe<T>;
  * @tparam T Floating-point scalar type used by the universe.
  */
 template <typename T>
-using UniverseHostPtr = atlas::host_shared_ptr<atlas::universe::Universe<T>>;
+using UniverseHostPtr = atlas::host_shared_ptr<atlas::Universe<T>>;
 
 /**
  * @brief Device-side shared pointer alias for Universe.
@@ -509,7 +504,7 @@ using UniverseHostPtr = atlas::host_shared_ptr<atlas::universe::Universe<T>>;
  * @tparam T Floating-point scalar type used by the universe.
  */
 template <typename T>
-using UniverseDevicePtr = atlas::device_shared_ptr<atlas::universe::Universe<T>>;
+using UniverseDevicePtr = atlas::device_shared_ptr<atlas::Universe<T>>;
 
 } // namespace atlas
 

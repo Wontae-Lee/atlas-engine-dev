@@ -10,9 +10,9 @@
  *
  * An AABB is represented by two corner points:
  *
- * - @ref atlas::spatial::AxisAlignedBoundingBox::lower_corner, the component-wise
+ * - @ref atlas::AxisAlignedBoundingBox::lower_corner, the component-wise
  *   minimum corner,
- * - @ref atlas::spatial::AxisAlignedBoundingBox::upper_corner, the component-wise
+ * - @ref atlas::AxisAlignedBoundingBox::upper_corner, the component-wise
  *   maximum corner.
  *
  * For a valid three-dimensional AABB, each coordinate interval satisfies:
@@ -49,7 +49,7 @@
 
 #include <limits>
 
-namespace atlas::spatial {
+namespace atlas {
 
 /**
  * @brief Stores the parametric intersection interval between a ray and an AABB.
@@ -860,8 +860,8 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AxisAlignedBoundingBox<T>
 merge_aabb(const AxisAlignedBoundingBox<T>& a,
            const AxisAlignedBoundingBox<T>& b) noexcept {
     AxisAlignedBoundingBox<T> out;
-    out.lower_corner = math::cmin(a.lower_corner, b.lower_corner);
-    out.upper_corner = math::cmax(a.upper_corner, b.upper_corner);
+    out.lower_corner = cmin(a.lower_corner, b.lower_corner);
+    out.upper_corner = cmax(a.upper_corner, b.upper_corner);
     return out;
 }
 
@@ -887,53 +887,50 @@ aabb_distance_squared(const AxisAlignedBoundingBox<T>& bounds,
     return (closest - point).length_squared();
 }
 
-} // namespace atlas::spatial
+} // namespace atlas
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for atlas::spatial::AxisAlignedBoundingBox.
+ * @brief Convenience alias for atlas::AxisAlignedBoundingBox.
+ *
+ * @tparam T Floating-point scalar type.
+ */
+/**
+ * @brief Convenience alias for atlas::AxisAlignedBoundingBoxRayIntersection.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using AxisAlignedBoundingBox = atlas::spatial::AxisAlignedBoundingBox<T>;
+using HitAABB = atlas::AxisAlignedBoundingBoxRayIntersection<T>;
 
 /**
- * @brief Convenience alias for atlas::spatial::AxisAlignedBoundingBoxRayIntersection.
+ * @brief Short convenience alias for atlas::AxisAlignedBoundingBox.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using HitAABB = atlas::spatial::AxisAlignedBoundingBoxRayIntersection<T>;
-
-/**
- * @brief Short convenience alias for atlas::spatial::AxisAlignedBoundingBox.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using AABB = atlas::spatial::AxisAlignedBoundingBox<T>;
+using AABB = atlas::AxisAlignedBoundingBox<T>;
 
 /**
  * @brief Float-specialized axis-aligned bounding box.
  */
-using AABBF = spatial::AxisAlignedBoundingBox<float>;
+using AABBF = AxisAlignedBoundingBox<float>;
 
 /**
  * @brief Double-specialized axis-aligned bounding box.
  */
-using AABBD = spatial::AxisAlignedBoundingBox<double>;
+using AABBD = AxisAlignedBoundingBox<double>;
 
 /**
  * @brief Float-specialized AABB ray-intersection result.
  */
-using AABBRayInteractionF = spatial::AxisAlignedBoundingBoxRayIntersection<float>;
+using AABBRayInteractionF = AxisAlignedBoundingBoxRayIntersection<float>;
 
 /**
  * @brief Double-specialized AABB ray-intersection result.
  */
-using AABBRayInteractionD = spatial::AxisAlignedBoundingBoxRayIntersection<double>;
+using AABBRayInteractionD = AxisAlignedBoundingBoxRayIntersection<double>;
 
 } // namespace atlas
 

@@ -10,7 +10,7 @@ namespace {
 using atlas::Ray;
 using atlas::Square;
 using atlas::Vector3F;
-using atlas::geometry::GeometryType;
+using atlas::GeometryType;
 using atlas::test::vec_near;
 using atlas::tol;
 
@@ -82,7 +82,7 @@ TEST(Square, InsideSurfaceCentroidAndBoundWork) {
 TEST(Square, GeometryOperatorAndTraceWork) {
     const Square<float> square(Vector3F(0, 0, 0), Vector3F(0, 0, 1), 2.0f);
 
-    const auto geometry_operator = square.make_geometry_operator();
+    const auto geometry_operator = square.make_device_geometry_view();
     const Ray<float> ray(Vector3F(0, 0, 5), Vector3F(0, 0, -1));
     const auto hit = geometry_operator.trace(ray);
 

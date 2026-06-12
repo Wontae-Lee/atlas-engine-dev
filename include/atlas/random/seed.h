@@ -7,7 +7,7 @@
  * @brief Defines constants used for deterministic hash-based sampling and default random seeding.
  */
 
-namespace atlas::seed {
+namespace atlas {
 
 /**
  * @brief Hash phase coefficient applied to the x-component of a 3D seed vector.
@@ -165,4 +165,4 @@ constexpr unsigned MORTON_EXPAND_BITS_FINAL_MULTIPLIER = 0x00000005u;
  */
 constexpr unsigned MORTON_EXPAND_BITS_FINAL_MASK = 0x49249249u;
 
-} // namespace atlas::seed
+} // namespace atlas

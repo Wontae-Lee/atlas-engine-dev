@@ -1,25 +1,27 @@
 #pragma once
 
+#include <atlas/memory/raw_pointer_cast.h>
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::geometry {
+namespace atlas {
 
 template <typename T>
 bool
-SquareGeometryOperator<T>::build_basis(const atlas::math::Vector<T, 3>& input_normal,
-                                       atlas::math::Vector<T, 3>& unit_normal,
-                                       atlas::math::Vector<T, 3>& tangent,
-                                       atlas::math::Vector<T, 3>& bitangent) const noexcept {
-    return atlas::math::orthonormal_basis(input_normal, unit_normal, tangent, bitangent);
+SquareGeometryOperator<T>::build_basis(const atlas::Vector<T, 3>& input_normal,
+                                       atlas::Vector<T, 3>& unit_normal,
+                                       atlas::Vector<T, 3>& tangent,
+                                       atlas::Vector<T, 3>& bitangent) const noexcept {
+    return atlas::orthonormal_basis(input_normal, unit_normal, tangent, bitangent);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-SquareGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
+atlas::Vector<T, 3>
+SquareGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
     // Without valid square parameters, there is no meaningful projection target.
     if (!center || !normal || !side_length) {
         return p;
@@ -58,19 +60,19 @@ SquareGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) con
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-SquareGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>&) const noexcept {
+atlas::Vector<T, 3>
+SquareGeometryOperator<T>::closest_normal(const atlas::Vector<T, 3>&) const noexcept {
     // Missing normal falls back to a deterministic upward normal.
     if (!normal) {
         return Vector3<T>(T(0), T(0), T(1));
     }
 
-    return atlas::math::normalized_or(*normal, Vector3<T>(T(0), T(0), T(1)));
+    return atlas::normalized_or(*normal, Vector3<T>(T(0), T(0), T(1)));
 }
 
 template <typename T>
 T
-SquareGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
+SquareGeometryOperator<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
     // Invalid geometry is treated as infinitely far away.
     if (!center || !normal || !side_length) {
         return std::numeric_limits<T>::infinity();
@@ -93,7 +95,7 @@ SquareGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) c
 
 template <typename T>
 bool
-SquareGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p,
+SquareGeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p,
                                      const T tolerance) const noexcept {
     // Invalid geometry cannot contain any point.
     if (!center || !normal || !side_length || !(*side_length > T(0))) {
@@ -119,21 +121,21 @@ SquareGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p,
     const T u = center_to_point.dot(tangent);
     const T v = center_to_point.dot(bitangent);
 
-    return atlas::math::abs(signed_plane_offset) <= tolerance
-        && atlas::math::abs(u) <= half_side + tolerance
-        && atlas::math::abs(v) <= half_side + tolerance;
+    return atlas::abs(signed_plane_offset) <= tolerance
+        && atlas::abs(u) <= half_side + tolerance
+        && atlas::abs(v) <= half_side + tolerance;
 }
 
 template <typename T>
 bool
-SquareGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p,
+SquareGeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p,
                                          const T tolerance) const noexcept {
     // A square is a finite surface, so surface membership is equivalent to the inside test.
     return is_inside(p, tolerance);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
+atlas::Vector<T, 3>
 SquareGeometryOperator<T>::centroid() const noexcept {
     // Missing center falls back to the origin as a neutral centroid.
     if (!center) {
@@ -145,16 +147,16 @@ SquareGeometryOperator<T>::centroid() const noexcept {
 }
 
 template <typename T>
-atlas::spatial::AxisAlignedBoundingBox<T>
+atlas::AxisAlignedBoundingBox<T>
 SquareGeometryOperator<T>::bound() const noexcept {
     // Invalid geometry returns an empty/default bounding box.
     if (!center || !normal || !side_length) {
-        return atlas::spatial::AxisAlignedBoundingBox<T>();
+        return atlas::AxisAlignedBoundingBox<T>();
     }
 
     // A non-positive side length collapses the bound to the center point.
     if (!(*side_length > T(0))) {
-        return atlas::spatial::AxisAlignedBoundingBox<T>(*center, *center);
+        return atlas::AxisAlignedBoundingBox<T>(*center, *center);
     }
 
     Vector3<T> unit_normal;
@@ -163,15 +165,15 @@ SquareGeometryOperator<T>::bound() const noexcept {
 
     // Build the square basis to compute projected axis-aligned extents.
     if (!build_basis(*normal, unit_normal, tangent, bitangent)) {
-        return atlas::spatial::AxisAlignedBoundingBox<T>(*center, *center);
+        return atlas::AxisAlignedBoundingBox<T>(*center, *center);
     }
 
     const T half_side = (*side_length) * T(0.5);
 
     // Compute the world-space AABB half extent induced by the two in-plane axes.
-    const Vector3<T> extent = (atlas::math::abs(tangent) + atlas::math::abs(bitangent)) * half_side;
+    const Vector3<T> extent = (atlas::abs(tangent) + atlas::abs(bitangent)) * half_side;
 
-    return atlas::spatial::AxisAlignedBoundingBox<T>(*center - extent, *center + extent);
+    return atlas::AxisAlignedBoundingBox<T>(*center - extent, *center + extent);
 }
 
 template <typename T>
@@ -183,16 +185,16 @@ SquareGeometryOperator<T>::is_valid() const noexcept {
     }
 
     // Center, normal, and side length must be finite, with nonzero normal and positive size.
-    return atlas::math::isfinite(*center)
-        && atlas::math::isfinite(*normal)
+    return atlas::isfinite(*center)
+        && atlas::isfinite(*normal)
         && normal->length_squared() > T(0)
-        && atlas::math::isfinite(*side_length)
+        && atlas::isfinite(*side_length)
         && *side_length > T(0);
 }
 
 template <typename T>
 HitSurface<T>
-SquareGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexcept {
+SquareGeometryOperator<T>::trace(const atlas::Ray<T>& ray) const noexcept {
     HitSurface<T> hit {};
 
     // Invalid square geometry produces a default non-intersecting result.
@@ -214,7 +216,7 @@ SquareGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
     const T epsilon     = std::numeric_limits<T>::epsilon();
 
     // Parallel or nearly parallel rays are treated as misses.
-    if (atlas::math::abs(denominator) <= epsilon) {
+    if (atlas::abs(denominator) <= epsilon) {
         return hit;
     }
 
@@ -234,7 +236,7 @@ SquareGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
     const T half_side              = (*side_length) * T(0.5);
 
     // Reject plane hits that fall outside the finite square extent.
-    if (atlas::math::abs(u) > half_side + epsilon || atlas::math::abs(v) > half_side + epsilon) {
+    if (atlas::abs(u) > half_side + epsilon || atlas::abs(v) > half_side + epsilon) {
         return hit;
     }
 
@@ -249,16 +251,13 @@ SquareGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexce
 
 template <typename T>
 HitSurface<T>
-SquareGeometryOperator<T>::operator()(const atlas::spatial::Ray<T>& ray) const noexcept {
+SquareGeometryOperator<T>::operator()(const atlas::Ray<T>& ray) const noexcept {
     // Allow the operator object to be used directly as a ray-intersection functor.
     return trace(ray);
 }
 
 template <typename T>
-Square<T>::Square() noexcept {
-    // Bind the operator to this square's default parameter storage.
-    bind_operator();
-}
+Square<T>::Square() noexcept = default;
 
 template <typename T>
 Square<T>::Square(const Vector3<T>& center_,
@@ -267,8 +266,6 @@ Square<T>::Square(const Vector3<T>& center_,
     : center(center_)
     , normal(normal_)
     , side_length(side_length_) {
-    // Bind the operator after storing the user-provided square parameters.
-    bind_operator();
 }
 
 template <typename T>
@@ -276,8 +273,6 @@ Square<T>::Square(const Square& other) noexcept
     : center(other.center)
     , normal(other.normal)
     , side_length(other.side_length) {
-    // Rebind the operator because copied raw pointers must refer to this object.
-    bind_operator();
 }
 
 template <typename T>
@@ -285,8 +280,6 @@ Square<T>::Square(Square&& other) noexcept
     : center(std::move(other.center))
     , normal(std::move(other.normal))
     , side_length(other.side_length) {
-    // Rebind this object after moving member storage.
-    bind_operator();
 }
 
 template <typename T>
@@ -300,9 +293,6 @@ Square<T>::operator=(const Square& other) noexcept {
     center      = other.center;
     normal      = other.normal;
     side_length = other.side_length;
-
-    // Rebind after assignment because operator pointers must target this object.
-    bind_operator();
 
     return *this;
 }
@@ -319,19 +309,17 @@ Square<T>::operator=(Square&& other) noexcept {
     normal      = std::move(other.normal);
     side_length = other.side_length;
 
-    // Rebind after moving because operator pointers must target this object.
-    bind_operator();
-
     return *this;
 }
 
 template <typename T>
-void
-Square<T>::bind_operator() noexcept {
-    // Store non-owning raw pointers to the square parameters used by the operator.
-    _operator.center      = &center;
-    _operator.normal      = &normal;
-    _operator.side_length = &side_length;
+SquareGeometryOperator<T>
+Square<T>::make_square_operator() const noexcept {
+    SquareGeometryOperator<T> op {};
+    op.center      = atlas::raw_pointer_cast(&center);
+    op.normal      = atlas::raw_pointer_cast(&normal);
+    op.side_length = atlas::raw_pointer_cast(&side_length);
+    return op;
 }
 
 template <typename T>
@@ -343,65 +331,56 @@ Square<T>::builder() noexcept {
 
 template <typename T>
 GeometryOperator<T>
-Square<T>::make_geometry_operator() const {
-    // Wrap the concrete square operator in the generic geometry operator type.
-    return GeometryOperator<T>(_operator);
+Square<T>::make_device_geometry_view() const {
+    return GeometryOperator<T>(make_square_operator());
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-Square<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Delegate closest-point queries to the bound square operator.
-    return _operator.closest_point(p);
+atlas::Vector<T, 3>
+Square<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
+    return make_square_operator().closest_point(p);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-Square<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Delegate closest-normal queries to the bound square operator.
-    return _operator.closest_normal(p);
+atlas::Vector<T, 3>
+Square<T>::closest_normal(const atlas::Vector<T, 3>& p) const noexcept {
+    return make_square_operator().closest_normal(p);
 }
 
 template <typename T>
 T
-Square<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Delegate signed-distance queries to the bound square operator.
-    return _operator.signed_distance(p);
+Square<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
+    return make_square_operator().signed_distance(p);
 }
 
 template <typename T>
 bool
-Square<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Delegate containment checks to the bound square operator.
-    return _operator.is_inside(p, tolerance);
+Square<T>::is_inside(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
+    return make_square_operator().is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
-Square<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Delegate surface-membership checks to the bound square operator.
-    return _operator.is_on_surface(p, tolerance);
+Square<T>::is_on_surface(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
+    return make_square_operator().is_on_surface(p, tolerance);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
+atlas::Vector<T, 3>
 Square<T>::centroid() const noexcept {
-    // Delegate centroid computation to the bound square operator.
-    return _operator.centroid();
+    return make_square_operator().centroid();
 }
 
 template <typename T>
-atlas::spatial::AxisAlignedBoundingBox<T>
+atlas::AxisAlignedBoundingBox<T>
 Square<T>::bound() const noexcept {
-    // Delegate bounding-box construction to the bound square operator.
-    return _operator.bound();
+    return make_square_operator().bound();
 }
 
 template <typename T>
 bool
 Square<T>::is_valid() const noexcept {
-    // Delegate validity checks to the bound square operator.
-    return _operator.is_valid();
+    return make_square_operator().is_valid();
 }
 
 template <typename T>
@@ -439,9 +418,9 @@ template <typename T>
 void
 Square<T>::Builder::validate() const {
     // All scalar and vector components must be finite before construction.
-    if (!atlas::math::isfinite(_center)
-        || !atlas::math::isfinite(_normal)
-        || !atlas::math::isfinite(_side_length)) {
+    if (!atlas::isfinite(_center)
+        || !atlas::isfinite(_normal)
+        || !atlas::isfinite(_side_length)) {
         throw std::runtime_error("Square::Builder: parameters must be finite.");
     }
 
@@ -473,4 +452,4 @@ Square<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<Square<T>>(std::move(square));
 }
 
-} // namespace atlas::geometry
+} // namespace atlas

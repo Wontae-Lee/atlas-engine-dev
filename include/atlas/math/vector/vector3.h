@@ -10,7 +10,6 @@
 #include <type_traits>
 
 namespace atlas {
-namespace math {
 
     /**
      * @brief Specialized 3D vector with named components and 3D-specific operations.
@@ -696,11 +695,8 @@ namespace math {
     template <typename To, typename From>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<To, 3>
     cast_to(const Vector<From, 3>& v) noexcept;
-
-} // namespace math
-
 template <typename T>
-using Vector3  = math::Vector<T, 3>;
+using Vector3  = Vector<T, 3>;
 using Vector3F = Vector3<float>;
 using Vector3D = Vector3<double>;
 using Vector3I = Vector3<int>;

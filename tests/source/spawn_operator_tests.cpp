@@ -11,10 +11,10 @@ namespace {
 using atlas::Box;
 using atlas::GeometryOperator;
 using atlas::Vector3F;
-using atlas::fluid::SpawnOperator;
-using atlas::fluid::SpawnType;
-using atlas::fluid::SurfaceSpawnOperator;
-using atlas::fluid::VolumeSpawnOperator;
+using atlas::SpawnOperator;
+using atlas::SpawnType;
+using atlas::SurfaceSpawnOperator;
+using atlas::VolumeSpawnOperator;
 
 GeometryOperator<float>
 make_box_operator() {
@@ -22,7 +22,7 @@ make_box_operator() {
                                 .with_lower_corner(Vector3F(-1, -1, -1))
                                 .with_upper_corner(Vector3F(1, 1, 1))
                                 .build();
-    return box.make_geometry_operator();
+    return box.make_device_geometry_view();
 }
 
 } // namespace

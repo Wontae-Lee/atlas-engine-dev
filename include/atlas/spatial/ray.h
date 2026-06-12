@@ -6,9 +6,9 @@
  *
  * @details
  * This header defines:
- * - @ref atlas::spatial::SurfaceRayIntersection, a structure describing the result
+ * - @ref atlas::SurfaceRayIntersection, a structure describing the result
  *   of intersecting a ray with a surface,
- * - @ref atlas::spatial::Ray, a minimal geometric ray representation.
+ * - @ref atlas::Ray, a minimal geometric ray representation.
  *
  * ## Purpose
  * Rays are fundamental primitives used throughout Atlas for:
@@ -46,7 +46,7 @@
 #include <limits>
 #include <type_traits>
 
-namespace atlas::spatial {
+namespace atlas {
 
 /**
  * @brief Surface ray intersection record.
@@ -182,25 +182,18 @@ public:
     point_at(T t) const noexcept;
 };
 
-} // namespace atlas::spatial
+} // namespace atlas
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for @ref atlas::spatial::SurfaceRayIntersection.
+ * @brief Convenience alias for @ref atlas::SurfaceRayIntersection.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using HitSurface = atlas::spatial::SurfaceRayIntersection<T>;
+using HitSurface = atlas::SurfaceRayIntersection<T>;
 
-/**
- * @brief Convenience alias for @ref atlas::spatial::Ray.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using Ray = atlas::spatial::Ray<T>;
 
 /**
  * @brief Single-precision ray alias.

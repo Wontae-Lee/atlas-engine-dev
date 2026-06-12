@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace atlas::fluid {
+namespace atlas {
 
 template <typename T>
 struct SourceProbe {
@@ -35,8 +35,4 @@ struct SourceProbe {
 }
 
 namespace atlas {
-
-template <typename T>
-using SourceProbe = atlas::fluid::SourceProbe<T>;
-
 }

@@ -5,7 +5,7 @@
  * @brief Declares the abstract host-side particle generator interface and related aliases.
  *
  * @details
- * This header defines @ref atlas::fluid::Generator, the abstract base class
+ * This header defines @ref atlas::Generator, the abstract base class
  * used to represent host-side particle-velocity generation laws in Atlas.
  *
  * A generator is responsible for:
@@ -57,25 +57,14 @@
  * @tparam T Floating-point scalar type used for generated velocities and generator parameters.
  */
 
+#include <atlas/generator/generate_operator.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
 #include <atlas/random/seed.h>
 
 #include <type_traits>
 
-namespace atlas::fluid {
-
-/**
- * @brief Forward declaration of the runtime generator type discriminator.
- *
- * @details
- * The concrete definition lives elsewhere and identifies which backend-portable
- * generation law is associated with a generator.
- */
-enum class GenerateType : int;
-
-template <typename T>
-struct GenerateOperator;
+namespace atlas {
 
 /**
  * @brief Abstract base class for host-side particle generators.
@@ -247,35 +236,28 @@ public:
     type() const noexcept = 0;
 };
 
-} // namespace atlas::fluid
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Convenience alias for @ref atlas::fluid::Generator.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using Generator = atlas::fluid::Generator<T>;
 
 /**
  * @brief Convenience alias for a host-owned shared pointer to
- *        @ref atlas::fluid::Generator.
+ *        @ref atlas::Generator.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using GeneratorHostPtr = atlas::host_shared_ptr<atlas::fluid::Generator<T>>;
+using GeneratorHostPtr = atlas::host_shared_ptr<atlas::Generator<T>>;
 
 /**
  * @brief Convenience alias for a device-owned shared pointer to
- *        @ref atlas::fluid::Generator.
+ *        @ref atlas::Generator.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using GeneratorDevicePtr = atlas::device_shared_ptr<atlas::fluid::Generator<T>>;
+using GeneratorDevicePtr = atlas::device_shared_ptr<atlas::Generator<T>>;
 
 } // namespace atlas
 

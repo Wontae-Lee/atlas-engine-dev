@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-namespace atlas::math {
+namespace atlas {
 template <typename T>
 constexpr Vector<T, 3>::Vector() noexcept
     : x(T(0))

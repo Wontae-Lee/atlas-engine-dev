@@ -2,7 +2,7 @@
 
 /**
  * @file orchestrator.h
- * @brief Declares the atlas::system::Orchestrator class and its fluent Builder.
+ * @brief Declares the atlas::Orchestrator class and its fluent Builder.
  *
  * The orchestrator is the high-level simulation-step coordinator. It connects
  * the universe, fluid, spatial searcher, optional codec, optional measurer, and
@@ -21,7 +21,7 @@
 
 #include <optional>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Coordinates search, classification, measurement, force application, and solver execution.
@@ -61,8 +61,6 @@ namespace atlas::system {
 template <typename T>
 class Orchestrator final {
 public:
-    using OrchestratorProbe = atlas::system::OrchestratorProbe<T>;
-
     /**
      * @brief Fluent builder for constructing validated `Orchestrator` instances.
      *
@@ -638,33 +636,30 @@ private:
     HostBuffer<SolveHostPtr<T>> _solvers {};
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for `atlas::system::Orchestrator`.
+ * @brief Convenience alias for `atlas::Orchestrator`.
+ *
+ * @tparam T Scalar type used by the orchestrator.
+ */
+/**
+ * @brief Host-side shared pointer alias for `atlas::Orchestrator`.
  *
  * @tparam T Scalar type used by the orchestrator.
  */
 template <typename T>
-using Orchestrator = atlas::system::Orchestrator<T>;
+using OrchestratorHostPtr = atlas::host_shared_ptr<atlas::Orchestrator<T>>;
 
 /**
- * @brief Host-side shared pointer alias for `atlas::system::Orchestrator`.
+ * @brief Device-side shared pointer alias for `atlas::Orchestrator`.
  *
  * @tparam T Scalar type used by the orchestrator.
  */
 template <typename T>
-using OrchestratorHostPtr = atlas::host_shared_ptr<atlas::system::Orchestrator<T>>;
-
-/**
- * @brief Device-side shared pointer alias for `atlas::system::Orchestrator`.
- *
- * @tparam T Scalar type used by the orchestrator.
- */
-template <typename T>
-using OrchestratorDevicePtr = atlas::device_shared_ptr<atlas::system::Orchestrator<T>>;
+using OrchestratorDevicePtr = atlas::device_shared_ptr<atlas::Orchestrator<T>>;
 
 } // namespace atlas
 

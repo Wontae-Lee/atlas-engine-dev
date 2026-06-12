@@ -2,7 +2,7 @@
 
 #include <atlas/memory/raw_pointer_cast.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 Codec<T>::Codec(UniverseHostPtr<T> domain,
@@ -123,9 +123,9 @@ Codec<T>::make_probe() noexcept {
         return false;
     }
 
-    auto* temperature_state     = _universe->template state<atlas::universe::UniverseTemperatureState<T>>();
-    auto* number_particle_state = _universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
-    auto* knudsen_number_state  = _universe->template state<atlas::universe::UniverseKnudsenNumberState<T>>();
+    auto* temperature_state     = _universe->template state<atlas::UniverseTemperatureState<T>>();
+    auto* number_particle_state = _universe->template state<atlas::UniverseNumberParticleState<T>>();
+    auto* knudsen_number_state  = _universe->template state<atlas::UniverseKnudsenNumberState<T>>();
 
     _probe.temperature_ptr = temperature_state != nullptr
         ? atlas::raw_pointer_cast(temperature_state->data().data())
@@ -156,4 +156,4 @@ Codec<T>::make_probe() noexcept {
     return _probe.num_of_cells > 0;
 }
 
-} // namespace atlas::system
+} // namespace atlas

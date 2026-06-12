@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 T
@@ -75,4 +75,4 @@ WendlandQuinticSphKernel<T>::viscosity_laplacian(const T radius,
         * (T(1) - T(4) * q);
 }
 
-} // namespace atlas::systemㅂ
+} // namespace atlasㅂ

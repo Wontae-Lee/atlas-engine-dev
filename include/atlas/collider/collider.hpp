@@ -1,17 +1,12 @@
 #pragma once
 
-#include <atlas/logging/logging.h>
-#include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/spatial/transformed_bounds.h>
-#include <atlas/transform/transform_reduce.h>
 
-#include <limits>
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 Collider<T>::Collider(DeviceBuffer<Unit<T>> units,
@@ -20,7 +15,7 @@ Collider<T>::Collider(DeviceBuffer<Unit<T>> units,
                       PostColliderType post_collider_type,
                       atlas::host_shared_ptr<atlas::Fluid<T>> fluid) noexcept
     : _units(std::move(units))
-    , _unit_bounds(_units.size())
+    , _bound_cache(_units.size())
     , _fluid(std::move(fluid))
     , _surface_interactions(std::move(surface_interactions))
     , _flips(std::move(flips))
@@ -64,7 +59,7 @@ Collider<T>::collide(const T dt) const {
         return;
     }
 
-    refresh_unit_bounds();
+    _bound_cache.refresh(_units);
 
     // Build a compact device-side probe containing raw pointers to collider, fluid, and interaction data.
     // If any required fluid state is missing, no collision pass is performed.
@@ -72,177 +67,7 @@ Collider<T>::collide(const T dt) const {
         return;
     }
 
-    const auto probe = _probe;
-    const PostColliderKernel<T> post_collider_kernel(_post_collider_type);
-
-    // Process each particle independently on the device.
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        probe.particle_count,
-        [=] ATLAS_DEVICE(const int i) {
-            const Vector3<T> p0        = probe.positions[i];
-            const Vector3<T> velocity  = probe.velocities[i];
-            const Vector3<T> direction = velocity * dt;
-            const T particle_speed     = velocity.length();
-            const T particle_sweep_length = particle_speed * dt;
-
-            if (particle_sweep_length <= atlas::eps
-                && post_collider_kernel.type != PostColliderType::precise) {
-                return;
-            }
-
-            const typename Collider<T>::ParticleHit hit = Collider<T>::trace_particle(
-                probe,
-                post_collider_kernel,
-                p0,
-                velocity,
-                direction,
-                particle_speed,
-                particle_sweep_length,
-                dt);
-
-            if (!hit.found) {
-                probe.positions[i] = p0 + direction;
-                return;
-            }
-
-            Collider<T>::apply_particle_hit(probe, post_collider_kernel, i, velocity, hit, dt);
-        });
-}
-
-template <typename T>
-ATLAS_DEVICE typename Collider<T>::ParticleHit
-Collider<T>::trace_particle(const typename Collider<T>::ColliderProbe& probe,
-                            const PostColliderKernel<T>& post_collider_kernel,
-                            const Vector3<T>& p0,
-                            const Vector3<T>& velocity,
-                            const Vector3<T>& direction,
-                            const T particle_speed,
-                            const T particle_sweep_length,
-                            const T dt) {
-    typename Collider<T>::ParticleHit hit {};
-    hit.time = atlas::far;
-
-    const bool unit_sweep = post_collider_kernel.type == PostColliderType::precise;
-    const atlas::spatial::Ray<T> particle_ray(p0, direction);
-
-    if (!unit_sweep && probe.unit_count > 1 && probe.scene_bound_covers_units) {
-        const auto scene_hit = probe.scene_bound.trace(particle_ray);
-        if (!scene_hit.is_intersecting || scene_hit.enter > particle_sweep_length) {
-            return hit;
-        }
-    }
-
-    for (int j = 0; j < probe.unit_count; ++j) {
-        const Unit<T>* unit = nullptr;
-        Vector3<T> sweep_direction = direction;
-        T sweep_speed              = particle_speed;
-        T sweep_length             = particle_sweep_length;
-
-        if (unit_sweep) {
-            unit = probe.units + j;
-            post_collider_kernel.sweep_motion(*unit,
-                                              p0,
-                                              velocity,
-                                              particle_speed,
-                                              dt,
-                                              sweep_direction,
-                                              sweep_speed,
-                                              sweep_length);
-        }
-
-        if (sweep_length <= atlas::eps || sweep_speed <= atlas::eps) {
-            continue;
-        }
-
-        const atlas::spatial::Ray<T> world_ray = unit_sweep
-            ? atlas::spatial::Ray<T>(p0, sweep_direction)
-            : particle_ray;
-        const auto& unit_bound = probe.unit_bounds[j];
-        if (unit_bound.is_valid()) {
-            const auto bound_hit = unit_bound.trace(world_ray);
-            if (!bound_hit.is_intersecting || bound_hit.enter > sweep_length) {
-                continue;
-            }
-        }
-
-        if (unit == nullptr) {
-            unit = probe.units + j;
-        }
-
-        const auto& sync_op = unit->sync_operator();
-        const auto& geom_op = unit->geometry_operator();
-        const atlas::spatial::Ray<T> local_ray = sync_op.sync_to_local(world_ray);
-        const HitSurface<T> local_hit          = geom_op(local_ray);
-
-        if (!local_hit.is_intersecting || local_hit.distance > sweep_length) {
-            continue;
-        }
-
-        const T hit_time = local_hit.distance / sweep_speed;
-        if (hit_time >= hit.time) {
-            continue;
-        }
-
-        hit.found      = true;
-        hit.distance   = local_hit.distance;
-        hit.time       = hit_time;
-        hit.speed      = sweep_speed;
-        hit.position   = sync_op.sync_to_world(local_hit.point);
-        hit.normal     = sync_op.sync_dir_to_world(local_hit.normal);
-        hit.unit_index = j;
-    }
-
-    return hit;
-}
-
-template <typename T>
-ATLAS_DEVICE void
-Collider<T>::apply_particle_hit(const typename Collider<T>::ColliderProbe& probe,
-                                const PostColliderKernel<T>& post_collider_kernel,
-                                const int particle_index,
-                                const Vector3<T>& velocity,
-                                const typename Collider<T>::ParticleHit& hit,
-                                const T dt) {
-    const int interaction_index =
-        (probe.interaction_count == 1 || hit.unit_index >= probe.interaction_count)
-            ? 0
-            : hit.unit_index;
-    const int flip_index = (probe.flip_count == 1 || hit.unit_index >= probe.flip_count)
-        ? 0
-        : hit.unit_index;
-    const bool flip_normal = probe.flip_count > 0 && probe.flips[flip_index] != std::uint8_t { 0 };
-    const Vector3<T> hit_normal = flip_normal ? -hit.normal : hit.normal;
-    const auto& hit_unit = probe.units[hit.unit_index];
-    const auto& interaction = probe.surface_interactions[interaction_index];
-
-    post_collider_kernel(
-        probe.positions[particle_index],
-        probe.velocities[particle_index],
-        velocity,
-        hit.position,
-        hit_normal,
-        hit.distance,
-        hit.speed,
-        dt,
-        hit_unit,
-        interaction);
-
-    if (probe.internal_energies == nullptr) {
-        return;
-    }
-
-    const std::size_t species_index = probe.species[particle_index];
-    if (species_index >= static_cast<std::size_t>(probe.material_count)) {
-        return;
-    }
-
-    const Vector3<T> wall_velocity = FastColliderKernel<T>::surface_velocity(hit_unit, hit.position);
-    probe.internal_energies[particle_index] = interaction.internal_energy(
-        probe.internal_energies[particle_index],
-        velocity - wall_velocity,
-        hit_normal,
-        probe.materials[species_index]);
+    detail::ColliderCollisionKernel<T>::resolve_particles(_probe, _post_collider_type, dt);
 }
 
 template <typename T>
@@ -256,98 +81,14 @@ Collider<T>::empty() const noexcept {
 template <typename T>
 bool
 Collider<T>::make_probe() const noexcept {
-    _probe = {};
-
-    if (empty()) {
-        return false;
-    }
-
-    auto& positions  = _fluid->template state<atlas::fluid::FluidPositionState<T>>()->data();
-    auto& velocities = _fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data();
-    auto& species    = _fluid->template state<atlas::fluid::FluidSpeciesState<T>>()->data();
-    auto* internal_energy_state = _fluid->template state<atlas::fluid::FluidInternalEnergyState<T>>();
-    auto& materials = _fluid->particle_properties();
-
-    if (positions.empty() || velocities.empty() || species.empty() || _fluid->particle_count() <= 0) {
-        return false;
-    }
-
-    _probe.units                = atlas::raw_pointer_cast(_units.data());
-    _probe.unit_bounds          = atlas::raw_pointer_cast(_unit_bounds.data());
-    _probe.surface_interactions = atlas::raw_pointer_cast(_surface_interactions.data());
-    _probe.flips                = atlas::raw_pointer_cast(_flips.data());
-    _probe.scene_bound          = _scene_bound;
-    _probe.positions            = atlas::raw_pointer_cast(positions.data());
-    _probe.velocities           = atlas::raw_pointer_cast(velocities.data());
-    if (internal_energy_state != nullptr
-        && internal_energy_state->data().size() >= _fluid->particle_count()
-        && species.size() >= _fluid->particle_count()
-        && !materials.empty()) {
-        _probe.internal_energies = atlas::raw_pointer_cast(internal_energy_state->data().data());
-        _probe.species           = atlas::raw_pointer_cast(species.data());
-        _probe.materials         = atlas::raw_pointer_cast(materials.data());
-        _probe.material_count    = static_cast<int>(materials.size());
-    }
-    _probe.unit_count           = static_cast<int>(_units.size());
-    _probe.interaction_count    = static_cast<int>(_surface_interactions.size());
-    _probe.flip_count           = static_cast<int>(_flips.size());
-    _probe.particle_count       = static_cast<int>(_fluid->particle_count());
-    _probe.scene_bound_covers_units = _scene_bound_covers_units;
-
-    return true;
-}
-
-template <typename T>
-void
-Collider<T>::refresh_unit_bounds() const {
-    if (_unit_bounds.size() != _units.size()) {
-        _unit_bounds.resize(_units.size());
-    }
-
-    auto* units_ptr = atlas::raw_pointer_cast(_units.data());
-    auto* bounds_ptr = atlas::raw_pointer_cast(_unit_bounds.data());
-    const int unit_count = static_cast<int>(_units.size());
-
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        unit_count,
-        [units_ptr, bounds_ptr] ATLAS_DEVICE(const int unit_index) {
-            const auto& unit = units_ptr[unit_index];
-            auto local_bound = unit.geometry_operator().bound();
-            auto& world_bound = bounds_ptr[unit_index];
-            const auto transformed_bound = atlas::spatial::transform_aabb(
-                local_bound,
-                [&unit] ATLAS_DEVICE(const Vector3<T>& point) {
-                    return unit.sync_operator().sync_to_world(point);
-                });
-            world_bound.lower_corner = transformed_bound.lower_corner;
-            world_bound.upper_corner = transformed_bound.upper_corner;
-        });
-
-    using Bound = atlas::spatial::AxisAlignedBoundingBox<T>;
-
-    _scene_bound = atlas::transform_reduce<ExecutionPolicy::device>(
-        _unit_bounds.begin(),
-        _unit_bounds.end(),
-        Bound {},
-        [] ATLAS_DEVICE(const Bound& bound) {
-            return bound.is_valid() ? bound : Bound {};
-        },
-        [] ATLAS_DEVICE(Bound lhs, const Bound& rhs) {
-            lhs.merge(rhs);
-            return lhs;
-        });
-
-    _scene_bound_covers_units = atlas::transform_reduce<ExecutionPolicy::device>(
-        _unit_bounds.begin(),
-        _unit_bounds.end(),
-        true,
-        [] ATLAS_DEVICE(const Bound& bound) {
-            return bound.is_valid();
-        },
-        [] ATLAS_DEVICE(const bool lhs, const bool rhs) {
-            return lhs && rhs;
-        });
+    return detail::ColliderProbeBuilder<T>::make(_probe,
+                                                 _units,
+                                                 _bound_cache.unit_bounds(),
+                                                 _surface_interactions,
+                                                 _flips,
+                                                 _bound_cache.scene_bound(),
+                                                 _bound_cache.covers_units(),
+                                                 _fluid);
 }
 
 template <typename T>
@@ -517,4 +258,4 @@ Collider<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::system
+} // namespace atlas

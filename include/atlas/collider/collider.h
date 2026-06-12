@@ -9,6 +9,9 @@
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/collider/collider_probe.h>
+#include <atlas/collider/detail/collider_bound_cache.h>
+#include <atlas/collider/detail/collider_collision_kernel.h>
+#include <atlas/collider/detail/collider_probe_builder.h>
 #include <atlas/collider/interaction/surface_interaction_kernel.h>
 #include <atlas/collider/kernel/post_collider_kernel.h>
 #include <atlas/fluid/fluid.h>
@@ -18,7 +21,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Resolves particle collisions between a fluid and a collection of collider units.
@@ -53,8 +56,6 @@ class Collider final {
     static_assert(std::is_floating_point_v<T>, "Collider requires a floating-point T");
 
 public:
-    using ColliderProbe = atlas::system::ColliderProbe<T>;
-
     /**
      * @brief Builder used for validated host-side Collider construction.
      */
@@ -151,46 +152,6 @@ public:
     make_probe() const noexcept;
 
 private:
-    struct ParticleHit {
-        bool found {};
-        T distance {};
-        T time {};
-        T speed {};
-        Vector3<T> position {};
-        Vector3<T> normal {};
-        int unit_index { -1 };
-    };
-
-    /**
-     * @brief Refreshes finite world-space bounds for collider units.
-     */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    refresh_unit_bounds() const;
-
-    /**
-     * @brief Finds the closest collider hit for one particle sweep.
-     */
-    ATLAS_DEVICE static ParticleHit
-    trace_particle(const ColliderProbe& probe,
-                   const PostColliderKernel<T>& post_collider_kernel,
-                   const Vector3<T>& p0,
-                   const Vector3<T>& velocity,
-                   const Vector3<T>& direction,
-                   T particle_speed,
-                   T particle_sweep_length,
-                   T dt);
-
-    /**
-     * @brief Applies the selected surface response to one particle hit.
-     */
-    ATLAS_DEVICE static void
-    apply_particle_hit(const ColliderProbe& probe,
-                       const PostColliderKernel<T>& post_collider_kernel,
-                       int particle_index,
-                       const Vector3<T>& velocity,
-                       const ParticleHit& hit,
-                       T dt);
-
     /**
      * @brief Device buffer containing collider units.
      *
@@ -199,22 +160,9 @@ private:
     DeviceBuffer<Unit<T>> _units;
 
     /**
-     * @brief Cached world-space AABBs used for broad-phase particle culling.
-     *
-     * Invalid entries represent units without finite bounds and must fall back to
-     * the full narrow-phase query.
+     * @brief Cached bounds used for broad-phase particle culling.
      */
-    mutable DeviceBuffer<atlas::spatial::AxisAlignedBoundingBox<T>> _unit_bounds;
-
-    /**
-     * @brief Cached world-space AABB enclosing all finite unit bounds.
-     */
-    mutable atlas::spatial::AxisAlignedBoundingBox<T> _scene_bound {};
-
-    /**
-     * @brief Whether _scene_bound covers every collider unit.
-     */
-    mutable bool _scene_bound_covers_units {};
+    mutable detail::ColliderBoundCache<T> _bound_cache;
 
     /**
      * @brief Host-side target fluid whose particle states are modified by collision processing.
@@ -251,7 +199,7 @@ private:
     /**
      * @brief Cached probe populated by @ref make_probe.
      */
-    mutable ColliderProbe _probe {};
+    mutable ColliderProbe<T> _probe {};
 };
 
 /**
@@ -456,31 +404,12 @@ private:
     PostColliderType _post_collider_type { PostColliderType::fast };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
-
-/**
- * @brief Alias for atlas::system::Collider.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using Collider = atlas::system::Collider<T>;
-
-/**
- * @brief Host shared pointer alias for Collider.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 using ColliderHostPtr = atlas::host_shared_ptr<Collider<T>>;
 
-/**
- * @brief Device shared pointer alias for Collider.
- *
- * @tparam T Floating-point scalar type.
- */
 template <typename T>
 using ColliderDevicePtr = atlas::device_shared_ptr<Collider<T>>;
 

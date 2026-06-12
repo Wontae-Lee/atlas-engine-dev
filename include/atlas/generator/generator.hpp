@@ -1,3 +1,3 @@
 #pragma once
-namespace atlas::fluid {
+namespace atlas {
 }

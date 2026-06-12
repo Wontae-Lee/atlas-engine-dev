@@ -8,7 +8,7 @@
 #include <atlas/geometry/geometry_operator.h>
 #include <atlas/spatial/ray.h>
 
-namespace atlas::fluid {
+namespace atlas {
 
 /**
  * @brief Stateless despawn policy that traces a velocity vector through geometry.
@@ -32,12 +32,12 @@ struct TracingDespawnOperator final {
      * @return True if the velocity trace intersects the geometry within @p time.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
-    despawn(const atlas::geometry::GeometryOperator<T>& query,
+    despawn(const atlas::GeometryOperator<T>& query,
             const Vector3<T>& position,
             const Vector3<T>& velocity,
             T time = T(0)) noexcept;
 };
 
-} // namespace atlas::fluid
+} // namespace atlas
 
 #include <atlas/sink/tracing_despawn_operator.hpp>

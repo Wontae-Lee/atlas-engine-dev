@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 DsmcSolver<T>::DsmcSolver(UniverseHostPtr<T> universe,
@@ -135,7 +135,7 @@ DsmcSolver<T>::make_probe() noexcept {
     _probe.cell_end_ptr   = this->_searcher->cell_end();
 
     _probe.universe_volume_ptr = nullptr;
-    if (auto* volume_state = this->_universe->template state<atlas::universe::UniverseVolumeState<T>>();
+    if (auto* volume_state = this->_universe->template state<atlas::UniverseVolumeState<T>>();
         volume_state != nullptr && volume_state->data().size() == static_cast<std::size_t>(this->_universe->number_of_cells())) {
         _probe.universe_volume_ptr = atlas::raw_pointer_cast(volume_state->data().data());
     }
@@ -214,7 +214,7 @@ DsmcSolver<T>::apply_flattened_collision(const DeviceBuffer<int>* allocated_solv
                 return;
             }
 
-            const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+            const auto stream = static_cast<std::uint64_t>(cell) * atlas::DSMC_CELL_STREAM_MULTIPLIER
                 + static_cast<std::uint64_t>(local_collision);
             int lhs_local = 0;
             int rhs_local = 0;
@@ -278,7 +278,7 @@ DsmcSolver<T>::apply_collision(const DeviceBuffer<int>* allocated_solver,
             if (end - begin < count) {
                 return;
             }
-            const auto stream_base = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER;
+            const auto stream_base = static_cast<std::uint64_t>(cell) * atlas::DSMC_CELL_STREAM_MULTIPLIER;
 
             for (int local_collision = 0; local_collision < collisions; ++local_collision) {
                 const auto stream = stream_base + static_cast<std::uint64_t>(local_collision);
@@ -327,7 +327,7 @@ DsmcSolver<T>::collide_pair(const Probe& probe,
         probe.particle_count,
         probe.indices_ptr);
 
-    const auto stream = static_cast<std::uint64_t>(cell) * atlas::seed::DSMC_CELL_STREAM_MULTIPLIER
+    const auto stream = static_cast<std::uint64_t>(cell) * atlas::DSMC_CELL_STREAM_MULTIPLIER
         + static_cast<std::uint64_t>(local_collision);
     return collide_indexed_pair(
         probe,
@@ -389,9 +389,9 @@ DsmcSolver<T>::collide_indexed_pair(const Probe& probe,
     }
 
     // Sample the random value used for the acceptance-rejection test.
-    const T accept_sample = atlas::sampling::sample_hashed_unit_interval<T>(
+    const T accept_sample = atlas::sample_hashed_unit_interval<T>(
         cell,
-        probe.collision_seed + stream + atlas::seed::DSMC_COLLISION_ACCEPT_SALT);
+        probe.collision_seed + stream + atlas::DSMC_COLLISION_ACCEPT_SALT);
 
     if (accept_sample >= accept_probability) {
         return false;
@@ -419,15 +419,15 @@ DsmcSolver<T>::sample_distinct_pair(int& lhs_local,
                                     const int count,
                                     const std::uint64_t seed,
                                     const std::uint64_t stream) noexcept {
-    lhs_local = atlas::sampling::sample_hashed_index(
+    lhs_local = atlas::sample_hashed_index(
         cell,
         count,
-        seed + stream + atlas::seed::DSMC_COLLISION_LHS_SALT);
+        seed + stream + atlas::DSMC_COLLISION_LHS_SALT);
 
-    rhs_local = atlas::sampling::sample_hashed_index(
+    rhs_local = atlas::sample_hashed_index(
         cell,
         count - 1,
-        seed + stream + atlas::seed::DSMC_COLLISION_RHS_SALT);
+        seed + stream + atlas::DSMC_COLLISION_RHS_SALT);
 
     if (rhs_local >= lhs_local) {
         ++rhs_local;

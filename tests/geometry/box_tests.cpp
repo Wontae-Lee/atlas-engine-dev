@@ -11,7 +11,7 @@ namespace {
 using atlas::Box;
 using atlas::Ray;
 using atlas::Vector3F;
-using atlas::geometry::GeometryType;
+using atlas::GeometryType;
 using atlas::test::vec_near;
 using atlas::tol;
 
@@ -105,9 +105,9 @@ TEST(Box, CentroidAndBoundMatchCorners) {
 TEST(Box, GeometryOperatorAndRayTraceWork) {
     const Box<float> box(Vector3F(-1, -1, -1), Vector3F(1, 1, 1));
 
-    const auto geometry_operator = box.make_geometry_operator();
+    const auto geometry_operator = box.make_device_geometry_view();
     const Ray<float> ray(Vector3F(-3, 0, 0), Vector3F(1, 0, 0));
-    const auto hit = box.make_geometry_operator().trace(ray);
+    const auto hit = box.make_device_geometry_view().trace(ray);
 
     EXPECT_EQ(box.type(), geometry_operator.type);
     EXPECT_TRUE(hit.is_intersecting);

@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 struct HybridDsmcSphProbe {
@@ -23,11 +23,7 @@ using HybridProbe = HybridDsmcSphProbe<T>;
 }
 
 namespace atlas {
-
 template <typename T>
-using HybridDsmcSphProbe = atlas::system::HybridDsmcSphProbe<T>;
-
-template <typename T>
-using HybridProbe = atlas::system::HybridDsmcSphProbe<T>;
+using HybridProbe = atlas::HybridDsmcSphProbe<T>;
 
 }

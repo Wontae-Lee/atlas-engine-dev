@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace atlas::spatial {
+namespace atlas {
 
 template <typename T>
 AxisAlignedBoundingBox<T>::AxisAlignedBoundingBox() noexcept {
@@ -15,8 +15,8 @@ template <typename T>
 AxisAlignedBoundingBox<T>::AxisAlignedBoundingBox(const Vector3<T>& point1,
                                                   const Vector3<T>& point2) noexcept {
     // Build a valid box regardless of input point order.
-    lower_corner = math::cmin(point1, point2);
-    upper_corner = math::cmax(point1, point2);
+    lower_corner = cmin(point1, point2);
+    upper_corner = cmax(point1, point2);
 }
 
 template <typename T>
@@ -66,7 +66,7 @@ bool
 AxisAlignedBoundingBox<T>::overlaps(const AxisAlignedBoundingBox& other) const noexcept {
     // Boxes do not overlap if one is completely separated on any axis.
     const bool separated =
-        math::any((upper_corner < other.lower_corner) | (lower_corner > other.upper_corner));
+        any((upper_corner < other.lower_corner) | (lower_corner > other.upper_corner));
 
     return !separated;
 }
@@ -75,7 +75,7 @@ template <typename T>
 bool
 AxisAlignedBoundingBox<T>::contains(const Vector3<T>& point) const noexcept {
     // A point is inside when it lies within all axis intervals.
-    return math::all((point >= lower_corner) & (point <= upper_corner));
+    return all((point >= lower_corner) & (point <= upper_corner));
 }
 
 template <typename T>
@@ -92,7 +92,7 @@ AxisAlignedBoundingBox<T>::intersects(const Ray<T>& ray) const noexcept {
         const T mx = upper_corner[i];
 
         // Parallel ray must already lie inside this axis interval.
-        if (atlas::math::abs(d) <= eps) {
+        if (atlas::abs(d) <= eps) {
             if (o < mn || o > mx) return false;
             continue;
         }
@@ -129,7 +129,7 @@ AxisAlignedBoundingBox<T>::trace(const Ray<T>& ray) const noexcept {
         const T mx = upper_corner[i];
 
         // Parallel ray misses if its origin is outside this axis interval.
-        if (atlas::math::abs(d) <= eps) {
+        if (atlas::abs(d) <= eps) {
             if (o < mn || o > mx) return isect;
             continue;
         }
@@ -187,9 +187,9 @@ template <typename T>
 bool
 AxisAlignedBoundingBox<T>::is_valid() const noexcept {
     // Valid boxes have finite coordinates and ordered corners.
-    return atlas::math::isfinite(lower_corner)
-        && atlas::math::isfinite(upper_corner)
-        && atlas::math::all(lower_corner <= upper_corner);
+    return atlas::isfinite(lower_corner)
+        && atlas::isfinite(upper_corner)
+        && atlas::all(lower_corner <= upper_corner);
 }
 
 template <typename T>
@@ -212,16 +212,16 @@ template <typename T>
 void
 AxisAlignedBoundingBox<T>::merge(const Vector3<T>& point) noexcept {
     // Expand bounds to include the point.
-    lower_corner = math::cmin(lower_corner, point);
-    upper_corner = math::cmax(upper_corner, point);
+    lower_corner = cmin(lower_corner, point);
+    upper_corner = cmax(upper_corner, point);
 }
 
 template <typename T>
 void
 AxisAlignedBoundingBox<T>::merge(const AxisAlignedBoundingBox& other) noexcept {
     // Expand bounds to include another box.
-    lower_corner = math::cmin(lower_corner, other.lower_corner);
-    upper_corner = math::cmax(upper_corner, other.upper_corner);
+    lower_corner = cmin(lower_corner, other.lower_corner);
+    upper_corner = cmax(upper_corner, other.upper_corner);
 }
 
 template <typename T>
@@ -249,14 +249,14 @@ template <typename T>
 Vector3<T>
 AxisAlignedBoundingBox<T>::clamp(const Vector3<T>& point) const noexcept {
     // Project the point onto the box by clamping each coordinate.
-    return math::clamp(point, lower_corner, upper_corner);
+    return clamp(point, lower_corner, upper_corner);
 }
 
 template <typename T>
 bool
 AxisAlignedBoundingBox<T>::is_empty() const noexcept {
     // A box is empty when at least one axis has non-positive length.
-    return math::any(upper_corner <= lower_corner);
+    return any(upper_corner <= lower_corner);
 }
 
-} // namespace atlas::spatial
+} // namespace atlas

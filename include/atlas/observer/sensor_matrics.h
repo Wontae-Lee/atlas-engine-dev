@@ -13,7 +13,7 @@
 #include <memory>
 #include <string_view>
 
-namespace atlas::observer {
+namespace atlas {
 
 /**
  * @brief Abstract base class for all observer metric containers.
@@ -142,14 +142,6 @@ protected:
     ATLAS_HOST ATLAS_NODISCARD std::string_view
     filename() const noexcept override;
 };
-
-} // namespace atlas::observer
-
-namespace atlas {
-
-using SensorMatrics       = observer::SensorMatrics;
-using SourceSensorMatrics = observer::SourceSensorMatrics;
-using SinkSensorMatrics   = observer::SinkSensorMatrics;
 
 } // namespace atlas
 

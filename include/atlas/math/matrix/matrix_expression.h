@@ -2,7 +2,7 @@
 #include <atlas/math/detail/ops.h>
 #include <cstddef>
 #include <type_traits>
-namespace atlas::math {
+namespace atlas {
 /**
  * @file matrix_expression.h
  * @brief Core matrix expression-template infrastructure (CRTP) and boolean reductions.
@@ -588,4 +588,4 @@ any(const MatrixExpression<bool, E>& mask) noexcept {
     }
     return false; // No elements were true.
 }
-} // namespace atlas::math
+} // namespace atlas

@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::fluid {
+namespace atlas {
 
 template <typename T>
 Source<T>::Source(DeviceBuffer<Unit<T>> units,
@@ -124,9 +124,9 @@ Source<T>::rebuild_cache() noexcept {
         const auto& spawn_op = spawn_operators[(spawn_operator_count == 1) ? 0 : i];
 
         // Determine the number of sample points along each axis.
-        const int nx = atlas::sampling::sample_axis_count(lower.x, upper.x, _spacing);
-        const int ny = atlas::sampling::sample_axis_count(lower.y, upper.y, _spacing);
-        const int nz = atlas::sampling::sample_axis_count(lower.z, upper.z, _spacing);
+        const int nx = atlas::sample_axis_count(lower.x, upper.x, _spacing);
+        const int ny = atlas::sample_axis_count(lower.y, upper.y, _spacing);
+        const int nz = atlas::sample_axis_count(lower.z, upper.z, _spacing);
 
         std::size_t accepted_count = 0;
 
@@ -296,7 +296,7 @@ Source<T>::emit() {
 
     if (emit_count == 0) {
         // Warn when the source has particles to emit but the fluid buffer is full.
-        atlas::logger::warn() << "\n"
+        atlas::warn() << "\n"
                               << "Source emission skipped: no available slots for "
                               << _local_particle_count
                               << " particles\n";
@@ -569,19 +569,19 @@ Source<T>::Builder::validate() const {
     }
 
     // Source sampling spacing must be finite and strictly positive.
-    if (!atlas::math::isfinite(_spacing) || _spacing <= T(0)) {
+    if (!atlas::isfinite(_spacing) || _spacing <= T(0)) {
         throw std::runtime_error("Source::Builder: spacing must be finite and positive.");
     }
 
     // Geometric tolerance must be finite.
-    if (!atlas::math::isfinite(_tolerance)) {
+    if (!atlas::isfinite(_tolerance)) {
         throw std::runtime_error("Source::Builder: tolerance must be finite.");
     }
 
     // Emission temperature must be finite.
-    if (!atlas::math::isfinite(_temperature)) {
+    if (!atlas::isfinite(_temperature)) {
         throw std::runtime_error("Source::Builder: temperature must be finite.");
     }
 }
 
-} // namespace atlas::fluid
+} // namespace atlas

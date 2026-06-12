@@ -5,7 +5,7 @@
  * @brief Declares the node representation used by bounding volume hierarchies.
  *
  * @details
- * This file defines @ref atlas::spatial::BVHNode, the compact node record used
+ * This file defines @ref atlas::BVHNode, the compact node record used
  * by BVH implementations in Atlas.
  *
  * A BVH is a tree over geometric primitives. Each node stores an axis-aligned
@@ -14,7 +14,7 @@
  * - the bounding boxes of its child nodes, for an internal node,
  * - the primitive range referenced by the leaf, for a leaf node.
  *
- * A node is interpreted according to @ref atlas::spatial::BVHNode::is_leaf:
+ * A node is interpreted according to @ref atlas::BVHNode::is_leaf:
  *
  * - if `is_leaf == true`, the node is a leaf and uses `start` and `count`,
  * - if `is_leaf == false`, the node is an internal node and uses `left` and `right`.
@@ -42,7 +42,7 @@
 
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 
-namespace atlas::spatial {
+namespace atlas {
 
 /**
  * @brief Node record used in a bounding volume hierarchy.
@@ -140,7 +140,7 @@ struct BVHNode {
      * where @f$A_i@f$ is triangle area and @f$c_i@f$ is triangle centroid. The
      * aggregate center is `solid_angle_moment / solid_angle_area`.
      */
-    atlas::math::Vector<T, 3> solid_angle_moment { T(0), T(0), T(0) };
+    atlas::Vector<T, 3> solid_angle_moment { T(0), T(0), T(0) };
 
     /**
      * @brief Sum of oriented triangle area vectors used by fast winding.
@@ -148,7 +148,7 @@ struct BVHNode {
      * @details
      * Each triangle contributes @f$\frac{1}{2} ((b-a) \times (c-a))@f$.
      */
-    atlas::math::Vector<T, 3> solid_angle_normal_area { T(0), T(0), T(0) };
+    atlas::Vector<T, 3> solid_angle_normal_area { T(0), T(0), T(0) };
 
     /**
      * @brief Sum of unsigned triangle areas covered by this node.
@@ -237,4 +237,4 @@ struct BVHNode {
     bool is_leaf = false;
 };
 
-} // namespace atlas::spatial
+} // namespace atlas

@@ -6,7 +6,7 @@
 
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 SphGatewaySolver<T>::SphGatewaySolver(UniverseHostPtr<T> universe,
@@ -92,13 +92,13 @@ SphGatewaySolver<T>::ensure_states() {
     // Ensure per-cell output buffers exist.
     const auto number_of_cells = static_cast<std::size_t>(this->_universe->number_of_cells());
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseNumberParticleState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseNumberParticleState<T>>(
+    if (!this->_universe->template has_state<atlas::UniverseNumberParticleState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseNumberParticleState<T>>(
             number_of_cells);
     }
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseFieldForceState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseFieldForceState<T>>(
+    if (!this->_universe->template has_state<atlas::UniverseFieldForceState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseFieldForceState<T>>(
             number_of_cells);
     }
 }
@@ -126,9 +126,9 @@ SphGatewaySolver<T>::initialize_context() noexcept {
     }
 
     // Grouped SPH requires particle position, velocity, and species states.
-    auto* position_state = this->_fluid->template state<atlas::fluid::FluidPositionState<T>>();
-    auto* velocity_state = this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>();
-    auto* species_state  = this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
+    auto* position_state = this->_fluid->template state<atlas::FluidPositionState<T>>();
+    auto* velocity_state = this->_fluid->template state<atlas::FluidVelocityState<T>>();
+    auto* species_state  = this->_fluid->template state<atlas::FluidSpeciesState<T>>();
 
     if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr) {
         reset_universe_fields();
@@ -207,8 +207,8 @@ SphGatewaySolver<T>::reset_universe_fields() {
     // Ensure reset targets exist.
     ensure_states();
 
-    auto* number_particle_state = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
-    auto* field_force_state     = this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>();
+    auto* number_particle_state = this->_universe->template state<atlas::UniverseNumberParticleState<T>>();
+    auto* field_force_state     = this->_universe->template state<atlas::UniverseFieldForceState<T>>();
 
     // Reset per-cell particle counts.
     if (number_particle_state != nullptr) {
@@ -230,12 +230,12 @@ SphGatewaySolver<T>::make_probe() noexcept {
         return false;
     }
 
-    _probe.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidPositionState<T>>()->data().data());
-    _probe.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data().data());
-    _probe.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>()->data().data());
+    _probe.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidPositionState<T>>()->data().data());
+    _probe.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidVelocityState<T>>()->data().data());
+    _probe.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidSpeciesState<T>>()->data().data());
     _probe.properties_ptr      = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
-    _probe.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()->data().data());
-    _probe.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>()->data().data());
+    _probe.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseNumberParticleState<T>>()->data().data());
+    _probe.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseFieldForceState<T>>()->data().data());
     _probe.indices_ptr    = this->_searcher->indices();
     _probe.cell_start_ptr = this->_searcher->cell_start();
     _probe.cell_end_ptr   = this->_searcher->cell_end();
@@ -442,7 +442,7 @@ SphGatewaySolver<T>::estimate_group_density_and_pressure(const DeviceBuffer<int>
                         continue;
                     }
 
-                    const T radius = atlas::math::sqrt_nonnegative(radius_squared);
+                    const T radius = atlas::sqrt_nonnegative(radius_squared);
 
                     density += representative_mass * probe.kernel.density_weight(radius, cell_size);
                 }
@@ -537,7 +537,7 @@ SphGatewaySolver<T>::update_group_motion(const DeviceBuffer<int>* allocated_solv
                         continue;
                     }
 
-                    const T radius = atlas::math::sqrt_nonnegative(radius_squared);
+                    const T radius = atlas::sqrt_nonnegative(radius_squared);
 
                     // Add pressure-gradient acceleration.
                     const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, cell_size);
@@ -751,4 +751,4 @@ SphGatewaySolver<T>::Builder::make_host_shared() const {
         _group_particle_count);
 }
 
-} // namespace atlas::system
+} // namespace atlas

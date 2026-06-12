@@ -5,11 +5,12 @@
  * @brief Declares tagged post-collision kernels for Collider.
  */
 
+#include <atlas/core/detail/device_variant.h>
 #include <atlas/collider/kernel/dt_remain_collider_kernel.h>
 #include <atlas/collider/kernel/fast_collider_kernel.h>
 #include <atlas/collider/kernel/precise_collider_kernel.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Selects how Collider places a particle after a surface hit.
@@ -126,15 +127,6 @@ struct PostColliderKernel final {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     copy_from(const PostColliderKernel& other) noexcept;
 };
-
-} // namespace atlas::system
-
-namespace atlas {
-
-using PostColliderType = atlas::system::PostColliderType;
-
-template <typename T>
-using PostColliderKernel = atlas::system::PostColliderKernel<T>;
 
 } // namespace atlas
 

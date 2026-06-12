@@ -5,7 +5,7 @@
  * @brief Declares an infinite plane geometry primitive and its lightweight query/trace operator.
  *
  * @details
- * This header defines @ref atlas::geometry::Plane, an infinite plane embedded in
+ * This header defines @ref atlas::Plane, an infinite plane embedded in
  * 3D space and represented in implicit form by:
  * - a normal vector,
  * - a scalar offset.
@@ -58,7 +58,7 @@
 
 #include <type_traits>
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Lightweight non-owning geometry operator for querying and tracing a plane.
@@ -94,7 +94,7 @@ struct PlaneGeometryOperator {
      * @details
      * Non-owning pointer to the normal vector defining the plane orientation.
      */
-    const atlas::math::Vector<T, 3>* normal = nullptr;
+    const atlas::Vector<T, 3>* normal = nullptr;
 
     /**
      * @brief Pointer to the scalar plane offset.
@@ -114,8 +114,8 @@ struct PlaneGeometryOperator {
      * @param p Query point in world space.
      * @return Orthogonal projection of @p p onto the plane.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the plane normal associated with a query point.
@@ -127,8 +127,8 @@ struct PlaneGeometryOperator {
      * @param p Query point in world space.
      * @return Plane normal associated with the query.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the signed distance from a query point to the plane.
@@ -141,7 +141,7 @@ struct PlaneGeometryOperator {
      * @return Signed distance from @p p to the plane.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Test whether a point lies in the "inside" half-space of the plane.
@@ -156,7 +156,7 @@ struct PlaneGeometryOperator {
      * @return `true` if the point is classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Test whether a point lies on the plane surface within a tolerance.
@@ -166,7 +166,7 @@ struct PlaneGeometryOperator {
      * @return `true` if the point is classified as lying on the surface.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Return a representative centroid of the plane.
@@ -178,7 +178,7 @@ struct PlaneGeometryOperator {
      *
      * @return Representative point on the plane.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept;
 
     /**
@@ -190,7 +190,7 @@ struct PlaneGeometryOperator {
      *
      * @return Axis-aligned bounding representation of the plane.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept;
 
     /**
@@ -218,7 +218,7 @@ struct PlaneGeometryOperator {
      * @return Surface hit record describing the ray-plane intersection result.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+    trace(const atlas::Ray<T>& ray) const noexcept;
 
     /**
      * @brief Function-call alias for @ref trace.
@@ -227,7 +227,7 @@ struct PlaneGeometryOperator {
      * @return Surface hit record.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+    operator()(const atlas::Ray<T>& ray) const noexcept;
 };
 
 /**
@@ -275,7 +275,7 @@ struct PlaneGeometryOperator {
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-class Plane final : public Geometry<T> {
+class Plane final : public Geometry<T>, public DeviceGeometryViewFactory<T> {
     static_assert(std::is_floating_point_v<T>, "Plane requires a floating-point T");
 
 public:
@@ -353,10 +353,6 @@ public:
     /**
      * @brief Copy constructor.
      *
-     * @details
-     * Copies plane parameters and rebinds the cached operator so that its
-     * internal pointers reference this object rather than the source object.
-     *
      * @param other Source plane.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
@@ -364,9 +360,6 @@ public:
 
     /**
      * @brief Move constructor.
-     *
-     * @details
-     * Moves plane parameters and rebinds the cached operator to this object.
      *
      * @param other Source plane.
      */
@@ -376,9 +369,6 @@ public:
     /**
      * @brief Copy assignment operator.
      *
-     * @details
-     * Copies plane parameters and refreshes the cached operator binding.
-     *
      * @param other Source plane.
      * @return `*this`.
      */
@@ -387,9 +377,6 @@ public:
 
     /**
      * @brief Move assignment operator.
-     *
-     * @details
-     * Moves plane parameters and refreshes the cached operator binding.
      *
      * @param other Source plane.
      * @return `*this`.
@@ -412,7 +399,7 @@ public:
      * @return Bound geometry operator.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE GeometryOperator<T>
-    make_geometry_operator() const override;
+    make_device_geometry_view() const override;
 
     /**
      * @brief Compute the closest point on the plane to a query point.
@@ -420,8 +407,8 @@ public:
      * @param p Query point.
      * @return Orthogonal projection onto the plane.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Return the closest plane normal associated with a query point.
@@ -429,8 +416,8 @@ public:
      * @param p Query point.
      * @return Plane normal associated with the query.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Compute the signed distance from a query point to the plane.
@@ -439,7 +426,7 @@ public:
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Test whether a point lies in the inside half-space within a tolerance.
@@ -449,7 +436,7 @@ public:
      * @return `true` if classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Test whether a point lies on the plane within a tolerance.
@@ -459,14 +446,14 @@ public:
      * @return `true` if classified as on the surface; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Return a representative centroid point for the plane.
      *
      * @return Representative point on the plane.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept override;
 
     /**
@@ -474,7 +461,7 @@ public:
      *
      * @return Axis-aligned bounding-box representation.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept override;
 
     /**
@@ -503,22 +490,10 @@ private:
     friend class Builder;
 
     /**
-     * @brief Bind the cached operator to this plane's storage.
-     *
-     * @details
-     * Refreshes the raw-pointer fields of @ref _operator so that they reference
-     * this instance's defining parameters.
+     * @brief Creates a lightweight runtime operator bound to this plane's current parameters.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    bind_operator() noexcept;
-
-    /**
-     * @brief Cached non-owning geometry operator bound to this plane.
-     *
-     * @details
-     * Stores raw pointers to @ref normal and @ref offset.
-     */
-    mutable PlaneGeometryOperator<T> _operator {};
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE PlaneGeometryOperator<T>
+    make_plane_operator() const noexcept;
 };
 
 /**
@@ -647,43 +622,36 @@ private:
     T _offset { T(0) };
 };
 
-} // namespace atlas::geometry
+} // namespace atlas
 
 namespace atlas {
 
+
 /**
- * @brief Convenience alias for @ref atlas::geometry::Plane.
+ * @brief Common specialization of @ref atlas::Plane for `float`.
+ */
+using PlaneF = Plane<float>;
+
+/**
+ * @brief Common specialization of @ref atlas::Plane for `double`.
+ */
+using PlaneD = Plane<double>;
+
+/**
+ * @brief Convenience alias for a host-owned shared pointer to @ref atlas::Plane.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using Plane = geometry::Plane<T>;
+using PlaneHostPtr = atlas::host_shared_ptr<Plane<T>>;
 
 /**
- * @brief Common specialization of @ref atlas::geometry::Plane for `float`.
- */
-using PlaneF = geometry::Plane<float>;
-
-/**
- * @brief Common specialization of @ref atlas::geometry::Plane for `double`.
- */
-using PlaneD = geometry::Plane<double>;
-
-/**
- * @brief Convenience alias for a host-owned shared pointer to @ref atlas::geometry::Plane.
+ * @brief Convenience alias for a device-owned shared pointer to @ref atlas::Plane.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using PlaneHostPtr = atlas::host_shared_ptr<geometry::Plane<T>>;
-
-/**
- * @brief Convenience alias for a device-owned shared pointer to @ref atlas::geometry::Plane.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using PlaneDevicePtr = atlas::device_shared_ptr<geometry::Plane<T>>;
+using PlaneDevicePtr = atlas::device_shared_ptr<Plane<T>>;
 
 } // namespace atlas
 

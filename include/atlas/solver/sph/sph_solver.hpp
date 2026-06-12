@@ -6,7 +6,7 @@
 
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 SphSolver<T>::SphSolver(UniverseHostPtr<T> universe,
@@ -82,13 +82,13 @@ SphSolver<T>::ensure_states() {
     // Ensure per-cell output buffers exist.
     const auto number_of_cells = static_cast<std::size_t>(this->_universe->number_of_cells());
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseNumberParticleState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseNumberParticleState<T>>(
+    if (!this->_universe->template has_state<atlas::UniverseNumberParticleState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseNumberParticleState<T>>(
             number_of_cells);
     }
 
-    if (!this->_universe->template has_state<atlas::universe::UniverseFieldForceState<T>>()) {
-        this->_universe->template emplace_state<atlas::universe::UniverseFieldForceState<T>>(
+    if (!this->_universe->template has_state<atlas::UniverseFieldForceState<T>>()) {
+        this->_universe->template emplace_state<atlas::UniverseFieldForceState<T>>(
             number_of_cells);
     }
 }
@@ -106,9 +106,9 @@ SphSolver<T>::initialize_context() noexcept {
     }
 
     // SPH requires particle position, velocity, and species states.
-    auto* position_state = this->_fluid->template state<atlas::fluid::FluidPositionState<T>>();
-    auto* velocity_state = this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>();
-    auto* species_state  = this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
+    auto* position_state = this->_fluid->template state<atlas::FluidPositionState<T>>();
+    auto* velocity_state = this->_fluid->template state<atlas::FluidVelocityState<T>>();
+    auto* species_state  = this->_fluid->template state<atlas::FluidSpeciesState<T>>();
 
     if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr) {
         reset_fields();
@@ -134,12 +134,12 @@ SphSolver<T>::make_probe() noexcept {
         return false;
     }
 
-    _probe.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidPositionState<T>>()->data().data());
-    _probe.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data().data());
-    _probe.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::fluid::FluidSpeciesState<T>>()->data().data());
+    _probe.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidPositionState<T>>()->data().data());
+    _probe.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidVelocityState<T>>()->data().data());
+    _probe.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidSpeciesState<T>>()->data().data());
     _probe.properties_ptr      = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
-    _probe.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()->data().data());
-    _probe.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>()->data().data());
+    _probe.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseNumberParticleState<T>>()->data().data());
+    _probe.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseFieldForceState<T>>()->data().data());
     _probe.indices_ptr    = this->_searcher->indices();
     _probe.cell_start_ptr = this->_searcher->cell_start();
     _probe.cell_end_ptr   = this->_searcher->cell_end();
@@ -192,8 +192,8 @@ SphSolver<T>::reset_fields() {
     // Ensure reset targets exist.
     ensure_states();
 
-    auto* number_particle_state = this->_universe->template state<atlas::universe::UniverseNumberParticleState<T>>();
-    auto* field_force_state     = this->_universe->template state<atlas::universe::UniverseFieldForceState<T>>();
+    auto* number_particle_state = this->_universe->template state<atlas::UniverseNumberParticleState<T>>();
+    auto* field_force_state     = this->_universe->template state<atlas::UniverseFieldForceState<T>>();
 
     // Reset per-cell particle counts.
     if (number_particle_state != nullptr) {
@@ -260,7 +260,7 @@ SphSolver<T>::estimate_density() {
                     continue;
                 }
 
-                const T radius = atlas::math::sqrt_nonnegative(radius_squared);
+                const T radius = atlas::sqrt_nonnegative(radius_squared);
 
                 const std::size_t neighbor_species_index = probe.species_ptr[neighbor_index];
 
@@ -368,7 +368,7 @@ SphSolver<T>::accelerate(const T dt) {
                     continue;
                 }
 
-                const T radius = atlas::math::sqrt_nonnegative(radius_squared);
+                const T radius = atlas::sqrt_nonnegative(radius_squared);
 
                 // Add pressure-gradient acceleration.
                 const Vector3<T> grad = probe.kernel.pressure_gradient(delta, radius, h);
@@ -519,4 +519,4 @@ SphSolver<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<SphSolver<T>>(_universe, _fluid, _searcher, _kernel_type);
 }
 
-} // namespace atlas::system
+} // namespace atlas

@@ -6,62 +6,12 @@
  */
 
 #include <atlas/generator/generator.h>
+#include <atlas/generator/generate_operator.h>
 #include <atlas/random/default_random_engine.h>
 
 #include <optional>
 
-namespace atlas::fluid {
-
-/**
- * @brief Device/host generation operator that produces a jittered 3D value.
- *
- * The operator generates each vector component independently by sampling a
- * uniform random offset in the range `[-jitter_radius, +jitter_radius]` and
- * adding it to `base_value`.
- *
- * @tparam T Scalar type used by the operator.
- */
-template <typename T>
-struct JitteringGenerateOperator final {
-    unsigned int seed = static_cast<unsigned int>(atlas::seed::DEFAULT_UNSIGNED_INT_SEED);
-    T base_value { T(0) };
-    T jitter_radius { T(0) };
-    mutable atlas::default_random_engine<T> engine;
-
-    /**
-     * @brief Construct a jittering generation operator.
-     *
-     * @param seed Seed used to initialize the internal random engine.
-     * @param base_value Central value around which jitter is applied.
-     * @param jitter_radius Radius of the symmetric uniform perturbation interval.
-     */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit JitteringGenerateOperator(
-        unsigned int seed = static_cast<unsigned int>(atlas::seed::DEFAULT_UNSIGNED_INT_SEED),
-        T base_value      = T(0),
-        T jitter_radius   = T(0)) noexcept;
-
-    /**
-     * @brief Generate a jittered 3D value.
-     *
-     * The input parameters are accepted to match the generic generate-operator
-     * interface but are not used by this operator.
-     *
-     * @param param0 Unused.
-     * @param param1 Unused.
-     * @return Jittered 3D vector.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
-    generate(T param0,
-             T param1) const;
-
-    /**
-     * @brief Generate a jittered value from a temporary engine initialized with @p seed.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
-    generate(unsigned int seed,
-             T param0,
-             T param1) const;
-};
+namespace atlas {
 
 /**
  * @brief Host-side generator wrapper for `JitteringGenerateOperator`.
@@ -96,7 +46,7 @@ public:
     JitteringOperator(
         T base_value,
         T jitter_radius,
-        unsigned int seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED) noexcept;
+        unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
     /**
      * @brief Generate a jittered vector value on the host.
@@ -225,15 +175,8 @@ private:
 private:
     std::optional<T> _base_value;
     std::optional<T> _jitter_radius;
-    unsigned int _seed = atlas::seed::DEFAULT_UNSIGNED_INT_SEED;
+    unsigned int _seed = atlas::DEFAULT_UNSIGNED_INT_SEED;
 };
-
-} // namespace atlas::fluid
-
-namespace atlas {
-
-template <typename T>
-using JitteringOperator = atlas::fluid::JitteringOperator<T>;
 
 } // namespace atlas
 

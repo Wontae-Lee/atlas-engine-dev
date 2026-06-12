@@ -10,7 +10,7 @@
 
 #include <type_traits>
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Lightweight query operator for an oriented square.
@@ -23,8 +23,8 @@ namespace atlas::geometry {
  */
 template <typename T>
 struct SquareGeometryOperator {
-    const atlas::math::Vector<T, 3>* center = nullptr;
-    const atlas::math::Vector<T, 3>* normal = nullptr;
+    const atlas::Vector<T, 3>* center = nullptr;
+    const atlas::Vector<T, 3>* normal = nullptr;
     const T* side_length                    = nullptr;
 
     /**
@@ -33,8 +33,8 @@ struct SquareGeometryOperator {
      * @param p Query point.
      * @return Closest point on the square.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Return the square normal closest to the query point.
@@ -45,8 +45,8 @@ struct SquareGeometryOperator {
      * @param p Query point.
      * @return Unit surface normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Return the signed distance from a point to the square.
@@ -57,7 +57,7 @@ struct SquareGeometryOperator {
      * @return Signed distance to the square.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Test whether a point lies on or inside the square within tolerance.
@@ -70,7 +70,7 @@ struct SquareGeometryOperator {
      * @return True if the point is inside the square footprint within tolerance.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Test whether a point lies on the square surface within tolerance.
@@ -82,14 +82,14 @@ struct SquareGeometryOperator {
      * @return True if the point is on the surface within tolerance.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Return the square centroid.
      *
      * @return Square center.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept;
 
     /**
@@ -97,7 +97,7 @@ struct SquareGeometryOperator {
      *
      * @return Bounding box enclosing the square.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept;
 
     /**
@@ -115,7 +115,7 @@ struct SquareGeometryOperator {
      * @return Surface hit description.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+    trace(const atlas::Ray<T>& ray) const noexcept;
 
     /**
      * @brief Shorthand call operator forwarding to `trace`.
@@ -124,7 +124,7 @@ struct SquareGeometryOperator {
      * @return Surface hit description.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+    operator()(const atlas::Ray<T>& ray) const noexcept;
 
 private:
     /**
@@ -137,10 +137,10 @@ private:
      * @return `true` when basis construction succeeds.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
-    build_basis(const atlas::math::Vector<T, 3>& input_normal,
-                atlas::math::Vector<T, 3>& unit_normal,
-                atlas::math::Vector<T, 3>& tangent,
-                atlas::math::Vector<T, 3>& bitangent) const noexcept;
+    build_basis(const atlas::Vector<T, 3>& input_normal,
+                atlas::Vector<T, 3>& unit_normal,
+                atlas::Vector<T, 3>& tangent,
+                atlas::Vector<T, 3>& bitangent) const noexcept;
 };
 
 /**
@@ -152,7 +152,7 @@ private:
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-class Square final : public Geometry<T> {
+class Square final : public Geometry<T>, public DeviceGeometryViewFactory<T> {
     static_assert(std::is_floating_point_v<T>, "Square requires a floating-point T");
 
 public:
@@ -231,27 +231,27 @@ public:
      * @return Geometry operator bound to this square instance.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE GeometryOperator<T>
-    make_geometry_operator() const override;
+    make_device_geometry_view() const override;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept override;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept override;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept override;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept override;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept override;
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
@@ -264,12 +264,10 @@ private:
     friend class Builder;
 
     /**
-     * @brief Bind the internal operator to this square's storage.
+     * @brief Creates a lightweight runtime operator bound to this square's current parameters.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    bind_operator() noexcept;
-
-    mutable SquareGeometryOperator<T> _operator {};
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE SquareGeometryOperator<T>
+    make_square_operator() const noexcept;
 };
 
 /**
@@ -343,21 +341,17 @@ private:
     T _side_length { T(1) };
 };
 
-} // namespace atlas::geometry
+} // namespace atlas
 
 namespace atlas {
+using SquareF = Square<float>;
+using SquareD = Square<double>;
 
 template <typename T>
-using Square = geometry::Square<T>;
-
-using SquareF = geometry::Square<float>;
-using SquareD = geometry::Square<double>;
+using SquareHostPtr = atlas::host_shared_ptr<Square<T>>;
 
 template <typename T>
-using SquareHostPtr = atlas::host_shared_ptr<geometry::Square<T>>;
-
-template <typename T>
-using SquareDevicePtr = atlas::device_shared_ptr<geometry::Square<T>>;
+using SquareDevicePtr = atlas::device_shared_ptr<Square<T>>;
 
 } // namespace atlas
 

@@ -28,7 +28,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Wendland quintic SPH smoothing-kernel utilities.
@@ -117,6 +117,6 @@ struct WendlandQuinticSphKernel final {
     viscosity_laplacian(T radius, T cell_size) noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 #include <atlas/solver/sph/wendland_quintic_sph_kernel.hpp>

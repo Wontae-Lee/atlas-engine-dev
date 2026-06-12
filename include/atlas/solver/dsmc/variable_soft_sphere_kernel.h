@@ -5,7 +5,7 @@
  * @brief Declares a Variable Soft Sphere DSMC collision kernel.
  *
  * @details
- * This file defines @ref atlas::system::VariableSoftSphereKernel, a stateless
+ * This file defines @ref atlas::VariableSoftSphereKernel, a stateless
  * DSMC collision-kernel component that combines:
  *
  * - VHS total collision cross-section evaluation,
@@ -113,7 +113,7 @@
 #include <atlas/material/material_properties.h>
 #include <atlas/math/math.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Variable Soft Sphere DSMC collision kernel.
@@ -363,6 +363,6 @@ public:
                const MaterialProperties<T>& rhs) const noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 #include <atlas/solver/dsmc/variable_soft_sphere_kernel.hpp>

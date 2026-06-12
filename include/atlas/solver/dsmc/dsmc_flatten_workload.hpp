@@ -9,7 +9,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 const atlas::DeviceBuffer<int>&
@@ -127,4 +127,4 @@ DsmcFlattenWorkload<T>::build(int* collision_count_ptr,
     return true;
 }
 
-} // namespace atlas::system
+} // namespace atlas

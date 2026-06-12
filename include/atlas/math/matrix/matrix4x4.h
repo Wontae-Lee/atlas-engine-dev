@@ -7,7 +7,6 @@
 #include <limits>
 #include <type_traits>
 namespace atlas {
-namespace math {
     /**
      * @brief Specialized 4×4 matrix with named fields and small-matrix utilities.
      *
@@ -505,9 +504,8 @@ namespace math {
     template <typename T>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 4>
     solve(const Matrix<T, 4, 4>& A, const Vector<T, 4>& b) noexcept;
-} // namespace math
 template <typename T>
-using Matrix4x4  = math::Matrix<T, 4, 4>;
+using Matrix4x4  = Matrix<T, 4, 4>;
 using Matrix4x4F = Matrix4x4<float>;
 using Matrix4x4D = Matrix4x4<double>;
 } // namespace atlas

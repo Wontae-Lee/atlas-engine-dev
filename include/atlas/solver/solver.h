@@ -7,7 +7,7 @@
 #include <atlas/searcher/searcher.h>
 #include <atlas/universe/universe.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Base interface for simulation solvers executed by the system orchestrator.
@@ -121,22 +121,22 @@ namespace atlas {
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using Solve = atlas::system::Solver<T>;
+using Solve = atlas::Solver<T>;
 
 /**
- * @brief Host shared-pointer alias for `atlas::system::Solver`.
+ * @brief Host shared-pointer alias for `atlas::Solver`.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using SolveHostPtr = atlas::host_shared_ptr<atlas::system::Solver<T>>;
+using SolveHostPtr = atlas::host_shared_ptr<atlas::Solver<T>>;
 
 /**
- * @brief Device shared-pointer alias for `atlas::system::Solver`.
+ * @brief Device shared-pointer alias for `atlas::Solver`.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using SolveDevicePtr = atlas::device_shared_ptr<atlas::system::Solver<T>>;
+using SolveDevicePtr = atlas::device_shared_ptr<atlas::Solver<T>>;
 
 }

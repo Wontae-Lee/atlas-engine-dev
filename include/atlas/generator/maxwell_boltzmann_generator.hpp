@@ -1,75 +1,10 @@
 #pragma once
 
 #include <atlas/logging/logging.h>
-#include <atlas/sampling/sampling.h>
-
 #include <cmath>
 #include <stdexcept>
 
-namespace atlas::fluid {
-
-template <typename T>
-MaxwellBoltzmannGenerateOperator<T>::MaxwellBoltzmannGenerateOperator(
-    const unsigned int seed,
-    const Vector3<T>& bulk_velocity) noexcept
-    : seed(seed)
-    , bulk_velocity(bulk_velocity)
-    , engine(seed) {
-    // Initialize the random engine with a fixed seed for reproducible velocity samples.
-}
-
-template <typename T>
-Vector3<T>
-MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
-                                              const T molecular_mass) const {
-    // Invalid thermodynamic parameters cannot define a Maxwell-Boltzmann distribution.
-    if (!(temperature > T(0)) || !(molecular_mass > T(0))) {
-        return Vector3<T>(T(0), T(0), T(0));
-    }
-
-    // The one-dimensional thermal velocity standard deviation is sqrt(k_B T / m).
-    const T sigma = atlas::math::sqrt_nonnegative(
-        static_cast<T>(atlas::boltzmann_constant) * temperature / molecular_mass);
-    T x {};
-    T y {};
-    T z {};
-    T unused {};
-    atlas::sampling::generate_standard_normal_pair<T>(engine, x, y);
-    atlas::sampling::generate_standard_normal_pair<T>(engine, z, unused);
-
-    // Sample independent normal components and shift them by the configured bulk velocity.
-    return Vector3<T>(
-               sigma * x,
-               sigma * y,
-               sigma * z)
-        + this->bulk_velocity;
-}
-
-template <typename T>
-Vector3<T>
-MaxwellBoltzmannGenerateOperator<T>::generate(const unsigned int seed,
-                                              const T temperature,
-                                              const T molecular_mass) const {
-    if (!(temperature > T(0)) || !(molecular_mass > T(0))) {
-        return Vector3<T>(T(0), T(0), T(0));
-    }
-
-    const T sigma = atlas::math::sqrt_nonnegative(
-        static_cast<T>(atlas::boltzmann_constant) * temperature / molecular_mass);
-    atlas::default_random_engine<T> seeded_engine(seed);
-    T x {};
-    T y {};
-    T z {};
-    T unused {};
-    atlas::sampling::generate_standard_normal_pair<T>(seeded_engine, x, y);
-    atlas::sampling::generate_standard_normal_pair<T>(seeded_engine, z, unused);
-
-    return Vector3<T>(
-               sigma * x,
-               sigma * y,
-               sigma * z)
-        + this->bulk_velocity;
-}
+namespace atlas {
 
 template <typename T>
 typename MaxwellBoltzmannGenerator<T>::Builder
@@ -209,4 +144,4 @@ MaxwellBoltzmannGenerator<T>::Builder::validate() const {
     }
 }
 
-} // namespace atlas::fluid
+} // namespace atlas

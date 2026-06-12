@@ -8,7 +8,7 @@
 
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 Orchestrator<T>::Orchestrator(UniverseHostPtr<T> universe,
@@ -269,10 +269,10 @@ Orchestrator<T>::make_probe() noexcept {
         return false;
     }
 
-    auto* field_force_state = _universe->template state<atlas::universe::UniverseFieldForceState<T>>();
-    auto* gravity_state     = _universe->template state<atlas::universe::UniverseGravityState<T>>();
-    auto* species_state     = _fluid->template state<atlas::fluid::FluidSpeciesState<T>>();
-    auto& velocity          = _fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data();
+    auto* field_force_state = _universe->template state<atlas::UniverseFieldForceState<T>>();
+    auto* gravity_state     = _universe->template state<atlas::UniverseGravityState<T>>();
+    auto* species_state     = _fluid->template state<atlas::FluidSpeciesState<T>>();
+    auto& velocity          = _fluid->template state<atlas::FluidVelocityState<T>>()->data();
 
     _probe.particle_count = static_cast<int>(_fluid->particle_count());
     _probe.num_of_cells   = _universe->number_of_cells();
@@ -489,8 +489,8 @@ Orchestrator<T>::Builder::ensure_gravity_state() const {
     }
 
     // If the gravity state already exists, resize it if necessary and refill it.
-    if (_universe->template has_state<atlas::universe::UniverseGravityState<T>>()) {
-        auto* gravity_state = _universe->template state<atlas::universe::UniverseGravityState<T>>();
+    if (_universe->template has_state<atlas::UniverseGravityState<T>>()) {
+        auto* gravity_state = _universe->template state<atlas::UniverseGravityState<T>>();
 
         if (gravity_state != nullptr) {
             if (gravity_state->size() != number_of_cells) {
@@ -507,9 +507,9 @@ Orchestrator<T>::Builder::ensure_gravity_state() const {
     }
 
     // Otherwise, create a new gravity state and initialize every cell with the same value.
-    _universe->template emplace_state<atlas::universe::UniverseGravityState<T>>(number_of_cells);
+    _universe->template emplace_state<atlas::UniverseGravityState<T>>(number_of_cells);
 
-    auto* gravity_state = _universe->template state<atlas::universe::UniverseGravityState<T>>();
+    auto* gravity_state = _universe->template state<atlas::UniverseGravityState<T>>();
 
     if (gravity_state == nullptr) {
         return;
@@ -545,4 +545,4 @@ Orchestrator<T>::Builder::make_host_shared() const {
         _solvers);
 }
 
-} // namespace atlas::system
+} // namespace atlas

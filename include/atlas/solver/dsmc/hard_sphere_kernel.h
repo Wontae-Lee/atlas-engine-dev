@@ -5,7 +5,7 @@
  * @brief Declares a hard-sphere DSMC collision kernel with hash-based scattering.
  *
  * @details
- * This file defines @ref atlas::system::HardSphereKernel, a binary collision
+ * This file defines @ref atlas::HardSphereKernel, a binary collision
  * kernel used by DSMC solvers to evaluate hard-sphere collision cross sections
  * and update the velocities of two colliding particles.
  *
@@ -180,7 +180,7 @@
 #include <atlas/material/material_properties.h>
 #include <atlas/math/math.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Hard-sphere binary collision kernel with hash-based scattering.
@@ -375,6 +375,6 @@ public:
                const MaterialProperties<T>& rhs) const noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 #include <atlas/solver/dsmc/hard_sphere_kernel.hpp>

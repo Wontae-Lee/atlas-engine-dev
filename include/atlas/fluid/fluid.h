@@ -21,7 +21,7 @@
 #include <typeindex>
 #include <unordered_map>
 
-namespace atlas::fluid {
+namespace atlas {
 
 /**
  * @brief Owns particle data, generator operators, and registered simulation states
@@ -488,17 +488,10 @@ private:
     std::optional<std::size_t> _particle_count;
 };
 
-} // namespace atlas::fluid
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::fluid::Fluid.
- *
- * @tparam T Floating-point numeric type.
- */
-template <typename T>
-using Fluid = fluid::Fluid<T>;
 
 /**
  * @brief Host-side shared pointer alias for Fluid.
@@ -506,7 +499,7 @@ using Fluid = fluid::Fluid<T>;
  * @tparam T Floating-point numeric type.
  */
 template <typename T>
-using FluidHostPtr = host_shared_ptr<fluid::Fluid<T>>;
+using FluidHostPtr = host_shared_ptr<Fluid<T>>;
 
 /**
  * @brief Device-side shared pointer alias for Fluid.
@@ -514,7 +507,7 @@ using FluidHostPtr = host_shared_ptr<fluid::Fluid<T>>;
  * @tparam T Floating-point numeric type.
  */
 template <typename T>
-using FluidDevicePtr = device_shared_ptr<fluid::Fluid<T>>;
+using FluidDevicePtr = device_shared_ptr<Fluid<T>>;
 
 }
 

@@ -7,7 +7,7 @@
 
 #include <atlas/searcher/searcher.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief KD-tree style particle searcher using axis prefiltering.
@@ -124,18 +124,14 @@ private:
     FluidHostPtr<T> _fluid {};
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
-
-template <typename T>
-using KdTreeSearcher = atlas::system::KdTreeSearcher<T>;
-
 /**
  * @brief Host shared pointer alias using the common Searcher interface.
  */
 template <typename T>
-using KdTreeSearcherHostPtr = atlas::host_shared_ptr<atlas::system::Searcher<T>>;
+using KdTreeSearcherHostPtr = atlas::host_shared_ptr<atlas::Searcher<T>>;
 
 } // namespace atlas
 

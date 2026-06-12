@@ -7,7 +7,6 @@
 #include <type_traits>
 
 namespace atlas {
-namespace math {
 
     /**
      * @brief Specialized 2D vector with named components and 2D-specific operations.
@@ -592,11 +591,8 @@ namespace math {
     template <typename T>
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector<T, 2>
     cmax(const Vector<T, 2>& a, const Vector<T, 2>& b);
-
-} // namespace math
-
 template <typename T>
-using Vector2  = math::Vector<T, 2>;
+using Vector2  = Vector<T, 2>;
 using Vector2F = Vector2<float>;
 using Vector2D = Vector2<double>;
 using Point2UI = Vector2<std::uint32_t>;

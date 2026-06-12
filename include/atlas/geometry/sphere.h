@@ -5,7 +5,7 @@
  * @brief Declares a sphere geometry primitive and its lightweight runtime query/trace operator.
  *
  * @details
- * This header defines @ref atlas::geometry::Sphere, a 3D sphere primitive
+ * This header defines @ref atlas::Sphere, a 3D sphere primitive
  * represented by:
  * - a center point,
  * - a scalar radius.
@@ -56,7 +56,7 @@
 
 #include <type_traits>
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Lightweight non-owning runtime query operator for a sphere.
@@ -92,7 +92,7 @@ struct SphereGeometryOperator {
      * @details
      * Non-owning pointer to the world-space center point of the sphere.
      */
-    const atlas::math::Vector<T, 3>* center = nullptr;
+    const atlas::Vector<T, 3>* center = nullptr;
 
     /**
      * @brief Pointer to the sphere radius.
@@ -115,8 +115,8 @@ struct SphereGeometryOperator {
      * @param p Query point in world space.
      * @return Closest point on the sphere.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the closest outward normal associated with the sphere.
@@ -128,8 +128,8 @@ struct SphereGeometryOperator {
      * @param p Query point in world space.
      * @return Closest geometric normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the signed distance from a query point to the sphere.
@@ -148,7 +148,7 @@ struct SphereGeometryOperator {
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Test whether a point lies inside the sphere within a tolerance.
@@ -158,7 +158,7 @@ struct SphereGeometryOperator {
      * @return `true` if the point is classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Test whether a point lies on the sphere surface within a tolerance.
@@ -168,7 +168,7 @@ struct SphereGeometryOperator {
      * @return `true` if the point is classified as lying on the surface.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Return the centroid of the sphere.
@@ -178,7 +178,7 @@ struct SphereGeometryOperator {
      *
      * @return Sphere centroid.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept;
 
     /**
@@ -190,7 +190,7 @@ struct SphereGeometryOperator {
      *
      * @return Axis-aligned bounding box enclosing the sphere.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept;
 
     /**
@@ -218,7 +218,7 @@ struct SphereGeometryOperator {
      * @return Surface hit record describing the ray-sphere intersection result.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+    trace(const atlas::Ray<T>& ray) const noexcept;
 
     /**
      * @brief Function-call alias for @ref trace.
@@ -227,7 +227,7 @@ struct SphereGeometryOperator {
      * @return Surface hit record.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+    operator()(const atlas::Ray<T>& ray) const noexcept;
 };
 
 /**
@@ -259,7 +259,7 @@ struct SphereGeometryOperator {
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-class Sphere final : public Geometry<T> {
+class Sphere final : public Geometry<T>, public DeviceGeometryViewFactory<T> {
     static_assert(std::is_floating_point_v<T>, "Sphere requires a floating-point T");
 
 public:
@@ -320,10 +320,6 @@ public:
     /**
      * @brief Copy constructor.
      *
-     * @details
-     * Copies sphere parameters and rebinds the cached operator so that its
-     * internal pointers reference this object rather than the source object.
-     *
      * @param other Source sphere.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
@@ -331,9 +327,6 @@ public:
 
     /**
      * @brief Move constructor.
-     *
-     * @details
-     * Moves sphere parameters and rebinds the cached operator to this object.
      *
      * @param other Source sphere.
      */
@@ -343,9 +336,6 @@ public:
     /**
      * @brief Copy assignment operator.
      *
-     * @details
-     * Copies sphere parameters and refreshes the cached operator binding.
-     *
      * @param other Source sphere.
      * @return `*this`.
      */
@@ -354,9 +344,6 @@ public:
 
     /**
      * @brief Move assignment operator.
-     *
-     * @details
-     * Moves sphere parameters and refreshes the cached operator binding.
      *
      * @param other Source sphere.
      * @return `*this`.
@@ -379,7 +366,7 @@ public:
      * @return Bound geometry operator.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE GeometryOperator<T>
-    make_geometry_operator() const override;
+    make_device_geometry_view() const override;
 
     /**
      * @brief Compute the closest point on the sphere to a query point.
@@ -387,8 +374,8 @@ public:
      * @param p Query point.
      * @return Closest point on the sphere.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Compute the closest outward normal associated with the sphere.
@@ -396,8 +383,8 @@ public:
      * @param p Query point.
      * @return Closest geometric normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Compute the signed distance from a query point to the sphere.
@@ -406,7 +393,7 @@ public:
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Test whether a point lies inside the sphere within a tolerance.
@@ -416,7 +403,7 @@ public:
      * @return `true` if classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Test whether a point lies on the sphere surface within a tolerance.
@@ -426,14 +413,14 @@ public:
      * @return `true` if classified as on the surface; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Return the centroid of the sphere.
      *
      * @return Sphere centroid.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept override;
 
     /**
@@ -441,7 +428,7 @@ public:
      *
      * @return Axis-aligned bounding box enclosing the sphere.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept override;
 
     /**
@@ -470,22 +457,10 @@ private:
     friend class Builder;
 
     /**
-     * @brief Bind the cached operator to this sphere's storage.
-     *
-     * @details
-     * Refreshes the raw-pointer fields of @ref _operator so that they reference
-     * this instance's geometric parameters.
+     * @brief Creates a lightweight runtime operator bound to this sphere's current parameters.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    bind_operator() noexcept;
-
-    /**
-     * @brief Cached runtime operator bound to this sphere.
-     *
-     * @details
-     * Stores raw pointers to @ref center and @ref radius.
-     */
-    mutable SphereGeometryOperator<T> _operator {};
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE SphereGeometryOperator<T>
+    make_sphere_operator() const noexcept;
 };
 
 /**
@@ -583,43 +558,36 @@ private:
     T _radius { T(1) };
 };
 
-} // namespace atlas::geometry
+} // namespace atlas
 
 namespace atlas {
 
+
 /**
- * @brief Convenience alias for @ref atlas::geometry::Sphere.
+ * @brief Common specialization of @ref atlas::Sphere for `float`.
+ */
+using SphereF = Sphere<float>;
+
+/**
+ * @brief Common specialization of @ref atlas::Sphere for `double`.
+ */
+using SphereD = Sphere<double>;
+
+/**
+ * @brief Convenience alias for a host-owned shared pointer to @ref atlas::Sphere.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using Sphere = geometry::Sphere<T>;
+using SphereHostPtr = atlas::host_shared_ptr<Sphere<T>>;
 
 /**
- * @brief Common specialization of @ref atlas::geometry::Sphere for `float`.
- */
-using SphereF = geometry::Sphere<float>;
-
-/**
- * @brief Common specialization of @ref atlas::geometry::Sphere for `double`.
- */
-using SphereD = geometry::Sphere<double>;
-
-/**
- * @brief Convenience alias for a host-owned shared pointer to @ref atlas::geometry::Sphere.
+ * @brief Convenience alias for a device-owned shared pointer to @ref atlas::Sphere.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using SphereHostPtr = atlas::host_shared_ptr<geometry::Sphere<T>>;
-
-/**
- * @brief Convenience alias for a device-owned shared pointer to @ref atlas::geometry::Sphere.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using SphereDevicePtr = atlas::device_shared_ptr<geometry::Sphere<T>>;
+using SphereDevicePtr = atlas::device_shared_ptr<Sphere<T>>;
 
 } // namespace atlas
 

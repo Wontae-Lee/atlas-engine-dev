@@ -4,7 +4,7 @@
  * @file sph_solver.h
  * @brief Declares the SPH solver used to estimate particle fields and update velocities.
  *
- * This header defines `atlas::system::SphSolver<T>`, a smooth-particle-
+ * This header defines `atlas::SphSolver<T>`, a smooth-particle-
  * hydrodynamics style solver that computes density, pressure, acceleration, and
  * cell-level force/particle-count fields from local particle neighborhoods.
  */
@@ -14,7 +14,7 @@
 #include <atlas/solver/sph/sph_kernel.h>
 #include <atlas/solver/sph/sph_probe.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Smooth-particle-hydrodynamics solver using searcher-provided neighbors.
@@ -55,7 +55,7 @@ namespace atlas::system {
 template <typename T>
 class SphSolver final : public Solver<T> {
 public:
-    using SphSolverProbe = atlas::system::SphProbe<T>;
+    using SphSolverProbe = atlas::SphProbe<T>;
 
     /**
      * @brief Fluent builder for constructing validated `SphSolver` instances.
@@ -444,33 +444,30 @@ private:
     SphKernelType _kernel_type { SphKernelType::standard };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for `atlas::system::SphSolver`.
+ * @brief Convenience alias for `atlas::SphSolver`.
+ *
+ * @tparam T Scalar type used by the SPH solver.
+ */
+/**
+ * @brief Host-side shared pointer alias for `atlas::SphSolver`.
  *
  * @tparam T Scalar type used by the SPH solver.
  */
 template <typename T>
-using SphSolver = atlas::system::SphSolver<T>;
+using SphSolverHostPtr = atlas::host_shared_ptr<atlas::SphSolver<T>>;
 
 /**
- * @brief Host-side shared pointer alias for `atlas::system::SphSolver`.
+ * @brief Device-side shared pointer alias for `atlas::SphSolver`.
  *
  * @tparam T Scalar type used by the SPH solver.
  */
 template <typename T>
-using SphSolverHostPtr = atlas::host_shared_ptr<atlas::system::SphSolver<T>>;
-
-/**
- * @brief Device-side shared pointer alias for `atlas::system::SphSolver`.
- *
- * @tparam T Scalar type used by the SPH solver.
- */
-template <typename T>
-using SphSolverDevicePtr = atlas::device_shared_ptr<atlas::system::SphSolver<T>>;
+using SphSolverDevicePtr = atlas::device_shared_ptr<atlas::SphSolver<T>>;
 
 } // namespace atlas
 

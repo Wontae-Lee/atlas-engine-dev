@@ -1,48 +1,60 @@
 #pragma once
-namespace atlas::fluid {
+namespace atlas {
+
+namespace detail {
+
 template <typename T>
-GenerateOperator<T>::GenerateOperator() noexcept
-    : type(GenerateType::uniform) {
-    new (&uniform) UniformGenerateOperator<T> {};
+using GenerateOperatorVariant = DeviceVariant<
+    GenerateOperator<T>,
+    GenerateType,
+    GenerateType::uniform,
+    DeviceVariantCase<
+        GenerateOperator<T>,
+        GenerateType,
+        GenerateType::uniform,
+        UniformGenerateOperator<T>,
+        &GenerateOperator<T>::uniform>,
+    DeviceVariantCase<
+        GenerateOperator<T>,
+        GenerateType,
+        GenerateType::jittering,
+        JitteringGenerateOperator<T>,
+        &GenerateOperator<T>::jittering>,
+    DeviceVariantCase<
+        GenerateOperator<T>,
+        GenerateType,
+        GenerateType::maxwell_sigma,
+        MaxwellSigmaGenerateOperator<T>,
+        &GenerateOperator<T>::maxwell_sigma>,
+    DeviceVariantCase<
+        GenerateOperator<T>,
+        GenerateType,
+        GenerateType::maxwell_boltzmann,
+        MaxwellBoltzmannGenerateOperator<T>,
+        &GenerateOperator<T>::maxwell_boltzmann>>;
+
+} // namespace detail
+
+template <typename T>
+GenerateOperator<T>::GenerateOperator() noexcept {
+    detail::GenerateOperatorVariant<T>::construct(*this, GenerateType::uniform);
 }
 
 template <typename T>
 GenerateOperator<T>::GenerateOperator(const GenerateType type,
-                                      const unsigned int seed) noexcept
-    : type(type) {
-    switch (type) {
-    case GenerateType::uniform:
-        new (&uniform) UniformGenerateOperator<T>(seed);
-        return;
-    case GenerateType::jittering:
-        new (&jittering) JitteringGenerateOperator<T>(seed);
-        return;
-    case GenerateType::maxwell_sigma:
-        new (&maxwell_sigma) MaxwellSigmaGenerateOperator<T>(seed);
-        return;
-    case GenerateType::maxwell_boltzmann:
-        new (&maxwell_boltzmann) MaxwellBoltzmannGenerateOperator<T>(seed);
-        return;
-    default:
-        this->type = GenerateType::uniform;
-        new (&uniform) UniformGenerateOperator<T>(seed);
-        return;
-    }
+                                      const unsigned int seed) noexcept {
+    detail::GenerateOperatorVariant<T>::construct(*this, type, seed);
 }
 
 template <typename T>
-GenerateOperator<T>::GenerateOperator(const GenerateOperator& other) noexcept
-    : type(other.type) {
-    copy_from(other);
+GenerateOperator<T>::GenerateOperator(const GenerateOperator& other) noexcept {
+    detail::GenerateOperatorVariant<T>::copy_construct(*this, other);
 }
 
 template <typename T>
 GenerateOperator<T>&
 GenerateOperator<T>::operator=(const GenerateOperator& other) noexcept {
-    if (this == &other) return *this;
-    destroy_active();
-    type = other.type;
-    copy_from(other);
+    detail::GenerateOperatorVariant<T>::assign(*this, other);
     return *this;
 }
 
@@ -54,70 +66,37 @@ GenerateOperator<T>::~GenerateOperator() noexcept {
 template <typename T>
 void
 GenerateOperator<T>::destroy_active() noexcept {
-    switch (type) {
-    case GenerateType::uniform:
-        uniform.~UniformGenerateOperator<T>();
-        return;
-    case GenerateType::jittering:
-        jittering.~JitteringGenerateOperator<T>();
-        return;
-    case GenerateType::maxwell_sigma:
-        maxwell_sigma.~MaxwellSigmaGenerateOperator<T>();
-        return;
-    case GenerateType::maxwell_boltzmann:
-        maxwell_boltzmann.~MaxwellBoltzmannGenerateOperator<T>();
-        return;
-    default:
-        uniform.~UniformGenerateOperator<T>();
-        return;
-    }
+    detail::GenerateOperatorVariant<T>::destroy(*this);
 }
 
 template <typename T>
 void
 GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
-    switch (type) {
-    case GenerateType::uniform:
-        new (&uniform) UniformGenerateOperator<T>(other.uniform);
-        return;
-    case GenerateType::jittering:
-        new (&jittering) JitteringGenerateOperator<T>(other.jittering);
-        return;
-    case GenerateType::maxwell_sigma:
-        new (&maxwell_sigma) MaxwellSigmaGenerateOperator<T>(other.maxwell_sigma);
-        return;
-    case GenerateType::maxwell_boltzmann:
-        new (&maxwell_boltzmann) MaxwellBoltzmannGenerateOperator<T>(other.maxwell_boltzmann);
-        return;
-    default:
-        type = GenerateType::uniform;
-        new (&uniform) UniformGenerateOperator<T>(other.uniform);
-        return;
-    }
+    detail::GenerateOperatorVariant<T>::copy_construct(*this, other);
 }
 
 template <typename T>
 GenerateOperator<T>::GenerateOperator(const UniformGenerateOperator<T>& op)
-    : type(GenerateType::uniform) {
-    new (&uniform) UniformGenerateOperator<T>(op);
+{
+    detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GenerateOperator<T>::GenerateOperator(const JitteringGenerateOperator<T>& op)
-    : type(GenerateType::jittering) {
-    new (&jittering) JitteringGenerateOperator<T>(op);
+{
+    detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GenerateOperator<T>::GenerateOperator(const MaxwellSigmaGenerateOperator<T>& op)
-    : type(GenerateType::maxwell_sigma) {
-    new (&maxwell_sigma) MaxwellSigmaGenerateOperator<T>(op);
+{
+    detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GenerateOperator<T>::GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>& op)
-    : type(GenerateType::maxwell_boltzmann) {
-    new (&maxwell_boltzmann) MaxwellBoltzmannGenerateOperator<T>(op);
+{
+    detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>

@@ -1,135 +1,138 @@
 #pragma once
 #include <limits>
-namespace atlas::geometry {
+namespace atlas {
+
+namespace detail {
+
 template <typename T>
-GeometryOperator<T>::GeometryOperator() noexcept
-    : type(GeometryType::Sphere)
-    , sphere() {
+using GeometryOperatorVariant = DeviceVariant<
+    GeometryOperator<T>,
+    GeometryType,
+    GeometryType::Sphere,
+    DeviceVariantCase<
+        GeometryOperator<T>,
+        GeometryType,
+        GeometryType::Box,
+        BoxGeometryOperator<T>,
+        &GeometryOperator<T>::box>,
+    DeviceVariantCase<
+        GeometryOperator<T>,
+        GeometryType,
+        GeometryType::Circle,
+        CircleGeometryOperator<T>,
+        &GeometryOperator<T>::circle>,
+    DeviceVariantCase<
+        GeometryOperator<T>,
+        GeometryType,
+        GeometryType::Cylinder,
+        CylinderGeometryOperator<T>,
+        &GeometryOperator<T>::cylinder>,
+    DeviceVariantCase<
+        GeometryOperator<T>,
+        GeometryType,
+        GeometryType::Plane,
+        PlaneGeometryOperator<T>,
+        &GeometryOperator<T>::plane>,
+    DeviceVariantCase<
+        GeometryOperator<T>,
+        GeometryType,
+        GeometryType::Sphere,
+        SphereGeometryOperator<T>,
+        &GeometryOperator<T>::sphere>,
+    DeviceVariantCase<
+        GeometryOperator<T>,
+        GeometryType,
+        GeometryType::Square,
+        SquareGeometryOperator<T>,
+        &GeometryOperator<T>::square>,
+    DeviceVariantCase<
+        GeometryOperator<T>,
+        GeometryType,
+        GeometryType::Triangle,
+        TriangleGeometryOperator<T>,
+        &GeometryOperator<T>::triangle>,
+    DeviceVariantCase<
+        GeometryOperator<T>,
+        GeometryType,
+        GeometryType::TriangleMesh,
+        TriangleMeshGeometryOperator<T>,
+        &GeometryOperator<T>::triangle_mesh>>;
+
+} // namespace detail
+
+template <typename T>
+GeometryOperator<T>::GeometryOperator() noexcept {
+    detail::GeometryOperatorVariant<T>::construct(*this, GeometryType::Sphere);
 }
 
 template <typename T>
-GeometryOperator<T>::GeometryOperator(const GeometryOperator& other) noexcept
-    : type(other.type) {
-    switch (type) {
-    case GeometryType::Box:
-        box = other.box;
-        return;
-    case GeometryType::Circle:
-        circle = other.circle;
-        return;
-    case GeometryType::Cylinder:
-        cylinder = other.cylinder;
-        return;
-    case GeometryType::Plane:
-        plane = other.plane;
-        return;
-    case GeometryType::Sphere:
-        sphere = other.sphere;
-        return;
-    case GeometryType::Square:
-        square = other.square;
-        return;
-    case GeometryType::Triangle:
-        triangle = other.triangle;
-        return;
-    case GeometryType::TriangleMesh:
-        triangle_mesh = other.triangle_mesh;
-        return;
-    default:
-        type   = GeometryType::Sphere;
-        sphere = other.sphere;
-        return;
-    }
+GeometryOperator<T>::GeometryOperator(const GeometryOperator& other) noexcept {
+    detail::GeometryOperatorVariant<T>::copy_construct(*this, other);
 }
 
 template <typename T>
 GeometryOperator<T>&
 GeometryOperator<T>::operator=(const GeometryOperator& other) noexcept {
-    if (this == &other) return *this;
-    type = other.type;
-    switch (type) {
-    case GeometryType::Box:
-        box = other.box;
-        return *this;
-    case GeometryType::Circle:
-        circle = other.circle;
-        return *this;
-    case GeometryType::Cylinder:
-        cylinder = other.cylinder;
-        return *this;
-    case GeometryType::Plane:
-        plane = other.plane;
-        return *this;
-    case GeometryType::Sphere:
-        sphere = other.sphere;
-        return *this;
-    case GeometryType::Square:
-        square = other.square;
-        return *this;
-    case GeometryType::Triangle:
-        triangle = other.triangle;
-        return *this;
-    case GeometryType::TriangleMesh:
-        triangle_mesh = other.triangle_mesh;
-        return *this;
-    default:
-        type   = GeometryType::Sphere;
-        sphere = other.sphere;
-        return *this;
-    }
+    detail::GeometryOperatorVariant<T>::assign(*this, other);
+    return *this;
+}
+
+template <typename T>
+GeometryOperator<T>::~GeometryOperator() noexcept {
+    detail::GeometryOperatorVariant<T>::destroy(*this);
 }
 
 template <typename T>
 GeometryOperator<T>::GeometryOperator(const BoxGeometryOperator<T>& op)
-    : type(GeometryType::Box)
-    , box(op) {
+{
+    detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GeometryOperator<T>::GeometryOperator(const CircleGeometryOperator<T>& op)
-    : type(GeometryType::Circle)
-    , circle(op) {
+{
+    detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GeometryOperator<T>::GeometryOperator(const CylinderGeometryOperator<T>& op)
-    : type(GeometryType::Cylinder)
-    , cylinder(op) {
+{
+    detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GeometryOperator<T>::GeometryOperator(const PlaneGeometryOperator<T>& op)
-    : type(GeometryType::Plane)
-    , plane(op) {
+{
+    detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GeometryOperator<T>::GeometryOperator(const SphereGeometryOperator<T>& op)
-    : type(GeometryType::Sphere)
-    , sphere(op) {
+{
+    detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GeometryOperator<T>::GeometryOperator(const SquareGeometryOperator<T>& op)
-    : type(GeometryType::Square)
-    , square(op) {
+{
+    detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GeometryOperator<T>::GeometryOperator(const TriangleGeometryOperator<T>& op)
-    : type(GeometryType::Triangle)
-    , triangle(op) {
+{
+    detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
 GeometryOperator<T>::GeometryOperator(const TriangleMeshGeometryOperator<T>& op)
-    : type(GeometryType::TriangleMesh)
-    , triangle_mesh(op) {
+{
+    detail::GeometryOperatorVariant<T>::construct_payload(*this, op);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-GeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
+atlas::Vector<T, 3>
+GeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.closest_point(p);
@@ -153,8 +156,8 @@ GeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noe
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-GeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
+atlas::Vector<T, 3>
+GeometryOperator<T>::closest_normal(const atlas::Vector<T, 3>& p) const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.closest_normal(p);
@@ -173,13 +176,13 @@ GeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const no
     case GeometryType::TriangleMesh:
         return triangle_mesh.closest_normal(p);
     default:
-        return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
+        return atlas::Vector<T, 3>(T(0), T(0), T(0));
     }
 }
 
 template <typename T>
 T
-GeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
+GeometryOperator<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.signed_distance(p);
@@ -204,7 +207,7 @@ GeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const n
 
 template <typename T>
 bool
-GeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+GeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.is_inside(p, tolerance);
@@ -229,7 +232,7 @@ GeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T toler
 
 template <typename T>
 bool
-GeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
+GeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.is_on_surface(p, tolerance);
@@ -253,7 +256,7 @@ GeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T t
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
+atlas::Vector<T, 3>
 GeometryOperator<T>::centroid() const noexcept {
     switch (type) {
     case GeometryType::Box:
@@ -273,12 +276,12 @@ GeometryOperator<T>::centroid() const noexcept {
     case GeometryType::TriangleMesh:
         return triangle_mesh.centroid();
     default:
-        return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
+        return atlas::Vector<T, 3>(T(0), T(0), T(0));
     }
 }
 
 template <typename T>
-atlas::spatial::AxisAlignedBoundingBox<T>
+atlas::AxisAlignedBoundingBox<T>
 GeometryOperator<T>::bound() const noexcept {
     switch (type) {
     case GeometryType::Box:
@@ -298,7 +301,7 @@ GeometryOperator<T>::bound() const noexcept {
     case GeometryType::TriangleMesh:
         return triangle_mesh.bound();
     default:
-        return atlas::spatial::AxisAlignedBoundingBox<T>();
+        return atlas::AxisAlignedBoundingBox<T>();
     }
 }
 
@@ -329,7 +332,7 @@ GeometryOperator<T>::is_valid() const noexcept {
 
 template <typename T>
 HitSurface<T>
-GeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexcept {
+GeometryOperator<T>::trace(const atlas::Ray<T>& ray) const noexcept {
     switch (type) {
     case GeometryType::Box:
         return box.trace(ray);
@@ -354,7 +357,7 @@ GeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexcept {
 
 template <typename T>
 HitSurface<T>
-GeometryOperator<T>::operator()(const atlas::spatial::Ray<T>& ray) const noexcept {
+GeometryOperator<T>::operator()(const atlas::Ray<T>& ray) const noexcept {
     return trace(ray);
 }
 

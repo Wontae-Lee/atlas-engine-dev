@@ -30,7 +30,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Cubic-spline SPH kernel utilities.
@@ -131,6 +131,6 @@ struct CubicSplineSphKernel final {
     viscosity_laplacian(T radius, T cell_size) noexcept;
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 #include <atlas/solver/sph/cubic_spline_sph_kernel.hpp>

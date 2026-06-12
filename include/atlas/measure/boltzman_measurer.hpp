@@ -7,7 +7,7 @@
 
 #include <stdexcept>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 typename BoltzmanMeasurer<T>::Builder
@@ -27,31 +27,31 @@ BoltzmanMeasurer<T>::BoltzmanMeasurer(UniverseHostPtr<T> universe,
         // Match universe field-state sizes to the current number of spatial cells.
         const auto number_of_cells = static_cast<std::size_t>(this->_universe->number_of_cells());
 
-        if (!this->_universe->template has_state<atlas::universe::UniverseTemperatureState<T>>()) {
+        if (!this->_universe->template has_state<atlas::UniverseTemperatureState<T>>()) {
             // Store per-cell temperature measurements in the universe state container.
-            this->_universe->template emplace_state<atlas::universe::UniverseTemperatureState<T>>(number_of_cells);
+            this->_universe->template emplace_state<atlas::UniverseTemperatureState<T>>(number_of_cells);
         }
 
-        if (!this->_universe->template has_state<atlas::universe::UniverseBulkVelocityState<T>>()) {
+        if (!this->_universe->template has_state<atlas::UniverseBulkVelocityState<T>>()) {
             // Store per-cell mean particle velocity.
-            this->_universe->template emplace_state<atlas::universe::UniverseBulkVelocityState<T>>(number_of_cells);
+            this->_universe->template emplace_state<atlas::UniverseBulkVelocityState<T>>(number_of_cells);
         }
 
-        if (!this->_universe->template has_state<atlas::universe::UniverseThermalEnergyState<T>>()) {
+        if (!this->_universe->template has_state<atlas::UniverseThermalEnergyState<T>>()) {
             // Store per-cell accumulated thermal velocity fluctuation energy.
-            this->_universe->template emplace_state<atlas::universe::UniverseThermalEnergyState<T>>(number_of_cells);
+            this->_universe->template emplace_state<atlas::UniverseThermalEnergyState<T>>(number_of_cells);
         }
 
-        if (!this->_universe->template has_state<atlas::universe::UniverseNumberParticleState<T>>()) {
+        if (!this->_universe->template has_state<atlas::UniverseNumberParticleState<T>>()) {
             // Store the number of particles assigned to each spatial cell.
-            this->_universe->template emplace_state<atlas::universe::UniverseNumberParticleState<T>>(number_of_cells);
+            this->_universe->template emplace_state<atlas::UniverseNumberParticleState<T>>(number_of_cells);
         }
     }
 
     if (this->_fluid != nullptr
-        && !this->_fluid->template has_state<atlas::fluid::FluidTemperatureState<T>>()) {
+        && !this->_fluid->template has_state<atlas::FluidTemperatureState<T>>()) {
         // Store per-particle temperature values when fluid-side temperature data is absent.
-        this->_fluid->template emplace_state<atlas::fluid::FluidTemperatureState<T>>(this->_fluid->buffer_size());
+        this->_fluid->template emplace_state<atlas::FluidTemperatureState<T>>(this->_fluid->buffer_size());
     }
 }
 
@@ -236,4 +236,4 @@ BoltzmanMeasurer<T>::Builder::make_host_shared() const {
     return atlas::make_host_shared<BoltzmanMeasurer<T>>(build());
 }
 
-} // namespace atlas::system
+} // namespace atlas

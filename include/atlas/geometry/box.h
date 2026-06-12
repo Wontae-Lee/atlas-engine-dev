@@ -8,12 +8,12 @@
  * @details
  * This header introduces two closely related components:
  *
- * - @ref atlas::geometry::BoxGeometryOperator :
+ * - @ref atlas::BoxGeometryOperator :
  *   a small query object that references box bounds through raw pointers and
  *   provides geometry evaluation routines such as closest-point queries,
  *   signed-distance queries, containment checks, and ray intersection tests.
  *
- * - @ref atlas::geometry::Box :
+ * - @ref atlas::Box :
  *   a concrete axis-aligned box geometry type derived from @ref Geometry,
  *   storing lower and upper corners directly and exposing the standard
  *   geometry interface required by the Atlas geometry system.
@@ -29,7 +29,7 @@
 
 #include <type_traits>
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Runtime query operator for an axis-aligned box.
@@ -56,8 +56,8 @@ namespace atlas::geometry {
  */
 template <typename T>
 struct BoxGeometryOperator {
-    const atlas::math::Vector<T, 3>* lower_corner = nullptr; ///< Pointer to the minimum corner of the box, interpreted component-wise as (x_min, y_min, z_min).
-    const atlas::math::Vector<T, 3>* upper_corner = nullptr; ///< Pointer to the maximum corner of the box, interpreted component-wise as (x_max, y_max, z_max).
+    const atlas::Vector<T, 3>* lower_corner = nullptr; ///< Pointer to the minimum corner of the box, interpreted component-wise as (x_min, y_min, z_min).
+    const atlas::Vector<T, 3>* upper_corner = nullptr; ///< Pointer to the maximum corner of the box, interpreted component-wise as (x_max, y_max, z_max).
 
     /**
      * @brief Computes the closest point on the box to a query point.
@@ -73,8 +73,8 @@ struct BoxGeometryOperator {
      * @param p Query point expressed in the same coordinate frame as the box.
      * @return Closest point on the box according to the operator's query policy.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Computes an outward-facing normal associated with the closest box feature.
@@ -91,8 +91,8 @@ struct BoxGeometryOperator {
      * @param p Query point expressed in the same coordinate frame as the box.
      * @return Outward-facing normal vector associated with the closest feature.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Computes the signed distance from a point to the box.
@@ -111,7 +111,7 @@ struct BoxGeometryOperator {
      * @return Signed distance from @p p to the box.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Tests whether a point lies inside the box within a tolerance band.
@@ -126,7 +126,7 @@ struct BoxGeometryOperator {
      * @return `true` if the point is considered inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Tests whether a point lies on or sufficiently near the box surface.
@@ -140,7 +140,7 @@ struct BoxGeometryOperator {
      * @return `true` if the point is considered on the surface; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Returns the centroid of the box.
@@ -151,7 +151,7 @@ struct BoxGeometryOperator {
      *
      * @return Geometric center of the box.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept;
 
     /**
@@ -163,7 +163,7 @@ struct BoxGeometryOperator {
      *
      * @return Axis-aligned bounding box enclosing the geometry.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept;
 
     /**
@@ -196,7 +196,7 @@ struct BoxGeometryOperator {
      * @return Hit record describing the ray/box intersection result.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+    trace(const atlas::Ray<T>& ray) const noexcept;
 
     /**
      * @brief Callable shorthand for @ref trace.
@@ -205,7 +205,7 @@ struct BoxGeometryOperator {
      * @return Hit record describing the ray/box intersection result.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+    operator()(const atlas::Ray<T>& ray) const noexcept;
 };
 
 /**
@@ -226,13 +226,12 @@ struct BoxGeometryOperator {
  * - centroid and bounding-box evaluation,
  * - runtime geometry operator creation.
  *
- * A mutable cached @ref BoxGeometryOperator is stored internally and can be
- * rebound to the current corner data as needed.
+ * Device/runtime views are created on demand from the current corner data.
  *
  * @tparam T Floating-point scalar type used for coordinates and geometric queries.
  */
 template <typename T>
-class Box final : public Geometry<T> {
+class Box final : public Geometry<T>, public DeviceGeometryViewFactory<T> {
     static_assert(std::is_floating_point_v<T>, "Box requires a floating-point T");
 
 public:
@@ -324,7 +323,7 @@ public:
      * @return Geometry operator bound to this box.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE GeometryOperator<T>
-    make_geometry_operator() const override;
+    make_device_geometry_view() const override;
 
     /**
      * @brief Computes the closest point on the box to a query point.
@@ -332,8 +331,8 @@ public:
      * @param p Query point in the box's coordinate frame.
      * @return Closest point on the box according to the class query policy.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Computes an outward-facing normal associated with the closest box feature.
@@ -341,8 +340,8 @@ public:
      * @param p Query point in the box's coordinate frame.
      * @return Closest-feature outward normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Computes the signed distance from a point to the box.
@@ -351,7 +350,7 @@ public:
      * @return Signed distance from @p p to the box.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Tests whether a point lies inside the box within a tolerance.
@@ -361,7 +360,7 @@ public:
      * @return `true` if the point is considered inside.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Tests whether a point lies on or near the box surface.
@@ -371,14 +370,14 @@ public:
      * @return `true` if the point is considered on the surface.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Returns the centroid of the box.
      *
      * @return Geometric center of the box.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept override;
 
     /**
@@ -386,7 +385,7 @@ public:
      *
      * @return Bounding box enclosing this geometry.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept override;
 
     /**
@@ -410,16 +409,14 @@ private:
     friend class Builder;
 
     /**
-     * @brief Rebinds the cached runtime operator to the current member corners.
+     * @brief Creates a lightweight runtime operator bound to the current corners.
      *
      * @details
-     * This helper updates the internal operator so that its corner pointers
-     * reference this object's current @ref lower_corner and @ref upper_corner.
+     * This helper avoids persistent pointer caches while still sharing the
+     * query implementation with @ref BoxGeometryOperator.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    bind_operator() noexcept;
-
-    mutable BoxGeometryOperator<T> _operator {}; ///< Cached runtime operator bound on demand to this box's corner storage.
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE BoxGeometryOperator<T>
+    make_box_operator() const noexcept;
 };
 
 template <typename T>
@@ -493,27 +490,20 @@ private:
     Vector3<T> _upper_corner { T(+1), T(+1), T(+1) }; ///< Staged upper corner used for the next build.
 };
 
-} // namespace atlas::geometry
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Convenience alias for @ref atlas::geometry::Box.
- *
- * @tparam T Floating-point scalar type used by the box.
- */
-template <typename T>
-using Box = geometry::Box<T>;
 
 /**
  * @brief Single-precision axis-aligned box type.
  */
-using BoxF = geometry::Box<float>;
+using BoxF = Box<float>;
 
 /**
  * @brief Double-precision axis-aligned box type.
  */
-using BoxD = geometry::Box<double>;
+using BoxD = Box<double>;
 
 /**
  * @brief Convenience alias for a host-shared box pointer.
@@ -521,7 +511,7 @@ using BoxD = geometry::Box<double>;
  * @tparam T Floating-point scalar type used by the box.
  */
 template <typename T>
-using BoxHostPtr = atlas::host_shared_ptr<geometry::Box<T>>;
+using BoxHostPtr = atlas::host_shared_ptr<Box<T>>;
 
 /**
  * @brief Convenience alias for a device-shared box pointer.
@@ -529,7 +519,7 @@ using BoxHostPtr = atlas::host_shared_ptr<geometry::Box<T>>;
  * @tparam T Floating-point scalar type used by the box.
  */
 template <typename T>
-using BoxDevicePtr = atlas::device_shared_ptr<geometry::Box<T>>;
+using BoxDevicePtr = atlas::device_shared_ptr<Box<T>>;
 
 } // namespace atlas
 

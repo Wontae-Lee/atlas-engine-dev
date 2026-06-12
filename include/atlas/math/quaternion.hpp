@@ -2,7 +2,7 @@
 #include <cmath>
 #include <limits>
 #include <type_traits>
-namespace atlas::math {
+namespace atlas {
 template <typename T>
 constexpr Quaternion<T>::Quaternion() noexcept
     : w(T(1))

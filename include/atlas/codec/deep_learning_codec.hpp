@@ -2,7 +2,7 @@
 
 #include <atlas/logging/logging.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 typename DeepLearningCodec<T>::Builder
@@ -138,4 +138,4 @@ DeepLearningCodec<T>::Builder::make_host_shared() const {
     return codec;
 }
 
-} // namespace atlas::system
+} // namespace atlas

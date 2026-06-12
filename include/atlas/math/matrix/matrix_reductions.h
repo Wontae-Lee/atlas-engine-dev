@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstddef>
 #include <type_traits>
-namespace atlas::math {
+namespace atlas {
 /**
  * @file matrix_reductions.h
  * @brief Scalar reductions for matrix expressions (sum, min/max, norms, dot, argmin/argmax).
@@ -352,4 +352,4 @@ argabsmax(const E& expr) noexcept {
     }
     return idx;
 }
-} // namespace atlas::math
+} // namespace atlas

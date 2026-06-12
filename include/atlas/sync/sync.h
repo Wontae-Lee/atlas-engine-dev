@@ -4,7 +4,7 @@
 #include <atlas/memory/memory.h>
 #include <atlas/sync/sync_operator.h>
 
-namespace atlas::physics {
+namespace atlas {
 
 /**
  * @brief Rigid transform state used to convert points, directions, and rays
@@ -144,7 +144,7 @@ public:
      * @note This constructor assumes that @p op already represents a consistent
      *       transform state.
      */
-    ATLAS_HOST ATLAS_FORCE_INLINE explicit Sync(const atlas::physics::SyncOperator<T>& op) noexcept;
+    ATLAS_HOST ATLAS_FORCE_INLINE explicit Sync(const atlas::SyncOperator<T>& op) noexcept;
 
     /**
      * @brief Creates a builder instance for host-side construction.
@@ -490,7 +490,7 @@ public:
      * @note The returned reference remains valid only while this Sync object is
      *       alive and unmodified in a way that would invalidate object storage.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::physics::SyncOperator<T>&
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const atlas::SyncOperator<T>&
     sync() const noexcept;
 
     /**
@@ -502,7 +502,7 @@ public:
      *
      * @return Copy of the internal sync operator.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE atlas::physics::SyncOperator<T>
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE atlas::SyncOperator<T>
     make_sync_operator() const noexcept;
 
 private:
@@ -521,7 +521,7 @@ private:
      *
      * All coordinate conversion functions delegate to this operator.
      */
-    atlas::physics::SyncOperator<T> sync_operator;
+    atlas::SyncOperator<T> sync_operator;
 };
 
 /**
@@ -598,7 +598,7 @@ public:
      *       in @p op.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_sync_operator(const atlas::physics::SyncOperator<T>& op) noexcept;
+    with_sync_operator(const atlas::SyncOperator<T>& op) noexcept;
 
     /**
      * @brief Validates the current builder state and constructs a Sync instance.
@@ -688,43 +688,33 @@ private:
      *
      * This value is used only when the builder is in operator mode.
      */
-    atlas::physics::SyncOperator<T> _operator {};
+    atlas::SyncOperator<T> _operator {};
 };
 
-} // namespace atlas::physics
+} // namespace atlas
 
 namespace atlas {
 
-/**
- * @brief Alias for atlas::physics::Sync.
- *
- * This alias exposes the rigid transform state type directly in the atlas
- * namespace.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using Sync = atlas::physics::Sync<T>;
 
 /**
  * @brief Host shared pointer alias for Sync.
  *
- * This alias represents a host-managed shared pointer to atlas::physics::Sync.
+ * This alias represents a host-managed shared pointer to atlas::Sync.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using SyncHostPtr = atlas::host_shared_ptr<atlas::physics::Sync<T>>;
+using SyncHostPtr = atlas::host_shared_ptr<atlas::Sync<T>>;
 
 /**
  * @brief Device shared pointer alias for Sync.
  *
- * This alias represents a device-managed shared pointer to atlas::physics::Sync.
+ * This alias represents a device-managed shared pointer to atlas::Sync.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using SyncDevicePtr = atlas::device_shared_ptr<atlas::physics::Sync<T>>;
+using SyncDevicePtr = atlas::device_shared_ptr<atlas::Sync<T>>;
 
 } // namespace atlas
 

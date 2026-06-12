@@ -5,10 +5,11 @@
  * @brief Declares tagged device-callable surface interaction kernels for Collider.
  */
 
+#include <atlas/core/detail/device_variant.h>
 #include <atlas/collider/interaction/isothermal_surface_kernel.h>
 #include <atlas/collider/interaction/maxwellian_surface_interaction.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Selects the active surface interaction behavior.
@@ -95,8 +96,8 @@ struct SurfaceInteractionKernel final {
      * @param normal Surface normal defining the outgoing hemisphere.
      * @return Outgoing per-particle internal energy.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE fluid::FluidInternalEnergy<T>
-    internal_energy(const fluid::FluidInternalEnergy<T>& incident_energy,
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy<T>
+    internal_energy(const FluidInternalEnergy<T>& incident_energy,
                     const Vector3<T>& incident_velocity,
                     const Vector3<T>& normal,
                     const MaterialProperties<T>& material) const noexcept;
@@ -107,15 +108,6 @@ struct SurfaceInteractionKernel final {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     copy_from(const SurfaceInteractionKernel& other) noexcept;
 };
-
-} // namespace atlas::system
-
-namespace atlas {
-
-using SurfaceInteractionType = atlas::system::SurfaceInteractionType;
-
-template <typename T>
-using SurfaceInteractionKernel = atlas::system::SurfaceInteractionKernel<T>;
 
 } // namespace atlas
 

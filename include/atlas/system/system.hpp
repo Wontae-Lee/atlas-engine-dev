@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 System<T>::System(FluidHostPtr<T> fluid,
@@ -26,8 +26,8 @@ System<T>::System(FluidHostPtr<T> fluid,
     // Cache state pointers once so time_integration() can skip the per-step
     // unordered_map lookup that state<>() would otherwise perform.
     if (_fluid) {
-        _cached_position_state = _fluid->template state<fluid::FluidPositionState<T>>();
-        _cached_velocity_state = _fluid->template state<fluid::FluidVelocityState<T>>();
+        _cached_position_state = _fluid->template state<FluidPositionState<T>>();
+        _cached_velocity_state = _fluid->template state<FluidVelocityState<T>>();
     }
 }
 
@@ -219,4 +219,4 @@ System<T>::Builder::make_host_shared() const {
         _dt);
 }
 
-} // namespace atlas::system
+} // namespace atlas

@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace atlas::math::detail {
+namespace atlas::detail {
 
 /**
  * @file ops.h
@@ -397,4 +397,4 @@ struct RNotEqual {
     operator()(T a, T b) const noexcept { return b != a; }
 };
 
-} // namespace atlas::math::detail
+} // namespace atlas::detail

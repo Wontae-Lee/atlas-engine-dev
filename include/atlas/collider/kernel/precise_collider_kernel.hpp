@@ -1,6 +1,6 @@
 #pragma once
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 void
@@ -43,4 +43,4 @@ PreciseColliderKernel<T>::operator()(Vector3<T>& position,
         interaction);
 }
 
-} // namespace atlas::system
+} // namespace atlas

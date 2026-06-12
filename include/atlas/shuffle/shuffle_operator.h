@@ -5,7 +5,7 @@
  * @brief Declares a deterministic hash-based shuffle operator for index randomization.
  *
  * @details
- * This header defines @ref atlas::system::ShuffleOperator, a lightweight,
+ * This header defines @ref atlas::ShuffleOperator, a lightweight,
  * backend-portable utility for generating pseudo-random permutations of integer
  * indices using a stateless hash function.
  *
@@ -55,87 +55,5 @@
 #include <atlas/random/seed.h>
 
 #include <cstdint>
-
-namespace atlas::system {
-
-/**
- * @brief Stateless hash-based operator for deterministic index shuffling.
- *
- * @details
- * @ref ShuffleOperator maps an integer index and a user-provided seed to a
- * 64-bit pseudo-random value using a sequence of bit-mixing operations.
- *
- * The operator is:
- * - deterministic,
- * - backend-portable (host and device),
- * - free of shared mutable state.
- *
- * ## Internal constants
- * The operator uses fixed constants for:
- * - additive offset,
- * - multiplicative mixing,
- * - XOR-shift steps,
- *
- * chosen to provide strong bit diffusion and low collision correlation.
- *
- * ## Design notes
- * - The operator does not produce a permutation by itself; instead, it produces
- *   sortable keys that can be used to derive a permutation.
- * - It is suitable for parallel contexts where thread-safe randomness is required.
- *
- * ---
- */
-struct ShuffleOperator final {
-    /**
-     * @brief Compute a pseudo-random value from an index and seed.
-     *
-     * @details
-     * Applies a sequence of XOR-shift and multiplication operations to produce
-     * a well-mixed 64-bit value.
-     *
-     * This function is equivalent to @ref shuffle_key and is provided as the
-     * call operator for convenience.
-     *
-     * @param index Input integer index.
-     * @param seed User-provided seed value.
-     * @return 64-bit pseudo-random value derived from @p index and @p seed.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE std::uint64_t
-    operator()(int index,
-               std::uint64_t seed) const noexcept;
-
-    /**
-     * @brief Generate a deterministic shuffle key for an index.
-     *
-     * @details
-     * Produces a pseudo-random 64-bit key suitable for:
-     * - sorting-based shuffling,
-     * - randomized indexing,
-     * - deterministic permutation construction.
-     *
-     * The output value is derived solely from:
-     * - the input @p index,
-     * - the supplied @p seed,
-     * ensuring reproducibility and thread safety.
-     *
-     * @param index Input integer index.
-     * @param seed User-provided seed value.
-     * @return 64-bit shuffle key.
-     */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE std::uint64_t
-    shuffle_key(int index,
-                std::uint64_t seed) const noexcept;
-};
-
-} // namespace atlas::system
-
-namespace atlas {
-
-/**
- * @brief Convenience alias for @ref atlas::system::ShuffleOperator.
- */
-using ShuffleOperator = atlas::system::ShuffleOperator;
-
-} // namespace atlas
 
 #include <atlas/shuffle/shuffle_operator.hpp>

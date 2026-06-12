@@ -5,14 +5,13 @@
  * @brief Declares the backend-portable tagged-union wrapper over all supported geometry operators.
  *
  * @details
- * This header defines @ref atlas::geometry::GeometryOperator, a value-type
+ * This header defines @ref atlas::GeometryOperator, a value-type
  * runtime geometry wrapper that erases the concrete primitive type into a
  * compact tagged-union representation.
  *
- * The primary purpose of this abstraction is to bridge:
- * - host-side polymorphic geometry objects derived from @ref Geometry, and
- * - backend/device execution code that requires a copyable, non-virtual,
- *   ownership-free geometry representation.
+ * The primary purpose of this abstraction is to provide backend/device
+ * execution code with a copyable, non-virtual, ownership-free geometry
+ * representation.
  *
  * ## Design overview
  * Rather than storing geometries through inheritance or dynamic allocation,
@@ -66,6 +65,7 @@
  * @tparam T Floating-point scalar type used for coordinates, distances, and query results.
  */
 
+#include <atlas/core/detail/device_variant.h>
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/circle.h>
 #include <atlas/geometry/cylinder.h>
@@ -76,7 +76,9 @@
 #include <atlas/geometry/triangle.h>
 #include <atlas/geometry/triangle_mesh.h>
 
-namespace atlas::geometry {
+#include <stdexcept>
+
+namespace atlas {
 
 /**
  * @brief Tagged-union wrapper over all supported lightweight geometry operators.
@@ -217,6 +219,12 @@ struct GeometryOperator {
     operator=(const GeometryOperator& other) noexcept;
 
     /**
+     * @brief Destroy the active geometry operator payload.
+     */
+    ATLAS_ALL_DEVICE
+    ~GeometryOperator() noexcept;
+
+    /**
      * @brief Construct the wrapper from a box geometry operator.
      *
      * @param op Box operator payload to store.
@@ -282,8 +290,8 @@ struct GeometryOperator {
      * @param p Query point in world space.
      * @return Closest point on the active geometry.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Dispatch the closest-normal query to the active geometry variant.
@@ -291,8 +299,8 @@ struct GeometryOperator {
      * @param p Query point in world space.
      * @return Closest geometric normal associated with the active geometry.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Dispatch the signed-distance query to the active geometry variant.
@@ -301,7 +309,7 @@ struct GeometryOperator {
      * @return Signed distance to the active geometry.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Dispatch the inside-classification query to the active geometry variant.
@@ -311,7 +319,7 @@ struct GeometryOperator {
      * @return `true` if the point is classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Dispatch the surface-classification query to the active geometry variant.
@@ -321,14 +329,14 @@ struct GeometryOperator {
      * @return `true` if the point is classified as on the surface; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Dispatch the centroid query to the active geometry variant.
      *
      * @return Centroid of the active geometry.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept;
 
     /**
@@ -336,7 +344,7 @@ struct GeometryOperator {
      *
      * @return Axis-aligned bounding box enclosing the active geometry.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept;
 
     /**
@@ -358,7 +366,7 @@ struct GeometryOperator {
      * @return Surface hit record describing the ray-geometry intersection result.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+    trace(const atlas::Ray<T>& ray) const noexcept;
 
     /**
      * @brief Function-call alias for @ref trace.
@@ -367,9 +375,21 @@ struct GeometryOperator {
      * @return Surface hit record.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+    operator()(const atlas::Ray<T>& ray) const noexcept;
 };
 
-} // namespace atlas::geometry
+template <typename T>
+ATLAS_HOST ATLAS_NODISCARD GeometryOperator<T>
+make_device_geometry_view(const Geometry<T>& geometry) {
+    const auto* factory = dynamic_cast<const DeviceGeometryViewFactory<T>*>(&geometry);
+
+    if (!factory) {
+        throw std::runtime_error("Geometry does not provide a device geometry view.");
+    }
+
+    return factory->make_device_geometry_view();
+}
+
+} // namespace atlas
 
 #include <atlas/geometry/geometry_operator.hpp>

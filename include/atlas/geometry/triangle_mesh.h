@@ -5,7 +5,7 @@
  * @brief Declares a triangle-mesh geometry primitive and its lightweight runtime query/trace operator.
  *
  * @details
- * This header defines @ref atlas::geometry::TriangleMesh, a surface geometry
+ * This header defines @ref atlas::TriangleMesh, a surface geometry
  * represented by a collection of triangles, together with
  * @ref TriangleMeshGeometryOperator, a lightweight non-owning operator used for
  * backend-friendly geometric queries.
@@ -64,7 +64,7 @@
 #include <string>
 #include <type_traits>
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Lightweight non-owning runtime query operator for a triangle mesh.
@@ -104,7 +104,7 @@ struct TriangleMeshGeometryOperator {
      * @details
      * Non-owning pointer to vertex positions used by mesh queries.
      */
-    const atlas::math::Vector<T, 3>* vertices = nullptr;
+    const atlas::Vector<T, 3>* vertices = nullptr;
 
     /**
      * @brief Pointer to the triangle index array.
@@ -122,7 +122,7 @@ struct TriangleMeshGeometryOperator {
     /**
      * @brief Pointer to BVH nodes used for accelerated traversal.
      */
-    const atlas::spatial::BVHNode<T>* bvh_nodes = nullptr;
+    const atlas::BVHNode<T>* bvh_nodes = nullptr;
 
     /**
      * @brief Pointer to BVH primitive index indirection.
@@ -153,32 +153,32 @@ private:
      * @brief Find the closest triangle point through direct triangle iteration.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    closest_point_linear(const atlas::math::Vector<T, 3>& p,
-                         atlas::math::Vector<T, 3>* best_point,
-                         atlas::math::Vector<T, 3>* best_normal,
+    closest_point_linear(const atlas::Vector<T, 3>& p,
+                         atlas::Vector<T, 3>* best_point,
+                         atlas::Vector<T, 3>* best_normal,
                          T limit) const noexcept;
 
     /**
      * @brief Find the closest triangle point through BVH distance pruning.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    closest_point_bvh(const atlas::math::Vector<T, 3>& p,
-                      atlas::math::Vector<T, 3>* best_point,
-                      atlas::math::Vector<T, 3>* best_normal,
+    closest_point_bvh(const atlas::Vector<T, 3>& p,
+                      atlas::Vector<T, 3>* best_point,
+                      atlas::Vector<T, 3>* best_normal,
                       T limit) const noexcept;
 
     /**
      * @brief Approximate one node's solid-angle contribution.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    approximate_solid_angle(const atlas::spatial::BVHNode<T>& node,
-                            const atlas::math::Vector<T, 3>& p) const noexcept;
+    approximate_solid_angle(const atlas::BVHNode<T>& node,
+                            const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Evaluate winding number through BVH aggregate solid-angle approximation.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    fast_winding_number_bvh(const atlas::math::Vector<T, 3>& p) const noexcept;
+    fast_winding_number_bvh(const atlas::Vector<T, 3>& p) const noexcept;
 
 public:
     /**
@@ -195,10 +195,10 @@ public:
      * @return Oriented solid angle contribution.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    solid_angle(const atlas::math::Vector<T, 3>& p,
-                const atlas::math::Vector<T, 3>& a,
-                const atlas::math::Vector<T, 3>& b,
-                const atlas::math::Vector<T, 3>& c) const noexcept;
+    solid_angle(const atlas::Vector<T, 3>& p,
+                const atlas::Vector<T, 3>& a,
+                const atlas::Vector<T, 3>& b,
+                const atlas::Vector<T, 3>& c) const noexcept;
 
     /**
      * @brief Compute the winding number of the mesh at a query point.
@@ -211,7 +211,7 @@ public:
      * @return Winding-number value at @p p.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    winding_number(const atlas::math::Vector<T, 3>& p) const noexcept;
+    winding_number(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the closest point on the triangle mesh to a query point.
@@ -224,8 +224,8 @@ public:
      * @param p Query point.
      * @return Closest point on the mesh surface.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the closest surface normal associated with a query point.
@@ -237,8 +237,8 @@ public:
      * @param p Query point.
      * @return Closest surface normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Compute the signed distance from a query point to the mesh.
@@ -252,7 +252,7 @@ public:
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept;
 
     /**
      * @brief Test whether a point lies inside the mesh within a tolerance.
@@ -266,7 +266,7 @@ public:
      * @return `true` if the point is classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Test whether a point lies on the mesh surface within a tolerance.
@@ -276,7 +276,7 @@ public:
      * @return `true` if the point is classified as on the surface.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance = T(0)) const noexcept;
 
     /**
      * @brief Return a centroid-like representative point of the triangle mesh.
@@ -287,7 +287,7 @@ public:
      *
      * @return Mesh centroid or representative point.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept;
 
     /**
@@ -295,7 +295,7 @@ public:
      *
      * @return Axis-aligned bounding box enclosing the mesh.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept;
 
     /**
@@ -323,7 +323,7 @@ public:
      * @return Surface hit record describing the ray-mesh intersection result.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    trace(const atlas::spatial::Ray<T>& ray) const noexcept;
+    trace(const atlas::Ray<T>& ray) const noexcept;
 
     /**
      * @brief Function-call alias for @ref trace.
@@ -332,7 +332,7 @@ public:
      * @return Surface hit record.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface<T>
-    operator()(const atlas::spatial::Ray<T>& ray) const noexcept;
+    operator()(const atlas::Ray<T>& ray) const noexcept;
 };
 
 /**
@@ -374,7 +374,7 @@ public:
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-class TriangleMesh final : public Geometry<T> {
+class TriangleMesh final : public Geometry<T>, public DeviceGeometryViewFactory<T> {
     static_assert(std::is_floating_point_v<T>, "TriangleMesh requires a floating-point T");
 
 public:
@@ -496,7 +496,7 @@ public:
      * @return Bound geometry operator.
      */
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE GeometryOperator<T>
-    make_geometry_operator() const override;
+    make_device_geometry_view() const override;
 
     /**
      * @brief Load mesh data from an OBJ file.
@@ -517,8 +517,8 @@ public:
      * @param p Query point.
      * @return Closest point on the mesh surface.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_point(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_point(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Compute the closest surface normal associated with a query point.
@@ -526,8 +526,8 @@ public:
      * @param p Query point.
      * @return Closest surface normal.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
-    closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
+    closest_normal(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Compute the signed distance from a query point to the mesh.
@@ -536,7 +536,7 @@ public:
      * @return Signed distance value.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T
-    signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept override;
+    signed_distance(const atlas::Vector<T, 3>& p) const noexcept override;
 
     /**
      * @brief Test whether a point lies inside the mesh within a tolerance.
@@ -546,7 +546,7 @@ public:
      * @return `true` if classified as inside; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_inside(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Test whether a point lies on the mesh surface within a tolerance.
@@ -556,14 +556,14 @@ public:
      * @return `true` if classified as on the surface; otherwise `false`.
      */
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const atlas::math::Vector<T, 3>& p, T tolerance) const noexcept override;
+    is_on_surface(const atlas::Vector<T, 3>& p, T tolerance) const noexcept override;
 
     /**
      * @brief Return a centroid-like representative point of the mesh.
      *
      * @return Mesh centroid or representative point.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::math::Vector<T, 3>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     centroid() const noexcept override;
 
     /**
@@ -571,7 +571,7 @@ public:
      *
      * @return Axis-aligned bounding box enclosing the mesh.
      */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::spatial::AxisAlignedBoundingBox<T>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::AxisAlignedBoundingBox<T>
     bound() const noexcept override;
 
     /**
@@ -794,43 +794,36 @@ private:
     HostBuffer<TriangleContainer4<T>> _triangles;
 };
 
-} // namespace atlas::geometry
+} // namespace atlas
 
 namespace atlas {
 
+
 /**
- * @brief Convenience alias for @ref atlas::geometry::TriangleMesh.
+ * @brief Common specialization of @ref atlas::TriangleMesh for `float`.
+ */
+using TriangleMeshF = TriangleMesh<float>;
+
+/**
+ * @brief Common specialization of @ref atlas::TriangleMesh for `double`.
+ */
+using TriangleMeshD = TriangleMesh<double>;
+
+/**
+ * @brief Convenience alias for a host-owned shared pointer to @ref atlas::TriangleMesh.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using TriangleMesh = geometry::TriangleMesh<T>;
+using TriangleMeshHostPtr = atlas::host_shared_ptr<TriangleMesh<T>>;
 
 /**
- * @brief Common specialization of @ref atlas::geometry::TriangleMesh for `float`.
- */
-using TriangleMeshF = geometry::TriangleMesh<float>;
-
-/**
- * @brief Common specialization of @ref atlas::geometry::TriangleMesh for `double`.
- */
-using TriangleMeshD = geometry::TriangleMesh<double>;
-
-/**
- * @brief Convenience alias for a host-owned shared pointer to @ref atlas::geometry::TriangleMesh.
+ * @brief Convenience alias for a device-owned shared pointer to @ref atlas::TriangleMesh.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using TriangleMeshHostPtr = atlas::host_shared_ptr<geometry::TriangleMesh<T>>;
-
-/**
- * @brief Convenience alias for a device-owned shared pointer to @ref atlas::geometry::TriangleMesh.
- *
- * @tparam T Floating-point scalar type.
- */
-template <typename T>
-using TriangleMeshDevicePtr = atlas::device_shared_ptr<geometry::TriangleMesh<T>>;
+using TriangleMeshDevicePtr = atlas::device_shared_ptr<TriangleMesh<T>>;
 
 } // namespace atlas
 

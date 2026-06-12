@@ -11,7 +11,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/measure/measurer.h>
 
-namespace atlas::system {
+namespace atlas {
 
 /**
  * @brief Measures cell-wise bulk velocity, thermal energy, particle count, and temperature.
@@ -322,33 +322,30 @@ private:
     MeasureModeType _measure_mode { MeasureModeType::Field };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for `atlas::system::BoltzmanMeasurer`.
+ * @brief Convenience alias for `atlas::BoltzmanMeasurer`.
+ *
+ * @tparam T Scalar type used by the measurer.
+ */
+/**
+ * @brief Host-side shared pointer alias for `atlas::BoltzmanMeasurer`.
  *
  * @tparam T Scalar type used by the measurer.
  */
 template <typename T>
-using BoltzmanMeasurer = atlas::system::BoltzmanMeasurer<T>;
+using BoltzmanMeasurerHostPtr = atlas::host_shared_ptr<atlas::BoltzmanMeasurer<T>>;
 
 /**
- * @brief Host-side shared pointer alias for `atlas::system::BoltzmanMeasurer`.
+ * @brief Device-side shared pointer alias for `atlas::BoltzmanMeasurer`.
  *
  * @tparam T Scalar type used by the measurer.
  */
 template <typename T>
-using BoltzmanMeasurerHostPtr = atlas::host_shared_ptr<atlas::system::BoltzmanMeasurer<T>>;
-
-/**
- * @brief Device-side shared pointer alias for `atlas::system::BoltzmanMeasurer`.
- *
- * @tparam T Scalar type used by the measurer.
- */
-template <typename T>
-using BoltzmanMeasurerDevicePtr = atlas::device_shared_ptr<atlas::system::BoltzmanMeasurer<T>>;
+using BoltzmanMeasurerDevicePtr = atlas::device_shared_ptr<atlas::BoltzmanMeasurer<T>>;
 
 } // namespace atlas
 

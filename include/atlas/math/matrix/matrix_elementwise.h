@@ -3,7 +3,7 @@
 #include <atlas/math/matrix/matrix_expression.h>
 #include <cmath>
 #include <type_traits>
-namespace atlas::math {
+namespace atlas {
 /**
  * @file matrix_elementwise.h
  * @brief Element-wise utility operations for matrix expression templates.
@@ -28,8 +28,8 @@ namespace atlas::math {
  *   exceed the lifetime of the returned expression.
  * - Scalar parameters (e.g., clamp bounds) are captured inside the operator functor by value.
  *
- * @see atlas::math::MatrixExpression, atlas::math::MatrixUnaryOperator,
- *      atlas::math::MatrixBinaryOperator, atlas::math::MatrixSelect
+ * @see atlas::MatrixExpression, atlas::MatrixUnaryOperator,
+ *      atlas::MatrixBinaryOperator, atlas::MatrixSelect
  */
 // ------------------------------------------------------------
 // Unary element-wise ops
@@ -200,4 +200,4 @@ select(const EM& mask, const ET& t, const EF& f) noexcept {
     // Build a select expression node. The node stores references to mask/t/f.
     return MatrixSelect<T, EM, ET, EF>(mask(), t(), f());
 }
-} // namespace atlas::math
+} // namespace atlas

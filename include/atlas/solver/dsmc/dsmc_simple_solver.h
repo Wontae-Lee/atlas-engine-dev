@@ -3,7 +3,7 @@
 #include <atlas/solver/dsmc/dsmc_solver.h>
 #include <atlas/solver/dsmc/statistics/dsmc_simple_statistics.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 class DsmcSimpleSolver final : public DsmcSolver<T> {
@@ -58,18 +58,14 @@ private:
     DsmcCollisionWorkloadType _workload_type { DsmcCollisionWorkloadType::cell };
 };
 
-} // namespace atlas::system
+} // namespace atlas
 
 namespace atlas {
+template <typename T>
+using DsmcSimpleSolverHostPtr = atlas::host_shared_ptr<atlas::DsmcSimpleSolver<T>>;
 
 template <typename T>
-using DsmcSimpleSolver = atlas::system::DsmcSimpleSolver<T>;
-
-template <typename T>
-using DsmcSimpleSolverHostPtr = atlas::host_shared_ptr<atlas::system::DsmcSimpleSolver<T>>;
-
-template <typename T>
-using DsmcSimpleSolverDevicePtr = atlas::device_shared_ptr<atlas::system::DsmcSimpleSolver<T>>;
+using DsmcSimpleSolverDevicePtr = atlas::device_shared_ptr<atlas::DsmcSimpleSolver<T>>;
 
 } // namespace atlas
 

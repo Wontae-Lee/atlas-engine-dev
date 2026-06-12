@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-namespace atlas::system {
+namespace atlas {
 
 enum struct DsmcCollisionWorkloadType : int {
     cell,
@@ -52,7 +52,7 @@ public:
      * DSMC collision kernel. It is copied into device lambdas before launching
      * parallel loops.
      */
-    using Probe = atlas::system::DsmcProbe<T>;
+    using Probe = atlas::DsmcProbe<T>;
 
     /**
      * @brief Creates an empty DSMC solver.
@@ -328,27 +328,21 @@ namespace atlas {
  *
  * @tparam T Floating-point scalar type.
  */
-template <typename T>
-using DsmcSolver = atlas::system::DsmcSolver<T>;
-
 /**
- * @brief Host shared-pointer alias for `atlas::system::DsmcSolver`.
+ * @brief Host shared-pointer alias for `atlas::DsmcSolver`.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using DsmcSolverHostPtr = atlas::host_shared_ptr<atlas::system::DsmcSolver<T>>;
+using DsmcSolverHostPtr = atlas::host_shared_ptr<atlas::DsmcSolver<T>>;
 
 /**
- * @brief Device shared-pointer alias for `atlas::system::DsmcSolver`.
+ * @brief Device shared-pointer alias for `atlas::DsmcSolver`.
  *
  * @tparam T Floating-point scalar type.
  */
 template <typename T>
-using DsmcSolverDevicePtr = atlas::device_shared_ptr<atlas::system::DsmcSolver<T>>;
-
-using DsmcCollisionWorkloadType = atlas::system::DsmcCollisionWorkloadType;
-
+using DsmcSolverDevicePtr = atlas::device_shared_ptr<atlas::DsmcSolver<T>>;
 }
 
 #include <atlas/solver/dsmc/dsmc_solver.hpp>

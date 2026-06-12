@@ -2,7 +2,7 @@
 
 #include <atlas/memory/raw_pointer_cast.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 Measurer<T>::Measurer(UniverseHostPtr<T> universe,
@@ -29,13 +29,13 @@ Measurer<T>::make_probe() noexcept {
         return false;
     }
 
-    auto* fluid_temperature = _fluid->template state<atlas::fluid::FluidTemperatureState<T>>();
+    auto* fluid_temperature = _fluid->template state<atlas::FluidTemperatureState<T>>();
 
-    _probe.field_temperature_ptr = atlas::raw_pointer_cast(_universe->template state<atlas::universe::UniverseTemperatureState<T>>()->data().data());
-    _probe.bulk_velocity_ptr     = atlas::raw_pointer_cast(_universe->template state<atlas::universe::UniverseBulkVelocityState<T>>()->data().data());
-    _probe.thermal_energy_ptr    = atlas::raw_pointer_cast(_universe->template state<atlas::universe::UniverseThermalEnergyState<T>>()->data().data());
-    _probe.number_particle_ptr   = atlas::raw_pointer_cast(_universe->template state<atlas::universe::UniverseNumberParticleState<T>>()->data().data());
-    _probe.velocity_ptr          = atlas::raw_pointer_cast(_fluid->template state<atlas::fluid::FluidVelocityState<T>>()->data().data());
+    _probe.field_temperature_ptr = atlas::raw_pointer_cast(_universe->template state<atlas::UniverseTemperatureState<T>>()->data().data());
+    _probe.bulk_velocity_ptr     = atlas::raw_pointer_cast(_universe->template state<atlas::UniverseBulkVelocityState<T>>()->data().data());
+    _probe.thermal_energy_ptr    = atlas::raw_pointer_cast(_universe->template state<atlas::UniverseThermalEnergyState<T>>()->data().data());
+    _probe.number_particle_ptr   = atlas::raw_pointer_cast(_universe->template state<atlas::UniverseNumberParticleState<T>>()->data().data());
+    _probe.velocity_ptr          = atlas::raw_pointer_cast(_fluid->template state<atlas::FluidVelocityState<T>>()->data().data());
     _probe.particle_temperature_ptr = fluid_temperature != nullptr
         ? atlas::raw_pointer_cast(fluid_temperature->data().data())
         : nullptr;
@@ -52,4 +52,4 @@ Measurer<T>::make_probe() noexcept {
         && _probe.cell_end_ptr != nullptr;
 }
 
-} // namespace atlas::system
+} // namespace atlas

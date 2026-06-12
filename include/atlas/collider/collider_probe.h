@@ -7,19 +7,19 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 struct ColliderProbe {
     const Unit<T>* units {};
-    const atlas::spatial::AxisAlignedBoundingBox<T>* unit_bounds {};
+    const atlas::AxisAlignedBoundingBox<T>* unit_bounds {};
     const SurfaceInteractionKernel<T>* surface_interactions {};
     const std::uint8_t* flips {};
-    atlas::spatial::AxisAlignedBoundingBox<T> scene_bound {};
+    atlas::AxisAlignedBoundingBox<T> scene_bound {};
 
     Vector3<T>* positions {};
     Vector3<T>* velocities {};
-    fluid::FluidInternalEnergy<T>* internal_energies {};
+    FluidInternalEnergy<T>* internal_energies {};
     const std::size_t* species {};
     const MaterialProperties<T>* materials {};
 
@@ -31,11 +31,4 @@ struct ColliderProbe {
     bool scene_bound_covers_units {};
 };
 
-}
-
-namespace atlas {
-
-template <typename T>
-using ColliderProbe = atlas::system::ColliderProbe<T>;
-
-}
+} // namespace atlas

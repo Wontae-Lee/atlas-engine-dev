@@ -5,7 +5,7 @@
  * @brief Declares the enumeration of all supported geometry primitive types.
  *
  * @details
- * This header defines @ref atlas::geometry::GeometryType, an enumeration used
+ * This header defines @ref atlas::GeometryType, an enumeration used
  * to identify the concrete type of a geometry primitive at runtime.
  *
  * ## Purpose
@@ -31,7 +31,7 @@
  * ---
  */
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Identifies the concrete geometry primitive type at runtime.
@@ -105,4 +105,4 @@ enum class GeometryType : int {
     TriangleMesh
 };
 
-} // namespace atlas::geometry
+} // namespace atlas

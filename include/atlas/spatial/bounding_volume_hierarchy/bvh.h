@@ -49,7 +49,7 @@
  *
  * ## Geometry operator export
  *
- * The exported @ref atlas::spatial::BvhGeometryOperator is a value-type runtime
+ * The exported @ref atlas::BvhGeometryOperator is a value-type runtime
  * view over the constructed hierarchy. It usually contains raw pointers or
  * lightweight references to device-side node, index, and triangle buffers.
  *
@@ -66,14 +66,14 @@
 #include <atlas/container/container.h>
 #include <atlas/memory/memory.h>
 
-namespace atlas::geometry {
+namespace atlas {
 
 /**
  * @brief Forward declaration of the triangle-mesh geometry operator.
  *
  * @details
  * Concrete BVH implementations export this operator type through
- * @ref atlas::spatial::BvhGeometryOperator. The operator is expected to provide
+ * @ref atlas::BvhGeometryOperator. The operator is expected to provide
  * the runtime traversal and query functionality for BVH-backed triangle meshes.
  *
  * @tparam T Floating-point scalar type used by triangle geometry and queries.
@@ -81,16 +81,16 @@ namespace atlas::geometry {
 template <typename T>
 struct TriangleMeshGeometryOperator;
 
-} // namespace atlas::geometry
+} // namespace atlas
 
-namespace atlas::spatial {
+namespace atlas {
 
 /**
  * @brief Geometry-operator type exported by BVH implementations.
  *
  * @details
  * This alias currently resolves to
- * @ref atlas::geometry::TriangleMeshGeometryOperator.
+ * @ref atlas::TriangleMeshGeometryOperator.
  *
  * A BVH implementation returns this type from make_geometry_operator() so that
  * downstream systems can perform accelerated spatial queries without depending
@@ -110,7 +110,7 @@ namespace atlas::spatial {
  *       lifetime and stability of the buffers owned by the concrete BVH object.
  */
 template <typename T>
-using BvhGeometryOperator = atlas::geometry::TriangleMeshGeometryOperator<T>;
+using BvhGeometryOperator = atlas::TriangleMeshGeometryOperator<T>;
 
 /**
  * @brief Abstract base class for triangle-mesh Bounding Volume Hierarchies.
@@ -242,12 +242,12 @@ public:
     make_geometry_operator() const = 0;
 };
 
-} // namespace atlas::spatial
+} // namespace atlas
 
 namespace atlas {
 
 /**
- * @brief Convenience alias for atlas::spatial::BoundingVolumeHierachy.
+ * @brief Convenience alias for atlas::BoundingVolumeHierachy.
  *
  * @details
  * Exposes the abstract BVH interface in the top-level atlas namespace.
@@ -255,7 +255,7 @@ namespace atlas {
  * @tparam T Floating-point scalar type used by triangle geometry and queries.
  */
 template <typename T>
-using BVH = spatial::BoundingVolumeHierachy<T>;
+using BVH = BoundingVolumeHierachy<T>;
 
 /**
  * @brief Host shared pointer alias for BVH objects.
