@@ -30,14 +30,14 @@ using atlas::tol;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
-using atlas::fluid::FluidActiveState;
-using atlas::fluid::FluidPositionState;
-using atlas::fluid::FluidSpeciesState;
-using atlas::fluid::FluidVelocityState;
-using atlas::system::Solver;
+using atlas::FluidActiveState;
+using atlas::FluidPositionState;
+using atlas::FluidSpeciesState;
+using atlas::FluidVelocityState;
+using atlas::Solver;
 using atlas::test::vec_near;
-using atlas::universe::UniverseFieldForceState;
-using atlas::universe::UniverseGravityState;
+using atlas::UniverseFieldForceState;
+using atlas::UniverseGravityState;
 
 class MockCodec final : public Codec<float> {
 public:

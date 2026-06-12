@@ -10,6 +10,10 @@
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/observer/observer.h>
+#include <atlas/source/detail/source_cache_builder.h>
+#include <atlas/source/detail/source_emitter.h>
+#include <atlas/source/detail/source_probe_builder.h>
+#include <atlas/source/detail/source_species_shuffler.h>
 #include <atlas/source/source_probe.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/unit/unit.h>
@@ -238,7 +242,7 @@ private:
     /**
      * @brief Cached probe populated by @ref make_probe.
      */
-    SourceProbe _probe {};
+    SourceProbe<T> _probe {};
 
     /**
      * @brief Monotonically increasing seed used across shuffle passes.
@@ -254,6 +258,26 @@ private:
      * @brief Monotonic source-step index used by source metric recording.
      */
     std::size_t _step_index = 0;
+
+    /**
+     * @brief Builds cached local source samples and base species assignment.
+     */
+    detail::SourceCacheBuilder<T> _cache_builder {};
+
+    /**
+     * @brief Shuffles species assignment for each emission pass.
+     */
+    detail::SourceSpeciesShuffler<T> _species_shuffler {};
+
+    /**
+     * @brief Builds raw-pointer probes for emission kernels.
+     */
+    detail::SourceProbeBuilder<T> _probe_builder {};
+
+    /**
+     * @brief Writes emitted particle state through a source probe.
+     */
+    detail::SourceEmitter<T> _emitter {};
 };
 
 /**

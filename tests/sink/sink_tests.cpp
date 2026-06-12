@@ -18,9 +18,9 @@ using atlas::HostBuffer;
 using atlas::Sink;
 using atlas::Unit;
 using atlas::Vector3F;
-using atlas::fluid::DespawnOperator;
-using atlas::fluid::DespawnType;
-using atlas::physics::Sync;
+using atlas::DespawnOperator;
+using atlas::DespawnType;
+using atlas::Sync;
 
 FluidHostPtr<float>
 make_fluid() {
@@ -183,9 +183,9 @@ TEST(Sink, TracingDespawnUsesPositionVelocityAndUpdateDt) {
     const auto fluid = make_fluid();
     fluid->set_particle_count(2);
 
-    auto* position_state = fluid->state<atlas::fluid::FluidPositionState<float>>();
-    auto* velocity_state = fluid->state<atlas::fluid::FluidVelocityState<float>>();
-    auto* active_state   = fluid->state<atlas::fluid::FluidActiveState<float>>();
+    auto* position_state = fluid->state<atlas::FluidPositionState<float>>();
+    auto* velocity_state = fluid->state<atlas::FluidVelocityState<float>>();
+    auto* active_state   = fluid->state<atlas::FluidActiveState<float>>();
     ASSERT_NE(position_state, nullptr);
     ASSERT_NE(velocity_state, nullptr);
     ASSERT_NE(active_state, nullptr);

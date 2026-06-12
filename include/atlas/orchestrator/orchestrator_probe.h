@@ -7,6 +7,12 @@
 
 namespace atlas {
 
+/**
+ * @brief Raw device-readable view used by orchestrator force stages.
+ *
+ * The probe does not own storage. All pointers refer to buffers owned by the
+ * configured universe, fluid, and spatial searcher for the current update step.
+ */
 template <typename T>
 struct OrchestratorProbe {
     Vector3<T>* velocity_ptr {};
@@ -24,7 +30,4 @@ struct OrchestratorProbe {
     int gravity_cell_count {};
 };
 
-}
-
-namespace atlas {
-}
+} // namespace atlas

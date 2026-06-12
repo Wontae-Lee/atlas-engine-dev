@@ -24,11 +24,11 @@ using atlas::MaterialProperties;
 using atlas::MaterialType;
 using atlas::Unit;
 using atlas::Vector3F;
-using atlas::fluid::MaxwellBoltzmannGenerator;
-using atlas::fluid::Source;
-using atlas::fluid::SpawnOperator;
-using atlas::fluid::SpawnType;
-using atlas::physics::Sync;
+using atlas::MaxwellBoltzmannGenerator;
+using atlas::Source;
+using atlas::SpawnOperator;
+using atlas::SpawnType;
+using atlas::Sync;
 
 FluidHostPtr<float>
 make_fluid(const std::size_t buffer_size = 8) {

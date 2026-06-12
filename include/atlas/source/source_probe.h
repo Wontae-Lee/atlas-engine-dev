@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlas/generator/generate_operator.h>
 #include <atlas/material/material_properties.h>
 #include <atlas/source/spawn_operator.h>
 #include <atlas/unit/unit.h>
@@ -9,6 +10,12 @@
 
 namespace atlas {
 
+/**
+ * @brief Raw device-readable view used by source emission kernels.
+ *
+ * The probe does not own storage. All pointers refer to source caches or fluid
+ * buffers prepared for the current emission step.
+ */
 template <typename T>
 struct SourceProbe {
     const Unit<T>* units {};
@@ -32,7 +39,4 @@ struct SourceProbe {
     std::uint64_t emission_seed {};
 };
 
-}
-
-namespace atlas {
-}
+} // namespace atlas

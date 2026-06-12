@@ -14,6 +14,9 @@
 #include <atlas/core/macros.h>
 #include <atlas/measure/measurer.h>
 #include <atlas/memory/memory.h>
+#include <atlas/orchestrator/detail/orchestrator_force_applier.h>
+#include <atlas/orchestrator/detail/orchestrator_pipeline.h>
+#include <atlas/orchestrator/detail/orchestrator_probe_builder.h>
 #include <atlas/orchestrator/orchestrator_probe.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/solver/solver.h>
@@ -40,15 +43,11 @@ namespace atlas {
  * implementation executes the following pipeline:
  *
  * @code
- * searcher.invalidate();
- * search();
- * classify();
- * measure();
- * make_probe();
- * const auto probe = _probe;
- * apply_gravity(probe, dt);
- * apply_field_force(probe, dt);
- * solve(dt);
+ * _search.run(orchestrator);
+ * _classification.run(orchestrator);
+ * _measurement.run(orchestrator, dt);
+ * _force.run(orchestrator, dt);
+ * _solve.run(orchestrator, dt);
  * @endcode
  *
  * Missing optional dependencies are handled defensively. For example, if no
@@ -60,6 +59,9 @@ namespace atlas {
  */
 template <typename T>
 class Orchestrator final {
+    template <typename>
+    friend struct detail::OrchestratorForceStage;
+
 public:
     /**
      * @brief Fluent builder for constructing validated `Orchestrator` instances.
@@ -218,16 +220,11 @@ public:
      * The execution order is:
      *
      * @code
-     * if (_searcher) {
-     *     _searcher->invalidate();
-     * }
-     * search();
-     * classify();
-     * measure();
-     * make_probe();
-     * const auto probe = _probe;
-     * apply_forces(probe, dt);
-     * solve(dt);
+     * _search.run(orchestrator);
+     * _classification.run(orchestrator);
+     * _measurement.run(orchestrator, dt);
+     * _force.run(orchestrator, dt);
+     * _solve.run(orchestrator, dt);
      * @endcode
      *
      * The searcher is invalidated before rebuilding search data. Gravity and
@@ -363,32 +360,46 @@ public:
      * @param dt Time-step size.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    apply_forces(const OrchestratorProbe& probe, T dt);
+    apply_forces(const OrchestratorProbe<T>& probe, T dt);
 
     /**
      * @brief Applies gravity to all particles in the probe using a pre-built probe.
      *
-     * Called by @ref orchestrate to avoid rebuilding the probe inside
-     * @ref apply_gravity when both force passes share the same step.
+     * This low-level entry point is kept for callers that need the standalone
+     * gravity pass. The normal orchestration pipeline uses @ref apply_forces so
+     * gravity and field force can share one traversal.
      *
      * @param probe Pre-built data view. Must have a valid `gravity_ptr`.
      * @param dt Time-step size.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    apply_gravity(const OrchestratorProbe& probe, T dt);
+    apply_gravity(const OrchestratorProbe<T>& probe, T dt);
 
     /**
      * @brief Applies field forces to all particles in the probe using a pre-built probe.
      *
-     * Called by @ref orchestrate to avoid rebuilding the probe inside
-     * @ref apply_field_force when both force passes share the same step.
+     * This low-level entry point is kept for callers that need the standalone
+     * field-force pass. The normal orchestration pipeline uses @ref apply_forces
+     * so gravity and field force can share one traversal.
      *
      * @param probe Pre-built data view. Must have valid `field_force_ptr`,
      *              `species_ptr`, `properties_ptr`, and positive `num_of_species`.
      * @param dt Time-step size.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    apply_field_force(const OrchestratorProbe& probe, T dt);
+    apply_field_force(const OrchestratorProbe<T>& probe, T dt);
+
+private:
+    /**
+     * @brief Applies force states using the cached probe produced by make_probe().
+     *
+     * The probe is copied before launch so device kernels receive a stable value
+     * object independent of later host-side probe updates.
+     *
+     * @param dt Time-step size.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE void
+    apply_probe_forces(T dt);
 
 private:
     /**
@@ -432,9 +443,27 @@ private:
     HostBuffer<SolveHostPtr<T>> _solvers {};
 
     /**
+     * @brief Fixed solver-side orchestration pipeline.
+     *
+     * This stateless object names the search, classification, measurement,
+     * force, and solve stages in their execution order.
+     */
+    detail::OrchestratorPipeline<T> _pipeline {};
+
+    /**
      * @brief Cached probe populated by @ref make_probe.
      */
-    OrchestratorProbe _probe {};
+    OrchestratorProbe<T> _probe {};
+
+    /**
+     * @brief Builds raw-pointer probes from runtime dependencies.
+     */
+    detail::OrchestratorProbeBuilder<T> _probe_builder {};
+
+    /**
+     * @brief Applies force-related universe states to fluid velocity.
+     */
+    detail::OrchestratorForceApplier<T> _force_applier {};
 };
 
 /**

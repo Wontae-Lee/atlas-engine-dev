@@ -3,9 +3,6 @@
 #include <atlas/logging/logging.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/parallel/parallel_sort.h>
-#include <atlas/sampling/sampling.h>
-#include <atlas/shuffle/shuffle_operator.h>
 
 #include <algorithm>
 #include <cmath>
@@ -76,168 +73,29 @@ Source<T>::rebuild_cache() noexcept {
         return;
     }
 
-    if (_units.empty() || _spawn_types.empty() || _spawn_operators.empty() || !_fluid || _fluid->generators().empty()) {
-        // Clear all cached data when required source inputs are unavailable.
-        _local_unit_counts.clear();
-        _flat_local_positions.clear();
-        _flat_unit_indices.clear();
-        _local_particle_count = 0;
-        _species_cache.clear();
-        _shuffled_species.clear();
-        _shuffle_keys.clear();
-        _shuffle_seed         = 0;
-        _is_invalidated_cache = false;
-        return;
-    }
+    _cache_builder.rebuild(_units,
+                           _spawn_types,
+                           _spawn_operators,
+                           _fluid,
+                           _flip,
+                           _spacing,
+                           _tolerance,
+                           _local_unit_counts,
+                           _flat_local_positions,
+                           _flat_unit_indices,
+                           _local_particle_count,
+                           _species_cache,
+                           _shuffled_species,
+                           _shuffle_keys,
+                           _shuffle_seed);
 
-    const auto& generators = _fluid->generators();
-
-    // Copy CUDA device buffers once for deterministic host-side cache construction.
-#if defined(ATLAS_TASKING_CUDA)
-    const HostBuffer<Unit<T>> units(_units.begin(), _units.end());
-
-    const HostBuffer<SpawnOperator<T>> spawn_operators(
-        _spawn_operators.begin(),
-        _spawn_operators.end());
-#else
-    const auto& units           = _units;
-    const auto& spawn_operators = _spawn_operators;
-#endif
-
-    // Store per-unit counts for observer metrics while building one flat cache.
-    _local_unit_counts.clear();
-    _local_unit_counts.resize(units.size(), 0);
-
-    HostBuffer<Vector3<T>> flat_positions;
-    HostBuffer<int> flat_unit_indices;
-
-    const std::size_t spawn_operator_count = spawn_operators.size();
-
-    for (std::size_t i = 0; i < units.size(); ++i) {
-        // Sample the bounding box of the unit geometry.
-        const auto& geometry = units[i].geometry_operator();
-        const auto bounds    = geometry.bound();
-        const auto& lower    = bounds.lower_corner;
-        const auto& upper    = bounds.upper_corner;
-
-        // Use either the shared spawn operator or the unit-specific operator.
-        const auto& spawn_op = spawn_operators[(spawn_operator_count == 1) ? 0 : i];
-
-        // Determine the number of sample points along each axis.
-        const int nx = atlas::sample_axis_count(lower.x, upper.x, _spacing);
-        const int ny = atlas::sample_axis_count(lower.y, upper.y, _spacing);
-        const int nz = atlas::sample_axis_count(lower.z, upper.z, _spacing);
-
-        std::size_t accepted_count = 0;
-
-        if (nx > 0 && ny > 0 && nz > 0) {
-            for (int iz = 0; iz < nz; ++iz) {
-                for (int iy = 0; iy < ny; ++iy) {
-                    for (int ix = 0; ix < nx; ++ix) {
-                        // Generate a regular-grid sample in the unit's local coordinate space.
-                        const Vector3<T> sample(
-                            lower.x + static_cast<T>(ix) * _spacing,
-                            lower.y + static_cast<T>(iy) * _spacing,
-                            lower.z + static_cast<T>(iz) * _spacing);
-
-                        // Test whether the sample should be accepted by the spawn operator.
-                        const bool accepted = spawn_op.spawn(geometry, sample, _tolerance);
-
-                        // Flip mode inverts the accepted region.
-                        if (_flip ? !accepted : accepted) {
-                            flat_positions.push_back(sample);
-                            flat_unit_indices.push_back(static_cast<int>(i));
-                            ++accepted_count;
-                        }
-                    }
-                }
-            }
-        }
-
-        _local_unit_counts[i] = static_cast<int>(accepted_count);
-    }
-
-    // Reset species shuffle buffers before rebuilding them.
-    _species_cache.clear();
-    _shuffled_species.clear();
-    _shuffle_keys.clear();
-
-    const std::size_t total_count = flat_positions.size();
-    _local_particle_count         = total_count;
-
-    if (total_count == 0) {
-        // No cached particles are available for emission.
-        _flat_local_positions.clear();
-        _flat_unit_indices.clear();
-        _shuffle_seed         = 0;
-        _is_invalidated_cache = false;
-        return;
-    }
-
-    // Move the host-built flat cache to device storage with one transfer per buffer.
-#if defined(ATLAS_TASKING_CUDA)
-    _flat_local_positions = DeviceBuffer<Vector3<T>>(flat_positions.begin(), flat_positions.end());
-    _flat_unit_indices    = DeviceBuffer<int>(flat_unit_indices.begin(), flat_unit_indices.end());
-#else
-    _flat_local_positions = std::move(flat_positions);
-    _flat_unit_indices    = std::move(flat_unit_indices);
-#endif
-
-    // Allocate species assignment and shuffle buffers for all cached samples.
-    _species_cache.resize(total_count);
-    _shuffled_species.resize(total_count);
-    _shuffle_keys.resize(total_count);
-
-    const int count         = static_cast<int>(total_count);
-    const int species_count = static_cast<int>(generators.size());
-    auto* cache             = atlas::raw_pointer_cast(this->_species_cache.data());
-
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        count,
-        [=] ATLAS_DEVICE(const int i) {
-            // Assign species in a repeating pattern before shuffling.
-            cache[i] = static_cast<std::size_t>(i % species_count);
-        });
-
-    // Reset shuffle sequence after rebuilding source samples.
-    _shuffle_seed         = 0;
     _is_invalidated_cache = false;
 }
 
 template <typename T>
 void
 Source<T>::shuffle_species(const std::size_t count) {
-    if (count == 0) {
-        // Clear shuffle output when there are no particles to emit.
-        _shuffled_species.clear();
-        _shuffle_keys.clear();
-        return;
-    }
-
-    // Advance the seed so each emission step gets a different shuffled order.
-    const std::uint64_t seed = _shuffle_seed++;
-
-    const auto* cache = atlas::raw_pointer_cast(this->_species_cache.data());
-    auto* shuffled = atlas::raw_pointer_cast(this->_shuffled_species.data());
-    auto* keys     = atlas::raw_pointer_cast(this->_shuffle_keys.data());
-
-    const ShuffleOperator shuffle {};
-
-    atlas::parallel_for<ExecutionPolicy::device>(
-        static_cast<std::size_t>(0),
-        count,
-        [=] ATLAS_DEVICE(const std::size_t i) {
-            // Copy and key only the species range that will be emitted this step.
-            shuffled[i] = cache[i];
-            keys[i]     = shuffle(static_cast<int>(i), seed);
-        });
-
-    // Sort species by pseudo-random keys to distribute species assignments.
-    atlas::parallel_sort_by_key<ExecutionPolicy::device>(
-        _shuffle_keys.begin(),
-        _shuffle_keys.begin() + static_cast<std::ptrdiff_t>(count),
-        _shuffled_species.begin());
+    _species_shuffler.shuffle(_species_cache, _shuffled_species, _shuffle_keys, _shuffle_seed, count);
 }
 
 template <typename T>
@@ -317,8 +175,6 @@ Source<T>::emit() {
     // Copy the probe descriptor for device lambda capture.
     const auto probe = _probe;
 
-    const ShuffleOperator shuffle {};
-
     // Compute per-unit emission counts on the host for observer metrics using
     // the host-side knowledge of each unit's position range.
     if (source_sensor_matrics != nullptr) {
@@ -334,35 +190,7 @@ Source<T>::emit() {
         }
     }
 
-    const int dst_offset = static_cast<int>(current_particle_count);
-
-    // Single flat kernel launch over all emit_count particles. Each thread reads
-    // its owning unit directly from the cache, avoiding per-particle offset searches.
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        static_cast<int>(emit_count),
-        [=] ATLAS_DEVICE(const int i) {
-            const int unit_index = probe.flat_unit_indices[i];
-            const int dst    = dst_offset + i;
-            const size_t sid = probe.shuffled_species[i];
-
-            if (sid >= static_cast<std::size_t>(probe.property_count)) {
-                return;
-            }
-
-            const auto sample_seed = static_cast<unsigned int>(shuffle(dst, probe.emission_seed));
-
-            Vector3<T> world_pos;
-            probe.units[unit_index].sync_operator().sync_to_world(probe.flat_local_positions[i], world_pos);
-
-            probe.positions[dst]  = world_pos;
-            probe.velocities[dst] = probe.generators[sid].generate(
-                sample_seed,
-                probe.temperature,
-                probe.properties[sid].molecular_mass);
-            probe.species[dst]    = sid;
-            probe.active[dst]     = 1;
-        });
+    _emitter.emit(probe, current_particle_count, emit_count);
 
     // Publish the new particle count after all emitted particle data has been written.
     _fluid->set_particle_count(current_particle_count + emit_count);
@@ -374,40 +202,14 @@ Source<T>::emit() {
 template <typename T>
 bool
 Source<T>::make_probe() noexcept {
-    _probe = {};
-
-    if (!_fluid || _units.empty() || _shuffled_species.empty()) {
-        return false;
-    }
-
-    auto& positions_buf   = _fluid->template state<FluidPositionState<T>>()->data();
-    auto& velocities_buf  = _fluid->template state<FluidVelocityState<T>>()->data();
-    auto& species_buf     = _fluid->template state<FluidSpeciesState<T>>()->data();
-    auto& active_buf      = _fluid->template state<FluidActiveState<T>>()->data();
-    const auto& generators_buf = _fluid->generators();
-    const auto& properties_buf = _fluid->particle_properties();
-
-    if (positions_buf.empty() || velocities_buf.empty() || species_buf.empty() || active_buf.empty()
-        || generators_buf.empty() || properties_buf.empty()
-        || _flat_local_positions.empty() || _flat_unit_indices.empty()) {
-        return false;
-    }
-
-    _probe.units                  = atlas::raw_pointer_cast(_units.data());
-    _probe.generators             = atlas::raw_pointer_cast(generators_buf.data());
-    _probe.properties             = atlas::raw_pointer_cast(properties_buf.data());
-    _probe.shuffled_species       = atlas::raw_pointer_cast(_shuffled_species.data());
-    _probe.positions              = atlas::raw_pointer_cast(positions_buf.data());
-    _probe.velocities             = atlas::raw_pointer_cast(velocities_buf.data());
-    _probe.species                = atlas::raw_pointer_cast(species_buf.data());
-    _probe.active                 = atlas::raw_pointer_cast(active_buf.data());
-    _probe.flat_local_positions   = atlas::raw_pointer_cast(_flat_local_positions.data());
-    _probe.flat_unit_indices      = atlas::raw_pointer_cast(_flat_unit_indices.data());
-    _probe.temperature            = _temperature;
-    _probe.property_count         = static_cast<int>(properties_buf.size());
-    _probe.emission_seed          = _shuffle_seed;
-
-    return true;
+    return _probe_builder.build(_fluid,
+                                _units,
+                                _shuffled_species,
+                                _flat_local_positions,
+                                _flat_unit_indices,
+                                _temperature,
+                                _shuffle_seed,
+                                _probe);
 }
 
 template <typename T>

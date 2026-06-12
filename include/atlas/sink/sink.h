@@ -12,6 +12,10 @@
 #include <atlas/memory/memory.h>
 #include <atlas/observer/observer.h>
 #include <atlas/sink/despawn_operator.h>
+#include <atlas/sink/detail/sink_fluid_compactor.h>
+#include <atlas/sink/detail/sink_particle_despawner.h>
+#include <atlas/sink/detail/sink_probe_builder.h>
+#include <atlas/sink/detail/sink_unit_bounds.h>
 #include <atlas/sink/sink_probe.h>
 #include <atlas/unit/unit.h>
 
@@ -259,12 +263,32 @@ private:
     /**
      * @brief Cached probe populated by @ref make_probe.
      */
-    SinkProbe _probe {};
+    SinkProbe<T> _probe {};
 
     /**
      * @brief Monotonic sink-step index used by sink metric recording.
      */
     std::size_t _step_index = 0;
+
+    /**
+     * @brief Refreshes cached world-space sink-unit bounds.
+     */
+    detail::SinkUnitBounds<T> _unit_bound_cache {};
+
+    /**
+     * @brief Builds raw-pointer probes for sink kernels.
+     */
+    detail::SinkProbeBuilder<T> _probe_builder {};
+
+    /**
+     * @brief Marks removed particles inactive.
+     */
+    detail::SinkParticleDespawner<T> _particle_despawner {};
+
+    /**
+     * @brief Compacts fluid storage after sink processing.
+     */
+    detail::SinkFluidCompactor<T> _fluid_compactor {};
 };
 
 /**
