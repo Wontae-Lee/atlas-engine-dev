@@ -32,14 +32,6 @@ Universe<T>::builder() noexcept {
 }
 
 template <typename T>
-template <typename StateT>
-const TypeId&
-Universe<T>::state_key() noexcept {
-    static const TypeId key { typeid(StateT) };
-    return key;
-}
-
-template <typename T>
 Vector3<int>
 Universe<T>::compute_grid_size(const Vector3<T>& lower_corner,
                                const Vector3<T>& upper_corner,
@@ -52,84 +44,42 @@ template <typename T>
 template <typename StateT, typename... Args>
 StateT&
 Universe<T>::emplace_state(Args&&... args) {
-    static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::State.");
-
-    // Construct and register the state by its concrete type.
-    auto state = std::make_unique<StateT>(std::forward<Args>(args)...);
-    auto* ptr  = state.get();
-    _states.insert_or_assign(state_key<StateT>(), std::move(state));
-    return *ptr;
+    return _states.template emplace<StateT>(std::forward<Args>(args)...);
 }
 
 template <typename T>
 template <typename StateT>
 void
 Universe<T>::set_state(std::unique_ptr<StateT> state) {
-    static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::State.");
-
-    // Null states are rejected to keep the registry valid.
-    atlas::check<std::invalid_argument>(state != nullptr)
-        << "Universe::set_state failed: state must not be null.";
-
-    _states.insert_or_assign(state_key<StateT>(), std::move(state));
+    _states.template set<StateT>(std::move(state));
 }
 
 template <typename T>
 template <typename StateT>
 StateT*
 Universe<T>::state() noexcept {
-    static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::State.");
-
-    // Return nullptr when the requested state is not registered.
-    const auto& key = state_key<StateT>();
-    auto it = _states.find(key);
-    return it == _states.end() ? nullptr : static_cast<StateT*>(it->second.get());
+    return _states.template get<StateT>();
 }
 
 template <typename T>
 template <typename StateT>
 const StateT*
 Universe<T>::state() const noexcept {
-    static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::State.");
-
-    // Const-qualified lookup for read-only access.
-    const auto& key = state_key<StateT>();
-    auto it = _states.find(key);
-    return it == _states.end() ? nullptr : static_cast<const StateT*>(it->second.get());
+    return _states.template get<StateT>();
 }
 
 template <typename T>
 template <typename StateT>
 bool
 Universe<T>::has_state() const noexcept {
-    static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::State.");
-
-    // Check whether a state of the requested concrete type exists.
-    return _states.contains(state_key<StateT>());
+    return _states.template contains<StateT>();
 }
 
 template <typename T>
 template <typename StateT>
 std::unique_ptr<StateT>
 Universe<T>::remove_state() {
-    static_assert(std::is_base_of_v<UniverseState, StateT>,
-                  "StateT must derive from atlas::State.");
-
-    const auto& key = state_key<StateT>();
-    auto it = _states.find(key);
-    if (it == _states.end()) {
-        return nullptr;
-    }
-
-    // Transfer ownership from the type-erased registry back to the caller.
-    auto state = std::unique_ptr<StateT>(static_cast<StateT*>(it->second.release()));
-    _states.erase(it);
-    return state;
+    return _states.template remove<StateT>();
 }
 
 template <typename T>
@@ -181,13 +131,13 @@ Universe<T>::observer() const noexcept {
 }
 
 template <typename T>
-std::unordered_map<TypeId, std::unique_ptr<UniverseState>>&
+UniverseStateStore&
 Universe<T>::states() noexcept {
     return _states;
 }
 
 template <typename T>
-const std::unordered_map<TypeId, std::unique_ptr<UniverseState>>&
+const UniverseStateStore&
 Universe<T>::states() const noexcept {
     return _states;
 }

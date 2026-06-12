@@ -5,6 +5,7 @@
  * @brief Declares the Observer class used to own and export heterogeneous simulation metrics.
  */
 
+#include <atlas/container/type_store.h>
 #include <atlas/core/macros.h>
 #include <atlas/memory/memory.h>
 #include <atlas/observer/sensor_matrics.h>
@@ -12,11 +13,10 @@
 #include <cstddef>
 #include <filesystem>
 #include <memory>
-#include <type_traits>
-#include <typeindex>
-#include <unordered_map>
 
 namespace atlas {
+
+using SensorMatricsStore = TypeStore<SensorMatrics>;
 
 /**
  * @brief Runtime registry of heterogeneous metric containers.
@@ -99,17 +99,17 @@ public:
     /**
      * @brief Returns the full mutable metric registry.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unordered_map<std::type_index, std::unique_ptr<SensorMatrics>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE SensorMatricsStore&
     sensor_matrics() noexcept;
 
     /**
      * @brief Returns the full read-only metric registry.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::unordered_map<std::type_index, std::unique_ptr<SensorMatrics>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SensorMatricsStore&
     sensor_matrics() const noexcept;
 
 private:
-    std::unordered_map<std::type_index, std::unique_ptr<SensorMatrics>> _sensor_matrics;
+    SensorMatricsStore _sensor_matrics;
 };
 
 /**

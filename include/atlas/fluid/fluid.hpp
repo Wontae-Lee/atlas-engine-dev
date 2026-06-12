@@ -1,7 +1,6 @@
 #pragma once
 #include <atlas/serialization/protobuf_snapshot.h>
 #include <stdexcept>
-#include <type_traits>
 #include <utility>
 namespace atlas {
 template <typename T>
@@ -69,14 +68,6 @@ Fluid<T>::observer() const noexcept {
 }
 
 template <typename T>
-template <typename StateT>
-const std::type_index&
-Fluid<T>::state_key() noexcept {
-    static const std::type_index key { typeid(StateT) };
-    return key;
-}
-
-template <typename T>
 void
 Fluid<T>::set_particle_count(const size_t particle_count) {
     if (particle_count > _buffer_size) {
@@ -89,81 +80,52 @@ template <typename T>
 template <typename StateT, typename... Args>
 StateT&
 Fluid<T>::emplace_state(Args&&... args) {
-    static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::FluidState.");
-    auto state = std::make_unique<StateT>(std::forward<Args>(args)...);
-    auto* ptr  = state.get();
-    _states.insert_or_assign(state_key<StateT>(), std::move(state));
-    return *ptr;
+    return _states.template emplace<StateT>(std::forward<Args>(args)...);
 }
 
 template <typename T>
 template <typename StateT>
 void
 Fluid<T>::set_state(std::unique_ptr<StateT> state) {
-    static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::FluidState.");
-    if (state == nullptr) {
-        throw std::invalid_argument("Fluid::set_state failed: state must not be null.");
-    }
-    _states.insert_or_assign(state_key<StateT>(), std::move(state));
+    _states.template set<StateT>(std::move(state));
 }
 
 template <typename T>
 template <typename StateT>
 StateT*
 Fluid<T>::state() noexcept {
-    static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::FluidState.");
-    const auto& key = state_key<StateT>();
-    auto it = _states.find(key);
-    return it == _states.end() ? nullptr : static_cast<StateT*>(it->second.get());
+    return _states.template get<StateT>();
 }
 
 template <typename T>
 template <typename StateT>
 const StateT*
 Fluid<T>::state() const noexcept {
-    static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::FluidState.");
-    const auto& key = state_key<StateT>();
-    auto it = _states.find(key);
-    return it == _states.end() ? nullptr : static_cast<const StateT*>(it->second.get());
+    return _states.template get<StateT>();
 }
 
 template <typename T>
 template <typename StateT>
 bool
 Fluid<T>::has_state() const noexcept {
-    static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::FluidState.");
-    return _states.contains(state_key<StateT>());
+    return _states.template contains<StateT>();
 }
 
 template <typename T>
 template <typename StateT>
 std::unique_ptr<StateT>
 Fluid<T>::remove_state() {
-    static_assert(std::is_base_of_v<FluidState, StateT>,
-                  "StateT must derive from atlas::FluidState.");
-    const auto& key = state_key<StateT>();
-    auto it = _states.find(key);
-    if (it == _states.end()) {
-        return nullptr;
-    }
-    auto state = std::unique_ptr<StateT>(static_cast<StateT*>(it->second.release()));
-    _states.erase(it);
-    return state;
+    return _states.template remove<StateT>();
 }
 
 template <typename T>
-std::unordered_map<std::type_index, std::unique_ptr<FluidState>>&
+FluidStateStore&
 Fluid<T>::states() noexcept {
     return _states;
 }
 
 template <typename T>
-const std::unordered_map<std::type_index, std::unique_ptr<FluidState>>&
+const FluidStateStore&
 Fluid<T>::states() const noexcept {
     return _states;
 }

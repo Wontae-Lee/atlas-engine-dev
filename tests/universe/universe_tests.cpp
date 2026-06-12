@@ -17,9 +17,9 @@ using atlas::Universe;
 using atlas::Vector3F;
 using atlas::Vector3I;
 using atlas::test::vec_near;
-using atlas::universe::UniverseBulkVelocityState;
-using atlas::universe::UniverseCollisionCountState;
-using atlas::universe::UniverseTemperatureState;
+using atlas::UniverseBulkVelocityState;
+using atlas::UniverseCollisionCountState;
+using atlas::UniverseTemperatureState;
 
 namespace fs = std::filesystem;
 

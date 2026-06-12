@@ -10,12 +10,12 @@ using atlas::Vector;
 using atlas::Vector3F;
 using atlas::eps;
 using atlas::test::vec_near;
-using atlas::universe::UniverseBulkVelocityState;
-using atlas::universe::UniverseCollisionRemainderState;
-using atlas::universe::UniverseMaterialRatioState;
-using atlas::universe::UniverseNumberParticleState;
-using atlas::universe::UniverseTemperatureState;
-using atlas::universe::UniverseThermalEnergyState;
+using atlas::UniverseBulkVelocityState;
+using atlas::UniverseCollisionRemainderState;
+using atlas::UniverseMaterialRatioState;
+using atlas::UniverseNumberParticleState;
+using atlas::UniverseTemperatureState;
+using atlas::UniverseThermalEnergyState;
 
 } // namespace
 

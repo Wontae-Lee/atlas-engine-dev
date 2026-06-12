@@ -7,6 +7,7 @@
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
+#include <atlas/container/type_store.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/generator/generator.h>
@@ -18,10 +19,10 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <typeindex>
-#include <unordered_map>
 
 namespace atlas {
+
+using FluidStateStore = TypeStore<FluidState>;
 
 /**
  * @brief Owns particle data, generator operators, and registered simulation states
@@ -234,7 +235,7 @@ public:
      *
      * @return Mutable reference to the state registry.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unordered_map<std::type_index, std::unique_ptr<FluidState>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidStateStore&
     states() noexcept;
 
     /**
@@ -242,7 +243,7 @@ public:
      *
      * @return Const reference to the state registry.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::unordered_map<std::type_index, std::unique_ptr<FluidState>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const FluidStateStore&
     states() const noexcept;
 
     /**
@@ -288,10 +289,6 @@ public:
 private:
     friend class Builder;
 
-    template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE static const std::type_index&
-    state_key() noexcept;
-
     /**
      * @brief Device buffer storing particle/species material properties.
      */
@@ -325,7 +322,7 @@ private:
     /**
      * @brief Registry of installed simulation states keyed by exact concrete type.
      */
-    std::unordered_map<std::type_index, std::unique_ptr<FluidState>> _states;
+    FluidStateStore _states;
 };
 
 /**

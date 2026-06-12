@@ -6,6 +6,7 @@
  */
 
 #include <atlas/buffer/host_buffer.h>
+#include <atlas/container/type_store.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
@@ -16,9 +17,10 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 
 namespace atlas {
+
+using UniverseStateStore = TypeStore<UniverseState>;
 
 /**
  * @brief Regular Cartesian simulation domain with cell-based state storage.
@@ -240,7 +242,7 @@ public:
      *
      * @return Mutable reference to the state registry.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unordered_map<TypeId, std::unique_ptr<UniverseState>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE UniverseStateStore&
     states() noexcept;
 
     /**
@@ -248,7 +250,7 @@ public:
      *
      * @return Const reference to the state registry.
      */
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::unordered_map<TypeId, std::unique_ptr<UniverseState>>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const UniverseStateStore&
     states() const noexcept;
 
     /**
@@ -260,10 +262,6 @@ public:
     save(std::string_view path) const;
 
 private:
-    template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE static const TypeId&
-    state_key() noexcept;
-
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3<int>
     compute_grid_size(const Vector3<T>& lower_corner,
                       const Vector3<T>& upper_corner,
@@ -312,7 +310,7 @@ private:
     /**
      * @brief Registry of universe states indexed by concrete type.
      */
-    std::unordered_map<TypeId, std::unique_ptr<UniverseState>> _states;
+    UniverseStateStore _states;
 };
 
 /**

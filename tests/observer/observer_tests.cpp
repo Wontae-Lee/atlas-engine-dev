@@ -40,12 +40,12 @@ using atlas::Sync;
 using atlas::SyncHostPtr;
 using atlas::Unit;
 using atlas::Vector3F;
-using atlas::fluid::DespawnOperator;
-using atlas::fluid::DespawnType;
-using atlas::fluid::FluidActiveState;
-using atlas::fluid::FluidPositionState;
-using atlas::fluid::SpawnOperator;
-using atlas::fluid::SpawnType;
+using atlas::DespawnOperator;
+using atlas::DespawnType;
+using atlas::FluidActiveState;
+using atlas::FluidPositionState;
+using atlas::SpawnOperator;
+using atlas::SpawnType;
 
 FluidHostPtr<float>
 make_observed_fluid(const ObserverHostPtr& observer,

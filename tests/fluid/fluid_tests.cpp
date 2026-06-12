@@ -17,11 +17,11 @@ using atlas::HostBuffer;
 using atlas::MaterialProperties;
 using atlas::MaterialType;
 using atlas::Vector3F;
-using atlas::fluid::FluidActiveState;
-using atlas::fluid::FluidPositionState;
-using atlas::fluid::FluidSpeciesState;
-using atlas::fluid::FluidTemperatureState;
-using atlas::fluid::FluidVelocityState;
+using atlas::FluidActiveState;
+using atlas::FluidPositionState;
+using atlas::FluidSpeciesState;
+using atlas::FluidTemperatureState;
+using atlas::FluidVelocityState;
 using atlas::test::vec_near;
 using atlas::tol;
 
