@@ -42,7 +42,6 @@
  */
 
 #include <atlas/math/math.h>
-#include <atlas/random/default_random_engine.h>
 
 #include <optional>
 
@@ -86,8 +85,7 @@ public:
 private:
     T _min_value;
     T _max_value;
-    unsigned int _seed;
-    atlas::host_shared_ptr<GenerateOperator<T>> _operator;
+    GenerateOperator<T> _operator;
 };
 
 template <typename T>

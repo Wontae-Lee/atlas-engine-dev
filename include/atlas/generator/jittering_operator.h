@@ -7,7 +7,6 @@
 
 #include <atlas/generator/generator.h>
 #include <atlas/generator/generate_operator.h>
-#include <atlas/random/default_random_engine.h>
 
 #include <optional>
 
@@ -103,8 +102,7 @@ public:
 private:
     T _base_value;
     T _jitter_radius;
-    unsigned int _seed;
-    atlas::host_shared_ptr<GenerateOperator<T>> _operator;
+    GenerateOperator<T> _operator;
 };
 
 /**

@@ -40,7 +40,6 @@
  */
 
 #include <atlas/math/math.h>
-#include <atlas/random/default_random_engine.h>
 
 #include <atlas/generator/generator.h>
 #include <atlas/generator/generate_operator.h>
@@ -85,8 +84,7 @@ private:
     T _temperature;
     T _molecular_mass;
     Vector3<T> _bulk_velocity;
-    unsigned int _seed;
-    atlas::host_shared_ptr<GenerateOperator<T>> _operator;
+    GenerateOperator<T> _operator;
 };
 
 template <typename T>

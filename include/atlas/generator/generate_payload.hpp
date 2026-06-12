@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/random/uniform_real_distribution.h>
 #include <atlas/sampling/sampling.h>
 
 namespace atlas {
@@ -15,12 +14,7 @@ template <typename T>
 Vector3<T>
 UniformGenerateOperator<T>::generate(const T min_value,
                                      const T max_value) const {
-    atlas::uniform_real_distribution<T> dist(min_value, max_value);
-
-    return Vector3<T>(
-        dist(engine),
-        dist(engine),
-        dist(engine));
+    return atlas::sample_uniform_vector<T>(engine, min_value, max_value);
 }
 
 template <typename T>
@@ -29,12 +23,7 @@ UniformGenerateOperator<T>::generate(const unsigned int seed,
                                      const T min_value,
                                      const T max_value) const {
     atlas::default_random_engine<T> seeded_engine(seed);
-    atlas::uniform_real_distribution<T> dist(min_value, max_value);
-
-    return Vector3<T>(
-        dist(seeded_engine),
-        dist(seeded_engine),
-        dist(seeded_engine));
+    return atlas::sample_uniform_vector<T>(seeded_engine, min_value, max_value);
 }
 
 template <typename T>
@@ -52,12 +41,8 @@ Vector3<T>
 JitteringGenerateOperator<T>::generate(const T,
                                        const T) const {
     const T radius = jitter_radius < T(0) ? -jitter_radius : jitter_radius;
-    atlas::uniform_real_distribution<T> distribution(-radius, radius);
-
-    return Vector3<T>(
-        base_value + distribution(engine),
-        base_value + distribution(engine),
-        base_value + distribution(engine));
+    return Vector3<T>(base_value, base_value, base_value)
+        + atlas::sample_uniform_vector<T>(engine, -radius, radius);
 }
 
 template <typename T>
@@ -67,12 +52,8 @@ JitteringGenerateOperator<T>::generate(const unsigned int seed,
                                        const T) const {
     const T radius = jitter_radius < T(0) ? -jitter_radius : jitter_radius;
     atlas::default_random_engine<T> seeded_engine(seed);
-    atlas::uniform_real_distribution<T> distribution(-radius, radius);
-
-    return Vector3<T>(
-        base_value + distribution(seeded_engine),
-        base_value + distribution(seeded_engine),
-        base_value + distribution(seeded_engine));
+    return Vector3<T>(base_value, base_value, base_value)
+        + atlas::sample_uniform_vector<T>(seeded_engine, -radius, radius);
 }
 
 template <typename T>
@@ -88,17 +69,7 @@ MaxwellSigmaGenerateOperator<T>::generate(const T sigma) const {
         return Vector3<T>(T(0), T(0), T(0));
     }
 
-    T x {};
-    T y {};
-    T z {};
-    T unused {};
-    atlas::generate_standard_normal_pair<T>(engine, x, y);
-    atlas::generate_standard_normal_pair<T>(engine, z, unused);
-
-    return Vector3<T>(
-        sigma * x,
-        sigma * y,
-        sigma * z);
+    return atlas::sample_normal_vector<T>(engine, sigma);
 }
 
 template <typename T>
@@ -110,17 +81,7 @@ MaxwellSigmaGenerateOperator<T>::generate(const unsigned int seed,
     }
 
     atlas::default_random_engine<T> seeded_engine(seed);
-    T x {};
-    T y {};
-    T z {};
-    T unused {};
-    atlas::generate_standard_normal_pair<T>(seeded_engine, x, y);
-    atlas::generate_standard_normal_pair<T>(seeded_engine, z, unused);
-
-    return Vector3<T>(
-        sigma * x,
-        sigma * y,
-        sigma * z);
+    return atlas::sample_normal_vector<T>(seeded_engine, sigma);
 }
 
 template <typename T>
@@ -142,18 +103,7 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const T temperature,
 
     const T sigma = atlas::sqrt_nonnegative(
         static_cast<T>(atlas::boltzmann_constant) * temperature / molecular_mass);
-    T x {};
-    T y {};
-    T z {};
-    T unused {};
-    atlas::generate_standard_normal_pair<T>(engine, x, y);
-    atlas::generate_standard_normal_pair<T>(engine, z, unused);
-
-    return Vector3<T>(
-               sigma * x,
-               sigma * y,
-               sigma * z)
-        + this->bulk_velocity;
+    return atlas::sample_normal_vector<T>(engine, sigma) + this->bulk_velocity;
 }
 
 template <typename T>
@@ -168,18 +118,7 @@ MaxwellBoltzmannGenerateOperator<T>::generate(const unsigned int seed,
     const T sigma = atlas::sqrt_nonnegative(
         static_cast<T>(atlas::boltzmann_constant) * temperature / molecular_mass);
     atlas::default_random_engine<T> seeded_engine(seed);
-    T x {};
-    T y {};
-    T z {};
-    T unused {};
-    atlas::generate_standard_normal_pair<T>(seeded_engine, x, y);
-    atlas::generate_standard_normal_pair<T>(seeded_engine, z, unused);
-
-    return Vector3<T>(
-               sigma * x,
-               sigma * y,
-               sigma * z)
-        + this->bulk_velocity;
+    return atlas::sample_normal_vector<T>(seeded_engine, sigma) + this->bulk_velocity;
 }
 
 } // namespace atlas

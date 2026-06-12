@@ -10,9 +10,9 @@ namespace {
 using atlas::GenerateType;
 using atlas::GeneratorHostPtr;
 using atlas::Vector3F;
-using atlas::fluid::GenerateOperator;
-using atlas::fluid::Generator;
-using atlas::fluid::UniformGenerateOperator;
+using atlas::GenerateOperator;
+using atlas::Generator;
+using atlas::UniformGenerateOperator;
 using atlas::make_host_shared;
 using atlas::test::vec_near;
 using atlas::tol;

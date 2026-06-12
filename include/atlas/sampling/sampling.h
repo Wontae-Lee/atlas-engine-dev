@@ -64,6 +64,51 @@ generate_standard_normal(atlas::default_random_engine<T>& engine) {
 }
 
 /**
+ * @brief Samples a vector with independently uniform components.
+ *
+ * @tparam T Floating-point scalar type.
+ * @param engine Random engine used to generate uniform samples.
+ * @param min_value Inclusive lower distribution bound.
+ * @param max_value Exclusive upper distribution bound.
+ * @return Vector whose components are sampled from the same uniform interval.
+ */
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+sample_uniform_vector(atlas::default_random_engine<T>& engine,
+                      const T min_value,
+                      const T max_value) {
+    atlas::uniform_real_distribution<T> distribution(min_value, max_value);
+    return Vector3<T>(
+        distribution(engine),
+        distribution(engine),
+        distribution(engine));
+}
+
+/**
+ * @brief Samples a zero-mean normal vector with shared standard deviation.
+ *
+ * @tparam T Floating-point scalar type.
+ * @param engine Random engine used to generate normal samples.
+ * @param sigma Standard deviation applied to each component.
+ * @return Vector whose components are sampled from N(0, sigma^2).
+ */
+template <typename T>
+ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+sample_normal_vector(atlas::default_random_engine<T>& engine,
+                     const T sigma) {
+    T x {};
+    T y {};
+    T z {};
+    T unused {};
+    atlas::generate_standard_normal_pair<T>(engine, x, y);
+    atlas::generate_standard_normal_pair<T>(engine, z, unused);
+    return Vector3<T>(
+        sigma * x,
+        sigma * y,
+        sigma * z);
+}
+
+/**
  * @brief Builds an orthonormal basis around a normal vector.
  *
  * Given a normal vector @p n, this function computes two perpendicular unit

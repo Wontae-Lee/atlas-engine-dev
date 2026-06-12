@@ -40,7 +40,6 @@
 #include <atlas/generator/generator.h>
 #include <atlas/generator/generate_operator.h>
 #include <atlas/math/math.h>
-#include <atlas/random/default_random_engine.h>
 
 #include <optional>
 
@@ -79,8 +78,7 @@ public:
 
 private:
     T _sigma;
-    unsigned int _seed;
-    atlas::host_shared_ptr<GenerateOperator<T>> _operator;
+    GenerateOperator<T> _operator;
 };
 
 template <typename T>

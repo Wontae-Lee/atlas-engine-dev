@@ -17,16 +17,16 @@ using atlas::Vector3F;
 using atlas::copy_device_to_host;
 using atlas::default_random_engine;
 using atlas::parallel_for;
-using atlas::math::dot;
-using atlas::math::normalize;
-using atlas::sampling::build_orthonormal_basis;
-using atlas::sampling::generate_standard_normal;
-using atlas::sampling::sample_axis_count;
-using atlas::sampling::sample_cosine_hemisphere;
-using atlas::sampling::sample_directional_unit_vector;
-using atlas::sampling::sample_hashed_unit_interval;
-using atlas::sampling::sample_random_unit_vector;
-using atlas::sampling::sample_uniform_hemisphere;
+using atlas::dot;
+using atlas::normalize;
+using atlas::build_orthonormal_basis;
+using atlas::generate_standard_normal;
+using atlas::sample_axis_count;
+using atlas::sample_cosine_hemisphere;
+using atlas::sample_directional_unit_vector;
+using atlas::sample_hashed_unit_interval;
+using atlas::sample_random_unit_vector;
+using atlas::sample_uniform_hemisphere;
 using atlas::tol;
 
 } // namespace
