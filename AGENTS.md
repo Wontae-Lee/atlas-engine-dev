@@ -18,6 +18,8 @@
 ## Coding Style
 
 * Implement only the requested algorithm or behavior.
+* Prefer structures and patterns that experienced C++ programmers would immediately recognize: clear ownership boundaries, direct control flow, cohesive classes, paired declaration/definition files, and role-named helpers.
+* Follow the nearest sibling module's organization before inventing a new layout. Keep helper types close to the owner they support, and split them out only when the role is substantial and named clearly, such as a kernel, builder, probe builder, interaction, or policy.
 * Keep code concise and direct; avoid unnecessary temporary variables, redundant branches, and verbose comments.
 * Prefer concise class and function names, but optimize for readable control flow over raw name length.
 * Keep member function names short and natural when the class context already supplies meaning. Prefer names like `apply_collision` over overly explicit names such as `accept_and_scatter_pair` or `particle_index_at_offset`.
