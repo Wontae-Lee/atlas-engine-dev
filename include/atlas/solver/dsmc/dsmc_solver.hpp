@@ -3,6 +3,7 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/sampling/sampling.h>
+#include <atlas/solver/dsmc/dsmc_probe_builder.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -56,100 +57,73 @@ DsmcSolver<T>::solve(const DeviceBuffer<int>* allocated_solver,
 template <typename T>
 void
 DsmcSolver<T>::ensure_states() {
+    if (!this->_universe) {
+        return;
+    }
 
-    // All DSMC cell states must match the current number of universe cells.
-    const auto number_of_cells = static_cast<std::size_t>(this->_universe->number_of_cells());
+    const auto count = static_cast<std::size_t>(this->_universe->number_of_cells());
 
-    // Create a state if it does not exist, or resize it if the cell count changed.
-    const auto ensure_state = [this, number_of_cells]<typename State>() {
-        if (auto* state = this->_universe->template state<State>();
-            state == nullptr) {
-            this->_universe->template emplace_state<State>(number_of_cells);
-        } else if (state->data().size() != number_of_cells) {
-            state->data().resize(number_of_cells);
-        }
-    };
+    if (auto* state = this->_universe->template state<UniverseNumberParticleState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseNumberParticleState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
+    }
 
-    // Number of particles per cell.
-    ensure_state.template operator()<UniverseNumberParticleState<T>>();
+    if (auto* state = this->_universe->template state<UniverseMaxRelativeSpeedState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseMaxRelativeSpeedState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
+    }
 
-    // Maximum relative particle speed per cell.
-    ensure_state.template operator()<UniverseMaxRelativeSpeedState<T>>();
+    if (auto* state = this->_universe->template state<UniverseMaxSigmaGState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseMaxSigmaGState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
+    }
 
-    // Maximum sigma*g value per cell, used as the NTC acceptance upper bound.
-    ensure_state.template operator()<UniverseMaxSigmaGState<T>>();
+    if (auto* state = this->_universe->template state<UniverseCollisionRemainderState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseCollisionRemainderState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
+    }
 
-    // Fractional collision-attempt remainder carried between solve steps.
-    ensure_state.template operator()<UniverseCollisionRemainderState<T>>();
-
-    // Number of candidate collision trials sampled for each cell.
-    ensure_state.template operator()<UniverseCollisionCountState<int>>();
+    if (auto* state = this->_universe->template state<UniverseCollisionCountState<int>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseCollisionCountState<int>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
+    }
 }
 
 template <typename T>
 void
 DsmcSolver<T>::reset_states() {
+    if (!this->_universe) {
+        return;
+    }
 
-    // State buffers may need to be created or resized before they can be reset.
     ensure_states();
-
-    auto* number_particle_state    = this->_universe->template state<UniverseNumberParticleState<T>>();
-    auto* max_relative_speed_state = this->_universe->template state<UniverseMaxRelativeSpeedState<T>>();
-    auto* max_sigma_g_state        = this->_universe->template state<UniverseMaxSigmaGState<T>>();
-    auto* collision_remainder_state = this->_universe->template state<UniverseCollisionRemainderState<T>>();
-    auto* collision_count_state    = this->_universe->template state<UniverseCollisionCountState<int>>();
-
-    // Clear all per-cell collision statistics from the previous solve step.
-    number_particle_state->reset();
-    max_relative_speed_state->reset();
-    max_sigma_g_state->reset();
-    collision_remainder_state->reset();
-    collision_count_state->reset();
+    this->_universe->template state<UniverseNumberParticleState<T>>()->reset();
+    this->_universe->template state<UniverseMaxRelativeSpeedState<T>>()->reset();
+    this->_universe->template state<UniverseMaxSigmaGState<T>>()->reset();
+    this->_universe->template state<UniverseCollisionRemainderState<T>>()->reset();
+    this->_universe->template state<UniverseCollisionCountState<int>>()->reset();
 }
 
 template <typename T>
 void
 DsmcSolver<T>::make_probe() noexcept {
-
-    // Fluid particle data used during pair selection and collision.
-    _probe.velocity_ptr   = atlas::raw_pointer_cast(this->_fluid->template state<FluidVelocityState<T>>()->data().data());
-    if (auto* internal_energy_state = this->_fluid->template state<FluidInternalEnergyState<T>>();
-        internal_energy_state != nullptr && internal_energy_state->data().size() >= this->_fluid->particle_count()) {
-        _probe.internal_energy_ptr = atlas::raw_pointer_cast(internal_energy_state->data().data());
-    } else {
-        _probe.internal_energy_ptr = nullptr;
-    }
-    _probe.species_ptr    = atlas::raw_pointer_cast(this->_fluid->template state<FluidSpeciesState<T>>()->data().data());
-    _probe.properties_ptr = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
-
-    // Universe cell states written during the measurement pass and read during collision.
-    _probe.number_particle_ptr    = atlas::raw_pointer_cast(this->_universe->template state<UniverseNumberParticleState<T>>()->data().data());
-    _probe.max_relative_speed_ptr = atlas::raw_pointer_cast(this->_universe->template state<UniverseMaxRelativeSpeedState<T>>()->data().data());
-    _probe.max_sigma_g_ptr        = atlas::raw_pointer_cast(this->_universe->template state<UniverseMaxSigmaGState<T>>()->data().data());
-    _probe.collision_remainder_ptr = atlas::raw_pointer_cast(this->_universe->template state<UniverseCollisionRemainderState<T>>()->data().data());
-    _probe.collision_count_ptr    = atlas::raw_pointer_cast(this->_universe->template state<UniverseCollisionCountState<int>>()->data().data());
-
-    // Spatial hashing arrays that define the sorted particle range of each cell.
-    _probe.indices_ptr    = this->_searcher->indices();
-    _probe.cell_start_ptr = this->_searcher->cell_start();
-    _probe.cell_end_ptr   = this->_searcher->cell_end();
-
-    _probe.universe_volume_ptr = nullptr;
-    if (auto* volume_state = this->_universe->template state<atlas::UniverseVolumeState<T>>();
-        volume_state != nullptr && volume_state->data().size() == static_cast<std::size_t>(this->_universe->number_of_cells())) {
-        _probe.universe_volume_ptr = atlas::raw_pointer_cast(volume_state->data().data());
-    }
-
-    // Scalar constants copied into the probe for device-side DSMC operations.
-    _probe.particle_count     = static_cast<int>(this->_fluid->particle_count());
-    _probe.species_count      = static_cast<int>(this->_fluid->particle_properties().size());
-    _probe.num_of_cells       = this->_universe->number_of_cells();
-    _probe.cell_volume        = this->_universe->cell_volume();
-    _probe.statistical_weight = this->_fluid->statistical_weight();
-    _probe.kernel             = _kernel;
-
-    // Advance the seed once per probe construction to decorrelate solve steps.
-    _probe.collision_seed = _collision_seed++;
+    static_cast<void>(atlas::detail::DsmcProbeBuilder<T>::make(
+        _probe,
+        this->_universe,
+        this->_fluid,
+        this->_searcher,
+        _kernel,
+        _collision_seed++));
 }
 
 template <typename T>

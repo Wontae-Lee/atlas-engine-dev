@@ -8,9 +8,9 @@
 
 namespace {
 
-class ExposedDsmcSolver final : public atlas::system::DsmcSolver<float> {
+class ExposedDsmcSolver final : public atlas::DsmcSolver<float> {
 public:
-    using atlas::system::DsmcSolver<float>::DsmcSolver;
+    using atlas::DsmcSolver<float>::DsmcSolver;
 
     const Probe& probe() const noexcept {
         return _probe;
@@ -36,19 +36,19 @@ TEST(DsmcSolver, ConstructorStoresKernelAndWorkloadTypes) {
         universe,
         fluid,
         searcher,
-        atlas::system::DsmcKernelType::variable_hard_sphere,
-        atlas::system::DsmcCollisionWorkloadType::flatten);
+        atlas::DsmcKernelType::variable_hard_sphere,
+        atlas::DsmcCollisionWorkloadType::flatten);
 
-    EXPECT_EQ(solver.kernel_type(), atlas::system::DsmcKernelType::variable_hard_sphere);
-    EXPECT_EQ(solver.workload_type(), atlas::system::DsmcCollisionWorkloadType::flatten);
+    EXPECT_EQ(solver.kernel_type(), atlas::DsmcKernelType::variable_hard_sphere);
+    EXPECT_EQ(solver.workload_type(), atlas::DsmcCollisionWorkloadType::flatten);
 }
 
 TEST(DsmcSolver, SetWorkloadTypeChangesCollisionSchedulingMode) {
     auto solver = make_solver();
 
-    solver.set_workload_type(atlas::system::DsmcCollisionWorkloadType::flatten);
+    solver.set_workload_type(atlas::DsmcCollisionWorkloadType::flatten);
 
-    EXPECT_EQ(solver.workload_type(), atlas::system::DsmcCollisionWorkloadType::flatten);
+    EXPECT_EQ(solver.workload_type(), atlas::DsmcCollisionWorkloadType::flatten);
 }
 
 TEST(DsmcSolver, EnsureStatesCreatesAllDsmcUniverseStates) {
@@ -135,10 +135,10 @@ TEST(DsmcSolver, ApplyCollisionAcceptsEmptyProbe) {
 TEST(DsmcSolver, ParticleAtMapsLocalCellIndexToParticleIndex) {
     const int indices[] = { 3, 1, 2 };
 
-    EXPECT_EQ(atlas::system::DsmcSolver<float>::particle_at(1, 0, 3, 4, indices), 1);
-    EXPECT_EQ(atlas::system::DsmcSolver<float>::particle_at(-1, 0, 3, 4, indices), -1);
-    EXPECT_EQ(atlas::system::DsmcSolver<float>::particle_at(3, 0, 3, 4, indices), -1);
-    EXPECT_EQ(atlas::system::DsmcSolver<float>::particle_at(0, 0, 3, 2, indices), -1);
+    EXPECT_EQ(atlas::DsmcSolver<float>::particle_at(1, 0, 3, 4, indices), 1);
+    EXPECT_EQ(atlas::DsmcSolver<float>::particle_at(-1, 0, 3, 4, indices), -1);
+    EXPECT_EQ(atlas::DsmcSolver<float>::particle_at(3, 0, 3, 4, indices), -1);
+    EXPECT_EQ(atlas::DsmcSolver<float>::particle_at(0, 0, 3, 2, indices), -1);
 }
 
 TEST(DsmcSolver, CollidePairRejectsInvalidParticleIndices) {
@@ -147,7 +147,7 @@ TEST(DsmcSolver, CollidePairRejectsInvalidParticleIndices) {
     probe.indices_ptr = indices;
     probe.particle_count = 1;
 
-    EXPECT_FALSE(atlas::system::DsmcSolver<float>::collide_pair(
+    EXPECT_FALSE(atlas::DsmcSolver<float>::collide_pair(
         probe,
         0,
         0,

@@ -21,9 +21,9 @@ using atlas::tol;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
-using atlas::universe::UniverseKnudsenNumberState;
-using atlas::universe::UniverseNumberParticleState;
-using atlas::universe::UniverseTemperatureState;
+using atlas::UniverseKnudsenNumberState;
+using atlas::UniverseNumberParticleState;
+using atlas::UniverseTemperatureState;
 
 UniverseHostPtr<float>
 make_universe() {

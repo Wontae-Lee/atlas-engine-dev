@@ -27,12 +27,12 @@ TEST(DsmcEnergyExchangeSolver, BuilderCreatesConfiguredSolver) {
         .with_universe(universe)
         .with_fluid(fluid)
         .with_searcher(searcher)
-        .with_kernel_type(atlas::system::DsmcKernelType::variable_hard_sphere)
-        .with_workload_type(atlas::system::DsmcCollisionWorkloadType::flatten)
+        .with_kernel_type(atlas::DsmcKernelType::variable_hard_sphere)
+        .with_workload_type(atlas::DsmcCollisionWorkloadType::flatten)
         .build();
 
-    EXPECT_EQ(solver.kernel_type(), atlas::system::DsmcKernelType::variable_hard_sphere);
-    EXPECT_EQ(solver.workload_type(), atlas::system::DsmcCollisionWorkloadType::flatten);
+    EXPECT_EQ(solver.kernel_type(), atlas::DsmcKernelType::variable_hard_sphere);
+    EXPECT_EQ(solver.workload_type(), atlas::DsmcCollisionWorkloadType::flatten);
 }
 
 TEST(DsmcEnergyExchangeSolver, BuilderCreatesHostSharedSolver) {
@@ -47,7 +47,7 @@ TEST(DsmcEnergyExchangeSolver, BuilderCreatesHostSharedSolver) {
         .make_host_shared();
 
     ASSERT_NE(solver, nullptr);
-    EXPECT_EQ(solver->kernel_type(), atlas::system::DsmcKernelType::hard_sphere);
+    EXPECT_EQ(solver->kernel_type(), atlas::DsmcKernelType::hard_sphere);
 }
 
 TEST(DsmcEnergyExchangeSolver, ApplyCollisionAcceptsEmptyProbe) {
@@ -111,7 +111,7 @@ TEST(DsmcEnergyExchangeSolver, ExchangeInternalEnergyReturnsTranslationalEnergyW
 }
 
 TEST(DsmcEnergyExchangeSolver, ExchangeParticleInternalEnergyWritesModeSplit) {
-    atlas::fluid::FluidInternalEnergy<float> energies[1];
+    atlas::FluidInternalEnergy<float> energies[1];
     energies[0].rotational = 0.5f;
     energies[0].vibrational = 0.25f;
 

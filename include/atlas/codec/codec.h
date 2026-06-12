@@ -284,7 +284,7 @@ protected:
     /**
      * @brief Cached probe populated by @ref make_probe.
      */
-    CodecProbe _probe {};
+    CodecProbe<T> _probe {};
 };
 
 } // namespace atlas

@@ -12,7 +12,7 @@ namespace {
 using atlas::MaterialProperties;
 using atlas::MaterialType;
 using atlas::Vector3F;
-using atlas::system::VariableSoftSphereKernel;
+using atlas::VariableSoftSphereKernel;
 using atlas::test::is_finite_vec;
 
 MaterialProperties<float>

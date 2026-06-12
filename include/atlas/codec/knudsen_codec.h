@@ -383,6 +383,20 @@ public:
     builder() noexcept;
 
 private:
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
+    fixed_cell(const CodecProbe<T>& probe, int cell) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
+    knudsen_number(T particle_count,
+                   T statistical_weight,
+                   T cell_volume,
+                   T characteristic_length,
+                   T representative_collision_cross_sectional_area) noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
+    solver_index(T kn, const T* splits, int split_count) noexcept;
+
+private:
     /**
      * @brief Characteristic length used to normalize the mean free path.
      *

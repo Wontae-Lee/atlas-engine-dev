@@ -19,12 +19,12 @@ TEST(DsmcSimpleSolver, BuilderCreatesConfiguredSolver) {
         .with_universe(universe)
         .with_fluid(fluid)
         .with_searcher(searcher)
-        .with_kernel_type(atlas::system::DsmcKernelType::variable_soft_sphere)
-        .with_workload_type(atlas::system::DsmcCollisionWorkloadType::flatten)
+        .with_kernel_type(atlas::DsmcKernelType::variable_soft_sphere)
+        .with_workload_type(atlas::DsmcCollisionWorkloadType::flatten)
         .build();
 
-    EXPECT_EQ(solver.kernel_type(), atlas::system::DsmcKernelType::variable_soft_sphere);
-    EXPECT_EQ(solver.workload_type(), atlas::system::DsmcCollisionWorkloadType::flatten);
+    EXPECT_EQ(solver.kernel_type(), atlas::DsmcKernelType::variable_soft_sphere);
+    EXPECT_EQ(solver.workload_type(), atlas::DsmcCollisionWorkloadType::flatten);
 }
 
 TEST(DsmcSimpleSolver, BuilderCreatesHostSharedSolver) {
@@ -39,7 +39,7 @@ TEST(DsmcSimpleSolver, BuilderCreatesHostSharedSolver) {
         .make_host_shared();
 
     ASSERT_NE(solver, nullptr);
-    EXPECT_EQ(solver->kernel_type(), atlas::system::DsmcKernelType::hard_sphere);
+    EXPECT_EQ(solver->kernel_type(), atlas::DsmcKernelType::hard_sphere);
 }
 
 TEST(DsmcSimpleSolver, MeasureCollisionStatisticsUsesSimpleStatisticComponent) {

@@ -25,6 +25,6 @@ TEST(DsmcProbe, DefaultConstructsEmptyDeviceView) {
     EXPECT_EQ(probe.num_of_cells, 0);
     EXPECT_EQ(probe.cell_volume, 0.0f);
     EXPECT_EQ(probe.statistical_weight, 0.0f);
-    EXPECT_EQ(probe.kernel.type, atlas::system::DsmcKernelType::hard_sphere);
+    EXPECT_EQ(probe.kernel.type, atlas::DsmcKernelType::hard_sphere);
     EXPECT_EQ(probe.collision_seed, 0u);
 }

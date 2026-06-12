@@ -10,7 +10,7 @@ namespace {
 using atlas::MaterialProperties;
 using atlas::MaterialType;
 using atlas::Vector3F;
-using atlas::system::HardSphereKernel;
+using atlas::HardSphereKernel;
 using atlas::test::is_finite_vec;
 
 MaterialProperties<float>

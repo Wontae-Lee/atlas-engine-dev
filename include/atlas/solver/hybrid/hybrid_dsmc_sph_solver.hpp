@@ -6,8 +6,11 @@
 #include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/sampling/sampling.h>
+#include <atlas/solver/dsmc/dsmc_probe_builder.h>
+#include <atlas/solver/sph/sph_probe_builder.h>
 
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <stdexcept>
 
@@ -105,30 +108,48 @@ HybridDsmcSphSolver<T>::ensure_states() {
         return;
     }
 
-    const auto number_of_cells = static_cast<std::size_t>(this->_universe->number_of_cells());
+    const auto count = static_cast<std::size_t>(this->_universe->number_of_cells());
 
-    if (!this->_universe->template has_state<atlas::UniverseNumberParticleState<T>>()) {
-        this->_universe->template emplace_state<atlas::UniverseNumberParticleState<T>>(number_of_cells);
+    if (auto* state = this->_universe->template state<UniverseNumberParticleState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseNumberParticleState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
     }
 
-    if (!this->_universe->template has_state<atlas::UniverseFieldForceState<T>>()) {
-        this->_universe->template emplace_state<atlas::UniverseFieldForceState<T>>(number_of_cells);
+    if (auto* state = this->_universe->template state<UniverseFieldForceState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseFieldForceState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
     }
 
-    if (!this->_universe->template has_state<atlas::UniverseMaxRelativeSpeedState<T>>()) {
-        this->_universe->template emplace_state<atlas::UniverseMaxRelativeSpeedState<T>>(number_of_cells);
+    if (auto* state = this->_universe->template state<UniverseMaxRelativeSpeedState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseMaxRelativeSpeedState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
     }
 
-    if (!this->_universe->template has_state<atlas::UniverseMaxSigmaGState<T>>()) {
-        this->_universe->template emplace_state<atlas::UniverseMaxSigmaGState<T>>(number_of_cells);
+    if (auto* state = this->_universe->template state<UniverseMaxSigmaGState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseMaxSigmaGState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
     }
 
-    if (!this->_universe->template has_state<atlas::UniverseCollisionRemainderState<T>>()) {
-        this->_universe->template emplace_state<atlas::UniverseCollisionRemainderState<T>>(number_of_cells);
+    if (auto* state = this->_universe->template state<UniverseCollisionRemainderState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseCollisionRemainderState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
     }
 
-    if (!this->_universe->template has_state<atlas::UniverseCollisionCountState<int>>()) {
-        this->_universe->template emplace_state<atlas::UniverseCollisionCountState<int>>(number_of_cells);
+    if (auto* state = this->_universe->template state<UniverseCollisionCountState<int>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseCollisionCountState<int>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
     }
 }
 
@@ -140,11 +161,7 @@ HybridDsmcSphSolver<T>::initialize_context() noexcept {
         return false;
     }
 
-    auto* position_state = this->_fluid->template state<atlas::FluidPositionState<T>>();
-    auto* velocity_state = this->_fluid->template state<atlas::FluidVelocityState<T>>();
-    auto* species_state  = this->_fluid->template state<atlas::FluidSpeciesState<T>>();
-
-    if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr) {
+    if (!atlas::detail::SphProbeBuilder<T>::has_particle_states(this->_fluid)) {
         reset_states();
         return false;
     }
@@ -159,57 +176,33 @@ bool
 HybridDsmcSphSolver<T>::make_probe() noexcept {
     _probe = {};
 
-    _probe.sph.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidPositionState<T>>()->data().data());
-    _probe.sph.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidVelocityState<T>>()->data().data());
-    _probe.sph.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidSpeciesState<T>>()->data().data());
-    _probe.sph.properties_ptr      = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
-    _probe.sph.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseNumberParticleState<T>>()->data().data());
-    _probe.sph.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseFieldForceState<T>>()->data().data());
-    _probe.sph.indices_ptr          = this->_searcher->indices();
-    _probe.sph.cell_start_ptr       = this->_searcher->cell_start();
-    _probe.sph.cell_end_ptr         = this->_searcher->cell_end();
-    _probe.sph.neighbor_offsets_ptr = this->_searcher->neighbor_offsets();
-    _probe.sph.neighbor_indices_ptr = this->_searcher->neighbor_indices();
-    _probe.sph.lower_corner         = this->_searcher->lower_corner();
-    _probe.sph.grid_size            = this->_searcher->grid_size();
-    _probe.sph.inverse_cell_size    = this->_searcher->inverse_cell_size();
-    _probe.sph.cell_size            = this->_searcher->cell_size();
-    _probe.sph.particle_count       = static_cast<int>(this->_fluid->particle_count());
-    _probe.sph.num_of_cells         = this->_universe->number_of_cells();
-    _probe.sph.num_of_properties    = static_cast<int>(this->_fluid->particle_properties().size());
-    _probe.sph.kernel               = _sph_kernel;
+    if (!atlas::detail::SphProbeBuilder<T>::ready(this->_universe, this->_fluid, this->_searcher)
+        || !atlas::detail::DsmcProbeBuilder<T>::ready(this->_universe, this->_fluid, this->_searcher)) {
+        return false;
+    }
 
-    _probe.dsmc.velocity_ptr            = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidVelocityState<T>>()->data().data());
-    if (auto* internal_energy_state = this->_fluid->template state<atlas::FluidInternalEnergyState<T>>();
-        internal_energy_state != nullptr && internal_energy_state->data().size() >= this->_fluid->particle_count()) {
-        _probe.dsmc.internal_energy_ptr = atlas::raw_pointer_cast(internal_energy_state->data().data());
+    const std::uint64_t collision_seed = _collision_seed++;
+    if (!atlas::detail::SphProbeBuilder<T>::make(
+            _probe.sph,
+            this->_universe,
+            this->_fluid,
+            this->_searcher,
+            _sph_kernel)
+        || !atlas::detail::DsmcProbeBuilder<T>::make(
+            _probe.dsmc,
+            this->_universe,
+            this->_fluid,
+            this->_searcher,
+            _dsmc_kernel,
+            collision_seed)) {
+        return false;
     }
-    _probe.dsmc.species_ptr             = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidSpeciesState<T>>()->data().data());
-    _probe.dsmc.properties_ptr          = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
-    _probe.dsmc.number_particle_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseNumberParticleState<T>>()->data().data());
-    _probe.dsmc.max_relative_speed_ptr  = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseMaxRelativeSpeedState<T>>()->data().data());
-    _probe.dsmc.max_sigma_g_ptr         = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseMaxSigmaGState<T>>()->data().data());
-    _probe.dsmc.collision_remainder_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseCollisionRemainderState<T>>()->data().data());
-    _probe.dsmc.collision_count_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseCollisionCountState<int>>()->data().data());
-    _probe.dsmc.indices_ptr             = this->_searcher->indices();
-    _probe.dsmc.cell_start_ptr          = this->_searcher->cell_start();
-    _probe.dsmc.cell_end_ptr            = this->_searcher->cell_end();
-    if (auto* volume_state = this->_universe->template state<atlas::UniverseVolumeState<T>>();
-        volume_state != nullptr && volume_state->data().size() == static_cast<std::size_t>(this->_universe->number_of_cells())) {
-        _probe.dsmc.universe_volume_ptr = atlas::raw_pointer_cast(volume_state->data().data());
-    }
-    _probe.dsmc.particle_count          = static_cast<int>(this->_fluid->particle_count());
-    _probe.dsmc.species_count           = static_cast<int>(this->_fluid->particle_properties().size());
-    _probe.dsmc.num_of_cells            = this->_universe->number_of_cells();
-    _probe.dsmc.cell_volume             = this->_universe->cell_volume();
-    _probe.dsmc.statistical_weight      = this->_fluid->statistical_weight();
-    _probe.dsmc.kernel                  = _dsmc_kernel;
-    _probe.dsmc.collision_seed          = _collision_seed;
+
     _probe.pairing_without_replacement = _pairing_without_replacement;
 
     _probe.grouping_length         = _grouping_length;
     _probe.sph_particle_threshold  = _sph_particle_threshold;
-    _probe.collision_seed          = _collision_seed++;
+    _probe.collision_seed          = collision_seed;
 
     return true;
 }
@@ -288,25 +281,12 @@ HybridDsmcSphSolver<T>::reset_states() {
     }
 
     ensure_states();
-
-    if (auto* state = this->_universe->template state<atlas::UniverseNumberParticleState<T>>()) {
-        state->reset();
-    }
-    if (auto* state = this->_universe->template state<atlas::UniverseFieldForceState<T>>()) {
-        state->reset();
-    }
-    if (auto* state = this->_universe->template state<atlas::UniverseMaxRelativeSpeedState<T>>()) {
-        state->reset();
-    }
-    if (auto* state = this->_universe->template state<atlas::UniverseMaxSigmaGState<T>>()) {
-        state->reset();
-    }
-    if (auto* state = this->_universe->template state<atlas::UniverseCollisionRemainderState<T>>()) {
-        state->reset();
-    }
-    if (auto* state = this->_universe->template state<atlas::UniverseCollisionCountState<int>>()) {
-        state->reset();
-    }
+    this->_universe->template state<UniverseNumberParticleState<T>>()->reset();
+    this->_universe->template state<UniverseFieldForceState<T>>()->reset();
+    this->_universe->template state<UniverseMaxRelativeSpeedState<T>>()->reset();
+    this->_universe->template state<UniverseMaxSigmaGState<T>>()->reset();
+    this->_universe->template state<UniverseCollisionRemainderState<T>>()->reset();
+    this->_universe->template state<UniverseCollisionCountState<int>>()->reset();
 }
 
 template <typename T>
@@ -989,16 +969,13 @@ HybridDsmcSphSolver<T>::apply_grouped_dsmc_collisions_without_replacement() {
 template <typename T>
 T
 HybridDsmcSphSolver<T>::rest_density_for(const MaterialProperties<T>& property) noexcept {
-    if (property.rest_density.has_value() && *property.rest_density > T(0)) {
-        return *property.rest_density;
-    }
-    return T(1);
+    return SphSolver<T>::rest_density(property);
 }
 
 template <typename T>
 T
 HybridDsmcSphSolver<T>::pressure_coefficient_for(const MaterialProperties<T>& property) noexcept {
-    return property.pressure_coefficient.value_or(T(0));
+    return SphSolver<T>::pressure_coefficient(property);
 }
 
 template <typename T>

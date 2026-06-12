@@ -146,14 +146,13 @@ public:
     /**
      * @brief Ensures SPH universe-side output states exist.
      *
-     * If a universe is configured, this function creates the following missing
-     * states with `universe->number_of_cells()` elements:
+     * If a universe is configured, this function creates or resizes the
+     * following states to `universe->number_of_cells()` elements:
      *
      * - `UniverseNumberParticleState<T>`,
      * - `UniverseFieldForceState<T>`.
      *
-     * Existing states are left unchanged. If no universe is configured, the
-     * function is a no-op.
+     * If no universe is configured, the function is a no-op.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE void
     ensure_states();

@@ -3,8 +3,11 @@
 #include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
+#include <atlas/solver/sph/sph_probe_builder.h>
 
+#include <cstddef>
 #include <stdexcept>
+#include <utility>
 
 namespace atlas {
 
@@ -74,22 +77,24 @@ SphSolver<T>::solve(const DeviceBuffer<int>*, const int, const T) {
 template <typename T>
 void
 SphSolver<T>::ensure_states() {
-    // Nothing can be initialized without a universe.
     if (!this->_universe) {
         return;
     }
 
-    // Ensure per-cell output buffers exist.
-    const auto number_of_cells = static_cast<std::size_t>(this->_universe->number_of_cells());
+    const auto count = static_cast<std::size_t>(this->_universe->number_of_cells());
 
-    if (!this->_universe->template has_state<atlas::UniverseNumberParticleState<T>>()) {
-        this->_universe->template emplace_state<atlas::UniverseNumberParticleState<T>>(
-            number_of_cells);
+    if (auto* state = this->_universe->template state<UniverseNumberParticleState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseNumberParticleState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
     }
 
-    if (!this->_universe->template has_state<atlas::UniverseFieldForceState<T>>()) {
-        this->_universe->template emplace_state<atlas::UniverseFieldForceState<T>>(
-            number_of_cells);
+    if (auto* state = this->_universe->template state<UniverseFieldForceState<T>>();
+        state == nullptr) {
+        this->_universe->template emplace_state<UniverseFieldForceState<T>>(count);
+    } else if (state->size() != count) {
+        state->data().resize(count);
     }
 }
 
@@ -105,12 +110,7 @@ SphSolver<T>::initialize_context() noexcept {
         return false;
     }
 
-    // SPH requires particle position, velocity, and species states.
-    auto* position_state = this->_fluid->template state<atlas::FluidPositionState<T>>();
-    auto* velocity_state = this->_fluid->template state<atlas::FluidVelocityState<T>>();
-    auto* species_state  = this->_fluid->template state<atlas::FluidSpeciesState<T>>();
-
-    if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr) {
+    if (!atlas::detail::SphProbeBuilder<T>::has_particle_states(this->_fluid)) {
         reset_fields();
         _density.resize(0);
         _pressure.resize(0);
@@ -130,31 +130,12 @@ bool
 SphSolver<T>::make_probe() noexcept {
     _probe = {};
 
-    if (!this->_universe || !this->_fluid || !this->_searcher) {
-        return false;
-    }
-
-    _probe.position_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidPositionState<T>>()->data().data());
-    _probe.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidVelocityState<T>>()->data().data());
-    _probe.species_ptr         = atlas::raw_pointer_cast(this->_fluid->template state<atlas::FluidSpeciesState<T>>()->data().data());
-    _probe.properties_ptr      = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
-    _probe.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseNumberParticleState<T>>()->data().data());
-    _probe.field_force_ptr     = atlas::raw_pointer_cast(this->_universe->template state<atlas::UniverseFieldForceState<T>>()->data().data());
-    _probe.indices_ptr    = this->_searcher->indices();
-    _probe.cell_start_ptr = this->_searcher->cell_start();
-    _probe.cell_end_ptr   = this->_searcher->cell_end();
-    _probe.neighbor_offsets_ptr = this->_searcher->neighbor_offsets();
-    _probe.neighbor_indices_ptr = this->_searcher->neighbor_indices();
-    _probe.lower_corner      = this->_searcher->lower_corner();
-    _probe.grid_size         = this->_searcher->grid_size();
-    _probe.inverse_cell_size = this->_searcher->inverse_cell_size();
-    _probe.cell_size         = this->_searcher->cell_size();
-    _probe.particle_count    = static_cast<int>(this->_fluid->particle_count());
-    _probe.num_of_cells      = this->_universe->number_of_cells();
-    _probe.num_of_properties = static_cast<int>(this->_fluid->particle_properties().size());
-    _probe.kernel            = _kernel;
-
-    return true;
+    return atlas::detail::SphProbeBuilder<T>::make(
+        _probe,
+        this->_universe,
+        this->_fluid,
+        this->_searcher,
+        _kernel);
 }
 
 template <typename T>
@@ -184,26 +165,13 @@ SphSolver<T>::prepare_fields() {
 template <typename T>
 void
 SphSolver<T>::reset_fields() {
-    // Nothing to reset when no universe is attached.
     if (!this->_universe) {
         return;
     }
 
-    // Ensure reset targets exist.
     ensure_states();
-
-    auto* number_particle_state = this->_universe->template state<atlas::UniverseNumberParticleState<T>>();
-    auto* field_force_state     = this->_universe->template state<atlas::UniverseFieldForceState<T>>();
-
-    // Reset per-cell particle counts.
-    if (number_particle_state != nullptr) {
-        number_particle_state->reset();
-    }
-
-    // Reset per-cell averaged force output.
-    if (field_force_state != nullptr) {
-        field_force_state->reset();
-    }
+    this->_universe->template state<UniverseNumberParticleState<T>>()->reset();
+    this->_universe->template state<UniverseFieldForceState<T>>()->reset();
 }
 
 template <typename T>
@@ -439,7 +407,6 @@ SphSolver<T>::accelerate(const T dt) {
 template <typename T>
 T
 SphSolver<T>::rest_density(const MaterialProperties<T>& property) noexcept {
-    // Prefer material rest density; fall back to unit density.
     if (property.rest_density.has_value() && *property.rest_density > T(0)) {
         return *property.rest_density;
     }
@@ -450,7 +417,6 @@ SphSolver<T>::rest_density(const MaterialProperties<T>& property) noexcept {
 template <typename T>
 T
 SphSolver<T>::pressure_coefficient(const MaterialProperties<T>& property) noexcept {
-    // Missing pressure coefficient disables pressure response.
     return property.pressure_coefficient.value_or(T(0));
 }
 

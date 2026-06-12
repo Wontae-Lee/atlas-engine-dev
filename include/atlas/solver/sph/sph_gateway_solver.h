@@ -302,14 +302,13 @@ public:
      * @brief Ensures universe-side output states required by the solver exist.
      *
      * @details
-     * If a universe is configured, this function creates the following missing
-     * states with `universe->number_of_cells()` entries:
+     * If a universe is configured, this function creates or resizes the
+     * following states to `universe->number_of_cells()` entries:
      *
      * - `UniverseNumberParticleState<T>`,
      * - `UniverseFieldForceState<T>`.
      *
-     * Existing states are left unchanged. If no universe is configured, the
-     * function is a no-op.
+     * If no universe is configured, the function is a no-op.
      *
      * @post The required universe-side output states exist when a universe is
      *       attached.

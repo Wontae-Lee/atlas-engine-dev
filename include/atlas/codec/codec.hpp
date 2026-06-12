@@ -1,6 +1,11 @@
 #pragma once
 
+#include <atlas/logging/logging.h>
 #include <atlas/memory/raw_pointer_cast.h>
+
+#include <cstddef>
+#include <stdexcept>
+#include <utility>
 
 namespace atlas {
 
@@ -11,8 +16,6 @@ Codec<T>::Codec(UniverseHostPtr<T> domain,
     : _universe(std::move(domain))
     , _fluid(std::move(fluid))
     , _searcher(std::move(searcher)) {
-    // A codec requires all simulation-side resources because encoding and
-    // decoding decisions are evaluated from universe, fluid, and searcher data.
     atlas::check<std::invalid_argument>(static_cast<bool>(_universe))
         << "Codec: universe must not be null.";
     atlas::check<std::invalid_argument>(static_cast<bool>(_fluid))
@@ -20,97 +23,80 @@ Codec<T>::Codec(UniverseHostPtr<T> domain,
     atlas::check<std::invalid_argument>(static_cast<bool>(_searcher))
         << "Codec: searcher must not be null.";
 
-    // Allocate solver-control buffers to match the current universe layout.
     reset();
 }
 
 template <typename T>
 void
 Codec<T>::update() {
-    // Recompute solver allocation first, then apply the decoded solver state
-    // back to the simulation data structures.
-    this->encode();
-    this->decode();
+    encode();
+    decode();
 }
 
 template <typename T>
 void
 Codec<T>::reset() noexcept {
-    const auto num_of_cells = _universe->number_of_cells();
-
-    // Each cell stores one solver-selection or constraint flag.
-    d_allocated_solver.resize(num_of_cells, 0);
-    d_fixed_solver.resize(num_of_cells, 0);
-    d_fixed_region.resize(num_of_cells, 0);
+    const auto cell_count = _universe->number_of_cells();
+    d_allocated_solver.resize(cell_count, 0);
+    d_fixed_solver.resize(cell_count, 0);
+    d_fixed_region.resize(cell_count, 0);
 }
 
 template <typename T>
 DeviceBuffer<int>&
 Codec<T>::allocated_solver() noexcept {
-    // Expose mutable solver assignments for derived codecs or host-side setup.
     return d_allocated_solver;
 }
 
 template <typename T>
 const DeviceBuffer<int>&
 Codec<T>::allocated_solver() const noexcept {
-    // Expose read-only solver assignments for diagnostics and external queries.
     return d_allocated_solver;
 }
 
 template <typename T>
 void
 Codec<T>::set_fixed_solver(DeviceBuffer<int> fixed_solver) {
-    // A non-empty fixed-solver map must define exactly one entry per cell.
     if (_universe && !fixed_solver.empty()) {
         atlas::check<std::invalid_argument>(
             fixed_solver.size() == static_cast<std::size_t>(_universe->number_of_cells()))
             << "Codec: fixed_solver size must match universe cell count.";
     }
-
-    // Replace the current fixed-solver constraints without copying the buffer.
     d_fixed_solver = std::move(fixed_solver);
 }
 
 template <typename T>
 DeviceBuffer<int>&
 Codec<T>::fixed_solver() noexcept {
-    // Expose mutable fixed-solver constraints for explicit user configuration.
     return d_fixed_solver;
 }
 
 template <typename T>
 const DeviceBuffer<int>&
 Codec<T>::fixed_solver() const noexcept {
-    // Expose read-only fixed-solver constraints for inspection.
     return d_fixed_solver;
 }
 
 template <typename T>
 void
 Codec<T>::set_fixed_region(DeviceBuffer<int> fixed_region) {
-    // A non-empty fixed-region map must define exactly one entry per cell.
     if (_universe && !fixed_region.empty()) {
         atlas::check<std::invalid_argument>(
             fixed_region.size() == static_cast<std::size_t>(_universe->number_of_cells()))
             << "Codec: fixed_region size must match universe cell count.";
     }
-
-    // Replace the current fixed-region constraints without copying the buffer.
     d_fixed_region = std::move(fixed_region);
 }
 
 template <typename T>
 DeviceBuffer<int>&
 Codec<T>::fixed_region() noexcept {
-    // Expose mutable fixed-region constraints for explicit user configuration.
     return d_fixed_region;
 }
 
 template <typename T>
 const DeviceBuffer<int>&
 Codec<T>::fixed_region() const noexcept {
-    // Expose read-only fixed-region constraints for inspection.
     return d_fixed_region;
 }
 
@@ -123,9 +109,9 @@ Codec<T>::make_probe() noexcept {
         return false;
     }
 
-    auto* temperature_state     = _universe->template state<atlas::UniverseTemperatureState<T>>();
-    auto* number_particle_state = _universe->template state<atlas::UniverseNumberParticleState<T>>();
-    auto* knudsen_number_state  = _universe->template state<atlas::UniverseKnudsenNumberState<T>>();
+    auto* temperature_state     = _universe->template state<UniverseTemperatureState<T>>();
+    auto* number_particle_state = _universe->template state<UniverseNumberParticleState<T>>();
+    auto* knudsen_number_state  = _universe->template state<UniverseKnudsenNumberState<T>>();
 
     _probe.temperature_ptr = temperature_state != nullptr
         ? atlas::raw_pointer_cast(temperature_state->data().data())
@@ -145,12 +131,12 @@ Codec<T>::make_probe() noexcept {
     _probe.fixed_region_ptr = d_fixed_region.empty()
         ? nullptr
         : atlas::raw_pointer_cast(d_fixed_region.data());
-    _probe.indices_ptr    = _searcher->indices();
+    _probe.indices_ptr = _searcher->indices();
     _probe.cell_start_ptr = _searcher->cell_start();
-    _probe.cell_end_ptr   = _searcher->cell_end();
-    _probe.particle_count     = static_cast<int>(_fluid->particle_count());
-    _probe.num_of_cells       = _universe->number_of_cells();
-    _probe.cell_volume        = _universe->cell_volume();
+    _probe.cell_end_ptr = _searcher->cell_end();
+    _probe.particle_count = static_cast<int>(_fluid->particle_count());
+    _probe.num_of_cells = _universe->number_of_cells();
+    _probe.cell_volume = _universe->cell_volume();
     _probe.statistical_weight = _fluid->statistical_weight();
 
     return _probe.num_of_cells > 0;

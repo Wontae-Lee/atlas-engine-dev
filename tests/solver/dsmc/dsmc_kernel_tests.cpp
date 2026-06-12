@@ -9,8 +9,8 @@ namespace {
 
 using atlas::MaterialProperties;
 using atlas::MaterialType;
-using atlas::system::DsmcKernel;
-using atlas::system::DsmcKernelType;
+using atlas::DsmcKernel;
+using atlas::DsmcKernelType;
 
 MaterialProperties<float>
 make_properties() {

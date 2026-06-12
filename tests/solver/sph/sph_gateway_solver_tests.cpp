@@ -20,15 +20,15 @@ using atlas::tol;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
-using atlas::system::SpatialHashingSearcher;
-using atlas::system::SphGatewaySolver;
-using atlas::system::SphKernelType;
+using atlas::SpatialHashingSearcher;
+using atlas::SphGatewaySolver;
+using atlas::SphKernelType;
 using atlas::test::vec_near;
-using atlas::universe::UniverseNumberParticleState;
+using atlas::UniverseNumberParticleState;
 
-using FluidPositionState = atlas::fluid::FluidPositionState<float>;
-using FluidSpeciesState  = atlas::fluid::FluidSpeciesState<float>;
-using FluidVelocityState = atlas::fluid::FluidVelocityState<float>;
+using FluidPositionState = atlas::FluidPositionState<float>;
+using FluidSpeciesState  = atlas::FluidSpeciesState<float>;
+using FluidVelocityState = atlas::FluidVelocityState<float>;
 
 UniverseHostPtr<float>
 make_universe() {

@@ -20,20 +20,20 @@ using atlas::tol;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
-using atlas::system::DsmcKernelType;
-using atlas::system::HybridDsmcSphSolver;
-using atlas::system::SpatialHashingSearcher;
-using atlas::system::SphKernelType;
+using atlas::DsmcKernelType;
+using atlas::HybridDsmcSphSolver;
+using atlas::SpatialHashingSearcher;
+using atlas::SphKernelType;
 using atlas::test::vec_near;
-using atlas::universe::UniverseCollisionCountState;
-using atlas::universe::UniverseFieldForceState;
-using atlas::universe::UniverseMaxRelativeSpeedState;
-using atlas::universe::UniverseMaxSigmaGState;
-using atlas::universe::UniverseNumberParticleState;
+using atlas::UniverseCollisionCountState;
+using atlas::UniverseFieldForceState;
+using atlas::UniverseMaxRelativeSpeedState;
+using atlas::UniverseMaxSigmaGState;
+using atlas::UniverseNumberParticleState;
 
-using FluidPositionState = atlas::fluid::FluidPositionState<float>;
-using FluidSpeciesState  = atlas::fluid::FluidSpeciesState<float>;
-using FluidVelocityState = atlas::fluid::FluidVelocityState<float>;
+using FluidPositionState = atlas::FluidPositionState<float>;
+using FluidSpeciesState  = atlas::FluidSpeciesState<float>;
+using FluidVelocityState = atlas::FluidVelocityState<float>;
 
 UniverseHostPtr<float>
 make_universe() {

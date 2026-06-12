@@ -58,20 +58,20 @@ namespace atlas {
  * @f[
  *     \mathrm{emit}
  *     \rightarrow
- *     \mathrm{remove}
- *     \rightarrow
  *     \mathrm{orchestrate}
  *     \rightarrow
- *     \mathrm{advect}.
+ *     \mathrm{advect}
+ *     \rightarrow
+ *     \mathrm{remove}.
  * @f]
  *
  * In code, this corresponds to:
  *
  * @code
  * emit();
- * remove();
  * orchestrate();
  * advect();
+ * remove();
  * @endcode
  *
  * If a collider is installed, advect() delegates the advection/collision phase
@@ -197,24 +197,21 @@ public:
      * @f[
      *     \mathrm{source}
      *     \rightarrow
-     *     \mathrm{sink}
-     *     \rightarrow
      *     \mathrm{orchestrator}
      *     \rightarrow
-     *     \mathrm{collider/integration}.
+     *     \mathrm{collider/integration}
+     *     \rightarrow
+     *     \mathrm{sink}.
      * @f]
      *
-     * More explicitly, update() calls:
+     * More explicitly, update() delegates to the named phase functions:
      *
      * @code
      * emit();
-     * remove();
      * orchestrate();
      * advect();
+     * remove();
      * @endcode
-     *
-     * This ordering allows newly emitted particles to be filtered by the sink
-     * before solver orchestration and advection/collision handling run.
      *
      * @note Null optional subsystems are skipped by their corresponding phase
      *       functions.

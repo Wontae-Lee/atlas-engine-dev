@@ -7,7 +7,7 @@
 namespace {
 
 using atlas::DeviceBuffer;
-using atlas::system::Solver;
+using atlas::Solver;
 
 class DummySolver final : public Solver<float> {
 public:

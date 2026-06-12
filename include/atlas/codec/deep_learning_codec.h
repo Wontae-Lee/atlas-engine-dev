@@ -44,7 +44,8 @@ public:
      * @brief Constructs a DeepLearningCodec from its required dependencies.
      *
      * The constructor forwards the provided universe, fluid, and searcher to
-     * the base Codec<T> and then resets the codec state.
+     * the base Codec<T>, which initializes the codec buffers for the current
+     * universe layout.
      *
      * @param domain Host-side shared pointer to the universe/domain object.
      * @param fluid Host-side shared pointer to the fluid object.

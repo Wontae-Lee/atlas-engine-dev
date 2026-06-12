@@ -13,12 +13,12 @@
 
 namespace {
 
-using DsmcSolver        = atlas::system::DsmcSolver<float>;
-using DsmcSimpleSolver  = atlas::system::DsmcSimpleSolver<float>;
-using DsmcEnergyExchangeSolver = atlas::system::DsmcEnergyExchangeSolver<float>;
-using DsmcFlattenWorkload = atlas::system::DsmcFlattenWorkload<float>;
-using DsmcStatistics = atlas::system::DsmcStatistics<float>;
-using DsmcSimpleStatistics = atlas::system::DsmcSimpleStatistics<float>;
+using DsmcSolver        = atlas::DsmcSolver<float>;
+using DsmcSimpleSolver  = atlas::DsmcSimpleSolver<float>;
+using DsmcEnergyExchangeSolver = atlas::DsmcEnergyExchangeSolver<float>;
+using DsmcFlattenWorkload = atlas::DsmcFlattenWorkload<float>;
+using DsmcStatistics = atlas::DsmcStatistics<float>;
+using DsmcSimpleStatistics = atlas::DsmcSimpleStatistics<float>;
 
 static_assert(std::is_base_of_v<DsmcSolver, DsmcSimpleSolver>);
 static_assert(std::is_base_of_v<DsmcSolver, DsmcEnergyExchangeSolver>);
