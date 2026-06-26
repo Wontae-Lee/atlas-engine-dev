@@ -4,11 +4,6 @@
 
 # Atlas Engine Dev
 
-[![TBB Core Linux](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-linux.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-linux.yml)
-[![TBB Vizkit Linux](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-linux.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-linux.yml)
-[![TBB Core macOS](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-macos.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-core-macos.yml)
-[![TBB Vizkit macOS](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-macos.yml/badge.svg)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb-vizkit-macos.yml)
-
 Atlas is a C++20 particle simulation engine with a header-only core, selectable TBB or CUDA execution backends, optional serialization support, and an OpenGL visualization layer called Vizkit.
 
 The public API is aggregated through:
