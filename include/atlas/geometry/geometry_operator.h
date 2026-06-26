@@ -12,6 +12,7 @@
 #include <atlas/geometry/triangle_mesh.h>
 
 #include <stdexcept>
+#include <type_traits>
 
 namespace atlas {
 
@@ -51,21 +52,9 @@ struct GeometryOperator {
     ATLAS_ALL_DEVICE
     ~GeometryOperator() noexcept;
 
-    ATLAS_ALL_DEVICE explicit GeometryOperator(const BoxGeometryOperator<T>& op);
-
-    ATLAS_ALL_DEVICE explicit GeometryOperator(const CircleGeometryOperator<T>& op);
-
-    ATLAS_ALL_DEVICE explicit GeometryOperator(const CylinderGeometryOperator<T>& op);
-
-    ATLAS_ALL_DEVICE explicit GeometryOperator(const PlaneGeometryOperator<T>& op);
-
-    ATLAS_ALL_DEVICE explicit GeometryOperator(const SphereGeometryOperator<T>& op);
-
-    ATLAS_ALL_DEVICE explicit GeometryOperator(const SquareGeometryOperator<T>& op);
-
-    ATLAS_ALL_DEVICE explicit GeometryOperator(const TriangleGeometryOperator<T>& op);
-
-    ATLAS_ALL_DEVICE explicit GeometryOperator(const TriangleMeshGeometryOperator<T>& op);
+    template <typename Payload,
+              std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, GeometryOperator>, int> = 0>
+    ATLAS_ALL_DEVICE explicit GeometryOperator(const Payload& op);
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::Vector<T, 3>
     closest_point(const atlas::Vector<T, 3>& p) const noexcept;

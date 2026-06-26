@@ -9,18 +9,8 @@ namespace detail {
         SurfaceInteractionKernel<T>,
         SurfaceInteractionType,
         SurfaceInteractionType::isothermal,
-        DeviceVariantCase<
-            SurfaceInteractionKernel<T>,
-            SurfaceInteractionType,
-            SurfaceInteractionType::isothermal,
-            IsothermalSurfaceInteraction<T>,
-            &SurfaceInteractionKernel<T>::isothermal>,
-        DeviceVariantCase<
-            SurfaceInteractionKernel<T>,
-            SurfaceInteractionType,
-            SurfaceInteractionType::maxwellian,
-            MaxwellianSurfaceInteraction<T>,
-            &SurfaceInteractionKernel<T>::maxwellian>>;
+        DeviceVariantCase<SurfaceInteractionType::isothermal, &SurfaceInteractionKernel<T>::isothermal>,
+        DeviceVariantCase<SurfaceInteractionType::maxwellian, &SurfaceInteractionKernel<T>::maxwellian>>;
 
 }
 
@@ -30,14 +20,8 @@ SurfaceInteractionKernel<T>::SurfaceInteractionKernel() noexcept {
 }
 
 template <typename T>
-SurfaceInteractionKernel<T>::SurfaceInteractionKernel(
-    const IsothermalSurfaceInteraction<T>& interaction) noexcept {
-    detail::SurfaceInteractionVariant<T>::construct_payload(*this, interaction);
-}
-
-template <typename T>
-SurfaceInteractionKernel<T>::SurfaceInteractionKernel(
-    const MaxwellianSurfaceInteraction<T>& interaction) noexcept {
+template <typename Payload, std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, SurfaceInteractionKernel<T>>, int>>
+SurfaceInteractionKernel<T>::SurfaceInteractionKernel(const Payload& interaction) noexcept {
     detail::SurfaceInteractionVariant<T>::construct_payload(*this, interaction);
 }
 

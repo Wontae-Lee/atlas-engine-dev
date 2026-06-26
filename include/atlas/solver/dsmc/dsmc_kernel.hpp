@@ -11,24 +11,9 @@ namespace detail {
         DsmcKernel<T>,
         DsmcKernelType,
         DsmcKernelType::hard_sphere,
-        DeviceVariantCase<
-            DsmcKernel<T>,
-            DsmcKernelType,
-            DsmcKernelType::hard_sphere,
-            HardSphereKernel<T>,
-            &DsmcKernel<T>::hard_sphere>,
-        DeviceVariantCase<
-            DsmcKernel<T>,
-            DsmcKernelType,
-            DsmcKernelType::variable_hard_sphere,
-            VariableHardSphereKernel<T>,
-            &DsmcKernel<T>::variable_hard_sphere>,
-        DeviceVariantCase<
-            DsmcKernel<T>,
-            DsmcKernelType,
-            DsmcKernelType::variable_soft_sphere,
-            VariableSoftSphereKernel<T>,
-            &DsmcKernel<T>::variable_soft_sphere>>;
+        DeviceVariantCase<DsmcKernelType::hard_sphere, &DsmcKernel<T>::hard_sphere>,
+        DeviceVariantCase<DsmcKernelType::variable_hard_sphere, &DsmcKernel<T>::variable_hard_sphere>,
+        DeviceVariantCase<DsmcKernelType::variable_soft_sphere, &DsmcKernel<T>::variable_soft_sphere>>;
 
 }
 
@@ -72,17 +57,8 @@ DsmcKernel<T>::copy_from(const DsmcKernel& other) noexcept {
 }
 
 template <typename T>
-DsmcKernel<T>::DsmcKernel(const HardSphereKernel<T>& op) {
-    detail::DsmcKernelVariant<T>::construct_payload(*this, op);
-}
-
-template <typename T>
-DsmcKernel<T>::DsmcKernel(const VariableHardSphereKernel<T>& op) {
-    detail::DsmcKernelVariant<T>::construct_payload(*this, op);
-}
-
-template <typename T>
-DsmcKernel<T>::DsmcKernel(const VariableSoftSphereKernel<T>& op) {
+template <typename Payload, std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, DsmcKernel<T>>, int>>
+DsmcKernel<T>::DsmcKernel(const Payload& op) {
     detail::DsmcKernelVariant<T>::construct_payload(*this, op);
 }
 

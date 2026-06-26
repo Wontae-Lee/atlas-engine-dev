@@ -6,6 +6,7 @@
 #include <atlas/solver/dsmc/variable_soft_sphere_kernel.h>
 
 #include <cstdint>
+#include <type_traits>
 
 namespace atlas {
 
@@ -52,14 +53,9 @@ struct DsmcKernel final {
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~DsmcKernel() noexcept;
 
-    ATLAS_HOST
-    DsmcKernel(const HardSphereKernel<T>& op);
-
-    ATLAS_HOST
-    DsmcKernel(const VariableHardSphereKernel<T>& op);
-
-    ATLAS_HOST
-    DsmcKernel(const VariableSoftSphereKernel<T>& op);
+    template <typename Payload,
+              std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, DsmcKernel>, int> = 0>
+    ATLAS_HOST DsmcKernel(const Payload& op);
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     cross_section(DsmcKernelType type,

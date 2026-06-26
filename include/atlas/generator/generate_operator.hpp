@@ -8,30 +8,10 @@ namespace detail {
         GenerateOperator<T>,
         GenerateType,
         GenerateType::uniform,
-        DeviceVariantCase<
-            GenerateOperator<T>,
-            GenerateType,
-            GenerateType::uniform,
-            UniformGenerateOperator<T>,
-            &GenerateOperator<T>::uniform>,
-        DeviceVariantCase<
-            GenerateOperator<T>,
-            GenerateType,
-            GenerateType::jittering,
-            JitteringGenerateOperator<T>,
-            &GenerateOperator<T>::jittering>,
-        DeviceVariantCase<
-            GenerateOperator<T>,
-            GenerateType,
-            GenerateType::maxwell_sigma,
-            MaxwellSigmaGenerateOperator<T>,
-            &GenerateOperator<T>::maxwell_sigma>,
-        DeviceVariantCase<
-            GenerateOperator<T>,
-            GenerateType,
-            GenerateType::maxwell_boltzmann,
-            MaxwellBoltzmannGenerateOperator<T>,
-            &GenerateOperator<T>::maxwell_boltzmann>>;
+        DeviceVariantCase<GenerateType::uniform, &GenerateOperator<T>::uniform>,
+        DeviceVariantCase<GenerateType::jittering, &GenerateOperator<T>::jittering>,
+        DeviceVariantCase<GenerateType::maxwell_sigma, &GenerateOperator<T>::maxwell_sigma>,
+        DeviceVariantCase<GenerateType::maxwell_boltzmann, &GenerateOperator<T>::maxwell_boltzmann>>;
 
 }
 
@@ -76,22 +56,8 @@ GenerateOperator<T>::copy_from(const GenerateOperator& other) noexcept {
 }
 
 template <typename T>
-GenerateOperator<T>::GenerateOperator(const UniformGenerateOperator<T>& op) {
-    detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
-}
-
-template <typename T>
-GenerateOperator<T>::GenerateOperator(const JitteringGenerateOperator<T>& op) {
-    detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
-}
-
-template <typename T>
-GenerateOperator<T>::GenerateOperator(const MaxwellSigmaGenerateOperator<T>& op) {
-    detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
-}
-
-template <typename T>
-GenerateOperator<T>::GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>& op) {
+template <typename Payload, std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, GenerateOperator<T>>, int>>
+GenerateOperator<T>::GenerateOperator(const Payload& op) {
     detail::GenerateOperatorVariant<T>::construct_payload(*this, op);
 }
 

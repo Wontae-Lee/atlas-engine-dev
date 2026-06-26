@@ -40,17 +40,9 @@ struct GenerateOperator final {
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~GenerateOperator() noexcept;
 
-    ATLAS_HOST
-    GenerateOperator(const UniformGenerateOperator<T>& op);
-
-    ATLAS_HOST
-    GenerateOperator(const JitteringGenerateOperator<T>& op);
-
-    ATLAS_HOST
-    GenerateOperator(const MaxwellSigmaGenerateOperator<T>& op);
-
-    ATLAS_HOST
-    GenerateOperator(const MaxwellBoltzmannGenerateOperator<T>& op);
+    template <typename Payload,
+              std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, GenerateOperator>, int> = 0>
+    ATLAS_HOST GenerateOperator(const Payload& op);
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(T param0,

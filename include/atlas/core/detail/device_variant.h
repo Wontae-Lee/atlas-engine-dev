@@ -15,16 +15,22 @@ struct type_tag final {
     using type = Payload;
 };
 
-template <typename Owner,
-          typename Tag,
-          Tag TagValue,
-          typename Payload,
-          Payload Owner::*Member>
-struct DeviceVariantCase final {
-    using payload_type = Payload;
+template <typename M>
+struct member_pointer_traits;
 
-    static constexpr Tag tag                = TagValue;
-    static constexpr Payload Owner::*member = Member;
+template <typename Class, typename Member>
+struct member_pointer_traits<Member Class::*> {
+    using owner_type   = Class;
+    using payload_type = Member;
+};
+
+template <auto TagValue, auto Member>
+struct DeviceVariantCase final {
+    using owner_type   = typename member_pointer_traits<decltype(Member)>::owner_type;
+    using payload_type = typename member_pointer_traits<decltype(Member)>::payload_type;
+
+    static constexpr auto tag    = TagValue;
+    static constexpr auto member = Member;
 };
 
 template <typename Owner,

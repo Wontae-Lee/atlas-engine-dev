@@ -9,24 +9,9 @@ namespace detail {
         PostColliderKernel<T>,
         PostColliderType,
         PostColliderType::fast,
-        DeviceVariantCase<
-            PostColliderKernel<T>,
-            PostColliderType,
-            PostColliderType::fast,
-            FastColliderKernel<T>,
-            &PostColliderKernel<T>::fast>,
-        DeviceVariantCase<
-            PostColliderKernel<T>,
-            PostColliderType,
-            PostColliderType::dt_remain,
-            DtRemainColliderKernel<T>,
-            &PostColliderKernel<T>::dt_remain>,
-        DeviceVariantCase<
-            PostColliderKernel<T>,
-            PostColliderType,
-            PostColliderType::precise,
-            PreciseColliderKernel<T>,
-            &PostColliderKernel<T>::precise>>;
+        DeviceVariantCase<PostColliderType::fast, &PostColliderKernel<T>::fast>,
+        DeviceVariantCase<PostColliderType::dt_remain, &PostColliderKernel<T>::dt_remain>,
+        DeviceVariantCase<PostColliderType::precise, &PostColliderKernel<T>::precise>>;
 
 }
 

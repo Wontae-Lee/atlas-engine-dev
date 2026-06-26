@@ -4,6 +4,8 @@
 #include <atlas/collider/interaction/maxwellian_surface_interaction.h>
 #include <atlas/core/detail/device_variant.h>
 
+#include <type_traits>
+
 namespace atlas {
 
 enum struct SurfaceInteractionType : int {
@@ -26,11 +28,10 @@ struct SurfaceInteractionKernel final {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     SurfaceInteractionKernel() noexcept;
 
+    template <typename Payload,
+              std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, SurfaceInteractionKernel>, int> = 0>
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    SurfaceInteractionKernel(const IsothermalSurfaceInteraction<T>& interaction) noexcept;
-
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    SurfaceInteractionKernel(const MaxwellianSurfaceInteraction<T>& interaction) noexcept;
+    SurfaceInteractionKernel(const Payload& interaction) noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     SurfaceInteractionKernel(const SurfaceInteractionKernel& other) noexcept;

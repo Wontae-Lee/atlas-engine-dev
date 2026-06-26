@@ -71,15 +71,15 @@ DeviceTypeSwitch<Tag, Default, Cases...>       for stateless operators
 
 ### The single source of truth
 
-The case list exists **once**, as the case entries in the alias. For a stateful
-union:
+The case list exists **once**, as the case entries in the alias. Each case is
+just its tag value and the union member it owns; the owner, tag type, and payload
+type are deduced from the member pointer:
 
 ```cpp
 template <typename T>
 using GeometryOperatorVariant = DeviceVariant<
     GeometryOperator<T>, GeometryType, GeometryType::Sphere,
-    DeviceVariantCase<GeometryOperator<T>, GeometryType, GeometryType::Box,
-                      BoxGeometryOperator<T>, &GeometryOperator<T>::box>,
+    DeviceVariantCase<GeometryType::Box, &GeometryOperator<T>::box>,
     /* ...one DeviceVariantCase per shape... */>;
 ```
 
@@ -165,12 +165,16 @@ genuinely cannot, prefer adding an overload over reintroducing a `switch`.
 Stateful union (DeviceVariant):
 
 ```text
-1. Add the enum case            (e.g. GeometryType)
-2. Add the union member         (the *.h operator struct)
-3. Add the explicit constructor (decl in .h, one-line def in .hpp)
-4. Add one DeviceVariantCase    (the variant alias in .hpp)
--- behavior methods need NO change; visit/apply/visit_type pick the case up --
+1. Add the enum case        (e.g. GeometryType)
+2. Add the union member     (the *.h operator struct)
+3. Add one DeviceVariantCase<Tag::Value, &Owner<T>::member> to the alias
+-- the single templated payload constructor and the behavior methods need NO
+   change; visit/apply/visit_type pick the case up automatically --
 ```
+
+The owning operator declares one constrained template constructor
+(`explicit Owner(const Payload&)`) that forwards any payload to
+`DeviceVariant::construct_payload`, so adding a case does not add a constructor.
 
 Stateless operator (DeviceTypeSwitch):
 

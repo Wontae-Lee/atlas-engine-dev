@@ -8,24 +8,9 @@ namespace detail {
         SphKernel<T>,
         SphKernelType,
         SphKernelType::standard,
-        DeviceVariantCase<
-            SphKernel<T>,
-            SphKernelType,
-            SphKernelType::standard,
-            StandardSphKernel<T>,
-            &SphKernel<T>::standard>,
-        DeviceVariantCase<
-            SphKernel<T>,
-            SphKernelType,
-            SphKernelType::cubic_spline,
-            CubicSplineSphKernel<T>,
-            &SphKernel<T>::cubic_spline>,
-        DeviceVariantCase<
-            SphKernel<T>,
-            SphKernelType,
-            SphKernelType::wendland_quintic,
-            WendlandQuinticSphKernel<T>,
-            &SphKernel<T>::wendland_quintic>>;
+        DeviceVariantCase<SphKernelType::standard, &SphKernel<T>::standard>,
+        DeviceVariantCase<SphKernelType::cubic_spline, &SphKernel<T>::cubic_spline>,
+        DeviceVariantCase<SphKernelType::wendland_quintic, &SphKernel<T>::wendland_quintic>>;
 
 }
 
@@ -69,17 +54,8 @@ SphKernel<T>::copy_from(const SphKernel& other) noexcept {
 }
 
 template <typename T>
-SphKernel<T>::SphKernel(const StandardSphKernel<T>& op) {
-    detail::SphKernelVariant<T>::construct_payload(*this, op);
-}
-
-template <typename T>
-SphKernel<T>::SphKernel(const CubicSplineSphKernel<T>& op) {
-    detail::SphKernelVariant<T>::construct_payload(*this, op);
-}
-
-template <typename T>
-SphKernel<T>::SphKernel(const WendlandQuinticSphKernel<T>& op) {
+template <typename Payload, std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, SphKernel<T>>, int>>
+SphKernel<T>::SphKernel(const Payload& op) {
     detail::SphKernelVariant<T>::construct_payload(*this, op);
 }
 

@@ -5,6 +5,8 @@
 #include <atlas/solver/sph/standard_sph_kernel.h>
 #include <atlas/solver/sph/wendland_quintic_sph_kernel.h>
 
+#include <type_traits>
+
 namespace atlas {
 
 enum struct SphKernelType : int {
@@ -40,14 +42,9 @@ struct SphKernel final {
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~SphKernel() noexcept;
 
-    ATLAS_HOST
-    SphKernel(const StandardSphKernel<T>& op);
-
-    ATLAS_HOST
-    SphKernel(const CubicSplineSphKernel<T>& op);
-
-    ATLAS_HOST
-    SphKernel(const WendlandQuinticSphKernel<T>& op);
+    template <typename Payload,
+              std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, SphKernel>, int> = 0>
+    ATLAS_HOST SphKernel(const Payload& op);
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static T
     density_weight(SphKernelType type,
