@@ -59,7 +59,8 @@
  * - window width,
  * - window height,
  * - window title,
- * - fullscreen mode.
+ * - fullscreen mode,
+ * - optional timestep count.
  *
  * These values are staged either through the constructor or the nested
  * @ref Builder.
@@ -90,11 +91,14 @@
  */
 
 #include <atlas/system/system.h>
+#include <atlas/math/vector/vector4.h>
 #include <vizkit/camera/camera.h>
 #include <vizkit/layer/layer.h>
 #include <vizkit/macros/macros.h>
 
+#include <cstddef>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace atlas::vizkit {
@@ -156,6 +160,7 @@ public:
      * - window size,
      * - title,
      * - fullscreen mode,
+     * - optional timestep count,
      * and constructs either:
      * - a viewer by value, or
      * - a shared pointer to a viewer.
@@ -188,13 +193,17 @@ public:
      * @param height Window height in pixels.
      * @param title Window title string.
      * @param fullscreen Whether the viewer should open in fullscreen mode.
+     * @param background_color RGBA color used when clearing the frame buffer.
+     * @param timestep_count Optional number of simulation timesteps to execute before stopping.
      */
     ATLAS_HOST ATLAS_FORCE_INLINE
     Viewer(SystemHostPtr<T> system,
            int width,
            int height,
            const char* title,
-           bool fullscreen) noexcept;
+           bool fullscreen,
+           const Vector4<T>& background_color = Vector4<T>(T(0.08), T(0.09), T(0.12), T(1)),
+           std::optional<std::size_t> timestep_count = std::nullopt) noexcept;
 
     /**
      * @brief Destructor.
@@ -363,6 +372,20 @@ private:
     bool _fullscreen = false;
 
     /**
+     * @brief RGBA color used to clear the framebuffer before rendering each frame.
+     */
+    Vector4<T> _background_color { T(0.08), T(0.09), T(0.12), T(1) };
+
+    /**
+     * @brief Optional limit on the number of simulation timesteps executed by the viewer loop.
+     *
+     * @details
+     * When unset, the viewer continues until the window is closed. When set, the
+     * loop exits after the requested number of system updates.
+     */
+    std::optional<std::size_t> _timestep_count = std::nullopt;
+
+    /**
      * @brief Owned GLFW window handle.
      *
      * @details
@@ -396,7 +419,8 @@ private:
  * - the bound simulation system,
  * - the window title,
  * - the window size,
- * - the fullscreen flag.
+ * - the fullscreen flag,
+ * - the optional timestep count.
  *
  * ## Typical usage
  * @code
@@ -430,7 +454,8 @@ public:
      * - no bound system,
      * - zero width and height,
      * - the default title `"Atlas Viewer"`,
-     * - windowed mode.
+     * - windowed mode,
+     * - no timestep limit.
      */
     Builder() = default;
 
@@ -470,6 +495,24 @@ public:
      */
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_fullscreen(bool fullscreen = true) noexcept;
+
+    /**
+     * @brief Set the viewer background clear color.
+     *
+     * @param color RGBA color used when clearing the frame buffer.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_background_color(const Vector4<T>& color) noexcept;
+
+    /**
+     * @brief Set the optional number of simulation timesteps to execute.
+     *
+     * @param timestep_count Number of timesteps to run, or `std::nullopt` to run until the window closes.
+     * @return `*this` for fluent chaining.
+     */
+    ATLAS_HOST ATLAS_FORCE_INLINE Builder&
+    with_timestep_count(std::optional<std::size_t> timestep_count) noexcept;
 
     /**
      * @brief Build a configured @ref Viewer by value after validation.
@@ -523,6 +566,16 @@ private:
      * @brief Pending fullscreen flag.
      */
     bool _fullscreen = false;
+
+    /**
+     * @brief Pending background clear color.
+     */
+    Vector4<T> _background_color { T(0.08), T(0.09), T(0.12), T(1) };
+
+    /**
+     * @brief Pending optional timestep limit.
+     */
+    std::optional<std::size_t> _timestep_count = std::nullopt;
 };
 
 } // namespace atlas::vizkit

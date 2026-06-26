@@ -207,7 +207,7 @@ Logger::~Logger() {
     // - emit the completed line with source-location metadata
     //
     // This RAII pattern enables call sites such as:
-    //   atlas::logger::info() << "hello " << value;
+    //   atlas::info() << "hello " << value;
     const std::string msg = _buffer.str();
 
     // Skip emission when nothing was streamed into the logger.

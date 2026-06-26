@@ -1,18 +1,18 @@
-#include "../../utilities/tests_utils.h"
+#include "../../utilities/test_utils.h"
 #include <cmath>
 #include <cstddef>
 #include <testkit/testkit.h>
 
 TEST(Matrix2x2, DefaultConstructorIsZero) {
-    const atlas::math::Matrix<double, 2, 2> m;
+    const atlas::Matrix<double, 2, 2> m;
 
-    for (std::size_t i = 0; i < atlas::math::Matrix<double, 2, 2>::size(); ++i) {
+    for (std::size_t i = 0; i < atlas::Matrix<double, 2, 2>::size(); ++i) {
         EXPECT_DOUBLE_EQ(m[i], 0.0);
     }
 }
 
 TEST(Matrix2x2, DiagonalConstructorIsScaledIdentity) {
-    const atlas::math::Matrix<double, 2, 2> m(3.5);
+    const atlas::Matrix<double, 2, 2> m(3.5);
 
     EXPECT_DOUBLE_EQ(m.m00, 3.5);
     EXPECT_DOUBLE_EQ(m.m11, 3.5);
@@ -22,7 +22,7 @@ TEST(Matrix2x2, DiagonalConstructorIsScaledIdentity) {
 }
 
 TEST(Matrix2x2, ElementConstructorRowMajor) {
-    const atlas::math::Matrix<double, 2, 2> m(
+    const atlas::Matrix<double, 2, 2> m(
         1.0,
         2.0,
         3.0,
@@ -35,12 +35,12 @@ TEST(Matrix2x2, ElementConstructorRowMajor) {
 }
 
 TEST(Matrix2x2, InitializerListPadsWithZero) {
-    const atlas::math::Matrix<double, 2, 2> m { 1.0, 2.0 };
+    const atlas::Matrix<double, 2, 2> m { 1.0, 2.0 };
 
     EXPECT_DOUBLE_EQ(m[0], 1.0);
     EXPECT_DOUBLE_EQ(m[1], 2.0);
 
-    for (std::size_t i = 2; i < atlas::math::Matrix<double, 2, 2>::size(); ++i) {
+    for (std::size_t i = 2; i < atlas::Matrix<double, 2, 2>::size(); ++i) {
         EXPECT_DOUBLE_EQ(m[i], 0.0);
     }
 }
@@ -52,7 +52,7 @@ TEST(Matrix2x2, RowsColsSize) {
 }
 
 TEST(Matrix2x2, DataPointerIsContiguousRowMajor) {
-    atlas::math::Matrix<double, 2, 2> m;
+    atlas::Matrix<double, 2, 2> m;
     m.set(
         1.0,
         2.0,
@@ -73,7 +73,7 @@ TEST(Matrix2x2, DataPointerIsContiguousRowMajor) {
 }
 
 TEST(Matrix2x2, IndexAndAtAndCallOperator) {
-    atlas::math::Matrix<double, 2, 2> m;
+    atlas::Matrix<double, 2, 2> m;
     m.set(
         1.0,
         2.0,
@@ -91,13 +91,13 @@ TEST(Matrix2x2, IndexAndAtAndCallOperator) {
 }
 
 TEST(Matrix2x2, SetZeroAndSetIdentity) {
-    atlas::math::Matrix<double, 2, 2> z(3.0);
+    atlas::Matrix<double, 2, 2> z(3.0);
     z.set_zero();
-    for (std::size_t i = 0; i < atlas::math::Matrix<double, 2, 2>::size(); ++i) {
+    for (std::size_t i = 0; i < atlas::Matrix<double, 2, 2>::size(); ++i) {
         EXPECT_DOUBLE_EQ(z[i], 0.0);
     }
 
-    atlas::math::Matrix<double, 2, 2> i;
+    atlas::Matrix<double, 2, 2> i;
     i.set_identity();
 
     EXPECT_DOUBLE_EQ(i.m00, 1.0);
@@ -110,7 +110,7 @@ TEST(Matrix2x2, SetZeroAndSetIdentity) {
 TEST(Matrix2x2, ScalarOpsInPlace) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    atlas::math::Matrix<double, 2, 2> m;
+    atlas::Matrix<double, 2, 2> m;
     m.set_identity();
 
     m += 2.0;
@@ -141,10 +141,10 @@ TEST(Matrix2x2, ScalarOpsInPlace) {
 TEST(Matrix2x2, MatrixOpsInPlace) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    atlas::math::Matrix<double, 2, 2> a;
+    atlas::Matrix<double, 2, 2> a;
     a.set_identity();
 
-    atlas::math::Matrix<double, 2, 2> b;
+    atlas::Matrix<double, 2, 2> b;
     b.set(
         1.0,
         2.0,
@@ -167,7 +167,7 @@ TEST(Matrix2x2, MatrixOpsInPlace) {
 TEST(Matrix2x2, TraceAndDeterminantIdentity) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    atlas::math::Matrix<double, 2, 2> m;
+    atlas::Matrix<double, 2, 2> m;
     m.set_identity();
 
     EXPECT_TRUE(atlas::test::near(m.trace(), 2.0, eps));
@@ -175,14 +175,14 @@ TEST(Matrix2x2, TraceAndDeterminantIdentity) {
 }
 
 TEST(Matrix2x2, TransposeAndTransposed) {
-    atlas::math::Matrix<double, 2, 2> m;
+    atlas::Matrix<double, 2, 2> m;
     m.set(
         1.0,
         2.0,
         3.0,
         4.0);
 
-    const atlas::math::Matrix<double, 2, 2> t = m.transposed();
+    const atlas::Matrix<double, 2, 2> t = m.transposed();
 
     EXPECT_DOUBLE_EQ(t.m00, 1.0);
     EXPECT_DOUBLE_EQ(t.m01, 3.0);
@@ -199,15 +199,15 @@ TEST(Matrix2x2, TransposeAndTransposed) {
 TEST(Matrix2x2, InverseAndInversed_MultiplicativeIdentity) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    atlas::math::Matrix<double, 2, 2> a;
+    atlas::Matrix<double, 2, 2> a;
     a.set(
         4.0,
         1.0,
         2.0,
         3.0);
 
-    const atlas::math::Matrix<double, 2, 2> inv  = a.inversed();
-    const atlas::math::Matrix<double, 2, 2> prod = a.mul(inv);
+    const atlas::Matrix<double, 2, 2> inv  = a.inversed();
+    const atlas::Matrix<double, 2, 2> prod = a.mul(inv);
 
     EXPECT_TRUE(atlas::test::near(prod.m00, 1.0, eps));
     EXPECT_TRUE(atlas::test::near(prod.m11, 1.0, eps));
@@ -216,13 +216,13 @@ TEST(Matrix2x2, InverseAndInversed_MultiplicativeIdentity) {
 TEST(Matrix2x2, TryInverseRejectsSingular) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    const atlas::math::Matrix<double, 2, 2> a(
+    const atlas::Matrix<double, 2, 2> a(
         1.0,
         2.0,
         2.0,
         4.0);
 
-    atlas::math::Matrix<double, 2, 2> out;
+    atlas::Matrix<double, 2, 2> out;
     const bool ok = a.try_inverse(out, eps);
 
     EXPECT_FALSE(ok);
@@ -231,30 +231,30 @@ TEST(Matrix2x2, TryInverseRejectsSingular) {
 TEST(Matrix2x2, IsInvertibleMatchesDeterminantMagnitude) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    atlas::math::Matrix<double, 2, 2> i;
+    atlas::Matrix<double, 2, 2> i;
     i.set_identity();
     EXPECT_TRUE(i.is_invertible(eps));
 
-    const atlas::math::Matrix<double, 2, 2> z;
+    const atlas::Matrix<double, 2, 2> z;
     EXPECT_FALSE(z.is_invertible(eps));
 }
 
 TEST(Matrix2x2, MatrixMultiply) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    const atlas::math::Matrix<double, 2, 2> a(
+    const atlas::Matrix<double, 2, 2> a(
         1.0,
         2.0,
         3.0,
         4.0);
 
-    const atlas::math::Matrix<double, 2, 2> b(
+    const atlas::Matrix<double, 2, 2> b(
         2.0,
         0.0,
         0.0,
         3.0);
 
-    const atlas::math::Matrix<double, 2, 2> c = a * b;
+    const atlas::Matrix<double, 2, 2> c = a * b;
 
     EXPECT_TRUE(atlas::test::near(c.m00, 2.0, eps));
     EXPECT_TRUE(atlas::test::near(c.m01, 6.0, eps));
@@ -265,14 +265,14 @@ TEST(Matrix2x2, MatrixMultiply) {
 TEST(Matrix2x2, MatrixVectorMultiply) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    const atlas::math::Matrix<double, 2, 2> a(
+    const atlas::Matrix<double, 2, 2> a(
         1.0,
         2.0,
         3.0,
         4.0);
 
-    const atlas::math::Vector<double, 2> v(1.0, 2.0);
-    const atlas::math::Vector<double, 2> y = a * v;
+    const atlas::Vector<double, 2> v(1.0, 2.0);
+    const atlas::Vector<double, 2> y = a * v;
 
     EXPECT_TRUE(atlas::test::near(y[0], 1.0 * 1.0 + 2.0 * 2.0, eps));
     EXPECT_TRUE(atlas::test::near(y[1], 3.0 * 1.0 + 4.0 * 2.0, eps));
@@ -281,41 +281,41 @@ TEST(Matrix2x2, MatrixVectorMultiply) {
 TEST(Matrix2x2, SolveAndSolved) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    const atlas::math::Matrix<double, 2, 2> A(
+    const atlas::Matrix<double, 2, 2> A(
         4.0,
         1.0,
         2.0,
         3.0);
 
-    const atlas::math::Vector<double, 2> b(1.0, 2.0);
+    const atlas::Vector<double, 2> b(1.0, 2.0);
 
-    atlas::math::Vector<double, 2> x;
+    atlas::Vector<double, 2> x;
     const bool ok = A.solve(b, x, eps);
     EXPECT_TRUE(ok);
 
-    const atlas::math::Vector<double, 2> y = A * x;
+    const atlas::Vector<double, 2> y = A * x;
     EXPECT_TRUE(atlas::test::vec_near(y, b, eps));
 
-    const atlas::math::Vector<double, 2> xs = A.solved(b);
-    const atlas::math::Vector<double, 2> ys = A * xs;
+    const atlas::Vector<double, 2> xs = A.solved(b);
+    const atlas::Vector<double, 2> ys = A * xs;
     EXPECT_TRUE(atlas::test::vec_near(ys, b, eps));
 }
 
 TEST(Matrix2x2, FreeFunctions) {
     constexpr auto eps = static_cast<double>(atlas::eps);
 
-    const atlas::math::Matrix<double, 2, 2> i = atlas::math::identity2x2<double>();
+    const atlas::Matrix<double, 2, 2> i = atlas::identity2x2<double>();
     EXPECT_TRUE(atlas::test::near(i.trace(), 2.0, eps));
 
-    const atlas::math::Matrix<double, 2, 2> z = atlas::math::zero2x2<double>();
+    const atlas::Matrix<double, 2, 2> z = atlas::zero2x2<double>();
     EXPECT_TRUE(atlas::test::near(z.trace(), 0.0, eps));
 
-    const atlas::math::Matrix<double, 2, 2> it = atlas::math::transpose(i);
+    const atlas::Matrix<double, 2, 2> it = atlas::transpose(i);
     EXPECT_TRUE(it == i);
 
-    const double det = atlas::math::determinant(i);
+    const double det = atlas::determinant(i);
     EXPECT_TRUE(atlas::test::near(det, 1.0, eps));
 
-    const atlas::math::Matrix<double, 2, 2> inv = atlas::math::inverse(i);
+    const atlas::Matrix<double, 2, 2> inv = atlas::inverse(i);
     EXPECT_TRUE(inv == i);
 }

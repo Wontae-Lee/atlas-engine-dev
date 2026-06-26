@@ -1,92 +1,94 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
-#include <atlas/logging/logging.h>
-#include <atlas/geometry/geometry_operator.h>
 #include <atlas/geometry/circle.h>
+#include <atlas/geometry/geometry_operator.h>
+#include <atlas/logging/logging.h>
 
 #include <testkit/testkit.h>
 
 namespace {
 
-using T = float;
-using Vec3 = atlas::Vector3<T>;
-
-constexpr T kEps = static_cast<T>(1e-5);
+using atlas::Circle;
+using atlas::Ray;
+using atlas::Vector3F;
+using atlas::GeometryType;
+using atlas::test::vec_near;
+using atlas::tol;
 
 } // namespace
 
 TEST(Circle, DefaultConstructorCreatesValidCircle) {
-    const atlas::geometry::Circle<T> circle;
+    const Circle<float> circle;
 
-    EXPECT_EQ(circle.type(), atlas::geometry::GeometryType::Circle);
+    EXPECT_EQ(circle.type(), GeometryType::Circle);
     EXPECT_TRUE(circle.is_valid());
-    EXPECT_NEAR(circle.radius, 1.0f, kEps);
+    EXPECT_NEAR(circle.radius, 1.0f, tol);
 }
 
 TEST(Circle, BuilderConstructsConfiguredCircle) {
-    const auto circle = atlas::geometry::Circle<T>::builder()
-                            .with_center(Vec3(1, 2, 3))
-                            .with_normal(Vec3(0, 0, 2))
+    const auto circle = Circle<float>::builder()
+                            .with_center(Vector3F(1, 2, 3))
+                            .with_normal(Vector3F(0, 0, 2))
                             .with_radius(4.0f)
                             .build();
 
-    EXPECT_TRUE(atlas::test::vec_near(circle.center, Vec3(1, 2, 3), kEps));
-    EXPECT_TRUE(atlas::test::vec_near(circle.normal, Vec3(0, 0, 2), kEps));
-    EXPECT_NEAR(circle.radius, 4.0f, kEps);
+    EXPECT_TRUE(vec_near(circle.center, Vector3F(1, 2, 3), tol));
+    EXPECT_TRUE(vec_near(circle.normal, Vector3F(0, 0, 2), tol));
+    EXPECT_NEAR(circle.radius, 4.0f, tol);
 }
 
 TEST(Circle, BuilderRejectsInvalidCircle) {
     EXPECT_THROW(
-        atlas::geometry::Circle<T>::builder()
-            .with_normal(Vec3(0, 0, 0))
+        Circle<float>::builder()
+            .with_normal(Vector3F(0, 0, 0))
             .with_radius(-1.0f)
             .build(),
         std::runtime_error);
 }
 
 TEST(Circle, ClosestPointProjectsToDiskAndRim) {
-    const atlas::geometry::Circle<T> circle(Vec3(0, 0, 0), Vec3(0, 0, 1), 2.0f);
+    const Circle<float> circle(Vector3F(0, 0, 0), Vector3F(0, 0, 1), 2.0f);
 
-    const Vec3 interior_projection = circle.closest_point(Vec3(1, 0, 3));
-    const Vec3 rim_projection = circle.closest_point(Vec3(3, 0, 0));
+    const Vector3F interior_projection = circle.closest_point(Vector3F(1, 0, 3));
+    const Vector3F rim_projection = circle.closest_point(Vector3F(3, 0, 0));
 
-    EXPECT_TRUE(atlas::test::vec_near(interior_projection, Vec3(1, 0, 0), kEps));
-    EXPECT_TRUE(atlas::test::vec_near(rim_projection, Vec3(2, 0, 0), kEps));
+    EXPECT_TRUE(vec_near(interior_projection, Vector3F(1, 0, 0), tol));
+    EXPECT_TRUE(vec_near(rim_projection, Vector3F(2, 0, 0), tol));
 }
 
 TEST(Circle, ClosestNormalAndSignedDistanceAreConsistent) {
-    const atlas::geometry::Circle<T> circle(Vec3(0, 0, 0), Vec3(0, 0, 2), 2.0f);
+    const Circle<float> circle(Vector3F(0, 0, 0), Vector3F(0, 0, 2), 2.0f);
 
-    const Vec3 normal = circle.closest_normal(Vec3(0, 0, 5));
+    const Vector3F normal = circle.closest_normal(Vector3F(0, 0, 5));
 
-    EXPECT_TRUE(atlas::test::vec_near(normal, Vec3(0, 0, 1), kEps));
-    EXPECT_NEAR(circle.signed_distance(Vec3(0, 0, 3)), 3.0f, kEps);
-    EXPECT_NEAR(circle.signed_distance(Vec3(0, 0, -3)), -3.0f, kEps);
+    EXPECT_TRUE(vec_near(normal, Vector3F(0, 0, 1), tol));
+    EXPECT_NEAR(circle.signed_distance(Vector3F(0, 0, 3)), 3.0f, tol);
+    EXPECT_NEAR(circle.signed_distance(Vector3F(0, 0, -3)), -3.0f, tol);
 }
 
 TEST(Circle, InsideSurfaceCentroidAndBoundWork) {
-    const atlas::geometry::Circle<T> circle(Vec3(1, 2, 3), Vec3(0, 0, 1), 2.0f);
+    const Circle<float> circle(Vector3F(1, 2, 3), Vector3F(0, 0, 1), 2.0f);
 
-    EXPECT_TRUE(circle.is_inside(Vec3(1, 2, 3), 0.0f));
-    EXPECT_TRUE(circle.is_on_surface(Vec3(3, 2, 3), 0.0f));
+    EXPECT_TRUE(circle.is_inside(Vector3F(1, 2, 3), 0.0f));
+    EXPECT_TRUE(circle.is_on_surface(Vector3F(3, 2, 3), 0.0f));
 
-    const Vec3 center = circle.centroid();
+    const Vector3F center = circle.centroid();
     const auto bounds = circle.bound();
 
-    EXPECT_TRUE(atlas::test::vec_near(center, Vec3(1, 2, 3), kEps));
-    EXPECT_TRUE(atlas::test::vec_near(bounds.lower_corner, Vec3(-1, 0, 3), kEps));
-    EXPECT_TRUE(atlas::test::vec_near(bounds.upper_corner, Vec3(3, 4, 3), kEps));
+    EXPECT_TRUE(vec_near(center, Vector3F(1, 2, 3), tol));
+    EXPECT_TRUE(vec_near(bounds.lower_corner, Vector3F(-1, 0, 3), tol));
+    EXPECT_TRUE(vec_near(bounds.upper_corner, Vector3F(3, 4, 3), tol));
 }
 
 TEST(Circle, GeometryOperatorAndTraceWork) {
-    const atlas::geometry::Circle<T> circle(Vec3(0, 0, 0), Vec3(0, 0, 1), 2.0f);
+    const Circle<float> circle(Vector3F(0, 0, 0), Vector3F(0, 0, 1), 2.0f);
 
-    const auto geometry_operator = circle.make_geometry_operator();
-    const atlas::spatial::Ray<T> ray(Vec3(0, 0, 5), Vec3(0, 0, -1));
-    const auto hit = circle.make_geometry_operator().trace(ray);
+    const auto geometry_operator = circle.make_device_geometry_view();
+    const Ray<float> ray(Vector3F(0, 0, 5), Vector3F(0, 0, -1));
+    const auto hit = circle.make_device_geometry_view().trace(ray);
 
     EXPECT_EQ(circle.type(), geometry_operator.type);
     EXPECT_TRUE(hit.is_intersecting);
-    EXPECT_NEAR(hit.distance, 5.0f, kEps);
-    EXPECT_TRUE(atlas::test::vec_near(hit.point, Vec3(0, 0, 0), kEps));
+    EXPECT_NEAR(hit.distance, 5.0f, tol);
+    EXPECT_TRUE(vec_near(hit.point, Vector3F(0, 0, 0), tol));
 }

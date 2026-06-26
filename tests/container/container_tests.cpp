@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/container/container.h>
 #include <cstddef>
@@ -6,7 +6,19 @@
 #include <type_traits>
 #include <utility>
 
-using namespace atlas;
+namespace {
+
+using atlas::Container;
+using atlas::Container2;
+using atlas::Container3;
+using atlas::Container4;
+using atlas::TriangleContainer4;
+using atlas::Vector;
+using atlas::eps;
+using atlas::test::vec_near;
+
+} // namespace
+
 
 TEST(Container4, DefaultConstructorValueInitializes) {
 
@@ -126,17 +138,17 @@ TEST(Container, AliasesHaveExpectedTypes) {
 
 TEST(TriangleContainer4, HoldsFourVector3) {
 
-    const math::Vector<double, 3> a(0.0, 0.0, 0.0);
-    const math::Vector<double, 3> b(1.0, 0.0, 0.0);
-    const math::Vector<double, 3> c(0.0, 1.0, 0.0);
-    const math::Vector<double, 3> n(0.0, 0.0, 1.0);
+    const Vector<double, 3> a(0.0, 0.0, 0.0);
+    const Vector<double, 3> b(1.0, 0.0, 0.0);
+    const Vector<double, 3> c(0.0, 1.0, 0.0);
+    const Vector<double, 3> n(0.0, 0.0, 1.0);
 
     TriangleContainer4<double> t(a, b, c, n);
 
-    EXPECT_TRUE(test::vec_near(t.a(), a, static_cast<double>(eps)));
-    EXPECT_TRUE(test::vec_near(t.b(), b, static_cast<double>(eps)));
-    EXPECT_TRUE(test::vec_near(t.c(), c, static_cast<double>(eps)));
-    EXPECT_TRUE(test::vec_near(t.d(), n, static_cast<double>(eps)));
+    EXPECT_TRUE(vec_near(t.a(), a, eps));
+    EXPECT_TRUE(vec_near(t.b(), b, eps));
+    EXPECT_TRUE(vec_near(t.c(), c, eps));
+    EXPECT_TRUE(vec_near(t.d(), n, eps));
 }
 
 TEST(Container4, NamedAccessorsAreReferences) {

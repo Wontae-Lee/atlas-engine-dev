@@ -1,86 +1,114 @@
 #pragma once
 
+#include <atlas/math/math.h>
+#include <atlas/sampling/sampling.h>
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>
 
 #include <cmath>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 T
-VariableHardSphereKernel<T>::cross_section(const MatrialProperties<T>& lhs,
-                                           const MatrialProperties<T>& rhs,
+VariableHardSphereKernel<T>::cross_section(const MaterialProperties<T>& lhs,
+                                           const MaterialProperties<T>& rhs,
                                            const T relative_speed) noexcept {
-    // Start from the hard-sphere geometric cross section.
-    //
-    // The VHS model used here is built as a speed-dependent extension of the
-    // hard-sphere model. Therefore, the hard-sphere cross section provides the
-    // baseline interaction area before any viscosity-index-based scaling is
-    // applied.
-    const T base_cross_section = HardSphereKernel<T>::cross_section(lhs, rhs);
 
-    // If the hard-sphere baseline is unavailable or non-physical, no valid VHS
-    // cross section can be constructed.
-    //
-    // This covers cases such as:
-    //   - missing collision diameters,
-    //   - non-positive effective diameter,
-    //   - any other upstream condition that caused the hard-sphere kernel to
-    //     report a zero cross section.
-    if (!(base_cross_section > T(0))) {
+    if (!lhs.reference_diameter.has_value() || !rhs.reference_diameter.has_value()
+        || !lhs.reference_temperature.has_value() || !rhs.reference_temperature.has_value()) {
         return T(0);
     }
 
-    // Read the viscosity index of the left-hand species.
-    //
-    // When the property is not explicitly provided, default to 1. This choice
-    // makes the speed exponent reduce to a neutral factor in many simple cases
-    // and avoids failing the computation when optional viscosity metadata is
-    // absent.
-    const T lhs_index = lhs.viscosity_index.value_or(T(1));
+    const T lhs_mass = lhs.molecular_mass;
+    const T rhs_mass = rhs.molecular_mass;
+    const T mass_sum = lhs_mass + rhs_mass;
 
-    // Read the viscosity index of the right-hand species using the same fallback.
-    const T rhs_index = rhs.viscosity_index.value_or(T(1));
+    if (!(lhs_mass > T(0)) || !(rhs_mass > T(0)) || !(mass_sum > T(0))
+        || !(relative_speed > T(0))) {
+        return T(0);
+    }
 
-    // Compute the multiplicative speed-scaling factor of the VHS model.
-    //
-    // This implementation uses the average of the two viscosity indices and
-    // forms the exponent:
-    //
-    //     ((lhs_index + rhs_index) / 2) - 1
-    //
-    // The relative speed is then raised to that exponent, making the collision
-    // cross section depend on the pair's approach speed.
-    //
-    // When the relative speed is not strictly positive, fall back to 1 so the
-    // function remains numerically safe and preserves the hard-sphere baseline
-    // instead of attempting an invalid power evaluation.
-    const T speed_scale = relative_speed > T(0)
-        ? std::pow(relative_speed, (lhs_index + rhs_index) * T(0.5) - T(1))
-        : T(1);
+    const T reference_diameter    = (lhs.reference_diameter.value() + rhs.reference_diameter.value()) * T(0.5);
+    const T reference_temperature = (lhs.reference_temperature.value() + rhs.reference_temperature.value()) * T(0.5);
+    const T viscosity_index       = (lhs.viscosity_index.value_or(T(0.5)) + rhs.viscosity_index.value_or(T(0.5)))
+        * T(0.5);
 
-    // Return the speed-adjusted VHS collision cross section.
-    //
-    // In this formulation:
-    //   - the hard-sphere kernel provides the base geometric area,
-    //   - the speed_scale term introduces the variable-hard-sphere dependence
-    //     on relative velocity.
-    return base_cross_section * speed_scale;
+    if (!(reference_diameter > T(0)) || !(reference_temperature > T(0))) {
+        return T(0);
+    }
+
+    const T gamma_argument = T(2.5) - viscosity_index;
+    if (!(gamma_argument > T(0))) {
+        return T(0);
+    }
+
+    const T reduced_mass = lhs_mass * rhs_mass / mass_sum;
+
+    const T thermal_ratio = (T(2) * static_cast<T>(atlas::boltzmann_constant) * reference_temperature)
+        / (reduced_mass * relative_speed * relative_speed);
+
+    if (!(thermal_ratio > T(0))) {
+        return T(0);
+    }
+
+    const T reference_area = static_cast<T>(atlas::pi) * reference_diameter * reference_diameter;
+
+    const T gamma_value = static_cast<T>(std::tgamma(static_cast<double>(gamma_argument)));
+    if (!(gamma_value > T(0))) {
+        return T(0);
+    }
+
+    return reference_area * std::pow(thermal_ratio, viscosity_index - T(0.5)) / gamma_value;
 }
 
 template <typename T>
 void
 VariableHardSphereKernel<T>::operator()(Vector3<T>& lhs_velocity,
                                         Vector3<T>& rhs_velocity,
-                                        const MatrialProperties<T>& lhs,
-                                        const MatrialProperties<T>& rhs) const noexcept {
-    // Reuse the hard-sphere collision response for the post-collision velocity update.
-    //
-    // In this implementation, the VHS model affects the collision probability
-    // through its speed-dependent cross section, but it does not introduce a
-    // distinct velocity-scattering rule at this stage. The actual velocity
-    // update is therefore delegated directly to the hard-sphere kernel.
-    HardSphereKernel<T> {}(lhs_velocity, rhs_velocity, lhs, rhs);
+                                        const MaterialProperties<T>& lhs,
+                                        const MaterialProperties<T>& rhs) const noexcept {
+
+    const T lhs_mass = lhs.molecular_mass;
+    const T rhs_mass = rhs.molecular_mass;
+    const T mass_sum = lhs_mass + rhs_mass;
+
+    const T scattering_parameter = T(1);
+
+    if (!(lhs_mass > T(0)) || !(rhs_mass > T(0)) || !(mass_sum > T(0))
+        || !(scattering_parameter > T(0))) {
+        return;
+    }
+
+    const Vector3<T> relative = lhs_velocity - rhs_velocity;
+    const T speed             = relative.length();
+
+    if (!(speed > T(0))) {
+        return;
+    }
+
+    const Vector3<T> center = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
+
+    const Vector3<T> axis = relative / speed;
+
+    const Vector3<T> sample_seed = relative + center * T(atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX)
+        + Vector3<T>(lhs_mass, rhs_mass, lhs_mass + rhs_mass);
+
+    const T u1 = atlas::sample_hashed_unit_interval(
+        sample_seed,
+        T(atlas::RANDOM_HASH_SALT_DIFFUSE_U1));
+    const T u2 = atlas::sample_hashed_unit_interval(
+        sample_seed + axis,
+        T(atlas::RANDOM_HASH_SALT_DIFFUSE_U2));
+
+    const T cos_chi = T(2) * std::pow(u1, T(1) / scattering_parameter) - T(1);
+
+    const T phi = T(2) * static_cast<T>(atlas::pi) * u2;
+
+    const Vector3<T> scattered_axis     = atlas::spherical_direction(axis, cos_chi, phi);
+    const Vector3<T> scattered_relative = scattered_axis * speed;
+
+    lhs_velocity = center + scattered_relative * (rhs_mass / mass_sum);
+    rhs_velocity = center - scattered_relative * (lhs_mass / mass_sum);
 }
 
-} // namespace atlas::system
+}

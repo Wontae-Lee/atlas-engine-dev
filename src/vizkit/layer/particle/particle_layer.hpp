@@ -189,7 +189,7 @@ ParticleLayer<T>::update(GLFWwindow* window, Camera& camera, T dt) {
 
     if (!fluid) return;
 
-    const auto* position_state = fluid->template state<atlas::fluid::FluidPositionState<T>>();
+    const auto* position_state = fluid->template state<atlas::FluidPositionState<T>>();
 
     if (position_state == nullptr || fluid->particle_count() == 0) return;
 

@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/random/default_random_engine.h>
 
@@ -8,23 +8,28 @@
 
 namespace {
 
-using T = float;
+using atlas::default_random_engine;
 
 } // namespace
 
 TEST(DefaultRandomEngine, AliasIsDefaultConstructibleAndUsable) {
-    atlas::default_random_engine<T> engine;
+    // Arrange: create a default random engine through the Atlas alias.
+    default_random_engine<float> engine;
 
+    // Act: generate two values from the same engine sequence.
     const auto first = engine();
     const auto second = engine();
 
+    // Assert: consecutive samples advance the engine state.
     EXPECT_NE(first, second);
 }
 
 TEST(DefaultRandomEngine, AliasMatchesStandardEngineInTbbBuild) {
 #ifndef ATLAS_TASKING_CUDA
-    EXPECT_TRUE((std::is_same_v<atlas::default_random_engine<T>, std::default_random_engine>));
+    // Assert: the TBB backend uses the standard default random engine.
+    EXPECT_TRUE((std::is_same_v<default_random_engine<float>, std::default_random_engine>));
 #else
+    // Assert: CUDA builds use a backend-specific engine type.
     SUCCEED();
 #endif
 }

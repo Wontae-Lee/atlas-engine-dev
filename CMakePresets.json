@@ -1,30 +1,13 @@
 {
-  "version": 6,
+  "version": 3,
   "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
 
   "configurePresets": [
     {
-      "name": "base-ninja",
+      "name": "base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "environment": {
-        "CMAKE_PREFIX_PATH": "/opt/homebrew${pathListSep}/usr/local${pathListSep}$penv{CMAKE_PREFIX_PATH}",
-        "PKG_CONFIG_PATH": "/opt/homebrew/lib/pkgconfig${pathListSep}/opt/homebrew/share/pkgconfig${pathListSep}/usr/local/lib/pkgconfig${pathListSep}/usr/local/share/pkgconfig${pathListSep}$penv{PKG_CONFIG_PATH}"
-      },
-      "cacheVariables": {
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
-    },
-    {
-      "name": "base-make",
-      "hidden": true,
-      "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/build/${presetName}",
-      "environment": {
-        "CMAKE_PREFIX_PATH": "/opt/homebrew${pathListSep}/usr/local${pathListSep}$penv{CMAKE_PREFIX_PATH}",
-        "PKG_CONFIG_PATH": "/opt/homebrew/lib/pkgconfig${pathListSep}/opt/homebrew/share/pkgconfig${pathListSep}/usr/local/lib/pkgconfig${pathListSep}/usr/local/share/pkgconfig${pathListSep}$penv{PKG_CONFIG_PATH}"
-      },
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
@@ -32,73 +15,13 @@
 
     {
       "name": "tbb-debug",
-      "displayName": "Atlas TBB Debug (Vizkit+Logging+GoogleTest+Benchmarks)",
-      "inherits": "base-ninja",
+      "displayName": "Atlas TBB Debug",
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "ATLAS_USE_CUDA": "OFF",
         "ATLAS_USE_TBB": "ON",
         "ATLAS_USE_VIZKIT": "ON",
-        "ATLAS_LOGGING": "ON",
-        "ATLAS_GOOGLE_TEST": "ON",
-        "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "ON"
-      }
-    },
-    {
-      "name": "tbb-release",
-      "displayName": "Atlas TBB Release (Vizkit+Logging+GoogleTest+Benchmarks)",
-      "inherits": "base-ninja",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "ATLAS_USE_CUDA": "OFF",
-        "ATLAS_USE_TBB": "ON",
-        "ATLAS_USE_VIZKIT": "ON",
-        "ATLAS_LOGGING": "ON",
-        "ATLAS_GOOGLE_TEST": "ON",
-        "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "ON"
-      }
-    },
-    {
-      "name": "tbb-relwithdebinfo",
-      "displayName": "Atlas TBB RelWithDebInfo (Vizkit+Logging+GoogleTest+Benchmarks)",
-      "inherits": "base-ninja",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "ATLAS_USE_CUDA": "OFF",
-        "ATLAS_USE_TBB": "ON",
-        "ATLAS_USE_VIZKIT": "ON",
-        "ATLAS_LOGGING": "ON",
-        "ATLAS_GOOGLE_TEST": "ON",
-        "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "ON"
-      }
-    },
-    {
-      "name": "tbb-debug-make",
-      "displayName": "Atlas TBB Debug (Unix Makefiles)",
-      "inherits": "base-make",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "ATLAS_USE_CUDA": "OFF",
-        "ATLAS_USE_TBB": "ON",
-        "ATLAS_USE_VIZKIT": "ON",
-        "ATLAS_LOGGING": "ON",
-        "ATLAS_GOOGLE_TEST": "ON",
-        "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "ON"
-      }
-    },
-    {
-      "name": "tbb-debug-core",
-      "displayName": "Atlas TBB Debug Core (Logging+GoogleTest)",
-      "inherits": "base-ninja",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "ATLAS_USE_CUDA": "OFF",
-        "ATLAS_USE_TBB": "ON",
-        "ATLAS_USE_VIZKIT": "OFF",
         "ATLAS_LOGGING": "ON",
         "ATLAS_GOOGLE_TEST": "ON",
         "ATLAS_CUDA_TEST": "OFF",
@@ -106,14 +29,14 @@
       }
     },
     {
-      "name": "tbb-release-core",
-      "displayName": "Atlas TBB Release Core (Logging+GoogleTest)",
-      "inherits": "base-ninja",
+      "name": "tbb-release",
+      "displayName": "Atlas TBB Release",
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "ATLAS_USE_CUDA": "OFF",
         "ATLAS_USE_TBB": "ON",
-        "ATLAS_USE_VIZKIT": "OFF",
+        "ATLAS_USE_VIZKIT": "ON",
         "ATLAS_LOGGING": "ON",
         "ATLAS_GOOGLE_TEST": "ON",
         "ATLAS_CUDA_TEST": "OFF",
@@ -123,16 +46,14 @@
 
     {
       "name": "cuda-debug",
-      "displayName": "Atlas CUDA Debug (Auto-detect CUDA toolchain/arch)",
-      "inherits": "base-ninja",
+      "displayName": "Atlas CUDA Debug",
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "ATLAS_USE_CUDA": "ON",
         "ATLAS_USE_TBB": "OFF",
-
         "ATLAS_USE_VIZKIT": "ON",
         "ATLAS_LOGGING": "ON",
-
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_CUDA_TEST": "OFF",
         "ATLAS_BENCHMARKS": "OFF"
@@ -140,69 +61,14 @@
     },
     {
       "name": "cuda-release",
-      "displayName": "Atlas CUDA Release (Auto-detect CUDA toolchain/arch)",
-      "inherits": "base-ninja",
+      "displayName": "Atlas CUDA Release",
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "ATLAS_USE_CUDA": "ON",
         "ATLAS_USE_TBB": "OFF",
-
         "ATLAS_USE_VIZKIT": "ON",
         "ATLAS_LOGGING": "ON",
-
-        "ATLAS_GOOGLE_TEST": "OFF",
-        "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "OFF"
-      }
-    },
-    {
-      "name": "cuda-relwithdebinfo",
-      "displayName": "Atlas CUDA RelWithDebInfo (Auto-detect CUDA toolchain/arch)",
-      "inherits": "base-ninja",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "ATLAS_USE_CUDA": "ON",
-        "ATLAS_USE_TBB": "OFF",
-
-        "ATLAS_USE_VIZKIT": "ON",
-        "ATLAS_LOGGING": "ON",
-
-        "ATLAS_GOOGLE_TEST": "OFF",
-        "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "OFF"
-      }
-    },
-
-
-    {
-      "name": "cuda-debug-core",
-      "displayName": "Atlas CUDA Debug Core (Auto-detect CUDA toolchain/arch)",
-      "inherits": "base-ninja",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "ATLAS_USE_CUDA": "ON",
-        "ATLAS_USE_TBB": "OFF",
-
-        "ATLAS_USE_VIZKIT": "OFF",
-        "ATLAS_LOGGING": "ON",
-
-        "ATLAS_GOOGLE_TEST": "OFF",
-        "ATLAS_CUDA_TEST": "OFF",
-        "ATLAS_BENCHMARKS": "OFF"
-      }
-    },
-    {
-      "name": "cuda-release-core",
-      "displayName": "Atlas CUDA Release Core (Auto-detect CUDA toolchain/arch)",
-      "inherits": "base-ninja",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "ATLAS_USE_CUDA": "ON",
-        "ATLAS_USE_TBB": "OFF",
-
-        "ATLAS_USE_VIZKIT": "OFF",
-        "ATLAS_LOGGING": "ON",
-
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_CUDA_TEST": "OFF",
         "ATLAS_BENCHMARKS": "OFF"
@@ -210,8 +76,8 @@
     },
     {
       "name": "cuda-debug-tests",
-      "displayName": "Atlas CUDA Debug Tests (atlas_all_cuda_test)",
-      "inherits": "base-ninja",
+      "displayName": "Atlas CUDA Debug Tests",
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "ATLAS_USE_CUDA": "ON",
@@ -226,19 +92,11 @@
   ],
 
   "buildPresets": [
-    { "name": "build-tbb-debug", "displayName": "Build TBB Debug", "configurePreset": "tbb-debug", "jobs": 0 },
-    { "name": "build-tbb-release", "displayName": "Build TBB Release", "configurePreset": "tbb-release", "jobs": 0 },
-    { "name": "build-tbb-relwithdebinfo", "displayName": "Build TBB RelWithDebInfo", "configurePreset": "tbb-relwithdebinfo", "jobs": 0 },
-    { "name": "build-tbb-debug-core", "displayName": "Build TBB Debug Core", "configurePreset": "tbb-debug-core", "jobs": 0 },
-    { "name": "build-tbb-release-core", "displayName": "Build TBB Release Core", "configurePreset": "tbb-release-core", "jobs": 0 },
-
-    { "name": "build-cuda-debug", "displayName": "Build CUDA Debug", "configurePreset": "cuda-debug", "jobs": 0 },
-    { "name": "build-cuda-release", "displayName": "Build CUDA Release", "configurePreset": "cuda-release", "jobs": 0 },
-    { "name": "build-cuda-relwithdebinfo", "displayName": "Build CUDA RelWithDebInfo", "configurePreset": "cuda-relwithdebinfo", "jobs": 0 },
-
-    { "name": "build-cuda-debug-core", "displayName": "Build CUDA Debug Core", "configurePreset": "cuda-debug-core", "jobs": 0 },
-    { "name": "build-cuda-release-core", "displayName": "Build CUDA Release Core", "configurePreset": "cuda-release-core", "jobs": 0 },
-    { "name": "build-cuda-debug-tests", "displayName": "Build CUDA Debug Tests", "configurePreset": "cuda-debug-tests", "jobs": 0 }
+    { "name": "build-tbb-debug",       "displayName": "Build TBB Debug",       "configurePreset": "tbb-debug",       "jobs": 0 },
+    { "name": "build-tbb-release",     "displayName": "Build TBB Release",     "configurePreset": "tbb-release",     "jobs": 0 },
+    { "name": "build-cuda-debug",      "displayName": "Build CUDA Debug",      "configurePreset": "cuda-debug",      "jobs": 0 },
+    { "name": "build-cuda-release",    "displayName": "Build CUDA Release",    "configurePreset": "cuda-release",    "jobs": 0 },
+    { "name": "build-cuda-debug-tests","displayName": "Build CUDA Debug Tests","configurePreset": "cuda-debug-tests","jobs": 0 }
   ],
 
   "testPresets": [
@@ -253,20 +111,6 @@
       "name": "ctest-tbb-release",
       "displayName": "CTest (TBB Release)",
       "configurePreset": "tbb-release",
-      "execution": { "noTestsAction": "error" },
-      "output": { "outputOnFailure": true }
-    },
-    {
-      "name": "ctest-tbb-debug-core",
-      "displayName": "CTest (TBB Debug Core)",
-      "configurePreset": "tbb-debug-core",
-      "execution": { "noTestsAction": "error" },
-      "output": { "outputOnFailure": true }
-    },
-    {
-      "name": "ctest-tbb-release-core",
-      "displayName": "CTest (TBB Release Core)",
-      "configurePreset": "tbb-release-core",
       "execution": { "noTestsAction": "error" },
       "output": { "outputOnFailure": true }
     }

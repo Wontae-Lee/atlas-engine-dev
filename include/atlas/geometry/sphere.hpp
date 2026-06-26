@@ -1,217 +1,165 @@
 #pragma once
 
 #include <atlas/memory/raw_pointer_cast.h>
+
 #include <utility>
 
-namespace atlas::geometry {
+namespace atlas {
 
 template <typename T>
 Sphere<T>::Sphere() noexcept
     : center(T(0), T(0), T(0))
     , radius(T(1)) {
-    // Construct a default sphere centered at the origin with unit radius.
-    //
-    // Default parameters:
-    // - center = (0, 0, 0)
-    // - radius = 1
-    //
-    // Bind the cached operator so all delegated geometry queries reference
-    // this object's member storage.
-    bind_operator();
 }
 
 template <typename T>
 Sphere<T>::Sphere(const Vector3<T>& center_, T radius_) noexcept
     : center(center_)
     , radius(radius_) {
-    // Construct a sphere directly from caller-provided center and radius.
-    //
-    // Bind the cached operator so the internal query adapter points to this
-    // sphere's actual member data.
-    bind_operator();
 }
 
 template <typename T>
 Sphere<T>::Sphere(const Sphere& other) noexcept
     : center(other.center)
     , radius(other.radius) {
-    // Copy the sphere parameters from another instance.
-    //
-    // Rebind the cached operator because it must refer to this object's
-    // members rather than the source object's members.
-    bind_operator();
 }
 
 template <typename T>
 Sphere<T>::Sphere(Sphere&& other) noexcept
     : center(std::move(other.center))
     , radius(other.radius) {
-    // Move or copy the sphere parameters into this object.
-    //
-    // Rebind this object's cached operator to the moved-in members.
-    bind_operator();
-
-    // Rebind the moved-from object's operator as well so its internal
-    // pointers remain consistent after the move.
-    other.bind_operator();
 }
 
 template <typename T>
 Sphere<T>&
 Sphere<T>::operator=(const Sphere& other) noexcept {
-    // Guard against self-assignment.
-    if (this == &other) return *this;
 
-    // Copy the sphere parameters from the source object.
+    if (this == &other) {
+        return *this;
+    }
+
     center = other.center;
     radius = other.radius;
 
-    // Rebind the cached operator so it points to this object's members.
-    bind_operator();
     return *this;
 }
 
 template <typename T>
 Sphere<T>&
 Sphere<T>::operator=(Sphere&& other) noexcept {
-    // Guard against self-move-assignment.
-    if (this == &other) return *this;
 
-    // Move or copy the sphere parameters from the source object.
+    if (this == &other) {
+        return *this;
+    }
+
     center = std::move(other.center);
     radius = other.radius;
 
-    // Rebind this object's cached operator.
-    bind_operator();
-
-    // Rebind the moved-from object's cached operator as well so its
-    // internal pointers continue to reference its own storage.
-    other.bind_operator();
     return *this;
 }
 
 template <typename T>
-void
-Sphere<T>::bind_operator() noexcept {
-    // Bind the cached sphere query operator to this instance's member storage.
-    //
-    // This keeps delegated geometry queries cheap while ensuring the operator
-    // always sees the current center and radius values.
-    _operator.center = atlas::raw_pointer_cast(&center);
-    _operator.radius = atlas::raw_pointer_cast(&radius);
+SphereGeometryOperator<T>
+Sphere<T>::make_sphere_operator() const noexcept {
+    SphereGeometryOperator<T> op {};
+    op.center = atlas::raw_pointer_cast(&center);
+    op.radius = atlas::raw_pointer_cast(&radius);
+    return op;
 }
 
 template <typename T>
 typename Sphere<T>::Builder
 Sphere<T>::builder() noexcept {
-    // Return a fresh builder object for staged sphere construction.
+
     return Builder {};
 }
 
 template <typename T>
 GeometryOperator<T>
-Sphere<T>::make_geometry_operator() const {
-    // Wrap the cached sphere-specific operator into the generic geometry
-    // operator interface expected by the wider geometry system.
-    return GeometryOperator<T>(_operator);
+Sphere<T>::make_device_geometry_view() const {
+    return GeometryOperator<T>(make_sphere_operator());
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-Sphere<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Forward the closest-point query to the cached bound operator.
-    return _operator.closest_point(p);
+atlas::Vector<T, 3>
+Sphere<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
+    return make_sphere_operator().closest_point(p);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-Sphere<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Forward the closest-normal query to the cached bound operator.
-    return _operator.closest_normal(p);
+atlas::Vector<T, 3>
+Sphere<T>::closest_normal(const atlas::Vector<T, 3>& p) const noexcept {
+    return make_sphere_operator().closest_normal(p);
 }
 
 template <typename T>
 T
-Sphere<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // Forward the signed-distance query to the cached bound operator.
-    return _operator.signed_distance(p);
+Sphere<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
+    return make_sphere_operator().signed_distance(p);
 }
 
 template <typename T>
 bool
-Sphere<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Forward inside classification to the cached bound operator.
-    return _operator.is_inside(p, tolerance);
+Sphere<T>::is_inside(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
+    return make_sphere_operator().is_inside(p, tolerance);
 }
 
 template <typename T>
 bool
-Sphere<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // Forward surface-band classification to the cached bound operator.
-    return _operator.is_on_surface(p, tolerance);
+Sphere<T>::is_on_surface(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
+    return make_sphere_operator().is_on_surface(p, tolerance);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
+atlas::Vector<T, 3>
 Sphere<T>::centroid() const noexcept {
-    // Forward centroid computation to the cached bound operator.
-    return _operator.centroid();
+    return make_sphere_operator().centroid();
 }
 
 template <typename T>
-atlas::spatial::AxisAlignedBoundingBox<T>
+atlas::AxisAlignedBoundingBox<T>
 Sphere<T>::bound() const noexcept {
-    // Forward bounding-box computation to the cached bound operator.
-    return _operator.bound();
+    return make_sphere_operator().bound();
 }
 
 template <typename T>
 bool
 Sphere<T>::is_valid() const noexcept {
-    // Forward validity testing to the cached bound operator.
-    return _operator.is_valid();
+    return make_sphere_operator().is_valid();
 }
 
 template <typename T>
 GeometryType
 Sphere<T>::type() const noexcept {
-    // Return the runtime geometry type tag for this concrete geometry.
+
     return GeometryType::Sphere;
 }
 
 template <typename T>
 Sphere<T>
 Sphere<T>::Builder::build() const {
-    // Validate the staged builder parameters before constructing the sphere.
+
     validate();
 
-    // Start from a default-constructed sphere so its cached operator is already
-    // bound to its own member storage.
     Sphere<T> s {};
-
-    // Overwrite the default sphere parameters with the validated builder state.
     s.center = _center;
     s.radius = _radius;
 
-    // No explicit rebind is required because the cached operator already points
-    // to `s`'s member storage and only the values were changed.
     return s;
 }
 
 template <typename T>
 atlas::host_shared_ptr<Sphere<T>>
 Sphere<T>::Builder::make_host_shared() const {
-    // Build the sphere by value first.
-    auto s = build();
 
-    // Move the built sphere into host-shared managed storage.
+    auto s = build();
     return atlas::make_host_shared<Sphere<T>>(std::move(s));
 }
 
 template <typename T>
 typename Sphere<T>::Builder&
 Sphere<T>::Builder::with_center(const Vector3<T>& c) noexcept {
-    // Store the sphere center in the builder's staged state.
+
     _center = c;
     return *this;
 }
@@ -219,7 +167,7 @@ Sphere<T>::Builder::with_center(const Vector3<T>& c) noexcept {
 template <typename T>
 typename Sphere<T>::Builder&
 Sphere<T>::Builder::with_radius(T r) noexcept {
-    // Store the sphere radius in the builder's staged state.
+
     _radius = r;
     return *this;
 }
@@ -227,209 +175,189 @@ Sphere<T>::Builder::with_radius(T r) noexcept {
 template <typename T>
 void
 Sphere<T>::Builder::validate() const {
-    // Reuse the runtime geometry-operator validity logic so the definition
-    // of a valid sphere remains centralized in one place.
-    atlas::geometry::SphereGeometryOperator<T> op;
+    atlas::SphereGeometryOperator<T> op;
 
     op.center = atlas::raw_pointer_cast(&_center);
     op.radius = atlas::raw_pointer_cast(&_radius);
 
-    // Reject invalid staged parameters with both a log message and an exception.
     if (!op.is_valid()) {
         throw std::runtime_error("Sphere::Builder: invalid parameters.");
     }
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-SphereGeometryOperator<T>::closest_point(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // If the operator is not fully bound, return the input point unchanged.
-    if (!center || !radius) return p;
+atlas::Vector<T, 3>
+SphereGeometryOperator<T>::closest_point(const atlas::Vector<T, 3>& p) const noexcept {
 
-    // Compute the vector from the sphere center to the query point.
-    const atlas::math::Vector<T, 3> v = p - *center;
-
-    // Squared distance from the center to the query point.
-    const T len2 = v.length_squared();
-
-    // Small threshold used to detect the degenerate case where the query point
-    // is numerically at the center.
-    const T e = std::numeric_limits<T>::epsilon();
-
-    if (len2 <= e) {
-        // At the exact center, the radial direction is undefined.
-        // Return a deterministic point on the sphere surface along +x.
-        return atlas::math::Vector<T, 3>((*center).x + *radius, (*center).y, (*center).z);
+    if (!center || !radius) {
+        return p;
     }
 
-    // Normalize the center-to-point direction and scale it by the sphere radius.
-    // This yields the closest point on the sphere surface.
-    const T inv_len = T(1) / static_cast<T>(std::sqrt(len2));
-    return (*center) + v * ((*radius) * inv_len);
+    const atlas::Vector<T, 3> v = p - *center;
+    const T e                   = std::numeric_limits<T>::epsilon();
+
+    const atlas::Vector<T, 3> direction = atlas::normalized_or(
+        v,
+        atlas::Vector<T, 3>(T(1), T(0), T(0)),
+        e);
+    return (*center) + direction * (*radius);
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
-SphereGeometryOperator<T>::closest_normal(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // If the operator is not fully bound, no meaningful normal can be computed.
-    if (!center || !radius) return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
+atlas::Vector<T, 3>
+SphereGeometryOperator<T>::closest_normal(const atlas::Vector<T, 3>& p) const noexcept {
 
-    // Vector from the sphere center to the query point.
-    const atlas::math::Vector<T, 3> v = p - *center;
-
-    // Squared length of that vector.
-    const T len2 = v.length_squared();
-
-    // Threshold for the degenerate case where the direction is undefined.
-    const T e = std::numeric_limits<T>::epsilon();
-
-    if (len2 <= e) {
-        // At the center, choose a deterministic outward normal along +x.
-        return atlas::math::Vector<T, 3>(T(1), T(0), T(0));
+    if (!center || !radius) {
+        return atlas::Vector<T, 3>(T(0), T(0), T(0));
     }
 
-    // Normalize the radial direction.
-    return v * (T(1) / static_cast<T>(std::sqrt(len2)));
+    const atlas::Vector<T, 3> v = p - *center;
+    const T e                   = std::numeric_limits<T>::epsilon();
+
+    return atlas::normalized_or(
+        v,
+        atlas::Vector<T, 3>(T(1), T(0), T(0)),
+        e);
 }
 
 template <typename T>
 T
-SphereGeometryOperator<T>::signed_distance(const atlas::math::Vector<T, 3>& p) const noexcept {
-    // If the operator is not fully bound, report an infinite distance so the
-    // query can be treated as invalid by the caller.
-    if (!center || !radius) return std::numeric_limits<T>::infinity();
+SphereGeometryOperator<T>::signed_distance(const atlas::Vector<T, 3>& p) const noexcept {
 
-    // Standard sphere signed-distance function:
-    // - negative inside
-    // - zero on the surface
-    // - positive outside
+    if (!center || !radius) {
+        return std::numeric_limits<T>::infinity();
+    }
+
     return (p - *center).length() - *radius;
 }
 
 template <typename T>
 bool
-SphereGeometryOperator<T>::is_inside(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // If the operator is not fully bound, containment cannot be established.
-    if (!center || !radius) return false;
+SphereGeometryOperator<T>::is_inside(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
 
-    // Expand the effective radius by the requested tolerance.
-    // Positive tolerance enlarges the admissible region.
+    if (!center || !radius) {
+        return false;
+    }
+
     const T expanded_radius = *radius + tolerance;
 
-    // If the expanded radius becomes negative, no point can be inside.
-    if (expanded_radius < T(0)) return false;
+    if (expanded_radius < T(0)) {
+        return false;
+    }
 
-    // Compare squared distances to avoid an unnecessary square root.
     return (p - *center).length_squared() <= expanded_radius * expanded_radius;
 }
 
 template <typename T>
 bool
-SphereGeometryOperator<T>::is_on_surface(const atlas::math::Vector<T, 3>& p, const T tolerance) const noexcept {
-    // A point is considered on the surface when its absolute signed distance
-    // lies within the specified tolerance band around zero.
-    return std::abs(signed_distance(p)) <= tolerance;
+SphereGeometryOperator<T>::is_on_surface(const atlas::Vector<T, 3>& p, const T tolerance) const noexcept {
+
+    if (!center || !radius || !(*radius > T(0)) || tolerance < T(0)) {
+        return false;
+    }
+
+    const T outer_radius = *radius + tolerance;
+    const T inner_radius = (*radius > tolerance) ? *radius - tolerance : T(0);
+    const T d2           = (p - *center).length_squared();
+
+    return d2 >= inner_radius * inner_radius
+        && d2 <= outer_radius * outer_radius;
 }
 
 template <typename T>
-atlas::math::Vector<T, 3>
+atlas::Vector<T, 3>
 SphereGeometryOperator<T>::centroid() const noexcept {
-    // If the center pointer is missing, return the origin as a safe fallback.
-    if (!center) return atlas::math::Vector<T, 3>(T(0), T(0), T(0));
 
-    // The centroid of a sphere is its center.
+    if (!center) {
+        return atlas::Vector<T, 3>(T(0), T(0), T(0));
+    }
+
     return *center;
 }
 
 template <typename T>
-atlas::spatial::AxisAlignedBoundingBox<T>
+atlas::AxisAlignedBoundingBox<T>
 SphereGeometryOperator<T>::bound() const noexcept {
-    // If the operator is not fully bound, return a default-constructed AABB.
-    if (!center || !radius) return atlas::spatial::AxisAlignedBoundingBox<T>();
 
-    // The sphere's AABB extends by exactly `radius` along all three axes.
-    const atlas::math::Vector<T, 3> dr(*radius, *radius, *radius);
-    return atlas::spatial::AxisAlignedBoundingBox<T>((*center) - dr, (*center) + dr);
+    if (!center || !radius) {
+        return atlas::AxisAlignedBoundingBox<T>();
+    }
+
+    const atlas::Vector<T, 3> dr(*radius, *radius, *radius);
+
+    return atlas::AxisAlignedBoundingBox<T>((*center) - dr, (*center) + dr);
 }
 
 template <typename T>
 bool
 SphereGeometryOperator<T>::is_valid() const noexcept {
-    // Radius pointer must be present.
-    if (!radius) return false;
 
-    // A valid sphere requires a strictly positive radius.
-    //
-    // Note:
-    // - this implementation checks radius only
-    // - it does not explicitly verify finiteness of center coordinates here
+    if (!radius) {
+        return false;
+    }
+
     return (*radius) > T(0);
 }
 
 template <typename T>
 HitSurface<T>
-SphereGeometryOperator<T>::trace(const atlas::spatial::Ray<T>& ray) const noexcept {
-    // Initialize the return record in the default "no intersection" state.
+SphereGeometryOperator<T>::trace(const atlas::Ray<T>& ray) const noexcept {
     HitSurface<T> result {};
-    if (!center || !radius) return result;
 
-    // Alias the sphere center and radius for readability.
-    const atlas::math::Vector<T, 3>& c = *center;
-    const T r                          = *radius;
+    if (!center || !radius) {
+        return result;
+    }
 
-    // Vector from the sphere center to the ray origin.
-    const atlas::math::Vector<T, 3> oc = ray.origin - c;
+    const atlas::Vector<T, 3>& c = *center;
+    const T r                    = *radius;
 
-    // Quadratic coefficients for ray-sphere intersection:
-    //   |origin + t * direction - center|^2 = r^2
+    const atlas::Vector<T, 3> oc = ray.origin - c;
+
     const T a  = ray.direction.length_squared();
     const T b  = T(2) * oc.dot(ray.direction);
     const T cc = oc.length_squared() - r * r;
 
-    // Discriminant determines whether a real intersection exists.
     const T disc = b * b - T(4) * a * cc;
-    if (disc < T(0)) return result;
+    if (disc < T(0)) {
+        return result;
+    }
 
-    // Compute the two quadratic roots.
-    const T sqrt_disc = static_cast<T>(std::sqrt(disc));
+    const T sqrt_disc = atlas::sqrt_nonnegative(disc);
     const T inv2a     = T(0.5) / a;
-    const T t0        = (-b - sqrt_disc) * inv2a;
-    const T t1        = (-b + sqrt_disc) * inv2a;
 
-    // Reject when both roots lie behind the ray origin.
-    if (t0 < T(0) && t1 < T(0)) return result;
+    const T t0 = (-b - sqrt_disc) * inv2a;
+    const T t1 = (-b + sqrt_disc) * inv2a;
 
-    // Select the nearest non-negative intersection parameter.
+    if (t0 < T(0) && t1 < T(0)) {
+        return result;
+    }
+
     T t = std::numeric_limits<T>::infinity();
-    if (t0 >= T(0)) t = t0;
-    if (t1 >= T(0) && t1 < t) t = t1;
 
-    // Populate the hit record.
+    if (t0 >= T(0)) {
+        t = t0;
+    }
+
+    if (t1 >= T(0) && t1 < t) {
+        t = t1;
+    }
+
     result.is_intersecting = true;
     result.distance        = t;
     result.point           = ray.point_at(t);
 
-    // Compute the outward normal at the hit point.
-    atlas::math::Vector<T, 3> n = result.point - c;
-    const T len2                = n.length_squared();
+    result.normal = atlas::normalized_or(
+        result.point - c,
+        atlas::Vector<T, 3>(T(1), T(0), T(0)));
 
-    if (len2 > T(0)) {
-        // Normalize the radial direction when it is well-defined.
-        n *= (T(1) / static_cast<T>(std::sqrt(len2)));
-    } else {
-        // Degenerate fallback if the normal cannot be resolved numerically.
-        n = atlas::math::Vector<T, 3>(T(1), T(0), T(0));
-    }
-
-    result.normal = n;
     return result;
 }
 
 template <typename T>
 HitSurface<T>
-SphereGeometryOperator<T>::operator()(const atlas::spatial::Ray<T>& ray) const noexcept {
-    // Function-call convenience wrapper around the explicit ray-trace routine.
+SphereGeometryOperator<T>::operator()(const atlas::Ray<T>& ray) const noexcept {
+
     return trace(ray);
 }
 
-} // namespace atlas::geometry
+}

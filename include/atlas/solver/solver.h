@@ -4,10 +4,10 @@
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/searcher/searcher.h>
 #include <atlas/universe/universe.h>
 
-namespace atlas::system {
+namespace atlas {
 
 template <typename T>
 class Solver {
@@ -17,7 +17,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     Solver(UniverseHostPtr<T> universe,
            FluidHostPtr<T> fluid,
-           SpatialHashingSearcherHostPtr<T> searcher) noexcept
+           SearcherHostPtr<T> searcher) noexcept
         : _universe(std::move(universe))
         , _fluid(std::move(fluid))
         , _searcher(std::move(searcher)) { }
@@ -35,7 +35,7 @@ protected:
 
     FluidHostPtr<T> _fluid {};
 
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 };
 
 }
@@ -43,12 +43,12 @@ protected:
 namespace atlas {
 
 template <typename T>
-using Solve = atlas::system::Solver<T>;
+using Solve = atlas::Solver<T>;
 
 template <typename T>
-using SolveHostPtr = atlas::host_shared_ptr<atlas::system::Solver<T>>;
+using SolveHostPtr = atlas::host_shared_ptr<atlas::Solver<T>>;
 
 template <typename T>
-using SolveDevicePtr = atlas::device_shared_ptr<atlas::system::Solver<T>>;
+using SolveDevicePtr = atlas::device_shared_ptr<atlas::Solver<T>>;
 
 }

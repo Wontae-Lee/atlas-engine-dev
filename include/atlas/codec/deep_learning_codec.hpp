@@ -2,13 +2,15 @@
 
 #include <atlas/logging/logging.h>
 
-namespace atlas::system {
+#include <cstddef>
+#include <stdexcept>
+#include <utility>
+
+namespace atlas {
 
 template <typename T>
 typename DeepLearningCodec<T>::Builder
 DeepLearningCodec<T>::builder() noexcept {
-
-    // Return a default-initialized builder for fluent DeepLearningCodec construction.
     return Builder {};
 }
 
@@ -16,36 +18,23 @@ template <typename T>
 DeepLearningCodec<T>::DeepLearningCodec(UniverseHostPtr<T> domain,
                                         FluidHostPtr<T> fluid,
                                         SpatialHashingSearcherHostPtr<T> searcher)
-    : Codec<T>(std::move(domain), std::move(fluid), std::move(searcher)) {
-
-    // Initialize or restore the codec state after the base dependencies
-    // have been installed.
-    this->reset();
-}
+    : Codec<T>(std::move(domain), std::move(fluid), std::move(searcher)) { }
 
 template <typename T>
 void
 DeepLearningCodec<T>::encode() {
-    // Encoding logic is not implemented yet.
-    //
-    // This function currently acts as an extension point for future
-    // deep-learning-based feature extraction or latent-state encoding.
+    static_cast<void>(this->make_probe());
 }
 
 template <typename T>
 void
 DeepLearningCodec<T>::decode() {
-    // Decoding logic is not implemented yet.
-    //
-    // This function currently acts as an extension point for future
-    // reconstruction or inference-based state decoding.
+    static_cast<void>(this->make_probe());
 }
 
 template <typename T>
 typename DeepLearningCodec<T>::Builder&
 DeepLearningCodec<T>::Builder::with_domain(UniverseHostPtr<T> domain) noexcept {
-
-    // Store the universe/domain dependency for later construction.
     _domain = std::move(domain);
     return *this;
 }
@@ -53,8 +42,6 @@ DeepLearningCodec<T>::Builder::with_domain(UniverseHostPtr<T> domain) noexcept {
 template <typename T>
 typename DeepLearningCodec<T>::Builder&
 DeepLearningCodec<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
-
-    // Store the fluid dependency for later construction.
     _fluid = std::move(fluid);
     return *this;
 }
@@ -62,43 +49,71 @@ DeepLearningCodec<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 template <typename T>
 typename DeepLearningCodec<T>::Builder&
 DeepLearningCodec<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
-
-    // Store the spatial hashing searcher dependency for later construction.
     _searcher = std::move(searcher);
+    return *this;
+}
+
+template <typename T>
+typename DeepLearningCodec<T>::Builder&
+DeepLearningCodec<T>::Builder::with_fixed_solver(DeviceBuffer<int> fixed_solver) noexcept {
+    _fixed_solver = std::move(fixed_solver);
+    return *this;
+}
+
+template <typename T>
+typename DeepLearningCodec<T>::Builder&
+DeepLearningCodec<T>::Builder::with_fixed_region(DeviceBuffer<int> fixed_region) noexcept {
+    _fixed_region = std::move(fixed_region);
     return *this;
 }
 
 template <typename T>
 void
 DeepLearningCodec<T>::Builder::validate() const {
-
-    // All required dependencies must be present before a valid codec can be built.
     atlas::check<std::invalid_argument>(static_cast<bool>(_domain))
         << "DeepLearningCodec::Builder: universe must not be null.";
     atlas::check<std::invalid_argument>(static_cast<bool>(_fluid))
         << "DeepLearningCodec::Builder: fluid must not be null.";
     atlas::check<std::invalid_argument>(static_cast<bool>(_searcher))
         << "DeepLearningCodec::Builder: searcher must not be null.";
+
+    const auto cell_count = static_cast<std::size_t>(_domain->number_of_cells());
+    atlas::check<std::invalid_argument>(_fixed_solver.empty() || _fixed_solver.size() == cell_count)
+        << "DeepLearningCodec::Builder: fixed_solver size must match universe cell count.";
+    atlas::check<std::invalid_argument>(_fixed_region.empty() || _fixed_region.size() == cell_count)
+        << "DeepLearningCodec::Builder: fixed_region size must match universe cell count.";
 }
 
 template <typename T>
 DeepLearningCodec<T>
 DeepLearningCodec<T>::Builder::build() const {
-
-    // Validate the builder configuration before constructing a value object.
     validate();
 
-    return DeepLearningCodec<T>(_domain, _fluid, _searcher);
+    auto codec = DeepLearningCodec<T>(_domain, _fluid, _searcher);
+    if (!_fixed_solver.empty()) {
+        codec.set_fixed_solver(_fixed_solver);
+    }
+    if (!_fixed_region.empty()) {
+        codec.set_fixed_region(_fixed_region);
+    }
+
+    return codec;
 }
 
 template <typename T>
 atlas::host_shared_ptr<DeepLearningCodec<T>>
 DeepLearningCodec<T>::Builder::make_host_shared() const {
-
-    // Validate the builder configuration before constructing a shared instance.
     validate();
 
-    return atlas::make_host_shared<DeepLearningCodec<T>>(_domain, _fluid, _searcher);
+    auto codec = atlas::make_host_shared<DeepLearningCodec<T>>(_domain, _fluid, _searcher);
+    if (!_fixed_solver.empty()) {
+        codec->set_fixed_solver(_fixed_solver);
+    }
+    if (!_fixed_region.empty()) {
+        codec->set_fixed_region(_fixed_region);
+    }
+
+    return codec;
 }
 
-} // namespace atlas::system
+}

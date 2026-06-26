@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/geometry_operator.h>
@@ -8,64 +8,83 @@
 
 namespace {
 
-using T = float;
-using Vec3 = atlas::Vector3<T>;
+using atlas::Box;
+using atlas::GeometryOperator;
+using atlas::Vector3F;
+using atlas::SpawnOperator;
+using atlas::SpawnType;
+using atlas::SurfaceSpawnOperator;
+using atlas::VolumeSpawnOperator;
 
-atlas::GeometryOperator<T>
+GeometryOperator<float>
 make_box_operator() {
-    static const auto box = atlas::geometry::Box<T>::builder()
-                                .with_lower_corner(Vec3(-1, -1, -1))
-                                .with_upper_corner(Vec3(1, 1, 1))
+    static const auto box = Box<float>::builder()
+                                .with_lower_corner(Vector3F(-1, -1, -1))
+                                .with_upper_corner(Vector3F(1, 1, 1))
                                 .build();
-    return box.make_geometry_operator();
+    return box.make_device_geometry_view();
 }
 
 } // namespace
 
 TEST(SpawnOperator, SurfaceOperatorDetectsSurfacePoints) {
+    // Arrange: create a box geometry query operator.
     const auto geometry_operator = make_box_operator();
 
-    EXPECT_TRUE(atlas::fluid::SurfaceSpawnOperator<T>::spawn(geometry_operator, Vec3(1, 0, 0), 0.0f));
-    EXPECT_FALSE(atlas::fluid::SurfaceSpawnOperator<T>::spawn(geometry_operator, Vec3(0, 0, 0), 0.0f));
+    // Assert: surface spawning accepts boundary points and rejects interior points.
+    EXPECT_TRUE(SurfaceSpawnOperator<float>::spawn(geometry_operator, Vector3F(1, 0, 0), 0.0f));
+    EXPECT_FALSE(SurfaceSpawnOperator<float>::spawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
 }
 
 TEST(SpawnOperator, VolumeOperatorDetectsInteriorPoints) {
+    // Arrange: create a box geometry query operator.
     const auto geometry_operator = make_box_operator();
 
-    EXPECT_TRUE(atlas::fluid::VolumeSpawnOperator<T>::spawn(geometry_operator, Vec3(0, 0, 0), 0.0f));
-    EXPECT_FALSE(atlas::fluid::VolumeSpawnOperator<T>::spawn(geometry_operator, Vec3(3, 0, 0), 0.0f));
+    // Assert: volume spawning accepts interior points and rejects exterior points.
+    EXPECT_TRUE(VolumeSpawnOperator<float>::spawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
+    EXPECT_FALSE(VolumeSpawnOperator<float>::spawn(geometry_operator, Vector3F(3, 0, 0), 0.0f));
 }
 
 TEST(SpawnOperator, DefaultConstructorCreatesSurfaceVariant) {
-    const atlas::fluid::SpawnOperator<T> spawn_operator;
+    // Arrange: create a default runtime spawn operator.
+    const SpawnOperator<float> spawn_operator;
 
-    EXPECT_EQ(spawn_operator.type, atlas::fluid::SpawnType::Surface);
+    // Assert: the default variant is surface spawning.
+    EXPECT_EQ(spawn_operator.type, SpawnType::Surface);
 }
 
 TEST(SpawnOperator, ExplicitTypeConstructorSelectsRequestedVariant) {
-    const atlas::fluid::SpawnOperator<T> volume_operator(atlas::fluid::SpawnType::Volume);
+    // Arrange: create a runtime spawn operator with an explicit volume type.
+    const SpawnOperator<float> volume_operator(SpawnType::Volume);
 
-    EXPECT_EQ(volume_operator.type, atlas::fluid::SpawnType::Volume);
+    // Assert: the requested variant is stored.
+    EXPECT_EQ(volume_operator.type, SpawnType::Volume);
 }
 
 TEST(SpawnOperator, CopyConstructionAndAssignmentPreserveType) {
-    const atlas::fluid::SpawnOperator<T> original(atlas::fluid::SpawnType::Volume);
-    const atlas::fluid::SpawnOperator<T> copied(original);
+    // Arrange: create a runtime spawn operator with a non-default type.
+    const SpawnOperator<float> original(SpawnType::Volume);
 
-    atlas::fluid::SpawnOperator<T> assigned;
+    // Act: copy-construct and copy-assign runtime spawn operators.
+    const SpawnOperator<float> copied(original);
+
+    SpawnOperator<float> assigned;
     assigned = original;
 
-    EXPECT_EQ(copied.type, atlas::fluid::SpawnType::Volume);
-    EXPECT_EQ(assigned.type, atlas::fluid::SpawnType::Volume);
+    // Assert: copied operators preserve the active type.
+    EXPECT_EQ(copied.type, SpawnType::Volume);
+    EXPECT_EQ(assigned.type, SpawnType::Volume);
 }
 
 TEST(SpawnOperator, SpawnDispatchesToActiveVariant) {
+    // Arrange: create surface and volume runtime spawn operators.
     const auto geometry_operator = make_box_operator();
-    const atlas::fluid::SpawnOperator<T> surface_operator(atlas::fluid::SpawnType::Surface);
-    const atlas::fluid::SpawnOperator<T> volume_operator(atlas::fluid::SpawnType::Volume);
+    const SpawnOperator<float> surface_operator(SpawnType::Surface);
+    const SpawnOperator<float> volume_operator(SpawnType::Volume);
 
-    EXPECT_TRUE(surface_operator.spawn(geometry_operator, Vec3(1, 0, 0), 0.0f));
-    EXPECT_FALSE(surface_operator.spawn(geometry_operator, Vec3(0, 0, 0), 0.0f));
-    EXPECT_TRUE(volume_operator.spawn(geometry_operator, Vec3(0, 0, 0), 0.0f));
-    EXPECT_FALSE(volume_operator.spawn(geometry_operator, Vec3(2, 0, 0), 0.0f));
+    // Assert: dispatch follows the active runtime variant.
+    EXPECT_TRUE(surface_operator.spawn(geometry_operator, Vector3F(1, 0, 0), 0.0f));
+    EXPECT_FALSE(surface_operator.spawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
+    EXPECT_TRUE(volume_operator.spawn(geometry_operator, Vector3F(0, 0, 0), 0.0f));
+    EXPECT_FALSE(volume_operator.spawn(geometry_operator, Vector3F(2, 0, 0), 0.0f));
 }

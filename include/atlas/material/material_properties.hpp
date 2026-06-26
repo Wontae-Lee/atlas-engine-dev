@@ -1,80 +1,63 @@
 #pragma once
-
 #include <stdexcept>
 #include <utility>
-
-namespace atlas::system {
-
+namespace atlas {
 template <typename T>
 typename MaterialProperties<T>::Builder
 MaterialProperties<T>::builder() noexcept {
-    // Return a fresh builder object for staged construction of
-    // `MaterialProperties<T>`.
-    //
-    // The builder path is useful when material parameters are supplied
-    // progressively and validated before the final object is created.
     return Builder {};
 }
 
 template <typename T>
 MaterialProperties<T>
 MaterialProperties<T>::Builder::build() const {
-    // Validate the staged builder state before constructing
-    // the final material-properties object.
     validate();
-
-    // Start from a default-constructed material-properties instance.
     MaterialProperties<T> p {};
-
-    // Use the explicitly configured material type when present.
-    // Otherwise fall back to `MaterialType::Molecule` as the default.
-    p.type = _type.value_or(MaterialType::Molecule);
-
-    // Mass must be provided explicitly.
-    p.mass = *_mass;
-
-    // Copy the molecular mass.
-    p.molecular_mass = _molecular_mass;
-
-    // Copy energy-related material properties.
-    p.translational_energy = _translational_energy;
-    p.rotational_energy    = _rotational_energy;
-    p.vibrational_energy   = _vibrational_energy;
-
-    // Copy species classification identifier.
-    p.species_id = _species_id;
-
-    // Copy transport / collision / continuum-style parameters.
-    p.collision_diameter   = _collision_diameter;
-    p.viscosity_index      = _viscosity_index;
-    p.scattering_parameter = _scattering_parameter;
-    p.rest_density         = _rest_density;
-    p.pressure_coefficient = _pressure_coefficient;
-    p.dynamic_viscosity    = _dynamic_viscosity;
-    p.smoothing_length     = _smoothing_length;
-
-    // Copy electro-physical properties.
-    p.electronic_energy = _electronic_energy;
-    p.charge            = _charge;
-
-    // Return the fully materialized properties object.
+    p.type                                   = _type.value_or(MaterialType::Molecule);
+    p.mass                                   = *_mass;
+    p.molecular_mass                         = _molecular_mass;
+    p.translational_energy                   = _translational_energy;
+    p.rotational_energy                      = _rotational_energy;
+    p.vibrational_energy                     = _vibrational_energy;
+    p.rotational_dof                         = _rotational_dof;
+    p.vibrational_dof                        = _vibrational_dof;
+    p.rotational_temperature                 = _rotational_temperature;
+    p.characteristic_vibrational_temperature = _characteristic_vibrational_temperature;
+    p.max_vibrational_quantum                = _max_vibrational_quantum;
+    p.gamma_quant                            = _gamma_quant;
+    p.interaction_id                         = _interaction_id;
+    p.fully_ionized                          = _fully_ionized;
+    p.polyatomic_molecule                    = _polyatomic_molecule;
+    p.species_id                             = _species_id;
+    p.reference_diameter                     = _reference_diameter;
+    p.reference_temperature                  = _reference_temperature;
+    p.viscosity_index                        = _viscosity_index;
+    p.scattering_parameter                   = _scattering_parameter;
+    p.rotational_relaxation_probability      = _rotational_relaxation_probability;
+    p.vibrational_relaxation_probability     = _vibrational_relaxation_probability;
+    p.rotational_relaxation_c1               = _rotational_relaxation_c1;
+    p.rotational_relaxation_c2               = _rotational_relaxation_c2;
+    p.rotational_relaxation_c3               = _rotational_relaxation_c3;
+    p.vibrational_relaxation_c1              = _vibrational_relaxation_c1;
+    p.vibrational_relaxation_c2              = _vibrational_relaxation_c2;
+    p.rest_density                           = _rest_density;
+    p.pressure_coefficient                   = _pressure_coefficient;
+    p.dynamic_viscosity                      = _dynamic_viscosity;
+    p.electronic_energy                      = _electronic_energy;
+    p.charge                                 = _charge;
     return p;
 }
 
 template <typename T>
 atlas::host_shared_ptr<MaterialProperties<T>>
 MaterialProperties<T>::Builder::make_host_shared() const {
-    // Build the validated material-properties object by value first.
     auto p = build();
-
-    // Move the built object into host-shared managed storage.
     return atlas::make_host_shared<MaterialProperties<T>>(std::move(p));
 }
 
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_type(const MaterialType::Value t) {
-    // Store the material type in the builder's staged state.
     _type = t;
     return *this;
 }
@@ -82,14 +65,10 @@ MaterialProperties<T>::Builder::with_type(const MaterialType::Value t) {
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_mass(T m) {
-    // Reject non-positive mass immediately because mass is a required
-    // physical parameter and must be strictly greater than zero.
     if (!(m > T(0))) {
         throw std::invalid_argument(
             "MaterialProperties::Builder: mass must be > 0.");
     }
-
-    // Store the validated mass in the builder.
     _mass = m;
     return *this;
 }
@@ -97,14 +76,10 @@ MaterialProperties<T>::Builder::with_mass(T m) {
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_molecular_mass(T m) {
-    // Reject non-positive molecular mass immediately because it must be
-    // physically meaningful when provided.
     if (!(m > T(0))) {
         throw std::invalid_argument(
             "MaterialProperties::Builder: molecular_mass must be > 0.");
     }
-
-    // Store the validated molecular mass in the builder.
     _molecular_mass = m;
     return *this;
 }
@@ -112,7 +87,6 @@ MaterialProperties<T>::Builder::with_molecular_mass(T m) {
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_translational_energy(T e) {
-    // Store translational energy metadata.
     _translational_energy = e;
     return *this;
 }
@@ -120,7 +94,6 @@ MaterialProperties<T>::Builder::with_translational_energy(T e) {
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_rotational_energy(T e) {
-    // Store rotational energy metadata.
     _rotational_energy = e;
     return *this;
 }
@@ -128,31 +101,113 @@ MaterialProperties<T>::Builder::with_rotational_energy(T e) {
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_vibrational_energy(T e) {
-    // Store vibrational energy metadata.
     _vibrational_energy = e;
     return *this;
 }
 
 template <typename T>
 typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rotational_dof(int dof) {
+    if (dof != 0 && dof != 2 && dof != 3) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: rotational_dof must be 0, 2, or 3.");
+    }
+    _rotational_dof = dof;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_vibrational_dof(int dof) {
+    if (dof < 0 || dof % 2 != 0) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: vibrational_dof must be non-negative and even.");
+    }
+    _vibrational_dof = dof;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rotational_temperature(T temperature) {
+    if (!(temperature > T(0))) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: rotational_temperature must be > 0.");
+    }
+    _rotational_temperature = temperature;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_characteristic_vibrational_temperature(T temperature) {
+    if (!(temperature > T(0))) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: characteristic_vibrational_temperature must be > 0.");
+    }
+    _characteristic_vibrational_temperature = temperature;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_max_vibrational_quantum(int quantum) {
+    _max_vibrational_quantum = quantum;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_gamma_quant(T gamma) {
+    _gamma_quant = gamma;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_interaction_id(int id) {
+    _interaction_id = id;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_fully_ionized(bool value) {
+    _fully_ionized = value;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_polyatomic_molecule(bool value) {
+    _polyatomic_molecule = value;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_species_id(int id) {
-    // Store the species identifier used to classify this material.
     _species_id = id;
     return *this;
 }
 
 template <typename T>
 typename MaterialProperties<T>::Builder&
-MaterialProperties<T>::Builder::with_collision_diameter(T d_ref) {
-    // Store the reference collision diameter.
-    _collision_diameter = d_ref;
+MaterialProperties<T>::Builder::with_reference_diameter(T d_ref) {
+    _reference_diameter = d_ref;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_reference_temperature(T t_ref) {
+    _reference_temperature = t_ref;
     return *this;
 }
 
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_viscosity_index(T omega) {
-    // Store the viscosity index or related transport exponent.
     _viscosity_index = omega;
     return *this;
 }
@@ -160,15 +215,60 @@ MaterialProperties<T>::Builder::with_viscosity_index(T omega) {
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_scattering_parameter(T alpha) {
-    // Store the scattering parameter used by the interaction model.
     _scattering_parameter = alpha;
     return *this;
 }
 
 template <typename T>
 typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rotational_relaxation_probability(T probability) {
+    if (probability < T(0) || probability > T(1)) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: rotational_relaxation_probability must be in [0, 1].");
+    }
+    _rotational_relaxation_probability = probability;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_vibrational_relaxation_probability(T probability) {
+    if (probability < T(0) || probability > T(1)) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: vibrational_relaxation_probability must be in [0, 1].");
+    }
+    _vibrational_relaxation_probability = probability;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_rotational_relaxation_coefficients(T c1, T c2, T c3) {
+    if (!(c1 > T(0))) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: rotational_relaxation_c1 must be > 0.");
+    }
+    _rotational_relaxation_c1 = c1;
+    _rotational_relaxation_c2 = c2;
+    _rotational_relaxation_c3 = c3;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
+MaterialProperties<T>::Builder::with_vibrational_relaxation_coefficients(T c1, T c2) {
+    if (!(c1 > T(0))) {
+        throw std::invalid_argument(
+            "MaterialProperties::Builder: vibrational_relaxation_c1 must be > 0.");
+    }
+    _vibrational_relaxation_c1 = c1;
+    _vibrational_relaxation_c2 = c2;
+    return *this;
+}
+
+template <typename T>
+typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_rest_density(T rho0) {
-    // Store the reference or rest density.
     _rest_density = rho0;
     return *this;
 }
@@ -176,7 +276,6 @@ MaterialProperties<T>::Builder::with_rest_density(T rho0) {
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_pressure_coefficient(T k) {
-    // Store the pressure-law coefficient.
     _pressure_coefficient = k;
     return *this;
 }
@@ -184,23 +283,13 @@ MaterialProperties<T>::Builder::with_pressure_coefficient(T k) {
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_dynamic_viscosity(T mu) {
-    // Store the dynamic viscosity.
     _dynamic_viscosity = mu;
     return *this;
 }
 
 template <typename T>
 typename MaterialProperties<T>::Builder&
-MaterialProperties<T>::Builder::with_smoothing_length(T h) {
-    // Store the smoothing length used by kernel- or particle-based models.
-    _smoothing_length = h;
-    return *this;
-}
-
-template <typename T>
-typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_electronic_energy(T e) {
-    // Store electronic energy metadata.
     _electronic_energy = e;
     return *this;
 }
@@ -208,7 +297,6 @@ MaterialProperties<T>::Builder::with_electronic_energy(T e) {
 template <typename T>
 typename MaterialProperties<T>::Builder&
 MaterialProperties<T>::Builder::with_charge(int q) {
-    // Store the material or particle charge state.
     _charge = q;
     return *this;
 }
@@ -216,16 +304,14 @@ MaterialProperties<T>::Builder::with_charge(int q) {
 template <typename T>
 void
 MaterialProperties<T>::Builder::validate() const {
-    // Mass and molecular_mass are mandatory parameters in the current builder contract.
     if (!_mass.has_value()) {
         throw std::invalid_argument(
             "MaterialProperties::Builder: mass must be provided.");
     }
-
     if (!(_molecular_mass > T(0))) {
         throw std::invalid_argument(
             "MaterialProperties::Builder: molecular_mass must be provided.");
     }
 }
 
-} // namespace atlas::system
+}

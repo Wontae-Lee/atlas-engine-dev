@@ -5,345 +5,127 @@
 #endif
 
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
 
-namespace {
+using namespace atlas;
 
-using T    = float;
-using Vec3 = atlas::Vector3<T>;
+int
+main() {
+    // Use single precision for this example to reduce memory traffic and improve
+    // throughput in particle-heavy DSMC-style simulations.
+    using T = float;
 
-namespace config {
+    // -------------------------------------------------------------------------
+    // 1. Observer, material, and velocity-generation configuration
+    // -------------------------------------------------------------------------
+    // This block defines the runtime observer, nitrogen material properties, and
+    // the Maxwell-Boltzmann generator used by source emission.
 
-    /**
-     * @brief Thermodynamic, molecular, and time-integration parameters used by the example.
-     *
-     * This example models nitrogen gas flowing around an imported intake triangle mesh.
-     * Particles are emitted from a circular source placed above the intake region and
-     * then evolve under:
-     * - DSMC particle-particle collisions
-     * - collisions against the imported mesh collider
-     * - sink removal outside the padded simulation domain
-     *
-     * Emitted particles are sampled from a Maxwell-Boltzmann distribution centered
-     * around the configured bulk inflow velocity.
-     */
-    constexpr T kTemperature           = 300.0f;
-    constexpr T kDt                    = 2.5e-5f;
-    constexpr std::size_t kBufferSize  = 500000;
-    constexpr T kNitrogenMolecularMass = 4.651734e-26f;
-    constexpr T kNitrogenDiameter      = 4.17e-10f;
+    // Create an observer with pre-reserved metric storage for source/sink data.
+    const auto observer = Observer::builder()
+                              .with_source_sensor_matrics(4096)
+                              .with_sink_sensor_matrics(4096)
+                              .make_host_shared();
 
-    /**
-     * @brief Spatial discretization and source sampling density parameters.
-     *
-     * `kCellSize` defines the Cartesian background grid resolution shared by the
-     * spatial hashing searcher and the DSMC collision solver.
-     *
-     * `kSourceSpacing` controls how densely the circular source surface is sampled
-     * when generating candidate emission positions. Smaller values produce a denser
-     * particle stream but also increase runtime cost.
-     */
-    constexpr T kCellSize      = 0.25f;
-    constexpr T kSourceSpacing = 0.15f;
+    // Store one material species. The current example models a single molecular gas.
+    HostBuffer<MaterialProperties<T>> material_properties(1);
 
-    /**
-     * @brief Viewer size used by the Vizkit execution path.
-     */
-    constexpr int kViewerWidth  = 1440;
-    constexpr int kViewerHeight = 900;
+    // Store one generator. Its index is expected to match the material/species setup.
+    HostBuffer<GeneratorHostPtr<T>> generators(1);
 
-    /**
-     * @brief Headless execution and observer preallocation settings.
-     *
-     * `kHeadlessSteps` specifies how many simulation steps are executed when Vizkit
-     * is not enabled.
-     *
-     * `kObserverReserveCount` pre-reserves observer metric storage to reduce dynamic
-     * allocations during the run.
-     */
-    constexpr int kHeadlessSteps                = 1000;
-    constexpr std::size_t kObserverReserveCount = 4096;
+    // Configure the nitrogen molecule properties.
+    material_properties[0] = MaterialProperties<T>::builder()
+                                 // Mark this species as a molecule rather than a wall,
+                                 // marker, or other possible material category.
+                                 .with_type(MaterialType::Molecule)
 
-    /**
-     * @brief Imported intake mesh processing and derived domain construction settings.
-     *
-     * The intake OBJ asset is assumed to already use meter-scale coordinates, so the
-     * mesh only needs to be uniformly scaled and re-centered around the world origin.
-     *
-     * The simulation domain is constructed from the intake mesh axis-aligned bounding
-     * box expanded by `kDomainPadding`.
-     *
-     * The particle source is positioned slightly below the upper domain boundary and
-     * offset forward toward the intake entrance.
-     */
-    constexpr T kIntakeMeshScale = 1.0f;
-    const Vec3 kDomainPadding(0.5f, 4.0f, 2.0f);
-    constexpr T kSourceInset         = 0.10f;
-    constexpr T kSourceRadiusPad     = 0.18f;
-    constexpr T kSourceForwardOffset = 0.45f;
+                                 // Set the particle mass in kilograms.
+                                 .with_mass(4.651734e-26f)
 
-    /**
-     * @brief Initial collider orientation and rotational motion settings.
-     *
-     * The intake mesh is initialized with a small tilt and continuously rotated so
-     * that collider motion remains visible in both the simulation and Vizkit.
-     *
-     * Because the simulation time step is very small, the visual angular speed must
-     * be comparatively large to make the motion perceptible.
-     */
-    constexpr T kColliderTiltXRad = -0.18f;
-    constexpr T kColliderTiltZRad = 0.10f;
-    constexpr T kColliderSpinRate = 640.0f;
-    const Vec3 kColliderSpinAxis(0.0f, 1.0f, 0.25f);
+                                 // Set the molecular mass used by thermal velocity generation.
+                                 .with_molecular_mass(4.651734e-26f)
 
-    /**
-     * @brief Bulk drift velocity assigned to emitted particles.
-     *
-     * Emission is not drift-free in this example. Newly spawned particles are drawn
-     * from a thermal distribution centered around this inflow velocity.
-     */
-    const Vec3 kBulkVelocity(0.0f, -5000.0f, 0.0f);
-
-    /**
-     * @brief Surface interaction settings used by the intake collider.
-     *
-     * The collider uses a fully diffuse reflection model:
-     * - cosine-weighted hemisphere sampling for outgoing directions
-     * - TMAC = 1, which always selects the diffuse branch
-     * - restitution = 1, which preserves incident speed magnitude
-     */
-    constexpr atlas::system::DiffuseSampling kDiffuseSampling
-        = atlas::system::DiffuseSampling::CosineWeighted;
-    constexpr T kRestitution                     = 1.0f;
-    constexpr T kTangentialMomentumAccommodation = 1.0f;
-
-    /**
-     * @brief DSMC kernel type used for particle-particle collisions.
-     */
-    constexpr atlas::system::DsmcKernelType kDsmcKernelType
-        = atlas::system::DsmcKernelType::hard_sphere;
-
-    /**
-     * @brief Measurement mode used for macroscopic diagnostics.
-     *
-     * `Field` stores measured quantities on the universe grid. This is sufficient
-     * for this example because the result is used only as a cell-wise diagnostic and
-     * is not written back into per-particle state.
-     */
-    constexpr atlas::MeasureModeType kMeasureMode = atlas::MeasureModeType::Field;
-
-    /**
-     * @brief Rendering colors and window title used by Vizkit.
-     */
-    const atlas::Vector4<T> kParticleColor(0.10f, 0.74f, 0.92f, 0.40f);
-    const atlas::Vector4<T> kColliderColor(0.92f, 0.96f, 0.98f, 0.80f);
-    constexpr const char* kViewerTitle = "Atlas DSMC Nitrogen Intake Flow";
-
-} // namespace config
-
-/**
- * @brief Return the output directory used for observer CSV export.
- *
- * The path is resolved relative to the current source file so exported observer
- * diagnostics are written next to the example source tree.
- *
- * @return Filesystem path to the observer output directory.
- */
-std::filesystem::path
-observer_output_path() {
-    return std::filesystem::path(__FILE__).parent_path() / "observer_output";
-}
-
-/**
- * @brief Return the filesystem path of the intake OBJ mesh asset.
- *
- * The path is resolved relative to the example source location.
- *
- * @return Filesystem path to the intake mesh OBJ file.
- */
-std::filesystem::path
-intake_mesh_path() {
-    return std::filesystem::path(__FILE__).parent_path().parent_path().parent_path()
-        / "assets"
-        / "intake"
-        / "intake.obj";
-}
-
-/**
- * @brief Create a rigid world-space unit for the given geometry.
- *
- * The geometry defines the local shape of the object. The sync object stores the
- * rigid transform used by runtime collision queries and Vizkit layers. When an
- * angular velocity is provided, the unit also carries rotational motion.
- *
- * @param geometry Geometry to wrap in a unit.
- * @param translation World-space translation of the unit origin.
- * @param orientation World-space orientation of the unit.
- * @param angular_velocity Optional angular velocity vector. When null, the unit
- *        is created without rotational velocity.
- * @return Host-shared pointer to the constructed unit.
- */
-atlas::UnitHostPtr<T>
-make_unit(const atlas::GeometryHostPtr<T>& geometry,
-          const Vec3& translation                 = Vec3(0, 0, 0),
-          const atlas::Quaternion<T>& orientation = atlas::Quaternion<T>(1, 0, 0, 0),
-          const Vec3* angular_velocity            = nullptr) {
-    const auto sync = atlas::Sync<T>::builder()
-                          .with_rigid_pose(translation, orientation)
-                          .make_host_shared();
-
-    auto builder = atlas::Unit<T>::builder();
-    builder.with_geometry(geometry).with_sync(sync);
-
-    if (angular_velocity != nullptr) {
-        builder.with_angular_velocity(*angular_velocity);
-    }
-
-    return builder.make_host_shared();
-}
-
-/**
- * @brief Build the initial orientation applied to the intake collider.
- *
- * The intake starts with a fixed tilt around the x- and z-axes.
- *
- * @return Quaternion representing the initial collider orientation.
- */
-atlas::Quaternion<T>
-make_collider_orientation() {
-    return atlas::Quaternion<T>::from_euler_xyz(
-        config::kColliderTiltXRad,
-        T(0),
-        config::kColliderTiltZRad);
-}
-
-/**
- * @brief Create the fluid container and configure its species and emission generator.
- *
- * Atlas fluids store:
- * - material and species properties
- * - host-configured generator models
- * - fixed-capacity particle state buffers
- *
- * This example uses a single nitrogen species, so both the material property
- * table and the generator table contain exactly one entry.
- *
- * @param observer Observer used to collect runtime metrics.
- * @return Host-shared pointer to the configured fluid.
- */
-atlas::FluidHostPtr<T>
-make_fluid(const atlas::ObserverHostPtr& observer) {
-    atlas::HostBuffer<atlas::MatrialProperties<T>> material_properties(1);
-    atlas::HostBuffer<atlas::GeneratorHostPtr<T>> generators(1);
-
-    /**
-     * @brief Configure the nitrogen material record required by the DSMC solver.
-     *
-     * The hard-sphere kernel reads at least:
-     * - molecular_mass
-     * - collision_diameter
-     *
-     * `species_id` is also assigned so the runtime retains an explicit species
-     * label for the particle population.
-     */
-    material_properties[0] = atlas::MatrialProperties<T>::builder()
-                                 .with_type(atlas::MaterialType::Molecule)
-                                 .with_mass(config::kNitrogenMolecularMass)
-                                 .with_molecular_mass(config::kNitrogenMolecularMass)
+                                 // Assign a species identifier. With only one species, zero is used.
                                  .with_species_id(0)
-                                 .with_collision_diameter(config::kNitrogenDiameter)
+
+                                 // Set the reference collision diameter used by hard-sphere models.
+                                 .with_reference_diameter(4.17e-10f)
+
+                                 // Finalize the immutable material-property object.
                                  .build();
 
-    /**
-     * @brief Configure the Maxwell-Boltzmann emission generator with imposed drift.
-     *
-     * Newly emitted particles are sampled from a thermal distribution centered on
-     * the configured bulk inflow velocity.
-     */
-    generators[0] = atlas::fluid::MaxwellBoltzmannGenerator<T>::builder()
-                        .with_temperature(config::kTemperature)
-                        .with_molecular_mass(config::kNitrogenMolecularMass)
-                        .with_bulk_velocity(config::kBulkVelocity)
+    // Configure the velocity generator for newly spawned particles.
+    generators[0] = MaxwellBoltzmannGenerator<T>::builder()
+                        // Use 300 K as the thermal temperature of the injected gas.
+                        .with_temperature(300.0f)
+
+                        // Use the same molecular mass as the configured material species.
+                        .with_molecular_mass(4.651734e-26f)
+
+                        // Add a macroscopic drift velocity along -y.
+                        .with_bulk_velocity(Vector3F(0.0f, -5000.0f, 0.0f))
+
+                        // Use a fixed seed so generated velocity samples are reproducible.
                         .with_seed(42u)
+
+                        // Allocate the generator in host-managed shared ownership.
                         .make_host_shared();
 
-    return atlas::fluid::Fluid<T>::builder()
-        .with_buffer_size(config::kBufferSize)
-        .with_properties(material_properties)
-        .with_generators(generators)
-        .with_observer(observer)
-        .make_host_shared();
-}
+    // Create the fluid particle storage and attach material/generator metadata.
+    const auto fluid = Fluid<T>::builder()
+                           // Reserve storage for up to 500,000 particles.
+                           .with_buffer_size(500000)
 
-/**
- * @brief Build the circular source geometry from the padded simulation bounds.
- *
- * The source disk is positioned slightly below the upper y boundary of the padded
- * domain and shifted forward along z toward the intake opening. Its radius is
- * derived from the smaller of the x- and z-extents of the padded domain with an
- * additional padding margin removed.
- *
- * @param padded_bounds Axis-aligned bounds of the padded simulation domain.
- * @return Host-shared pointer to the circular source geometry.
- */
-atlas::GeometryHostPtr<T>
-make_source_geometry(const atlas::spatial::AxisAlignedBoundingBox<T>& padded_bounds) {
-    const Vec3 extents = padded_bounds.extents();
-    const T radius     = std::max(
-        T(0.05),
-        T(0.5) * std::min(extents.x, extents.z) - config::kSourceRadiusPad);
-    const Vec3 center(
-        0.0f,
-        padded_bounds.upper_corner.y - config::kSourceInset,
-        config::kSourceForwardOffset);
+                           // Attach the single-species material table.
+                           .with_properties(material_properties)
 
-    return atlas::geometry::Circle<T>::builder()
-        .with_center(center)
-        .with_normal(Vec3(0.0f, -1.0f, 0.0f))
-        .with_radius(radius)
-        .make_host_shared();
-}
+                           // Attach the velocity generator table used by source injection.
+                           .with_generators(generators)
 
-/**
- * @brief Load, validate, normalize, and build the intake triangle mesh geometry.
- *
- * The OBJ mesh is loaded from disk, its raw bounds are computed, and the mesh is
- * re-centered around the world origin. The imported coordinates are assumed to
- * already be in meters, so only a uniform scale factor is applied.
- *
- * Degenerate triangles are discarded. For each retained triangle, a normalized
- * geometric normal is recomputed and stored in the fourth slot of the triangle
- * container.
- *
- * @throws std::runtime_error Thrown when no valid triangles remain after
- *         filtering and normal reconstruction.
- * @return Host-shared pointer to the processed triangle mesh geometry.
- */
-atlas::GeometryHostPtr<T>
-make_intake_geometry() {
-    auto mesh = atlas::geometry::TriangleMesh<T>::builder()
-                    .load_from_obj(intake_mesh_path().string())
+                           // Attach the observer used by runtime metrics.
+                           .with_observer(observer)
+
+                           // Allocate the fluid object in host-managed shared ownership.
+                           .make_host_shared();
+
+    // -------------------------------------------------------------------------
+    // 2. Imported mesh and derived regions
+    // -------------------------------------------------------------------------
+    // This block loads the intake OBJ asset, recenters the mesh, rebuilds triangle
+    // normals, derives a padded domain, and creates the circular source.
+
+    // Resolve the intake OBJ path relative to this source file.
+    const auto intake_mesh_path = std::filesystem::path(__FILE__).parent_path().parent_path().parent_path()
+                                  / "assets"
+                                  / "intake"
+                                  / "intake.obj";
+
+    // Load the raw triangle mesh from disk.
+    auto mesh = TriangleMesh<T>::builder()
+                    .load_from_obj(intake_mesh_path.string())
                     .build();
 
-    atlas::spatial::AxisAlignedBoundingBox<T> raw_bounds;
+    // Compute the raw mesh bounds before recentering.
+    AxisAlignedBoundingBox<T> raw_bounds;
     for (const auto& triangle : mesh.triangles) {
         raw_bounds.merge(triangle.a());
         raw_bounds.merge(triangle.b());
         raw_bounds.merge(triangle.c());
     }
 
-    const Vec3 raw_center = raw_bounds.center();
-    atlas::HostBuffer<atlas::TriangleContainer4<T>> processed_triangles;
-
+    // Recenter the mesh around the origin and discard degenerate triangles.
+    const Vector3F raw_center = raw_bounds.center();
+    HostBuffer<TriangleContainer4<T>> processed_triangles;
     for (const auto& triangle : mesh.triangles) {
-        atlas::TriangleContainer4<T> transformed_triangle = triangle;
-        transformed_triangle.a()                          = (triangle.a() - raw_center) * config::kIntakeMeshScale;
-        transformed_triangle.b()                          = (triangle.b() - raw_center) * config::kIntakeMeshScale;
-        transformed_triangle.c()                          = (triangle.c() - raw_center) * config::kIntakeMeshScale;
+        TriangleContainer4<T> transformed_triangle = triangle;
+        transformed_triangle.a()                   = (triangle.a() - raw_center) * 1.0f;
+        transformed_triangle.b()                   = (triangle.b() - raw_center) * 1.0f;
+        transformed_triangle.c()                   = (triangle.c() - raw_center) * 1.0f;
 
-        Vec3 geometric_normal = atlas::math::cross(
+        Vector3F geometric_normal = cross(
             transformed_triangle.b() - transformed_triangle.a(),
             transformed_triangle.c() - transformed_triangle.a());
 
@@ -361,276 +143,323 @@ make_intake_geometry() {
         throw std::runtime_error("Failed to build a valid intake triangle mesh.");
     }
 
+    // Store the processed triangles in the mesh geometry.
     mesh.set_triangles(processed_triangles);
-    return atlas::make_host_shared<atlas::geometry::TriangleMesh<T>>(std::move(mesh));
-}
+    const auto intake_geometry = make_host_shared<TriangleMesh<T>>(std::move(mesh));
 
-/**
- * @brief Build the padded axis-aligned simulation domain from mesh bounds.
- *
- * The universe and sink operate on a regular box domain rather than the exact
- * intake mesh volume. This helper expands the mesh bounding box by the configured
- * padding in each axis.
- *
- * @param mesh_bounds Axis-aligned bounds of the intake mesh geometry.
- * @return Host-shared pointer to the padded box geometry.
- */
-atlas::GeometryHostPtr<T>
-make_domain_geometry(const atlas::spatial::AxisAlignedBoundingBox<T>& mesh_bounds) {
-    return atlas::geometry::Box<T>::builder()
-        .with_lower_corner(mesh_bounds.lower_corner - config::kDomainPadding)
-        .with_upper_corner(mesh_bounds.upper_corner + config::kDomainPadding)
-        .make_host_shared();
-}
+    // Build a padded box domain from the intake mesh bounds.
+    const auto intake_bounds = intake_geometry->bound();
+    const auto domain_geometry = Box<T>::builder()
+                                     .with_lower_corner(intake_bounds.lower_corner - Vector3F(0.5f, 4.0f, 2.0f))
+                                     .with_upper_corner(intake_bounds.upper_corner + Vector3F(0.5f, 4.0f, 2.0f))
+                                     .make_host_shared();
 
-/**
- * @brief Construct the wall interaction model used by the intake collider.
- *
- * Diffuse reflection randomizes the outgoing direction according to the selected
- * sampling model. The reflected speed magnitude remains controlled by the
- * restitution parameter.
- *
- * @return Configured collider surface interaction descriptor.
- */
-atlas::system::ColliderSurfaceInteraction<T>
-make_collider_interaction() {
-    return atlas::system::ColliderSurfaceInteraction<T>::builder()
-        .with_diffuse_sampling(config::kDiffuseSampling)
-        .with_restitution(config::kRestitution)
-        .with_tangential_momentum_accommodation(config::kTangentialMomentumAccommodation)
-        .with_temperature(config::kTemperature)
-        .build();
-}
+    // Build a circular source near the upper y boundary of the padded domain.
+    const auto domain_bounds = domain_geometry->bound();
+    const Vector3F domain_extents = domain_bounds.extents();
+    const T source_radius = std::max(
+        T(0.05),
+        T(0.5) * std::min(domain_extents.x, domain_extents.z) - T(0.18));
+    const auto source_geometry = Circle<T>::builder()
+                                     .with_center(Vector3F(0.0f, domain_bounds.upper_corner.y - 0.10f, 0.45f))
+                                     .with_normal(Vector3F(0.0f, -1.0f, 0.0f))
+                                     .with_radius(source_radius)
+                                     .make_host_shared();
 
-} // namespace
+    // -------------------------------------------------------------------------
+    // 3. Core simulation containers
+    // -------------------------------------------------------------------------
+    // This block creates the universe, spatial searcher, DSMC solver, field
+    // measurer, and orchestrator.
 
-/**
- * @brief Entry point of the DSMC nitrogen intake-flow example.
- *
- * The program assembles the full runtime pipeline, including:
- * - observer and particle storage
- * - imported intake mesh collider
- * - padded Cartesian simulation domain
- * - spatial hashing searcher
- * - DSMC collision solver and macroscopic measurer
- * - circular source, sink, and rotating collider unit
- * - optional Vizkit visualization
- *
- * When Vizkit is enabled, the example runs interactively. Otherwise the same
- * simulation pipeline is executed headlessly for a fixed number of steps.
- *
- * @return Process exit code.
- */
-int
-main() {
-    const auto observer = atlas::Observer::builder()
-                              .with_source_sensor_matrics(config::kObserverReserveCount)
-                              .with_sink_sensor_matrics(config::kObserverReserveCount)
-                              .make_host_shared();
-
-    /**
-     * @brief Create the fluid first because most runtime subsystems depend on it.
-     */
-    const auto fluid = make_fluid(observer);
-
-    /**
-     * @brief Build the intake mesh, padded domain, and source geometry.
-     *
-     * The universe is defined over a padded axis-aligned box derived from the
-     * intake mesh bounds because the searcher and DSMC solver operate on a regular
-     * Cartesian grid.
-     */
-    const auto intake_geometry = make_intake_geometry();
-    const auto intake_bounds   = intake_geometry->bound();
-    const auto domain_geometry = make_domain_geometry(intake_bounds);
-    const auto source_geometry = make_source_geometry(domain_geometry->bound());
-    const auto domain_bounds   = domain_geometry->bound();
-
-    /**
-     * @brief Create the universe that owns the regular background cell grid.
-     *
-     * The spatial hashing searcher and DSMC solver both reuse this grid.
-     */
-    const auto universe = atlas::Universe<T>::builder()
+    // Create the Cartesian simulation universe from the padded domain bounds.
+    const auto universe = Universe<T>::builder()
+                              // Define the lower corner of the computational domain.
                               .with_lower_corner(domain_bounds.lower_corner)
+
+                              // Define the upper corner of the computational domain.
                               .with_upper_corner(domain_bounds.upper_corner)
-                              .with_cell_size(config::kCellSize)
+
+                              // Use a uniform cell size for spatial hashing and cell-wise DSMC.
+                              .with_cell_size(0.25f)
+
+                              // Attach the observer used by runtime metrics.
                               .with_observer(observer)
+
+                              // Allocate the universe object in host-managed shared ownership.
                               .make_host_shared();
 
-    /**
-     * @brief Create the spatial hashing searcher used for particle binning.
-     *
-     * Each update maps active particles into grid cells so the DSMC solver can
-     * efficiently query local collision neighborhoods.
-     */
-    const auto searcher = atlas::SpatialHashingSearcher<T>::builder()
+    // Build a spatial hashing searcher that maps particles to universe cells.
+    const auto searcher = SpatialHashingSearcher<T>::builder()
+                              // Attach the simulation domain used to define the grid.
                               .with_universe(universe)
+
+                              // Attach the particle container that will be indexed.
                               .with_fluid(fluid)
+
+                              // Allocate the searcher in host-managed shared ownership.
                               .make_host_shared();
 
-    /**
-     * @brief Build the DSMC solver responsible for particle-particle collisions.
-     */
-    const auto dsmc_solver = atlas::DsmcNtcSolver<T>::builder()
-                                 .with_universe(universe)
-                                 .with_fluid(fluid)
-                                 .with_searcher(searcher)
-                                 .with_kernel_type(config::kDsmcKernelType)
-                                 .make_host_shared();
+    // Configure the DSMC collision solver.
+    const auto dsmc_solver = make_host_shared<DsmcSolver<T>>(
+        universe,
+        fluid,
+        searcher,
+        DsmcKernelType::hard_sphere);
 
-    /**
-     * @brief Build the measurer that computes macroscopic cell fields.
-     *
-     * After particles have been assigned to cells, the measurer derives cell-wise
-     * diagnostic quantities such as bulk velocity and temperature.
-     */
-    const auto measurer = atlas::BoltzmanMeasurer<T>::builder()
+    // Configure the field measurer.
+    const auto measurer = BoltzmanMeasurer<T>::builder()
+                              // Attach the universe to define measurement cells.
                               .with_universe(universe)
+
+                              // Attach the fluid to sample particle states.
                               .with_fluid(fluid)
+
+                              // Attach the searcher to access particles in cell order.
                               .with_searcher(searcher)
-                              .with_measure_mode(config::kMeasureMode)
+
+                              // Measure field quantities rather than only global quantities.
+                              .with_measure_mode(MeasureModeType::Field)
+
+                              // Allocate the measurer in host-managed shared ownership.
                               .make_host_shared();
 
-    /**
-     * @brief Build the orchestrator that owns the internal search-measure-solve sequence.
-     */
-    const auto orchestrator = atlas::Orchestrator<T>::builder()
+    // Combine search, collision solving, and measurement into one solver pipeline.
+    const auto orchestrator = Orchestrator<T>::builder()
+                                  // Attach the shared universe object.
                                   .with_universe(universe)
+
+                                  // Attach the shared fluid object.
                                   .with_fluid(fluid)
+
+                                  // Attach the spatial searcher used before solver/measurer work.
                                   .with_searcher(searcher)
+
+                                  // Attach the measurer to collect field data during updates.
                                   .with_measurer(measurer)
+
+                                  // Attach the DSMC solver that performs collision updates.
                                   .with_solver(dsmc_solver)
+
+                                  // Allocate the orchestrator in host-managed shared ownership.
                                   .make_host_shared();
 
-    /**
-     * @brief Build the shared units used by runtime systems and Vizkit.
-     *
-     * The intake collider unit is initialized with a tilted orientation and a
-     * constant angular velocity so the mesh rotates during the simulation.
-     */
-    const auto collider_orientation = make_collider_orientation();
-    const auto collider_spin        = config::kColliderSpinAxis * config::kColliderSpinRate;
+    // -------------------------------------------------------------------------
+    // 4. Shared transform state and units
+    // -------------------------------------------------------------------------
+    // Geometry objects are wrapped in units. A unit combines geometry with a
+    // synchronization object that stores its rigid pose.
 
-    const auto domain_unit = make_unit(domain_geometry);
-    const auto source_unit = make_unit(source_geometry);
-    const auto intake_unit = make_unit(
-        intake_geometry,
-        Vec3(0, 0, 0),
-        collider_orientation,
-        &collider_spin);
+    const auto sync = Sync<T>::builder()
+                          // Place the static geometries at the origin with identity rotation.
+                          .with_rigid_pose(Vector3F(0, 0, 0), Quaternion<T>(1, 0, 0, 0))
 
-    /**
-     * @brief Create the surface source that emits particles from the circular disk.
-     *
-     * The source samples positions on the disk surface and assigns velocities using
-     * the configured thermal generator with imposed bulk inflow.
-     */
-    const auto source = atlas::fluid::Source<T>::builder()
-                            .with_units(atlas::HostBuffer<atlas::Unit<T>> { *source_unit })
-                            .with_fluid(fluid)
-                            .with_observer(observer)
-                            .with_spawn_types(atlas::HostBuffer<atlas::fluid::SpawnType> {
-                                atlas::fluid::SpawnType::Surface,
-                            })
-                            .with_spawn_operator(
-                                atlas::fluid::SpawnOperator<T>(atlas::fluid::SpawnType::Surface))
-                            .with_spacing(config::kSourceSpacing)
-                            .with_temperature(config::kTemperature)
-                            .make_host_shared();
-
-    /**
-     * @brief Create the sink that removes particles leaving the padded domain box.
-     *
-     * The sink operates on the padded axis-aligned bounding box rather than the
-     * exact intake mesh shape.
-     */
-    const auto sink = atlas::fluid::Sink<T>::builder()
-                          .with_units(atlas::HostBuffer<atlas::Unit<T>> { *domain_unit })
-                          .with_fluid(fluid)
-                          .with_observer(observer)
-                          .with_despawn_types(atlas::HostBuffer<atlas::fluid::DespawnType> {
-                              atlas::fluid::DespawnType::Volume,
-                          })
-                          .with_despawn_operator(
-                              atlas::fluid::DespawnOperator<T>(atlas::fluid::DespawnType::Volume))
-                          .with_flip(true)
+                          // Allocate the sync object in host-managed shared ownership.
                           .make_host_shared();
 
-    /**
-     * @brief Create the collider that reflects particles on the intake triangle mesh.
-     *
-     * `with_flip(true)` inverts the default sidedness handling so the collision
-     * response is applied on the intended side of the imported surface.
-     */
-    const auto collider = atlas::Collider<T>::builder()
+    const auto collider_sync = Sync<T>::builder()
+                                   // Tilt the intake collider around x and z at startup.
+                                   .with_rigid_pose(
+                                       Vector3F(0, 0, 0),
+                                       Quaternion<T>::from_euler_xyz(-0.18f, T(0), 0.10f))
+
+                                   // Allocate the collider sync object in host-managed ownership.
+                                   .make_host_shared();
+
+    const auto domain_unit = Unit<T>::builder()
+                                 // Attach the full-domain geometry.
+                                 .with_geometry(domain_geometry)
+
+                                 // Attach the shared identity transform.
+                                 .with_sync(sync)
+
+                                 // Allocate the unit in host-managed shared ownership.
+                                 .make_host_shared();
+
+    const auto source_unit = Unit<T>::builder()
+                                 // Attach the circular source geometry.
+                                 .with_geometry(source_geometry)
+
+                                 // Attach the shared identity transform.
+                                 .with_sync(sync)
+
+                                 // Allocate the unit in host-managed shared ownership.
+                                 .make_host_shared();
+
+    const auto intake_unit = Unit<T>::builder()
+                                 // Attach the imported intake mesh geometry.
+                                 .with_geometry(intake_geometry)
+
+                                 // Attach the tilted collider transform.
+                                 .with_sync(collider_sync)
+
+                                 // Rotate the collider during simulation.
+                                 .with_angular_velocity(Vector3F(0.0f, 1.0f, 0.25f) * 640.0f)
+
+                                 // Allocate the unit in host-managed shared ownership.
+                                 .make_host_shared();
+
+    // -------------------------------------------------------------------------
+    // 5. Boundary and interaction systems
+    // -------------------------------------------------------------------------
+    // This block defines how particles enter, leave, and interact with geometry.
+
+    // Configure circular surface particle injection.
+    const auto source = Source<T>::builder()
+                            // Use the source unit as the injection region.
+                            .with_units(HostBuffer<Unit<T>> { *source_unit })
+
+                            // Attach the particle container that receives new particles.
+                            .with_fluid(fluid)
+
+                            // Attach the observer used by runtime metrics.
+                            .with_observer(observer)
+
+                            // Spawn particles on the surface of the source geometry.
+                            .with_spawn_types(HostBuffer<SpawnType> {
+                                SpawnType::Surface,
+                            })
+
+                            // Use a surface spawn operator matching the selected spawn type.
+                            .with_spawn_operator(SpawnOperator<T>(SpawnType::Surface))
+
+                            // Set the approximate particle spacing on the source disk.
+                            .with_spacing(0.15f)
+
+                            // Use the same thermal temperature as the velocity generator.
+                            .with_temperature(300.0f)
+
+                            // Allocate the source in host-managed shared ownership.
+                            .make_host_shared();
+
+    // Configure particle removal at the padded domain boundary.
+    const auto sink = Sink<T>::builder()
+                          // Use the padded domain unit as the sink reference region.
+                          .with_units(HostBuffer<Unit<T>> { *domain_unit })
+
+                          // Attach the particle container from which particles are removed.
+                          .with_fluid(fluid)
+
+                          // Attach the observer used by runtime metrics.
+                          .with_observer(observer)
+
+                          // Evaluate despawning using the volume of the domain geometry.
+                          .with_despawn_types(HostBuffer<DespawnType> {
+                              DespawnType::Volume,
+                          })
+
+                          // Use a volume despawn operator matching the selected despawn type.
+                          .with_despawn_operator(DespawnOperator<T>(DespawnType::Volume))
+
+                          // Flip the volume test so particles outside the domain are removed.
+                          .with_flip(true)
+
+                          // Allocate the sink in host-managed shared ownership.
+                          .make_host_shared();
+
+    // Configure particle interaction with the intake triangle mesh.
+    const auto collider = Collider<T>::builder()
+                              // Attach the fluid whose particles will be tested against the collider.
                               .with_fluid(fluid)
-                              .with_units(atlas::HostBuffer<atlas::Unit<T>> { *intake_unit })
+
+                              // Use the rotating intake unit as the solid obstacle.
+                              .with_units(HostBuffer<Unit<T>> { *intake_unit })
+
+                              // Define one surface-interaction model for the intake mesh.
                               .with_surface_interactions(
-                                  atlas::HostBuffer<atlas::system::ColliderSurfaceInteraction<T>> {
-                                      make_collider_interaction(),
+                                  HostBuffer<IsothermalSurfaceInteraction<T>> {
+                                      IsothermalSurfaceInteraction<T>::builder()
+                                          // Use cosine-weighted diffuse reflection.
+                                          .with_diffuse_sampling(DiffuseSampling::CosineWeighted)
+
+                                          // Preserve incident speed magnitude.
+                                          .with_restitution(1.0f)
+
+                                          // Use full momentum accommodation.
+                                          .with_momentum_acc(1.0f)
+
+                                          // Store the wall temperature used by the interaction model.
+                                          .with_temperature(300.0f)
+
+                                          // Finalize the surface-interaction object.
+                                          .build(),
                                   })
+
+                              // Invert collider sidedness for the imported mesh orientation.
                               .with_flip(true)
+
+                              // Allocate the collider in host-managed shared ownership.
                               .make_host_shared();
 
-    /**
-     * @brief Assemble the top-level simulation system.
-     *
-     * The per-update execution order is:
-     * - source emits new particles
-     * - orchestrator performs search, measurement, and DSMC collision solving
-     * - collider resolves intake-mesh wall interactions
-     * - sink removes particles that escaped the padded simulation domain
-     */
-    const auto system = atlas::System<T>::builder()
+    // -------------------------------------------------------------------------
+    // 6. Full system assembly
+    // -------------------------------------------------------------------------
+    // The System object owns the high-level update sequence. It receives the
+    // fluid, domain, source/sink/collider systems, solver pipeline, and timestep.
+
+    const auto system = System<T>::builder()
+                            // Attach the particle container.
                             .with_fluid(fluid)
+
+                            // Attach the computational domain.
                             .with_domain(universe)
+
+                            // Attach particle injection.
                             .with_source(source)
+
+                            // Attach particle removal.
                             .with_sink(sink)
+
+                            // Attach particle-surface collision handling.
                             .with_collider(collider)
+
+                            // Attach the orchestrated DSMC and measurement pipeline.
                             .with_solver(orchestrator)
-                            .with_dt(config::kDt)
+
+                            // Set the simulation timestep in seconds.
+                            .with_dt(2.5e-5f)
+
+                            // Allocate the full simulation system in host-managed shared ownership.
                             .make_host_shared();
 
 #ifdef ATLAS_ENABLE_VIZKIT
-    /**
-     * @brief Run the interactive Vizkit visualization path.
-     */
-    atlas::vizkit::Viewer<T> viewer = atlas::vizkit::Viewer<T>::builder()
-                                          .with_system(system)
-                                          .with_title(config::kViewerTitle)
-                                          .with_size(config::kViewerWidth, config::kViewerHeight)
-                                          .build();
+    // -------------------------------------------------------------------------
+    // 7. Interactive visualization
+    // -------------------------------------------------------------------------
+    // Run the interactive Vizkit path when visualization support is enabled.
 
-    /**
-     * @brief Frame the initial camera around the padded simulation bounds.
-     */
+    vizkit::Viewer<T> viewer = vizkit::Viewer<T>::builder()
+                                   // Attach the full simulation system.
+                                   .with_system(system)
+
+                                   // Configure the viewer window.
+                                   .with_title("Atlas DSMC Nitrogen Intake Flow")
+                                   .with_size(1440, 900)
+
+                                   // Build the viewer.
+                                   .build();
+
+    // Frame the initial camera around the padded simulation bounds.
     viewer.camera().fit_bounds(domain_bounds.lower_corner, domain_bounds.upper_corner);
 
-    /**
-     * @brief Render the live particle cloud.
-     */
+    // Render the live particle cloud.
     viewer.add_layer(
-        atlas::vizkit::ParticleLayer<T>::builder()
+        vizkit::ParticleLayer<T>::builder()
             .with_system(system)
-            .with_color(config::kParticleColor)
+            .with_color(Vector4<T>(0.10f, 0.74f, 0.92f, 0.40f))
             .make_shared());
 
-    /**
-     * @brief Render the padded simulation domain as a wireframe reference box.
-     */
+    // Render the padded simulation domain as a wireframe reference box.
     viewer.add_layer(
-        atlas::vizkit::BoxLayer<T>::builder()
+        vizkit::BoxLayer<T>::builder()
             .with_unit(domain_unit)
             .make_shared());
 
-    /**
-     * @brief Render the imported intake mesh as a semi-transparent reference layer.
-     */
-    const auto intake_layer = atlas::vizkit::TriangleMeshLayer<T>::builder()
+    // Render the imported intake mesh as a semi-transparent reference layer.
+    const auto intake_layer = vizkit::TriangleMeshLayer<T>::builder()
                                   .with_unit(intake_unit)
                                   .make_shared();
-    intake_layer->set_color(config::kColliderColor);
+    intake_layer->set_color(Vector4<T>(0.92f, 0.96f, 0.98f, 0.80f));
     viewer.add_layer(intake_layer);
 
     std::cout
@@ -638,24 +467,26 @@ main() {
            "flow around a rotating imported triangle-mesh collider.\n";
 
     const int exit_code = viewer.run();
-    observer->export_csv(observer_output_path());
+    observer->export_csv(std::filesystem::path(__FILE__).parent_path() / "observer_output");
     return exit_code;
 #else
-    /**
-     * @brief Run the headless fallback path for non-Vizkit builds.
-     *
-     * This path keeps the example runnable in environments without OpenGL or GLFW
-     * while still exercising the same simulation pipeline.
-     */
-    for (int step = 0; step < config::kHeadlessSteps; ++step) {
+    // -------------------------------------------------------------------------
+    // 7. Headless time integration
+    // -------------------------------------------------------------------------
+    // Run a fixed number of update steps when Vizkit is not enabled.
+
+    for (int step = 0; step < 1000; ++step) {
+        // Advance the simulation by one timestep.
         system->update();
     }
 
+    // Print a compact completion message and the number of active particles left
+    // in the fluid container after all update steps.
     std::cout
-        << "Nitrogen DSMC example ran headlessly for " << config::kHeadlessSteps << " steps.\n"
+        << "Nitrogen DSMC example ran headlessly for " << 1000 << " steps.\n"
         << "Active particles: " << fluid->particle_count() << '\n';
 
-    observer->export_csv(observer_output_path());
+    observer->export_csv(std::filesystem::path(__FILE__).parent_path() / "observer_output");
     return 0;
 #endif
 }

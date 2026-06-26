@@ -208,27 +208,55 @@ GeometryLayer<T>::update(GLFWwindow* window, Camera& camera, T dt) {
     // Activate the shader program before uploading uniforms and drawing.
     _program->use();
 
-    // Upload the MVP matrix.
-    glUniformMatrix4fv(_u_mvp, 1, GL_FALSE, mvp);
-
-    // Upload a default geometry color if the shader exposes the uniform.
-    if (_u_color >= 0) {
-        glUniform4f(_u_color, _color.x, _color.y, _color.z, _color.w);
-    }
+    _program->set_mat4("MVP", mvp);
 
     // Allow geometry layers to use alpha in the shared fragment shader.
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_LINE_SMOOTH);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glLineWidth(static_cast<GLfloat>(_line_width));
 
     // Bind the VAO containing vertex format + buffer binding state.
     glBindVertexArray(_vao);
 
-    // Issue the draw call using the layer's configured primitive topology.
+    const bool triangle_layer = _primitive_mode == GL_TRIANGLES;
+
+    if (triangle_layer) {
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(1.0f, 1.0f);
+    }
+
+    _program->set_vec4(
+        "uColor",
+        static_cast<float>(_color.x),
+        static_cast<float>(_color.y),
+        static_cast<float>(_color.z),
+        static_cast<float>(_color.w));
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glDrawArrays(_primitive_mode, 0, _vertex_count);
+
+    if (triangle_layer) {
+        glDisable(GL_POLYGON_OFFSET_FILL);
+    }
+
+    if (triangle_layer && _edge_overlay) {
+        _program->set_vec4(
+            "uColor",
+            static_cast<float>(_edge_color.x),
+            static_cast<float>(_edge_color.y),
+            static_cast<float>(_edge_color.z),
+            static_cast<float>(_edge_color.w));
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDrawArrays(_primitive_mode, 0, _vertex_count);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 
     // Unbind VAO after drawing.
     glBindVertexArray(0);
 
+    glDisable(GL_LINE_SMOOTH);
     glDisable(GL_BLEND);
 }
 
@@ -236,6 +264,24 @@ template <typename T>
 void
 GeometryLayer<T>::set_color(const Vector4<T>& color) noexcept {
     _color = color;
+}
+
+template <typename T>
+void
+GeometryLayer<T>::set_edge_color(const Vector4<T>& color) noexcept {
+    _edge_color = color;
+}
+
+template <typename T>
+void
+GeometryLayer<T>::set_line_width(const T width) noexcept {
+    _line_width = width > T(0) ? width : T(1);
+}
+
+template <typename T>
+void
+GeometryLayer<T>::set_edge_overlay(const bool enabled) noexcept {
+    _edge_overlay = enabled;
 }
 
 template <typename T>

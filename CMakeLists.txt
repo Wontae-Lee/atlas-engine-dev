@@ -9,8 +9,9 @@
 #   3. validating mutually exclusive or unsupported options
 #   4. configuring the selected tasking backend
 #   5. wiring optional subsystems such as logging and visualization
-#   6. creating test and benchmark targets when requested
-#   7. printing a final configuration summary for diagnostics
+#   6. creating test targets when requested
+#   7. delegating benchmark configuration to benchmarks/CMakeLists.txt
+#   8. printing a final configuration summary for diagnostics
 #
 # The overall design goal is to keep the top-level build readable,
 # predictable, and easy to diagnose when configuration issues occur.
@@ -240,12 +241,11 @@ endfunction()
 # Rules enforced here:
 #
 #   1. exactly one tasking backend must be selected
-#   2. benchmarks are disabled for the CUDA backend
-#   3. GoogleTest-based tests are disabled for the CUDA backend
+#   2. GoogleTest-based tests are disabled for the CUDA backend
 #
-# The benchmark and GoogleTest cases are downgraded to warnings
-# and auto-corrected because the user's broader configuration can
-# still proceed successfully without those optional features.
+# The GoogleTest case is downgraded to a warning and auto-corrected
+# because the user's broader configuration can still proceed
+# successfully without that optional feature.
 # ============================================================
 if (ATLAS_USE_CUDA AND ATLAS_USE_TBB)
     message(FATAL_ERROR
@@ -259,14 +259,6 @@ if ((NOT ATLAS_USE_CUDA) AND (NOT ATLAS_USE_TBB))
             "[ATLAS] Invalid configuration: "
             "one of ATLAS_USE_CUDA or ATLAS_USE_TBB must be ON."
     )
-endif ()
-
-if (ATLAS_USE_CUDA AND ATLAS_BENCHMARKS)
-    message(WARNING
-            "[ATLAS] ATLAS_BENCHMARKS are not yet compatible with the CUDA backend. "
-            "Disabling benchmarks."
-    )
-    set(ATLAS_BENCHMARKS OFF)
 endif ()
 
 if (ATLAS_USE_CUDA AND ATLAS_GOOGLE_TEST)
@@ -312,6 +304,11 @@ add_subdirectory(external/tinyobj)
 # `external/protobuf`. Both the protobuf C++ runtime and the
 # `protoc` compiler are built from that tree so no separate
 # prebuilt archive is required.
+#
+# Keep protobuf's own CMake output under the active Atlas build
+# tree, not under the vendored source checkout. Atlas-generated
+# files from our .proto schemas are kept in a separate generated/
+# directory in the same build tree.
 # ============================================================
 unset(WITH_PROTOC CACHE)
 set(protobuf_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -324,7 +321,9 @@ set(protobuf_INSTALL OFF CACHE BOOL "" FORCE)
 set(protobuf_USE_UNITY_BUILD OFF CACHE BOOL "" FORCE)
 set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
 
-add_subdirectory(external/protobuf EXCLUDE_FROM_ALL)
+set(ATLAS_PROTOBUF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/protobuf")
+set(ATLAS_PROTOBUF_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/protobuf")
+add_subdirectory("${ATLAS_PROTOBUF_SOURCE_DIR}" "${ATLAS_PROTOBUF_BINARY_DIR}" EXCLUDE_FROM_ALL)
 
 set(ATLAS_PROTO_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/serialization/proto")
 set(ATLAS_PROTO_SCHEMA "${ATLAS_PROTO_SCHEMA_DIR}/atlas_snapshot.proto")
@@ -358,6 +357,7 @@ target_include_directories(atlas-serialization
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         PRIVATE
         "${ATLAS_PROTO_OUTPUT_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobj"
 )
 
 target_link_libraries(atlas-serialization
@@ -488,11 +488,18 @@ if (ATLAS_USE_CUDA)
     # been selected and environment diagnostics have been gathered.
     enable_language(CUDA)
 
-    # Apply the CUDA language standard globally so CUDA-enabled targets do not
-    # need to restate the same target properties or per-source standard flags
-    # in each example directory.
-    set(CMAKE_CUDA_STANDARD 20)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    # CMake 3.20+ may not know how to map CUDA_STANDARD 20 to nvcc flags even
+    # when the installed nvcc supports C++20. Apply the standard explicitly so
+    # CUDA examples and tests configure consistently on those CMake versions.
+    set(CMAKE_CUDA20_STANDARD_COMPILE_OPTION "--std=c++20")
+    set(CMAKE_CUDA20_EXTENSION_COMPILE_OPTION "--std=c++20")
+    unset(CMAKE_CUDA_STANDARD CACHE)
+    unset(CMAKE_CUDA_STANDARD_REQUIRED CACHE)
+    unset(CMAKE_CUDA_STANDARD)
+    unset(CMAKE_CUDA_STANDARD_REQUIRED)
+    if (NOT CMAKE_CUDA_FLAGS MATCHES "(^| )--std=c\\+\\+20($| )")
+        string(APPEND CMAKE_CUDA_FLAGS " --std=c++20")
+    endif ()
 
     # --------------------------------------------------------
     # CUDA architecture selection
@@ -884,8 +891,6 @@ if (ATLAS_ENABLE_TESTS)
             set(ATLAS_CUDA_TEST_MAIN "${CMAKE_CURRENT_SOURCE_DIR}/tests/cuda/main.cu")
             set(ATLAS_CUDA_EXCLUDED_SOURCES
                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/remove/remove_tests.cu"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/solver/dsmc/dsmc_disjoint_pair_solver_tests.cu"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/solver/dsmc/dsmc_ntc_solver_tests.cu"
                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/transform/transform_reduce_tests.cu"
                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/transform/transform_tests.cu"
             )
@@ -902,20 +907,6 @@ if (ATLAS_ENABLE_TESTS)
             add_executable(atlas_all_cuda_test
                     ${ATLAS_CUDA_TEST_MAIN}
                     ${ATLAS_CUDA_TEST_SOURCES}
-            )
-
-            # The CUDA target itself is configured with CUDA 17, while
-            # non-main CUDA sources additionally receive a C++20 flag.
-            # This mixed setup reflects the current project/toolchain
-            # expectations and should be revisited if the CUDA dialect
-            # policy is unified later.
-            set_target_properties(atlas_all_cuda_test PROPERTIES
-                    CUDA_STANDARD 17
-                    CUDA_STANDARD_REQUIRED ON
-            )
-
-            set_source_files_properties(${ATLAS_CUDA_TEST_SOURCES} PROPERTIES
-                    COMPILE_OPTIONS "--std=c++20"
             )
 
             target_link_libraries(atlas_all_cuda_test
@@ -943,16 +934,20 @@ endif ()
 # ============================================================
 # Benchmarks
 #
-# Benchmark targets are added only when explicitly enabled and not
-# disabled earlier by compatibility validation.
+# Benchmark targets and benchmark-reference builds are intentionally
+# delegated to benchmarks/CMakeLists.txt. Keeping that logic out of
+# the top-level file prevents external benchmark projects from making
+# the main build entry point harder to scan.
 #
-# The benchmark framework itself is vendored through the source tree
-# and benchmark definitions are expected to live under benchmarks/.
+# The top-level file still owns the public ATLAS_BENCHMARKS option and
+# configuration summary, while the benchmark subdirectory owns:
+#
+#   - Google Benchmark setup
+#   - benchmark backend compatibility checks
+#   - external reference-code builds
+#   - benchmark input/smoke-run convenience targets
 # ============================================================
-if (ATLAS_BENCHMARKS)
-    add_subdirectory(external/googlebenchmark)
-    add_subdirectory(benchmarks)
-endif ()
+add_subdirectory(benchmarks)
 
 # ============================================================
 # Example applications

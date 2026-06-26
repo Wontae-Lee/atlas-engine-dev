@@ -13,3 +13,15 @@
 [submodule "external/protobuf"]
 	path = external/protobuf
 	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "benchmarks/dumux"]
+	path = benchmarks/dumux
+	url = https://github.com/dumux/dumux.git
+[submodule "benchmarks/piclas"]
+	path = benchmarks/piclas
+	url = https://github.com/piclas-framework/piclas.git
+[submodule "benchmarks/sparta"]
+	path = benchmarks/sparta
+	url = https://github.com/sparta/sparta.git
+[submodule "benchmarks/splishsplash"]
+	path = benchmarks/splishsplash
+	url = https://github.com/InteractiveComputerGraphics/SPlisHSPlasH.git

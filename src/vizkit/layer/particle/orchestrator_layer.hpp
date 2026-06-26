@@ -211,7 +211,7 @@ OrchestratorLayer<T>::update(GLFWwindow* window, Camera& camera, T dt) {
     const auto& fluid = _orchestrator->fluid();
 
     // Retrieve the particle position state to visualize.
-    const auto* position_state = fluid->template state<atlas::fluid::FluidPositionState<T>>();
+    const auto* position_state = fluid->template state<atlas::FluidPositionState<T>>();
 
     // Nothing can be rendered when the position state is missing or when no
     // active particles exist.

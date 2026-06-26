@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/generator/generate_operator.h>
 #include <atlas/measure/boltzman_measurer.h>
@@ -7,28 +7,40 @@
 
 namespace {
 
-using T = float;
+using atlas::BoltzmanMeasurer;
+using atlas::Fluid;
+using atlas::FluidHostPtr;
+using atlas::MeasureModeType;
+using atlas::SpatialHashingSearcher;
+using atlas::SpatialHashingSearcherHostPtr;
+using atlas::Universe;
+using atlas::UniverseHostPtr;
+using atlas::Vector3F;
+using atlas::FluidTemperatureState;
+using atlas::UniverseBulkVelocityState;
+using atlas::UniverseTemperatureState;
+using atlas::UniverseThermalEnergyState;
 
-atlas::UniverseHostPtr<T>
+UniverseHostPtr<float>
 make_universe() {
-    return atlas::universe::Universe<T>::builder()
-        .with_lower_corner(atlas::Vector3<T>(0, 0, 0))
-        .with_upper_corner(atlas::Vector3<T>(1, 1, 1))
+    return Universe<float>::builder()
+        .with_lower_corner(Vector3F(0, 0, 0))
+        .with_upper_corner(Vector3F(1, 1, 1))
         .with_cell_size(1.0f)
         .make_host_shared();
 }
 
-atlas::FluidHostPtr<T>
+FluidHostPtr<float>
 make_fluid() {
-    return atlas::fluid::Fluid<T>::builder()
+    return Fluid<float>::builder()
         .with_buffer_size(4)
         .make_host_shared();
 }
 
-atlas::SpatialHashingSearcherHostPtr<T>
-make_searcher(const atlas::UniverseHostPtr<T>& universe,
-              const atlas::FluidHostPtr<T>& fluid) {
-    return atlas::system::SpatialHashingSearcher<T>::builder()
+SpatialHashingSearcherHostPtr<float>
+make_searcher(const UniverseHostPtr<float>& universe,
+              const FluidHostPtr<float>& fluid) {
+    return SpatialHashingSearcher<float>::builder()
         .with_universe(universe)
         .with_fluid(fluid)
         .make_host_shared();
@@ -41,22 +53,22 @@ TEST(BoltzmanMeasurer, ConstructorCreatesRequiredUniverseAndFluidStates) {
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    ASSERT_FALSE(universe->has_state<atlas::universe::UniverseTemperatureState<T>>());
-    ASSERT_FALSE(universe->has_state<atlas::universe::UniverseBulkVelocityState<T>>());
-    ASSERT_FALSE(universe->has_state<atlas::universe::UniverseThermalEnergyState<T>>());
-    ASSERT_FALSE(fluid->has_state<atlas::fluid::FluidTemperatureState<T>>());
+    ASSERT_FALSE(universe->has_state<UniverseTemperatureState<float>>());
+    ASSERT_FALSE(universe->has_state<UniverseBulkVelocityState<float>>());
+    ASSERT_FALSE(universe->has_state<UniverseThermalEnergyState<float>>());
+    ASSERT_FALSE(fluid->has_state<FluidTemperatureState<float>>());
 
-    const atlas::system::BoltzmanMeasurer<T> measurer(universe, fluid, searcher, atlas::MeasureModeType::All);
+    const BoltzmanMeasurer<float> measurer(universe, fluid, searcher, MeasureModeType::All);
 
-    EXPECT_EQ(measurer.measure_mode(), atlas::MeasureModeType::All);
-    ASSERT_TRUE(universe->has_state<atlas::universe::UniverseTemperatureState<T>>());
-    ASSERT_TRUE(universe->has_state<atlas::universe::UniverseBulkVelocityState<T>>());
-    ASSERT_TRUE(universe->has_state<atlas::universe::UniverseThermalEnergyState<T>>());
-    ASSERT_TRUE(fluid->has_state<atlas::fluid::FluidTemperatureState<T>>());
-    EXPECT_EQ(universe->state<atlas::universe::UniverseTemperatureState<T>>()->size(), 8u);
-    EXPECT_EQ(universe->state<atlas::universe::UniverseBulkVelocityState<T>>()->size(), 8u);
-    EXPECT_EQ(universe->state<atlas::universe::UniverseThermalEnergyState<T>>()->size(), 8u);
-    EXPECT_EQ(fluid->state<atlas::fluid::FluidTemperatureState<T>>()->size(), 4u);
+    EXPECT_EQ(measurer.measure_mode(), MeasureModeType::All);
+    ASSERT_TRUE(universe->has_state<UniverseTemperatureState<float>>());
+    ASSERT_TRUE(universe->has_state<UniverseBulkVelocityState<float>>());
+    ASSERT_TRUE(universe->has_state<UniverseThermalEnergyState<float>>());
+    ASSERT_TRUE(fluid->has_state<FluidTemperatureState<float>>());
+    EXPECT_EQ(universe->state<UniverseTemperatureState<float>>()->size(), 8u);
+    EXPECT_EQ(universe->state<UniverseBulkVelocityState<float>>()->size(), 8u);
+    EXPECT_EQ(universe->state<UniverseThermalEnergyState<float>>()->size(), 8u);
+    EXPECT_EQ(fluid->state<FluidTemperatureState<float>>()->size(), 4u);
 }
 
 TEST(BoltzmanMeasurer, BuilderConstructsUsableMeasurer) {
@@ -64,14 +76,14 @@ TEST(BoltzmanMeasurer, BuilderConstructsUsableMeasurer) {
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    const auto measurer = atlas::system::BoltzmanMeasurer<T>::builder()
+    const auto measurer = BoltzmanMeasurer<float>::builder()
                               .with_universe(universe)
                               .with_fluid(fluid)
                               .with_searcher(searcher)
-                              .with_measure_mode(atlas::MeasureModeType::Field)
+                              .with_measure_mode(MeasureModeType::Field)
                               .build();
 
-    EXPECT_EQ(measurer.measure_mode(), atlas::MeasureModeType::Field);
+    EXPECT_EQ(measurer.measure_mode(), MeasureModeType::Field);
 }
 
 TEST(BoltzmanMeasurer, BuilderRejectsMissingDependencies) {
@@ -79,7 +91,7 @@ TEST(BoltzmanMeasurer, BuilderRejectsMissingDependencies) {
     const auto fluid = make_fluid();
 
     EXPECT_THROW(
-        atlas::system::BoltzmanMeasurer<T>::builder()
+        BoltzmanMeasurer<float>::builder()
             .with_universe(universe)
             .with_fluid(fluid)
             .build(),
@@ -91,18 +103,18 @@ TEST(BoltzmanMeasurer, MakeHostSharedBuildsMeasurer) {
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    const auto measurer = atlas::system::BoltzmanMeasurer<T>::builder()
+    const auto measurer = BoltzmanMeasurer<float>::builder()
                               .with_universe(universe)
                               .with_fluid(fluid)
                               .with_searcher(searcher)
                               .make_host_shared();
 
     ASSERT_NE(measurer, nullptr);
-    EXPECT_EQ(measurer->measure_mode(), atlas::MeasureModeType::Field);
+    EXPECT_EQ(measurer->measure_mode(), MeasureModeType::Field);
 }
 
 TEST(BoltzmanMeasurer, MeasureIsSafeNoOpWithoutDependencies) {
-    atlas::system::BoltzmanMeasurer<T> measurer;
+    BoltzmanMeasurer<float> measurer;
 
     EXPECT_NO_THROW(measurer.measure());
 }

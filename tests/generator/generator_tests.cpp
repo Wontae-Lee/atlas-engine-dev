@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/generator/generate_operator.h>
 #include <atlas/generator/generator.h>
@@ -7,68 +7,77 @@
 
 namespace {
 
-using T = float;
-using Vec3 = atlas::Vector3<T>;
+using atlas::GenerateType;
+using atlas::GeneratorHostPtr;
+using atlas::Vector3F;
+using atlas::GenerateOperator;
+using atlas::Generator;
+using atlas::UniformGenerateOperator;
+using atlas::make_host_shared;
+using atlas::test::vec_near;
+using atlas::tol;
 
-class DummyGenerator final : public atlas::fluid::Generator<T> {
+class DummyGenerator final : public Generator<float> {
 public:
-    explicit DummyGenerator(Vec3 sample = Vec3(1, 2, 3))
+    explicit DummyGenerator(Vector3F sample = Vector3F(1, 2, 3))
         : _sample(sample)
-        , _operator(atlas::fluid::UniformGenerateOperator<T>(17u)) {}
+        , _operator(UniformGenerateOperator<float>(17u)) {}
 
-    Vec3
+    Vector3F
     generate() const override {
         return _sample;
     }
 
-    const atlas::fluid::GenerateOperator<T>&
+    const GenerateOperator<float>&
     generate_operator() const noexcept override {
         return _operator;
     }
 
-    atlas::fluid::GenerateOperator<T>
+    GenerateOperator<float>
     make_generate_operator() const noexcept override {
         return _operator;
     }
 
-    T
+    float
     param0() const noexcept override {
         return 4.0f;
     }
 
-    T
+    float
     param1() const noexcept override {
         return 9.0f;
     }
 
-    atlas::fluid::GenerateType
+    GenerateType
     type() const noexcept override {
-        return atlas::fluid::GenerateType::uniform;
+        return GenerateType::uniform;
     }
 
 private:
-    Vec3 _sample;
-    atlas::fluid::GenerateOperator<T> _operator;
+    Vector3F _sample;
+    GenerateOperator<float> _operator;
 };
-
-constexpr T kEps = static_cast<T>(1e-5);
 
 } // namespace
 
 TEST(Generator, DerivedImplementationSatisfiesInterface) {
+    // Arrange: create a concrete test generator.
     const DummyGenerator generator;
 
-    EXPECT_TRUE(atlas::test::vec_near(generator.generate(), Vec3(1, 2, 3), kEps));
-    EXPECT_EQ(generator.type(), atlas::fluid::GenerateType::uniform);
-    EXPECT_NEAR(generator.param0(), 4.0f, kEps);
-    EXPECT_NEAR(generator.param1(), 9.0f, kEps);
-    EXPECT_EQ(generator.generate_operator().type, atlas::fluid::GenerateType::uniform);
-    EXPECT_EQ(generator.make_generate_operator().type, atlas::fluid::GenerateType::uniform);
+    // Assert: the implementation satisfies the generator interface contract.
+    EXPECT_TRUE(vec_near(generator.generate(), Vector3F(1, 2, 3), tol));
+    EXPECT_EQ(generator.type(), GenerateType::uniform);
+    EXPECT_NEAR(generator.param0(), 4.0f, tol);
+    EXPECT_NEAR(generator.param1(), 9.0f, tol);
+    EXPECT_EQ(generator.generate_operator().type, GenerateType::uniform);
+    EXPECT_EQ(generator.make_generate_operator().type, GenerateType::uniform);
 }
 
 TEST(Generator, HostSharedAliasCanOwnDerivedImplementation) {
-    atlas::GeneratorHostPtr<T> generator = atlas::make_host_shared<DummyGenerator>(Vec3(3, 2, 1));
+    // Act: store a derived generator through the public host pointer alias.
+    GeneratorHostPtr<float> generator = make_host_shared<DummyGenerator>(Vector3F(3, 2, 1));
 
+    // Assert: shared ownership preserves the dynamic implementation.
     ASSERT_NE(generator, nullptr);
-    EXPECT_TRUE(atlas::test::vec_near(generator->generate(), Vec3(3, 2, 1), kEps));
+    EXPECT_TRUE(vec_near(generator->generate(), Vector3F(3, 2, 1), tol));
 }

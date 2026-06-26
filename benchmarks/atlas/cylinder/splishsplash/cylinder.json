@@ -1,0 +1,89 @@
+{
+    "Configuration": {
+        "particleRadius": 0.025,
+        "numberOfStepsPerRenderUpdate": 2,
+        "simulationMethod": 4,
+        "gravitation": [0, -9.81, 0],
+        "cflMethod": 1,
+        "cflFactor": 0.5,
+        "cflMaxTimeStepSize": 0.005,
+        "boundaryHandlingMethod": 2,
+        "stopAt": 0.05,
+        "DFSPH": {
+            "minIterations": 2,
+            "maxIterations": 100,
+            "maxError": 0.05,
+            "maxIterationsV": 100,
+            "maxErrorV": 0.1,
+            "enableDivergenceSolver": true
+        }
+    },
+    "Simulation": {
+        "timeStepSize": 0.005,
+        "maxIter": 5,
+        "maxIterVel": 5,
+        "velocityUpdateMethod": 0,
+        "contactTolerance": 0.06,
+        "contactStiffnessRigidBody": 1.0,
+        "contactStiffnessParticleRigidBody": 100.0
+    },
+    "Materials": [
+        {
+            "id": "Fluid",
+            "density0": 1000,
+            "viscosityMethod": 1,
+            "colorMapType": 1,
+            "Standard viscosity": {
+                "viscosity": 0.01
+            }
+        }
+    ],
+    "RigidBodies": [
+        {
+            "id": 1,
+            "geometryFile": "../../../splishsplash/data/models/UnitBox.obj",
+            "translation": [0, 2.0, 0],
+            "rotationAxis": [1, 0, 0],
+            "rotationAngle": 0,
+            "scale": [3.1, 4.0, 1.6],
+            "color": [0.1, 0.4, 0.6, 1.0],
+            "isDynamic": false,
+            "isWall": true,
+            "restitution": 0.6,
+            "friction": 0.0,
+            "collisionObjectType": 2,
+            "collisionObjectScale": [3.1, 4.0, 1.6],
+            "invertSDF": true,
+            "mapInvert": true,
+            "mapThickness": 0.0,
+            "mapResolution": [30, 30, 15]
+        },
+        {
+            "id": 2,
+            "geometryFile": "../../../splishsplash/data/models/cylinder.obj",
+            "isDynamic": true,
+            "density": 700,
+            "translation": [-0.2, 1.5, 0],
+            "rotationAxis": [1, 1, 1],
+            "rotationAngle": 0.5,
+            "scale": [0.1, 0.5, 0.1],
+            "restitution": 0.6,
+            "friction": 0.2,
+            "color": [0.2, 0.6, 0.4, 1.0],
+            "collisionObjectType": 3,
+            "collisionObjectScale": [0.1, 0.5, 0.1],
+            "mapInvert": false,
+            "mapThickness": 0.0,
+            "mapResolution": [20, 20, 20]
+        }
+    ],
+    "FluidBlocks": [
+        {
+            "denseMode": 0,
+            "start": [-0.75, 0.0, -0.75],
+            "end": [0.75, 1.5, 0.75],
+            "translation": [-0.2, 0.0, 0.0],
+            "scale": [1, 1, 1]
+        }
+    ]
+}

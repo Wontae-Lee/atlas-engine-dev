@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/logging/logging.h>
 #include <atlas/sync/sync.h>
@@ -7,50 +7,61 @@
 
 namespace {
 
-using T = float;
-using Vec3 = atlas::Vector3<T>;
-using Quat = atlas::Quaternion<T>;
-
-constexpr T kEps = static_cast<T>(1e-4);
+using atlas::pi;
+using atlas::QuaternionF;
+using atlas::Sync;
+using atlas::tol;
+using atlas::Vector3F;
+using atlas::test::vec_near;
 
 } // namespace
 
 TEST(Sync, DefaultConstructorCreatesIdentityTransform) {
-    const atlas::Sync<T> sync;
+    // Arrange: create a default sync object.
+    const Sync<float> sync;
 
-    EXPECT_TRUE(atlas::test::vec_near(sync.sync_to_world(Vec3(1, 2, 3)), Vec3(1, 2, 3), kEps));
+    // Assert: the default transform leaves points unchanged.
+    EXPECT_TRUE(vec_near(sync.sync_to_world(Vector3F(1, 2, 3)), Vector3F(1, 2, 3), tol));
 }
 
 TEST(Sync, BuilderConstructsConfiguredSync) {
-    const auto sync = atlas::Sync<T>::builder()
-                          .with_rigid_pose(Vec3(1, 2, 3), Quat::from_axis_angle(Vec3(0, 0, 1), T(atlas::pi / 2)))
+    // Arrange and act: build a sync object with translation and a +Z rotation.
+    const auto sync = Sync<float>::builder()
+                          .with_rigid_pose(Vector3F(1, 2, 3),
+                                           QuaternionF::from_axis_angle(Vector3F(0, 0, 1), static_cast<float>(pi / 2)))
                           .build();
 
-    EXPECT_TRUE(atlas::test::vec_near(sync.sync_to_world(Vec3(1, 0, 0)), Vec3(1, 3, 3), 1e-3f));
+    // Assert: the configured rigid transform is applied to local points.
+    EXPECT_TRUE(vec_near(sync.sync_to_world(Vector3F(1, 0, 0)), Vector3F(1, 3, 3), tol));
 }
 
 TEST(Sync, BuilderRejectsInvalidQuaternion) {
-    EXPECT_THROW(
-        atlas::Sync<T>::builder()
-            .with_rigid_pose(Vec3(0, 0, 0), Quat(T(0), T(0), T(0), T(0)))
-            .build(),
-        std::runtime_error);
+    // A zero-length quaternion cannot define a valid orientation.
+    EXPECT_THROW(Sync<float>::builder()
+                     .with_rigid_pose(Vector3F(0, 0, 0), QuaternionF(0, 0, 0, 0))
+                     .build(),
+                 std::runtime_error);
 }
 
 TEST(Sync, SettersUpdatePose) {
-    atlas::Sync<T> sync;
+    // Arrange: start from the identity transform.
+    Sync<float> sync;
 
-    sync.set_translation(Vec3(1, 2, 3));
-    sync.set_orientation(Quat::from_axis_angle(Vec3(0, 0, 1), T(atlas::pi / 2)));
+    // Act: update translation and orientation through setters.
+    sync.set_translation(Vector3F(1, 2, 3));
+    sync.set_orientation(QuaternionF::from_axis_angle(Vector3F(0, 0, 1), static_cast<float>(pi / 2)));
 
-    EXPECT_TRUE(atlas::test::vec_near(sync.sync_to_world(Vec3(1, 0, 0)), Vec3(1, 3, 3), 1e-3f));
+    // Assert: the updated pose is reflected in point transforms.
+    EXPECT_TRUE(vec_near(sync.sync_to_world(Vector3F(1, 0, 0)), Vector3F(1, 3, 3), tol));
 }
 
 TEST(Sync, MakeHostSharedBuildsSync) {
-    const auto sync = atlas::Sync<T>::builder()
-                          .with_rigid_pose(Vec3(0, 0, 0), Quat(T(1), T(0), T(0), T(0)))
+    // Arrange and act: build shared ownership for an identity sync object.
+    const auto sync = Sync<float>::builder()
+                          .with_rigid_pose(Vector3F(0, 0, 0), QuaternionF(1, 0, 0, 0))
                           .make_host_shared();
 
+    // Assert: the shared object exists and preserves identity transforms.
     ASSERT_NE(sync, nullptr);
-    EXPECT_TRUE(atlas::test::vec_near(sync->sync_to_world(Vec3(1, 0, 0)), Vec3(1, 0, 0), kEps));
+    EXPECT_TRUE(vec_near(sync->sync_to_world(Vector3F(1, 0, 0)), Vector3F(1, 0, 0), tol));
 }

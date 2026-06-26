@@ -1,4 +1,4 @@
-#include "../utilities/tests_utils.h"
+#include "../utilities/test_utils.h"
 
 #include <atlas/random/default_random_engine.h>
 #include <atlas/random/uniform_real_distribution.h>
@@ -9,14 +9,17 @@
 
 namespace {
 
-using T = float;
+using atlas::default_random_engine;
+using atlas::uniform_real_distribution;
 
 } // namespace
 
 TEST(UniformRealDistribution, ProducesValuesInsideRequestedRange) {
-    atlas::default_random_engine<T> engine(7u);
-    atlas::uniform_real_distribution<T> distribution(-2.0f, 3.0f);
+    // Arrange: create a deterministic engine and bounded distribution.
+    default_random_engine<float> engine(7u);
+    uniform_real_distribution<float> distribution(-2.0f, 3.0f);
 
+    // Act and assert: sampled values stay inside the requested range.
     for (int i = 0; i < 64; ++i) {
         const auto value = distribution(engine);
         EXPECT_GE(value, -2.0f);
@@ -26,8 +29,10 @@ TEST(UniformRealDistribution, ProducesValuesInsideRequestedRange) {
 
 TEST(UniformRealDistribution, AliasMatchesStandardDistributionInTbbBuild) {
 #ifndef ATLAS_TASKING_CUDA
-    EXPECT_TRUE((std::is_same_v<atlas::uniform_real_distribution<T>, std::uniform_real_distribution<T>>));
+    // Assert: the TBB backend uses the standard uniform real distribution.
+    EXPECT_TRUE((std::is_same_v<uniform_real_distribution<float>, std::uniform_real_distribution<float>>));
 #else
+    // Assert: CUDA builds use a backend-specific distribution type.
     SUCCEED();
 #endif
 }

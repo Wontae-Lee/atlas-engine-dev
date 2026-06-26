@@ -2,15 +2,19 @@
 
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
+#include <atlas/measure/measurer_probe.h>
 #include <atlas/memory/memory.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/universe/universe.h>
 
-namespace atlas::system {
+namespace atlas {
 
 enum class MeasureModeType : int {
+
     Field,
+
     Fluid,
+
     All
 };
 
@@ -30,30 +34,35 @@ public:
     measure()
         = 0;
 
+    ATLAS_HOST ATLAS_FORCE_INLINE virtual void
+    measure(T dt);
+
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE virtual MeasureModeType
     measure_mode() const noexcept = 0;
 
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    make_probe() noexcept;
+
 protected:
     UniverseHostPtr<T> _universe {};
+
     FluidHostPtr<T> _fluid {};
+
     SpatialHashingSearcherHostPtr<T> _searcher {};
 
+    MeasurerProbe<T> _probe {};
 };
 
 }
 
 namespace atlas {
 
-using MeasureModeType = atlas::system::MeasureModeType;
+template <typename T>
+using MeasurerHostPtr = atlas::host_shared_ptr<atlas::Measurer<T>>;
 
 template <typename T>
-using Measurer = atlas::system::Measurer<T>;
+using MeasurerDevicePtr = atlas::device_shared_ptr<atlas::Measurer<T>>;
 
-template <typename T>
-using MeasurerHostPtr = atlas::host_shared_ptr<atlas::system::Measurer<T>>;
-
-template <typename T>
-using MeasurerDevicePtr = atlas::device_shared_ptr<atlas::system::Measurer<T>>;
 }
 
 #include <atlas/measure/measurer.hpp>

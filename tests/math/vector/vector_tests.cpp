@@ -1,10 +1,14 @@
-#include "../../utilities/tests_utils.h"
+#include "../../utilities/test_utils.h"
 #include <cmath>
 #include <cstddef>
 #include <testkit/testkit.h>
 #include <type_traits>
 
-using namespace atlas;
+namespace {
+
+using atlas::eps;
+
+} // namespace
 
 TEST(VectorN, DefaultConstructorIsZero) {
     atlas::Vector<double, 5> v;
@@ -175,8 +179,8 @@ TEST(VectorN, MajorMinorAxisAreByAbsValue) {
 
     const double mags[4] = { std::abs(v[0]), std::abs(v[1]), std::abs(v[2]), std::abs(v[3]) };
     for (double mag : mags) {
-        EXPECT_LE(mags[min], mag + 1e-12);
-        EXPECT_GE(mags[maj] + 1e-12, mag);
+        EXPECT_LE(mags[min], mag + eps);
+        EXPECT_GE(mags[maj] + eps, mag);
     }
 }
 

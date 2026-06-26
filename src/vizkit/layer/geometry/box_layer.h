@@ -29,7 +29,7 @@
  *
  * The base @ref GeometryLayer is responsible for:
  * - transforming these positions into world space using the unit’s
- *   @ref atlas::system::Sync,
+ *   @ref atlas::Sync,
  * - uploading and rendering them with the configured OpenGL primitive mode.
  *
  * ## Rendering characteristics

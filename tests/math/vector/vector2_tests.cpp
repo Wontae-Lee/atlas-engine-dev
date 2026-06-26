@@ -1,19 +1,23 @@
-#include "../../utilities/tests_utils.h"
+#include "../../utilities/test_utils.h"
 #include <cmath>
 #include <cstddef>
 #include <testkit/testkit.h>
 #include <type_traits>
 
-using namespace atlas;
+namespace {
+
+using atlas::eps;
+
+} // namespace
 
 TEST(Vector2, ScalarCtor) {
-    const atlas::math::Vector<double, 2> v(3.0);
+    const atlas::Vector<double, 2> v(3.0);
     EXPECT_DOUBLE_EQ(v.x, 3.0);
     EXPECT_DOUBLE_EQ(v.y, 3.0);
 }
 
 TEST(Vector2, ComponentCtorAndIndex) {
-    atlas::math::Vector<double, 2> v(1.0, -2.0);
+    atlas::Vector<double, 2> v(1.0, -2.0);
 
     EXPECT_DOUBLE_EQ(v[0], 1.0);
     EXPECT_DOUBLE_EQ(v[1], -2.0);
@@ -25,24 +29,24 @@ TEST(Vector2, ComponentCtorAndIndex) {
 }
 
 TEST(Vector2, DotAndCrossBasic) {
-    const atlas::math::Vector<double, 2> a(1.0, 2.0);
-    const atlas::math::Vector<double, 2> b(3.0, -4.0);
+    const atlas::Vector<double, 2> a(1.0, 2.0);
+    const atlas::Vector<double, 2> b(3.0, -4.0);
 
     EXPECT_DOUBLE_EQ(a.dot(b), 1.0 * 3.0 + 2.0 * (-4.0));
-    EXPECT_DOUBLE_EQ(atlas::math::dot(a, b), a.dot(b));
+    EXPECT_DOUBLE_EQ(atlas::dot(a, b), a.dot(b));
 
     const double cr = a.cross(b);
     EXPECT_DOUBLE_EQ(cr, 1.0 * (-4.0) - 2.0 * 3.0);
-    EXPECT_DOUBLE_EQ(atlas::math::cross(a, b), cr);
+    EXPECT_DOUBLE_EQ(atlas::cross(a, b), cr);
 }
 
 TEST(Vector2, LengthAndNormalize) {
 
-    atlas::math::Vector<double, 2> v(3.0, 4.0);
+    atlas::Vector<double, 2> v(3.0, 4.0);
     EXPECT_DOUBLE_EQ(v.length_squared(), 25.0);
     EXPECT_DOUBLE_EQ(v.length(), 5.0);
 
-    const atlas::math::Vector<double, 2> n = v.normalized();
+    const atlas::Vector<double, 2> n = v.normalized();
     EXPECT_TRUE(atlas::test::is_finite_vec(n));
     EXPECT_TRUE(atlas::test::near(n.length(), 1.0, static_cast<double>(atlas::eps)));
 
@@ -53,11 +57,11 @@ TEST(Vector2, LengthAndNormalize) {
 
 TEST(Vector2, ProjectedIsOrthogonalToNormal) {
 
-    const atlas::math::Vector<double, 2> v(3.0, 4.0);
-    const atlas::math::Vector<double, 2> n(2.0, 0.0);
+    const atlas::Vector<double, 2> v(3.0, 4.0);
+    const atlas::Vector<double, 2> n(2.0, 0.0);
 
-    const atlas::math::Vector<double, 2> p1 = v.projected(n);
-    const atlas::math::Vector<double, 2> p2 = atlas::math::projected(v, n);
+    const atlas::Vector<double, 2> p1 = v.projected(n);
+    const atlas::Vector<double, 2> p2 = atlas::projected(v, n);
 
     EXPECT_TRUE(atlas::test::is_finite_vec(p1));
     EXPECT_TRUE(atlas::test::is_finite_vec(p2));
@@ -71,8 +75,8 @@ TEST(Vector2, ProjectedIsOrthogonalToNormal) {
 
 TEST(Vector2, TangentialIsPerpendicular) {
 
-    const atlas::math::Vector<double, 2> v(1.0, 2.0);
-    const atlas::math::Vector<double, 2> t = v.tangential();
+    const atlas::Vector<double, 2> v(1.0, 2.0);
+    const atlas::Vector<double, 2> t = v.tangential();
 
     EXPECT_TRUE(atlas::test::is_finite_vec(t));
     EXPECT_TRUE(atlas::test::near(v.dot(t), 0.0, static_cast<double>(atlas::eps)));
@@ -80,7 +84,7 @@ TEST(Vector2, TangentialIsPerpendicular) {
 }
 
 TEST(Vector2, MajorMinorAxisUsesAbsMagnitude) {
-    const atlas::math::Vector<double, 2> v(1.0, -5.0);
+    const atlas::Vector<double, 2> v(1.0, -5.0);
 
     const std::size_t maj = v.major_axis();
     const std::size_t min = v.minor_axis();
@@ -98,11 +102,11 @@ TEST(Vector2, MajorMinorAxisUsesAbsMagnitude) {
 
 TEST(Vector2, ReflectedBasicProperty) {
 
-    const atlas::math::Vector<double, 2> n(0.0, 1.0);
-    const atlas::math::Vector<double, 2> v(1.0, -2.0);
+    const atlas::Vector<double, 2> n(0.0, 1.0);
+    const atlas::Vector<double, 2> v(1.0, -2.0);
 
-    const atlas::math::Vector<double, 2> r1 = v.reflected(n);
-    const atlas::math::Vector<double, 2> r2 = atlas::math::reflected(v, n);
+    const atlas::Vector<double, 2> r1 = v.reflected(n);
+    const atlas::Vector<double, 2> r2 = atlas::reflected(v, n);
 
     EXPECT_TRUE(atlas::test::is_finite_vec(r1));
     EXPECT_TRUE(atlas::test::is_finite_vec(r2));
@@ -112,8 +116,8 @@ TEST(Vector2, ReflectedBasicProperty) {
 }
 
 TEST(Vector2, CastTo) {
-    const atlas::math::Vector<float, 2> vf(1.25f, -2.5f);
-    const atlas::math::Vector<double, 2> vd = vf.cast_to<double>();
+    const atlas::Vector<float, 2> vf(1.25f, -2.5f);
+    const atlas::Vector<double, 2> vd = vf.cast_to<double>();
 
     EXPECT_NEAR(vd.x, 1.25, static_cast<double>(atlas::eps));
     EXPECT_NEAR(vd.y, -2.5, static_cast<double>(atlas::eps));

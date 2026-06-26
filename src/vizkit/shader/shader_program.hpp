@@ -85,6 +85,34 @@ ShaderProgram::uniform_loc(const char* name) const {
     return glGetUniformLocation(_prog, name);
 }
 
+inline void
+ShaderProgram::set_mat4(const char* name, const float* value) const {
+    const GLint loc = uniform_loc(name);
+    if (loc >= 0) {
+        glUniformMatrix4fv(loc, 1, GL_FALSE, value);
+    }
+}
+
+inline void
+ShaderProgram::set_vec4(const char* name,
+                        const float x,
+                        const float y,
+                        const float z,
+                        const float w) const {
+    const GLint loc = uniform_loc(name);
+    if (loc >= 0) {
+        glUniform4f(loc, x, y, z, w);
+    }
+}
+
+inline void
+ShaderProgram::set_float(const char* name, const float value) const {
+    const GLint loc = uniform_loc(name);
+    if (loc >= 0) {
+        glUniform1f(loc, value);
+    }
+}
+
 inline GLuint
 ShaderProgram::compile(GLenum type, const char* src) {
     // Compile one shader stage from GLSL source text.

@@ -138,7 +138,7 @@ BoxLayer<T>::build_geometry(std::vector<Vector3<T>>& positions) {
 
     // This layer only knows how to render box geometry.
     // If the unit geometry is not a box, leave the output empty.
-    if (query.type != atlas::geometry::GeometryType::Box) return;
+    if (query.type != atlas::GeometryType::Box) return;
 
     // Access the concrete box operator stored inside the tagged geometry union.
     const auto& box = query.box;
