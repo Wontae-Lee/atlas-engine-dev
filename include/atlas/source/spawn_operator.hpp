@@ -2,17 +2,6 @@
 
 namespace atlas {
 
-namespace detail {
-
-    template <typename T>
-    using SpawnTypeSwitch = DeviceTypeSwitch<
-        SpawnType,
-        SpawnType::Surface,
-        DeviceTypeCase<SpawnType, SpawnType::Surface, SurfaceSpawnOperator<T>>,
-        DeviceTypeCase<SpawnType, SpawnType::Volume, VolumeSpawnOperator<T>>>;
-
-}
-
 template <typename T>
 bool
 SurfaceSpawnOperator<T>::spawn(const atlas::GeometryOperator<T>& query,
@@ -34,20 +23,6 @@ VolumeSpawnOperator<T>::spawn(const atlas::GeometryOperator<T>& query,
 template <typename T>
 SpawnOperator<T>::SpawnOperator(const SpawnType type) noexcept
     : type(type) {
-}
-
-template <typename T>
-SpawnOperator<T>::SpawnOperator(const SurfaceSpawnOperator<T>& op)
-    : type(SpawnType::Surface) {
-
-    static_cast<void>(op);
-}
-
-template <typename T>
-SpawnOperator<T>::SpawnOperator(const VolumeSpawnOperator<T>& op)
-    : type(SpawnType::Volume) {
-
-    static_cast<void>(op);
 }
 
 template <typename T>

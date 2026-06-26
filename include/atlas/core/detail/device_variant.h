@@ -236,7 +236,28 @@ struct DeviceTypeSwitch final {
         return visit_by_tag<Cases...>(tag, static_cast<Visitor&&>(visitor), fallback);
     }
 
+    template <typename Payload>
+    static constexpr bool holds = (std::is_same_v<Payload, typename Cases::payload_type> || ...);
+
+    template <typename Payload>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static constexpr Tag
+    tag_of() noexcept {
+        return tag_of_impl<Payload, Cases...>();
+    }
+
 private:
+    template <typename Payload, typename Case, typename... Rest>
+    ATLAS_ALL_DEVICE static constexpr Tag
+    tag_of_impl() noexcept {
+        if constexpr (std::is_same_v<Payload, typename Case::payload_type>) {
+            return Case::tag;
+        } else if constexpr (sizeof...(Rest) > 0) {
+            return tag_of_impl<Payload, Rest...>();
+        } else {
+            return DefaultTag;
+        }
+    }
+
     template <typename Case, typename... Rest, typename Visitor, typename Fallback>
     ATLAS_ALL_DEVICE static Fallback
     visit_by_tag(const Tag tag, Visitor&& visitor, Fallback fallback) noexcept {

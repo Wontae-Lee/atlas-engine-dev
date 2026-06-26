@@ -5,6 +5,8 @@
 #include <atlas/sink/tracing_despawn_operator.h>
 #include <atlas/sink/volume_despawn_operator.h>
 
+#include <type_traits>
+
 namespace atlas {
 
 enum class DespawnType : int {
@@ -15,6 +17,18 @@ enum class DespawnType : int {
 
     Tracing
 };
+
+namespace detail {
+
+    template <typename T>
+    using DespawnTypeSwitch = DeviceTypeSwitch<
+        DespawnType,
+        DespawnType::Surface,
+        DeviceTypeCase<DespawnType, DespawnType::Surface, SurfaceDespawnOperator<T>>,
+        DeviceTypeCase<DespawnType, DespawnType::Volume, VolumeDespawnOperator<T>>,
+        DeviceTypeCase<DespawnType, DespawnType::Tracing, TracingDespawnOperator<T>>>;
+
+}
 
 template <typename T>
 struct DespawnOperator final {
@@ -34,14 +48,11 @@ struct DespawnOperator final {
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~DespawnOperator() noexcept = default;
 
-    ATLAS_HOST
-    DespawnOperator(const SurfaceDespawnOperator<T>& op);
-
-    ATLAS_HOST
-    DespawnOperator(const VolumeDespawnOperator<T>& op);
-
-    ATLAS_HOST
-    DespawnOperator(const TracingDespawnOperator<T>& op);
+    template <typename Payload,
+              std::enable_if_t<detail::DespawnTypeSwitch<T>::template holds<std::decay_t<Payload>>, int> = 0>
+    ATLAS_HOST DespawnOperator(const Payload&) noexcept
+        : type(detail::DespawnTypeSwitch<T>::template tag_of<std::decay_t<Payload>>()) {
+    }
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     despawn(const atlas::GeometryOperator<T>& query,

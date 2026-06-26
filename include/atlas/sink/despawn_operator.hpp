@@ -1,39 +1,9 @@
 #pragma once
 namespace atlas {
 
-namespace detail {
-
-    template <typename T>
-    using DespawnTypeSwitch = DeviceTypeSwitch<
-        DespawnType,
-        DespawnType::Surface,
-        DeviceTypeCase<DespawnType, DespawnType::Surface, SurfaceDespawnOperator<T>>,
-        DeviceTypeCase<DespawnType, DespawnType::Volume, VolumeDespawnOperator<T>>,
-        DeviceTypeCase<DespawnType, DespawnType::Tracing, TracingDespawnOperator<T>>>;
-
-}
-
 template <typename T>
 DespawnOperator<T>::DespawnOperator(const DespawnType type) noexcept
     : type(type) {
-}
-
-template <typename T>
-DespawnOperator<T>::DespawnOperator(const SurfaceDespawnOperator<T>& op)
-    : type(DespawnType::Surface) {
-    static_cast<void>(op);
-}
-
-template <typename T>
-DespawnOperator<T>::DespawnOperator(const VolumeDespawnOperator<T>& op)
-    : type(DespawnType::Volume) {
-    static_cast<void>(op);
-}
-
-template <typename T>
-DespawnOperator<T>::DespawnOperator(const TracingDespawnOperator<T>& op)
-    : type(DespawnType::Tracing) {
-    static_cast<void>(op);
 }
 
 template <typename T>
