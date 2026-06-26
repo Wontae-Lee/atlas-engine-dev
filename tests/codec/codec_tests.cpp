@@ -15,7 +15,7 @@ using atlas::DeviceBuffer;
 using atlas::Fluid;
 using atlas::FluidHostPtr;
 using atlas::SpatialHashingSearcher;
-using atlas::SpatialHashingSearcherHostPtr;
+using atlas::SearcherHostPtr;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
@@ -27,7 +27,7 @@ class DummyCodec final : public Codec<float> {
 public:
     DummyCodec(UniverseHostPtr<float> universe,
                FluidHostPtr<float> fluid,
-               SpatialHashingSearcherHostPtr<float> searcher)
+               SearcherHostPtr<float> searcher)
         : Codec<float>(std::move(universe), std::move(fluid), std::move(searcher)) { }
 
     void
@@ -64,7 +64,7 @@ make_fluid() {
         .make_host_shared();
 }
 
-SpatialHashingSearcherHostPtr<float>
+SearcherHostPtr<float>
 make_searcher(const UniverseHostPtr<float>& universe,
               const FluidHostPtr<float>& fluid) {
     // Create the searcher dependency required by Codec.

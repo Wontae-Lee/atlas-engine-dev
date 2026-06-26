@@ -4,7 +4,7 @@
 #include <atlas/codec/codec_probe.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/searcher/searcher.h>
 #include <atlas/universe/universe.h>
 
 #include <type_traits>
@@ -20,7 +20,7 @@ public:
     make(CodecProbe<T>& probe,
          const UniverseHostPtr<T>& universe,
          const FluidHostPtr<T>& fluid,
-         const SpatialHashingSearcherHostPtr<T>& searcher,
+         const SearcherHostPtr<T>& searcher,
          DeviceBuffer<int>& allocated_solver,
          const DeviceBuffer<int>& fixed_solver,
          const DeviceBuffer<int>& fixed_region) noexcept;

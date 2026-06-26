@@ -17,7 +17,7 @@ DeepLearningCodec<T>::builder() noexcept {
 template <typename T>
 DeepLearningCodec<T>::DeepLearningCodec(UniverseHostPtr<T> domain,
                                         FluidHostPtr<T> fluid,
-                                        SpatialHashingSearcherHostPtr<T> searcher)
+                                        SearcherHostPtr<T> searcher)
     : Codec<T>(std::move(domain), std::move(fluid), std::move(searcher)) { }
 
 template <typename T>
@@ -48,7 +48,7 @@ DeepLearningCodec<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 typename DeepLearningCodec<T>::Builder&
-DeepLearningCodec<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+DeepLearningCodec<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
     _searcher = std::move(searcher);
     return *this;
 }

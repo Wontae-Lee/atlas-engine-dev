@@ -6,7 +6,7 @@ template <typename T>
 bool
 OrchestratorProbeBuilder<T>::build(const UniverseHostPtr<T>& universe,
                                    const FluidHostPtr<T>& fluid,
-                                   const SpatialHashingSearcherHostPtr<T>& searcher,
+                                   const SearcherHostPtr<T>& searcher,
                                    OrchestratorProbe<T>& probe) const noexcept {
     probe = {};
 
@@ -25,7 +25,7 @@ template <typename T>
 bool
 OrchestratorProbeBuilder<T>::load_common_data(const UniverseHostPtr<T>& universe,
                                               const FluidHostPtr<T>& fluid,
-                                              const SpatialHashingSearcherHostPtr<T>& searcher,
+                                              const SearcherHostPtr<T>& searcher,
                                               OrchestratorProbe<T>& probe) const noexcept {
     if (!universe || !fluid || !searcher) {
         return false;

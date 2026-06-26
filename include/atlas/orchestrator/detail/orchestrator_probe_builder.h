@@ -5,7 +5,7 @@
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/orchestrator/orchestrator_probe.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/searcher/searcher.h>
 #include <atlas/universe/universe.h>
 #include <atlas/universe/universe_state.h>
 
@@ -17,14 +17,14 @@ public:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     build(const UniverseHostPtr<T>& universe,
           const FluidHostPtr<T>& fluid,
-          const SpatialHashingSearcherHostPtr<T>& searcher,
+          const SearcherHostPtr<T>& searcher,
           OrchestratorProbe<T>& probe) const noexcept;
 
 private:
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
     load_common_data(const UniverseHostPtr<T>& universe,
                      const FluidHostPtr<T>& fluid,
-                     const SpatialHashingSearcherHostPtr<T>& searcher,
+                     const SearcherHostPtr<T>& searcher,
                      OrchestratorProbe<T>& probe) const noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void

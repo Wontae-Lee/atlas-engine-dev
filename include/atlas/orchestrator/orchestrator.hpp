@@ -11,7 +11,7 @@ namespace atlas {
 template <typename T>
 Orchestrator<T>::Orchestrator(UniverseHostPtr<T> universe,
                               FluidHostPtr<T> fluid,
-                              SpatialHashingSearcherHostPtr<T> searcher,
+                              SearcherHostPtr<T> searcher,
                               CodecHostPtr<T> codec,
                               MeasurerHostPtr<T> measurer,
                               HostBuffer<SolveHostPtr<T>> solvers) noexcept
@@ -152,7 +152,7 @@ Orchestrator<T>::set_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 void
-Orchestrator<T>::set_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+Orchestrator<T>::set_searcher(SearcherHostPtr<T> searcher) noexcept {
     _searcher = std::move(searcher);
 }
 
@@ -175,7 +175,7 @@ Orchestrator<T>::add_solver(SolveHostPtr<T> solver) noexcept {
 }
 
 template <typename T>
-const SpatialHashingSearcherHostPtr<T>&
+const SearcherHostPtr<T>&
 Orchestrator<T>::searcher() const noexcept {
     return _searcher;
 }
@@ -226,7 +226,7 @@ Orchestrator<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 typename Orchestrator<T>::Builder&
-Orchestrator<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+Orchestrator<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
     _searcher = std::move(searcher);
     return *this;
 }

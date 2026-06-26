@@ -49,7 +49,7 @@ make_dsmc_fluid(const std::size_t buffer_size = 4) {
         .make_host_shared();
 }
 
-inline atlas::SpatialHashingSearcherHostPtr<float>
+inline atlas::SearcherHostPtr<float>
 make_dsmc_searcher(const atlas::UniverseHostPtr<float>& universe,
                    const atlas::FluidHostPtr<float>& fluid) {
     return atlas::SpatialHashingSearcher<float>::builder()

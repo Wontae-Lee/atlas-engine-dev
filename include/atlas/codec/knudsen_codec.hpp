@@ -21,7 +21,7 @@ KnudsenCodec<T>::builder() noexcept {
 template <typename T>
 KnudsenCodec<T>::KnudsenCodec(UniverseHostPtr<T> domain,
                               FluidHostPtr<T> fluid,
-                              SpatialHashingSearcherHostPtr<T> searcher,
+                              SearcherHostPtr<T> searcher,
                               T characteristic_length,
                               T representative_collision_cross_sectional_area)
     : Codec<T>(std::move(domain), std::move(fluid), std::move(searcher))
@@ -119,7 +119,7 @@ KnudsenCodec<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 typename KnudsenCodec<T>::Builder&
-KnudsenCodec<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+KnudsenCodec<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
     _searcher = std::move(searcher);
     return *this;
 }

@@ -16,7 +16,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     KnudsenCodec(UniverseHostPtr<T> domain,
                  FluidHostPtr<T> fluid,
-                 SpatialHashingSearcherHostPtr<T> searcher,
+                 SearcherHostPtr<T> searcher,
                  T characteristic_length,
                  T representative_collision_cross_sectional_area = T(1));
 
@@ -65,7 +65,7 @@ public:
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+    with_searcher(SearcherHostPtr<T> searcher) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_characteristic_length(T characteristic_length) noexcept;
@@ -95,7 +95,7 @@ private:
 
     FluidHostPtr<T> _fluid {};
 
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 
     T _characteristic_length = T(1);
 

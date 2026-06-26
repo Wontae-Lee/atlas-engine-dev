@@ -16,7 +16,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     DeepLearningCodec(UniverseHostPtr<T> domain,
                       FluidHostPtr<T> fluid,
-                      SpatialHashingSearcherHostPtr<T> searcher);
+                      SearcherHostPtr<T> searcher);
 
     ~DeepLearningCodec() override = default;
 
@@ -44,7 +44,7 @@ public:
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+    with_searcher(SearcherHostPtr<T> searcher) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_fixed_solver(DeviceBuffer<int> fixed_solver) noexcept;
@@ -67,7 +67,7 @@ private:
 
     FluidHostPtr<T> _fluid {};
 
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 
     DeviceBuffer<int> _fixed_solver {};
 

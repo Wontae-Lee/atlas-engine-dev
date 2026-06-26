@@ -13,7 +13,7 @@ using atlas::FluidHostPtr;
 using atlas::MeasureModeType;
 using atlas::Measurer;
 using atlas::SpatialHashingSearcher;
-using atlas::SpatialHashingSearcherHostPtr;
+using atlas::SearcherHostPtr;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
@@ -22,7 +22,7 @@ class DummyMeasure final : public Measurer<float> {
 public:
     DummyMeasure(UniverseHostPtr<float> universe,
                  FluidHostPtr<float> fluid,
-                 SpatialHashingSearcherHostPtr<float> searcher,
+                 SearcherHostPtr<float> searcher,
                  MeasureModeType measure_mode) noexcept
         : Measurer<float>(std::move(universe), std::move(fluid), std::move(searcher))
         , _measure_mode(measure_mode) {}
@@ -59,7 +59,7 @@ make_fluid() {
         .make_host_shared();
 }
 
-SpatialHashingSearcherHostPtr<float>
+SearcherHostPtr<float>
 make_searcher(const UniverseHostPtr<float>& universe,
               const FluidHostPtr<float>& fluid) {
     return SpatialHashingSearcher<float>::builder()

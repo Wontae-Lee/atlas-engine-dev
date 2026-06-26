@@ -4,7 +4,7 @@
 #include <atlas/fluid/fluid.h>
 #include <atlas/measure/measurer_probe.h>
 #include <atlas/memory/memory.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/searcher/searcher.h>
 #include <atlas/universe/universe.h>
 
 namespace atlas {
@@ -26,7 +26,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     Measurer(UniverseHostPtr<T> universe,
              FluidHostPtr<T> fluid,
-             SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+             SearcherHostPtr<T> searcher) noexcept;
 
     virtual ~Measurer() = default;
 
@@ -48,7 +48,7 @@ protected:
 
     FluidHostPtr<T> _fluid {};
 
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 
     MeasurerProbe<T> _probe {};
 };

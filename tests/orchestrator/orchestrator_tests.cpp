@@ -25,7 +25,7 @@ using atlas::MeasureModeType;
 using atlas::Measurer;
 using atlas::Orchestrator;
 using atlas::SpatialHashingSearcher;
-using atlas::SpatialHashingSearcherHostPtr;
+using atlas::SearcherHostPtr;
 using atlas::tol;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
@@ -43,7 +43,7 @@ class MockCodec final : public Codec<float> {
 public:
     MockCodec(UniverseHostPtr<float> universe,
               FluidHostPtr<float> fluid,
-              SpatialHashingSearcherHostPtr<float> searcher)
+              SearcherHostPtr<float> searcher)
         : Codec<float>(std::move(universe), std::move(fluid), std::move(searcher)) { }
 
     void
@@ -68,7 +68,7 @@ class MockMeasurer final : public Measurer<float> {
 public:
     MockMeasurer(UniverseHostPtr<float> universe,
                  FluidHostPtr<float> fluid,
-                 SpatialHashingSearcherHostPtr<float> searcher)
+                 SearcherHostPtr<float> searcher)
         : Measurer<float>(std::move(universe), std::move(fluid), std::move(searcher)) { }
 
     void
@@ -136,7 +136,7 @@ make_universe() {
         .make_host_shared();
 }
 
-SpatialHashingSearcherHostPtr<float>
+SearcherHostPtr<float>
 make_searcher(const UniverseHostPtr<float>& universe,
               const FluidHostPtr<float>& fluid) {
     return SpatialHashingSearcher<float>::builder()

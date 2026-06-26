@@ -9,7 +9,7 @@
 #include <atlas/orchestrator/detail/orchestrator_pipeline.h>
 #include <atlas/orchestrator/detail/orchestrator_probe_builder.h>
 #include <atlas/orchestrator/orchestrator_probe.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/searcher/searcher.h>
 #include <atlas/solver/solver.h>
 #include <atlas/universe/universe.h>
 
@@ -33,7 +33,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     Orchestrator(UniverseHostPtr<T> universe,
                  FluidHostPtr<T> fluid,
-                 SpatialHashingSearcherHostPtr<T> searcher,
+                 SearcherHostPtr<T> searcher,
                  CodecHostPtr<T> codec,
                  MeasurerHostPtr<T> measurer,
                  HostBuffer<SolveHostPtr<T>> solvers) noexcept;
@@ -72,7 +72,7 @@ public:
     set_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+    set_searcher(SearcherHostPtr<T> searcher) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_codec(CodecHostPtr<T> codec) noexcept;
@@ -83,7 +83,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE void
     add_solver(SolveHostPtr<T> solver) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SpatialHashingSearcherHostPtr<T>&
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SearcherHostPtr<T>&
     searcher() const noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const UniverseHostPtr<T>&
@@ -119,7 +119,7 @@ private:
 
     FluidHostPtr<T> _fluid {};
 
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 
     CodecHostPtr<T> _codec {};
 
@@ -148,7 +148,7 @@ public:
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+    with_searcher(SearcherHostPtr<T> searcher) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_codec(CodecHostPtr<T> codec) noexcept;
@@ -180,7 +180,7 @@ private:
 
     FluidHostPtr<T> _fluid {};
 
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 
     CodecHostPtr<T> _codec {};
 

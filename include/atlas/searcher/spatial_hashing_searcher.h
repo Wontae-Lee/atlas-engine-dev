@@ -104,9 +104,6 @@ private:
 namespace atlas {
 
 template <typename T>
-using SpatialHashingSearcherHostPtr = atlas::host_shared_ptr<Searcher<T>>;
-
-template <typename T>
 using SpatialHashingSearcherDevicePtr = atlas::device_shared_ptr<SpatialHashingSearcher<T>>;
 
 }

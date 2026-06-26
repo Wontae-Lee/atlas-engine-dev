@@ -19,7 +19,7 @@ BoltzmannMeasurer<T>::builder() noexcept {
 template <typename T>
 BoltzmannMeasurer<T>::BoltzmannMeasurer(UniverseHostPtr<T> universe,
                                       FluidHostPtr<T> fluid,
-                                      SpatialHashingSearcherHostPtr<T> searcher,
+                                      SearcherHostPtr<T> searcher,
                                       const MeasureModeType measure_mode) noexcept
     : Measurer<T>(std::move(universe), std::move(fluid), std::move(searcher))
     , _measure_mode(measure_mode) {
@@ -175,7 +175,7 @@ BoltzmannMeasurer<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 
 template <typename T>
 typename BoltzmannMeasurer<T>::Builder&
-BoltzmannMeasurer<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+BoltzmannMeasurer<T>::Builder::with_searcher(SearcherHostPtr<T> searcher) noexcept {
 
     _searcher = std::move(searcher);
     return *this;

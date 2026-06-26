@@ -15,7 +15,7 @@ using atlas::DeviceBuffer;
 using atlas::Fluid;
 using atlas::FluidHostPtr;
 using atlas::SpatialHashingSearcher;
-using atlas::SpatialHashingSearcherHostPtr;
+using atlas::SearcherHostPtr;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::Vector3F;
@@ -38,7 +38,7 @@ make_fluid() {
         .make_host_shared();
 }
 
-SpatialHashingSearcherHostPtr<float>
+SearcherHostPtr<float>
 make_searcher(const UniverseHostPtr<float>& universe,
               const FluidHostPtr<float>& fluid) {
     // Create the searcher dependency required by the codec.

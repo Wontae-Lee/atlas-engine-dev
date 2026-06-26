@@ -16,7 +16,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     BoltzmannMeasurer(UniverseHostPtr<T> universe,
                      FluidHostPtr<T> fluid,
-                     SpatialHashingSearcherHostPtr<T> searcher,
+                     SearcherHostPtr<T> searcher,
                      MeasureModeType measure_mode = MeasureModeType::All) noexcept;
 
     ~BoltzmannMeasurer() override = default;
@@ -49,7 +49,7 @@ public:
     with_fluid(FluidHostPtr<T> fluid) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept;
+    with_searcher(SearcherHostPtr<T> searcher) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_measure_mode(MeasureModeType measure_mode) noexcept;
@@ -69,7 +69,7 @@ private:
 
     FluidHostPtr<T> _fluid {};
 
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 
     MeasureModeType _measure_mode { MeasureModeType::Field };
 };

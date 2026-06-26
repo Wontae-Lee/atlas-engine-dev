@@ -10,7 +10,7 @@ bool
 CodecProbeBuilder<T>::make(CodecProbe<T>& probe,
                            const UniverseHostPtr<T>& universe,
                            const FluidHostPtr<T>& fluid,
-                           const SpatialHashingSearcherHostPtr<T>& searcher,
+                           const SearcherHostPtr<T>& searcher,
                            DeviceBuffer<int>& allocated_solver,
                            const DeviceBuffer<int>& fixed_solver,
                            const DeviceBuffer<int>& fixed_region) noexcept {

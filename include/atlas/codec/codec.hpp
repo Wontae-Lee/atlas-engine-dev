@@ -12,7 +12,7 @@ namespace atlas {
 template <typename T>
 Codec<T>::Codec(UniverseHostPtr<T> domain,
                 FluidHostPtr<T> fluid,
-                SpatialHashingSearcherHostPtr<T> searcher)
+                SearcherHostPtr<T> searcher)
     : _universe(std::move(domain))
     , _fluid(std::move(fluid))
     , _searcher(std::move(searcher)) {

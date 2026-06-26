@@ -108,9 +108,14 @@ optional linear/angular motion. It is the shared region type used by `Source`,
 
 ### `searcher/`
 Neighbor acceleration structures behind the `Searcher<T>` interface:
-`SpatialHashingSearcher<T>` (the primary grid-hash searcher), plus
-`kdtree_searcher`, `octree_searcher`, and `quadtree_searcher`. Provides sorted
-indices, per-cell ranges, and a neighbor stencil.
+`SpatialHashingSearcher<T>` (the default grid-hash searcher), plus
+`KdTreeSearcher<T>`, `OctreeSearcher<T>`, and `QuadtreeSearcher<T>`. The base
+`Searcher<T>` owns the neighbor buffers and exposes the query surface (`build`,
+`indices`, `cell_start`/`cell_end`, `neighbor_*`); concrete searchers override
+`build`. The consumers that need neighbors — `Orchestrator<T>`, `Codec<T>`, and
+`Measurer<T>` — depend on `SearcherHostPtr<T>` (the base), so the user selects
+the neighbor-search strategy simply by building and passing the searcher of
+their choice to `with_searcher(...)`.
 
 ### `indexer/`
 `DevicePairIndexer` — symmetric pair indexing used by DSMC collision pairing.

@@ -3,7 +3,7 @@
 #include <atlas/codec/codec_probe.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
-#include <atlas/searcher/spatial_hashing_searcher.h>
+#include <atlas/searcher/searcher.h>
 #include <atlas/universe/universe.h>
 
 namespace atlas {
@@ -16,7 +16,7 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE
     Codec(UniverseHostPtr<T> domain,
           FluidHostPtr<T> fluid,
-          SpatialHashingSearcherHostPtr<T> searcher);
+          SearcherHostPtr<T> searcher);
 
     virtual ~Codec() = default;
 
@@ -66,7 +66,7 @@ protected:
 
     FluidHostPtr<T> _fluid {};
 
-    SpatialHashingSearcherHostPtr<T> _searcher {};
+    SearcherHostPtr<T> _searcher {};
 
     DeviceBuffer<int> d_allocated_solver;
 
