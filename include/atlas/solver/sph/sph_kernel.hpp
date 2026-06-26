@@ -88,16 +88,13 @@ T
 SphKernel<T>::density_weight(const SphKernelType type,
                              const T radius,
                              const T cell_size) noexcept {
-    switch (type) {
-    case SphKernelType::standard:
-        return StandardSphKernel<T>::density_weight(radius, cell_size);
-    case SphKernelType::cubic_spline:
-        return CubicSplineSphKernel<T>::density_weight(radius, cell_size);
-    case SphKernelType::wendland_quintic:
-        return WendlandQuinticSphKernel<T>::density_weight(radius, cell_size);
-    default:
-        return T(0);
-    }
+    return detail::SphKernelVariant<T>::visit_type(
+        type,
+        [&] ATLAS_ALL_DEVICE (auto kernel_tag) noexcept {
+            using Kernel = typename decltype(kernel_tag)::type;
+            return Kernel::density_weight(radius, cell_size);
+        },
+        T(0));
 }
 
 template <typename T>
@@ -106,16 +103,13 @@ SphKernel<T>::pressure_gradient(const SphKernelType type,
                                 const Vector3<T>& delta,
                                 const T radius,
                                 const T cell_size) noexcept {
-    switch (type) {
-    case SphKernelType::standard:
-        return StandardSphKernel<T>::pressure_gradient(delta, radius, cell_size);
-    case SphKernelType::cubic_spline:
-        return CubicSplineSphKernel<T>::pressure_gradient(delta, radius, cell_size);
-    case SphKernelType::wendland_quintic:
-        return WendlandQuinticSphKernel<T>::pressure_gradient(delta, radius, cell_size);
-    default:
-        return Vector3<T>(T(0), T(0), T(0));
-    }
+    return detail::SphKernelVariant<T>::visit_type(
+        type,
+        [&] ATLAS_ALL_DEVICE (auto kernel_tag) noexcept {
+            using Kernel = typename decltype(kernel_tag)::type;
+            return Kernel::pressure_gradient(delta, radius, cell_size);
+        },
+        Vector3<T>(T(0), T(0), T(0)));
 }
 
 template <typename T>
@@ -123,16 +117,13 @@ T
 SphKernel<T>::viscosity_laplacian(const SphKernelType type,
                                   const T radius,
                                   const T cell_size) noexcept {
-    switch (type) {
-    case SphKernelType::standard:
-        return StandardSphKernel<T>::viscosity_laplacian(radius, cell_size);
-    case SphKernelType::cubic_spline:
-        return CubicSplineSphKernel<T>::viscosity_laplacian(radius, cell_size);
-    case SphKernelType::wendland_quintic:
-        return WendlandQuinticSphKernel<T>::viscosity_laplacian(radius, cell_size);
-    default:
-        return T(0);
-    }
+    return detail::SphKernelVariant<T>::visit_type(
+        type,
+        [&] ATLAS_ALL_DEVICE (auto kernel_tag) noexcept {
+            using Kernel = typename decltype(kernel_tag)::type;
+            return Kernel::viscosity_laplacian(radius, cell_size);
+        },
+        T(0));
 }
 
 template <typename T>

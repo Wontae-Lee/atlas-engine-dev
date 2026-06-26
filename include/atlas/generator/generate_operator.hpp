@@ -135,26 +135,12 @@ GenerateOperator<T>::generate(const unsigned int seed,
 template <typename T>
 void
 GenerateOperator<T>::reseed(const unsigned int seed) noexcept {
-    switch (type) {
-    case GenerateType::uniform:
-        uniform.seed   = seed;
-        uniform.engine = atlas::default_random_engine<T>(seed);
-        return;
-    case GenerateType::jittering:
-        jittering.seed   = seed;
-        jittering.engine = atlas::default_random_engine<T>(seed);
-        return;
-    case GenerateType::maxwell_sigma:
-        maxwell_sigma.seed   = seed;
-        maxwell_sigma.engine = atlas::default_random_engine<T>(seed);
-        return;
-    case GenerateType::maxwell_boltzmann:
-        maxwell_boltzmann.seed   = seed;
-        maxwell_boltzmann.engine = atlas::default_random_engine<T>(seed);
-        return;
-    default:
-        return;
-    }
+    detail::GenerateOperatorVariant<T>::apply(
+        *this,
+        [&] ATLAS_ALL_DEVICE (auto& op) noexcept {
+            op.seed   = seed;
+            op.engine = atlas::default_random_engine<T>(seed);
+        });
 }
 
 }

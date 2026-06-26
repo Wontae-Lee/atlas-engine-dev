@@ -110,17 +110,37 @@ Contrast this with the old shape, where every behavior method carried its own
 forgotten arm became a silent wrong result via `default:`. With `visit`, a
 payload that does not provide the expected method fails to compile.
 
-### `visit` contract
+### DeviceVariant dispatch primitives
+
+`DeviceVariant` provides three dispatch primitives. Pick the one that matches
+the behavior method's shape:
 
 ```text
-visit(owner, visitor, fallback)
-  - owner    : the variant value (const)
-  - visitor  : ATLAS_ALL_DEVICE generic callable invoked on the active payload
-  - fallback : returned only if owner.type matches no case
-Invariant: owner.type always equals the active member's tag (maintained by
-construct/copy/assign), so visit always invokes the visitor on the active
-payload; only a corrupted tag hits the fallback.
+visit(owner, visitor, fallback)      value-returning, reads the active payload
+                                     (const owner); returns fallback if the tag
+                                     matches no case.
+apply(owner, visitor)                void; const and non-const owner overloads.
+                                     Use for methods that return void (including
+                                     out-parameter and mutating methods).
+visit_type(tag, visitor, fallback)   static type dispatch with no instance. The
+                                     visitor receives detail::type_tag<Payload>
+                                     and recovers the payload type via
+                                     decltype(tag)::type to call a static method.
 ```
+
+Invariant for `visit`/`apply`: `owner.type` always equals the active member's
+tag (maintained by construct/copy/assign), so the visitor is always invoked on
+the active payload; only a corrupted tag reaches the fallback (or, for `apply`,
+does nothing).
+
+### When a method is not uniform
+
+`visit`/`apply` require the visitor to call the **same expression** on every
+payload. A behavior method whose cases differ — a payload with a different
+argument list, or a case that returns a constant instead of calling the payload —
+is not uniform and is left as an explicit `switch`. Forcing it into a visitor
+would require changing payload interfaces, which is a separate decision. The
+remaining switches in 7.5 are these non-uniform cases.
 
 ---
 
@@ -144,18 +164,31 @@ the migration is optional. If migrated, follow the `visit` recipe above.
 
 ## 7.5 Rollout Status
 
-The `visit` migration of the Pattern B unions is staged. Status:
+Migration of the Pattern B unions to the dispatch primitives. "Uniform" methods
+are migrated; non-uniform methods are listed as the exceptions that stay as
+`switch`.
 
 ```text
-[done]    geometry/geometry_operator        (reference implementation)
-[pending] generator/generate_operator
-[pending] collider/interaction/surface_interaction_kernel
-[pending] collider/kernel/post_collider_kernel
-[pending] solver/dsmc/dsmc_kernel
-[pending] solver/sph/sph_kernel
+[done]    geometry/geometry_operator        all 9 behavior methods -> visit
+[done]    collider/kernel/post_collider_kernel  sweep_motion, operator() -> apply
+[done]    solver/sph/sph_kernel             3 static dispatchers -> visit_type
+[partial] collider/interaction/surface_interaction_kernel
+            operator() -> visit
+            internal_energy stays (isothermal returns the input unchanged)
+[partial] generator/generate_operator
+            reseed -> apply
+            generate() x2 stay (maxwell_sigma takes one fewer argument)
+[partial] solver/dsmc/dsmc_kernel
+            operator() -> apply
+            cross_section stays (hard_sphere has no relative_speed argument)
 [optional] source/spawn_operator, sink/despawn_operator  (Pattern C -> B)
 ```
 
-When migrating a pending union, keep the change behavior-preserving: replace each
-`switch (type)` behavior method with a `visit` call whose fallback equals the old
-`default:` value, and leave the lifetime/case-list code untouched.
+The `[partial]` exceptions are non-uniform behavior methods (see 7.3). Making
+them uniform would mean changing the payload interfaces (for example giving every
+generator a two-argument `generate`); that is deliberately out of scope here and
+should be decided on its own merits.
+
+When migrating, keep the change behavior-preserving: replace each uniform
+`switch (type)` method with a `visit`/`apply`/`visit_type` call whose fallback
+equals the old `default:` value, and leave the lifetime/case-list code untouched.

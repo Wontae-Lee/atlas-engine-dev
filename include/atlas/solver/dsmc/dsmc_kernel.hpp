@@ -141,19 +141,11 @@ DsmcKernel<T>::operator()(Vector3<T>& lhs_velocity,
                           Vector3<T>& rhs_velocity,
                           const MaterialProperties<T>& lhs,
                           const MaterialProperties<T>& rhs) const noexcept {
-    switch (type) {
-    case DsmcKernelType::hard_sphere:
-        hard_sphere(lhs_velocity, rhs_velocity, lhs, rhs);
-        return;
-    case DsmcKernelType::variable_hard_sphere:
-        variable_hard_sphere(lhs_velocity, rhs_velocity, lhs, rhs);
-        return;
-    case DsmcKernelType::variable_soft_sphere:
-        variable_soft_sphere(lhs_velocity, rhs_velocity, lhs, rhs);
-        return;
-    default:
-        return;
-    }
+    detail::DsmcKernelVariant<T>::apply(
+        *this,
+        [&] ATLAS_ALL_DEVICE (const auto& kernel) noexcept {
+            kernel(lhs_velocity, rhs_velocity, lhs, rhs);
+        });
 }
 
 template <typename T>

@@ -10,6 +10,11 @@ namespace atlas::detail {
 template <typename>
 inline constexpr bool dependent_false_v = false;
 
+template <typename Payload>
+struct type_tag final {
+    using type = Payload;
+};
+
 template <typename Owner,
           typename Tag,
           Tag TagValue,
@@ -75,7 +80,39 @@ struct DeviceVariant final {
         return visit_by_tag<Cases...>(owner, owner.type, static_cast<Visitor&&>(visitor), fallback);
     }
 
+    template <typename Visitor>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
+    apply(Owner& owner, Visitor&& visitor) noexcept {
+        apply_by_tag<Cases...>(owner, owner.type, static_cast<Visitor&&>(visitor));
+    }
+
+    template <typename Visitor>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
+    apply(const Owner& owner, Visitor&& visitor) noexcept {
+        apply_const_by_tag<Cases...>(owner, owner.type, static_cast<Visitor&&>(visitor));
+    }
+
+    template <typename Visitor, typename Fallback>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static Fallback
+    visit_type(const Tag tag, Visitor&& visitor, Fallback fallback) noexcept {
+        return visit_type_by_tag<Cases...>(tag, static_cast<Visitor&&>(visitor), fallback);
+    }
+
 private:
+    template <typename Case, typename... Rest, typename Visitor, typename Fallback>
+    ATLAS_ALL_DEVICE static Fallback
+    visit_type_by_tag(const Tag tag, Visitor&& visitor, Fallback fallback) noexcept {
+        if (tag == Case::tag) {
+            return visitor(type_tag<typename Case::payload_type> {});
+        }
+
+        if constexpr (sizeof...(Rest) > 0) {
+            return visit_type_by_tag<Rest...>(tag, static_cast<Visitor&&>(visitor), fallback);
+        } else {
+            return fallback;
+        }
+    }
+
     template <typename Case, typename... Rest, typename Visitor, typename Fallback>
     ATLAS_ALL_DEVICE static Fallback
     visit_by_tag(const Owner& owner, const Tag tag, Visitor&& visitor, Fallback fallback) noexcept {
@@ -87,6 +124,32 @@ private:
             return visit_by_tag<Rest...>(owner, tag, static_cast<Visitor&&>(visitor), fallback);
         } else {
             return fallback;
+        }
+    }
+
+    template <typename Case, typename... Rest, typename Visitor>
+    ATLAS_ALL_DEVICE static void
+    apply_by_tag(Owner& owner, const Tag tag, Visitor&& visitor) noexcept {
+        if (tag == Case::tag) {
+            visitor(owner.*(Case::member));
+            return;
+        }
+
+        if constexpr (sizeof...(Rest) > 0) {
+            apply_by_tag<Rest...>(owner, tag, static_cast<Visitor&&>(visitor));
+        }
+    }
+
+    template <typename Case, typename... Rest, typename Visitor>
+    ATLAS_ALL_DEVICE static void
+    apply_const_by_tag(const Owner& owner, const Tag tag, Visitor&& visitor) noexcept {
+        if (tag == Case::tag) {
+            visitor(owner.*(Case::member));
+            return;
+        }
+
+        if constexpr (sizeof...(Rest) > 0) {
+            apply_const_by_tag<Rest...>(owner, tag, static_cast<Visitor&&>(visitor));
         }
     }
 

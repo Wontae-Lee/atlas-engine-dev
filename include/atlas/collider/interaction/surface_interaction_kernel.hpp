@@ -62,14 +62,10 @@ template <typename T>
 Vector3<T>
 SurfaceInteractionKernel<T>::operator()(const Vector3<T>& incident,
                                         const Vector3<T>& normal) const noexcept {
-    switch (type) {
-    case SurfaceInteractionType::isothermal:
-        return isothermal(incident, normal);
-    case SurfaceInteractionType::maxwellian:
-        return maxwellian(incident, normal);
-    }
-
-    return Vector3<T>(T(0), T(0), T(0));
+    return detail::SurfaceInteractionVariant<T>::visit(
+        *this,
+        [&] ATLAS_ALL_DEVICE (const auto& interaction) noexcept { return interaction(incident, normal); },
+        Vector3<T>(T(0), T(0), T(0)));
 }
 
 template <typename T>

@@ -67,17 +67,11 @@ PostColliderKernel<T>::sweep_motion(const Unit<T>& unit,
                                     Vector3<T>& sweep_direction,
                                     T& sweep_speed,
                                     T& sweep_length) const noexcept {
-    switch (type) {
-    case PostColliderType::fast:
-        fast.sweep_motion(unit, origin, incident, incident_speed, dt, sweep_direction, sweep_speed, sweep_length);
-        return;
-    case PostColliderType::dt_remain:
-        dt_remain.sweep_motion(unit, origin, incident, incident_speed, dt, sweep_direction, sweep_speed, sweep_length);
-        return;
-    case PostColliderType::precise:
-        precise.sweep_motion(unit, origin, incident, incident_speed, dt, sweep_direction, sweep_speed, sweep_length);
-        return;
-    }
+    detail::PostColliderVariant<T>::apply(
+        *this,
+        [&] ATLAS_ALL_DEVICE (const auto& kernel) noexcept {
+            kernel.sweep_motion(unit, origin, incident, incident_speed, dt, sweep_direction, sweep_speed, sweep_length);
+        });
 }
 
 template <typename T>
@@ -92,17 +86,11 @@ PostColliderKernel<T>::operator()(Vector3<T>& position,
                                   const T dt,
                                   const Unit<T>& unit,
                                   const SurfaceInteractionKernel<T>& interaction) const noexcept {
-    switch (type) {
-    case PostColliderType::fast:
-        fast(position, velocity, incident, hit_position, hit_normal, hit_distance, sweep_speed, dt, unit, interaction);
-        break;
-    case PostColliderType::dt_remain:
-        dt_remain(position, velocity, incident, hit_position, hit_normal, hit_distance, sweep_speed, dt, unit, interaction);
-        break;
-    case PostColliderType::precise:
-        precise(position, velocity, incident, hit_position, hit_normal, hit_distance, sweep_speed, dt, unit, interaction);
-        break;
-    }
+    detail::PostColliderVariant<T>::apply(
+        *this,
+        [&] ATLAS_ALL_DEVICE (const auto& kernel) noexcept {
+            kernel(position, velocity, incident, hit_position, hit_normal, hit_distance, sweep_speed, dt, unit, interaction);
+        });
 }
 
 template <typename T>
