@@ -69,8 +69,8 @@ Backend and capacity conventions for specific builders:
   setters, then getters.
 - Member variables are ordered by type when no nearer sibling layout is more
   specific: bool, integer, floating-point, HostBuffer<T>, then DeviceBuffer<T>.
-- Do not silently rename existing public spellings such as MatrialProperties or
-  sensor_matrics unless a rename is explicitly requested.
+- A public rename is a breaking change; rename public spellings (types, methods,
+  headers) only when explicitly requested.
 ```
 
 ---

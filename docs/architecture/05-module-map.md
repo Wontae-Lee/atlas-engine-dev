@@ -132,7 +132,7 @@ emission inputs.
 
 ### `measure/`
 Macroscopic field measurement. `Measurer<T>` interface with `VolumeMeasurer`
-and `BoltzmanMeasurer` implementations, plus `MeasurerProbe`. Populates
+and `BoltzmannMeasurer` implementations, plus `MeasurerProbe`. Populates
 `Universe` per-cell field states.
 
 ### `codec/`
@@ -200,10 +200,9 @@ force applier, and the probe builder. See
 ## 5.7 Cross-Cutting
 
 ### `observer/`
-Optional diagnostics. `Observer` holds typed sensor metrics (`SensorMatrics`)
-and can export them (for example to CSV). Note the existing public spelling
-`sensor_matrics` / `SensorMatrics` is intentional and must not be silently
-renamed.
+Optional diagnostics. `Observer` holds typed sensor metrics (`SensorMetrics`,
+with `SourceSensorMetrics` / `SinkSensorMetrics`) and can export them (for
+example to CSV).
 
 ### `logging/`
 Optional `Logger` with severity levels; compiled implementation in

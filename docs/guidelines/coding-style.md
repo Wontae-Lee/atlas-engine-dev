@@ -51,8 +51,8 @@ call site.
   names that differ only by a generic suffix or a repeated verb (for example
   `execute_*_trial` vs `execute_*_pair`) when more specific step names would
   make the call flow easier to scan.
-- Do not silently rename existing public spellings such as `MatrialProperties`
-  or `sensor_matrics` unless a rename is explicitly requested.
+- A public rename is a breaking change. Do not rename public spellings (types,
+  methods, headers) unless a rename is explicitly requested.
 
 ---
 

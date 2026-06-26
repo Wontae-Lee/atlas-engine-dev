@@ -320,8 +320,8 @@ int main() {
     using T = float;
 
     const auto observer = atlas::Observer::builder()
-        .with_source_sensor_matrics(1024)
-        .with_sink_sensor_matrics(1024)
+        .with_source_sensor_metrics(1024)
+        .with_sink_sensor_metrics(1024)
         .make_host_shared();
 
     atlas::HostBuffer<atlas::MaterialProperties<T>> properties(1);
@@ -442,7 +442,7 @@ Each example provides `main.cpp` and `main.cu` entry points selected by the acti
 - use portability macros from [`include/atlas/core/macros.h`](include/atlas/core/macros.h): `ATLAS_HOST`, `ATLAS_DEVICE`, `ATLAS_ALL_DEVICE`, `ATLAS_FORCE_INLINE`, `ATLAS_NODISCARD`, `ATLAS_MAYBE_UNUSED`, and `RESTRICT`
 - template modules follow paired `.h` and `.hpp` files, with the `.h` including the `.hpp` at the bottom
 - do not hand-edit generated umbrella headers such as [`include/atlas/atlas.h`](include/atlas/atlas.h); use [`tools/generate_headers.py`](tools/generate_headers.py)
-- public APIs preserve existing spelling such as `sensor_matrics`
+- a public rename is a breaking change; rename public spellings only when explicitly requested
 - Vizkit is compiled only when enabled and reads `system()->dt()` from the bound `System`
 
 ## License
