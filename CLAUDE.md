@@ -48,6 +48,7 @@ A few rules are easy to miss; everything else is in the linked docs.
 | Understand the CUDA/TBB backend model | [architecture/04-backend-portability.md](docs/architecture/04-backend-portability.md) |
 | Look up a specific module directory | [architecture/05-module-map.md](docs/architecture/05-module-map.md) |
 | Check a structural convention (files, builders, naming, solver rules) | [architecture/06-conventions.md](docs/architecture/06-conventions.md) |
+| Add a new geometry/solver/kernel (extension points, `visit` recipe) | [architecture/07-extensibility.md](docs/architecture/07-extensibility.md) |
 
 Each directory also has its own `README.md` index:
 [`docs/architecture/README.md`](docs/architecture/README.md) and

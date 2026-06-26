@@ -69,7 +69,27 @@ struct DeviceVariant final {
         destroy_by_tag<Cases...>(owner, owner.type);
     }
 
+    template <typename Visitor, typename Fallback>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static Fallback
+    visit(const Owner& owner, Visitor&& visitor, Fallback fallback) noexcept {
+        return visit_by_tag<Cases...>(owner, owner.type, static_cast<Visitor&&>(visitor), fallback);
+    }
+
 private:
+    template <typename Case, typename... Rest, typename Visitor, typename Fallback>
+    ATLAS_ALL_DEVICE static Fallback
+    visit_by_tag(const Owner& owner, const Tag tag, Visitor&& visitor, Fallback fallback) noexcept {
+        if (tag == Case::tag) {
+            return visitor(owner.*(Case::member));
+        }
+
+        if constexpr (sizeof...(Rest) > 0) {
+            return visit_by_tag<Rest...>(owner, tag, static_cast<Visitor&&>(visitor), fallback);
+        } else {
+            return fallback;
+        }
+    }
+
     template <typename Case, typename... Rest, typename... Args>
     ATLAS_ALL_DEVICE static void
     construct_by_tag(Owner& owner, const Tag tag, const Args&... args) noexcept {

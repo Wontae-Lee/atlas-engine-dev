@@ -24,6 +24,7 @@ single generated umbrella header:
 | [04-backend-portability.md](04-backend-portability.md) | The CUDA/TBB backend model: buffers, `parallel_for`, memory, and portability macros. |
 | [05-module-map.md](05-module-map.md) | A directory-by-directory catalog of `include/atlas/`. |
 | [06-conventions.md](06-conventions.md) | File layout, builder pattern, active-prefix discipline, and naming rules. |
+| [07-extensibility.md](07-extensibility.md) | The extension points and how to add a new case (virtual, DeviceVariant `visit`, tag-only). |
 
 ## How This Directory Should Be Used
 
