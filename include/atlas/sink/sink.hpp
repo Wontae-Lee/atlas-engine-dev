@@ -52,17 +52,17 @@ template <typename T>
 void
 Sink<T>::sink(const T dt) {
     const std::size_t step_index = _step_index++;
-    auto* sink_sensor_matrics    = _observer ? _observer->sensor_matrics<atlas::SinkSensorMatrics>() : nullptr;
+    auto* sink_sensor_metrics    = _observer ? _observer->sensor_metrics<atlas::SinkSensorMetrics>() : nullptr;
     HostBuffer<std::size_t> removed_per_unit;
-    if (sink_sensor_matrics != nullptr) {
+    if (sink_sensor_metrics != nullptr) {
         removed_per_unit = HostBuffer<std::size_t>(_units.size(), std::size_t { 0 });
     }
     const auto record_sink_metrics = [&] {
-        if (sink_sensor_matrics == nullptr) {
+        if (sink_sensor_metrics == nullptr) {
             return;
         }
         for (std::size_t unit_index = 0; unit_index < removed_per_unit.size(); ++unit_index) {
-            sink_sensor_matrics->record(step_index, unit_index, removed_per_unit[unit_index]);
+            sink_sensor_metrics->record(step_index, unit_index, removed_per_unit[unit_index]);
         }
     };
     if (!make_probe(dt)) {
@@ -72,7 +72,7 @@ Sink<T>::sink(const T dt) {
 
     const auto probe                = _probe;
     int* despawned_unit_indices_ptr = nullptr;
-    if (sink_sensor_matrics != nullptr) {
+    if (sink_sensor_metrics != nullptr) {
         if (_despawned_unit_indices.size() != probe.particle_count) {
             _despawned_unit_indices.resize(probe.particle_count);
         }
@@ -81,7 +81,7 @@ Sink<T>::sink(const T dt) {
 
     _particle_despawner.apply(probe, despawned_unit_indices_ptr);
 
-    if (sink_sensor_matrics != nullptr) {
+    if (sink_sensor_metrics != nullptr) {
         const HostBuffer<int> removed_units(
             _despawned_unit_indices.begin(),
             _despawned_unit_indices.begin() + static_cast<std::ptrdiff_t>(probe.particle_count));

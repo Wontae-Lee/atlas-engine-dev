@@ -8,11 +8,11 @@
 namespace atlas {
 
 template <typename T>
-class LinearBoundingVolumeHierachy final : public BoundingVolumeHierachy<T> {
+class LinearBoundingVolumeHierarchy final : public BoundingVolumeHierarchy<T> {
 public:
-    LinearBoundingVolumeHierachy() = default;
+    LinearBoundingVolumeHierarchy() = default;
 
-    ~LinearBoundingVolumeHierachy() override = default;
+    ~LinearBoundingVolumeHierarchy() override = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build(const HostBuffer<TriangleContainer4<T>>& triangles) override;
@@ -117,7 +117,7 @@ private:
 namespace atlas {
 
 template <typename T>
-using LBVH = LinearBoundingVolumeHierachy<T>;
+using LBVH = LinearBoundingVolumeHierarchy<T>;
 
 }
 

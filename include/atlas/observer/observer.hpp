@@ -10,46 +10,46 @@ Observer::builder() noexcept {
     return Builder {};
 }
 
-template <typename SensorMatricsT, typename... Args>
-SensorMatricsT&
-Observer::emplace_sensor_matrics(Args&&... args) {
-    return _sensor_matrics.template emplace<SensorMatricsT>(std::forward<Args>(args)...);
+template <typename SensorMetricsT, typename... Args>
+SensorMetricsT&
+Observer::emplace_sensor_metrics(Args&&... args) {
+    return _sensor_metrics.template emplace<SensorMetricsT>(std::forward<Args>(args)...);
 }
 
-template <typename SensorMatricsT>
+template <typename SensorMetricsT>
 void
-Observer::set_sensor_matrics(std::unique_ptr<SensorMatricsT> sensor_matrics) {
-    _sensor_matrics.template set<SensorMatricsT>(std::move(sensor_matrics));
+Observer::set_sensor_metrics(std::unique_ptr<SensorMetricsT> sensor_metrics) {
+    _sensor_metrics.template set<SensorMetricsT>(std::move(sensor_metrics));
 }
 
-template <typename SensorMatricsT>
-SensorMatricsT*
-Observer::sensor_matrics() noexcept {
-    return _sensor_matrics.template get<SensorMatricsT>();
+template <typename SensorMetricsT>
+SensorMetricsT*
+Observer::sensor_metrics() noexcept {
+    return _sensor_metrics.template get<SensorMetricsT>();
 }
 
-template <typename SensorMatricsT>
-const SensorMatricsT*
-Observer::sensor_matrics() const noexcept {
-    return _sensor_matrics.template get<SensorMatricsT>();
+template <typename SensorMetricsT>
+const SensorMetricsT*
+Observer::sensor_metrics() const noexcept {
+    return _sensor_metrics.template get<SensorMetricsT>();
 }
 
-template <typename SensorMatricsT>
+template <typename SensorMetricsT>
 bool
-Observer::has_sensor_matrics() const noexcept {
-    return _sensor_matrics.template contains<SensorMatricsT>();
+Observer::has_sensor_metrics() const noexcept {
+    return _sensor_metrics.template contains<SensorMetricsT>();
 }
 
-template <typename SensorMatricsT>
-std::unique_ptr<SensorMatricsT>
-Observer::remove_sensor_matrics() {
-    return _sensor_matrics.template remove<SensorMatricsT>();
+template <typename SensorMetricsT>
+std::unique_ptr<SensorMetricsT>
+Observer::remove_sensor_metrics() {
+    return _sensor_metrics.template remove<SensorMetricsT>();
 }
 
 inline void
 Observer::export_csv(const std::filesystem::path& output_directory) const {
 
-    for (const auto& entry : _sensor_matrics) {
+    for (const auto& entry : _sensor_metrics) {
         const auto& value = entry.second;
         if (value) {
 
@@ -58,20 +58,20 @@ Observer::export_csv(const std::filesystem::path& output_directory) const {
     }
 }
 
-inline SensorMatricsStore&
-Observer::sensor_matrics() noexcept {
-    return _sensor_matrics;
+inline SensorMetricsStore&
+Observer::sensor_metrics() noexcept {
+    return _sensor_metrics;
 }
 
-inline const SensorMatricsStore&
-Observer::sensor_matrics() const noexcept {
-    return _sensor_matrics;
+inline const SensorMetricsStore&
+Observer::sensor_metrics() const noexcept {
+    return _sensor_metrics;
 }
 
 inline Observer::Builder&
-Observer::Builder::with_source_sensor_matrics(const std::size_t reserve_count) noexcept {
+Observer::Builder::with_source_sensor_metrics(const std::size_t reserve_count) noexcept {
 
-    _with_source_sensor_matrics = true;
+    _with_source_sensor_metrics = true;
 
     _source_reserve_count = reserve_count;
 
@@ -79,9 +79,9 @@ Observer::Builder::with_source_sensor_matrics(const std::size_t reserve_count) n
 }
 
 inline Observer::Builder&
-Observer::Builder::with_sink_sensor_matrics(const std::size_t reserve_count) noexcept {
+Observer::Builder::with_sink_sensor_metrics(const std::size_t reserve_count) noexcept {
 
-    _with_sink_sensor_matrics = true;
+    _with_sink_sensor_metrics = true;
 
     _sink_reserve_count = reserve_count;
 
@@ -92,14 +92,14 @@ inline Observer
 Observer::Builder::build() const {
     Observer observer;
 
-    if (_with_source_sensor_matrics) {
+    if (_with_source_sensor_metrics) {
 
-        observer.emplace_sensor_matrics<SourceSensorMatrics>(_source_reserve_count);
+        observer.emplace_sensor_metrics<SourceSensorMetrics>(_source_reserve_count);
     }
 
-    if (_with_sink_sensor_matrics) {
+    if (_with_sink_sensor_metrics) {
 
-        observer.emplace_sensor_matrics<SinkSensorMatrics>(_sink_reserve_count);
+        observer.emplace_sensor_metrics<SinkSensorMetrics>(_sink_reserve_count);
     }
 
     return observer;

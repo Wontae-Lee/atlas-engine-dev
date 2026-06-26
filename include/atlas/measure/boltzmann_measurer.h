@@ -6,20 +6,20 @@
 namespace atlas {
 
 template <typename T>
-class BoltzmanMeasurer final : public Measurer<T> {
+class BoltzmannMeasurer final : public Measurer<T> {
 public:
     class Builder;
 
 public:
-    BoltzmanMeasurer() = default;
+    BoltzmannMeasurer() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE
-    BoltzmanMeasurer(UniverseHostPtr<T> universe,
+    BoltzmannMeasurer(UniverseHostPtr<T> universe,
                      FluidHostPtr<T> fluid,
                      SpatialHashingSearcherHostPtr<T> searcher,
                      MeasureModeType measure_mode = MeasureModeType::All) noexcept;
 
-    ~BoltzmanMeasurer() override = default;
+    ~BoltzmannMeasurer() override = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
@@ -38,7 +38,7 @@ private:
 };
 
 template <typename T>
-class BoltzmanMeasurer<T>::Builder final {
+class BoltzmannMeasurer<T>::Builder final {
 public:
     Builder() = default;
 
@@ -54,10 +54,10 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
     with_measure_mode(MeasureModeType measure_mode) noexcept;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE BoltzmanMeasurer<T>
+    ATLAS_HOST ATLAS_FORCE_INLINE BoltzmannMeasurer<T>
     build() const;
 
-    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<BoltzmanMeasurer<T>>
+    ATLAS_HOST ATLAS_FORCE_INLINE atlas::host_shared_ptr<BoltzmannMeasurer<T>>
     make_host_shared() const;
 
 private:
@@ -79,11 +79,11 @@ private:
 namespace atlas {
 
 template <typename T>
-using BoltzmanMeasurerHostPtr = atlas::host_shared_ptr<atlas::BoltzmanMeasurer<T>>;
+using BoltzmannMeasurerHostPtr = atlas::host_shared_ptr<atlas::BoltzmannMeasurer<T>>;
 
 template <typename T>
-using BoltzmanMeasurerDevicePtr = atlas::device_shared_ptr<atlas::BoltzmanMeasurer<T>>;
+using BoltzmannMeasurerDevicePtr = atlas::device_shared_ptr<atlas::BoltzmannMeasurer<T>>;
 
 }
 
-#include <atlas/measure/boltzman_measurer.hpp>
+#include <atlas/measure/boltzmann_measurer.hpp>

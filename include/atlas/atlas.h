@@ -72,7 +72,7 @@
 #include <atlas/math/vector/vector_operators.h>
 #include <atlas/math/vector/vector_reductions.h>
 #include <atlas/math/vector/vector_statistics.h>
-#include <atlas/measure/boltzman_measurer.h>
+#include <atlas/measure/boltzmann_measurer.h>
 #include <atlas/measure/measurer.h>
 #include <atlas/measure/measurer_probe.h>
 #include <atlas/measure/volume_measurer.h>
@@ -80,7 +80,7 @@
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/observer/observer.h>
-#include <atlas/observer/sensor_matrics.h>
+#include <atlas/observer/sensor_metrics.h>
 #include <atlas/orchestrator/detail/orchestrator_force_applier.h>
 #include <atlas/orchestrator/detail/orchestrator_pipeline.h>
 #include <atlas/orchestrator/detail/orchestrator_probe_builder.h>

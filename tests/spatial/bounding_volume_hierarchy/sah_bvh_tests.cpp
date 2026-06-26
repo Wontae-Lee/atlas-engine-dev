@@ -10,9 +10,9 @@ namespace {
 using atlas::HostBuffer;
 using atlas::TriangleContainer4;
 using atlas::Vector3F;
-using atlas::SurfaceAreaHeuristicBoundingVolumeHierachy;
+using atlas::SurfaceAreaHeuristicBoundingVolumeHierarchy;
 
-using SahBvh = SurfaceAreaHeuristicBoundingVolumeHierachy<float>;
+using SahBvh = SurfaceAreaHeuristicBoundingVolumeHierarchy<float>;
 
 HostBuffer<TriangleContainer4<float>>
 make_triangles() {
@@ -49,7 +49,7 @@ make_split_triangles() {
 
 } // namespace
 
-TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, DefaultStateIsEmpty) {
+TEST(SurfaceAreaHeuristicBoundingVolumeHierarchy, DefaultStateIsEmpty) {
     // Arrange: create a default SAH BVH.
     const SahBvh bvh;
 
@@ -66,7 +66,7 @@ TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, DefaultStateIsEmpty) {
     EXPECT_TRUE(bvh.device_triangles().empty());
 }
 
-TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, SettersClampToSupportedRange) {
+TEST(SurfaceAreaHeuristicBoundingVolumeHierarchy, SettersClampToSupportedRange) {
     // Arrange: create a mutable SAH BVH.
     SahBvh bvh;
 
@@ -87,7 +87,7 @@ TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, SettersClampToSupportedRange) {
     EXPECT_EQ(bvh.num_of_bins(), 256);
 }
 
-TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, BuildPopulatesHierarchyBuffers) {
+TEST(SurfaceAreaHeuristicBoundingVolumeHierarchy, BuildPopulatesHierarchyBuffers) {
     // Arrange: create a SAH BVH and deterministic triangle input.
     SahBvh bvh;
     const auto triangles = make_triangles();
@@ -109,7 +109,7 @@ TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, BuildPopulatesHierarchyBuffers)
     EXPECT_EQ(bvh.centroids().size(), triangles.size());
 }
 
-TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, BuildCreatesLeafForSingleTriangle) {
+TEST(SurfaceAreaHeuristicBoundingVolumeHierarchy, BuildCreatesLeafForSingleTriangle) {
     // Arrange: build a SAH BVH from one triangle.
     SahBvh bvh;
     bvh.build(make_triangles());
@@ -127,7 +127,7 @@ TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, BuildCreatesLeafForSingleTriang
     EXPECT_EQ(root.count, 1);
 }
 
-TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, BuildCreatesInternalNodeWhenSplitIsNeeded) {
+TEST(SurfaceAreaHeuristicBoundingVolumeHierarchy, BuildCreatesInternalNodeWhenSplitIsNeeded) {
     // Arrange: force splitting by setting one primitive per leaf.
     SahBvh bvh;
     bvh.set_leaf_size(1);
@@ -159,7 +159,7 @@ TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, BuildCreatesInternalNodeWhenSpl
     EXPECT_GE(static_cast<int>(bvh.nodes().size()), 3);
 }
 
-TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, BuildPreservesAllPrimitiveIndicesAfterPartition) {
+TEST(SurfaceAreaHeuristicBoundingVolumeHierarchy, BuildPreservesAllPrimitiveIndicesAfterPartition) {
     // Arrange: force a partitioned build.
     SahBvh bvh;
     bvh.set_leaf_size(1);
@@ -178,7 +178,7 @@ TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, BuildPreservesAllPrimitiveIndic
     EXPECT_EQ(sorted_indices, (std::vector<int> { 0, 1, 2 }));
 }
 
-TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, ResetClearsBuiltState) {
+TEST(SurfaceAreaHeuristicBoundingVolumeHierarchy, ResetClearsBuiltState) {
     // Arrange: build a SAH BVH.
     SahBvh bvh;
     bvh.build(make_triangles());
@@ -197,7 +197,7 @@ TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, ResetClearsBuiltState) {
     EXPECT_TRUE(bvh.device_triangles().empty());
 }
 
-TEST(SurfaceAreaHeuristicBoundingVolumeHierachy, GeometryOperatorReferencesCurrentBuffers) {
+TEST(SurfaceAreaHeuristicBoundingVolumeHierarchy, GeometryOperatorReferencesCurrentBuffers) {
     // Arrange: build a SAH BVH with triangle data.
     SahBvh bvh;
     bvh.build(make_triangles());

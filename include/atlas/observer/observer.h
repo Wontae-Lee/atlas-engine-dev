@@ -3,7 +3,7 @@
 #include <atlas/container/type_store.h>
 #include <atlas/core/macros.h>
 #include <atlas/memory/memory.h>
-#include <atlas/observer/sensor_matrics.h>
+#include <atlas/observer/sensor_metrics.h>
 
 #include <cstddef>
 #include <filesystem>
@@ -11,7 +11,7 @@
 
 namespace atlas {
 
-using SensorMatricsStore = TypeStore<SensorMatrics>;
+using SensorMetricsStore = TypeStore<SensorMetrics>;
 
 class Observer final {
 public:
@@ -33,41 +33,41 @@ public:
     ATLAS_HOST ATLAS_FORCE_INLINE static Builder
     builder() noexcept;
 
-    template <typename SensorMatricsT, typename... Args>
-    ATLAS_HOST ATLAS_FORCE_INLINE SensorMatricsT&
-    emplace_sensor_matrics(Args&&... args);
+    template <typename SensorMetricsT, typename... Args>
+    ATLAS_HOST ATLAS_FORCE_INLINE SensorMetricsT&
+    emplace_sensor_metrics(Args&&... args);
 
-    template <typename SensorMatricsT>
+    template <typename SensorMetricsT>
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_sensor_matrics(std::unique_ptr<SensorMatricsT> sensor_matrics);
+    set_sensor_metrics(std::unique_ptr<SensorMetricsT> sensor_metrics);
 
-    template <typename SensorMatricsT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE SensorMatricsT*
-    sensor_matrics() noexcept;
+    template <typename SensorMetricsT>
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE SensorMetricsT*
+    sensor_metrics() noexcept;
 
-    template <typename SensorMatricsT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SensorMatricsT*
-    sensor_matrics() const noexcept;
+    template <typename SensorMetricsT>
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SensorMetricsT*
+    sensor_metrics() const noexcept;
 
-    template <typename SensorMatricsT>
+    template <typename SensorMetricsT>
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    has_sensor_matrics() const noexcept;
+    has_sensor_metrics() const noexcept;
 
-    template <typename SensorMatricsT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unique_ptr<SensorMatricsT>
-    remove_sensor_matrics();
+    template <typename SensorMetricsT>
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unique_ptr<SensorMetricsT>
+    remove_sensor_metrics();
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     export_csv(const std::filesystem::path& output_directory) const;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE SensorMatricsStore&
-    sensor_matrics() noexcept;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE SensorMetricsStore&
+    sensor_metrics() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SensorMatricsStore&
-    sensor_matrics() const noexcept;
+    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SensorMetricsStore&
+    sensor_metrics() const noexcept;
 
 private:
-    SensorMatricsStore _sensor_matrics;
+    SensorMetricsStore _sensor_metrics;
 };
 
 class Observer::Builder final {
@@ -75,10 +75,10 @@ public:
     Builder() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_source_sensor_matrics(std::size_t reserve_count = 0) noexcept;
+    with_source_sensor_metrics(std::size_t reserve_count = 0) noexcept;
 
     ATLAS_HOST ATLAS_FORCE_INLINE Builder&
-    with_sink_sensor_matrics(std::size_t reserve_count = 0) noexcept;
+    with_sink_sensor_metrics(std::size_t reserve_count = 0) noexcept;
 
     ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Observer
     build() const;
@@ -87,8 +87,8 @@ public:
     make_host_shared() const;
 
 private:
-    bool _with_source_sensor_matrics  = false;
-    bool _with_sink_sensor_matrics    = false;
+    bool _with_source_sensor_metrics  = false;
+    bool _with_sink_sensor_metrics    = false;
     std::size_t _source_reserve_count = 0;
     std::size_t _sink_reserve_count   = 0;
 };

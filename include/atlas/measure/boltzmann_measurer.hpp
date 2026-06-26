@@ -10,14 +10,14 @@
 namespace atlas {
 
 template <typename T>
-typename BoltzmanMeasurer<T>::Builder
-BoltzmanMeasurer<T>::builder() noexcept {
+typename BoltzmannMeasurer<T>::Builder
+BoltzmannMeasurer<T>::builder() noexcept {
 
     return Builder {};
 }
 
 template <typename T>
-BoltzmanMeasurer<T>::BoltzmanMeasurer(UniverseHostPtr<T> universe,
+BoltzmannMeasurer<T>::BoltzmannMeasurer(UniverseHostPtr<T> universe,
                                       FluidHostPtr<T> fluid,
                                       SpatialHashingSearcherHostPtr<T> searcher,
                                       const MeasureModeType measure_mode) noexcept
@@ -57,7 +57,7 @@ BoltzmanMeasurer<T>::BoltzmanMeasurer(UniverseHostPtr<T> universe,
 
 template <typename T>
 void
-BoltzmanMeasurer<T>::measure() {
+BoltzmannMeasurer<T>::measure() {
 
     if (!this->make_probe()) {
         return;
@@ -146,44 +146,44 @@ BoltzmanMeasurer<T>::measure() {
 
 template <typename T>
 void
-BoltzmanMeasurer<T>::measure(const T) {
+BoltzmannMeasurer<T>::measure(const T) {
     measure();
 }
 
 template <typename T>
 MeasureModeType
-BoltzmanMeasurer<T>::measure_mode() const noexcept {
+BoltzmannMeasurer<T>::measure_mode() const noexcept {
 
     return _measure_mode;
 }
 
 template <typename T>
-typename BoltzmanMeasurer<T>::Builder&
-BoltzmanMeasurer<T>::Builder::with_universe(UniverseHostPtr<T> universe) noexcept {
+typename BoltzmannMeasurer<T>::Builder&
+BoltzmannMeasurer<T>::Builder::with_universe(UniverseHostPtr<T> universe) noexcept {
 
     _universe = std::move(universe);
     return *this;
 }
 
 template <typename T>
-typename BoltzmanMeasurer<T>::Builder&
-BoltzmanMeasurer<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
+typename BoltzmannMeasurer<T>::Builder&
+BoltzmannMeasurer<T>::Builder::with_fluid(FluidHostPtr<T> fluid) noexcept {
 
     _fluid = std::move(fluid);
     return *this;
 }
 
 template <typename T>
-typename BoltzmanMeasurer<T>::Builder&
-BoltzmanMeasurer<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
+typename BoltzmannMeasurer<T>::Builder&
+BoltzmannMeasurer<T>::Builder::with_searcher(SpatialHashingSearcherHostPtr<T> searcher) noexcept {
 
     _searcher = std::move(searcher);
     return *this;
 }
 
 template <typename T>
-typename BoltzmanMeasurer<T>::Builder&
-BoltzmanMeasurer<T>::Builder::with_measure_mode(const MeasureModeType measure_mode) noexcept {
+typename BoltzmannMeasurer<T>::Builder&
+BoltzmannMeasurer<T>::Builder::with_measure_mode(const MeasureModeType measure_mode) noexcept {
 
     _measure_mode = measure_mode;
     return *this;
@@ -191,35 +191,35 @@ BoltzmanMeasurer<T>::Builder::with_measure_mode(const MeasureModeType measure_mo
 
 template <typename T>
 void
-BoltzmanMeasurer<T>::Builder::validate() const {
+BoltzmannMeasurer<T>::Builder::validate() const {
 
     if (!_universe) {
-        throw std::runtime_error("BoltzmanMeasurer::Builder: universe must not be null.");
+        throw std::runtime_error("BoltzmannMeasurer::Builder: universe must not be null.");
     }
 
     if (!_fluid) {
-        throw std::runtime_error("BoltzmanMeasurer::Builder: fluid must not be null.");
+        throw std::runtime_error("BoltzmannMeasurer::Builder: fluid must not be null.");
     }
 
     if (!_searcher) {
-        throw std::runtime_error("BoltzmanMeasurer::Builder: searcher must not be null.");
+        throw std::runtime_error("BoltzmannMeasurer::Builder: searcher must not be null.");
     }
 }
 
 template <typename T>
-BoltzmanMeasurer<T>
-BoltzmanMeasurer<T>::Builder::build() const {
+BoltzmannMeasurer<T>
+BoltzmannMeasurer<T>::Builder::build() const {
 
     validate();
 
-    return BoltzmanMeasurer<T>(_universe, _fluid, _searcher, _measure_mode);
+    return BoltzmannMeasurer<T>(_universe, _fluid, _searcher, _measure_mode);
 }
 
 template <typename T>
-atlas::host_shared_ptr<BoltzmanMeasurer<T>>
-BoltzmanMeasurer<T>::Builder::make_host_shared() const {
+atlas::host_shared_ptr<BoltzmannMeasurer<T>>
+BoltzmannMeasurer<T>::Builder::make_host_shared() const {
 
-    return atlas::make_host_shared<BoltzmanMeasurer<T>>(build());
+    return atlas::make_host_shared<BoltzmannMeasurer<T>>(build());
 }
 
 }

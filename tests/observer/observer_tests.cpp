@@ -31,11 +31,11 @@ using atlas::MaterialProperties;
 using atlas::MaterialType;
 using atlas::Observer;
 using atlas::ObserverHostPtr;
-using atlas::SensorMatrics;
+using atlas::SensorMetrics;
 using atlas::Sink;
-using atlas::SinkSensorMatrics;
+using atlas::SinkSensorMetrics;
 using atlas::Source;
-using atlas::SourceSensorMatrics;
+using atlas::SourceSensorMetrics;
 using atlas::Sync;
 using atlas::SyncHostPtr;
 using atlas::Unit;
@@ -109,22 +109,22 @@ read_file(const std::filesystem::path& path) {
 
 TEST(Observer, ExportCsvWritesMetricFiles) {
     const auto observer = Observer::builder()
-                              .with_source_sensor_matrics(2)
-                              .with_sink_sensor_matrics(2)
+                              .with_source_sensor_metrics(2)
+                              .with_sink_sensor_metrics(2)
                               .make_host_shared();
 
     ASSERT_NE(observer, nullptr);
 
-    observer->sensor_matrics<SourceSensorMatrics>()->record(0, 1, 4);
-    observer->sensor_matrics<SinkSensorMatrics>()->record(2, 3, 7);
+    observer->sensor_metrics<SourceSensorMetrics>()->record(0, 1, 4);
+    observer->sensor_metrics<SinkSensorMetrics>()->record(2, 3, 7);
 
     const auto output_dir = std::filesystem::temp_directory_path() / "atlas_observer_export_test";
     std::filesystem::remove_all(output_dir);
 
     observer->export_csv(output_dir);
 
-    const auto source_path = output_dir / "source_sensor_matrics.csv";
-    const auto sink_path   = output_dir / "sink_sensor_matrics.csv";
+    const auto source_path = output_dir / "source_sensor_metrics.csv";
+    const auto sink_path   = output_dir / "sink_sensor_metrics.csv";
 
     ASSERT_TRUE(std::filesystem::exists(source_path));
     ASSERT_TRUE(std::filesystem::exists(sink_path));
@@ -137,7 +137,7 @@ TEST(Observer, ExportCsvWritesMetricFiles) {
 
 TEST(Observer, SourceRecordsPerUnitEmissionCounts) {
     const auto observer = Observer::builder()
-                              .with_source_sensor_matrics()
+                              .with_source_sensor_metrics()
                               .make_host_shared();
     const auto fluid = make_observed_fluid(observer, 128);
 
@@ -158,9 +158,9 @@ TEST(Observer, SourceRecordsPerUnitEmissionCounts) {
 
     source.emit();
 
-    const auto* metrics = observer->sensor_matrics<SourceSensorMatrics>();
+    const auto* metrics = observer->sensor_metrics<SourceSensorMetrics>();
     ASSERT_NE(metrics, nullptr);
-    const HostBuffer<SensorMatrics::Record> records(
+    const HostBuffer<SensorMetrics::Record> records(
         metrics->records().begin(),
         metrics->records().end());
     ASSERT_EQ(records.size(), 2u);
@@ -177,7 +177,7 @@ TEST(Observer, SourceRecordsPerUnitEmissionCounts) {
 
 TEST(Observer, SinkRecordsPerUnitRemovalCounts) {
     const auto observer = Observer::builder()
-                              .with_sink_sensor_matrics()
+                              .with_sink_sensor_metrics()
                               .make_host_shared();
     const auto fluid = make_observed_fluid(observer, 8);
 
@@ -202,9 +202,9 @@ TEST(Observer, SinkRecordsPerUnitRemovalCounts) {
 
     sink.sink();
 
-    const auto* metrics = observer->sensor_matrics<SinkSensorMatrics>();
+    const auto* metrics = observer->sensor_metrics<SinkSensorMetrics>();
     ASSERT_NE(metrics, nullptr);
-    const HostBuffer<SensorMatrics::Record> records(
+    const HostBuffer<SensorMetrics::Record> records(
         metrics->records().begin(),
         metrics->records().end());
     ASSERT_EQ(records.size(), 1u);
@@ -216,7 +216,7 @@ TEST(Observer, SinkRecordsPerUnitRemovalCounts) {
 
 TEST(Observer, SinkRecordsFlippedSingleUnitRemovalCounts) {
     const auto observer = Observer::builder()
-                              .with_sink_sensor_matrics()
+                              .with_sink_sensor_metrics()
                               .make_host_shared();
     const auto fluid = make_observed_fluid(observer, 8);
 
@@ -242,9 +242,9 @@ TEST(Observer, SinkRecordsFlippedSingleUnitRemovalCounts) {
 
     sink.sink();
 
-    const auto* metrics = observer->sensor_matrics<SinkSensorMatrics>();
+    const auto* metrics = observer->sensor_metrics<SinkSensorMetrics>();
     ASSERT_NE(metrics, nullptr);
-    const HostBuffer<SensorMatrics::Record> records(
+    const HostBuffer<SensorMetrics::Record> records(
         metrics->records().begin(),
         metrics->records().end());
     ASSERT_EQ(records.size(), 1u);

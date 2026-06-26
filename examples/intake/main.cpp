@@ -26,8 +26,8 @@ main() {
 
     // Create an observer with pre-reserved metric storage for source/sink data.
     const auto observer = Observer::builder()
-                              .with_source_sensor_matrics(4096)
-                              .with_sink_sensor_matrics(4096)
+                              .with_source_sensor_metrics(4096)
+                              .with_sink_sensor_metrics(4096)
                               .make_host_shared();
 
     // Store one material species. The current example models a single molecular gas.
@@ -208,7 +208,7 @@ main() {
         DsmcKernelType::hard_sphere);
 
     // Configure the field measurer.
-    const auto measurer = BoltzmanMeasurer<T>::builder()
+    const auto measurer = BoltzmannMeasurer<T>::builder()
                               // Attach the universe to define measurement cells.
                               .with_universe(universe)
 

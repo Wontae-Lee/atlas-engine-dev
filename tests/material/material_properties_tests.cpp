@@ -12,7 +12,7 @@ using atlas::tol;
 
 } // namespace
 
-TEST(MatrialProperties, DefaultConstructionLeavesOptionalsEmpty) {
+TEST(MaterialProperties, DefaultConstructionLeavesOptionalsEmpty) {
     // Arrange and act: default-construct material properties.
     const MaterialProperties<float> properties;
 
@@ -24,7 +24,7 @@ TEST(MatrialProperties, DefaultConstructionLeavesOptionalsEmpty) {
     EXPECT_FALSE(properties.charge.has_value());
 }
 
-TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
+TEST(MaterialProperties, BuilderConstructsRecordFromExplicitMass) {
     // Arrange and act: build a fully populated material record.
     const auto properties = MaterialProperties<float>::builder()
                                 .with_type(MaterialType::Ion)
@@ -122,7 +122,7 @@ TEST(MatrialProperties, BuilderConstructsRecordFromExplicitMass) {
     EXPECT_EQ(*properties.charge, 2);
 }
 
-TEST(MatrialProperties, BuilderRequiresExplicitMass) {
+TEST(MaterialProperties, BuilderRequiresExplicitMass) {
     // Assert: molecular mass without explicit mass is rejected.
     EXPECT_THROW(
         MaterialProperties<float>::builder()
@@ -131,7 +131,7 @@ TEST(MatrialProperties, BuilderRequiresExplicitMass) {
         std::invalid_argument);
 }
 
-TEST(MatrialProperties, MakeHostSharedReturnsUsableRecord) {
+TEST(MaterialProperties, MakeHostSharedReturnsUsableRecord) {
     // Act: build a shared material record.
     const auto properties = MaterialProperties<float>::builder()
                                 .with_mass(3.0f)
@@ -143,7 +143,7 @@ TEST(MatrialProperties, MakeHostSharedReturnsUsableRecord) {
     EXPECT_NEAR(properties->mass, 3.0f, tol);
 }
 
-TEST(MatrialProperties, BuilderRejectsInvalidMassInputsImmediately) {
+TEST(MaterialProperties, BuilderRejectsInvalidMassInputsImmediately) {
     // Assert: non-positive mass values are rejected immediately.
     EXPECT_THROW(
         MaterialProperties<float>::builder()
@@ -156,7 +156,7 @@ TEST(MatrialProperties, BuilderRejectsInvalidMassInputsImmediately) {
         std::invalid_argument);
 }
 
-TEST(MatrialProperties, BuilderRejectsInvalidInternalEnergyInputsImmediately) {
+TEST(MaterialProperties, BuilderRejectsInvalidInternalEnergyInputsImmediately) {
     EXPECT_THROW(
         MaterialProperties<float>::builder()
             .with_rotational_dof(1),
@@ -198,7 +198,7 @@ TEST(MatrialProperties, BuilderRejectsInvalidInternalEnergyInputsImmediately) {
         std::invalid_argument);
 }
 
-TEST(MatrialProperties, BuilderRejectsMissingOrInconsistentMassConfiguration) {
+TEST(MaterialProperties, BuilderRejectsMissingOrInconsistentMassConfiguration) {
     // Assert: exactly one mass field is not enough to build a valid material.
     EXPECT_THROW(
         MaterialProperties<float>::builder()

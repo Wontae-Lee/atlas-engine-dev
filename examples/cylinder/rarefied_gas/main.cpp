@@ -122,7 +122,7 @@ main() {
         DsmcKernelType::hard_sphere);
 
     // Configure the field measurer.
-    const auto measurer = BoltzmanMeasurer<T>::builder()
+    const auto measurer = BoltzmannMeasurer<T>::builder()
                               // Attach the universe to define measurement cells.
                               .with_universe(universe)
 

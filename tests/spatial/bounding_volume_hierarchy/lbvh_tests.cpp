@@ -19,9 +19,9 @@ using atlas::MORTON_EXPAND_BITS_SECOND_MASK;
 using atlas::MORTON_EXPAND_BITS_SECOND_MULTIPLIER;
 using atlas::MORTON_EXPAND_BITS_THIRD_MASK;
 using atlas::MORTON_EXPAND_BITS_THIRD_MULTIPLIER;
-using atlas::LinearBoundingVolumeHierachy;
+using atlas::LinearBoundingVolumeHierarchy;
 
-using Lbvh = LinearBoundingVolumeHierachy<float>;
+using Lbvh = LinearBoundingVolumeHierarchy<float>;
 
 HostBuffer<TriangleContainer4<float>>
 make_triangles() {
@@ -35,7 +35,7 @@ make_triangles() {
 
 } // namespace
 
-TEST(LinearBoundingVolumeHierachy, DefaultStateIsEmpty) {
+TEST(LinearBoundingVolumeHierarchy, DefaultStateIsEmpty) {
     // Arrange: create a default LBVH.
     const Lbvh bvh;
 
@@ -52,7 +52,7 @@ TEST(LinearBoundingVolumeHierachy, DefaultStateIsEmpty) {
     EXPECT_TRUE(bvh.device_triangles().empty());
 }
 
-TEST(LinearBoundingVolumeHierachy, SettersClampToSupportedRange) {
+TEST(LinearBoundingVolumeHierarchy, SettersClampToSupportedRange) {
     // Arrange: create a mutable LBVH.
     Lbvh bvh;
 
@@ -73,7 +73,7 @@ TEST(LinearBoundingVolumeHierachy, SettersClampToSupportedRange) {
     EXPECT_EQ(bvh.morton_bits(), 10);
 }
 
-TEST(LinearBoundingVolumeHierachy, MortonExpandBitConstantsExposeExpectedValues) {
+TEST(LinearBoundingVolumeHierarchy, MortonExpandBitConstantsExposeExpectedValues) {
     // Assert: Morton bit expansion constants match the standard 10-bit interleaving stages.
     EXPECT_EQ(MORTON_EXPAND_BITS_FIRST_MULTIPLIER, 0x00010001u);
     EXPECT_EQ(MORTON_EXPAND_BITS_FIRST_MASK, 0xFF0000FFu);
@@ -85,7 +85,7 @@ TEST(LinearBoundingVolumeHierachy, MortonExpandBitConstantsExposeExpectedValues)
     EXPECT_EQ(MORTON_EXPAND_BITS_FINAL_MASK, 0x49249249u);
 }
 
-TEST(LinearBoundingVolumeHierachy, BuildPopulatesHierarchyBuffers) {
+TEST(LinearBoundingVolumeHierarchy, BuildPopulatesHierarchyBuffers) {
     // Arrange: create an LBVH and deterministic triangle input.
     Lbvh bvh;
     const auto triangles = make_triangles();
@@ -107,7 +107,7 @@ TEST(LinearBoundingVolumeHierachy, BuildPopulatesHierarchyBuffers) {
     EXPECT_EQ(bvh.centroids().size(), triangles.size());
 }
 
-TEST(LinearBoundingVolumeHierachy, ResetClearsBuiltState) {
+TEST(LinearBoundingVolumeHierarchy, ResetClearsBuiltState) {
     // Arrange: build an LBVH.
     Lbvh bvh;
     bvh.build(make_triangles());
@@ -126,7 +126,7 @@ TEST(LinearBoundingVolumeHierachy, ResetClearsBuiltState) {
     EXPECT_TRUE(bvh.device_triangles().empty());
 }
 
-TEST(LinearBoundingVolumeHierachy, GeometryOperatorReferencesCurrentBuffers) {
+TEST(LinearBoundingVolumeHierarchy, GeometryOperatorReferencesCurrentBuffers) {
     // Arrange: build an LBVH with triangle data.
     Lbvh bvh;
     bvh.build(make_triangles());

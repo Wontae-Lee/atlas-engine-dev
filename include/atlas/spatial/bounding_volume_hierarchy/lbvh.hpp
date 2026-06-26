@@ -8,7 +8,7 @@ namespace atlas {
 
 template <typename T>
 BvhGeometryOperator<T>
-LinearBoundingVolumeHierachy<T>::make_geometry_operator() const {
+LinearBoundingVolumeHierarchy<T>::make_geometry_operator() const {
     BvhGeometryOperator<T> op;
 
     op.bvh_nodes   = atlas::raw_pointer_cast(d_nodes.data());
@@ -21,14 +21,14 @@ LinearBoundingVolumeHierachy<T>::make_geometry_operator() const {
 
 template <typename T>
 void
-LinearBoundingVolumeHierachy<T>::set_leaf_size(const int leaf_size) noexcept {
+LinearBoundingVolumeHierarchy<T>::set_leaf_size(const int leaf_size) noexcept {
 
     _leaf_size = (leaf_size < 1) ? 1 : leaf_size;
 }
 
 template <typename T>
 void
-LinearBoundingVolumeHierachy<T>::set_morton_bits(int morton_bits) noexcept {
+LinearBoundingVolumeHierarchy<T>::set_morton_bits(int morton_bits) noexcept {
 
     if (morton_bits < 1) morton_bits = 1;
     if (morton_bits > 10) morton_bits = 10;
@@ -38,67 +38,67 @@ LinearBoundingVolumeHierachy<T>::set_morton_bits(int morton_bits) noexcept {
 
 template <typename T>
 int
-LinearBoundingVolumeHierachy<T>::leaf_size() const noexcept {
+LinearBoundingVolumeHierarchy<T>::leaf_size() const noexcept {
     return _leaf_size;
 }
 
 template <typename T>
 int
-LinearBoundingVolumeHierachy<T>::morton_bits() const noexcept {
+LinearBoundingVolumeHierarchy<T>::morton_bits() const noexcept {
     return _morton_bits;
 }
 
 template <typename T>
 int
-LinearBoundingVolumeHierachy<T>::root() const noexcept {
+LinearBoundingVolumeHierarchy<T>::root() const noexcept {
     return _root;
 }
 
 template <typename T>
 const HostBuffer<BVHNode<T>>&
-LinearBoundingVolumeHierachy<T>::nodes() const noexcept {
+LinearBoundingVolumeHierarchy<T>::nodes() const noexcept {
     return h_nodes;
 }
 
 template <typename T>
 const HostBuffer<int>&
-LinearBoundingVolumeHierachy<T>::indices() const noexcept {
+LinearBoundingVolumeHierarchy<T>::indices() const noexcept {
     return h_indices;
 }
 
 template <typename T>
 const HostBuffer<AABB<T>>&
-LinearBoundingVolumeHierachy<T>::bounds() const noexcept {
+LinearBoundingVolumeHierarchy<T>::bounds() const noexcept {
     return h_prim_bounds;
 }
 
 template <typename T>
 const HostBuffer<Vector3<T>>&
-LinearBoundingVolumeHierachy<T>::centroids() const noexcept {
+LinearBoundingVolumeHierarchy<T>::centroids() const noexcept {
     return h_centroids;
 }
 
 template <typename T>
 const DeviceBuffer<BVHNode<T>>&
-LinearBoundingVolumeHierachy<T>::device_nodes() const noexcept {
+LinearBoundingVolumeHierarchy<T>::device_nodes() const noexcept {
     return d_nodes;
 }
 
 template <typename T>
 const DeviceBuffer<int>&
-LinearBoundingVolumeHierachy<T>::device_indices() const noexcept {
+LinearBoundingVolumeHierarchy<T>::device_indices() const noexcept {
     return d_indices;
 }
 
 template <typename T>
 const DeviceBuffer<TriangleContainer4<T>>&
-LinearBoundingVolumeHierachy<T>::device_triangles() const noexcept {
+LinearBoundingVolumeHierarchy<T>::device_triangles() const noexcept {
     return d_triangles;
 }
 
 template <typename T>
 void
-LinearBoundingVolumeHierachy<T>::assign_solid_angle_moment(
+LinearBoundingVolumeHierarchy<T>::assign_solid_angle_moment(
     BVHNode<T>& node,
     const TriangleContainer4<T>& triangle) noexcept {
     const Vector3<T>& a = triangle.a();
@@ -123,7 +123,7 @@ LinearBoundingVolumeHierachy<T>::assign_solid_angle_moment(
 
 template <typename T>
 void
-LinearBoundingVolumeHierachy<T>::merge_solid_angle_moment(
+LinearBoundingVolumeHierarchy<T>::merge_solid_angle_moment(
     BVHNode<T>& node,
     const BVHNode<T>& left,
     const BVHNode<T>& right) noexcept {
@@ -134,14 +134,14 @@ LinearBoundingVolumeHierachy<T>::merge_solid_angle_moment(
 
 template <typename T>
 int
-LinearBoundingVolumeHierachy<T>::leaf_node_index(const int k, const int n) noexcept {
+LinearBoundingVolumeHierarchy<T>::leaf_node_index(const int k, const int n) noexcept {
 
     return (n - 1) + k;
 }
 
 template <typename T>
 unsigned
-LinearBoundingVolumeHierachy<T>::expand_bits(unsigned v) noexcept {
+LinearBoundingVolumeHierarchy<T>::expand_bits(unsigned v) noexcept {
 
     v = (v * atlas::MORTON_EXPAND_BITS_FIRST_MULTIPLIER)
         & atlas::MORTON_EXPAND_BITS_FIRST_MASK;
@@ -157,7 +157,7 @@ LinearBoundingVolumeHierachy<T>::expand_bits(unsigned v) noexcept {
 
 template <typename T>
 int
-LinearBoundingVolumeHierachy<T>::clz32(const uint32_t x) noexcept {
+LinearBoundingVolumeHierarchy<T>::clz32(const uint32_t x) noexcept {
 
     if (x == 0u) return 32;
 
@@ -174,7 +174,7 @@ LinearBoundingVolumeHierachy<T>::clz32(const uint32_t x) noexcept {
 
 template <typename T>
 int
-LinearBoundingVolumeHierachy<T>::clz64(const uint64_t x) noexcept {
+LinearBoundingVolumeHierarchy<T>::clz64(const uint64_t x) noexcept {
 
     if (x == 0u) return 64;
 
@@ -191,7 +191,7 @@ LinearBoundingVolumeHierachy<T>::clz64(const uint64_t x) noexcept {
 
 template <typename T>
 uint32_t
-LinearBoundingVolumeHierachy<T>::morton3(
+LinearBoundingVolumeHierarchy<T>::morton3(
     const Vector3<T>& p,
     const AABB<T>& cb,
     const int bits) const noexcept {
@@ -229,7 +229,7 @@ LinearBoundingVolumeHierachy<T>::morton3(
 
 template <typename T>
 int
-LinearBoundingVolumeHierachy<T>::delta_lcp(
+LinearBoundingVolumeHierarchy<T>::delta_lcp(
     const HostBuffer<uint64_t>& keys,
     const int n,
     const int i,
@@ -247,7 +247,7 @@ LinearBoundingVolumeHierachy<T>::delta_lcp(
 
 template <typename T>
 int
-LinearBoundingVolumeHierachy<T>::find_split(
+LinearBoundingVolumeHierarchy<T>::find_split(
     const HostBuffer<uint32_t>& codes,
     const int first,
     const int last) noexcept {
@@ -276,7 +276,7 @@ LinearBoundingVolumeHierachy<T>::find_split(
 
 template <typename T>
 void
-LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& triangles) {
+LinearBoundingVolumeHierarchy<T>::build(const HostBuffer<TriangleContainer4<T>>& triangles) {
     const int n = static_cast<int>(triangles.size());
 
     reset();
@@ -440,7 +440,7 @@ LinearBoundingVolumeHierachy<T>::build(const HostBuffer<TriangleContainer4<T>>& 
 
 template <typename T>
 void
-LinearBoundingVolumeHierachy<T>::reset() {
+LinearBoundingVolumeHierarchy<T>::reset() {
 
     h_nodes.clear();
     h_indices.clear();

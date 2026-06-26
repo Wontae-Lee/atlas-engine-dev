@@ -15,10 +15,10 @@ using atlas::TriangleContainer4;
 using atlas::Vector3F;
 using atlas::device_shared_ptr;
 using atlas::host_shared_ptr;
-using atlas::BoundingVolumeHierachy;
+using atlas::BoundingVolumeHierarchy;
 using atlas::BvhGeometryOperator;
 
-class DummyBvh final : public BoundingVolumeHierachy<float> {
+class DummyBvh final : public BoundingVolumeHierarchy<float> {
 public:
     void
     build(const HostBuffer<TriangleContainer4<float>>& triangles) override {
@@ -40,7 +40,7 @@ public:
 
 TEST(BoundingVolumeHierarchy, AliasTypesCompile) {
     // Assert: public aliases match the underlying BVH types.
-    static_assert(std::is_same_v<BVH<float>, BoundingVolumeHierachy<float>>);
+    static_assert(std::is_same_v<BVH<float>, BoundingVolumeHierarchy<float>>);
     static_assert(std::is_same_v<BVHHostPtr<float>, host_shared_ptr<BVH<float>>>);
     static_assert(std::is_same_v<BVHDevicePtr<float>, device_shared_ptr<BVH<float>>>);
 

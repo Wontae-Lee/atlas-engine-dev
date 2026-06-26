@@ -10,7 +10,7 @@
 
 namespace atlas {
 
-class SensorMatrics {
+class SensorMetrics {
 public:
     struct Record {
         ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr Record() noexcept = default;
@@ -28,17 +28,17 @@ public:
     };
 
 public:
-    SensorMatrics()                         = default;
-    SensorMatrics(const SensorMatrics&)     = delete;
-    SensorMatrics(SensorMatrics&&) noexcept = default;
-    virtual ~SensorMatrics()                = default;
+    SensorMetrics()                         = default;
+    SensorMetrics(const SensorMetrics&)     = delete;
+    SensorMetrics(SensorMetrics&&) noexcept = default;
+    virtual ~SensorMetrics()                = default;
 
-    SensorMatrics&
-    operator=(const SensorMatrics&)
+    SensorMetrics&
+    operator=(const SensorMetrics&)
         = delete;
 
-    SensorMatrics&
-    operator=(SensorMatrics&&) noexcept = default;
+    SensorMetrics&
+    operator=(SensorMetrics&&) noexcept = default;
 
     ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
     size() const noexcept = 0;
@@ -47,11 +47,11 @@ public:
     export_csv(const std::filesystem::path& output_directory) const = 0;
 };
 
-class ParticleCountSensorMatrics : public SensorMatrics {
+class ParticleCountSensorMetrics : public SensorMetrics {
 public:
-    ParticleCountSensorMatrics() = default;
+    ParticleCountSensorMetrics() = default;
 
-    ATLAS_HOST explicit ParticleCountSensorMatrics(std::size_t reserve_count);
+    ATLAS_HOST explicit ParticleCountSensorMetrics(std::size_t reserve_count);
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     record(std::size_t step_index,
@@ -75,9 +75,9 @@ protected:
     HostBuffer<Record> _records;
 };
 
-class SourceSensorMatrics final : public ParticleCountSensorMatrics {
+class SourceSensorMetrics final : public ParticleCountSensorMetrics {
 public:
-    using ParticleCountSensorMatrics::ParticleCountSensorMatrics;
+    using ParticleCountSensorMetrics::ParticleCountSensorMetrics;
 
     ATLAS_HOST void
     export_csv(const std::filesystem::path& output_directory) const override;
@@ -87,9 +87,9 @@ protected:
     filename() const noexcept override;
 };
 
-class SinkSensorMatrics final : public ParticleCountSensorMatrics {
+class SinkSensorMetrics final : public ParticleCountSensorMetrics {
 public:
-    using ParticleCountSensorMatrics::ParticleCountSensorMatrics;
+    using ParticleCountSensorMetrics::ParticleCountSensorMetrics;
 
     ATLAS_HOST void
     export_csv(const std::filesystem::path& output_directory) const override;
@@ -101,4 +101,4 @@ protected:
 
 }
 
-#include <atlas/observer/sensor_matrics.hpp>
+#include <atlas/observer/sensor_metrics.hpp>

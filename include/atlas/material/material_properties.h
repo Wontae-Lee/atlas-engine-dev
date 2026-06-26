@@ -272,10 +272,10 @@ private:
 namespace atlas {
 
 template <typename T>
-using MatrialPropertiesHostPtr = atlas::host_shared_ptr<MaterialProperties<T>>;
+using MaterialPropertiesHostPtr = atlas::host_shared_ptr<MaterialProperties<T>>;
 
 template <typename T>
-using MatrialPropertiesDevicePtr = atlas::device_shared_ptr<MaterialProperties<T>>;
+using MaterialPropertiesDevicePtr = atlas::device_shared_ptr<MaterialProperties<T>>;
 
 }
 

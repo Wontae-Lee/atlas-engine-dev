@@ -17,11 +17,11 @@ template <typename T>
 using BvhGeometryOperator = atlas::TriangleMeshGeometryOperator<T>;
 
 template <typename T>
-class BoundingVolumeHierachy {
+class BoundingVolumeHierarchy {
 public:
-    BoundingVolumeHierachy() = default;
+    BoundingVolumeHierarchy() = default;
 
-    virtual ~BoundingVolumeHierachy() = default;
+    virtual ~BoundingVolumeHierarchy() = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE virtual void
     build(const HostBuffer<TriangleContainer4<T>>& triangles)
@@ -36,7 +36,7 @@ public:
 namespace atlas {
 
 template <typename T>
-using BVH = BoundingVolumeHierachy<T>;
+using BVH = BoundingVolumeHierarchy<T>;
 
 template <typename T>
 using BVHHostPtr = atlas::host_shared_ptr<BVH<T>>;

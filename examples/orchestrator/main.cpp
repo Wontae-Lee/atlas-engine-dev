@@ -114,7 +114,7 @@ main() {
                               .make_host_shared();
 
     // Build the measurer that populates field-level statistics on the universe grid.
-    const auto measurer = BoltzmanMeasurer<T>::builder()
+    const auto measurer = BoltzmannMeasurer<T>::builder()
                               // Attach the universe to define measurement cells.
                               .with_universe(universe)
 

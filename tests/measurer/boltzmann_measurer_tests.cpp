@@ -1,13 +1,13 @@
 #include "../utilities/test_utils.h"
 
 #include <atlas/generator/generate_operator.h>
-#include <atlas/measure/boltzman_measurer.h>
+#include <atlas/measure/boltzmann_measurer.h>
 
 #include <testkit/testkit.h>
 
 namespace {
 
-using atlas::BoltzmanMeasurer;
+using atlas::BoltzmannMeasurer;
 using atlas::Fluid;
 using atlas::FluidHostPtr;
 using atlas::MeasureModeType;
@@ -48,7 +48,7 @@ make_searcher(const UniverseHostPtr<float>& universe,
 
 } // namespace
 
-TEST(BoltzmanMeasurer, ConstructorCreatesRequiredUniverseAndFluidStates) {
+TEST(BoltzmannMeasurer, ConstructorCreatesRequiredUniverseAndFluidStates) {
     const auto universe = make_universe();
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
@@ -58,7 +58,7 @@ TEST(BoltzmanMeasurer, ConstructorCreatesRequiredUniverseAndFluidStates) {
     ASSERT_FALSE(universe->has_state<UniverseThermalEnergyState<float>>());
     ASSERT_FALSE(fluid->has_state<FluidTemperatureState<float>>());
 
-    const BoltzmanMeasurer<float> measurer(universe, fluid, searcher, MeasureModeType::All);
+    const BoltzmannMeasurer<float> measurer(universe, fluid, searcher, MeasureModeType::All);
 
     EXPECT_EQ(measurer.measure_mode(), MeasureModeType::All);
     ASSERT_TRUE(universe->has_state<UniverseTemperatureState<float>>());
@@ -71,12 +71,12 @@ TEST(BoltzmanMeasurer, ConstructorCreatesRequiredUniverseAndFluidStates) {
     EXPECT_EQ(fluid->state<FluidTemperatureState<float>>()->size(), 4u);
 }
 
-TEST(BoltzmanMeasurer, BuilderConstructsUsableMeasurer) {
+TEST(BoltzmannMeasurer, BuilderConstructsUsableMeasurer) {
     const auto universe = make_universe();
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    const auto measurer = BoltzmanMeasurer<float>::builder()
+    const auto measurer = BoltzmannMeasurer<float>::builder()
                               .with_universe(universe)
                               .with_fluid(fluid)
                               .with_searcher(searcher)
@@ -86,24 +86,24 @@ TEST(BoltzmanMeasurer, BuilderConstructsUsableMeasurer) {
     EXPECT_EQ(measurer.measure_mode(), MeasureModeType::Field);
 }
 
-TEST(BoltzmanMeasurer, BuilderRejectsMissingDependencies) {
+TEST(BoltzmannMeasurer, BuilderRejectsMissingDependencies) {
     const auto universe = make_universe();
     const auto fluid = make_fluid();
 
     EXPECT_THROW(
-        BoltzmanMeasurer<float>::builder()
+        BoltzmannMeasurer<float>::builder()
             .with_universe(universe)
             .with_fluid(fluid)
             .build(),
         std::runtime_error);
 }
 
-TEST(BoltzmanMeasurer, MakeHostSharedBuildsMeasurer) {
+TEST(BoltzmannMeasurer, MakeHostSharedBuildsMeasurer) {
     const auto universe = make_universe();
     const auto fluid = make_fluid();
     const auto searcher = make_searcher(universe, fluid);
 
-    const auto measurer = BoltzmanMeasurer<float>::builder()
+    const auto measurer = BoltzmannMeasurer<float>::builder()
                               .with_universe(universe)
                               .with_fluid(fluid)
                               .with_searcher(searcher)
@@ -113,8 +113,8 @@ TEST(BoltzmanMeasurer, MakeHostSharedBuildsMeasurer) {
     EXPECT_EQ(measurer->measure_mode(), MeasureModeType::Field);
 }
 
-TEST(BoltzmanMeasurer, MeasureIsSafeNoOpWithoutDependencies) {
-    BoltzmanMeasurer<float> measurer;
+TEST(BoltzmannMeasurer, MeasureIsSafeNoOpWithoutDependencies) {
+    BoltzmannMeasurer<float> measurer;
 
     EXPECT_NO_THROW(measurer.measure());
 }

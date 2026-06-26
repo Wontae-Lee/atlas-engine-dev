@@ -15,11 +15,11 @@ struct Bin {
 };
 
 template <typename T>
-class SurfaceAreaHeuristicBoundingVolumeHierachy final : public BoundingVolumeHierachy<T> {
+class SurfaceAreaHeuristicBoundingVolumeHierarchy final : public BoundingVolumeHierarchy<T> {
 public:
-    SurfaceAreaHeuristicBoundingVolumeHierachy() = default;
+    SurfaceAreaHeuristicBoundingVolumeHierarchy() = default;
 
-    ~SurfaceAreaHeuristicBoundingVolumeHierachy() override = default;
+    ~SurfaceAreaHeuristicBoundingVolumeHierarchy() override = default;
 
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build(const HostBuffer<TriangleContainer4<T>>& triangles) override;
@@ -144,7 +144,7 @@ private:
 namespace atlas {
 
 template <typename T>
-using SAHBVH = SurfaceAreaHeuristicBoundingVolumeHierachy<T>;
+using SAHBVH = SurfaceAreaHeuristicBoundingVolumeHierarchy<T>;
 
 }
 

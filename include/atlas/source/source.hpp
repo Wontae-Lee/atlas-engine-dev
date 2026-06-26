@@ -100,22 +100,22 @@ Source<T>::emit() {
 
     const std::size_t step_index = _step_index++;
 
-    auto* source_sensor_matrics = _observer ? _observer->sensor_matrics<atlas::SourceSensorMatrics>() : nullptr;
+    auto* source_sensor_metrics = _observer ? _observer->sensor_metrics<atlas::SourceSensorMetrics>() : nullptr;
 
     HostBuffer<std::size_t> emitted_per_unit;
 
-    if (source_sensor_matrics != nullptr) {
+    if (source_sensor_metrics != nullptr) {
 
         emitted_per_unit = HostBuffer<std::size_t>(_units.size(), std::size_t { 0 });
     }
 
     const auto record_source_metrics = [&] {
-        if (source_sensor_matrics == nullptr) {
+        if (source_sensor_metrics == nullptr) {
             return;
         }
 
         for (std::size_t unit_index = 0; unit_index < emitted_per_unit.size(); ++unit_index) {
-            source_sensor_matrics->record(step_index, unit_index, emitted_per_unit[unit_index]);
+            source_sensor_metrics->record(step_index, unit_index, emitted_per_unit[unit_index]);
         }
     };
 
@@ -163,7 +163,7 @@ Source<T>::emit() {
 
     const auto probe = _probe;
 
-    if (source_sensor_matrics != nullptr) {
+    if (source_sensor_metrics != nullptr) {
         int offset = 0;
         for (std::size_t u = 0; u < _local_unit_counts.size(); ++u) {
             const int unit_size     = _local_unit_counts[u];

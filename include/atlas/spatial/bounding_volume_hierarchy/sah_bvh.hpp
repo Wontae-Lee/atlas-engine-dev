@@ -11,7 +11,7 @@ namespace atlas {
 
 template <typename T>
 BvhGeometryOperator<T>
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::make_geometry_operator() const {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::make_geometry_operator() const {
     BvhGeometryOperator<T> op;
 
     op.bvh_nodes   = atlas::raw_pointer_cast(d_nodes.data());
@@ -24,14 +24,14 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::make_geometry_operator() const {
 
 template <typename T>
 void
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::set_leaf_size(const int leaf_size) noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::set_leaf_size(const int leaf_size) noexcept {
 
     _leaf_size = (leaf_size < 1) ? 1 : leaf_size;
 }
 
 template <typename T>
 void
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::set_num_of_bins(int num_bins) noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::set_num_of_bins(int num_bins) noexcept {
 
     if (num_bins < 4) num_bins = 4;
     if (num_bins > 256) num_bins = 256;
@@ -41,67 +41,67 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::set_num_of_bins(int num_bins) noe
 
 template <typename T>
 int
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::leaf_size() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::leaf_size() const noexcept {
     return _leaf_size;
 }
 
 template <typename T>
 int
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::num_of_bins() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::num_of_bins() const noexcept {
     return _num_of_bins;
 }
 
 template <typename T>
 int
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::root() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::root() const noexcept {
     return _root;
 }
 
 template <typename T>
 const HostBuffer<BVHNode<T>>&
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::nodes() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::nodes() const noexcept {
     return h_nodes;
 }
 
 template <typename T>
 const HostBuffer<int>&
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::indices() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::indices() const noexcept {
     return h_indices;
 }
 
 template <typename T>
 const HostBuffer<AABB<T>>&
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::bounds() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::bounds() const noexcept {
     return h_prim_bounds;
 }
 
 template <typename T>
 const HostBuffer<Vector3<T>>&
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::centroids() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::centroids() const noexcept {
     return h_centroids;
 }
 
 template <typename T>
 const DeviceBuffer<BVHNode<T>>&
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::device_nodes() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::device_nodes() const noexcept {
     return d_nodes;
 }
 
 template <typename T>
 const DeviceBuffer<int>&
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::device_indices() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::device_indices() const noexcept {
     return d_indices;
 }
 
 template <typename T>
 const DeviceBuffer<TriangleContainer4<T>>&
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::device_triangles() const noexcept {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::device_triangles() const noexcept {
     return d_triangles;
 }
 
 template <typename T>
 void
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::build(
     const HostBuffer<TriangleContainer4<T>>& triangles) {
     const int n = static_cast<int>(triangles.size());
 
@@ -148,7 +148,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build(
 
 template <typename T>
 void
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::assign_solid_angle_moment(
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::assign_solid_angle_moment(
     BVHNode<T>& node,
     const int start,
     const int end,
@@ -179,7 +179,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::assign_solid_angle_moment(
 
 template <typename T>
 void
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::merge_solid_angle_moment(
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::merge_solid_angle_moment(
     BVHNode<T>& node,
     const BVHNode<T>& left,
     const BVHNode<T>& right) noexcept {
@@ -190,7 +190,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::merge_solid_angle_moment(
 
 template <typename T>
 int
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::build_recursive(
     int start,
     const int end,
     int& node_count,
@@ -379,7 +379,7 @@ SurfaceAreaHeuristicBoundingVolumeHierachy<T>::build_recursive(
 
 template <typename T>
 void
-SurfaceAreaHeuristicBoundingVolumeHierachy<T>::reset() {
+SurfaceAreaHeuristicBoundingVolumeHierarchy<T>::reset() {
 
     h_nodes.clear();
     h_indices.clear();
