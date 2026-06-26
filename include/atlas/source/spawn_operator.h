@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlas/core/detail/device_variant.h>
 #include <atlas/math/math.h>
 
 namespace atlas {

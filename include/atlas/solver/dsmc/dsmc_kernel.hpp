@@ -123,16 +123,13 @@ DsmcKernel<T>::cross_section(const DsmcKernelType type,
                              const MaterialProperties<T>& lhs,
                              const MaterialProperties<T>& rhs,
                              const T relative_speed) noexcept {
-    switch (type) {
-    case DsmcKernelType::hard_sphere:
-        return HardSphereKernel<T>::cross_section(lhs, rhs);
-    case DsmcKernelType::variable_hard_sphere:
-        return VariableHardSphereKernel<T>::cross_section(lhs, rhs, relative_speed);
-    case DsmcKernelType::variable_soft_sphere:
-        return VariableSoftSphereKernel<T>::cross_section(lhs, rhs, relative_speed);
-    default:
-        return T(0);
-    }
+    return detail::DsmcKernelVariant<T>::visit_type(
+        type,
+        [&] ATLAS_ALL_DEVICE (auto kernel_tag) noexcept {
+            using Kernel = typename decltype(kernel_tag)::type;
+            return Kernel::cross_section(lhs, rhs, relative_speed);
+        },
+        T(0));
 }
 
 template <typename T>

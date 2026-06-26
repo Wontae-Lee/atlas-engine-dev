@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atlas/fluid/fluid_state.h>
+#include <atlas/material/material_properties.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
 
@@ -57,6 +59,12 @@ public:
 
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     operator()(const Vector3<T>& incident, const Vector3<T>& normal) const noexcept;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy<T>
+    internal_energy(const FluidInternalEnergy<T>& incident_energy,
+                    const Vector3<T>& incident_velocity,
+                    const Vector3<T>& normal,
+                    const MaterialProperties<T>& material) const noexcept;
 
 private:
     T _restitution_coeff { T(1) };

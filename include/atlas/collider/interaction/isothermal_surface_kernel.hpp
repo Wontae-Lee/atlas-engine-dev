@@ -116,6 +116,19 @@ IsothermalSurfaceInteraction<T>::operator()(const Vector3<T>& incident,
 }
 
 template <typename T>
+FluidInternalEnergy<T>
+IsothermalSurfaceInteraction<T>::internal_energy(
+    const FluidInternalEnergy<T>& incident_energy,
+    const Vector3<T>& incident_velocity,
+    const Vector3<T>& normal,
+    const MaterialProperties<T>& material) const noexcept {
+    static_cast<void>(incident_velocity);
+    static_cast<void>(normal);
+    static_cast<void>(material);
+    return incident_energy;
+}
+
+template <typename T>
 typename IsothermalSurfaceInteraction<T>::Builder&
 IsothermalSurfaceInteraction<T>::Builder::with_diffuse_sampling(const DiffuseSampling mode) noexcept {
 

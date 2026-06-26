@@ -75,14 +75,12 @@ SurfaceInteractionKernel<T>::internal_energy(
     const Vector3<T>& incident_velocity,
     const Vector3<T>& normal,
     const MaterialProperties<T>& material) const noexcept {
-    switch (type) {
-    case SurfaceInteractionType::isothermal:
-        return incident_energy;
-    case SurfaceInteractionType::maxwellian:
-        return maxwellian.internal_energy(incident_energy, incident_velocity, normal, material);
-    }
-
-    return incident_energy;
+    return detail::SurfaceInteractionVariant<T>::visit(
+        *this,
+        [&] ATLAS_ALL_DEVICE (const auto& interaction) noexcept {
+            return interaction.internal_energy(incident_energy, incident_velocity, normal, material);
+        },
+        incident_energy);
 }
 
 template <typename T>

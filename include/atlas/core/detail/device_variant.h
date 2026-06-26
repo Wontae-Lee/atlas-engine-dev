@@ -215,4 +215,35 @@ private:
     }
 };
 
+template <typename Tag, Tag TagValue, typename Payload>
+struct DeviceTypeCase final {
+    using payload_type = Payload;
+
+    static constexpr Tag tag = TagValue;
+};
+
+template <typename Tag, Tag DefaultTag, typename... Cases>
+struct DeviceTypeSwitch final {
+    template <typename Visitor, typename Fallback>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static Fallback
+    visit(const Tag tag, Visitor&& visitor, Fallback fallback) noexcept {
+        return visit_by_tag<Cases...>(tag, static_cast<Visitor&&>(visitor), fallback);
+    }
+
+private:
+    template <typename Case, typename... Rest, typename Visitor, typename Fallback>
+    ATLAS_ALL_DEVICE static Fallback
+    visit_by_tag(const Tag tag, Visitor&& visitor, Fallback fallback) noexcept {
+        if (tag == Case::tag) {
+            return visitor(type_tag<typename Case::payload_type> {});
+        }
+
+        if constexpr (sizeof...(Rest) > 0) {
+            return visit_by_tag<Rest...>(tag, static_cast<Visitor&&>(visitor), fallback);
+        } else {
+            return fallback;
+        }
+    }
+};
+
 }

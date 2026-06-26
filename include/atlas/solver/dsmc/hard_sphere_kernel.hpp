@@ -24,6 +24,15 @@ HardSphereKernel<T>::cross_section(const MaterialProperties<T>& lhs,
 }
 
 template <typename T>
+T
+HardSphereKernel<T>::cross_section(const MaterialProperties<T>& lhs,
+                                   const MaterialProperties<T>& rhs,
+                                   const T relative_speed) noexcept {
+    static_cast<void>(relative_speed);
+    return cross_section(lhs, rhs);
+}
+
+template <typename T>
 void
 HardSphereKernel<T>::operator()(Vector3<T>& lhs_velocity,
                                 Vector3<T>& rhs_velocity,

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlas/core/detail/device_variant.h>
 #include <atlas/sink/surface_despawn_operator.h>
 #include <atlas/sink/tracing_despawn_operator.h>
 #include <atlas/sink/volume_despawn_operator.h>

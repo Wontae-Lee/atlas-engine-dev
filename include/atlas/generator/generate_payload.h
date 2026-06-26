@@ -60,6 +60,16 @@ struct MaxwellSigmaGenerateOperator final {
     ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
     generate(unsigned int seed,
              T sigma) const;
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(T sigma, T) const {
+        return generate(sigma);
+    }
+
+    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3<T>
+    generate(unsigned int seed, T sigma, T) const {
+        return generate(seed, sigma);
+    }
 };
 
 template <typename T>

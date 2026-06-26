@@ -99,18 +99,10 @@ template <typename T>
 Vector3<T>
 GenerateOperator<T>::generate(const T param0,
                               const T param1) const {
-    switch (type) {
-    case GenerateType::uniform:
-        return uniform.generate(param0, param1);
-    case GenerateType::jittering:
-        return jittering.generate(param0, param1);
-    case GenerateType::maxwell_sigma:
-        return maxwell_sigma.generate(param0);
-    case GenerateType::maxwell_boltzmann:
-        return maxwell_boltzmann.generate(param0, param1);
-    default:
-        return Vector3<T>(T(0), T(0), T(0));
-    }
+    return detail::GenerateOperatorVariant<T>::visit(
+        *this,
+        [&] ATLAS_ALL_DEVICE (const auto& op) { return op.generate(param0, param1); },
+        Vector3<T>(T(0), T(0), T(0)));
 }
 
 template <typename T>
@@ -118,18 +110,10 @@ Vector3<T>
 GenerateOperator<T>::generate(const unsigned int seed,
                               const T param0,
                               const T param1) const {
-    switch (type) {
-    case GenerateType::uniform:
-        return uniform.generate(seed, param0, param1);
-    case GenerateType::jittering:
-        return jittering.generate(seed, param0, param1);
-    case GenerateType::maxwell_sigma:
-        return maxwell_sigma.generate(seed, param0);
-    case GenerateType::maxwell_boltzmann:
-        return maxwell_boltzmann.generate(seed, param0, param1);
-    default:
-        return Vector3<T>(T(0), T(0), T(0));
-    }
+    return detail::GenerateOperatorVariant<T>::visit(
+        *this,
+        [&] ATLAS_ALL_DEVICE (const auto& op) { return op.generate(seed, param0, param1); },
+        Vector3<T>(T(0), T(0), T(0)));
 }
 
 template <typename T>

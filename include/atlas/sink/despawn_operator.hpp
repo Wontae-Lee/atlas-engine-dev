@@ -1,6 +1,18 @@
 #pragma once
 namespace atlas {
 
+namespace detail {
+
+    template <typename T>
+    using DespawnTypeSwitch = DeviceTypeSwitch<
+        DespawnType,
+        DespawnType::Surface,
+        DeviceTypeCase<DespawnType, DespawnType::Surface, SurfaceDespawnOperator<T>>,
+        DeviceTypeCase<DespawnType, DespawnType::Volume, VolumeDespawnOperator<T>>,
+        DeviceTypeCase<DespawnType, DespawnType::Tracing, TracingDespawnOperator<T>>>;
+
+}
+
 template <typename T>
 DespawnOperator<T>::DespawnOperator(const DespawnType type) noexcept
     : type(type) {
@@ -29,16 +41,13 @@ bool
 DespawnOperator<T>::despawn(const atlas::GeometryOperator<T>& query,
                             const Vector3<T>& vector,
                             const T value) const noexcept {
-    switch (type) {
-    case DespawnType::Surface:
-        return SurfaceDespawnOperator<T>::despawn(query, vector, value);
-    case DespawnType::Volume:
-        return VolumeDespawnOperator<T>::despawn(query, vector, value);
-    case DespawnType::Tracing:
-        return TracingDespawnOperator<T>::despawn(query, Vector3<T>(T(0), T(0), T(0)), vector, value);
-    default:
-        return false;
-    }
+    return detail::DespawnTypeSwitch<T>::visit(
+        type,
+        [&] ATLAS_ALL_DEVICE (auto despawn_tag) noexcept {
+            using Op = typename decltype(despawn_tag)::type;
+            return Op::despawn(query, Vector3<T>(T(0), T(0), T(0)), vector, value);
+        },
+        false);
 }
 
 template <typename T>
@@ -47,16 +56,13 @@ DespawnOperator<T>::despawn(const atlas::GeometryOperator<T>& query,
                             const Vector3<T>& position,
                             const Vector3<T>& vector,
                             const T value) const noexcept {
-    switch (type) {
-    case DespawnType::Surface:
-        return SurfaceDespawnOperator<T>::despawn(query, vector, value);
-    case DespawnType::Volume:
-        return VolumeDespawnOperator<T>::despawn(query, vector, value);
-    case DespawnType::Tracing:
-        return TracingDespawnOperator<T>::despawn(query, position, vector, value);
-    default:
-        return false;
-    }
+    return detail::DespawnTypeSwitch<T>::visit(
+        type,
+        [&] ATLAS_ALL_DEVICE (auto despawn_tag) noexcept {
+            using Op = typename decltype(despawn_tag)::type;
+            return Op::despawn(query, position, vector, value);
+        },
+        false);
 }
 
 }
