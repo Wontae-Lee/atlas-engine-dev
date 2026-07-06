@@ -1,6 +1,6 @@
 #pragma once
 
-#include <atlas/core/detail/device_variant.h>
+#include <atlas/core/device_variant.h>
 #include <atlas/solver/sph/cubic_spline_sph_kernel.h>
 #include <atlas/solver/sph/standard_sph_kernel.h>
 #include <atlas/solver/sph/wendland_quintic_sph_kernel.h>
@@ -76,74 +76,70 @@ struct SphKernel final {
     viscosity_laplacian(float radius, float cell_size) const noexcept;
 };
 
-namespace detail {
+using SphKernelVariant = DeviceVariant<
+    SphKernel,
+    SphKernelType,
+    SphKernelType::standard,
+    DeviceVariantCase<SphKernelType::standard, &SphKernel::standard>,
+    DeviceVariantCase<SphKernelType::cubic_spline, &SphKernel::cubic_spline>,
+    DeviceVariantCase<SphKernelType::wendland_quintic, &SphKernel::wendland_quintic>>;
 
-    using SphKernelVariant = DeviceVariant<
-        SphKernel,
-        SphKernelType,
-        SphKernelType::standard,
-        DeviceVariantCase<SphKernelType::standard, &SphKernel::standard>,
-        DeviceVariantCase<SphKernelType::cubic_spline, &SphKernel::cubic_spline>,
-        DeviceVariantCase<SphKernelType::wendland_quintic, &SphKernel::wendland_quintic>>;
-
-    struct SphDensityWeight {
-        float radius;
-        float cell_size;
-        template <typename Tag>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-        operator()(Tag) const noexcept {
-            using Kernel = typename Tag::type;
-            return Kernel::density_weight(radius, cell_size);
-        }
-    };
-    struct SphPressureGradient {
-        const Float3& delta;
-        float radius;
-        float cell_size;
-        template <typename Tag>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
-        operator()(Tag) const noexcept {
-            using Kernel = typename Tag::type;
-            return Kernel::pressure_gradient(delta, radius, cell_size);
-        }
-    };
-    struct SphViscosityLaplacian {
-        float radius;
-        float cell_size;
-        template <typename Tag>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-        operator()(Tag) const noexcept {
-            using Kernel = typename Tag::type;
-            return Kernel::viscosity_laplacian(radius, cell_size);
-        }
-    };
-
-}
+struct SphDensityWeight {
+    float radius;
+    float cell_size;
+    template <typename Tag>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    operator()(Tag) const noexcept {
+        using Kernel = typename Tag::type;
+        return Kernel::density_weight(radius, cell_size);
+    }
+};
+struct SphPressureGradient {
+    const Float3& delta;
+    float radius;
+    float cell_size;
+    template <typename Tag>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    operator()(Tag) const noexcept {
+        using Kernel = typename Tag::type;
+        return Kernel::pressure_gradient(delta, radius, cell_size);
+    }
+};
+struct SphViscosityLaplacian {
+    float radius;
+    float cell_size;
+    template <typename Tag>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    operator()(Tag) const noexcept {
+        using Kernel = typename Tag::type;
+        return Kernel::viscosity_laplacian(radius, cell_size);
+    }
+};
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 SphKernel::SphKernel() noexcept {
-    detail::SphKernelVariant::construct(*this, SphKernelType::standard);
+    SphKernelVariant::construct(*this, SphKernelType::standard);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 SphKernel::SphKernel(const SphKernelType type) noexcept {
-    detail::SphKernelVariant::construct(*this, type);
+    SphKernelVariant::construct(*this, type);
 }
 
 template <typename Payload,
           std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, SphKernel>, int>>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 SphKernel::SphKernel(const Payload& op) {
-    detail::SphKernelVariant::construct_payload(*this, op);
+    SphKernelVariant::construct_payload(*this, op);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
 SphKernel::density_weight(const SphKernelType type,
                           const float radius,
                           const float cell_size) noexcept {
-    return detail::SphKernelVariant::visit_type(
+    return SphKernelVariant::visit_type(
         type,
-        detail::SphDensityWeight { radius, cell_size },
+        SphDensityWeight { radius, cell_size },
         0.0f);
 }
 
@@ -152,9 +148,9 @@ SphKernel::pressure_gradient(const SphKernelType type,
                              const Float3& delta,
                              const float radius,
                              const float cell_size) noexcept {
-    return detail::SphKernelVariant::visit_type(
+    return SphKernelVariant::visit_type(
         type,
-        detail::SphPressureGradient { delta, radius, cell_size },
+        SphPressureGradient { delta, radius, cell_size },
         Float3(0.0f, 0.0f, 0.0f));
 }
 
@@ -162,9 +158,9 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
 SphKernel::viscosity_laplacian(const SphKernelType type,
                                const float radius,
                                const float cell_size) noexcept {
-    return detail::SphKernelVariant::visit_type(
+    return SphKernelVariant::visit_type(
         type,
-        detail::SphViscosityLaplacian { radius, cell_size },
+        SphViscosityLaplacian { radius, cell_size },
         0.0f);
 }
 

@@ -5,7 +5,7 @@
 #include <new>
 #include <type_traits>
 
-namespace atlas::detail {
+namespace atlas {
 
 template <typename>
 inline constexpr bool dependent_false_v = false;

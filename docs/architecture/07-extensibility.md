@@ -19,7 +19,7 @@ Pattern A — Virtual interface (open set, host-side)
 
 Pattern B — Tagged dispatch (closed set, device-callable)
   A tag selects the active case; dispatch goes through the shared helpers in
-  core/detail/device_variant.h. Two shapes share these helpers:
+  core/device_variant.h. Two shapes share these helpers:
     - stateful operator unions (carry a payload union): GeometryOperator,
       Generate, SurfaceInteractionKernel, PostColliderKernel,
       DsmcKernel, SphKernel.
@@ -54,7 +54,7 @@ The same recipe applies to `Codec`, `Searcher`, and `Measurer`.
 ## 7.3 Pattern B: Tagged Dispatch (Closed, Device-Callable)
 
 A device-callable value type cannot use virtual dispatch, so it carries a tag
-and dispatches on it. The shared helpers live in `core/detail/device_variant.h`:
+and dispatches on it. The shared helpers live in `core/device_variant.h`:
 
 ```text
 DeviceVariant<Owner, Tag, Default, Cases...>   for stateful operator unions
@@ -103,7 +103,7 @@ re-enumerated in the method body:
 
 ```cpp
 float GeometryOperator::signed_distance(const atlas::Vector3& p) const noexcept {
-    return detail::GeometryOperatorVariant::visit(
+    return GeometryOperatorVariant::visit(
         *this,
         [&] ATLAS_ALL_DEVICE (const auto& geometry) noexcept { return geometry.signed_distance(p); },
         std::numeric_limits<float>::infinity());
@@ -126,7 +126,7 @@ DeviceVariant:
                                        Use for methods that return void, mutate
                                        the active payload, or write out-parameters.
   visit_type(tag, visitor, fallback)   static dispatch with no instance. The
-                                       visitor receives detail::type_tag<Payload>
+                                       visitor receives type_tag<Payload>
                                        and recovers the payload type via
                                        decltype(tag)::type to call a static method.
 

@@ -15,17 +15,13 @@
 
 namespace atlas {
 
-namespace detail {
+template <typename CandidateFilter>
+struct SearcherNeighborCount;
 
-    template <typename CandidateFilter>
-    struct SearcherNeighborCount;
+template <typename CandidateFilter>
+struct SearcherNeighborWrite;
 
-    template <typename CandidateFilter>
-    struct SearcherNeighborWrite;
-
-    struct SearcherNeighborTotal;
-
-}
+struct SearcherNeighborTotal;
 
 class Searcher {
 public:
@@ -161,7 +157,7 @@ protected:
         atlas::parallel_for<ExecutionPolicy::device>(
             0,
             alive,
-            detail::SearcherNeighborCount<CandidateFilter> {
+            SearcherNeighborCount<CandidateFilter> {
                 counts,
                 indices,
                 start,
@@ -191,7 +187,7 @@ protected:
         atlas::parallel_for<ExecutionPolicy::device>(
             0,
             alive,
-            detail::SearcherNeighborWrite<CandidateFilter> {
+            SearcherNeighborWrite<CandidateFilter> {
                 neighbors,
                 offsets,
                 indices,
@@ -238,122 +234,118 @@ protected:
     bool _is_invalidated { true };
 };
 
-namespace detail {
+template <typename CandidateFilter>
+struct SearcherNeighborCount {
+    int* counts {};
+    const int* indices {};
+    const int* start {};
+    const int* end {};
+    const Float3* positions {};
+    CandidateFilter filter {};
+    Float3 lower_corner {};
+    float inverse_cell_size {};
+    float radius_squared {};
+    Int3 grid_size {};
 
-    template <typename CandidateFilter>
-    struct SearcherNeighborCount {
-        int* counts {};
-        const int* indices {};
-        const int* start {};
-        const int* end {};
-        const Float3* positions {};
-        CandidateFilter filter {};
-        Float3 lower_corner {};
-        float inverse_cell_size {};
-        float radius_squared {};
-        Int3 grid_size {};
+    ATLAS_ALL_DEVICE void
+    operator()(const int i) const {
+        const Float3 pi = positions[i];
+        const Int3 cell = Searcher::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
 
-        ATLAS_ALL_DEVICE void
-        operator()(const int i) const {
-            const Float3 pi = positions[i];
-            const Int3 cell = Searcher::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
+        int count = 0;
+        for (int dz = -1; dz <= 1; ++dz) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    const Int3 neighbor_cell = cell + Int3(dx, dy, dz);
+                    if (!Searcher::contains_cell(neighbor_cell, grid_size)) continue;
 
-            int count = 0;
-            for (int dz = -1; dz <= 1; ++dz) {
-                for (int dy = -1; dy <= 1; ++dy) {
-                    for (int dx = -1; dx <= 1; ++dx) {
-                        const Int3 neighbor_cell = cell + Int3(dx, dy, dz);
-                        if (!Searcher::contains_cell(neighbor_cell, grid_size)) continue;
+                    const std::uint32_t key = Searcher::linear_key(neighbor_cell, grid_size);
+                    const int first         = start[key];
+                    if (first < 0) continue;
 
-                        const std::uint32_t key = Searcher::linear_key(neighbor_cell, grid_size);
-                        const int first         = start[key];
-                        if (first < 0) continue;
+                    const int last = end[key];
+                    for (int cursor = first; cursor < last; ++cursor) {
+                        const int j = indices[cursor];
+                        if (j == i) continue;
 
-                        const int last = end[key];
-                        for (int cursor = first; cursor < last; ++cursor) {
-                            const int j = indices[cursor];
-                            if (j == i) continue;
+                        const Float3 pj = positions[j];
+                        if (!filter(i, j, pi, pj)) continue;
 
-                            const Float3 pj = positions[j];
-                            if (!filter(i, j, pi, pj)) continue;
-
-                            const Float3 delta = pj - pi;
-                            if (delta.length_squared() <= radius_squared) {
-                                ++count;
-                            }
-                        }
-                    }
-                }
-            }
-
-            counts[i] = count;
-        }
-    };
-
-    template <typename CandidateFilter>
-    struct SearcherNeighborWrite {
-        int* neighbors {};
-        const int* offsets {};
-        const int* indices {};
-        const int* start {};
-        const int* end {};
-        const Float3* positions {};
-        CandidateFilter filter {};
-        Float3 lower_corner {};
-        float inverse_cell_size {};
-        float radius_squared {};
-        Int3 grid_size {};
-
-        ATLAS_ALL_DEVICE void
-        operator()(const int i) const {
-            const Float3 pi = positions[i];
-            const Int3 cell = Searcher::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
-
-            int write = offsets[i];
-            for (int dz = -1; dz <= 1; ++dz) {
-                for (int dy = -1; dy <= 1; ++dy) {
-                    for (int dx = -1; dx <= 1; ++dx) {
-                        const Int3 neighbor_cell = cell + Int3(dx, dy, dz);
-                        if (!Searcher::contains_cell(neighbor_cell, grid_size)) continue;
-
-                        const std::uint32_t key = Searcher::linear_key(neighbor_cell, grid_size);
-                        const int first         = start[key];
-                        if (first < 0) continue;
-
-                        const int last = end[key];
-                        for (int cursor = first; cursor < last; ++cursor) {
-                            const int j = indices[cursor];
-                            if (j == i) continue;
-
-                            const Float3 pj = positions[j];
-                            if (!filter(i, j, pi, pj)) continue;
-
-                            const Float3 delta = pj - pi;
-                            if (delta.length_squared() <= radius_squared) {
-                                neighbors[write++] = j;
-                            }
+                        const Float3 delta = pj - pi;
+                        if (delta.length_squared() <= radius_squared) {
+                            ++count;
                         }
                     }
                 }
             }
         }
-    };
 
-    struct SearcherNeighborTotal {
-        int* total {};
-        int* offsets {};
-        const int* counts {};
-        int alive {};
-        int last {};
+        counts[i] = count;
+    }
+};
 
-        ATLAS_ALL_DEVICE void
-        operator()(int) const {
-            total[0]       = offsets[last] + counts[last];
-            offsets[alive] = total[0];
+template <typename CandidateFilter>
+struct SearcherNeighborWrite {
+    int* neighbors {};
+    const int* offsets {};
+    const int* indices {};
+    const int* start {};
+    const int* end {};
+    const Float3* positions {};
+    CandidateFilter filter {};
+    Float3 lower_corner {};
+    float inverse_cell_size {};
+    float radius_squared {};
+    Int3 grid_size {};
+
+    ATLAS_ALL_DEVICE void
+    operator()(const int i) const {
+        const Float3 pi = positions[i];
+        const Int3 cell = Searcher::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
+
+        int write = offsets[i];
+        for (int dz = -1; dz <= 1; ++dz) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    const Int3 neighbor_cell = cell + Int3(dx, dy, dz);
+                    if (!Searcher::contains_cell(neighbor_cell, grid_size)) continue;
+
+                    const std::uint32_t key = Searcher::linear_key(neighbor_cell, grid_size);
+                    const int first         = start[key];
+                    if (first < 0) continue;
+
+                    const int last = end[key];
+                    for (int cursor = first; cursor < last; ++cursor) {
+                        const int j = indices[cursor];
+                        if (j == i) continue;
+
+                        const Float3 pj = positions[j];
+                        if (!filter(i, j, pi, pj)) continue;
+
+                        const Float3 delta = pj - pi;
+                        if (delta.length_squared() <= radius_squared) {
+                            neighbors[write++] = j;
+                        }
+                    }
+                }
+            }
         }
-    };
+    }
+};
 
-}
+struct SearcherNeighborTotal {
+    int* total {};
+    int* offsets {};
+    const int* counts {};
+    int alive {};
+    int last {};
+
+    ATLAS_ALL_DEVICE void
+    operator()(int) const {
+        total[0]       = offsets[last] + counts[last];
+        offsets[alive] = total[0];
+    }
+};
 
 using SearcherHostPtr = atlas::host_shared_ptr<Searcher>;
 

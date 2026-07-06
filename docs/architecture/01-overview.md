@@ -58,7 +58,7 @@ layers, not the other way around.
 +--------------------------------------------------------------+
 | Primitive layer                                              |
 |   math (vector, matrix, quaternion), buffer, memory,         |
-|   parallel, scan, remove, sampling, shuffle, atomic, random, |
+|   parallel, scan, remove, sampling, shuffle, random,         |
 |   container, tuple, iterator, unit utilities                 |
 +--------------------------------------------------------------+
 | Portability layer                                            |

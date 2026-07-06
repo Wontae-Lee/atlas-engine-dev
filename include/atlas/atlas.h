@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atlas/atomic/atomic.h>
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/codec/codec.h>
@@ -20,7 +19,7 @@
 #include <atlas/collider/kernel/precise_collider_kernel.h>
 #include <atlas/container/container.h>
 #include <atlas/container/type_store.h>
-#include <atlas/core/detail/device_variant.h>
+#include <atlas/core/device_variant.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/fluid/fluid_state.h>
@@ -81,7 +80,6 @@
 #include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/shuffle/shuffle.h>
 #include <atlas/sink/despawn.h>
-#include <atlas/sink/detail/sink_unit_bounds.h>
 #include <atlas/sink/sink.h>
 #include <atlas/sink/sink_probe.h>
 #include <atlas/sink/surface_despawn.h>

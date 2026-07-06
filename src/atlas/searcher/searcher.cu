@@ -211,7 +211,7 @@ Searcher::finalize_neighbor_offsets(const int alive) {
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         1,
-        detail::SearcherNeighborTotal {
+        SearcherNeighborTotal {
             total,
             offsets,
             counts,

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <atlas/core/detail/device_variant.h>
+#include <atlas/core/device_variant.h>
 #include <atlas/solver/dsmc/hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/variable_soft_sphere_kernel.h>
@@ -81,54 +81,50 @@ struct DsmcKernel final {
             float relative_speed_squared) const noexcept;
 };
 
-namespace detail {
+using DsmcKernelVariant = DeviceVariant<
+    DsmcKernel,
+    DsmcKernelType,
+    DsmcKernelType::hard_sphere,
+    DeviceVariantCase<DsmcKernelType::hard_sphere, &DsmcKernel::hard_sphere>,
+    DeviceVariantCase<DsmcKernelType::variable_hard_sphere, &DsmcKernel::variable_hard_sphere>,
+    DeviceVariantCase<DsmcKernelType::variable_soft_sphere, &DsmcKernel::variable_soft_sphere>>;
 
-    using DsmcKernelVariant = DeviceVariant<
-        DsmcKernel,
-        DsmcKernelType,
-        DsmcKernelType::hard_sphere,
-        DeviceVariantCase<DsmcKernelType::hard_sphere, &DsmcKernel::hard_sphere>,
-        DeviceVariantCase<DsmcKernelType::variable_hard_sphere, &DsmcKernel::variable_hard_sphere>,
-        DeviceVariantCase<DsmcKernelType::variable_soft_sphere, &DsmcKernel::variable_soft_sphere>>;
-
-    struct DsmcCrossSection {
-        const MaterialProperties& lhs;
-        const MaterialProperties& rhs;
-        float relative_speed;
-        template <typename Tag>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-        operator()(Tag) const noexcept {
-            using Kernel = typename Tag::type;
-            return Kernel::cross_section(lhs, rhs, relative_speed);
-        }
-    };
-    struct DsmcCollide {
-        Float3& lhs_velocity;
-        Float3& rhs_velocity;
-        const MaterialProperties& lhs;
-        const MaterialProperties& rhs;
-        template <typename K>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-        operator()(const K& kernel) const noexcept { kernel(lhs_velocity, rhs_velocity, lhs, rhs); }
-    };
-
-}
+struct DsmcCrossSection {
+    const MaterialProperties& lhs;
+    const MaterialProperties& rhs;
+    float relative_speed;
+    template <typename Tag>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    operator()(Tag) const noexcept {
+        using Kernel = typename Tag::type;
+        return Kernel::cross_section(lhs, rhs, relative_speed);
+    }
+};
+struct DsmcCollide {
+    Float3& lhs_velocity;
+    Float3& rhs_velocity;
+    const MaterialProperties& lhs;
+    const MaterialProperties& rhs;
+    template <typename K>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    operator()(const K& kernel) const noexcept { kernel(lhs_velocity, rhs_velocity, lhs, rhs); }
+};
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 DsmcKernel::DsmcKernel() noexcept {
-    detail::DsmcKernelVariant::construct(*this, DsmcKernelType::hard_sphere);
+    DsmcKernelVariant::construct(*this, DsmcKernelType::hard_sphere);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 DsmcKernel::DsmcKernel(const DsmcKernelType type) noexcept {
-    detail::DsmcKernelVariant::construct(*this, type);
+    DsmcKernelVariant::construct(*this, type);
 }
 
 template <typename Payload,
           std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, DsmcKernel>, int>>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 DsmcKernel::DsmcKernel(const Payload& op) {
-    detail::DsmcKernelVariant::construct_payload(*this, op);
+    DsmcKernelVariant::construct_payload(*this, op);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE DsmcPairParameters
@@ -166,9 +162,9 @@ DsmcKernel::cross_section(const DsmcKernelType type,
                           const MaterialProperties& lhs,
                           const MaterialProperties& rhs,
                           const float relative_speed) noexcept {
-    return detail::DsmcKernelVariant::visit_type(
+    return DsmcKernelVariant::visit_type(
         type,
-        detail::DsmcCrossSection { lhs, rhs, relative_speed },
+        DsmcCrossSection { lhs, rhs, relative_speed },
         0.0f);
 }
 
@@ -177,9 +173,9 @@ DsmcKernel::operator()(Float3& lhs_velocity,
                        Float3& rhs_velocity,
                        const MaterialProperties& lhs,
                        const MaterialProperties& rhs) const noexcept {
-    detail::DsmcKernelVariant::apply(
+    DsmcKernelVariant::apply(
         *this,
-        detail::DsmcCollide { lhs_velocity, rhs_velocity, lhs, rhs });
+        DsmcCollide { lhs_velocity, rhs_velocity, lhs, rhs });
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float

@@ -100,17 +100,13 @@ debug(std::source_location loc = std::source_location::current()) {
     return Logger(LoggingLevel::debug, loc);
 }
 
-namespace detail {
+bool
+should_log(LoggingLevel msg_level) noexcept;
 
-    bool
-    should_log(LoggingLevel msg_level) noexcept;
-
-    void
-    emit_log_line(LoggingLevel msg_level,
-                  const std::source_location& loc,
-                  const std::string& message);
-
-}
+void
+emit_log_line(LoggingLevel msg_level,
+              const std::source_location& loc,
+              const std::string& message);
 
 #else
 
@@ -179,66 +175,62 @@ debug(std::source_location = std::source_location::current()) {
 
 #endif
 
-namespace detail {
+template <typename ExceptionT>
+struct ErrorIfProxy final {
 
-    template <typename ExceptionT>
-    struct ErrorIfProxy final {
+    bool should_throw { false };
 
-        bool should_throw { false };
+    std::source_location loc { std::source_location::current() };
 
-        std::source_location loc { std::source_location::current() };
+    std::stringstream user_ss {};
 
-        std::stringstream user_ss {};
+    explicit ErrorIfProxy(bool shouldThrow,
+                          std::source_location l = std::source_location::current()) noexcept
+        : should_throw(shouldThrow)
+        , loc(l) { }
 
-        explicit ErrorIfProxy(bool shouldThrow,
-                              std::source_location l = std::source_location::current()) noexcept
-            : should_throw(shouldThrow)
-            , loc(l) { }
+    template <typename U>
+    ErrorIfProxy&
+    operator<<(const U& x) {
+        user_ss << x;
+        return *this;
+    }
 
-        template <typename U>
-        ErrorIfProxy&
-        operator<<(const U& x) {
-            user_ss << x;
-            return *this;
-        }
+    ~ErrorIfProxy() noexcept(false) {
+        if (!should_throw) return;
 
-        ~ErrorIfProxy() noexcept(false) {
-            if (!should_throw) return;
-
-            const std::string user_msg = user_ss.str().empty() ? "ATLAS error" : user_ss.str();
+        const std::string user_msg = user_ss.str().empty() ? "ATLAS error" : user_ss.str();
 
 #ifdef ATLAS_ENABLE_LOGGING
-            if (::atlas::detail::should_log(::atlas::LoggingLevel::error)) {
-                ::atlas::detail::emit_log_line(::atlas::LoggingLevel::error, loc, user_msg);
-            }
+        if (::atlas::should_log(::atlas::LoggingLevel::error)) {
+            ::atlas::emit_log_line(::atlas::LoggingLevel::error, loc, user_msg);
+        }
 #endif
-            throw ExceptionT(user_msg);
-        }
-    };
+        throw ExceptionT(user_msg);
+    }
+};
 
-    struct NoopErrorProxy final {
+struct NoopErrorProxy final {
 
-        template <typename U>
-        constexpr const NoopErrorProxy&
-        operator<<(const U&) const noexcept {
-            return *this;
-        }
-    };
+    template <typename U>
+    constexpr const NoopErrorProxy&
+    operator<<(const U&) const noexcept {
+        return *this;
+    }
+};
 
-    inline constexpr NoopErrorProxy noop_error_proxy {};
-
-}
+inline constexpr NoopErrorProxy noop_error_proxy {};
 
 template <typename ExceptionT = std::runtime_error>
-inline detail::ErrorIfProxy<ExceptionT>
+inline ErrorIfProxy<ExceptionT>
 error_if(bool cond, std::source_location loc = std::source_location::current()) noexcept {
-    return detail::ErrorIfProxy<ExceptionT>(cond, loc);
+    return ErrorIfProxy<ExceptionT>(cond, loc);
 }
 
 template <typename ExceptionT = std::runtime_error>
-inline detail::ErrorIfProxy<ExceptionT>
+inline ErrorIfProxy<ExceptionT>
 check(bool cond, std::source_location loc = std::source_location::current()) noexcept {
-    return detail::ErrorIfProxy<ExceptionT>(!cond, loc);
+    return ErrorIfProxy<ExceptionT>(!cond, loc);
 }
 
 #if !defined(NDEBUG)
@@ -248,7 +240,7 @@ check(bool cond, std::source_location loc = std::source_location::current()) noe
 #else
 
 #define ATLAS_ERROR_IF(cond) \
-    ((void)sizeof(cond), ::atlas::detail::noop_error_proxy)
+    ((void)sizeof(cond), ::atlas::noop_error_proxy)
 #endif
 
 #if !defined(NDEBUG)
@@ -258,7 +250,7 @@ check(bool cond, std::source_location loc = std::source_location::current()) noe
 #else
 
 #define ATLAS_CHECK(cond) \
-    ((void)sizeof(cond), ::atlas::detail::noop_error_proxy)
+    ((void)sizeof(cond), ::atlas::noop_error_proxy)
 #endif
 
 }

@@ -9,7 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace atlas::detail {
+namespace atlas {
 
 class ColliderCollisionKernel final {
 private:

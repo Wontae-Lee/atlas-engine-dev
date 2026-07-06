@@ -21,19 +21,15 @@ enum struct MaxwellianInternalEnergyStyle : int {
     discrete
 };
 
-namespace detail {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+maxwellian_unit_sample(const float u) noexcept {
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    maxwellian_unit_sample(const float u) noexcept {
+    return u > atlas::eps ? u : atlas::eps;
+}
 
-        return u > atlas::eps ? u : atlas::eps;
-    }
-
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
-    maxwellian_tangent_seed(const Float3& normal, const Float3& seed) noexcept {
-        return atlas::orthogonal_unit_vector(normal, seed, atlas::tol);
-    }
-
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+maxwellian_tangent_seed(const Float3& normal, const Float3& seed) noexcept {
+    return atlas::orthogonal_unit_vector(normal, seed, atlas::tol);
 }
 
 class MaxwellianSurfaceInteraction final {
@@ -152,16 +148,16 @@ public:
         }
 
         const float vrm      = most_probable_speed();
-        const float vperp    = vrm * atlas::sqrt_nonnegative(-std::log(detail::maxwellian_unit_sample(perpendicular_sample)));
+        const float vperp    = vrm * atlas::sqrt_nonnegative(-std::log(maxwellian_unit_sample(perpendicular_sample)));
         const float theta    = 2.0f * atlas::pi * theta_sample;
-        const float vtangent = vrm * atlas::sqrt_nonnegative(-std::log(detail::maxwellian_unit_sample(tangent_sample)));
+        const float vtangent = vrm * atlas::sqrt_nonnegative(-std::log(maxwellian_unit_sample(tangent_sample)));
         const float vtan1    = vtangent * std::sin(theta);
         const float vtan2    = vtangent * std::cos(theta);
 
         Float3 tangent1 = atlas::reject(incident, normal);
 
         if (tangent1.length_squared() == 0.0f) {
-            tangent1 = detail::maxwellian_tangent_seed(normal, tangent_seed);
+            tangent1 = maxwellian_tangent_seed(normal, tangent_seed);
         } else {
             tangent1 = tangent1.normalized();
         }
@@ -245,7 +241,7 @@ public:
         const float safe_wall   = wall_energy > 0.0f ? wall_energy : std::numeric_limits<float>::min();
         const float safe_energy = std::max(incident, 0.0f);
         const float magnitude   = atlas::sqrt_nonnegative(safe_energy * (1.0f - acc) / safe_wall);
-        const float radius      = atlas::sqrt_nonnegative(-acc * std::log(detail::maxwellian_unit_sample(sample)));
+        const float radius      = atlas::sqrt_nonnegative(-acc * std::log(maxwellian_unit_sample(sample)));
         const float phase       = std::cos(2.0f * atlas::pi * theta_sample);
 
         return safe_wall * (radius * radius + magnitude * magnitude + 2.0f * radius * magnitude * phase);
@@ -264,7 +260,7 @@ public:
                 ? *material.rotational_temperature
                 : _temperature;
             const float quantum         = rot_temperature > atlas::eps ? rot_temperature : atlas::eps;
-            const float sample          = detail::maxwellian_unit_sample(
+            const float sample          = maxwellian_unit_sample(
                 atlas::sample_hashed_unit_interval(seed, 14.11f));
             const int level = static_cast<int>(-std::log(sample) * _temperature / quantum);
             return static_cast<float>(level) * atlas::boltzmann_constant * quantum;
@@ -286,7 +282,7 @@ public:
                 ? *material.characteristic_vibrational_temperature
                 : _temperature;
             const float quantum         = vib_temperature > atlas::eps ? vib_temperature : atlas::eps;
-            const float sample          = detail::maxwellian_unit_sample(
+            const float sample          = maxwellian_unit_sample(
                 atlas::sample_hashed_unit_interval(seed, 16.37f));
             const int level = static_cast<int>(-std::log(sample) * _temperature / quantum);
             return static_cast<float>(level) * atlas::boltzmann_constant * quantum;
@@ -300,7 +296,7 @@ public:
                                  const Float3& seed,
                                  const float salt) const noexcept {
         if (dof == 2) {
-            const float sample = detail::maxwellian_unit_sample(
+            const float sample = maxwellian_unit_sample(
                 atlas::sample_hashed_unit_interval(seed, salt));
             return -std::log(sample) * atlas::boltzmann_constant * _temperature;
         }

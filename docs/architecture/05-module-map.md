@@ -15,7 +15,7 @@ simulation objects, coordination/driver, and cross-cutting concerns.
 ### `core/`
 Portability layer. `core/macros.h` defines host/device attributes
 (`ATLAS_HOST`, `ATLAS_DEVICE`, `ATLAS_ALL_DEVICE`), inlining and attribute
-macros, and `RESTRICT`. `core/detail/device_variant.h` provides the
+macros, and `RESTRICT`. `core/device_variant.h` provides the
 device-callable variant used to build operator unions. No runtime types.
 
 ---
@@ -44,10 +44,6 @@ Ownership, raw-pointer access, and host/device copies: `host_shared_ptr<T>`,
 `copy_host_to_device` / `copy_device_to_host` helpers (implemented with
 `thrust::copy_n`, so they work under both device systems). On CUDA,
 `device_shared_ptr` uses managed memory with atomic reference counting.
-
-### `atomic/`
-Backend-agnostic atomic operations (CUDA intrinsics on device, `std::atomic_ref`
-on the CPU). Used by reference counting and parallel compaction.
 
 ### `parallel/`
 Execution-policy-parameterized parallel algorithms: `parallel_for`,
@@ -277,9 +273,9 @@ kernels, and probe assembly, are all defined in `src/atlas/source/source.cu`.
 `Sink` — particle removal and active-prefix compaction (float, non-template).
 The `Despawn` tag dispatcher and the stateless
 volume/surface/tracing despawn operators are header-inline device code;
-`SinkProbe` is a device-visible view struct. `sink/detail/` holds the
-unit-bounds cache; probe assembly is inlined into `Sink::make_probe`. Host
-definitions live in `src/atlas/sink/` (`sink.cu`, `detail/*.cu`).
+`SinkProbe` is a device-visible view struct. The unit-bounds refresh and probe
+assembly are inlined into `Sink` (`refresh_unit_bounds`, `make_probe`). Host
+definitions live in `src/atlas/sink/sink.cu`.
 
 ---
 
