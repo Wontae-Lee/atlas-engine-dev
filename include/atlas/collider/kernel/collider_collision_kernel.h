@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atlas/collider/collider_probe.h>
-#include <atlas/collider/detail/hit_collider.h>
+#include <atlas/collider/hit_collider.h>
 #include <atlas/collider/kernel/post_collider_kernel.h>
 #include <atlas/core/macros.h>
 #include <atlas/parallel/parallel_for.h>
