@@ -5,7 +5,6 @@
 #include <atlas/core/macros.h>
 #include <atlas/measure/measurer.h>
 #include <atlas/memory/memory.h>
-#include <atlas/orchestrator/detail/orchestrator_force_applier.h>
 #include <atlas/orchestrator/orchestrator_probe.h>
 #include <atlas/searcher/searcher.h>
 #include <atlas/solver/solver.h>
@@ -122,8 +121,6 @@ private:
     HostBuffer<SolveHostPtr> _solvers {};
 
     OrchestratorProbe _probe {};
-
-    detail::OrchestratorForceApplier _force_applier {};
 };
 
 class Orchestrator::Builder final {

@@ -61,7 +61,6 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/observer/observer.h>
 #include <atlas/observer/sensor_metrics.h>
-#include <atlas/orchestrator/detail/orchestrator_force_applier.h>
 #include <atlas/orchestrator/orchestrator.h>
 #include <atlas/orchestrator/orchestrator_probe.h>
 #include <atlas/parallel/parallel.h>
@@ -106,9 +105,6 @@
 #include <atlas/solver/sph/sph_solver.h>
 #include <atlas/solver/sph/standard_sph_kernel.h>
 #include <atlas/solver/sph/wendland_quintic_sph_kernel.h>
-#include <atlas/source/detail/source_cache_builder.h>
-#include <atlas/source/detail/source_emitter.h>
-#include <atlas/source/detail/source_species_shuffler.h>
 #include <atlas/source/source.h>
 #include <atlas/source/source_probe.h>
 #include <atlas/source/spawn.h>

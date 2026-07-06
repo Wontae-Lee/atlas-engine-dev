@@ -20,9 +20,9 @@ namespace atlas {
 
 /**
  * @brief Non-owning snapshot of a `Source` + its `Fluid`, passed by
- *        value into `detail::SourceEmitter`'s device kernel. See
+ *        value into `Source`'s device kernel. See
  *        `Source::make_probe` for how it is filled and
- *        `source.h`/`detail/source_emitter.h` for how each field is
+ *        `source.h` for how each field is
  *        used.
  */
 struct SourceProbe {
@@ -34,7 +34,7 @@ struct SourceProbe {
     /** Per-species material properties (molecular mass, ...). */
     const MaterialProperties* properties {};
     /** Per-cached-candidate species assignment, already randomized by
-     *  `detail::SourceSpeciesShuffler`; only the first `emit_count`
+     *  `Source`; only the first `emit_count`
      *  entries are consumed by one `emit()` call. */
     const std::size_t* shuffled_species {};
 
@@ -53,7 +53,7 @@ struct SourceProbe {
     int* active {};
 
     /** Cached candidate spawn positions in each candidate's owning
-     *  unit's local frame (see `detail::SourceCacheBuilder`). */
+     *  unit's local frame (see `Source`). */
     const Float3* flat_local_positions {};
 
     /** Owning unit index for each entry of `flat_local_positions`

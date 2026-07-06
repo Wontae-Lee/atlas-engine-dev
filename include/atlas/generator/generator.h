@@ -20,7 +20,7 @@
  * `docs/architecture/04-backend-portability.md` §4.7): virtual dispatch
  * only exists host-side, since device code cannot resolve it without
  * `-rdc`. `Fluid::generators()` holds one `Generator` per species;
- * `Source`/`detail::SourceEmitter` read the matching `Generate`
+ * `Source`/`Source` read the matching `Generate`
  * per particle's assigned species.
  */
 

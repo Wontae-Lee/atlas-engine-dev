@@ -40,7 +40,7 @@
  * 2. Per cell, per `samples_per_axis^3` regularly-spaced sample point
  *    within the cell (a deterministic grid, not Monte Carlo/random
  *    sampling — same "regular lattice at fixed spacing" idea as
- *    `detail::SourceCacheBuilder`'s candidate positions), tests whether
+ *    `Source`'s candidate positions), tests whether
  *    that point falls inside any (region-relevant) unit's exact
  *    geometry (`Geometry::is_inside`, in the unit's local
  *    frame). A sample covered by *any* unit counts as occluded (breaks

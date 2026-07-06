@@ -24,7 +24,7 @@ device-callable variant used to build operator unions. No runtime types.
 
 ### `math/`
 Float vectors, matrices, and quaternions as plain non-template classes:
-`Vector3` (float), `Vector3i` (int grid coordinates), `Matrix3x3`,
+`Float3` (float), `Int3` (int grid coordinates), `Float3x3`,
 `Quaternion`, plus `Bool3` (element-wise comparison result consumed by
 `all`/`any`/`none`). Float constants and scalar helpers live in
 `math/constants.h`. The entire module is device-hot and therefore
@@ -80,7 +80,7 @@ PRNG abstraction over Thrust: `default_random_engine` (non-template alias),
 
 ### `container/`
 `Container<T,N>` (a CUDA-friendly fixed-size array, with `Container2/3/4`
-aliases and `TriangleContainer4` = `Container<Vector3, 4>`) and `TypeStore`
+aliases and `TriangleContainer4` = `Container<Float3, 4>`) and `TypeStore`
 (the type-erased store backing fluid/universe states and observer metrics).
 
 ### `tuple/`
@@ -147,7 +147,7 @@ Neighbor acceleration structures behind the host-only `Searcher` interface:
 `Searcher` owns the neighbor buffers and exposes the query surface (`build`,
 `indices`, `cell_start`/`cell_end`, `neighbor_*`) as plain-host virtuals;
 the static grid helpers (`cell_for`, `linear_key`, `contains_cell`,
-`search_radius_for`) use `Vector3i` cells and stay device-callable
+`search_radius_for`) use `Int3` cells and stay device-callable
 header-inline together with the neighbor count/write functors. Concrete
 searchers override `build`; host-side build/builder logic lives in
 `src/atlas/searcher/*.cu`. The consumers that need neighbors —
@@ -187,7 +187,7 @@ Macroscopic field measurement. `Measurer` is a host-only virtual interface
 pointer views into the universe/fluid state buffers and searcher grid arrays,
 rebuilt by `make_probe`. Implementations: `BoltzmannMeasurer` (per-cell bulk
 velocity, thermal energy, number density, temperature) and `VolumeMeasurer`
-(unit-occupancy cell volume with `Vector3i` cell regions). Populates
+(unit-occupancy cell volume with `Int3` cell regions). Populates
 `Universe` per-cell field states. Host definitions and the measurement
 kernels (device lambdas confined to non-virtual helpers) live in
 `src/atlas/measure/*.cu`.
@@ -196,26 +196,27 @@ kernels (device lambdas confined to non-virtual helpers) live in
 Solver allocation. `Codec` (host-only virtual base, float) assigns cells to
 solver indices and caches a `CodecProbe` — a header-inline value struct whose
 pointers are views into universe/fluid/searcher-owned `DeviceBuffer`s,
-rebuilt by `make_probe()` (`detail::CodecProbeBuilder`). `KnudsenCodec`
+rebuilt by `make_probe()`. `KnudsenCodec`
 switches DSMC/SPH by local Knudsen number (device helpers header-inline;
 per-cell kernels are device lambdas confined to the non-virtual
 `encode_cells`/`decode_cells`), and `DeepLearningCodec` is the
-learned-classification variant. Class, builder, and probe-builder
-definitions live in `src/atlas/codec/*.cu`.
+learned-classification variant. Class and builder definitions live in
+`src/atlas/codec/*.cu`.
 
 ### `collider/`
 Boundary interaction and collision-aware motion. `Collider` (float,
 non-template) owns the surface-interaction kernels and borrows its boundary
 units from the `Universe` (`universe.collider_units()`, an `atlas::UnitField`);
-`ColliderProbe` is a device-visible view struct. Subdirectories:
+`ColliderProbe` is a device-visible view struct, and `HitCollider`
+(`collider/hit_collider.h`) is its closest-hit record. Subdirectories:
 `collider/interaction/` (surface models such as isothermal and Maxwellian and
-the `SurfaceInteractionKernel` DeviceVariant union), `collider/kernel/`
-(post-collision motion policies: fast, dt-remain, precise, and the
-`PostColliderKernel` DeviceVariant union), and `collider/detail/` (probe
-builder and the header-inline `ColliderCollisionKernel` sweep code; the
-per-unit/scene broad-phase AABB cache now lives in `UnitField` under `unit/`).
-Host definitions live in `src/atlas/collider/` (`collider.cu`,
-`detail/*.cu`, `interaction/*.cu`).
+the `SurfaceInteractionKernel` DeviceVariant union) and `collider/kernel/`
+(the header-inline `ColliderCollisionKernel` sweep plus the post-collision
+motion policies: fast, dt-remain, precise, and the `PostColliderKernel`
+DeviceVariant union); the per-unit/scene broad-phase AABB cache lives in
+`UnitField` under `unit/`. Probe assembly is inlined into
+`Collider::make_probe`. Host definitions live in `src/atlas/collider/`
+(`collider.cu`, `interaction/*.cu`).
 
 ### `solver/`
 Physics time-stepping (float, non-template). `Solver` is the host-only
@@ -243,7 +244,7 @@ when needed.
 `Fluid` and the `FluidState` family (float, non-template; converted). Particle
 storage: `DeviceBuffer<MaterialProperties>` properties,
 `DeviceBuffer<Generate>` generators, and typed per-particle states in a
-`TypeStore<FluidState>` (position/velocity as `DeviceBuffer<Vector3>`, species
+`TypeStore<FluidState>` (position/velocity as `DeviceBuffer<Float3>`, species
 as `DeviceBuffer<std::size_t>`, active as `DeviceBuffer<int>`, temperature as
 `DeviceBuffer<float>`, internal energy as `DeviceBuffer<FluidInternalEnergy>`).
 The template `compact_buffer`/`reset_buffer` helpers stay inline in the
@@ -254,9 +255,9 @@ implemented on top of the `serialization/` snapshot functions. See
 
 ### `universe/`
 `Universe` and the `UniverseState` family (float, non-template; converted).
-Domain extents, grid resolution (`Vector3i`), and per-cell field states stored
+Domain extents, grid resolution (`Int3`), and per-cell field states stored
 in a `TypeStore<UniverseState>`. Per-cell buffers are `DeviceBuffer<float>`,
-`DeviceBuffer<Vector3>`, or `DeviceBuffer<int>` (collision count);
+`DeviceBuffer<Float3>`, or `DeviceBuffer<int>` (collision count);
 `UniverseMaterialRatioState<N>` keeps its dimension template and stores
 `Container<float, N>`. The `Universe` also centrally owns the scene's units as
 one `UnitField` per consumer role (`with_{source,sink,collider,measurer}_units`
@@ -268,21 +269,17 @@ are implemented on top of the `serialization/` snapshot functions.
 ### `source/`
 `Source` — particle injection into the inactive tail (float, non-template;
 converted). `Spawn` (surface/volume `DeviceTypeSwitch` variant) and the
-`SourceProbe` pointer-view struct are header-inline device code. In
-`source/detail/`, the emitter and species shuffler are header-inline (their
-bodies are device kernel launches); the cache builder and probe builder are
-declared in headers with definitions in `src/atlas/source/detail/`
-(`source_cache_builder.cu`, `source_probe_builder.cu`). `Source` and its
-`Builder` are defined in `src/atlas/source/source.cu`.
+`SourceProbe` pointer-view struct are header-inline device code. `Source` and
+its `Builder`, together with the spawn-cache rebuild, species shuffle, emission
+kernels, and probe assembly, are all defined in `src/atlas/source/source.cu`.
 
 ### `sink/`
 `Sink` — particle removal and active-prefix compaction (float, non-template).
 The `Despawn` tag dispatcher and the stateless
 volume/surface/tracing despawn operators are header-inline device code;
 `SinkProbe` is a device-visible view struct. `sink/detail/` holds the
-despawner, compactor, unit-bounds cache, and probe builder — declarations in
-headers, host definitions in `src/atlas/sink/` (`sink.cu`,
-`detail/*.cu`).
+unit-bounds cache; probe assembly is inlined into `Sink::make_probe`. Host
+definitions live in `src/atlas/sink/` (`sink.cu`, `detail/*.cu`).
 
 ---
 
@@ -291,9 +288,9 @@ headers, host definitions in `src/atlas/sink/` (`sink.cu`,
 ### `orchestrator/`
 `Orchestrator` (float, non-template) — coordinates the per-step pipeline
 (search, classification, measurement, force, solve). `OrchestratorProbe` is a
-header-inline float view struct; `orchestrator/detail/` holds the pipeline, the
-force applier, and the probe builder, with host definitions (including the
-force-applier device lambdas) in `src/atlas/orchestrator/**/*.cu`. See
+header-inline float view struct; the stage sequencing, force-application
+kernels, and probe assembly are all host code (with device lambdas) in
+`src/atlas/orchestrator/orchestrator.cu`. See
 [03-simulation-pipeline.md](03-simulation-pipeline.md).
 
 ### `system/`
