@@ -6,7 +6,6 @@
 #include <atlas/memory/memory.h>
 #include <atlas/observer/observer.h>
 #include <atlas/sink/despawn.h>
-#include <atlas/sink/detail/sink_probe_builder.h>
 #include <atlas/sink/detail/sink_unit_bounds.h>
 #include <atlas/sink/sink_probe.h>
 #include <atlas/unit/unit.h>

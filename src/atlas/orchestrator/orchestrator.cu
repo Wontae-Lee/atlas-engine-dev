@@ -226,8 +226,18 @@ Orchestrator::make_probe() noexcept {
 
 void
 Orchestrator::orchestrate(const float dt) {
+    if (searcher()) {
+        searcher()->invalidate();
+    }
+    search();
+    classify();
+    measure(dt);
 
-    _pipeline.run(*this, dt);
+    if (dt != 0.0f && make_probe()) {
+        apply_probe_forces(dt);
+    }
+
+    solve(dt);
 }
 
 void

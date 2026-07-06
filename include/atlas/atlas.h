@@ -9,8 +9,8 @@
 #include <atlas/codec/knudsen_codec.h>
 #include <atlas/collider/collider.h>
 #include <atlas/collider/collider_probe.h>
-#include <atlas/collider/detail/collider_collision_kernel.h>
-#include <atlas/collider/detail/hit_collider.h>
+#include <atlas/collider/kernel/collider_collision_kernel.h>
+#include <atlas/collider/hit_collider.h>
 #include <atlas/collider/interaction/isothermal_surface_kernel.h>
 #include <atlas/collider/interaction/maxwellian_surface_interaction.h>
 #include <atlas/collider/interaction/surface_interaction_kernel.h>
@@ -62,7 +62,6 @@
 #include <atlas/observer/observer.h>
 #include <atlas/observer/sensor_metrics.h>
 #include <atlas/orchestrator/detail/orchestrator_force_applier.h>
-#include <atlas/orchestrator/detail/orchestrator_pipeline.h>
 #include <atlas/orchestrator/orchestrator.h>
 #include <atlas/orchestrator/orchestrator_probe.h>
 #include <atlas/parallel/parallel.h>
@@ -89,7 +88,6 @@
 #include <atlas/sink/surface_despawn.h>
 #include <atlas/sink/tracing_despawn.h>
 #include <atlas/sink/volume_despawn.h>
-#include <atlas/solver/detail/solver_probe_common.h>
 #include <atlas/solver/dsmc/dsmc_energy_exchange_solver.h>
 #include <atlas/solver/dsmc/dsmc_flatten_workload.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>

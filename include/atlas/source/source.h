@@ -7,7 +7,6 @@
 #include <atlas/observer/observer.h>
 #include <atlas/source/detail/source_cache_builder.h>
 #include <atlas/source/detail/source_emitter.h>
-#include <atlas/source/detail/source_probe_builder.h>
 #include <atlas/source/detail/source_species_shuffler.h>
 #include <atlas/source/source_probe.h>
 #include <atlas/source/spawn.h>

@@ -6,8 +6,6 @@
 #include <atlas/measure/measurer.h>
 #include <atlas/memory/memory.h>
 #include <atlas/orchestrator/detail/orchestrator_force_applier.h>
-#include <atlas/orchestrator/detail/orchestrator_pipeline.h>
-#include <atlas/orchestrator/detail/orchestrator_probe_builder.h>
 #include <atlas/orchestrator/orchestrator_probe.h>
 #include <atlas/searcher/searcher.h>
 #include <atlas/solver/solver.h>
@@ -18,8 +16,6 @@
 namespace atlas {
 
 class Orchestrator final {
-    friend struct detail::OrchestratorForceStage;
-
 public:
     class Builder;
 
@@ -124,8 +120,6 @@ private:
     MeasurerHostPtr _measurer {};
 
     HostBuffer<SolveHostPtr> _solvers {};
-
-    detail::OrchestratorPipeline _pipeline {};
 
     OrchestratorProbe _probe {};
 

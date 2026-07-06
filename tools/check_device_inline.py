@@ -69,7 +69,8 @@ def check_nodiscard_first(path, lines):
     """Flag declarations where ATLAS_NODISCARD is not the leading specifier."""
     violations = []
     for i, line in enumerate(lines, start=1):
-        if "ATLAS_NODISCARD" in line and NODISCARD_MISORDER.search(line):
+        code = line.split("//", 1)[0]
+        if "ATLAS_NODISCARD" in code and NODISCARD_MISORDER.search(code):
             violations.append((path, i, line.strip(),
                                "ATLAS_NODISCARD must come first"))
     return violations

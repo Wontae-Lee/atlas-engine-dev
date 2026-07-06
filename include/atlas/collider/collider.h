@@ -3,8 +3,7 @@
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/collider/collider_probe.h>
-#include <atlas/collider/detail/collider_collision_kernel.h>
-#include <atlas/collider/detail/collider_probe_builder.h>
+#include <atlas/collider/kernel/collider_collision_kernel.h>
 #include <atlas/collider/interaction/surface_interaction_kernel.h>
 #include <atlas/collider/kernel/post_collider_kernel.h>
 #include <atlas/fluid/fluid.h>

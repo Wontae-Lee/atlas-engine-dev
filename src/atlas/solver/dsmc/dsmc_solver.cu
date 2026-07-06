@@ -3,7 +3,7 @@
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/solver/detail/solver_probe_common.h>
+#include <atlas/searcher/searcher.h>
 #include <atlas/universe/universe_state.h>
 
 #include <cstddef>
@@ -140,7 +140,13 @@ DsmcSolver::make_probe() noexcept {
         return;
     }
 
-    detail::fill_common_solver_probe(_probe, this->_universe, this->_fluid, this->_searcher);
+    _probe.velocity_ptr        = atlas::raw_pointer_cast(this->_fluid->state<FluidVelocityState>()->data().data());
+    _probe.species_ptr         = atlas::raw_pointer_cast(this->_fluid->state<FluidSpeciesState>()->data().data());
+    _probe.properties_ptr      = atlas::raw_pointer_cast(this->_fluid->particle_properties().data());
+    _probe.number_particle_ptr = atlas::raw_pointer_cast(this->_universe->state<UniverseNumberParticleState>()->data().data());
+    _probe.indices_ptr         = this->_searcher->indices();
+    _probe.cell_start_ptr      = this->_searcher->cell_start();
+    _probe.cell_end_ptr        = this->_searcher->cell_end();
 
     if (auto* state = this->_fluid->state<FluidInternalEnergyState>();
         state != nullptr && state->data().size() >= this->_fluid->particle_count()) {
