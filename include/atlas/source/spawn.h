@@ -15,7 +15,7 @@
  *        applied to inflow (`Source`) instead of outflow.
  *
  * @details
- * `detail::SourceCacheBuilder` generates a regular lattice of candidate
+ * `Source` generates a regular lattice of candidate
  * points over each unit's bounding box (see that file); `Spawn`
  * is the geometric filter deciding which of those candidates are
  * actually valid spawn locations for that unit's shape — analogous to
@@ -90,7 +90,7 @@ namespace detail {
 }
 
 /**
- * @brief Tag-dispatch wrapper letting `detail::SourceCacheBuilder` test
+ * @brief Tag-dispatch wrapper letting `Source` test
  *        candidate positions through whichever `SpawnType` a unit was
  *        configured with. See this file's top-of-file documentation.
  */

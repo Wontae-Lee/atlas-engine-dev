@@ -23,10 +23,10 @@
 #include <atlas/geometry/triangle.h>
 #include <atlas/geometry/triangle_mesh.h>
 #include <atlas/material/material_properties.h>
-#include <atlas/math/matrix/matrix3x3.h>
+#include <atlas/math/matrix/float3x3.h>
 #include <atlas/math/quaternion.h>
-#include <atlas/math/vector/vector3.h>
-#include <atlas/math/vector/vector3i.h>
+#include <atlas/math/vector/float3.h>
+#include <atlas/math/vector/int3.h>
 #include <atlas/observer/observer.h>
 #include <atlas/observer/sensor_metrics.h>
 #include <atlas/orchestrator/orchestrator.h>
@@ -62,14 +62,14 @@ atlas_backend() {
 }
 
 std::string
-vector3_repr(const atlas::Vector3& v) {
-    return "Vector3(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", "
+vector3_repr(const atlas::Float3& v) {
+    return "Float3(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", "
            + std::to_string(v.z) + ")";
 }
 
 std::string
-vector3i_repr(const atlas::Vector3i& v) {
-    return "Vector3i(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", "
+vector3i_repr(const atlas::Int3& v) {
+    return "Int3(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", "
            + std::to_string(v.z) + ")";
 }
 
@@ -82,7 +82,7 @@ quaternion_repr(const atlas::Quaternion& q) {
 atlas::GeneratorHostPtr
 make_maxwell_boltzmann_generator(float temperature,
                                  float molecular_mass,
-                                 const atlas::Vector3& bulk_velocity,
+                                 const atlas::Float3& bulk_velocity,
                                  unsigned int seed) {
     return atlas::MaxwellBoltzmannGenerator::builder()
         .with_temperature(temperature)
@@ -93,8 +93,8 @@ make_maxwell_boltzmann_generator(float temperature,
 }
 
 atlas::UniverseHostPtr
-make_universe(const atlas::Vector3& lower_corner,
-              const atlas::Vector3& upper_corner,
+make_universe(const atlas::Float3& lower_corner,
+              const atlas::Float3& upper_corner,
               float cell_size,
               const std::vector<atlas::Unit>& source_units,
               const std::vector<atlas::Unit>& sink_units,
@@ -132,7 +132,7 @@ make_spatial_hashing_searcher(const atlas::UniverseHostPtr& universe,
 }
 
 atlas::Geometry
-make_box(const atlas::Vector3& lower_corner, const atlas::Vector3& upper_corner) {
+make_box(const atlas::Float3& lower_corner, const atlas::Float3& upper_corner) {
     return atlas::Geometry(*atlas::Box::builder()
                                 .with_lower_corner(lower_corner)
                                 .with_upper_corner(upper_corner)
@@ -140,7 +140,7 @@ make_box(const atlas::Vector3& lower_corner, const atlas::Vector3& upper_corner)
 }
 
 atlas::Geometry
-make_sphere(const atlas::Vector3& center, float radius) {
+make_sphere(const atlas::Float3& center, float radius) {
     return atlas::Geometry(*atlas::Sphere::builder()
                                 .with_center(center)
                                 .with_radius(radius)
@@ -148,7 +148,7 @@ make_sphere(const atlas::Vector3& center, float radius) {
 }
 
 atlas::Geometry
-make_cylinder(const atlas::Vector3& center, float radius, float height, bool open) {
+make_cylinder(const atlas::Float3& center, float radius, float height, bool open) {
     return atlas::Geometry(*atlas::Cylinder::builder()
                                 .with_center(center)
                                 .with_radius(radius)
@@ -158,7 +158,7 @@ make_cylinder(const atlas::Vector3& center, float radius, float height, bool ope
 }
 
 atlas::Geometry
-make_circle(const atlas::Vector3& center, const atlas::Vector3& normal, float radius) {
+make_circle(const atlas::Float3& center, const atlas::Float3& normal, float radius) {
     return atlas::Geometry(*atlas::Circle::builder()
                                 .with_center(center)
                                 .with_normal(normal)
@@ -167,14 +167,14 @@ make_circle(const atlas::Vector3& center, const atlas::Vector3& normal, float ra
 }
 
 atlas::Geometry
-make_plane(const atlas::Vector3& point, const atlas::Vector3& normal) {
+make_plane(const atlas::Float3& point, const atlas::Float3& normal) {
     return atlas::Geometry(*atlas::Plane::builder()
                                 .with_point_normal(point, normal)
                                 .make_host_shared());
 }
 
 atlas::Geometry
-make_square(const atlas::Vector3& center, const atlas::Vector3& normal, float side_length) {
+make_square(const atlas::Float3& center, const atlas::Float3& normal, float side_length) {
     return atlas::Geometry(*atlas::Square::builder()
                                 .with_center(center)
                                 .with_normal(normal)
@@ -183,7 +183,7 @@ make_square(const atlas::Vector3& center, const atlas::Vector3& normal, float si
 }
 
 atlas::Geometry
-make_triangle(const atlas::Vector3& a, const atlas::Vector3& b, const atlas::Vector3& c) {
+make_triangle(const atlas::Float3& a, const atlas::Float3& b, const atlas::Float3& c) {
     return atlas::Geometry(*atlas::Triangle::builder()
                                 .with_vertices(a, b, c)
                                 .make_host_shared());
@@ -234,7 +234,7 @@ observer_sink_records(const atlas::Observer& observer) {
 }
 
 atlas::SyncHostPtr
-make_sync(const atlas::Vector3& translation, const atlas::Quaternion& orientation) {
+make_sync(const atlas::Float3& translation, const atlas::Quaternion& orientation) {
     return atlas::Sync::builder()
         .with_rigid_pose(translation, orientation)
         .make_host_shared();
@@ -445,28 +445,28 @@ NB_MODULE(atlas, m) {
     m.def("backend", &atlas_backend,
           "Return the tasking backend the module was compiled against.");
 
-    nb::class_<atlas::Vector3>(m, "Vector3")
+    nb::class_<atlas::Float3>(m, "Float3")
         .def(nb::init<>())
         .def(nb::init<float, float, float>(), "x"_a, "y"_a, "z"_a)
-        .def_rw("x", &atlas::Vector3::x)
-        .def_rw("y", &atlas::Vector3::y)
-        .def_rw("z", &atlas::Vector3::z)
-        .def("dot", &atlas::Vector3::dot, "v"_a)
-        .def("cross", &atlas::Vector3::cross, "v"_a)
-        .def("length", &atlas::Vector3::length)
-        .def("normalized", &atlas::Vector3::normalized)
+        .def_rw("x", &atlas::Float3::x)
+        .def_rw("y", &atlas::Float3::y)
+        .def_rw("z", &atlas::Float3::z)
+        .def("dot", &atlas::Float3::dot, "v"_a)
+        .def("cross", &atlas::Float3::cross, "v"_a)
+        .def("length", &atlas::Float3::length)
+        .def("normalized", &atlas::Float3::normalized)
         .def(nb::self + nb::self)
         .def(nb::self - nb::self)
         .def(nb::self * float())
         .def(-nb::self)
         .def("__repr__", &vector3_repr);
 
-    nb::class_<atlas::Vector3i>(m, "Vector3i")
+    nb::class_<atlas::Int3>(m, "Int3")
         .def(nb::init<>())
         .def(nb::init<int, int, int>(), "x"_a, "y"_a, "z"_a)
-        .def_rw("x", &atlas::Vector3i::x)
-        .def_rw("y", &atlas::Vector3i::y)
-        .def_rw("z", &atlas::Vector3i::z)
+        .def_rw("x", &atlas::Int3::x)
+        .def_rw("y", &atlas::Int3::y)
+        .def_rw("z", &atlas::Int3::z)
         .def("__repr__", &vector3i_repr);
 
     nb::class_<atlas::Quaternion>(m, "Quaternion")
@@ -480,21 +480,21 @@ NB_MODULE(atlas, m) {
         .def("normalized", &atlas::Quaternion::normalized)
         .def("__repr__", &quaternion_repr);
 
-    nb::class_<atlas::Matrix3x3>(m, "Matrix3x3")
+    nb::class_<atlas::Float3x3>(m, "Float3x3")
         .def(nb::init<>())
         .def(nb::init<float, float, float, float, float, float, float, float, float>(),
              "m00"_a, "m01"_a, "m02"_a,
              "m10"_a, "m11"_a, "m12"_a,
              "m20"_a, "m21"_a, "m22"_a)
-        .def_rw("m00", &atlas::Matrix3x3::m00)
-        .def_rw("m01", &atlas::Matrix3x3::m01)
-        .def_rw("m02", &atlas::Matrix3x3::m02)
-        .def_rw("m10", &atlas::Matrix3x3::m10)
-        .def_rw("m11", &atlas::Matrix3x3::m11)
-        .def_rw("m12", &atlas::Matrix3x3::m12)
-        .def_rw("m20", &atlas::Matrix3x3::m20)
-        .def_rw("m21", &atlas::Matrix3x3::m21)
-        .def_rw("m22", &atlas::Matrix3x3::m22);
+        .def_rw("m00", &atlas::Float3x3::m00)
+        .def_rw("m01", &atlas::Float3x3::m01)
+        .def_rw("m02", &atlas::Float3x3::m02)
+        .def_rw("m10", &atlas::Float3x3::m10)
+        .def_rw("m11", &atlas::Float3x3::m11)
+        .def_rw("m12", &atlas::Float3x3::m12)
+        .def_rw("m20", &atlas::Float3x3::m20)
+        .def_rw("m21", &atlas::Float3x3::m21)
+        .def_rw("m22", &atlas::Float3x3::m22);
 
     nb::enum_<atlas::MaterialType::Value>(m, "MaterialType")
         .value("molecule", atlas::MaterialType::molecule)

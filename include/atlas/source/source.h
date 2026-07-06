@@ -5,9 +5,6 @@
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
 #include <atlas/observer/observer.h>
-#include <atlas/source/detail/source_cache_builder.h>
-#include <atlas/source/detail/source_emitter.h>
-#include <atlas/source/detail/source_species_shuffler.h>
 #include <atlas/source/source_probe.h>
 #include <atlas/source/spawn.h>
 #include <atlas/unit/unit.h>
@@ -36,7 +33,7 @@
  *   - `_flip`: inverts candidate acceptance (same convention as `Sink`'s
  *     `flip` — see `sink.h`);
  *   - `_spacing`: the candidate lattice spacing (see
- *     `detail::SourceCacheBuilder`);
+ *     `Source`);
  *   - `_temperature`: the emission temperature passed to each species'
  *     velocity generator.
  *
@@ -44,15 +41,15 @@
  * `emit()`:
  *   1. `rebuild_cache()`: regenerates the flattened candidate spawn
  *      lattice if `_is_invalidated_cache` is set (see
- *      `detail::SourceCacheBuilder`) — a no-op most calls, since the
+ *      `Source`) — a no-op most calls, since the
  *      cache only needs rebuilding when unit geometry changes.
  *   2. Computes how many particles can actually be emitted this step:
  *      `min(cached candidate count, remaining fluid buffer capacity)`
  *      — logs a warning and emits nothing if the fluid buffer is full.
  *   3. `shuffle_species(emit_count)`: randomizes which cached candidate
  *      gets which species for this call (see
- *      `detail::SourceSpeciesShuffler`).
- *   4. `make_probe()` + `detail::SourceEmitter::emit`: writes the new
+ *      `Source`).
+ *   4. `make_probe()` + `Source::emit`: writes the new
  *      particles into the fluid's tail slots (positions from the cache,
  *      velocities sampled per species) and grows
  *      `Fluid::particle_count()` by `emit_count`.
@@ -114,13 +111,13 @@ public:
     emit();
 
     /** @brief Regenerates the flattened candidate spawn lattice
-     *  (`detail::SourceCacheBuilder::rebuild`) if the cache is
+     *  (`Source::rebuild_cache`) if the cache is
      *  currently invalidated; no-op otherwise. */
     ATLAS_HOST void
     rebuild_cache() noexcept;
 
     /** @brief Randomizes species assignment for the first `count`
-     *  cached candidates (`detail::SourceSpeciesShuffler::shuffle`). */
+     *  cached candidates (`Source::shuffle_species`). */
     ATLAS_HOST void
     shuffle_species(std::size_t count);
 
@@ -169,12 +166,6 @@ private:
     bool _is_invalidated_cache = true;
 
     std::size_t _step_index = 0;
-
-    detail::SourceCacheBuilder _cache_builder {};
-
-    detail::SourceSpeciesShuffler _species_shuffler {};
-
-    detail::SourceEmitter _emitter {};
 };
 
 /**

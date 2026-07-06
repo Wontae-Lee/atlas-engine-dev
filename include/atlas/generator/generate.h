@@ -23,7 +23,7 @@
  * own parameter meaning — `(min_value, max_value)` for `uniform`,
  * ignored for `jittering`, `(sigma, unused)` for `maxwell_sigma`,
  * `(temperature, molecular_mass)` for `maxwell_boltzmann` — so
- * `detail::SourceEmitter` can call `generate(seed, temperature,
+ * `Source` can call `generate(seed, temperature,
  * molecular_mass)` uniformly regardless of which generator a species
  * actually uses.
  */

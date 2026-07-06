@@ -47,7 +47,7 @@
  * internal `mutable engine` (a stateful stream, advancing across calls —
  * appropriate for host-side, sequential use), and one that constructs a
  * fresh `default_random_engine` from an explicit `seed_` per call
- * (stateless — the pattern `detail::SourceEmitter` uses, since each
+ * (stateless — the pattern `Source` uses, since each
  * device thread emitting one particle needs an independent, reproducible
  * draw without sharing mutable RNG state across threads).
  */
