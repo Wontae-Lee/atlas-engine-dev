@@ -64,7 +64,6 @@ public:
     ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() noexcept;
 
-private:
     ATLAS_HOST void
     rebuild_spawn_cache() noexcept;
 
@@ -77,6 +76,7 @@ private:
     ATLAS_HOST void
     emit_particles(std::size_t dst_offset, std::size_t emit_count);
 
+private:
     UniverseHostPtr _universe;
 
     DeviceBuffer<SpawnType> _spawn_types;

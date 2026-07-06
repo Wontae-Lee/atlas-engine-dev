@@ -13,36 +13,32 @@
 
 namespace atlas {
 
-namespace detail {
+template <bool Parallel, typename Key, typename Value>
+ATLAS_FORCE_INLINE void
+host_sort_by_key(Key* keys, Value* values, const std::size_t count) {
+    std::vector<std::size_t> permutation(count);
+    std::iota(permutation.begin(), permutation.end(), std::size_t { 0 });
 
-    template <bool Parallel, typename Key, typename Value>
-    ATLAS_FORCE_INLINE void
-    host_sort_by_key(Key* keys, Value* values, const std::size_t count) {
-        std::vector<std::size_t> permutation(count);
-        std::iota(permutation.begin(), permutation.end(), std::size_t { 0 });
+    const auto by_key = [keys](const std::size_t a, const std::size_t b) { return keys[a] < keys[b]; };
 
-        const auto by_key = [keys](const std::size_t a, const std::size_t b) { return keys[a] < keys[b]; };
+    const std::vector<Key> keys_copy(keys, keys + count);
+    const std::vector<Value> values_copy(values, values + count);
 
-        const std::vector<Key> keys_copy(keys, keys + count);
-        const std::vector<Value> values_copy(values, values + count);
-
-        if constexpr (Parallel) {
-            std::sort(std::execution::par, permutation.begin(), permutation.end(), by_key);
-            std::vector<std::size_t> indices(count);
-            std::iota(indices.begin(), indices.end(), std::size_t { 0 });
-            std::for_each(std::execution::par, indices.begin(), indices.end(), [&](const std::size_t i) {
-                keys[i]   = keys_copy[permutation[i]];
-                values[i] = values_copy[permutation[i]];
-            });
-        } else {
-            std::sort(permutation.begin(), permutation.end(), by_key);
-            for (std::size_t i = 0; i < count; ++i) {
-                keys[i]   = keys_copy[permutation[i]];
-                values[i] = values_copy[permutation[i]];
-            }
+    if constexpr (Parallel) {
+        std::sort(std::execution::par, permutation.begin(), permutation.end(), by_key);
+        std::vector<std::size_t> indices(count);
+        std::iota(indices.begin(), indices.end(), std::size_t { 0 });
+        std::for_each(std::execution::par, indices.begin(), indices.end(), [&](const std::size_t i) {
+            keys[i]   = keys_copy[permutation[i]];
+            values[i] = values_copy[permutation[i]];
+        });
+    } else {
+        std::sort(permutation.begin(), permutation.end(), by_key);
+        for (std::size_t i = 0; i < count; ++i) {
+            keys[i]   = keys_copy[permutation[i]];
+            values[i] = values_copy[permutation[i]];
         }
     }
-
 }
 
 template <ExecutionPolicy P, typename RandomIt>
@@ -74,7 +70,7 @@ parallel_sort_by_key(KeyIt keys_first, KeyIt keys_last, ValueIt values_first) {
         auto* keys              = atlas::raw_pointer_cast(&*keys_first);
         auto* values            = atlas::raw_pointer_cast(&*values_first);
         const std::size_t count = static_cast<std::size_t>(keys_last - keys_first);
-        detail::host_sort_by_key<P != ExecutionPolicy::serial>(keys, values, count);
+        host_sort_by_key<P != ExecutionPolicy::serial>(keys, values, count);
     }
 }
 

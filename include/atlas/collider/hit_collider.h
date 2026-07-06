@@ -3,7 +3,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 
-namespace atlas::detail {
+namespace atlas {
 
 struct HitCollider final {
 

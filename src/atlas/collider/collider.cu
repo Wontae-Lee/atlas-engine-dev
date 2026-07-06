@@ -53,7 +53,7 @@ Collider::collide(const float dt) const {
         return;
     }
 
-    detail::ColliderCollisionKernel::resolve_particles(_probe, _post_collider_type, dt);
+    ColliderCollisionKernel::resolve_particles(_probe, _post_collider_type, dt);
 }
 
 bool

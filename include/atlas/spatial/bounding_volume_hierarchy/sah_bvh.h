@@ -114,20 +114,6 @@ private:
     DeviceBuffer<TriangleContainer4> d_triangles;
 
 private:
-    struct RangeBounds {
-        AABB node;
-        AABB centroid;
-        int count {};
-        bool degenerate {};
-    };
-
-    struct SplitChoice {
-        int axis {};
-        float cmin {};
-        float den {};
-        int split { -1 };
-    };
-
     ATLAS_HOST void
     assign_solid_angle_moment(BVHNode& node,
                               int start,
@@ -138,25 +124,6 @@ private:
     merge_solid_angle_moment(BVHNode& node,
                              const BVHNode& left,
                              const BVHNode& right) noexcept;
-
-    ATLAS_HOST RangeBounds
-    compute_range_bounds(int start, int end) const;
-
-    ATLAS_HOST int
-    make_leaf(int node_index,
-              int start,
-              int end,
-              const RangeBounds& bounds,
-              const HostBuffer<TriangleContainer4>& triangles);
-
-    ATLAS_HOST SplitChoice
-    choose_sah_split(int start, int end, const RangeBounds& bounds) const;
-
-    ATLAS_HOST int
-    partition_sah_split(int start, int end, const SplitChoice& split);
-
-    ATLAS_HOST int
-    make_internal(int node_index, int left_child, int right_child) noexcept;
 
     ATLAS_HOST int
     build_recursive(int start,

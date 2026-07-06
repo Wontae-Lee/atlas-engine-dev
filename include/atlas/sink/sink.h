@@ -6,8 +6,8 @@
 #include <atlas/memory/memory.h>
 #include <atlas/observer/observer.h>
 #include <atlas/sink/despawn.h>
-#include <atlas/sink/detail/sink_unit_bounds.h>
 #include <atlas/sink/sink_probe.h>
+#include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/unit/unit.h>
 #include <atlas/universe/universe.h>
 
@@ -59,11 +59,9 @@ public:
     ATLAS_NODISCARD ATLAS_HOST bool
     make_probe(float dt = 0.0f) noexcept;
 
-private:
     ATLAS_HOST void
     refresh_unit_bounds() noexcept;
 
-public:
     ATLAS_HOST void
     despawn_particles(const SinkProbe& probe, int* removed_unit_indices);
 
@@ -97,8 +95,6 @@ private:
     SinkProbe _probe {};
 
     std::size_t _step_index = 0;
-
-    detail::SinkUnitBounds _unit_bound_cache {};
 };
 
 class Sink::Builder final {

@@ -8,7 +8,7 @@
 #include <iostream>
 #include <mutex>
 
-namespace atlas::detail {
+namespace atlas {
 
 // Optional output stream override for INFO messages.
 // If null, INFO logs are written to std::cout.
@@ -193,7 +193,7 @@ emit_log_line(const LoggingLevel msg_level,
     os->flush();
 }
 
-} // namespace atlas::detail
+} // namespace atlas
 
 namespace atlas {
 
@@ -214,8 +214,8 @@ Logger::~Logger() {
     if (msg.empty()) return;
 
     // Only emit if the message level is currently enabled.
-    if (::atlas::detail::should_log(_level)) {
-        ::atlas::detail::emit_log_line(_level, _loc, msg);
+    if (::atlas::should_log(_level)) {
+        ::atlas::emit_log_line(_level, _loc, msg);
     }
 }
 
@@ -224,8 +224,8 @@ Logging::set_info_stream(std::ostream* strm) {
     // Install or replace the output stream used for INFO messages.
     //
     // Passing nullptr restores default fallback behavior (std::cout).
-    std::lock_guard<std::mutex> lock(detail::s_mtx);
-    detail::s_info = strm;
+    std::lock_guard<std::mutex> lock(s_mtx);
+    s_info = strm;
 }
 
 void
@@ -233,8 +233,8 @@ Logging::set_warn_stream(std::ostream* strm) {
     // Install or replace the output stream used for WARN messages.
     //
     // Passing nullptr restores default fallback behavior (std::cout).
-    std::lock_guard<std::mutex> lock(detail::s_mtx);
-    detail::s_warn = strm;
+    std::lock_guard<std::mutex> lock(s_mtx);
+    s_warn = strm;
 }
 
 void
@@ -242,8 +242,8 @@ Logging::set_error_stream(std::ostream* strm) {
     // Install or replace the output stream used for ERROR messages.
     //
     // Passing nullptr restores default fallback behavior (std::cerr).
-    std::lock_guard<std::mutex> lock(detail::s_mtx);
-    detail::s_error = strm;
+    std::lock_guard<std::mutex> lock(s_mtx);
+    s_error = strm;
 }
 
 void
@@ -251,8 +251,8 @@ Logging::set_debug_stream(std::ostream* strm) {
     // Install or replace the output stream used for DEBUG messages.
     //
     // Passing nullptr restores default fallback behavior (std::cout).
-    std::lock_guard<std::mutex> lock(detail::s_mtx);
-    detail::s_debug = strm;
+    std::lock_guard<std::mutex> lock(s_mtx);
+    s_debug = strm;
 }
 
 void
@@ -276,8 +276,8 @@ Logging::set_level(LoggingLevel level) {
     //
     // This affects future calls to should_log() and therefore controls which
     // messages are emitted after this point.
-    std::lock_guard<std::mutex> lock(detail::s_mtx);
-    detail::s_level = level;
+    std::lock_guard<std::mutex> lock(s_mtx);
+    s_level = level;
 }
 
 void

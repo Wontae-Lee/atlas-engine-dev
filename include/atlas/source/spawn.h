@@ -1,6 +1,6 @@
 #pragma once
 
-#include <atlas/core/detail/device_variant.h>
+#include <atlas/core/device_variant.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 
@@ -35,27 +35,23 @@ struct VolumeSpawn final {
     }
 };
 
-namespace detail {
+using SpawnTypeSwitch = DeviceTypeSwitch<
+    SpawnType,
+    SpawnType::surface,
+    DeviceTypeCase<SpawnType, SpawnType::surface, SurfaceSpawn>,
+    DeviceTypeCase<SpawnType, SpawnType::volume, VolumeSpawn>>;
 
-    using SpawnTypeSwitch = DeviceTypeSwitch<
-        SpawnType,
-        SpawnType::surface,
-        DeviceTypeCase<SpawnType, SpawnType::surface, SurfaceSpawn>,
-        DeviceTypeCase<SpawnType, SpawnType::volume, VolumeSpawn>>;
-
-    struct SpawnVisitor {
-        const atlas::Geometry& query;
-        const Float3& particle;
-        float tolerance;
-        template <typename Tag>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
-        operator()(Tag) const noexcept {
-            using Op = typename Tag::type;
-            return Op::spawn(query, particle, tolerance);
-        }
-    };
-
-}
+struct SpawnVisitor {
+    const atlas::Geometry& query;
+    const Float3& particle;
+    float tolerance;
+    template <typename Tag>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    operator()(Tag) const noexcept {
+        using Op = typename Tag::type;
+        return Op::spawn(query, particle, tolerance);
+    }
+};
 
 struct Spawn final {
 
@@ -75,10 +71,10 @@ struct Spawn final {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~Spawn() noexcept = default;
 
     template <typename Payload,
-              std::enable_if_t<detail::SpawnTypeSwitch::holds<std::decay_t<Payload>>, int> = 0>
+              std::enable_if_t<SpawnTypeSwitch::holds<std::decay_t<Payload>>, int> = 0>
     ATLAS_HOST
     Spawn(const Payload&) noexcept
-        : type(detail::SpawnTypeSwitch::tag_of<std::decay_t<Payload>>()) {
+        : type(SpawnTypeSwitch::tag_of<std::decay_t<Payload>>()) {
     }
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
@@ -97,9 +93,9 @@ Spawn::spawn(const atlas::Geometry& query,
              const Float3& particle,
              const float tolerance) const noexcept {
 
-    return detail::SpawnTypeSwitch::visit(
+    return SpawnTypeSwitch::visit(
         type,
-        detail::SpawnVisitor { query, particle, tolerance },
+        SpawnVisitor { query, particle, tolerance },
         false);
 }
 

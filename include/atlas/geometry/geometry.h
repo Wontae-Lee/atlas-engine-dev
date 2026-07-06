@@ -1,6 +1,6 @@
 #pragma once
 
-#include <atlas/core/detail/device_variant.h>
+#include <../core/device_variant.h>
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/circle.h>
 #include <atlas/geometry/cylinder.h>
@@ -109,141 +109,137 @@ struct Geometry {
     operator()(const Ray& ray) const noexcept;
 };
 
-namespace detail {
+using GeometryVariant = DeviceVariant<
+    Geometry,
+    GeometryType,
+    GeometryType::sphere,
+    DeviceVariantCase<GeometryType::box, &Geometry::box>,
+    DeviceVariantCase<GeometryType::circle, &Geometry::circle>,
+    DeviceVariantCase<GeometryType::cylinder, &Geometry::cylinder>,
+    DeviceVariantCase<GeometryType::plane, &Geometry::plane>,
+    DeviceVariantCase<GeometryType::sphere, &Geometry::sphere>,
+    DeviceVariantCase<GeometryType::square, &Geometry::square>,
+    DeviceVariantCase<GeometryType::triangle, &Geometry::triangle>,
+    DeviceVariantCase<GeometryType::triangle_mesh, &Geometry::triangle_mesh>>;
 
-    using GeometryVariant = DeviceVariant<
-        Geometry,
-        GeometryType,
-        GeometryType::sphere,
-        DeviceVariantCase<GeometryType::box, &Geometry::box>,
-        DeviceVariantCase<GeometryType::circle, &Geometry::circle>,
-        DeviceVariantCase<GeometryType::cylinder, &Geometry::cylinder>,
-        DeviceVariantCase<GeometryType::plane, &Geometry::plane>,
-        DeviceVariantCase<GeometryType::sphere, &Geometry::sphere>,
-        DeviceVariantCase<GeometryType::square, &Geometry::square>,
-        DeviceVariantCase<GeometryType::triangle, &Geometry::triangle>,
-        DeviceVariantCase<GeometryType::triangle_mesh, &Geometry::triangle_mesh>>;
-
-    struct GeometryClosestPoint {
-        Float3 p;
-        template <typename S>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
-        operator()(const S& geometry) const noexcept { return geometry.closest_point(p); }
-    };
-    struct GeometryClosestNormal {
-        Float3 p;
-        template <typename S>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
-        operator()(const S& geometry) const noexcept { return geometry.closest_normal(p); }
-    };
-    struct GeometrySignedDistance {
-        Float3 p;
-        template <typename S>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-        operator()(const S& geometry) const noexcept { return geometry.signed_distance(p); }
-    };
-    struct GeometryIsInside {
-        Float3 p;
-        float tolerance;
-        template <typename S>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
-        operator()(const S& geometry) const noexcept { return geometry.is_inside(p, tolerance); }
-    };
-    struct GeometryIsOnSurface {
-        Float3 p;
-        float tolerance;
-        template <typename S>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
-        operator()(const S& geometry) const noexcept { return geometry.is_on_surface(p, tolerance); }
-    };
-    struct GeometryCentroid {
-        template <typename S>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
-        operator()(const S& geometry) const noexcept { return geometry.centroid(); }
-    };
-    struct GeometryBound {
-        template <typename S>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AABB
-        operator()(const S& geometry) const noexcept { return geometry.bound(); }
-    };
-    struct GeometryIsValid {
-        template <typename S>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
-        operator()(const S& geometry) const noexcept { return geometry.is_valid(); }
-    };
-    struct GeometryTrace {
-        Ray ray;
-        template <typename S>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
-        operator()(const S& geometry) const noexcept { return geometry.trace(ray); }
-    };
-
-}
+struct GeometryClosestPoint {
+    Float3 p;
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    operator()(const S& geometry) const noexcept { return geometry.closest_point(p); }
+};
+struct GeometryClosestNormal {
+    Float3 p;
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    operator()(const S& geometry) const noexcept { return geometry.closest_normal(p); }
+};
+struct GeometrySignedDistance {
+    Float3 p;
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    operator()(const S& geometry) const noexcept { return geometry.signed_distance(p); }
+};
+struct GeometryIsInside {
+    Float3 p;
+    float tolerance;
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    operator()(const S& geometry) const noexcept { return geometry.is_inside(p, tolerance); }
+};
+struct GeometryIsOnSurface {
+    Float3 p;
+    float tolerance;
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    operator()(const S& geometry) const noexcept { return geometry.is_on_surface(p, tolerance); }
+};
+struct GeometryCentroid {
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    operator()(const S& geometry) const noexcept { return geometry.centroid(); }
+};
+struct GeometryBound {
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AABB
+    operator()(const S& geometry) const noexcept { return geometry.bound(); }
+};
+struct GeometryIsValid {
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    operator()(const S& geometry) const noexcept { return geometry.is_valid(); }
+};
+struct GeometryTrace {
+    Ray ray;
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
+    operator()(const S& geometry) const noexcept { return geometry.trace(ray); }
+};
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 Geometry::Geometry() noexcept {
-    detail::GeometryVariant::construct(*this, GeometryType::sphere);
+    GeometryVariant::construct(*this, GeometryType::sphere);
 }
 
 template <typename Payload,
           std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, Geometry>, int>>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 Geometry::Geometry(const Payload& op) {
-    detail::GeometryVariant::construct_payload(*this, op);
+    GeometryVariant::construct_payload(*this, op);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
 Geometry::closest_point(const Float3& p) const noexcept {
-    return detail::GeometryVariant::visit(*this, detail::GeometryClosestPoint { p }, p);
+    return GeometryVariant::visit(*this, GeometryClosestPoint { p }, p);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
 Geometry::closest_normal(const Float3& p) const noexcept {
-    return detail::GeometryVariant::visit(
+    return GeometryVariant::visit(
         *this,
-        detail::GeometryClosestNormal { p },
+        GeometryClosestNormal { p },
         Float3(0.0f, 0.0f, 0.0f));
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
 Geometry::signed_distance(const Float3& p) const noexcept {
-    return detail::GeometryVariant::visit(
+    return GeometryVariant::visit(
         *this,
-        detail::GeometrySignedDistance { p },
+        GeometrySignedDistance { p },
         std::numeric_limits<float>::infinity());
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
 Geometry::is_inside(const Float3& p, const float tolerance) const noexcept {
-    return detail::GeometryVariant::visit(*this, detail::GeometryIsInside { p, tolerance }, false);
+    return GeometryVariant::visit(*this, GeometryIsInside { p, tolerance }, false);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
 Geometry::is_on_surface(const Float3& p, const float tolerance) const noexcept {
-    return detail::GeometryVariant::visit(*this, detail::GeometryIsOnSurface { p, tolerance }, false);
+    return GeometryVariant::visit(*this, GeometryIsOnSurface { p, tolerance }, false);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
 Geometry::centroid() const noexcept {
-    return detail::GeometryVariant::visit(
+    return GeometryVariant::visit(
         *this,
-        detail::GeometryCentroid {},
+        GeometryCentroid {},
         Float3(0.0f, 0.0f, 0.0f));
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AABB
 Geometry::bound() const noexcept {
-    return detail::GeometryVariant::visit(*this, detail::GeometryBound {}, AABB());
+    return GeometryVariant::visit(*this, GeometryBound {}, AABB());
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
 Geometry::is_valid() const noexcept {
-    return detail::GeometryVariant::visit(*this, detail::GeometryIsValid {}, false);
+    return GeometryVariant::visit(*this, GeometryIsValid {}, false);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
 Geometry::trace(const Ray& ray) const noexcept {
-    return detail::GeometryVariant::visit(*this, detail::GeometryTrace { ray }, HitSurface {});
+    return GeometryVariant::visit(*this, GeometryTrace { ray }, HitSurface {});
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface

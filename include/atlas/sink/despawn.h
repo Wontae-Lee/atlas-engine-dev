@@ -1,6 +1,6 @@
 #pragma once
 
-#include <atlas/core/detail/device_variant.h>
+#include <atlas/core/device_variant.h>
 #include <atlas/sink/surface_despawn.h>
 #include <atlas/sink/tracing_despawn.h>
 #include <atlas/sink/volume_despawn.h>
@@ -18,40 +18,36 @@ enum class DespawnType : int {
     tracing
 };
 
-namespace detail {
+using DespawnTypeSwitch = DeviceTypeSwitch<
+    DespawnType,
+    DespawnType::surface,
+    DeviceTypeCase<DespawnType, DespawnType::surface, SurfaceDespawn>,
+    DeviceTypeCase<DespawnType, DespawnType::volume, VolumeDespawn>,
+    DeviceTypeCase<DespawnType, DespawnType::tracing, TracingDespawn>>;
 
-    using DespawnTypeSwitch = DeviceTypeSwitch<
-        DespawnType,
-        DespawnType::surface,
-        DeviceTypeCase<DespawnType, DespawnType::surface, SurfaceDespawn>,
-        DeviceTypeCase<DespawnType, DespawnType::volume, VolumeDespawn>,
-        DeviceTypeCase<DespawnType, DespawnType::tracing, TracingDespawn>>;
-
-    struct DespawnVectorVisitor {
-        const atlas::Geometry& query;
-        const Float3& vector;
-        float value;
-        template <typename Tag>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
-        operator()(Tag) const noexcept {
-            using Op = typename Tag::type;
-            return Op::despawn(query, Float3(0.0f, 0.0f, 0.0f), vector, value);
-        }
-    };
-    struct DespawnPositionVisitor {
-        const atlas::Geometry& query;
-        const Float3& position;
-        const Float3& vector;
-        float value;
-        template <typename Tag>
-        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
-        operator()(Tag) const noexcept {
-            using Op = typename Tag::type;
-            return Op::despawn(query, position, vector, value);
-        }
-    };
-
-}
+struct DespawnVectorVisitor {
+    const atlas::Geometry& query;
+    const Float3& vector;
+    float value;
+    template <typename Tag>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    operator()(Tag) const noexcept {
+        using Op = typename Tag::type;
+        return Op::despawn(query, Float3(0.0f, 0.0f, 0.0f), vector, value);
+    }
+};
+struct DespawnPositionVisitor {
+    const atlas::Geometry& query;
+    const Float3& position;
+    const Float3& vector;
+    float value;
+    template <typename Tag>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    operator()(Tag) const noexcept {
+        using Op = typename Tag::type;
+        return Op::despawn(query, position, vector, value);
+    }
+};
 
 struct Despawn final {
 
@@ -71,10 +67,10 @@ struct Despawn final {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~Despawn() noexcept = default;
 
     template <typename Payload,
-              std::enable_if_t<detail::DespawnTypeSwitch::holds<std::decay_t<Payload>>, int> = 0>
+              std::enable_if_t<DespawnTypeSwitch::holds<std::decay_t<Payload>>, int> = 0>
     ATLAS_HOST
     Despawn(const Payload&) noexcept
-        : type(detail::DespawnTypeSwitch::tag_of<std::decay_t<Payload>>()) {
+        : type(DespawnTypeSwitch::tag_of<std::decay_t<Payload>>()) {
     }
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
@@ -98,9 +94,9 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
 Despawn::despawn(const atlas::Geometry& query,
                  const Float3& vector,
                  const float value) const noexcept {
-    return detail::DespawnTypeSwitch::visit(
+    return DespawnTypeSwitch::visit(
         type,
-        detail::DespawnVectorVisitor { query, vector, value },
+        DespawnVectorVisitor { query, vector, value },
         false);
 }
 
@@ -109,9 +105,9 @@ Despawn::despawn(const atlas::Geometry& query,
                  const Float3& position,
                  const Float3& vector,
                  const float value) const noexcept {
-    return detail::DespawnTypeSwitch::visit(
+    return DespawnTypeSwitch::visit(
         type,
-        detail::DespawnPositionVisitor { query, position, vector, value },
+        DespawnPositionVisitor { query, position, vector, value },
         false);
 }
 

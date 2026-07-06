@@ -142,7 +142,38 @@ Sink::make_probe(const float dt) noexcept {
 
 void
 Sink::refresh_unit_bounds() noexcept {
-    _unit_bound_cache.refresh(_universe->sink_units().units(), _unit_bounds, _tolerance);
+    const auto& units = _universe->sink_units().units();
+
+    if (units.empty()) {
+        _unit_bounds.clear();
+        return;
+    }
+
+    if (_unit_bounds.size() != units.size()) {
+        _unit_bounds.resize(units.size());
+    }
+
+    const auto* units_ptr = atlas::raw_pointer_cast(units.data());
+    auto* bounds_ptr      = atlas::raw_pointer_cast(_unit_bounds.data());
+    const int unit_count  = static_cast<int>(units.size());
+    // A negative tolerance (an "inside-only" despawn margin) must not
+    // shrink the broad-phase box below the unit's exact geometry, or the
+    // AABB reject test could wrongly cull a particle the exact query would
+    // still have accepted.
+    const float expand    = _tolerance > 0.0f ? _tolerance : 0.0f;
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        unit_count,
+        [=] ATLAS_ALL_DEVICE(const int unit_index) {
+            auto& world_bound = bounds_ptr[unit_index];
+
+            world_bound = units_ptr[unit_index].world_bound();
+
+            if (expand > 0.0f) {
+                world_bound.expand(expand);
+            }
+        });
 }
 
 void
