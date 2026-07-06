@@ -19,10 +19,6 @@ exclusive_scan(InputIt first, InputIt last,
                BinaryOp binary_op) {
     if (first == last) return result;
 
-    // Only the CUDA device policy keeps thrust: for every other policy under the
-    // TBB build, thrust's __host__ __device__ temporary allocator makes nvcc
-    // device-compile an illegal throw (guarded only for the CUDA device system).
-    // Use the STL — parallel for host/device (TBB-backed), sequential for serial.
     if constexpr (P == ExecutionPolicy::device && THRUST_DEVICE_SYSTEM == THRUST_DEVICE_SYSTEM_CUDA) {
         return thrust::exclusive_scan(thrust::device, first, last, result, init, binary_op);
     } else {

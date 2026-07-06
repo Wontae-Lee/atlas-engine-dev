@@ -6,17 +6,8 @@
 
 #include <optional>
 
-/**
- * @file jittering_generator.h
- * @brief Host-side `Generator` wrapping `JitteringGenerate`
- *        (`param0` = `base_value`, `param1` = `jitter_radius`); see
- *        `generate_payload.h` for why this is a non-physical,
- *        near-deterministic generator rather than a Maxwellian one.
- */
-
 namespace atlas {
 
-/** @brief `Generator` configuration for `GenerateType::jittering`. */
 class JitteringGenerator final : public Generator {
 public:
     class Builder;
@@ -53,8 +44,6 @@ private:
     Generate _operator;
 };
 
-/** @brief Fluent builder for `JitteringGenerator`; requires both
- *  `_base_value`/`_jitter_radius` set. */
 class JitteringGenerator::Builder final {
 public:
     Builder() = default;

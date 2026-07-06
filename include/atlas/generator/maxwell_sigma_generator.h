@@ -6,16 +6,8 @@
 
 #include <optional>
 
-/**
- * @file maxwell_sigma_generator.h
- * @brief Host-side `Generator` wrapping `MaxwellSigmaGenerate`
- *        (`param0` = `sigma`); see `generate_payload.h` for the
- *        isotropic-Gaussian sampling model.
- */
-
 namespace atlas {
 
-/** @brief `Generator` configuration for `GenerateType::maxwell_sigma`. */
 class MaxwellSigmaGenerator final : public Generator {
 public:
     class Builder;
@@ -50,8 +42,6 @@ private:
     Generate _operator;
 };
 
-/** @brief Fluent builder for `MaxwellSigmaGenerator`; requires `_sigma`
- *  set. */
 class MaxwellSigmaGenerator::Builder final {
 public:
     Builder() = default;

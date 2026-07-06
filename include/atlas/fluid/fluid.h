@@ -17,55 +17,10 @@
 #include <string_view>
 #include <utility>
 
-/**
- * @file fluid.h
- * @brief The particle population every solver/collider/sink/source/
- *        measurer in Atlas ultimately operates on: a fixed-capacity
- *        structure-of-arrays store of per-particle attribute buffers
- *        (`FluidState`s) plus per-species material/generator tables.
- *
- * @details
- * ### Operating principle
- * `Fluid` separates *capacity* from *live count*: `buffer_size()` is
- * the fixed allocation size every registered `FluidState` is sized to,
- * while `particle_count()` is how many of those slots currently hold a
- * live particle (`<= buffer_size()`). This split is what lets
- * `Source::emit()` add particles cheaply (write into
- * `[particle_count, particle_count + emit_count)`, then bump the count —
- * no reallocation as long as slots remain) and `Sink::compact_fluid_particles()`
- * shrink the live count without touching the underlying allocation.
- *
- * `_states` (`FluidStateStore`, a `TypeStore<FluidState>` — a
- * type-indexed heterogeneous container, see `container/type_store.h`)
- * holds whichever `FluidState`s this fluid actually needs
- * (`FluidPositionState`, `FluidVelocityState`, ..., see
- * `fluid_state.h`); the templated `emplace_state`/`state`/`has_state`/
- * `remove_state` accessors are inline in the class body (the
- * `TypeStore`-backed template-member convention shared with `Universe`
- * — see `docs/updates/updates.md` §2.12), so a caller can add exactly
- * the states its simulation needs without every `Fluid` paying for
- * every possible state.
- *
- * `_particle_properties`/`_generators` are parallel per-species arrays
- * (indexed by `FluidSpeciesState`): `particle_properties()[species]` is
- * that species' `MaterialProperties` (mass, cross-section, ...) and
- * `generators()[species]` is the `Generate` `Source` draws new
- * particles' velocities from for that species.
- * `statistical_weight()` (`F_N`) is the real-molecules-per-simulated-
- * particle scaling used throughout the DSMC number-density/collision-rate
- * formulas (see `dsmc_solver.h`, `KnudsenCodec::knudsen_number`).
- */
-
 namespace atlas {
 
 using FluidStateStore = TypeStore<FluidState>;
 
-/**
- * @brief Fixed-capacity particle population: per-particle state buffers
- *        plus per-species material/generator tables. See this file's
- *        top-of-file documentation for the buffer-size/particle-count
- *        split and the state-store pattern.
- */
 class Fluid final {
 public:
     class Builder;
@@ -90,47 +45,33 @@ public:
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    /** Per-species velocity generator table, indexed by
-     *  `FluidSpeciesState`; see `generate.h`. */
     ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Generate>&
     generators() const noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<Generate>&
     generators() noexcept;
 
-    /** Per-species material properties table, indexed by
-     *  `FluidSpeciesState`; see `material_properties.h`. */
     ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<MaterialProperties>&
     particle_properties() const noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<MaterialProperties>&
     particle_properties() noexcept;
 
-    /** @brief Sets the live particle count (must not exceed
-     *  `buffer_size()`); used by `Source`/`Sink` after emitting/removing
-     *  particles. */
     ATLAS_HOST void
     set_particle_count(std::size_t particle_count);
 
-    /** @brief Constructs and registers a `StateT` (e.g.
-     *  `FluidVelocityState`) in this fluid's state store, replacing any
-     *  existing one of the same type. */
     template <typename StateT, typename... Args>
     ATLAS_HOST ATLAS_FORCE_INLINE StateT&
     emplace_state(Args&&... args) {
         return _states.template emplace<StateT>(std::forward<Args>(args)...);
     }
 
-    /** @brief Installs an already-constructed `StateT`, replacing any
-     *  existing one of the same type. */
     template <typename StateT>
     ATLAS_HOST ATLAS_FORCE_INLINE void
     set_state(std::unique_ptr<StateT> state) {
         _states.template set<StateT>(std::move(state));
     }
 
-    /** @brief The registered `StateT`, or `nullptr` if this fluid does
-     *  not have one. */
     template <typename StateT>
     ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE StateT*
     state() noexcept {
@@ -143,52 +84,36 @@ public:
         return _states.template get<StateT>();
     }
 
-    /** @brief Whether a `StateT` is currently registered. */
     template <typename StateT>
     ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE bool
     has_state() const noexcept {
         return _states.template contains<StateT>();
     }
 
-    /** @brief Unregisters and returns a `StateT`, or `nullptr` if none
-     *  was registered. */
     template <typename StateT>
     ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE std::unique_ptr<StateT>
     remove_state() {
         return _states.template remove<StateT>();
     }
 
-    /** @brief The underlying heterogeneous state store; for callers
-     *  that need to iterate every registered state generically (e.g.
-     *  `Sink::compact_fluid_particles`). */
     ATLAS_NODISCARD ATLAS_HOST FluidStateStore&
     states() noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST const FluidStateStore&
     states() const noexcept;
 
-    /** @brief Fixed allocation size every registered `FluidState` is
-     *  sized to; see this file's top-of-file documentation for the
-     *  buffer-size/particle-count split. */
     ATLAS_NODISCARD ATLAS_HOST std::size_t
     buffer_size() const noexcept;
 
-    /** @brief Current live particle count (`<= buffer_size()`). */
     ATLAS_NODISCARD ATLAS_HOST std::size_t
     particle_count() const noexcept;
 
-    /** @brief Real molecules per simulated particle (`F_N`); see this
-     *  file's top-of-file documentation. */
     ATLAS_NODISCARD ATLAS_HOST float
     statistical_weight() const noexcept;
 
-    /** @brief Optional attached observer for sensor-metrics recording
-     *  (e.g. `SinkSensorMetrics`/`SourceSensorMetrics`); may be null. */
     ATLAS_NODISCARD ATLAS_HOST const ObserverHostPtr&
     observer() const noexcept;
 
-    /** @brief Serializes this fluid's particle state to a binary
-     *  snapshot at `path` (see `serialization/protobuf_snapshot.h`). */
     ATLAS_HOST void
     save(std::string_view path) const;
 
@@ -210,12 +135,6 @@ private:
     FluidStateStore _states;
 };
 
-/**
- * @brief Fluent builder for `Fluid`. `with_properties`/`with_generators`
- *        set the parallel per-species tables (must end up the same
- *        length); `with_binary` restores particle state from a saved
- *        snapshot instead of starting empty.
- */
 class Fluid::Builder final {
 public:
     Builder() = default;
@@ -226,30 +145,21 @@ public:
     ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Fluid>
     make_host_shared() const;
 
-    /** @brief Per-species material properties table. */
     ATLAS_HOST Builder&
     with_properties(const HostBuffer<MaterialProperties>& properties);
 
-    /** @brief Per-species velocity generators, converted to their
-     *  device-callable `Generate` values. */
     ATLAS_HOST Builder&
     with_generators(const HostBuffer<GeneratorHostPtr>& generators);
 
-    /** @brief Fixed particle-buffer capacity; required. */
     ATLAS_HOST Builder&
     with_buffer_size(std::size_t buffer_size) noexcept;
 
-    /** @brief Real molecules per simulated particle (`F_N`); defaults
-     *  to `1.0`. */
     ATLAS_HOST Builder&
     with_statistical_weight(float statistical_weight) noexcept;
 
     ATLAS_HOST Builder&
     with_observer(ObserverHostPtr observer) noexcept;
 
-    /** @brief Restores particle state (position/velocity/species/
-     *  active/temperature, particle count) from a saved binary
-     *  snapshot at `path`, instead of an empty fluid. */
     ATLAS_HOST Builder&
     with_binary(const std::string& path);
 

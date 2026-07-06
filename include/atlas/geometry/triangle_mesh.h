@@ -13,89 +13,8 @@
 #include <limits>
 #include <string>
 
-/**
- * @file triangle_mesh.h
- * @brief Arbitrary triangle mesh shape: `TriangleMeshGeometryOperator`
- *        (device-callable queries; a true pointer *view* into the
- *        mesh's vertex/index/BVH buffers, the one exception to
- *        value-embedding among the shape operators — see
- *        `geometry.h`) and its host wrapper `TriangleMesh`
- *        (BVH construction, OBJ loading).
- *
- * @details
- * ### Background — three query families, each with a linear and a
- * ### BVH-accelerated path
- * Every query below has a brute-force `O(triangle_count)` linear
- * implementation and, when a `BVH` (see
- * `spatial/bounding_volume_hierarchy/`) has been built, a
- * `has_bvh()`-gated accelerated path that prunes most of the mesh via
- * the tree's bounding boxes / precomputed moments. `has_bvh()` is
- * forced `false` when compiling *host* code under the CUDA backend
- * (`ATLAS_TASKING_CUDA` without `__CUDA_ARCH__`) because the BVH's
- * pointers are device pointers, not dereferenceable from the host — the
- * operator degrades gracefully to the linear path in that configuration
- * rather than crashing.
- *
- * 1. **Closest point / signed distance** (`closest_point_linear` /
- *    `closest_point_bvh`): a linear scan simply keeps the minimum
- *    `Triangle::closest_point` distance over every
- *    triangle. The BVH path is a standard nearest-neighbor tree
- *    traversal with branch-and-bound pruning: descend into a node only
- *    if `aabb_distance_squared(node.bounds, p) <= best_d2` (a box
- *    farther than the current best cannot contain a closer triangle),
- *    and when both children are viable, visit the nearer one first (so
- *    `best_d2` tightens as early as possible, pruning the farther
- *    subtree more aggressively).
- * 2. **Winding number / inside test** (`winding_number` /
- *    `fast_winding_number_bvh`, feeding `is_inside`/`signed_distance`):
- *    see `node.h`'s Background for the generalized winding number
- *    concept. `solid_angle(p, a, b, c)` is Van Oosterom & Strackee's
- *    (1983) closed-form solid angle subtended by a triangle at a point:
- *    `Omega = 2*atan2(a.(b x c), |a||b||c| + (a.b)|c| + (b.c)|a| +
- *    (c.a)|b|)` (`a, b, c` here are the vertices *relative to* `p`).
- *    Summing this over every triangle and dividing by `4*pi` gives the
- *    exact winding number (`winding_number`). `fast_winding_number_bvh`
- *    accelerates this with the same Barnes-Hut-style multipole
- *    admissibility test used in fast N-body gravity solvers: a node is
- *    "far enough" to approximate as a single point mass
- *    (`approximate_solid_angle`, using the node's precomputed
- *    area-weighted centroid/normal moments, see `node.h`) when its
- *    bounding diagonal is small relative to its distance from `p`
- *    (`size2 <= distance2 * theta^2`, `theta = 0.5` — smaller `theta`
- *    demands the node be relatively farther/smaller before
- *    approximating, trading accuracy for speed); otherwise the
- *    traversal descends into its children, down to exact
- *    per-triangle `solid_angle` sums at the leaves.
- * 3. **Ray tracing** (`trace`): the linear path traces every triangle
- *    and keeps the closest hit. The BVH path is the standard
- *    closest-hit BVH traversal: a node is visited only if its own box
- *    is hit *and* that hit's entry distance doesn't already exceed the
- *    best hit found so far (`hit.enter > best_t` prunes), so the
- *    traversal naturally skips subtrees that cannot possibly contain a
- *    closer intersection.
- *
- * `TriangleContainer4` (the BVH's per-triangle storage) packs a
- * triangle's three vertices plus its precomputed normal (`.d()`) in one
- * value, avoiding a separate normal recomputation per BVH-path query.
- *
- * ### References
- * - A. Van Oosterom and J. Strackee, "The Solid Angle of a Plane
- *   Triangle," IEEE Transactions on Biomedical Engineering BME-30(2),
- *   1983. (the closed-form triangle solid angle `solid_angle()`
- *   implements)
- * - See `node.h`'s References for the generalized winding number and
- *   its BVH-hierarchical fast evaluation.
- */
-
 namespace atlas {
 
-/**
- * @brief Arbitrary triangle mesh device operator; a pointer *view* into
- *        externally-owned vertex/index/BVH buffers (not value-embedded,
- *        unlike every other shape operator — see `geometry.h`).
- *        See this file's top-of-file documentation for the three
- *        query families and their linear/BVH-accelerated paths.
- */
 struct TriangleMeshGeometryOperator {
 
     const Float3* vertices = nullptr;
@@ -704,20 +623,6 @@ public:
     }
 };
 
-/**
- * @brief Host-side triangle mesh `Geometry`: owns the triangle data,
- *        lazily builds a `SAHBVH` acceleration structure
- *        (`ensure_bvh`/`build_bvh`), and maintains a flat
- *        vertex/index "query cache" (`ensure_query_cache`/
- *        `rebuild_query_cache`) so the device-callable
- *        `TriangleMeshGeometryOperator` this produces
- *        (`make_device_geometry_view`) can view the mesh through plain
- *        pointers. `triangles` stores each triangle independently (its
- *        own three vertices, no shared-vertex adjacency) — the query
- *        cache's `indices` are therefore just `0..3n-1` identity
- *        indices, present only to match the operator's
- *        vertices+indices interface.
- */
 struct Geometry;
 
 class TriangleMesh final {
@@ -756,8 +661,6 @@ public:
     ATLAS_NODISCARD ATLAS_HOST Geometry
     make_device_geometry_view() const;
 
-    /** @brief Loads triangle data from a Wavefront OBJ file at
-     *  `filename`, replacing `triangles`; `false` on failure. */
     ATLAS_NODISCARD ATLAS_HOST bool
     load_from_obj(const std::string& filename, bool verbose = false);
 
@@ -801,37 +704,22 @@ private:
 
     mutable TriangleMeshGeometryOperator _operator {};
 
-    /** @brief Lazily allocates `_bvh` as a `SAHBVH` if not already
-     *  present (the default/only BVH strategy `TriangleMesh` uses). */
     ATLAS_HOST void
     ensure_bvh() noexcept;
 
-    /** @brief Builds (or rebuilds) `_bvh` over the current `triangles`;
-     *  `bvh_built` gates whether `make_device_geometry_view` exposes
-     *  BVH pointers at all. */
     ATLAS_HOST void
     build_bvh();
 
-    /** @brief Rebuilds the flat vertex/index query cache only if it is
-     *  not already up to date (`query_cache_built`). */
     ATLAS_HOST void
     ensure_query_cache() const;
 
-    /** @brief Unconditionally regenerates `_query_vertices`/
-     *  `_query_indices` from `triangles` (see this class's top-of-class
-     *  documentation for why the indices are just `0..3n-1`). */
     ATLAS_HOST void
     rebuild_query_cache() const;
 
-    /** @brief Refreshes `_operator`'s pointers/counts from the current
-     *  query cache and (if built) BVH. */
     ATLAS_HOST void
     update_operator() const;
 };
 
-/** @brief Fluent builder for `TriangleMesh`; set triangles directly
- *  (`with_triangles`) or load them from an OBJ file
- *  (`load_from_obj`). */
 class TriangleMesh::Builder final {
 public:
     Builder() = default;

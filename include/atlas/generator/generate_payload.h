@@ -7,55 +7,8 @@
 
 #include <cmath>
 
-/**
- * @file generate_payload.h
- * @brief The four concrete velocity/vector generators
- *        `Source`/`Fluid::generators()` draw new particle velocities
- *        from, each a device-callable value type wrapping a stateful RNG
- *        engine (`atlas::default_random_engine`).
- *
- * @details
- * ### Background — sampling a Maxwellian velocity distribution
- * `MaxwellBoltzmannGenerate` is the physically-motivated
- * generator `Source` normally uses for particle emission: kinetic theory
- * shows that a gas in equilibrium at temperature `T` has each Cartesian
- * velocity component independently normally distributed,
- * `p(v_x) ~ exp(-m v_x^2 / (2 k_B T))`, i.e.
- * `v_x, v_y, v_z ~ Normal(0, sigma)`, `sigma = sqrt(k_B T / m)` — the
- * three-component vector `v` this produces (before any bulk-flow
- * offset) is exactly a Maxwell-Boltzmann-distributed velocity. This is
- * the standard result that the Maxwell-Boltzmann speed distribution
- * factors into three independent 1D Gaussians, one per axis;
- * `MaxwellSigmaGenerate` is the same isotropic-Gaussian sampler
- * with `sigma` supplied directly (for callers that already have it,
- * skipping the `sqrt(k_B T / m)` conversion), and
- * `MaxwellBoltzmannGenerate` additionally adds a configurable
- * `bulk_velocity` drift — `v = v_thermal + u_bulk`, the standard way to
- * superimpose a mean flow on top of thermal (random) motion.
- *
- * `UniformGenerate` and `JitteringGenerate` are
- * non-physical generators for testing/simplified sources:
- * `UniformGenerate` draws each component uniformly in
- * `[min_value, max_value]`; `JitteringGenerate` returns a fixed
- * `base_value` plus small uniform noise in `[-jitter_radius,
- * jitter_radius]` per component, ignoring whatever temperature/mass
- * parameters are passed to `generate()` — useful for a near-deterministic
- * source (e.g. a fixed injection velocity with a small spread) rather
- * than a Maxwellian one.
- *
- * Every operator exposes two `generate()` overloads: one using its own
- * internal `mutable engine` (a stateful stream, advancing across calls —
- * appropriate for host-side, sequential use), and one that constructs a
- * fresh `default_random_engine` from an explicit `seed_` per call
- * (stateless — the pattern `Source` uses, since each
- * device thread emitting one particle needs an independent, reproducible
- * draw without sharing mutable RNG state across threads).
- */
-
 namespace atlas {
 
-/** @brief Draws each velocity component uniformly in `[min_value,
- *  max_value]`; non-physical, for testing/simplified sources. */
 struct UniformGenerate final {
     unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED;
     mutable atlas::default_random_engine engine;
@@ -78,9 +31,6 @@ struct UniformGenerate final {
     }
 };
 
-/** @brief Returns `base_value + Uniform(-jitter_radius, jitter_radius)`
- *  per component, ignoring the `generate()` temperature/mass arguments;
- *  a fixed value with small noise rather than a Maxwellian draw. */
 struct JitteringGenerate final {
     unsigned int seed   = atlas::DEFAULT_UNSIGNED_INT_SEED;
     float base_value    = 0.0f;
@@ -113,10 +63,6 @@ struct JitteringGenerate final {
     }
 };
 
-/** @brief Isotropic 3D Gaussian draw with `sigma` supplied directly
- *  (`Normal(0, sigma)` per component) — the Maxwellian thermal-velocity
- *  shape without the `sqrt(k_B T / m)` conversion; see this file's
- *  top-of-file documentation. Returns zero if `sigma <= 0`. */
 struct MaxwellSigmaGenerate final {
     unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED;
     mutable atlas::default_random_engine engine;
@@ -157,13 +103,6 @@ struct MaxwellSigmaGenerate final {
     }
 };
 
-/**
- * @brief Physically-motivated Maxwellian velocity draw with bulk flow:
- *        `v = Normal(0, sqrt(k_B*T/m)) + bulk_velocity`. See this file's
- *        top-of-file documentation for the equilibrium kinetic-theory
- *        derivation. Returns zero if `temperature`/`molecular_mass` is
- *        non-positive.
- */
 struct MaxwellBoltzmannGenerate final {
     unsigned int seed    = atlas::DEFAULT_UNSIGNED_INT_SEED;
     Float3 bulk_velocity = Float3(0.0f, 0.0f, 0.0f);

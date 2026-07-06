@@ -11,79 +11,17 @@
 #include <cstddef>
 #include <utility>
 
-/**
- * @file fluid_state.h
- * @brief The per-particle attribute buffers (position, velocity,
- *        species, active flag, temperature, internal energy) that make
- *        up a `Fluid`'s structure-of-arrays particle representation,
- *        plus the shared compaction/reset machinery every concrete
- *        state uses.
- *
- * @details
- * ### Operating principle
- * Each concrete `*State` class (`FluidPositionState`,
- * `FluidVelocityState`, ...) owns exactly one `DeviceBuffer<T>` and
- * implements the small `FluidState` interface (`size`/`compact`/
- * `reset`) so `Fluid` can hold an arbitrary, type-heterogeneous set of
- * them in one `FluidStateStore` (a `TypeStore<FluidState>`, see
- * `container/type_store.h`) and operate on all of them uniformly (e.g.
- * `Sink::compact_fluid_particles` iterates every registered state and
- * calls `compact()` on each, without knowing their concrete types).
- * Not every `Fluid` needs every state — a purely translational DSMC gas
- * has no `FluidInternalEnergyState`; systems check `has_state<T>()`
- * before touching a state that may not exist (as `DsmcSolver::solve`
- * and `ColliderCollisionKernel` do for internal energy).
- *
- * `compact_buffer`/`reset_buffer` are the shared implementations every
- * concrete state's `compact()`/`reset()` delegate to (via CRTP-free
- * composition — each state just calls
- * `compact_buffer(_position, compact_indices, kept)` etc. with its own
- * buffer):
- *   - `reset_buffer`: parallel-fills the buffer with value-initialized
- *     elements (`T{}`) — used to clear stale slots past the active
- *     particle count after compaction (see `Sink::compact_fluid_particles`).
- *   - `compact_buffer`: gathers `buffer[compact_indices[i]] -> scratch[i]`
- *     for `i` in `[0, kept)`, then copies the scratch buffer back over
- *     the original — the same gather-then-copy-back shape for every
- *     state, driven by one shared `compact_indices` permutation computed
- *     once by the caller (`Sink`'s stream compaction). The scratch
- *     buffer (`_compacted`, a type-erased `std::any` holding a
- *     `DeviceBuffer<value_type>`) is reused across calls rather than
- *     reallocated every compaction, at the cost of one `std::any_cast`
- *     per call — type erasure is needed here because the base class
- *     itself is not templated on `value_type` (each derived state's
- *     value type differs), so it cannot declare a strongly-typed member
- *     for the scratch buffer directly.
- */
-
 namespace atlas {
 
-/**
- * @brief One DSMC particle's internal (non-translational) energy modes;
- *        see `maxwellian_surface_interaction.h`'s Background and
- *        `dsmc_energy_exchange_solver.h` for how these are sampled and
- *        exchanged (Larsen-Borgnakke model).
- */
 struct FluidInternalEnergy final {
 
-    /** Translational kinetic energy remaining after internal-mode
-     *  exchange (see `DsmcEnergyExchangeSolver::exchange_internal_energy`). */
     float translational {};
 
-    /** Rotational mode energy. */
     float rotational {};
 
-    /** Vibrational mode energy. */
     float vibrational {};
 };
 
-/**
- * @brief Base interface every per-particle attribute buffer implements,
- *        so `Fluid`'s heterogeneous `FluidStateStore` can operate on all
- *        registered states uniformly. See this file's top-of-file
- *        documentation for the compaction/reset machinery this provides
- *        to derived classes.
- */
 class FluidState {
 public:
     FluidState() = default;
@@ -101,23 +39,13 @@ public:
     FluidState&
     operator=(FluidState&&) noexcept = default;
 
-    /** @brief Current buffer capacity (not necessarily equal to
-     *  `Fluid::particle_count()` — states are sized to the fluid's
-     *  buffer capacity, not the live particle count). */
     ATLAS_NODISCARD ATLAS_HOST virtual std::size_t
     size() const noexcept = 0;
 
-    /** @brief Gathers this state's buffer through `compact_indices`,
-     *  keeping only the first `kept` entries; see this file's
-     *  top-of-file documentation for the shared `compact_buffer` this
-     *  delegates to. */
     ATLAS_HOST virtual void
     compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept)
         = 0;
 
-    /** @brief Value-initializes every element of this state's buffer;
-     *  see this file's top-of-file documentation for the shared
-     *  `reset_buffer` this delegates to. */
     ATLAS_HOST virtual void
     reset()
         = 0;
@@ -174,11 +102,6 @@ public:
     std::any _compacted;
 };
 
-/** @brief Per-particle world-space position buffer. Every concrete
- *  `*State` class in this file follows this same shape: an
- *  `explicit(buffer_size)` constructor, an `explicit(DeviceBuffer<T>)`
- *  adopting constructor, `data()` accessors, and `compact()`/`reset()`
- *  delegating to `FluidState::compact_buffer`/`reset_buffer`. */
 class FluidPositionState final : public FluidState {
 public:
     FluidPositionState() = default;
@@ -206,7 +129,6 @@ private:
     DeviceBuffer<Float3> _position;
 };
 
-/** @brief Per-particle world-space velocity buffer. */
 class FluidVelocityState final : public FluidState {
 public:
     FluidVelocityState() = default;
@@ -234,8 +156,6 @@ private:
     DeviceBuffer<Float3> _velocity;
 };
 
-/** @brief Per-particle species index buffer (indexes into
- *  `Fluid::particle_properties()`/`Fluid::generators()`). */
 class FluidSpeciesState final : public FluidState {
 public:
     FluidSpeciesState() = default;
@@ -263,8 +183,6 @@ private:
     DeviceBuffer<std::size_t> _species;
 };
 
-/** @brief Per-particle active flag buffer (`1` = live, `0` = pending
- *  removal); see `Sink::despawn_particles`/`compact_fluid_particles`. */
 class FluidActiveState final : public FluidState {
 public:
     FluidActiveState() = default;
@@ -292,9 +210,6 @@ private:
     DeviceBuffer<int> _active;
 };
 
-/** @brief Per-particle diagnostic temperature buffer; written by
- *  `BoltzmannMeasurer::assign_particle_temperature`, optional (only
- *  present when a measurer needs per-particle temperature output). */
 class FluidTemperatureState final : public FluidState {
 public:
     FluidTemperatureState() = default;
@@ -322,9 +237,6 @@ private:
     DeviceBuffer<float> _temperature;
 };
 
-/** @brief Per-particle `FluidInternalEnergy` buffer; optional (only
- *  present for gases modeling rotational/vibrational energy exchange,
- *  see `DsmcEnergyExchangeSolver`). */
 class FluidInternalEnergyState final : public FluidState {
 public:
     FluidInternalEnergyState() = default;

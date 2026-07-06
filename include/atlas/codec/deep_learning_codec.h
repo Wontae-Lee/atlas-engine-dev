@@ -6,32 +6,8 @@
 #include <atlas/memory/memory.h>
 #include <atlas/universe/universe.h>
 
-/**
- * @file deep_learning_codec.h
- * @brief Placeholder `Codec` for a future learned (rather than
- *        analytic-formula) per-cell solver classifier.
- *
- * @details
- * Where `KnudsenCodec` decides each cell's solver from a closed-form
- * physical criterion (Knudsen number), a learned classifier could
- * instead predict the appropriate solver from a trained model over
- * richer per-cell features — potentially capturing regime transitions a
- * single scalar threshold can't. This class currently only establishes
- * the `Codec` interface shape (constructor, `Builder`, the
- * `fixed_solver`/`fixed_region` override plumbing inherited from
- * `Codec`); `encode()`/`decode()` are stubs that just rebuild the probe
- * (`make_probe()`) without computing or writing any classification —
- * `allocated_solver()` is left at whatever `Codec::reset()` initialized
- * it to (all-zero) until an actual model integration lands.
- */
-
 namespace atlas {
 
-/**
- * @brief Scaffold for a learned per-cell solver classifier; `encode()`/
- *        `decode()` do not yet compute a classification. See this
- *        file's top-of-file documentation.
- */
 class DeepLearningCodec final : public Codec {
 public:
     class Builder;
@@ -45,13 +21,9 @@ public:
 
     ~DeepLearningCodec() override = default;
 
-    /** @brief Currently a stub: rebuilds the probe only, does not write
-     *  any classification (see this file's top-of-file documentation). */
     ATLAS_HOST void
     encode() override;
 
-    /** @brief Currently a stub: rebuilds the probe only, does not write
-     *  any classification (see this file's top-of-file documentation). */
     ATLAS_HOST void
     decode() override;
 
@@ -59,12 +31,6 @@ public:
     builder() noexcept;
 };
 
-/**
- * @brief Fluent builder for `DeepLearningCodec`. Validation requires
- *        non-null `_domain`/`_fluid`/`_searcher` and
- *        `_fixed_solver`/`_fixed_region` either empty or sized to the
- *        domain's cell count.
- */
 class DeepLearningCodec::Builder final {
 public:
     Builder() = default;
