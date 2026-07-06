@@ -1,8 +1,9 @@
 #include <atlas/solver/dsmc/dsmc_solver.h>
 
+#include <atlas/fluid/fluid_state.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/solver/dsmc/detail/dsmc_probe_builder.h>
+#include <atlas/solver/detail/solver_probe_common.h>
 #include <atlas/universe/universe_state.h>
 
 #include <cstddef>
@@ -109,15 +110,57 @@ DsmcSolver::reset_states() {
     this->_universe->state<UniverseCollisionCountState>()->reset();
 }
 
+namespace {
+
+bool
+dsmc_probe_ready(const UniverseHostPtr& universe,
+                 const FluidHostPtr& fluid,
+                 const SearcherHostPtr& searcher) noexcept {
+    return universe != nullptr
+        && fluid != nullptr
+        && searcher != nullptr
+        && fluid->state<FluidVelocityState>() != nullptr
+        && fluid->state<FluidSpeciesState>() != nullptr
+        && universe->state<UniverseNumberParticleState>() != nullptr
+        && universe->state<UniverseMaxRelativeSpeedState>() != nullptr
+        && universe->state<UniverseMaxSigmaGState>() != nullptr
+        && universe->state<UniverseCollisionRemainderState>() != nullptr
+        && universe->state<UniverseCollisionCountState>() != nullptr;
+}
+
+}
+
 void
 DsmcSolver::make_probe() noexcept {
-    static_cast<void>(atlas::detail::DsmcProbeBuilder::make(
-        _probe,
-        this->_universe,
-        this->_fluid,
-        this->_searcher,
-        _kernel,
-        _collision_seed++));
+    const auto collision_seed = _collision_seed++;
+
+    _probe = {};
+
+    if (!dsmc_probe_ready(this->_universe, this->_fluid, this->_searcher)) {
+        return;
+    }
+
+    detail::fill_common_solver_probe(_probe, this->_universe, this->_fluid, this->_searcher);
+
+    if (auto* state = this->_fluid->state<FluidInternalEnergyState>();
+        state != nullptr && state->data().size() >= this->_fluid->particle_count()) {
+        _probe.internal_energy_ptr = atlas::raw_pointer_cast(state->data().data());
+    }
+    _probe.max_relative_speed_ptr  = atlas::raw_pointer_cast(this->_universe->state<UniverseMaxRelativeSpeedState>()->data().data());
+    _probe.max_sigma_g_ptr         = atlas::raw_pointer_cast(this->_universe->state<UniverseMaxSigmaGState>()->data().data());
+    _probe.collision_remainder_ptr = atlas::raw_pointer_cast(this->_universe->state<UniverseCollisionRemainderState>()->data().data());
+    _probe.collision_count_ptr     = atlas::raw_pointer_cast(this->_universe->state<UniverseCollisionCountState>()->data().data());
+    if (auto* state = this->_universe->state<UniverseVolumeState>();
+        state != nullptr && state->data().size() == static_cast<std::size_t>(this->_universe->cell_count())) {
+        _probe.universe_volume_ptr = atlas::raw_pointer_cast(state->data().data());
+    }
+    _probe.particle_count     = static_cast<int>(this->_fluid->particle_count());
+    _probe.species_count      = static_cast<int>(this->_fluid->particle_properties().size());
+    _probe.cell_count         = this->_universe->cell_count();
+    _probe.cell_volume        = this->_universe->cell_volume();
+    _probe.statistical_weight = this->_fluid->statistical_weight();
+    _probe.kernel             = _kernel;
+    _probe.collision_seed     = collision_seed;
 }
 
 bool

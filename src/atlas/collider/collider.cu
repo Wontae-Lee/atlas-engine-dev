@@ -1,4 +1,6 @@
 #include <atlas/collider/collider.h>
+#include <atlas/fluid/fluid_state.h>
+#include <atlas/memory/raw_pointer_cast.h>
 
 #include <stdexcept>
 #include <utility>
@@ -62,15 +64,56 @@ Collider::empty() const noexcept {
 bool
 Collider::make_probe() const noexcept {
     const UnitField& unit_field = _universe->collider_units();
+    const auto&      units      = unit_field.units();
 
-    return detail::ColliderProbeBuilder::make(_probe,
-                                              unit_field.units(),
-                                              unit_field.unit_bounds(),
-                                              _surface_interactions,
-                                              _flips,
-                                              unit_field.scene_bound(),
-                                              unit_field.covers_units(),
-                                              _fluid);
+    _probe = {};
+
+    if (units.empty() || _surface_interactions.empty() || !_fluid) {
+        return false;
+    }
+
+    // Position/velocity/species states are required unconditionally (no
+    // null check before ->data()): a Fluid intended for use with a Collider
+    // is expected to always carry these three, unlike internal energy
+    // below, which is genuinely optional.
+    auto& positions             = _fluid->state<atlas::FluidPositionState>()->data();
+    auto& velocities            = _fluid->state<atlas::FluidVelocityState>()->data();
+    auto& species               = _fluid->state<atlas::FluidSpeciesState>()->data();
+    auto* internal_energy_state = _fluid->state<atlas::FluidInternalEnergyState>();
+    auto& materials             = _fluid->particle_properties();
+
+    if (positions.empty() || velocities.empty() || species.empty() || _fluid->particle_count() <= 0) {
+        return false;
+    }
+
+    _probe.units                = atlas::raw_pointer_cast(units.data());
+    _probe.unit_bounds          = atlas::raw_pointer_cast(unit_field.unit_bounds().data());
+    _probe.surface_interactions = atlas::raw_pointer_cast(_surface_interactions.data());
+    _probe.flips                = atlas::raw_pointer_cast(_flips.data());
+    _probe.scene_bound          = unit_field.scene_bound();
+    _probe.positions            = atlas::raw_pointer_cast(positions.data());
+    _probe.velocities           = atlas::raw_pointer_cast(velocities.data());
+    // internal_energies/species/materials are populated together only when
+    // the fluid tracks internal energy AND has a non-empty material table;
+    // otherwise they stay null/zero so DsmcEnergyExchangeSolver-style
+    // internal-energy accommodation is simply skipped rather than the
+    // whole probe build failing.
+    if (internal_energy_state != nullptr
+        && internal_energy_state->data().size() >= _fluid->particle_count()
+        && species.size() >= _fluid->particle_count()
+        && !materials.empty()) {
+        _probe.internal_energies = atlas::raw_pointer_cast(internal_energy_state->data().data());
+        _probe.species           = atlas::raw_pointer_cast(species.data());
+        _probe.materials         = atlas::raw_pointer_cast(materials.data());
+        _probe.material_count    = static_cast<int>(materials.size());
+    }
+    _probe.unit_count               = static_cast<int>(units.size());
+    _probe.interaction_count        = static_cast<int>(_surface_interactions.size());
+    _probe.flip_count               = static_cast<int>(_flips.size());
+    _probe.particle_count           = static_cast<int>(_fluid->particle_count());
+    _probe.scene_bound_covers_units = unit_field.covers_units();
+
+    return true;
 }
 
 Collider::Builder&

@@ -18,7 +18,7 @@ namespace atlas {
 
 /**
  * @brief Non-owning snapshot of a `Sink` + its `Fluid`, passed by value
- *        into the despawn device kernel. See `detail::SinkProbeBuilder`
+ *        into the despawn device kernel. See `Sink::make_probe`
  *        for how it is filled and `sink.h`/`despawn.h` for how
  *        each field is used.
  */

@@ -45,8 +45,8 @@
  * and instead always resolves to `fixed_solver[cell]` — letting a caller
  * pin specific cells (e.g. a known inlet or a diagnostic region) to a
  * chosen solver regardless of the codec's own criterion. `make_probe()`
- * assembles the `CodecProbe` view (`detail::CodecProbeBuilder::make`)
- * concrete codecs' `encode()`/`decode()` operate through.
+ * assembles the `CodecProbe` view that concrete codecs' `encode()`/
+ * `decode()` operate through.
  */
 
 namespace atlas {
@@ -131,8 +131,7 @@ public:
     fixed_region() const noexcept;
 
     /** @brief Rebuilds `_probe` from the current universe/fluid/searcher
-     *  state and this codec's allocation buffers
-     *  (`detail::CodecProbeBuilder::make`); `false` if
+     *  state and this codec's allocation buffers; `false` if
      *  universe/fluid/searcher is null or the universe has zero cells. */
     ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() noexcept;

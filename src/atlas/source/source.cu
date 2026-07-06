@@ -1,4 +1,6 @@
+#include <atlas/fluid/fluid_state.h>
 #include <atlas/logging/logging.h>
+#include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/source/source.h>
 
 #include <algorithm>
@@ -170,14 +172,51 @@ Source::emit() {
 
 bool
 Source::make_probe() noexcept {
-    return detail::SourceProbeBuilder::make(_fluid,
-                                            _universe->source_units().units(),
-                                            _shuffled_species,
-                                            _flat_local_positions,
-                                            _flat_unit_indices,
-                                            _temperature,
-                                            _shuffle_seed,
-                                            _probe);
+    _probe = {};
+
+    const auto& units = _universe->source_units().units();
+
+    if (!_fluid || units.empty() || _shuffled_species.empty()) {
+        return false;
+    }
+
+    auto* position_state = _fluid->state<FluidPositionState>();
+    auto* velocity_state = _fluid->state<FluidVelocityState>();
+    auto* species_state  = _fluid->state<FluidSpeciesState>();
+    auto* active_state   = _fluid->state<FluidActiveState>();
+
+    if (position_state == nullptr || velocity_state == nullptr || species_state == nullptr || active_state == nullptr) {
+        return false;
+    }
+
+    auto& positions_buf        = position_state->data();
+    auto& velocities_buf       = velocity_state->data();
+    auto& species_buf          = species_state->data();
+    auto& active_buf           = active_state->data();
+    const auto& generators_buf = _fluid->generators();
+    const auto& properties_buf = _fluid->particle_properties();
+
+    if (positions_buf.empty() || velocities_buf.empty() || species_buf.empty() || active_buf.empty()
+        || generators_buf.empty() || properties_buf.empty()
+        || _flat_local_positions.empty() || _flat_unit_indices.empty()) {
+        return false;
+    }
+
+    _probe.units                = atlas::raw_pointer_cast(units.data());
+    _probe.generators           = atlas::raw_pointer_cast(generators_buf.data());
+    _probe.properties           = atlas::raw_pointer_cast(properties_buf.data());
+    _probe.shuffled_species     = atlas::raw_pointer_cast(_shuffled_species.data());
+    _probe.positions            = atlas::raw_pointer_cast(positions_buf.data());
+    _probe.velocities           = atlas::raw_pointer_cast(velocities_buf.data());
+    _probe.species              = atlas::raw_pointer_cast(species_buf.data());
+    _probe.active               = atlas::raw_pointer_cast(active_buf.data());
+    _probe.flat_local_positions = atlas::raw_pointer_cast(_flat_local_positions.data());
+    _probe.flat_unit_indices    = atlas::raw_pointer_cast(_flat_unit_indices.data());
+    _probe.temperature          = _temperature;
+    _probe.property_count       = static_cast<int>(properties_buf.size());
+    _probe.emission_seed        = _shuffle_seed;
+
+    return true;
 }
 
 Source

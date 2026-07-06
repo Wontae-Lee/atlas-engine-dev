@@ -4,7 +4,7 @@
 #include <atlas/fluid/fluid.h>
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/probe/probe_common.h>
+#include <atlas/searcher/searcher.h>
 #include <atlas/universe/universe.h>
 #include <atlas/universe/universe_state.h>
 
@@ -21,7 +21,9 @@ fill_common_solver_probe(Probe& probe,
     probe.properties_ptr      = atlas::raw_pointer_cast(fluid->particle_properties().data());
     probe.number_particle_ptr = atlas::raw_pointer_cast(universe->state<UniverseNumberParticleState>()->data().data());
 
-    fill_cell_partition(probe, searcher);
+    probe.indices_ptr    = searcher->indices();
+    probe.cell_start_ptr = searcher->cell_start();
+    probe.cell_end_ptr   = searcher->cell_end();
 }
 
 }

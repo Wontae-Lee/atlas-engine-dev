@@ -6,13 +6,11 @@
 #include <atlas/codec/codec.h>
 #include <atlas/codec/codec_probe.h>
 #include <atlas/codec/deep_learning_codec.h>
-#include <atlas/codec/detail/codec_probe_builder.h>
 #include <atlas/codec/knudsen_codec.h>
 #include <atlas/collider/collider.h>
 #include <atlas/collider/collider_probe.h>
 #include <atlas/collider/detail/collider_collision_kernel.h>
-#include <atlas/collider/detail/collider_hit.h>
-#include <atlas/collider/detail/collider_probe_builder.h>
+#include <atlas/collider/detail/hit_collider.h>
 #include <atlas/collider/interaction/isothermal_surface_kernel.h>
 #include <atlas/collider/interaction/maxwellian_surface_interaction.h>
 #include <atlas/collider/interaction/surface_interaction_kernel.h>
@@ -49,11 +47,11 @@
 #include <atlas/logging/logging.h>
 #include <atlas/material/material_properties.h>
 #include <atlas/math/constants.h>
-#include <atlas/math/matrix/matrix3x3.h>
+#include <atlas/math/matrix/float3x3.h>
 #include <atlas/math/quaternion.h>
 #include <atlas/math/vector/bool3.h>
-#include <atlas/math/vector/vector3.h>
-#include <atlas/math/vector/vector3i.h>
+#include <atlas/math/vector/float3.h>
+#include <atlas/math/vector/int3.h>
 #include <atlas/measure/boltzmann_measurer.h>
 #include <atlas/measure/measurer.h>
 #include <atlas/measure/measurer_probe.h>
@@ -65,14 +63,12 @@
 #include <atlas/observer/sensor_metrics.h>
 #include <atlas/orchestrator/detail/orchestrator_force_applier.h>
 #include <atlas/orchestrator/detail/orchestrator_pipeline.h>
-#include <atlas/orchestrator/detail/orchestrator_probe_builder.h>
 #include <atlas/orchestrator/orchestrator.h>
 #include <atlas/orchestrator/orchestrator_probe.h>
 #include <atlas/parallel/parallel.h>
 #include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/parallel/parallel_sort.h>
-#include <atlas/probe/probe_common.h>
 #include <atlas/random/default_random_engine.h>
 #include <atlas/random/seed.h>
 #include <atlas/random/uniform_real_distribution.h>
@@ -87,7 +83,6 @@
 #include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/shuffle/shuffle.h>
 #include <atlas/sink/despawn.h>
-#include <atlas/sink/detail/sink_probe_builder.h>
 #include <atlas/sink/detail/sink_unit_bounds.h>
 #include <atlas/sink/sink.h>
 #include <atlas/sink/sink_probe.h>
@@ -95,7 +90,6 @@
 #include <atlas/sink/tracing_despawn.h>
 #include <atlas/sink/volume_despawn.h>
 #include <atlas/solver/detail/solver_probe_common.h>
-#include <atlas/solver/dsmc/detail/dsmc_probe_builder.h>
 #include <atlas/solver/dsmc/dsmc_energy_exchange_solver.h>
 #include <atlas/solver/dsmc/dsmc_flatten_workload.h>
 #include <atlas/solver/dsmc/dsmc_kernel.h>
@@ -109,7 +103,6 @@
 #include <atlas/solver/dsmc/variable_soft_sphere_kernel.h>
 #include <atlas/solver/solver.h>
 #include <atlas/solver/sph/cubic_spline_sph_kernel.h>
-#include <atlas/solver/sph/detail/sph_probe_builder.h>
 #include <atlas/solver/sph/sph_kernel.h>
 #include <atlas/solver/sph/sph_probe.h>
 #include <atlas/solver/sph/sph_solver.h>
@@ -117,7 +110,6 @@
 #include <atlas/solver/sph/wendland_quintic_sph_kernel.h>
 #include <atlas/source/detail/source_cache_builder.h>
 #include <atlas/source/detail/source_emitter.h>
-#include <atlas/source/detail/source_probe_builder.h>
 #include <atlas/source/detail/source_species_shuffler.h>
 #include <atlas/source/source.h>
 #include <atlas/source/source_probe.h>

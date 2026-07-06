@@ -131,7 +131,7 @@ public:
     compact_fluid_particles();
 
     /** @brief Refreshes unit bounds and rebuilds `_probe`
-     *  (`detail::SinkProbeBuilder::make`); `false` if there is nothing
+     *  (`Sink::make_probe`); `false` if there is nothing
      *  to despawn against right now. */
     ATLAS_NODISCARD ATLAS_HOST bool
     make_probe(float dt = 0.0f) noexcept;

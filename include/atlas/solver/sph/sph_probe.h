@@ -28,7 +28,7 @@ namespace atlas {
 /**
  * @brief Non-owning snapshot of an `SphSolver`'s fluid/universe/searcher
  *        state, passed by value into the density-estimation and
- *        force-accumulation kernels. See `detail::SphProbeBuilder` for
+ *        force-accumulation kernels. See `SphSolver::make_probe` for
  *        how it is filled and `sph_solver.h` for how each field is
  *        used.
  */

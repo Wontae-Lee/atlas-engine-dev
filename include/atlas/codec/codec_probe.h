@@ -12,9 +12,9 @@ namespace atlas {
 
 /**
  * @brief Non-owning snapshot of a `Codec`'s universe/fluid/searcher
- *        state and allocation buffers. See `detail::CodecProbeBuilder`
- *        for how it is filled and `codec.h`/`knudsen_codec.h` for how
- *        each field is used.
+ *        state and allocation buffers. See `Codec::make_probe` for how
+ *        it is filled and `codec.h`/`knudsen_codec.h` for how each
+ *        field is used.
  */
 struct CodecProbe {
     /** Per-cell temperature, owned by the universe's

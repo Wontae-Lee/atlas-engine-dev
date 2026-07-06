@@ -21,7 +21,7 @@ namespace atlas {
 /**
  * @brief Non-owning snapshot of a `Source` + its `Fluid`, passed by
  *        value into `detail::SourceEmitter`'s device kernel. See
- *        `detail::SourceProbeBuilder` for how it is filled and
+ *        `Source::make_probe` for how it is filled and
  *        `source.h`/`detail/source_emitter.h` for how each field is
  *        used.
  */

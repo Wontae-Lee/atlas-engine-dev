@@ -135,7 +135,7 @@ public:
     initialize_context() noexcept;
 
     /** @brief Rebuilds `_probe` from current universe/fluid/searcher/
-     *  kernel state (`detail::SphProbeBuilder::make`). */
+     *  kernel state (`SphSolver::make_probe`). */
     ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() noexcept;
 
