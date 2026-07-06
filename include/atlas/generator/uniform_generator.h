@@ -6,16 +6,8 @@
 
 #include <optional>
 
-/**
- * @file uniform_generator.h
- * @brief Host-side `Generator` wrapping `UniformGenerate`
- *        (`param0` = `min_value`, `param1` = `max_value`); see
- *        `generate_payload.h` for the sampling model.
- */
-
 namespace atlas {
 
-/** @brief `Generator` configuration for `GenerateType::uniform`. */
 class UniformGenerator final : public Generator {
 public:
     class Builder;
@@ -52,8 +44,6 @@ private:
     Generate _operator;
 };
 
-/** @brief Fluent builder for `UniformGenerator`; requires both
- *  `_min_value`/`_max_value` set. */
 class UniformGenerator::Builder final {
 public:
     Builder() = default;

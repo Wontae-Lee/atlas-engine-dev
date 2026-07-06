@@ -4,121 +4,8 @@
 
 #include <cmath>
 
-/**
- * @file dsmc_energy_exchange_solver.h
- * @brief `DsmcSolver` extended with Larsen-Borgnakke rotational/
- *        vibrational energy exchange: on each accepted collision, some
- *        translational kinetic energy may relax into (or out of)
- *        internal energy before the elastic scattering kernel runs.
- *
- * @details
- * ### Background
- * Plain `DsmcSolver`/`DsmcKernel::operator()` model collisions as purely
- * elastic: translational kinetic energy is conserved and only its
- * direction is redistributed. Real polyatomic molecules also exchange
- * energy with internal (rotational, vibrational) modes on collision, and
- * that exchange happens with finite probability, not on every collision
- * — a diatomic gas needs, on average, `Zr` (the rotational collision
- * number) collisions before a given molecule's rotational mode
- * equilibrates with translation, and `Zv >> Zr` for vibration. The
- * Larsen-Borgnakke (LB) statistical model (Larsen & Borgnakke, 1975) is
- * the standard DSMC treatment: on each collision, redistribute energy
- * between translation and each internal mode with probability `1/Z`
- * (`Z` = that mode's relaxation collision number), and when relaxation
- * *does* happen, redraw the post-collision split from the equilibrium
- * distribution appropriate to the modes' combined degrees of freedom —
- * exactly the same “redistribute total energy among quadratic degrees of
- * freedom” idea as `MaxwellianSurfaceInteraction`'s internal-energy
- * sampling (see that file's Derivation D3), except here between *two
- * colliding particles'* translational and internal energy pools instead
- * of a particle and a wall.
- *
- * `Zr`/`Zv` are not constants in a real gas — they rise sharply at low
- * collision energy (a "cold" collision is unlikely to excite rotation/
- * vibration at all) — so `rotational_relaxation_probability`/
- * `vibrational_relaxation_probability` use temperature-dependent
- * formulas (Parker's formula for `Zr(T)`, extended in Bird's DSMC;
- * a Millikan-White-derived formula for `Zv(T)`) rather than the
- * material's optional constant `*_relaxation_probability` fallback.
- *
- * ### Operating principle
- * `collide_indexed_pair` mirrors `DsmcSolver`'s NTC accept/reject test
- * exactly (same `sigma_g`/`max_sigma_g` bookkeeping — see
- * `dsmc_solver.h`), but on acceptance calls `exchange_internal_energy`
- * *before* `probe.kernel(...)`'s elastic scattering, then
- * `rescale_relative_velocity` to make the post-scattering relative speed
- * consistent with whatever translational energy survived the exchange.
- *
- * `exchange_internal_energy`:
- * 1. Pools the pair's relative translational kinetic energy
- *    `e_dispose = 0.5 * mu * g^2` (`mu` = reduced mass, `g` = relative
- *    speed) — the energy available to redistribute.
- * 2. Calls `exchange_particle_internal_energy` once per particle. Each
- *    call, per mode (rotational then vibrational):
- *      a. Computes that mode's relaxation probability at the
- *         *candidate* collision energy (`e_dispose + <that particle's
- *         current mode energy>`).
- *      b. Draws a hashed uniform; on success (relaxation happens this
- *         collision), adds the particle's current mode energy into the
- *         shared pool `e_dispose`, redraws the mode's *new* energy from
- *         the pool, then subtracts the new draw back out of the pool —
- *         so `e_dispose` always reflects exactly the energy not yet
- *         assigned to any mode.
- * 3. Whatever remains in `e_dispose` after both particles' modes have
- *    had a chance to exchange becomes the pair's *new* relative
- *    translational kinetic energy, which `rescale_relative_velocity`
- *    then imposes by rescaling `relative` to the speed that energy
- *    implies (preserving direction and center-of-mass velocity), before
- *    `probe.kernel(...)` re-scatters that (rescaled) relative velocity's
- *    *direction* per the configured collision model.
- *
- * ### Derivations
- * **New-energy sampling given a relaxation event.** With `dof` degrees
- * of freedom exchanging out of a pool `E`:
- *   - `dof == 2` (a single rotational mode, or a harmonic-oscillator
- *     vibrational mode with `omega`-adjusted exponent): drawn as
- *     `E_new = (1 - U^(1/exponent)) * E`, `exponent = 2.5 - omega`,
- *     `U ~ Uniform(0,1)` — the standard closed-form LB two-body
- *     redistribution: this is the fraction of `E` assigned to a 2-dof
- *     mode when the *other* share (the remaining translational +
- *     other-mode dof) behaves like a `(2*exponent)`-dof continuum, and
- *     is exact (needs no rejection) because the 2-dof share has a simple
- *     power-law marginal.
- *   - `dof != 2`: `sample_bl(a1, a2, ...)` (an acceptance-rejection Beta-
- *     distribution-shaped sampler: draws `x ~ Uniform(0,1)`, accepts
- *     with probability `(x*(a1+a2)/a1)^a1 * ((1-x)*(a1+a2)/a2)^a2`, the
- *     peak-normalized Beta(a1+1, a2+1)-shaped density — the same
- *     acceptance-rejection idea as `maxwellian_surface_interaction.h`'s
- *     Derivation D3, generalized to two competing power-law exponents
- *     `a1 = dof/2 - 1` (the relaxing mode) and `a2 = 1.5 - omega` (the
- *     remaining share)) gives the fraction of `E` assigned to the mode;
- *     `E_new = E * sample_bl(...)`.
- *
- * ### References
- * - C. Borgnakke and P. S. Larsen, "Statistical collision model for
- *   Monte Carlo simulation of polyatomic gas mixture," Journal of
- *   Computational Physics, 18(4), 1975, pp. 405-420. (the Larsen-
- *   Borgnakke model this solver implements)
- * - G. A. Bird, "Molecular Gas Dynamics and the Direct Simulation of Gas
- *   Flows," Oxford University Press, 1994, ch. 5. (LB redistribution
- *   formulas for `dof == 2` and general `dof`, and the extension of
- *   Parker's formula for temperature-dependent `Zr`)
- * - J. G. Parker, "Rotational relaxation in diatomic gases," Physics of
- *   Fluids 2(4), 1959, pp. 449-462. (temperature-dependent rotational
- *   collision number, extended here in `rotational_relaxation_probability`)
- * - R. C. Millikan and D. R. White, "Systematics of vibrational
- *   relaxation," Journal of Chemical Physics 39(12), 1963,
- *   pp. 3209-3213. (basis for the temperature-dependent vibrational
- *   collision number in `vibrational_relaxation_probability`)
- */
-
 namespace atlas {
 
-/**
- * @brief `DsmcSolver` with Larsen-Borgnakke rotational/vibrational
- *        energy exchange on each accepted collision. See this file's
- *        top-of-file documentation for the model and its derivation.
- */
 class DsmcEnergyExchangeSolver final : public DsmcSolver {
 public:
     using Base  = DsmcSolver;
@@ -130,14 +17,9 @@ public:
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    /** @brief NTC selection plus Larsen-Borgnakke energy exchange for
-     *  every cell; overrides `DsmcSolver::apply_collision`. */
     ATLAS_HOST void
     apply_collision(const DeviceBuffer<int>* allocated_solver, int index, float dt) override;
 
-    /** @brief Resolves local slot indices to particle indices and
-     *  forwards to `collide_indexed_pair` (energy-exchange counterpart
-     *  of `DsmcSolver::collide_pair`). */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static bool
     collide_pair(const Probe& probe,
                  int cell,
@@ -148,11 +30,6 @@ public:
                  int rhs_local,
                  float max_sigma_g) noexcept;
 
-    /** @brief NTC accept/reject test identical to
-     *  `DsmcSolver::collide_indexed_pair`, but on acceptance runs
-     *  `exchange_internal_energy` before the kernel's elastic scattering
-     *  and `rescale_relative_velocity` after. See this file's
-     *  top-of-file documentation for the full sequence. */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static bool
     collide_indexed_pair(const Probe& probe,
                          int cell,
@@ -162,60 +39,22 @@ public:
                          int particle_j,
                          float max_sigma_g) noexcept;
 
-    /** @brief Hashed uniform draw in `[0,1)` keyed by
-     *  `(cell, local_collision, seed, salt)` — the shared RNG primitive
-     *  every sampler in this file is built from. */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     sample_unit(int cell, int local_collision, std::uint64_t seed, std::uint64_t salt) noexcept;
 
-    /**
-     * @brief Acceptance-rejection sample of a Beta(`exp_1`+1, `exp_2`+1)-
-     *        shaped fraction in `[0,1]`: the general (non-`dof==2`)
-     *        Larsen-Borgnakke redistribution fraction. See this file's
-     *        Derivations section. Falls back to `0.5` after 32 failed
-     *        attempts (astronomically unlikely for the exponent ranges
-     *        this solver uses); returns `0` if either exponent is
-     *        non-positive.
-     */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     sample_bl(float exp_1, float exp_2, int cell, int local_collision, std::uint64_t seed, std::uint64_t salt) noexcept;
 
-    /**
-     * @brief Temperature-dependent rotational relaxation probability
-     *        `1/Zr(T_c)` (Parker's formula, extended per Bird 1994) from
-     *        `material`'s `rotational_relaxation_c1/c2/c3` fit
-     *        constants and the pair's collision temperature implied by
-     *        `collision_energy`; falls back to the material's constant
-     *        `rotational_relaxation_probability` if the fit constants
-     *        are not set. Returns `0` if the material has no rotational
-     *        dof.
-     */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     rotational_relaxation_probability(const MaterialProperties& material,
                                       float collision_energy,
                                       float omega) noexcept;
 
-    /** @brief Analogous temperature-dependent vibrational relaxation
-     *  probability `1/Zv(T_c)`, derived from a Millikan-White-style fit
-     *  (`vibrational_relaxation_c1/c2`); same fallback/zero-dof
-     *  behavior as `rotational_relaxation_probability`. */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     vibrational_relaxation_probability(const MaterialProperties& material,
                                        float collision_energy,
                                        float omega) noexcept;
 
-    /**
-     * @brief Pools the pair's relative translational kinetic energy and
-     *        runs `exchange_particle_internal_energy` for both
-     *        particles' rotational/vibrational modes in turn.
-     * @return The energy remaining in the pool after both particles'
-     *         modes have had a chance to relax — the pair's new
-     *         relative translational kinetic energy. `0` if the pair's
-     *         `DsmcPairParameters` are invalid (see
-     *         `DsmcKernel::pair_parameters`); the raw pooled energy
-     *         (unmodified) if the fluid does not track internal energy
-     *         at all.
-     */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     exchange_internal_energy(const Probe& probe,
                              int cell,
@@ -226,19 +65,6 @@ public:
                              std::size_t species_j,
                              float relative_speed_squared) noexcept;
 
-    /**
-     * @brief Rotational-then-vibrational relaxation for one particle:
-     *        per mode, draws whether relaxation happens this collision
-     *        (`rotational_relaxation_probability`/
-     *        `vibrational_relaxation_probability`), and if so moves that
-     *        mode's current energy into `e_dispose` and redraws its new
-     *        energy from the pool (`dof == 2` closed form or
-     *        `sample_bl` for `dof > 2`; see this file's Derivations).
-     *        Writes the particle's updated `FluidInternalEnergy` back to
-     *        `probe.internal_energy_ptr`, with `energy.translational`
-     *        set to whatever remains in `e_dispose` once both modes have
-     *        had their turn.
-     */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
     exchange_particle_internal_energy(const Probe& probe,
                                       int cell,
@@ -249,16 +75,6 @@ public:
                                       std::uint64_t salt_base,
                                       float& e_dispose) noexcept;
 
-    /**
-     * @brief Rescales `lhs_velocity`/`rhs_velocity`'s relative-velocity
-     *        magnitude (about their shared center-of-mass velocity) so
-     *        the pair's relative translational kinetic energy equals
-     *        `translational_energy`, preserving direction and momentum.
-     *        Applied *before* `DsmcKernel::operator()` reorients that
-     *        (now correctly-scaled) relative velocity's direction. No-op
-     *        for degenerate input (non-positive masses/energy or zero
-     *        relative speed).
-     */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
     rescale_relative_velocity(Float3& lhs_velocity,
                               Float3& rhs_velocity,
@@ -278,11 +94,6 @@ public:
     launch_flattened_energy_collisions();
 };
 
-/**
- * @brief Fluent builder for `DsmcEnergyExchangeSolver`; same required
- *        fields (universe/fluid/searcher) and validation as
- *        `DsmcSimpleSolver::Builder`.
- */
 class DsmcEnergyExchangeSolver::Builder final {
 public:
     ATLAS_HOST Builder&

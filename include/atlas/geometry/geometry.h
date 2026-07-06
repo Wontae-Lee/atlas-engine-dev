@@ -15,41 +15,8 @@
 #include <limits>
 #include <type_traits>
 
-/**
- * @file geometry.h
- * @brief Runtime-selectable, device-callable dispatcher over all eight
- *        shape operators (`Box`, ...,
- *        `TriangleMeshGeometryOperator`) — the value every device kernel
- *        actually queries geometry through; see `geometry.h`'s
- *        top-of-file documentation for why this exists separately from
- *        `Geometry`.
- *
- * @details
- * Same tagged-union `DeviceVariant` dispatch pattern as `DsmcKernel`/
- * `SphKernel`/`SurfaceInteractionKernel` (see those files): a
- * `GeometryType` tag selects which shape operator is active, and
- * `detail::GeometryVariant::visit` dispatches every query
- * (`closest_point`, `is_inside`, `trace`, ...) to it. Every shape
- * operator except `TriangleMeshGeometryOperator` value-embeds its
- * parameters (copied by value into the operator, no pointer into the
- * owning `Geometry` — see `docs/updates/updates.md` §2.5/§2.9 for the
- * historical dangling-pointer hazard this closed); `TriangleMeshGeometryOperator`
- * is the one exception, holding true pointer *views* into
- * vertex/index/BVH buffers owned by the mesh (a triangle mesh's data is
- * too large to value-embed per operator instance).
- */
-
 namespace atlas {
 
-/**
- * @brief Compile-time contract every shape stored in the `Geometry`
- *        union must satisfy — the device-callable query interface the
- *        variant dispatches to. Replaces the old abstract `Geometry`
- *        base's virtual interface with a concept (no vtables, so it
- *        works in device code), and the static_asserts below make a
- *        missing/mismatched method a clear per-shape error instead of an
- *        obscure failure deep inside `GeometryVariant::visit`.
- */
 template <typename S>
 concept Shape = requires(const S s, const Float3 p, const Ray r, float tolerance) {
     { s.closest_point(p) } -> std::same_as<Float3>;
@@ -72,16 +39,6 @@ static_assert(Shape<Square>);
 static_assert(Shape<Triangle>);
 static_assert(Shape<TriangleMeshGeometryOperator>);
 
-/**
- * @brief Tagged-union value type that holds one shape and dispatches
- *        device-callable queries (`closest_point`/`is_inside`/`trace`/
- *        ...) to it via a `GeometryType` tag — no virtual dispatch, so
- *        it is device-storable (a `Unit` holds one by value). Every union
- *        member is a `Shape` (see the concept above); the fixed-size
- *        shapes value-embed their parameters, while
- *        `TriangleMeshGeometryOperator` is a pointer view into the mesh's
- *        externally-owned buffers.
- */
 struct Geometry {
 
     GeometryType type = GeometryType::sphere;
@@ -145,12 +102,9 @@ struct Geometry {
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     is_valid() const noexcept;
 
-    /** @brief Ray-surface intersection query, dispatched to the active
-     *  shape; used by `ColliderCollisionKernel`, `TracingDespawn`. */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     trace(const Ray& ray) const noexcept;
 
-    /** @brief `trace(ray)`. */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     operator()(const Ray& ray) const noexcept;
 };
@@ -170,10 +124,6 @@ namespace detail {
         DeviceVariantCase<GeometryType::triangle, &Geometry::triangle>,
         DeviceVariantCase<GeometryType::triangle_mesh, &Geometry::triangle_mesh>>;
 
-    // The variant visitors are functor structs rather than generic device
-    // lambdas: nvcc forbids extended `__host__ __device__` lambdas that are
-    // generic or capture by reference, whereas a struct with a templated
-    // `operator()` and by-value members is unrestricted on device.
     struct GeometryClosestPoint {
         Float3 p;
         template <typename S>

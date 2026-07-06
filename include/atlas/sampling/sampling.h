@@ -18,9 +18,6 @@ generate_standard_normal_pair(atlas::default_random_engine& engine,
                               float& second) {
     atlas::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
-    // Compare against `eps` by value (not via std::max's `const float&`, which
-    // would odr-use the namespace-scope constexpr and leave it undefined in
-    // device code).
     const float sampled_u1 = dist(engine);
     const float u1         = sampled_u1 > eps ? sampled_u1 : eps;
 

@@ -5,64 +5,8 @@
 #include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
 #include <atlas/spatial/bounding_volume_hierarchy/node.h>
 
-/**
- * @file sah_bvh.h
- * @brief Top-down BVH construction minimizing the Surface Area
- *        Heuristic (SAH) cost at every split, via Wald's (2007) binned
- *        approximation — slower to build than `LBVH` but produces
- *        tighter trees (fewer, more targeted ray/query traversal steps).
- *
- * @details
- * ### Background — the surface area heuristic
- * The expected cost of a ray query through a BVH node with children
- * `L`, `R` is modeled as
- * `C = C_trav + (A(L)/A(N)) * count(L) * C_isect + (A(R)/A(N)) *
- * count(R) * C_isect`, where `A(.)` is a box's surface area, `C_trav`
- * the fixed cost of descending a node, and `C_isect` the cost of an
- * exact primitive intersection test — the probability a ray passing
- * through parent box `N` also passes through child box `L`/`R` is
- * approximated by the ratio of surface areas (valid under a uniform
- * random ray direction assumption), so minimizing this expression at
- * every split greedily minimizes expected traversal cost (Goldsmith &
- * Salmon, 1987; the standard cost model behind "SAH" BVH construction).
- * Exhaustively evaluating this cost at every possible split position
- * (every primitive boundary, sorted) is `O(n log n)` per node; Wald's
- * binned approximation instead partitions the split axis into
- * `bin_count` equal-width buckets (`Bin`, holding each bucket's merged
- * bounds and primitive count) and only evaluates the cost at the
- * `bin_count - 1` bucket boundaries — `O(n)` per node (one pass to bin,
- * one to sweep bucket prefix sums for the cost) at a small accuracy
- * cost relative to the exact evaluation.
- *
- * ### Operating principle
- * `build_recursive` (per node): `compute_range_bounds` computes both
- * the node's own AABB and the *centroid* AABB (`RangeBounds` — the
- * spread of primitive centroids, used to choose which axis and where to
- * bin, independent of primitive extent); `choose_sah_split` bins
- * centroids into `bin_count` buckets along the longest centroid-spread
- * axis, sweeps prefix/suffix bucket-bound merges to evaluate the binned
- * SAH cost at each boundary, and returns the cheapest (`SplitChoice`);
- * `partition_sah_split` then partitions the primitive range in place
- * around that boundary (a Hoare/quicksort-style partition, not a full
- * sort); `make_leaf`/`make_internal` finalize whichever the chosen
- * split (or a degenerate/too-small range, which always becomes a leaf)
- * produces. The same winding-number moment computation described in
- * `node.h` runs alongside leaf/internal-node construction.
- *
- * ### References
- * - J. Goldsmith and J. Salmon, "Automatic Creation of Object
- *   Hierarchies for Ray Tracing," IEEE Computer Graphics and
- *   Applications 7(5), 1987. (the surface-area-heuristic cost model)
- * - I. Wald, "On fast Construction of SAH-based Bounding Volume
- *   Hierarchies," IEEE Symposium on Interactive Ray Tracing, 2007. (the
- *   binned approximation this class implements)
- */
-
 namespace atlas {
 
-/** @brief One bucket of `choose_sah_split`'s binned centroid histogram:
- *  the merged bound and primitive count of every primitive whose
- *  centroid falls in this bucket along the split axis. */
 struct Bin {
 
     AABB bounds;
@@ -70,11 +14,6 @@ struct Bin {
     int count = 0;
 };
 
-/**
- * @brief Binned Surface Area Heuristic BVH builder. See this file's
- *        top-of-file documentation for the SAH cost model and the
- *        binned approximation.
- */
 class SAHBVH final : public BVH {
 public:
     SAHBVH() = default;
@@ -90,19 +29,11 @@ public:
     ATLAS_HOST void
     reset();
 
-    /** @brief Below this many primitives, `build_recursive` always
-     *  makes a leaf regardless of SAH cost (clamped to `>= 1`) — avoids
-     *  splitting down to single primitives, where per-node traversal
-     *  overhead outweighs any intersection-test savings. */
     void
     set_leaf_size(const int leaf_size) noexcept {
         _leaf_size = (leaf_size < 1) ? 1 : leaf_size;
     }
 
-    /** @brief Number of histogram buckets `choose_sah_split` bins
-     *  centroids into per axis (clamped to `[4, 256]`); more bins
-     *  approximate the exact (unbinned) SAH cost more closely, at
-     *  proportionally more work per split. */
     void
     set_bin_count(int count) noexcept {
         if (count < 4) count = 4;

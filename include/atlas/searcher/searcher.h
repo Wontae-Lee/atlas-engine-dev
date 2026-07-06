@@ -13,68 +13,6 @@
 #include <cstddef>
 #include <cstdint>
 
-/**
- * @file searcher.h
- * @brief Host-only base class for particle spatial partitioning: sorts
- *        particles into `Universe` grid cells (the shared machinery
- *        every `Searcher` subclass uses, regardless of its own
- *        secondary structure — k-d tree, octree, quadtree), plus the
- *        generic kernel-radius neighbor-list builder `SphSolver`
- *        consumes.
- *
- * @details
- * ### Operating principle — cell sort (`build()`'s shared pipeline)
- * Every concrete searcher's `build()` follows the same sequence over
- * this base class's protected helpers:
- * 1. `init_indices_iota`: `_indices[i] = i` for every alive particle —
- *    the array that will end up holding particle indices grouped by
- *    cell.
- * 2. `compute_grid_keys`: assigns each particle a linear cell key
- *    (`linear_key`, a flattened `x + y*nx + z*nx*ny` index — the
- *    standard 3D-to-1D grid flattening) via `cell_for` (world position
- *    -> clamped grid cell).
- * 3. `sort_by_key`: sorts `_indices` by cell key — after this,
- *    `_indices` is a permutation of `[0, alive)` grouped contiguously by
- *    cell (a counting-sort-equivalent result via key sort, not an
- *    explicit bucket pass).
- * 4. `build_cell_ranges`: derives `_cell_start`/`_cell_end` (each
- *    cell's `[start, end)` slice of the now cell-sorted `_indices`)
- *    from the sorted keys.
- * This gives every subclass the same `indices()`/`cell_start()`/
- * `cell_end()` triple (already used throughout Atlas —
- * `DsmcProbe`/`SphProbe`/`SinkProbe`/`SourceProbe`/`CodecProbe` all
- * consume exactly this layout) regardless of whether the subclass then
- * layers a secondary acceleration structure (a k-d tree, octree, or
- * quadtree) on top for its own specialized queries.
- *
- * ### Operating principle — kernel-radius neighbor lists (`build_cell_neighbors`)
- * SPH needs, for every particle, every other particle within the
- * kernel's support radius (`sqrt(radius_squared) = cell_size`, so
- * candidates only need checking in the `3x3x3` block of cells around a
- * particle's own cell — assuming the grid's cell size equals the
- * kernel support). This is a classic two-pass CSR (compressed sparse
- * row) construction, the same shape as
- * `DsmcFlattenWorkload`/`Sink::compact_fluid_particles`'s
- * count-then-scan-then-write pattern:
- * 1. `detail::SearcherNeighborCount` (one thread per particle): walks
- *    the `3x3x3` neighbor-cell block, counts candidates within
- *    `radius_squared` that also pass the caller-supplied
- *    `CandidateFilter` (a compile-time functor — e.g. species
- *    filtering — so different callers can reuse this same neighbor
- *    walk with different inclusion criteria without runtime branching
- *    overhead), and writes each particle's neighbor count.
- * 2. `atlas::exclusive_scan` turns per-particle counts into per-particle
- *    write offsets — the same offset-computation idea as
- *    `DsmcFlattenWorkload::build`.
- * 3. `detail::SearcherNeighborWrite` re-walks the identical neighbor
- *    search (deliberately duplicating pass 1's traversal rather than
- *    caching candidates from it, trading recomputation for not needing
- *    an intermediate unbounded-size buffer) and scatters each accepted
- *    neighbor index into its particle's slice of `_neighbor_indices`.
- * The resulting `neighbor_offsets()`/`neighbor_indices()` pair is
- * exactly the CSR neighbor list `SphProbe`/`sph_solver.h` iterate.
- */
-
 namespace atlas {
 
 namespace detail {
@@ -89,13 +27,6 @@ namespace detail {
 
 }
 
-/**
- * @brief Host-only base class implementing the shared cell-sort and
- *        kernel-radius-neighbor-list machinery every concrete searcher
- *        (`SpatialHashingSearcher`, `KdTreeSearcher`, `OctreeSearcher`,
- *        `QuadtreeSearcher`) builds on. See this file's top-of-file
- *        documentation for both pipelines.
- */
 class Searcher {
 public:
     Searcher() = default;
@@ -113,20 +44,13 @@ public:
     Searcher&
     operator=(Searcher&&) noexcept = default;
 
-    /** @brief (Re)builds the spatial partition from the current fluid
-     *  particle positions; see this file's top-of-file cell-sort
-     *  pipeline. */
     ATLAS_HOST virtual void
     build()
         = 0;
 
-    /** @brief Marks the partition stale so the next `build()` actually
-     *  recomputes it (implementations may skip rebuilding while not
-     *  invalidated, as an optimization when positions haven't changed). */
     ATLAS_HOST virtual void
     invalidate() noexcept;
 
-    /** @brief Clears all buffers back to an empty state. */
     ATLAS_HOST virtual void
     reset() noexcept;
 
@@ -160,9 +84,6 @@ public:
     ATLAS_NODISCARD ATLAS_HOST virtual int
     neighbor_count() const noexcept;
 
-    /** @brief Flattens a 3D cell index into a single grid-linear key
-     *  (`x + y*nx + z*nx*ny`), used both to sort particles by cell and
-     *  to index `cell_start`/`cell_end`. */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static std::uint32_t
     linear_key(const int ix, const int iy, const int iz, const Int3& gs) noexcept {
         return static_cast<std::uint32_t>(ix + iy * gs.x + iz * gs.x * gs.y);
@@ -173,9 +94,6 @@ public:
         return linear_key(cell.x, cell.y, cell.z, gs);
     }
 
-    /** @brief World-space position to (clamped-in-range) grid cell
-     *  index; the shared position-to-cell mapping every searcher/
-     *  consumer uses. */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static Int3
     cell_for(const Float3& position,
              const Float3& lower_corner,
@@ -185,70 +103,46 @@ public:
         return atlas::clamp(cell, Int3(0, 0, 0), grid_size - Int3(1, 1, 1));
     }
 
-    /** @brief Whether `cell` is within `[0, grid_size)` on every axis. */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static bool
     contains_cell(const Int3& cell, const Int3& grid_size) noexcept {
         return atlas::all(cell >= Int3(0, 0, 0))
             && atlas::all(cell < grid_size);
     }
 
-    /** @brief Number of grid cells a search radius `length` spans,
-     *  rounded up (`ceil(length / cell_size)`) — the neighbor-cell
-     *  block radius to walk for a query of that reach. */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static int
     search_radius_for(const float length, const float cell_size) noexcept {
         return static_cast<int>(std::ceil(length / cell_size));
     }
 
 protected:
-    /** @brief Throws if `_universe`/`_fluid` is null (`owner` names the
-     *  caller for the error message). */
     ATLAS_HOST void
     validate_dependencies(const char* owner) const;
 
     ATLAS_HOST const Float3*
     position_ptr() const noexcept;
 
-    /** @brief Current live particle count from `_fluid`. */
     ATLAS_HOST int
     active_count() const noexcept;
 
-    /** @brief Resizes `_keys`/`_indices` to `alive` and the per-cell
-     *  `_cell_start`/`_cell_end` to the universe's cell count. */
     ATLAS_HOST void
     prepare_grid_buffers(int alive);
 
 public:
-    /** @brief `_indices[i] = i` for `i` in `[0, alive)` — cell-sort
-     *  pipeline step 1; see this file's top-of-file documentation. */
     ATLAS_HOST void
     init_indices_iota(int alive);
 
-    /** @brief Assigns each particle's grid-linear key from `positions`
-     *  — cell-sort pipeline step 2. */
     ATLAS_HOST void
     compute_grid_keys(int alive, const Float3* positions);
 
 protected:
-    /** @brief Sorts `_indices` by `_keys` — cell-sort pipeline step 3. */
     ATLAS_HOST void
     sort_by_key(int alive);
 
 public:
-    /** @brief Derives `_cell_start`/`_cell_end` from the now cell-sorted
-     *  `_indices` — cell-sort pipeline step 4. */
     ATLAS_HOST void
     build_cell_ranges(int alive);
 
 protected:
-    /**
-     * @brief Builds the kernel-radius (`cell_size`) neighbor list via
-     *        the two-pass count/scan/write CSR construction described
-     *        in this file's top-of-file documentation. `filter` is
-     *        applied to every candidate pair alongside the radius test,
-     *        letting callers (e.g. species-restricted neighbor queries)
-     *        reuse this same cell walk with their own inclusion rule.
-     */
     template <typename CandidateFilter>
     ATLAS_HOST ATLAS_FORCE_INLINE void
     build_cell_neighbors(const int alive, const Float3* positions, CandidateFilter filter) {
@@ -311,13 +205,10 @@ protected:
                 gs });
     }
 
-    /** @brief Completes the exclusive-scan offsets with the total
-     *  neighbor count (`offsets[alive]`), returning that total. */
     ATLAS_HOST int
     finalize_neighbor_offsets(int alive);
 
 protected:
-    /** @brief Clears the neighbor-list buffers back to empty. */
     ATLAS_HOST void
     clear_neighbors();
 
@@ -349,9 +240,6 @@ protected:
 
 namespace detail {
 
-    /** @brief Pass 1 of `build_cell_neighbors`: counts, per particle,
-     *  how many `3x3x3`-neighbor-cell candidates pass the radius test
-     *  and `CandidateFilter`. */
     template <typename CandidateFilter>
     struct SearcherNeighborCount {
         int* counts {};
@@ -402,9 +290,6 @@ namespace detail {
         }
     };
 
-    /** @brief Pass 3 of `build_cell_neighbors`: re-walks the identical
-     *  neighbor search and scatters accepted neighbor indices into
-     *  each particle's `[offsets[i], offsets[i+1])` slice. */
     template <typename CandidateFilter>
     struct SearcherNeighborWrite {
         int* neighbors {};
@@ -454,9 +339,6 @@ namespace detail {
         }
     };
 
-    /** @brief Single-thread functor computing the final total neighbor
-     *  count and closing out the offsets array, used by
-     *  `finalize_neighbor_offsets`. */
     struct SearcherNeighborTotal {
         int* total {};
         int* offsets {};

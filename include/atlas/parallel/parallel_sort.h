@@ -15,9 +15,6 @@ namespace atlas {
 
 namespace detail {
 
-    // sort_by_key on host memory: std has no sort_by_key, so sort an index
-    // permutation by key and scatter both arrays through it. `Parallel` picks
-    // the parallel STL (TBB-backed) vs the sequential algorithms.
     template <bool Parallel, typename Key, typename Value>
     ATLAS_FORCE_INLINE void
     host_sort_by_key(Key* keys, Value* values, const std::size_t count) {
@@ -47,14 +44,6 @@ namespace detail {
     }
 
 }
-
-// Only the CUDA device policy is safe with thrust here: thrust's temp-allocating
-// algorithms route through a __host__ __device__ temporary_allocator whose
-// bad_alloc throw is guarded ONLY for the CUDA device system. Under the TBB
-// build every other thrust policy (host, seq, tbb-device) is still
-// __host__ __device__, so nvcc device-compiles the illegal throw. Use the STL
-// for those — parallel for host/device (libstdc++ backs par with TBB),
-// sequential for the serial policy.
 
 template <ExecutionPolicy P, typename RandomIt>
 ATLAS_FORCE_INLINE void

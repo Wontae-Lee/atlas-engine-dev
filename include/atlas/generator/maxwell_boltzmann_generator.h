@@ -7,19 +7,8 @@
 
 #include <optional>
 
-/**
- * @file maxwell_boltzmann_generator.h
- * @brief Host-side `Generator` wrapping
- *        `MaxwellBoltzmannGenerate` (`param0` = `temperature`,
- *        `param1` = `molecular_mass`, plus a configured
- *        `bulk_velocity`); see `generate_payload.h` for the equilibrium
- *        kinetic-theory derivation. The physically standard choice for
- *        `Source` particle emission.
- */
-
 namespace atlas {
 
-/** @brief `Generator` configuration for `GenerateType::maxwell_boltzmann`. */
 class MaxwellBoltzmannGenerator final : public Generator {
 public:
     class Builder;
@@ -59,9 +48,6 @@ private:
     Generate _operator;
 };
 
-/** @brief Fluent builder for `MaxwellBoltzmannGenerator`; requires both
- *  `_temperature`/`_molecular_mass` set; `_bulk_velocity` defaults to
- *  zero. */
 class MaxwellBoltzmannGenerator::Builder final {
 public:
     Builder() = default;

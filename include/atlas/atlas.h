@@ -9,11 +9,11 @@
 #include <atlas/codec/knudsen_codec.h>
 #include <atlas/collider/collider.h>
 #include <atlas/collider/collider_probe.h>
-#include <atlas/collider/kernel/collider_collision_kernel.h>
 #include <atlas/collider/hit_collider.h>
 #include <atlas/collider/interaction/isothermal_surface_kernel.h>
 #include <atlas/collider/interaction/maxwellian_surface_interaction.h>
 #include <atlas/collider/interaction/surface_interaction_kernel.h>
+#include <atlas/collider/kernel/collider_collision_kernel.h>
 #include <atlas/collider/kernel/dt_remain_collider_kernel.h>
 #include <atlas/collider/kernel/fast_collider_kernel.h>
 #include <atlas/collider/kernel/post_collider_kernel.h>

@@ -17,44 +17,10 @@
 #include <string_view>
 #include <utility>
 
-/**
- * @file universe.h
- * @brief The fixed, axis-aligned uniform grid every spatially-indexed
- *        system in Atlas partitions particles/cells over (`Searcher`,
- *        `DsmcSolver`, `SphSolver`, `KnudsenCodec`, the measurers, ...),
- *        plus its heterogeneous per-cell state store.
- *
- * @details
- * ### Operating principle
- * A `Universe` is defined by `lower_corner`/`upper_corner` (the
- * simulated domain's world-space bounds) and `cell_size` (a single
- * scalar — cells are uniform cubes, not an adaptive/non-uniform grid).
- * `compute_grid_size()` derives the integer cell counts per axis:
- * `floor((upper - lower) * inverse_cell_size) + 1` — the `+1` ensures
- * the grid always covers at least one cell along each axis and rounds
- * up any partial trailing cell rather than truncating it away (the
- * domain's actual extent may not be an exact multiple of `cell_size`).
- * `cell_count()` is the product of the three per-axis grid sizes, and
- * `cell_volume()` is `cell_size^3`.
- *
- * `_states` (`UniverseStateStore`, see `universe_state.h`) holds
- * whichever per-cell states the attached solvers/codecs/measurers
- * currently need, the same only-pay-for-what-you-use pattern
- * `Fluid`/`FluidStateStore` uses for per-particle state (templated
- * `emplace_state`/`state`/`has_state`/`remove_state` accessors are
- * inline in the class body, per the shared `TypeStore`-backed
- * convention — see `docs/updates/updates.md` §2.12).
- */
-
 namespace atlas {
 
 using UniverseStateStore = TypeStore<UniverseState>;
 
-/**
- * @brief The fixed uniform-grid simulation domain and its per-cell
- *        state store. See this file's top-of-file documentation for
- *        the grid-sizing derivation and state-store pattern.
- */
 class Universe {
 public:
     class Builder;
@@ -118,7 +84,6 @@ public:
         return _states.template remove<StateT>();
     }
 
-    /** @brief Total number of cells (`grid_size().x * .y * .z`). */
     ATLAS_NODISCARD ATLAS_HOST int
     cell_count() const noexcept;
 
@@ -128,15 +93,12 @@ public:
     ATLAS_NODISCARD ATLAS_HOST Float3
     upper_corner() const noexcept;
 
-    /** @brief Per-axis cell counts; see this file's top-of-file
-     *  documentation for the `compute_grid_size` derivation. */
     ATLAS_NODISCARD ATLAS_HOST Int3
     grid_size() const noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST float
     cell_size() const noexcept;
 
-    /** @brief `cell_size()^3`. */
     ATLAS_NODISCARD ATLAS_HOST float
     cell_volume() const noexcept;
 
@@ -152,14 +114,6 @@ public:
     ATLAS_NODISCARD ATLAS_HOST const UniverseStateStore&
     states() const noexcept;
 
-    /**
-     * @brief The boundary/region units owned centrally by the domain, one
-     *        `UnitField` per consumer role. `Source`/`Sink`/`Collider`/
-     *        `VolumeMeasurer` no longer own their units — they borrow the
-     *        matching field through the `UniverseHostPtr` they are built
-     *        with, so unit pose integration and world-bound caching happen
-     *        once here rather than being re-implemented per role.
-     */
     ATLAS_NODISCARD ATLAS_HOST UnitField&
     source_units() noexcept;
 
@@ -184,14 +138,10 @@ public:
     ATLAS_NODISCARD ATLAS_HOST const UnitField&
     measurer_units() const noexcept;
 
-    /** @brief Serializes this universe's state to a binary snapshot at
-     *  `path` (see `serialization/protobuf_snapshot.h`). */
     ATLAS_HOST void
     save(std::string_view path) const;
 
 private:
-    /** @brief `floor((upper - lower) * inverse_cell_size) + 1` per
-     *  axis; see this file's top-of-file documentation. */
     ATLAS_NODISCARD ATLAS_HOST static Int3
     compute_grid_size(const Float3& lower_corner,
                       const Float3& upper_corner,
@@ -224,13 +174,6 @@ private:
     UnitField _measurer_units;
 };
 
-/**
- * @brief Fluent builder for `Universe`. `with_geometry` is a
- *        convenience alternative to `with_lower_corner`/`with_upper_corner`:
- *        it derives the domain bounds directly from a `Geometry`'s
- *        world-space AABB instead of specifying corners manually.
- *        `with_binary` restores per-cell state from a saved snapshot.
- */
 class Universe::Builder final {
 public:
     Builder() = default;
@@ -241,8 +184,6 @@ public:
     ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Universe>
     make_host_shared() const;
 
-    /** @brief Sets `_lower_corner`/`_upper_corner` to `geometry`'s
-     *  world-space bounding box, instead of setting them individually. */
     ATLAS_HOST Builder&
     with_geometry(const Geometry& geometry);
 
@@ -252,36 +193,24 @@ public:
     ATLAS_HOST Builder&
     with_upper_corner(const Float3& v) noexcept;
 
-    /** @brief The uniform cube cell size (`h`); required, must be
-     *  positive. */
     ATLAS_HOST Builder&
     with_cell_size(float h) noexcept;
 
     ATLAS_HOST Builder&
     with_observer(ObserverHostPtr observer) noexcept;
 
-    /** @brief Registers the boundary units the `Source` will emit from;
-     *  the built `Universe` owns them (see `Universe::source_units`). */
     ATLAS_HOST Builder&
     with_source_units(const HostBuffer<Unit>& units);
 
-    /** @brief Registers the boundary units the `Sink` will remove
-     *  particles at; the built `Universe` owns them. */
     ATLAS_HOST Builder&
     with_sink_units(const HostBuffer<Unit>& units);
 
-    /** @brief Registers the boundary units the `Collider` will collide
-     *  particles against; the built `Universe` owns them. */
     ATLAS_HOST Builder&
     with_collider_units(const HostBuffer<Unit>& units);
 
-    /** @brief Registers the region units the `VolumeMeasurer` measures
-     *  occupied volume for; the built `Universe` owns them. */
     ATLAS_HOST Builder&
     with_measurer_units(const HostBuffer<Unit>& units);
 
-    /** @brief Restores per-cell state (temperature/bulk velocity/field
-     *  force/...) from a saved binary snapshot at `path`. */
     ATLAS_HOST Builder&
     with_binary(const std::string& path);
 

@@ -8,99 +8,15 @@
 
 #include <cmath>
 
-/**
- * @file variable_hard_sphere_kernel.h
- * @brief DSMC collision model with a temperature-dependent cross-section
- *        that reproduces the correct viscosity-temperature exponent of a
- *        real gas, while keeping `HardSphereKernel`'s isotropic
- *        scattering.
- *
- * @details
- * ### Background
- * Real-gas viscosity scales with temperature roughly as `mu ~ T^omega`,
- * where `omega` (`viscosity_index`) is close to `0.5` for a true rigid
- * hard sphere but empirically higher (`~0.7`-`1.0`) for most real gases —
- * `HardSphereKernel`'s temperature-independent cross-section reproduces
- * only `omega = 0.5` and so gets transport properties (viscosity,
- * diffusion, thermal conductivity) wrong away from the reference
- * condition. The VHS model (Bird) keeps the *scattering law* of a hard
- * sphere (still isotropic, same as `HardSphereKernel::operator()`) but
- * lets the *apparent* sphere diameter — and hence the cross-section —
- * shrink with increasing relative speed, calibrated so the resulting
- * viscosity matches the real gas's `omega` at a reference temperature
- * `T_ref`. This decouples cross-section physics from scattering-angle
- * physics, which `VariableSoftSphereKernel` (VSS) then also
- * generalizes.
- *
- * ### Derivation — the VHS cross-section formula
- * Bird derives the VHS total cross-section by requiring the model's
- * viscosity coefficient, computed from Chapman-Enskog kinetic theory for
- * a power-law cross-section `sigma ~ g^(1 - 2*omega)` (`g` = relative
- * speed), to equal the real gas's viscosity `mu = mu_ref * (T/T_ref)^omega`
- * at the reference temperature. The result (this file's `cross_section`):
- * ```
- * sigma(g) = pi * d_ref^2 * [ (2 k_B T_ref) / (mu_r * g^2) ]^(omega - 1/2)
- *            / Gamma(5/2 - omega)
- * ```
- * where `d_ref` is the mean reference diameter at `T_ref`, `mu_r` the
- * reduced mass `m1 m2 / (m1+m2)`, and `Gamma` the Euler gamma function
- * (`std::tgamma`) — the normalization constant that makes the resulting
- * effective viscosity exponent come out to exactly `omega` at `T_ref`.
- * Two sanity checks: at `omega = 0.5` (a true hard sphere), the exponent
- * `omega - 1/2` vanishes and `sigma` collapses to the constant
- * `pi * d_ref^2 / Gamma(2) = pi * d_ref^2` — exactly
- * `HardSphereKernel`'s cross-section, as it must. And `sigma` decreases
- * with `g` for `omega > 0.5` (the usual case for real gases): faster
- * pairs present a smaller apparent target, which is what raises the
- * effective viscosity exponent above the pure-hard-sphere value of
- * `0.5`.
- *
- * `viscosity_index`/`reference_temperature`/`reference_diameter` are
- * averaged pairwise (arithmetic mean of the two species' values) — the
- * conventional VHS mixing rule for unlike-species pairs.
- *
- * ### References
- * - G. A. Bird, "Molecular Gas Dynamics and the Direct Simulation of Gas
- *   Flows," Oxford University Press, 1994, ch. 4 (VHS model derivation
- *   and cross-section formula).
- */
-
 namespace atlas {
 
-/**
- * @brief Temperature-dependent (power-law) cross-section, isotropic
- *        center-of-mass scattering (same as `HardSphereKernel`). See
- *        this file's top-of-file documentation for the cross-section
- *        derivation.
- */
 class VariableHardSphereKernel final {
 public:
-    /**
-     * @brief VHS total cross-section at relative speed `relative_speed`;
-     *        see this file's Derivation section. Returns `0` if either
-     *        species is missing `reference_diameter`/
-     *        `reference_temperature`, if either mass/the mean diameter/
-     *        the mean temperature is non-positive, if
-     *        `relative_speed <= 0`, if `omega >= 2.5` (the Gamma-function
-     *        argument `2.5 - omega` would be non-positive), or if the
-     *        Gamma evaluation itself is non-positive.
-     */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     cross_section(const MaterialProperties& lhs,
                   const MaterialProperties& rhs,
                   float relative_speed) noexcept;
 
-    /**
-     * @brief Applies one elastic VHS collision: identical isotropic
-     *        center-of-mass scattering kinematics to
-     *        `HardSphereKernel::operator()` (see that file's
-     *        derivation) — only the cross-section (and hence selection
-     *        probability, not the outcome here) differs between the two
-     *        models. The local `scattering_parameter = 1` fixes the
-     *        scattering law to isotropic; compare
-     *        `VariableSoftSphereKernel`, which instead reads a
-     *        per-material scattering parameter to bias it.
-     */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Float3& lhs_velocity,
                Float3& rhs_velocity,
