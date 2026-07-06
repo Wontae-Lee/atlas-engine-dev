@@ -1,0 +1,83 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
+
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_GOOGLE_TEST": "ON",
+        "ATLAS_BENCHMARKS": "OFF"
+      }
+    },
+
+    {
+      "name": "tbb-debug",
+      "displayName": "Atlas TBB Debug (CPU, Thrust device = TBB)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ATLAS_DEVICE_SYSTEM": "TBB"
+      }
+    },
+    {
+      "name": "tbb-release",
+      "displayName": "Atlas TBB Release (CPU, Thrust device = TBB)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ATLAS_DEVICE_SYSTEM": "TBB",
+        "ATLAS_GOOGLE_TEST": "OFF"
+      }
+    },
+
+    {
+      "name": "cuda-debug",
+      "displayName": "Atlas CUDA Debug (GPU, Thrust device = CUDA)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ATLAS_DEVICE_SYSTEM": "CUDA"
+      }
+    },
+    {
+      "name": "cuda-release",
+      "displayName": "Atlas CUDA Release (GPU, Thrust device = CUDA)",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ATLAS_DEVICE_SYSTEM": "CUDA",
+        "ATLAS_GOOGLE_TEST": "OFF"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    { "name": "build-tbb-debug",    "displayName": "Build TBB Debug",    "configurePreset": "tbb-debug",    "jobs": 0 },
+    { "name": "build-tbb-release",  "displayName": "Build TBB Release",  "configurePreset": "tbb-release",  "jobs": 0 },
+    { "name": "build-cuda-debug",   "displayName": "Build CUDA Debug",   "configurePreset": "cuda-debug",   "jobs": 0 },
+    { "name": "build-cuda-release", "displayName": "Build CUDA Release", "configurePreset": "cuda-release", "jobs": 0 }
+  ],
+
+  "testPresets": [
+    {
+      "name": "ctest-tbb-debug",
+      "displayName": "CTest (TBB Debug)",
+      "configurePreset": "tbb-debug",
+      "execution": { "noTestsAction": "error" },
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ctest-cuda-debug",
+      "displayName": "CTest (CUDA Debug)",
+      "configurePreset": "cuda-debug",
+      "execution": { "noTestsAction": "error" },
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}

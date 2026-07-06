@@ -1,0 +1,35 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "nanobind>=2.0"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "atlas"
+version = "0.1.0"
+description = "Atlas Engine — GPU/CPU particle physics simulation (nanobind bindings)"
+requires-python = ">=3.8"
+readme = "README.md"
+license = { text = "Proprietary" }
+authors = [{ name = "Wontae Lee" }]
+
+[tool.scikit-build]
+# Drive the repository's top-level CMakeLists.txt.
+cmake.version = ">=3.20"
+ninja.version = ">=1.10"
+
+# Wheel build config: bindings on, tests/benchmarks off. The Thrust device
+# system (TBB / CUDA) is chosen per build via
+#   -C cmake.define.ATLAS_DEVICE_SYSTEM=CUDA
+# defaulting to the portable CPU (TBB) backend here.
+cmake.define.ATLAS_PYTHON = "ON"
+cmake.define.ATLAS_GOOGLE_TEST = "OFF"
+cmake.define.ATLAS_BENCHMARKS = "OFF"
+cmake.define.ATLAS_DEVICE_SYSTEM = "TBB"
+cmake.define.CMAKE_BUILD_TYPE = "Release"
+
+# Only the Python extension target is installed into the wheel (its
+# install() rule lives in src/python/atlas/CMakeLists.txt).
+build.targets = ["atlas_python"]
+install.components = ["python"]
+
+# Keep build trees per-backend so TBB and CUDA wheels do not clobber each other.
+build-dir = "build/wheel"

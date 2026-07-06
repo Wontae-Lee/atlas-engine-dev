@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+    <option name="sdkName" value="Python 3.10 (atlas-engine-dev)" />
+  </component>
+  <component name="CMakePythonSetting">
+    <option name="pythonIntegrationState" value="YES" />
+  </component>
+  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
+  <component name="CidrRootsConfiguration">
+    <sourceRoots>
+      <file path="$PROJECT_DIR$/include" />
+      <file path="$PROJECT_DIR$/src" />
+      <file path="$PROJECT_DIR$/tests" />
+    </sourceRoots>
+    <excludeRoots>
+      <file path="$PROJECT_DIR$/.claude" />
+      <file path="$PROJECT_DIR$/.venv" />
+      <file path="$PROJECT_DIR$/benchmarks/dumux" />
+      <file path="$PROJECT_DIR$/benchmarks/piclas" />
+      <file path="$PROJECT_DIR$/benchmarks/sparta" />
+      <file path="$PROJECT_DIR$/benchmarks/splishsplash" />
+      <file path="$PROJECT_DIR$/build" />
+      <file path="$PROJECT_DIR$/cmake-build-debug" />
+      <file path="$PROJECT_DIR$/docs/doxygen/html" />
+      <file path="$PROJECT_DIR$/external" />
+      <file path="$PROJECT_DIR$/external/googlebenchmark" />
+      <file path="$PROJECT_DIR$/external/googletest" />
+      <file path="$PROJECT_DIR$/external/lyra" />
+      <file path="$PROJECT_DIR$/external/tinyobj" />
+    </excludeRoots>
+  </component>
+</project>

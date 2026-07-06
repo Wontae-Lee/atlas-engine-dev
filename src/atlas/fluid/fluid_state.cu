@@ -1,0 +1,205 @@
+#include <atlas/fluid/fluid_state.h>
+
+#include <utility>
+
+namespace atlas {
+
+FluidPositionState::FluidPositionState(const std::size_t buffer_size)
+    : _position(buffer_size) {
+}
+
+FluidPositionState::FluidPositionState(DeviceBuffer<Vector3> position) noexcept
+    : _position(std::move(position)) {
+}
+
+std::size_t
+FluidPositionState::size() const noexcept {
+    return _position.size();
+}
+
+void
+FluidPositionState::compact(const DeviceBuffer<std::size_t>& compact_indices, const std::size_t kept) {
+    compact_buffer(_position, compact_indices, kept);
+}
+
+void
+FluidPositionState::reset() {
+    reset_buffer(_position);
+}
+
+DeviceBuffer<Vector3>&
+FluidPositionState::data() noexcept {
+    return _position;
+}
+
+const DeviceBuffer<Vector3>&
+FluidPositionState::data() const noexcept {
+    return _position;
+}
+
+FluidVelocityState::FluidVelocityState(const std::size_t buffer_size)
+    : _velocity(buffer_size) {
+}
+
+FluidVelocityState::FluidVelocityState(DeviceBuffer<Vector3> velocity) noexcept
+    : _velocity(std::move(velocity)) {
+}
+
+std::size_t
+FluidVelocityState::size() const noexcept {
+    return _velocity.size();
+}
+
+void
+FluidVelocityState::compact(const DeviceBuffer<std::size_t>& compact_indices, const std::size_t kept) {
+    compact_buffer(_velocity, compact_indices, kept);
+}
+
+void
+FluidVelocityState::reset() {
+    reset_buffer(_velocity);
+}
+
+DeviceBuffer<Vector3>&
+FluidVelocityState::data() noexcept {
+    return _velocity;
+}
+
+const DeviceBuffer<Vector3>&
+FluidVelocityState::data() const noexcept {
+    return _velocity;
+}
+
+FluidSpeciesState::FluidSpeciesState(const std::size_t buffer_size)
+    : _species(buffer_size) {
+}
+
+FluidSpeciesState::FluidSpeciesState(DeviceBuffer<std::size_t> species) noexcept
+    : _species(std::move(species)) {
+}
+
+std::size_t
+FluidSpeciesState::size() const noexcept {
+    return _species.size();
+}
+
+void
+FluidSpeciesState::compact(const DeviceBuffer<std::size_t>& compact_indices, const std::size_t kept) {
+    compact_buffer(_species, compact_indices, kept);
+}
+
+void
+FluidSpeciesState::reset() {
+    reset_buffer(_species);
+}
+
+DeviceBuffer<std::size_t>&
+FluidSpeciesState::data() noexcept {
+    return _species;
+}
+
+const DeviceBuffer<std::size_t>&
+FluidSpeciesState::data() const noexcept {
+    return _species;
+}
+
+FluidActiveState::FluidActiveState(const std::size_t buffer_size)
+    : _active(buffer_size) {
+}
+
+FluidActiveState::FluidActiveState(DeviceBuffer<int> active) noexcept
+    : _active(std::move(active)) {
+}
+
+std::size_t
+FluidActiveState::size() const noexcept {
+    return _active.size();
+}
+
+void
+FluidActiveState::compact(const DeviceBuffer<std::size_t>& compact_indices, const std::size_t kept) {
+    compact_buffer(_active, compact_indices, kept);
+}
+
+void
+FluidActiveState::reset() {
+    reset_buffer(_active);
+}
+
+DeviceBuffer<int>&
+FluidActiveState::data() noexcept {
+    return _active;
+}
+
+const DeviceBuffer<int>&
+FluidActiveState::data() const noexcept {
+    return _active;
+}
+
+FluidTemperatureState::FluidTemperatureState(const std::size_t buffer_size)
+    : _temperature(buffer_size) {
+}
+
+FluidTemperatureState::FluidTemperatureState(DeviceBuffer<float> temperature) noexcept
+    : _temperature(std::move(temperature)) {
+}
+
+std::size_t
+FluidTemperatureState::size() const noexcept {
+    return _temperature.size();
+}
+
+void
+FluidTemperatureState::compact(const DeviceBuffer<std::size_t>& compact_indices, const std::size_t kept) {
+    compact_buffer(_temperature, compact_indices, kept);
+}
+
+void
+FluidTemperatureState::reset() {
+    reset_buffer(_temperature);
+}
+
+DeviceBuffer<float>&
+FluidTemperatureState::data() noexcept {
+    return _temperature;
+}
+
+const DeviceBuffer<float>&
+FluidTemperatureState::data() const noexcept {
+    return _temperature;
+}
+
+FluidInternalEnergyState::FluidInternalEnergyState(const std::size_t buffer_size)
+    : _internal_energy(buffer_size) {
+}
+
+FluidInternalEnergyState::FluidInternalEnergyState(DeviceBuffer<FluidInternalEnergy> internal_energy) noexcept
+    : _internal_energy(std::move(internal_energy)) {
+}
+
+std::size_t
+FluidInternalEnergyState::size() const noexcept {
+    return _internal_energy.size();
+}
+
+void
+FluidInternalEnergyState::compact(const DeviceBuffer<std::size_t>& compact_indices, const std::size_t kept) {
+    compact_buffer(_internal_energy, compact_indices, kept);
+}
+
+void
+FluidInternalEnergyState::reset() {
+    reset_buffer(_internal_energy);
+}
+
+DeviceBuffer<FluidInternalEnergy>&
+FluidInternalEnergyState::data() noexcept {
+    return _internal_energy;
+}
+
+const DeviceBuffer<FluidInternalEnergy>&
+FluidInternalEnergyState::data() const noexcept {
+    return _internal_energy;
+}
+
+}

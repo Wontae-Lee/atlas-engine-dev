@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package atlas.proto;
+
+message OptionalDouble {
+  bool has_value = 1;
+  double value = 2;
+}
+
+message OptionalInt32 {
+  bool has_value = 1;
+  int32 value = 2;
+}
+
+message Vector3 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message RawBuffer {
+  uint64 element_count = 1;
+  bytes data = 2;
+}
+
+message MaterialProperty {
+  int32 type = 1;
+  double mass = 2;
+  double molecular_mass = 3;
+  OptionalDouble translational_energy = 4;
+  OptionalDouble rotational_energy = 5;
+  OptionalDouble vibrational_energy = 6;
+  OptionalInt32 species_id = 7;
+  OptionalDouble reference_diameter = 8;
+  OptionalDouble viscosity_index = 9;
+  OptionalDouble scattering_parameter = 10;
+  OptionalDouble rest_density = 11;
+  OptionalDouble pressure_coefficient = 12;
+  OptionalDouble dynamic_viscosity = 13;
+  reserved 14;
+  OptionalDouble electronic_energy = 15;
+  OptionalInt32 charge = 16;
+  OptionalDouble reference_temperature = 17;
+}
+
+enum GeneratorType {
+  GENERATOR_MAXWELL_SIGMA = 0;
+  GENERATOR_MAXWELL_BOLTZMANN = 1;
+  GENERATOR_UNIFORM = 2;
+}
+
+message GeneratorOperator {
+  GeneratorType type = 1;
+  uint32 seed = 2;
+  Vector3 bulk_velocity = 3;
+}
+
+enum ScalarType {
+  SCALAR_FLOAT32 = 0;
+  SCALAR_FLOAT64 = 1;
+}
+
+message FluidSnapshot {
+  uint32 version = 1;
+  ScalarType scalar_type = 2;
+  uint64 buffer_size = 3;
+  uint64 particle_count = 4;
+  double statistical_weight = 5;
+  repeated MaterialProperty properties = 6;
+  repeated GeneratorOperator generators = 7;
+  RawBuffer positions = 8;
+  RawBuffer velocities = 9;
+  RawBuffer species = 10;
+  RawBuffer active = 11;
+  RawBuffer temperature = 12;
+  bool includes_temperature_state = 13;
+}
+
+enum UniverseStateKind {
+  UNIVERSE_TEMPERATURE = 0;
+  UNIVERSE_BULK_VELOCITY = 1;
+  UNIVERSE_FIELD_FORCE = 2;
+  UNIVERSE_MAX_RELATIVE_SPEED = 3;
+  UNIVERSE_THERMAL_ENERGY = 4;
+  UNIVERSE_NUMBER_PARTICLE = 5;
+  UNIVERSE_COLLISION_COUNT = 6;
+  UNIVERSE_KNUDSEN_NUMBER = 7;
+}
+
+message UniverseState {
+  UniverseStateKind kind = 1;
+  RawBuffer scalar_buffer = 2;
+  RawBuffer vector_buffer = 3;
+  RawBuffer int_buffer = 4;
+}
+
+message UniverseSnapshot {
+  uint32 version = 1;
+  ScalarType scalar_type = 2;
+  Vector3 lower_corner = 3;
+  Vector3 upper_corner = 4;
+  double cell_size = 5;
+  repeated UniverseState states = 6;
+}

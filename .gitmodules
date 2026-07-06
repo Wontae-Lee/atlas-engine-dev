@@ -1,0 +1,15 @@
+[submodule "external/tinyobj"]
+	path = external/tinyobj
+	url = https://github.com/tinyobjloader/tinyobjloader.git
+[submodule "external/googletest"]
+	path = external/googletest
+	url = https://github.com/google/googletest.git
+[submodule "external/googlebenchmark"]
+	path = external/googlebenchmark
+	url = https://github.com/google/benchmark.git
+[submodule "external/protobuf"]
+	path = external/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "external/nanobind"]
+	path = external/nanobind
+	url = https://github.com/wjakob/nanobind.git
