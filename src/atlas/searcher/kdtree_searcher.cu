@@ -12,7 +12,7 @@ KdTreeSearcher::KdTreeSearcher(UniverseHostPtr universe, FluidHostPtr fluid)
 }
 
 void
-KdTreeSearcher::build_neighbors(const int alive, const Vector3* pos) {
+KdTreeSearcher::build_neighbors(const int alive, const Float3* pos) {
     const float radius = cell_size();
 
     // Not an actual k-d tree traversal — this filter just adds a
@@ -23,9 +23,9 @@ KdTreeSearcher::build_neighbors(const int alive, const Vector3* pos) {
         alive,
         pos,
         [=] ATLAS_ALL_DEVICE(const int,
-                         const int,
-                         const Vector3& pi,
-                         const Vector3& pj) {
+                             const int,
+                             const Float3& pi,
+                             const Float3& pj) {
             const float dx = pj.x - pi.x;
             return dx >= -radius && dx <= radius;
         });
@@ -37,8 +37,8 @@ KdTreeSearcher::build() {
         return;
     }
 
-    const Vector3* positions = position_ptr();
-    const int alive          = active_count();
+    const Float3* positions = position_ptr();
+    const int alive         = active_count();
 
     if (!positions || alive <= 0) {
         reset();

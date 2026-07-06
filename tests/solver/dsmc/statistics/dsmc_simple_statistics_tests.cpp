@@ -9,7 +9,7 @@
 namespace {
 
 struct DsmcSimpleStatisticsFixture {
-    atlas::DeviceBuffer<atlas::Vector3> velocity = atlas::DeviceBuffer<atlas::Vector3>(2);
+    atlas::DeviceBuffer<atlas::Float3> velocity = atlas::DeviceBuffer<atlas::Float3>(2);
     atlas::DeviceBuffer<float> number_particle = atlas::DeviceBuffer<float>(1);
     atlas::DeviceBuffer<float> max_relative_speed = atlas::DeviceBuffer<float>(1);
     atlas::DeviceBuffer<float> max_sigma_g = atlas::DeviceBuffer<float>(1);
@@ -21,8 +21,8 @@ struct DsmcSimpleStatisticsFixture {
     atlas::DsmcProbe probe {};
 
     DsmcSimpleStatisticsFixture() {
-        velocity[0] = atlas::Vector3(1.0f, 0.0f, 0.0f);
-        velocity[1] = atlas::Vector3(-1.0f, 0.0f, 0.0f);
+        velocity[0] = atlas::Float3(1.0f, 0.0f, 0.0f);
+        velocity[1] = atlas::Float3(-1.0f, 0.0f, 0.0f);
         indices[0] = 0;
         indices[1] = 1;
         cell_start[0] = 0;

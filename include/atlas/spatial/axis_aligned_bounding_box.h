@@ -69,9 +69,9 @@ struct HitAABB {
  */
 class AABB final {
 public:
-    Vector3 lower_corner;
+    Float3 lower_corner;
 
-    Vector3 upper_corner;
+    Float3 upper_corner;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     AABB() noexcept {
@@ -79,7 +79,7 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    AABB(const Vector3& point1, const Vector3& point2) noexcept
+    AABB(const Float3& point1, const Float3& point2) noexcept
         : lower_corner(cmin(point1, point2))
         , upper_corner(cmax(point1, point2)) { }
 
@@ -130,7 +130,7 @@ public:
     }
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
-    contains(const Vector3& point) const noexcept {
+    contains(const Float3& point) const noexcept {
         return all((point >= lower_corner) & (point <= upper_corner));
     }
 
@@ -187,12 +187,12 @@ public:
         return isect;
     }
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     center() const noexcept {
         return (lower_corner + upper_corner) * 0.5f;
     }
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     extents() const noexcept {
         return upper_corner - lower_corner;
     }
@@ -223,12 +223,12 @@ public:
      *  `is_valid()` correctly reports `false` until then. */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     reset() noexcept {
-        lower_corner = Vector3(inf, inf, inf);
-        upper_corner = Vector3(-inf, -inf, -inf);
+        lower_corner = Float3(inf, inf, inf);
+        upper_corner = Float3(-inf, -inf, -inf);
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    merge(const Vector3& point) noexcept {
+    merge(const Float3& point) noexcept {
         lower_corner = cmin(lower_corner, point);
         upper_corner = cmax(upper_corner, point);
     }
@@ -241,7 +241,7 @@ public:
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     expand(const float delta) noexcept {
-        const Vector3 d(delta, delta, delta);
+        const Float3 d(delta, delta, delta);
 
         lower_corner -= d;
         upper_corner += d;
@@ -251,17 +251,17 @@ public:
      *  `idx` (bit 0 -> x, bit 1 -> y, bit 2 -> z; `0` = lower_corner,
      *  `1` set = that axis takes upper_corner). Used to enumerate all 8
      *  corners for e.g. `transform_aabb`. */
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     corner(const std::size_t idx) const noexcept {
         const float x = (idx & 1) ? upper_corner.x : lower_corner.x;
         const float y = (idx & 2) ? upper_corner.y : lower_corner.y;
         const float z = (idx & 4) ? upper_corner.z : lower_corner.z;
 
-        return Vector3(x, y, z);
+        return Float3(x, y, z);
     }
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    clamp(const Vector3& point) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    clamp(const Float3& point) const noexcept {
         return atlas::clamp(point, lower_corner, upper_corner);
     }
 
@@ -279,7 +279,7 @@ public:
  *  identity element for building up a bound via repeated `merge()`
  *  calls starting from one point instead of `reset()`. */
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AABB
-make_aabb(const Vector3& p) noexcept {
+make_aabb(const Float3& p) noexcept {
     AABB b;
     b.lower_corner = p;
     b.upper_corner = p;
@@ -302,8 +302,8 @@ merge_aabb(const AABB& a,
  *  ordering/thresholding by distance is needed. */
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
 aabb_distance_squared(const AABB& bounds,
-                      const Vector3& point) noexcept {
-    const Vector3 closest = bounds.clamp(point);
+                      const Float3& point) noexcept {
+    const Float3 closest = bounds.clamp(point);
     return (closest - point).length_squared();
 }
 

@@ -29,7 +29,7 @@ public:
 
     ~System() = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_HOST void
@@ -50,10 +50,10 @@ public:
     ATLAS_HOST void
     time_integration();
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     dt() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const FluidHostPtr&
+    ATLAS_NODISCARD ATLAS_HOST const FluidHostPtr&
     fluid() const noexcept;
 
 private:
@@ -100,10 +100,10 @@ public:
     ATLAS_HOST Builder&
     with_dt(float dt) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD System
+    ATLAS_NODISCARD ATLAS_HOST System
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<System>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<System>
     make_host_shared() const;
 
 private:

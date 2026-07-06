@@ -127,7 +127,7 @@ public:
 
     class Builder;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     /** @brief NTC selection plus Larsen-Borgnakke energy exchange for
@@ -165,7 +165,7 @@ public:
     /** @brief Hashed uniform draw in `[0,1)` keyed by
      *  `(cell, local_collision, seed, salt)` — the shared RNG primitive
      *  every sampler in this file is built from. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     sample_unit(int cell, int local_collision, std::uint64_t seed, std::uint64_t salt) noexcept;
 
     /**
@@ -177,7 +177,7 @@ public:
      *        this solver uses); returns `0` if either exponent is
      *        non-positive.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     sample_bl(float exp_1, float exp_2, int cell, int local_collision, std::uint64_t seed, std::uint64_t salt) noexcept;
 
     /**
@@ -190,7 +190,7 @@ public:
      *        are not set. Returns `0` if the material has no rotational
      *        dof.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     rotational_relaxation_probability(const MaterialProperties& material,
                                       float collision_energy,
                                       float omega) noexcept;
@@ -199,7 +199,7 @@ public:
      *  probability `1/Zv(T_c)`, derived from a Millikan-White-style fit
      *  (`vibrational_relaxation_c1/c2`); same fallback/zero-dof
      *  behavior as `rotational_relaxation_probability`. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     vibrational_relaxation_probability(const MaterialProperties& material,
                                        float collision_energy,
                                        float omega) noexcept;
@@ -260,8 +260,8 @@ public:
      *        relative speed).
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
-    rescale_relative_velocity(Vector3& lhs_velocity,
-                              Vector3& rhs_velocity,
+    rescale_relative_velocity(Float3& lhs_velocity,
+                              Float3& rhs_velocity,
                               const MaterialProperties& lhs,
                               const MaterialProperties& rhs,
                               float translational_energy) noexcept;
@@ -303,10 +303,10 @@ public:
     ATLAS_HOST void
     validate() const;
 
-    ATLAS_HOST ATLAS_NODISCARD DsmcEnergyExchangeSolver
+    ATLAS_NODISCARD ATLAS_HOST DsmcEnergyExchangeSolver
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<DsmcEnergyExchangeSolver>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<DsmcEnergyExchangeSolver>
     make_host_shared() const;
 
 private:
@@ -360,8 +360,8 @@ DsmcEnergyExchangeSolver::collide_indexed_pair(const Probe& probe,
         return false;
     }
 
-    Vector3 lhs_velocity               = probe.velocity_ptr[particle_i];
-    Vector3 rhs_velocity               = probe.velocity_ptr[particle_j];
+    Float3 lhs_velocity                = probe.velocity_ptr[particle_i];
+    Float3 rhs_velocity                = probe.velocity_ptr[particle_j];
     const float relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
     const float sigma_g                = probe.kernel.sigma_g(
         probe.properties_ptr,
@@ -619,8 +619,8 @@ DsmcEnergyExchangeSolver::exchange_particle_internal_energy(const Probe& probe,
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-DsmcEnergyExchangeSolver::rescale_relative_velocity(Vector3& lhs_velocity,
-                                                    Vector3& rhs_velocity,
+DsmcEnergyExchangeSolver::rescale_relative_velocity(Float3& lhs_velocity,
+                                                    Float3& rhs_velocity,
                                                     const MaterialProperties& lhs,
                                                     const MaterialProperties& rhs,
                                                     const float translational_energy) noexcept {
@@ -637,15 +637,15 @@ DsmcEnergyExchangeSolver::rescale_relative_velocity(Vector3& lhs_velocity,
         return;
     }
 
-    const Vector3 relative = lhs_velocity - rhs_velocity;
-    const float speed      = relative.length();
+    const Float3 relative = lhs_velocity - rhs_velocity;
+    const float speed     = relative.length();
     if (!(speed > 0.0f)) {
         return;
     }
 
-    const float target_speed         = atlas::sqrt_nonnegative(2.0f * translational_energy / reduced_mass);
-    const Vector3 scattered_relative = relative * (target_speed / speed);
-    const Vector3 center             = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
+    const float target_speed        = atlas::sqrt_nonnegative(2.0f * translational_energy / reduced_mass);
+    const Float3 scattered_relative = relative * (target_speed / speed);
+    const Float3 center             = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
 
     lhs_velocity = center + scattered_relative * (rhs_mass / mass_sum);
     rhs_velocity = center - scattered_relative * (lhs_mass / mass_sum);

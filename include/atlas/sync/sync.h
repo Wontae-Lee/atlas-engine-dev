@@ -12,10 +12,10 @@ public:
     class Builder;
 
 public:
-    Vector3 translation;
+    Float3 translation;
     Quaternion orientation;
-    Matrix3x3 orientation_matrix;
-    Matrix3x3 inverse_orientation_matrix;
+    Float3x3 orientation_matrix;
+    Float3x3 inverse_orientation_matrix;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     Sync() noexcept
@@ -25,7 +25,7 @@ public:
         , inverse_orientation_matrix(atlas::identity3x3()) { }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Sync(const Vector3& translation_, const Quaternion& orientation_) noexcept
+    Sync(const Float3& translation_, const Quaternion& orientation_) noexcept
         : translation(translation_)
         , orientation(orientation_)
         , orientation_matrix()
@@ -33,14 +33,16 @@ public:
         rebuild_matrices();
     }
 
-    Sync(const Sync&) noexcept            = default;
-    Sync(Sync&&) noexcept                 = default;
-    Sync& operator=(const Sync&) noexcept = default;
-    Sync& operator=(Sync&&) noexcept      = default;
+    Sync(const Sync&) noexcept = default;
+    Sync(Sync&&) noexcept      = default;
+    Sync&
+    operator=(const Sync&) noexcept = default;
+    Sync&
+    operator=(Sync&&) noexcept = default;
 
     ~Sync() noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
@@ -50,22 +52,22 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    sync_to_world(const Vector3& local_point, Vector3& world_point) const noexcept {
+    sync_to_world(const Float3& local_point, Float3& world_point) const noexcept {
         atlas::rotate_translate(orientation_matrix, local_point, translation, world_point);
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    sync_to_local(const Vector3& world_point, Vector3& local_point) const noexcept {
+    sync_to_local(const Float3& world_point, Float3& local_point) const noexcept {
         atlas::rotate_subtract(inverse_orientation_matrix, world_point, translation, local_point);
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    sync_dir_to_world(const Vector3& local_dir, Vector3& world_dir) const noexcept {
+    sync_dir_to_world(const Float3& local_dir, Float3& world_dir) const noexcept {
         atlas::rotate(orientation_matrix, local_dir, world_dir);
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    sync_dir_to_local(const Vector3& world_dir, Vector3& local_dir) const noexcept {
+    sync_dir_to_local(const Float3& world_dir, Float3& local_dir) const noexcept {
         atlas::rotate(inverse_orientation_matrix, world_dir, local_dir);
     }
 
@@ -81,42 +83,42 @@ public:
         atlas::rotate(inverse_orientation_matrix, world_ray.direction, local_ray.direction);
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
-    sync_to_world(const Vector3& local_point) const noexcept {
-        Vector3 out;
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    sync_to_world(const Float3& local_point) const noexcept {
+        Float3 out;
         sync_to_world(local_point, out);
         return out;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
-    sync_to_local(const Vector3& world_point) const noexcept {
-        Vector3 out;
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    sync_to_local(const Float3& world_point) const noexcept {
+        Float3 out;
         sync_to_local(world_point, out);
         return out;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
-    sync_dir_to_world(const Vector3& local_dir) const noexcept {
-        Vector3 out;
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    sync_dir_to_world(const Float3& local_dir) const noexcept {
+        Float3 out;
         sync_dir_to_world(local_dir, out);
         return out;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
-    sync_dir_to_local(const Vector3& world_dir) const noexcept {
-        Vector3 out;
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    sync_dir_to_local(const Float3& world_dir) const noexcept {
+        Float3 out;
         sync_dir_to_local(world_dir, out);
         return out;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Ray
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Ray
     sync_to_world(const Ray& local_ray) const noexcept {
         Ray out;
         sync_to_world(local_ray, out);
         return out;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Ray
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Ray
     sync_to_local(const Ray& world_ray) const noexcept {
         Ray out;
         sync_to_local(world_ray, out);
@@ -124,7 +126,7 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    set_translation(const Vector3& translation_) noexcept {
+    set_translation(const Float3& translation_) noexcept {
         translation = translation_;
     }
 
@@ -135,7 +137,7 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    set_pose(const Vector3& translation_, const Quaternion& orientation_) noexcept {
+    set_pose(const Float3& translation_, const Quaternion& orientation_) noexcept {
         translation = translation_;
         orientation = orientation_;
         rebuild_matrices();
@@ -147,12 +149,12 @@ public:
     Builder() = default;
 
     ATLAS_HOST Builder&
-    with_rigid_pose(const Vector3& translation_, const Quaternion& orientation_) noexcept;
+    with_rigid_pose(const Float3& translation_, const Quaternion& orientation_) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD Sync
+    ATLAS_NODISCARD ATLAS_HOST Sync
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Sync>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Sync>
     make_host_shared() const;
 
 private:
@@ -160,7 +162,7 @@ private:
     validate() const;
 
 private:
-    Vector3 _translation = Vector3(0.0f, 0.0f, 0.0f);
+    Float3 _translation = Float3(0.0f, 0.0f, 0.0f);
 
     Quaternion _orientation = Quaternion(1.0f, 0.0f, 0.0f, 0.0f);
 };

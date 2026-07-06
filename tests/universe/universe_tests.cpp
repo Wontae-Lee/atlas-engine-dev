@@ -15,7 +15,7 @@
 namespace {
 
 bool
-expect_vec_near(const atlas::Vector3& a, const atlas::Vector3& b) {
+expect_vec_near(const atlas::Float3& a, const atlas::Float3& b) {
     return std::abs(a.x - b.x) <= atlas::tol
         && std::abs(a.y - b.y) <= atlas::tol
         && std::abs(a.z - b.z) <= atlas::tol;
@@ -25,15 +25,15 @@ expect_vec_near(const atlas::Vector3& a, const atlas::Vector3& b) {
 
 TEST(Universe, BuilderConstructsConfiguredUniverse) {
     const auto universe = atlas::Universe::builder()
-                              .with_lower_corner(atlas::Vector3(0.0f, 0.0f, 0.0f))
-                              .with_upper_corner(atlas::Vector3(1.0f, 1.0f, 1.0f))
+                              .with_lower_corner(atlas::Float3(0.0f, 0.0f, 0.0f))
+                              .with_upper_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
                               .with_cell_size(0.5f)
                               .build();
 
-    EXPECT_TRUE(expect_vec_near(universe.lower_corner(), atlas::Vector3(0.0f, 0.0f, 0.0f)));
-    EXPECT_TRUE(expect_vec_near(universe.upper_corner(), atlas::Vector3(1.0f, 1.0f, 1.0f)));
+    EXPECT_TRUE(expect_vec_near(universe.lower_corner(), atlas::Float3(0.0f, 0.0f, 0.0f)));
+    EXPECT_TRUE(expect_vec_near(universe.upper_corner(), atlas::Float3(1.0f, 1.0f, 1.0f)));
 
-    EXPECT_TRUE(universe.grid_size() == atlas::Vector3i(3, 3, 3));
+    EXPECT_TRUE(universe.grid_size() == atlas::Int3(3, 3, 3));
     EXPECT_EQ(universe.cell_count(), 27);
 
     EXPECT_FLOAT_EQ(universe.cell_size(), 0.5f);
@@ -43,8 +43,8 @@ TEST(Universe, BuilderConstructsConfiguredUniverse) {
 
 TEST(Universe, BuilderCanUseGeometryBounds) {
     const atlas::Geometry geometry(atlas::Box::builder()
-                                               .with_lower_corner(atlas::Vector3(-1.0f, -2.0f, -3.0f))
-                                               .with_upper_corner(atlas::Vector3(1.0f, 2.0f, 3.0f))
+                                               .with_lower_corner(atlas::Float3(-1.0f, -2.0f, -3.0f))
+                                               .with_upper_corner(atlas::Float3(1.0f, 2.0f, 3.0f))
                                                .build());
 
     const auto universe = atlas::Universe::builder()
@@ -52,21 +52,21 @@ TEST(Universe, BuilderCanUseGeometryBounds) {
                               .with_cell_size(1.0f)
                               .build();
 
-    EXPECT_TRUE(expect_vec_near(universe.lower_corner(), atlas::Vector3(-1.0f, -2.0f, -3.0f)));
-    EXPECT_TRUE(expect_vec_near(universe.upper_corner(), atlas::Vector3(1.0f, 2.0f, 3.0f)));
+    EXPECT_TRUE(expect_vec_near(universe.lower_corner(), atlas::Float3(-1.0f, -2.0f, -3.0f)));
+    EXPECT_TRUE(expect_vec_near(universe.upper_corner(), atlas::Float3(1.0f, 2.0f, 3.0f)));
 }
 
 TEST(Universe, BuilderRejectsInvalidGeometryParameters) {
     EXPECT_THROW(static_cast<void>(atlas::Universe::builder()
-                                       .with_lower_corner(atlas::Vector3(0.0f, 0.0f, 0.0f))
-                                       .with_upper_corner(atlas::Vector3(1.0f, 1.0f, 1.0f))
+                                       .with_lower_corner(atlas::Float3(0.0f, 0.0f, 0.0f))
+                                       .with_upper_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
                                        .with_cell_size(0.0f)
                                        .build()),
                  std::invalid_argument);
 
     EXPECT_THROW(static_cast<void>(atlas::Universe::builder()
-                                       .with_lower_corner(atlas::Vector3(1.0f, 1.0f, 1.0f))
-                                       .with_upper_corner(atlas::Vector3(0.0f, 0.0f, 0.0f))
+                                       .with_lower_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
+                                       .with_upper_corner(atlas::Float3(0.0f, 0.0f, 0.0f))
                                        .with_cell_size(1.0f)
                                        .build()),
                  std::invalid_argument);
@@ -76,8 +76,8 @@ TEST(Universe, BuilderAttachesObserver) {
     auto observer = atlas::Observer::builder().make_host_shared();
 
     const auto universe = atlas::Universe::builder()
-                              .with_lower_corner(atlas::Vector3(0.0f, 0.0f, 0.0f))
-                              .with_upper_corner(atlas::Vector3(1.0f, 1.0f, 1.0f))
+                              .with_lower_corner(atlas::Float3(0.0f, 0.0f, 0.0f))
+                              .with_upper_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
                               .with_cell_size(1.0f)
                               .with_observer(observer)
                               .build();
@@ -87,8 +87,8 @@ TEST(Universe, BuilderAttachesObserver) {
 
 TEST(Universe, StateLifecycleSupportsInsertLookupReplaceAndRemove) {
     auto universe = atlas::Universe::builder()
-                        .with_lower_corner(atlas::Vector3(0.0f, 0.0f, 0.0f))
-                        .with_upper_corner(atlas::Vector3(1.0f, 1.0f, 1.0f))
+                        .with_lower_corner(atlas::Float3(0.0f, 0.0f, 0.0f))
+                        .with_upper_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
                         .with_cell_size(1.0f)
                         .build();
 
@@ -112,8 +112,8 @@ TEST(Universe, StateLifecycleSupportsInsertLookupReplaceAndRemove) {
 
 TEST(Universe, SetStateRejectsNullOwnershipTransfer) {
     auto universe = atlas::Universe::builder()
-                        .with_lower_corner(atlas::Vector3(0.0f, 0.0f, 0.0f))
-                        .with_upper_corner(atlas::Vector3(1.0f, 1.0f, 1.0f))
+                        .with_lower_corner(atlas::Float3(0.0f, 0.0f, 0.0f))
+                        .with_upper_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
                         .with_cell_size(1.0f)
                         .build();
 
@@ -125,8 +125,8 @@ TEST(Universe, SetStateRejectsNullOwnershipTransfer) {
 
 TEST(Universe, SaveAndReloadBinarySnapshot) {
     auto universe = atlas::Universe::builder()
-                        .with_lower_corner(atlas::Vector3(-1.0f, -2.0f, -3.0f))
-                        .with_upper_corner(atlas::Vector3(1.0f, 2.0f, 3.0f))
+                        .with_lower_corner(atlas::Float3(-1.0f, -2.0f, -3.0f))
+                        .with_upper_corner(atlas::Float3(1.0f, 2.0f, 3.0f))
                         .with_cell_size(1.0f)
                         .build();
 
@@ -136,10 +136,10 @@ TEST(Universe, SaveAndReloadBinarySnapshot) {
 
     universe.set_state<atlas::UniverseBulkVelocityState>(
         std::make_unique<atlas::UniverseBulkVelocityState>(
-            atlas::DeviceBuffer<atlas::Vector3> {
-                atlas::Vector3(1.0f, 0.0f, 0.0f),
-                atlas::Vector3(0.0f, 1.0f, 0.0f),
-                atlas::Vector3(0.0f, 0.0f, 1.0f) }));
+            atlas::DeviceBuffer<atlas::Float3> {
+                atlas::Float3(1.0f, 0.0f, 0.0f),
+                atlas::Float3(0.0f, 1.0f, 0.0f),
+                atlas::Float3(0.0f, 0.0f, 1.0f) }));
 
     universe.set_state<atlas::UniverseCollisionCountState>(
         std::make_unique<atlas::UniverseCollisionCountState>(
@@ -153,8 +153,8 @@ TEST(Universe, SaveAndReloadBinarySnapshot) {
                               .with_binary(snapshot_path.string())
                               .build();
 
-    EXPECT_TRUE(expect_vec_near(restored.lower_corner(), atlas::Vector3(-1.0f, -2.0f, -3.0f)));
-    EXPECT_TRUE(expect_vec_near(restored.upper_corner(), atlas::Vector3(1.0f, 2.0f, 3.0f)));
+    EXPECT_TRUE(expect_vec_near(restored.lower_corner(), atlas::Float3(-1.0f, -2.0f, -3.0f)));
+    EXPECT_TRUE(expect_vec_near(restored.upper_corner(), atlas::Float3(1.0f, 2.0f, 3.0f)));
     EXPECT_FLOAT_EQ(restored.cell_size(), 1.0f);
 
     const auto* temperature     = restored.state<atlas::UniverseTemperatureState>();
@@ -166,12 +166,12 @@ TEST(Universe, SaveAndReloadBinarySnapshot) {
     ASSERT_NE(collision_count, nullptr);
 
     const float restored_t1          = temperature->data()[1];
-    const atlas::Vector3 restored_v2 = bulk_velocity->data()[2];
+    const atlas::Float3 restored_v2 = bulk_velocity->data()[2];
     const int restored_c0            = collision_count->data()[0];
     const int restored_c2            = collision_count->data()[2];
 
     EXPECT_FLOAT_EQ(restored_t1, 325.0f);
-    EXPECT_TRUE(expect_vec_near(restored_v2, atlas::Vector3(0.0f, 0.0f, 1.0f)));
+    EXPECT_TRUE(expect_vec_near(restored_v2, atlas::Float3(0.0f, 0.0f, 1.0f)));
     EXPECT_EQ(restored_c0, 2);
     EXPECT_EQ(restored_c2, 6);
 

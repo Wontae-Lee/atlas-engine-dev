@@ -43,7 +43,6 @@ public:
     make_geometry_operator() const = 0;
 };
 
-
 using BVHHostPtr = atlas::host_shared_ptr<BVH>;
 
 using BVHDevicePtr = atlas::device_shared_ptr<BVH>;

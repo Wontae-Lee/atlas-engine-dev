@@ -87,22 +87,22 @@ struct PostColliderKernel final {
      *  the ray segment used to search for a hit this timestep). */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     sweep_motion(const Unit& unit,
-                 const Vector3& origin,
-                 const Vector3& incident,
+                 const Float3& origin,
+                 const Float3& incident,
                  float incident_speed,
                  float dt,
-                 Vector3& sweep_direction,
+                 Float3& sweep_direction,
                  float& sweep_speed,
                  float& sweep_length) const noexcept;
 
     /** @brief Dispatches to the active payload's post-hit response
      *  (reflects/thermalizes velocity and repositions the particle). */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    operator()(Vector3& position,
-               Vector3& velocity,
-               const Vector3& incident,
-               const Vector3& hit_position,
-               const Vector3& hit_normal,
+    operator()(Float3& position,
+               Float3& velocity,
+               const Float3& incident,
+               const Float3& hit_position,
+               const Float3& hit_normal,
                float hit_distance,
                float sweep_speed,
                float dt,
@@ -125,30 +125,32 @@ namespace detail {
     // a struct may hold reference members for the write-back outputs.
     struct PostColliderSweepMotion {
         const Unit& unit;
-        const Vector3& origin;
-        const Vector3& incident;
+        const Float3& origin;
+        const Float3& incident;
         float incident_speed;
         float dt;
-        Vector3& sweep_direction;
+        Float3& sweep_direction;
         float& sweep_speed;
         float& sweep_length;
-        template <typename K> ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+        template <typename K>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         operator()(const K& kernel) const noexcept {
             kernel.sweep_motion(unit, origin, incident, incident_speed, dt, sweep_direction, sweep_speed, sweep_length);
         }
     };
     struct PostColliderApply {
-        Vector3& position;
-        Vector3& velocity;
-        const Vector3& incident;
-        const Vector3& hit_position;
-        const Vector3& hit_normal;
+        Float3& position;
+        Float3& velocity;
+        const Float3& incident;
+        const Float3& hit_position;
+        const Float3& hit_normal;
         float hit_distance;
         float sweep_speed;
         float dt;
         const Unit& unit;
         const SurfaceInteractionKernel& interaction;
-        template <typename K> ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+        template <typename K>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
         operator()(const K& kernel) const noexcept {
             kernel(position, velocity, incident, hit_position, hit_normal, hit_distance, sweep_speed, dt, unit, interaction);
         }
@@ -168,25 +170,32 @@ PostColliderKernel::PostColliderKernel(const PostColliderType type_) noexcept {
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
 PostColliderKernel::sweep_motion(const Unit& unit,
-                                 const Vector3& origin,
-                                 const Vector3& incident,
+                                 const Float3& origin,
+                                 const Float3& incident,
                                  const float incident_speed,
                                  const float dt,
-                                 Vector3& sweep_direction,
+                                 Float3& sweep_direction,
                                  float& sweep_speed,
                                  float& sweep_length) const noexcept {
     detail::PostColliderVariant::apply(
         *this,
         detail::PostColliderSweepMotion {
-            unit, origin, incident, incident_speed, dt, sweep_direction, sweep_speed, sweep_length });
+            unit,
+            origin,
+            incident,
+            incident_speed,
+            dt,
+            sweep_direction,
+            sweep_speed,
+            sweep_length });
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-PostColliderKernel::operator()(Vector3& position,
-                               Vector3& velocity,
-                               const Vector3& incident,
-                               const Vector3& hit_position,
-                               const Vector3& hit_normal,
+PostColliderKernel::operator()(Float3& position,
+                               Float3& velocity,
+                               const Float3& incident,
+                               const Float3& hit_position,
+                               const Float3& hit_normal,
                                const float hit_distance,
                                const float sweep_speed,
                                const float dt,
@@ -195,7 +204,16 @@ PostColliderKernel::operator()(Vector3& position,
     detail::PostColliderVariant::apply(
         *this,
         detail::PostColliderApply {
-            position, velocity, incident, hit_position, hit_normal, hit_distance, sweep_speed, dt, unit, interaction });
+            position,
+            velocity,
+            incident,
+            hit_position,
+            hit_normal,
+            hit_distance,
+            sweep_speed,
+            dt,
+            unit,
+            interaction });
 }
 
 }

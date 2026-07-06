@@ -60,9 +60,10 @@ class Codec {
 public:
     Codec() = default;
 
-    ATLAS_HOST Codec(UniverseHostPtr domain,
-                     FluidHostPtr fluid,
-                     SearcherHostPtr searcher);
+    ATLAS_HOST
+    Codec(UniverseHostPtr domain,
+          FluidHostPtr fluid,
+          SearcherHostPtr searcher);
 
     virtual ~Codec() = default;
 
@@ -99,10 +100,10 @@ public:
 
     /** @brief Per-cell solver index this codec last decoded; the buffer
      *  `Solver::solve(allocated_solver, index, dt)` is called with. */
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
     allocated_solver() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
     allocated_solver() const noexcept;
 
     /** @brief Sets the per-cell solver-index override used wherever
@@ -111,10 +112,10 @@ public:
     ATLAS_HOST void
     set_fixed_solver(DeviceBuffer<int> fixed_solver);
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
     fixed_solver() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
     fixed_solver() const noexcept;
 
     /** @brief Sets the per-cell "exempt from automatic classification"
@@ -123,17 +124,17 @@ public:
     ATLAS_HOST void
     set_fixed_region(DeviceBuffer<int> fixed_region);
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
     fixed_region() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
     fixed_region() const noexcept;
 
     /** @brief Rebuilds `_probe` from the current universe/fluid/searcher
      *  state and this codec's allocation buffers
      *  (`detail::CodecProbeBuilder::make`); `false` if
      *  universe/fluid/searcher is null or the universe has zero cells. */
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() noexcept;
 
 protected:

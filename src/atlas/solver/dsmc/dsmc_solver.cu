@@ -168,7 +168,7 @@ DsmcSolver::launch_flattened_collisions() {
         0,
         flattened_collision_count,
         [=] ATLAS_ALL_DEVICE(const int work_index) {
-            const int cell = collision_cells_ptr[work_index];
+            const int cell            = collision_cells_ptr[work_index];
             // work_index is a global index into the flattened candidate
             // list; recover this candidate's position *within its own
             // cell* by subtracting that cell's starting offset, matching

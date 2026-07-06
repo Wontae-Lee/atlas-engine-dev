@@ -98,11 +98,11 @@ Fluid::Builder::build() const {
     f._observer            = _observer;
     if (_position_state.has_value()) {
         f.set_state<FluidPositionState>(std::make_unique<FluidPositionState>(
-            DeviceBuffer<Vector3>(_position_state->begin(), _position_state->end())));
+            DeviceBuffer<Float3>(_position_state->begin(), _position_state->end())));
     }
     if (_velocity_state.has_value()) {
         f.set_state<FluidVelocityState>(std::make_unique<FluidVelocityState>(
-            DeviceBuffer<Vector3>(_velocity_state->begin(), _velocity_state->end())));
+            DeviceBuffer<Float3>(_velocity_state->begin(), _velocity_state->end())));
     }
     if (_species_state.has_value()) {
         f.set_state<FluidSpeciesState>(std::make_unique<FluidSpeciesState>(

@@ -25,7 +25,7 @@ namespace atlas {
 struct DsmcProbe {
     /** Particle velocities, owned by `Fluid`; read and updated in place
      *  by collision kernels. */
-    Vector3* velocity_ptr {};
+    Float3* velocity_ptr {};
     /** Particle internal energy, owned by `Fluid`; `nullptr` if the
      *  fluid does not track it (see `DsmcEnergyExchangeSolver`). */
     FluidInternalEnergy* internal_energy_ptr {};

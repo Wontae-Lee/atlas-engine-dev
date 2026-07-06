@@ -95,17 +95,18 @@ public:
 
     SphSolver() = default;
 
-    ATLAS_HOST SphSolver(UniverseHostPtr universe,
-                         FluidHostPtr fluid,
-                         SearcherHostPtr searcher,
-                         SphKernelType kernel_type = SphKernelType::standard) noexcept;
+    ATLAS_HOST
+    SphSolver(UniverseHostPtr universe,
+              FluidHostPtr fluid,
+              SearcherHostPtr searcher,
+              SphKernelType kernel_type = SphKernelType::standard) noexcept;
 
     ~SphSolver() override = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD SphKernelType
+    ATLAS_NODISCARD ATLAS_HOST SphKernelType
     kernel_type() const noexcept;
 
     /** @brief Full per-step pipeline (see this file's top-of-file
@@ -135,7 +136,7 @@ public:
 
     /** @brief Rebuilds `_probe` from current universe/fluid/searcher/
      *  kernel state (`detail::SphProbeBuilder::make`). */
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() noexcept;
 
     /** @brief Resizes `_density`/`_pressure`/`_acceleration` to the
@@ -151,12 +152,12 @@ public:
 
     /** @brief The material's configured `rest_density` (`rho0` in the
      *  linear EOS), or `1.0` if unset/non-positive. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     rest_density(const MaterialProperties& property) noexcept;
 
     /** @brief The material's configured `pressure_coefficient` (`k` in
      *  the linear EOS `P = k*(rho - rho0)`), or `0` if unset. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     pressure_coefficient(const MaterialProperties& property) noexcept;
 
     /** @brief Per-particle neighbor-summed density + linear-EOS pressure
@@ -188,7 +189,7 @@ private:
 
     DeviceBuffer<float> _pressure {};
 
-    DeviceBuffer<Vector3> _acceleration {};
+    DeviceBuffer<Float3> _acceleration {};
 };
 
 /**
@@ -212,10 +213,10 @@ public:
     ATLAS_HOST Builder&
     with_kernel_type(SphKernelType kernel_type) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD SphSolver
+    ATLAS_NODISCARD ATLAS_HOST SphSolver
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<SphSolver>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<SphSolver>
     make_host_shared() const;
 
 private:

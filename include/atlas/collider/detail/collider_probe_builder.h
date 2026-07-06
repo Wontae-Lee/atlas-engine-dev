@@ -46,7 +46,7 @@ public:
      *         failing the whole build) when only translational collision
      *         response is available.
      */
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     make(ColliderProbe& probe,
          const DeviceBuffer<Unit>& units,
          const DeviceBuffer<Bound>& unit_bounds,

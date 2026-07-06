@@ -17,13 +17,13 @@ public:
     apply_field_force(const OrchestratorProbe& probe, float dt) const;
 
 private:
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     has_gravity(const OrchestratorProbe& probe) const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     has_field_force(const OrchestratorProbe& probe) const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD int
+    ATLAS_NODISCARD ATLAS_HOST int
     force_cell_count(const OrchestratorProbe& probe, bool gravity, bool field_force) const noexcept;
 };
 

@@ -22,7 +22,7 @@ Plane::Builder::make_host_shared() const {
 }
 
 Plane::Builder&
-Plane::Builder::with_normal(const Vector3& normal_) noexcept {
+Plane::Builder::with_normal(const Float3& normal_) noexcept {
     _normal = normal_;
     return *this;
 }
@@ -34,14 +34,14 @@ Plane::Builder::with_offset(const float offset_) noexcept {
 }
 
 Plane::Builder&
-Plane::Builder::with_normal_offset(const Vector3& normal_, const float offset_) noexcept {
+Plane::Builder::with_normal_offset(const Float3& normal_, const float offset_) noexcept {
     _normal = normal_;
     _offset = offset_;
     return *this;
 }
 
 Plane::Builder&
-Plane::Builder::with_point_normal(const Vector3& point, const Vector3& normal_) noexcept {
+Plane::Builder::with_point_normal(const Float3& point, const Float3& normal_) noexcept {
     _normal = normal_;
     _offset = -(normal_.dot(point));
     return *this;

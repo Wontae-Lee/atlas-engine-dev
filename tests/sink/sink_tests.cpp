@@ -25,11 +25,11 @@ using atlas::Sync;
 using atlas::Unit;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::tol;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, tol);
     EXPECT_NEAR(actual.y, expected.y, tol);
     EXPECT_NEAR(actual.z, expected.z, tol);
@@ -45,8 +45,8 @@ make_fluid() {
 UniverseHostPtr
 make_universe(const HostBuffer<Unit>& sink_units) {
     return Universe::builder()
-        .with_lower_corner(Vector3(-10.0f, -10.0f, -10.0f))
-        .with_upper_corner(Vector3(10.0f, 10.0f, 10.0f))
+        .with_lower_corner(Float3(-10.0f, -10.0f, -10.0f))
+        .with_upper_corner(Float3(10.0f, 10.0f, 10.0f))
         .with_cell_size(1.0f)
         .with_sink_units(sink_units)
         .make_host_shared();
@@ -55,8 +55,8 @@ make_universe(const HostBuffer<Unit>& sink_units) {
 Unit
 make_unit() {
     static const auto geometry = Box::builder()
-                                     .with_lower_corner(Vector3(-1.0f, -1.0f, -1.0f))
-                                     .with_upper_corner(Vector3(1.0f, 1.0f, 1.0f))
+                                     .with_lower_corner(Float3(-1.0f, -1.0f, -1.0f))
+                                     .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
                                      .make_host_shared();
 
     const auto sync = Sync::builder()
@@ -71,8 +71,8 @@ make_unit() {
 Unit
 make_tracing_unit() {
     static const auto geometry = Box::builder()
-                                     .with_lower_corner(Vector3(2.0f, -1.0f, -1.0f))
-                                     .with_upper_corner(Vector3(3.0f, 1.0f, 1.0f))
+                                     .with_lower_corner(Float3(2.0f, -1.0f, -1.0f))
+                                     .with_upper_corner(Float3(3.0f, 1.0f, 1.0f))
                                      .make_host_shared();
 
     const auto sync = Sync::builder()
@@ -201,10 +201,10 @@ TEST(Sink, TracingDespawnUsesPositionVelocityAndUpdateDt) {
     ASSERT_NE(velocity_state, nullptr);
     ASSERT_NE(active_state, nullptr);
 
-    position_state->data()[0] = Vector3(1.0f, 0.0f, 0.0f);
-    position_state->data()[1] = Vector3(-2.0f, 0.0f, 0.0f);
-    velocity_state->data()[0] = Vector3(1.0f, 0.0f, 0.0f);
-    velocity_state->data()[1] = Vector3(1.0f, 0.0f, 0.0f);
+    position_state->data()[0] = Float3(1.0f, 0.0f, 0.0f);
+    position_state->data()[1] = Float3(-2.0f, 0.0f, 0.0f);
+    velocity_state->data()[0] = Float3(1.0f, 0.0f, 0.0f);
+    velocity_state->data()[1] = Float3(1.0f, 0.0f, 0.0f);
     active_state->data()[0]   = 1;
     active_state->data()[1]   = 1;
 
@@ -218,6 +218,6 @@ TEST(Sink, TracingDespawnUsesPositionVelocityAndUpdateDt) {
     sink.update(2.5f);
 
     EXPECT_EQ(fluid->particle_count(), std::size_t { 1 });
-    const Vector3 remaining_position = position_state->data()[0];
-    expect_vec_near(remaining_position, Vector3(-2.0f, 0.0f, 0.0f));
+    const Float3 remaining_position = position_state->data()[0];
+    expect_vec_near(remaining_position, Float3(-2.0f, 0.0f, 0.0f));
 }

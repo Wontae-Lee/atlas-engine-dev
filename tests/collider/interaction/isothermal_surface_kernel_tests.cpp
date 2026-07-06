@@ -8,11 +8,11 @@ namespace {
 
 using atlas::DiffuseSampling;
 using atlas::IsothermalSurfaceInteraction;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::tol;
 
 bool
-is_finite_vec(const Vector3& v) {
+is_finite_vec(const Float3& v) {
     return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
 }
 
@@ -29,8 +29,8 @@ TEST(IsothermalSurfaceKernel, HeaderExportsUsableInteractionKernel) {
                             .with_momentum_acc(0.0f)
                             .build();
 
-    const Vector3 incident(0.0f, -4.0f, 0.0f);
-    const Vector3 out = kernel(incident, Vector3(0.0f, 1.0f, 0.0f));
+    const Float3 incident(0.0f, -4.0f, 0.0f);
+    const Float3 out = kernel(incident, Float3(0.0f, 1.0f, 0.0f));
 
     EXPECT_TRUE(is_finite_vec(out));
     EXPECT_NEAR(out.x, 0.0f, tol);

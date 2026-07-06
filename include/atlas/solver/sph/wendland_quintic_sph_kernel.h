@@ -59,19 +59,19 @@ struct WendlandQuinticSphKernel final {
 
     /** @brief Wendland C2 density weight `alpha*(1-q)^4*(1+4q)`,
      *  `alpha = 21/(2*pi*h^3)`. `0` outside `[0, cell_size]`. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     density_weight(float radius, float cell_size) noexcept;
 
     /** @brief Exact analytic gradient of `density_weight`, scaled along
      *  `delta`. `0` outside `(0, cell_size]`. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3
-    pressure_gradient(const Vector3& delta,
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static Float3
+    pressure_gradient(const Float3& delta,
                       float radius,
                       float cell_size) noexcept;
 
     /** @brief Exact analytic (radially-symmetric) Laplacian of
      *  `density_weight`. `0` outside `[0, cell_size]`. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     viscosity_laplacian(float radius, float cell_size) noexcept;
 };
 
@@ -94,13 +94,13 @@ WendlandQuinticSphKernel::density_weight(const float radius,
         * (1.0f + 4.0f * q);
 }
 
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-WendlandQuinticSphKernel::pressure_gradient(const Vector3& delta,
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+WendlandQuinticSphKernel::pressure_gradient(const Float3& delta,
                                             const float radius,
                                             const float cell_size) noexcept {
 
     if (!(cell_size > 0.0f) || !(radius > 0.0f) || radius > cell_size) {
-        return Vector3(0.0f, 0.0f, 0.0f);
+        return Float3(0.0f, 0.0f, 0.0f);
     }
 
     const float q           = radius / cell_size;

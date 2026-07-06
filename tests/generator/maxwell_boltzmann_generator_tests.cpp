@@ -11,10 +11,10 @@ namespace {
 using atlas::GenerateType;
 using atlas::MaxwellBoltzmannGenerate;
 using atlas::MaxwellBoltzmannGenerator;
-using atlas::Vector3;
+using atlas::Float3;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, atlas::tol);
     EXPECT_NEAR(actual.y, expected.y, atlas::tol);
     EXPECT_NEAR(actual.z, expected.z, atlas::tol);
@@ -23,14 +23,14 @@ expect_vec_near(const Vector3& actual, const Vector3& expected) {
 }
 
 TEST(MaxwellBoltzmannGenerator, OperatorReturnsZeroForInvalidPhysicalParameters) {
-    const MaxwellBoltzmannGenerate generator(13u, Vector3(1.0f, 2.0f, 3.0f));
+    const MaxwellBoltzmannGenerate generator(13u, Float3(1.0f, 2.0f, 3.0f));
 
-    expect_vec_near(generator.generate(0.0f, 1.0f), Vector3(0.0f, 0.0f, 0.0f));
-    expect_vec_near(generator.generate(300.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f));
+    expect_vec_near(generator.generate(0.0f, 1.0f), Float3(0.0f, 0.0f, 0.0f));
+    expect_vec_near(generator.generate(300.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f));
 }
 
 TEST(MaxwellBoltzmannGenerator, DirectConstructorExposesConfiguredParameters) {
-    const MaxwellBoltzmannGenerator generator(300.0f, 4.65e-26f, Vector3(1.0f, 2.0f, 3.0f), 31u);
+    const MaxwellBoltzmannGenerator generator(300.0f, 4.65e-26f, Float3(1.0f, 2.0f, 3.0f), 31u);
 
     EXPECT_EQ(generator.type(), GenerateType::maxwell_boltzmann);
     EXPECT_NEAR(generator.param0(), 300.0f, atlas::tol);
@@ -44,7 +44,7 @@ TEST(MaxwellBoltzmannGenerator, BuilderConstructsConfiguredGenerator) {
     const auto generator = MaxwellBoltzmannGenerator::builder()
                                .with_temperature(350.0f)
                                .with_molecular_mass(3.0e-26f)
-                               .with_bulk_velocity(Vector3(1.0f, 0.0f, 0.0f))
+                               .with_bulk_velocity(Float3(1.0f, 0.0f, 0.0f))
                                .with_seed(9u)
                                .build();
 

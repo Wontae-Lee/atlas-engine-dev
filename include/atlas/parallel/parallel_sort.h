@@ -33,11 +33,10 @@ namespace detail {
             std::sort(std::execution::par, permutation.begin(), permutation.end(), by_key);
             std::vector<std::size_t> indices(count);
             std::iota(indices.begin(), indices.end(), std::size_t { 0 });
-            std::for_each(std::execution::par, indices.begin(), indices.end(),
-                          [&](const std::size_t i) {
-                              keys[i]   = keys_copy[permutation[i]];
-                              values[i] = values_copy[permutation[i]];
-                          });
+            std::for_each(std::execution::par, indices.begin(), indices.end(), [&](const std::size_t i) {
+                keys[i]   = keys_copy[permutation[i]];
+                values[i] = values_copy[permutation[i]];
+            });
         } else {
             std::sort(permutation.begin(), permutation.end(), by_key);
             for (std::size_t i = 0; i < count; ++i) {

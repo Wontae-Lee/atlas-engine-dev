@@ -12,7 +12,7 @@ using atlas::Container2;
 using atlas::Container3;
 using atlas::Container4;
 using atlas::TriangleContainer4;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::eps;
 
 }
@@ -129,14 +129,14 @@ TEST(Container, AliasesHaveExpectedTypes) {
     static_assert(std::is_same_v<Container2<float>, Container<float, 2>>);
     static_assert(std::is_same_v<Container3<float>, Container<float, 3>>);
     static_assert(std::is_same_v<Container4<float>, Container<float, 4>>);
-    static_assert(std::is_same_v<TriangleContainer4, Container<Vector3, 4>>);
+    static_assert(std::is_same_v<TriangleContainer4, Container<Float3, 4>>);
 }
 
 TEST(TriangleContainer4, HoldsFourVector3) {
-    const Vector3 a(0.0f, 0.0f, 0.0f);
-    const Vector3 b(1.0f, 0.0f, 0.0f);
-    const Vector3 c(0.0f, 1.0f, 0.0f);
-    const Vector3 n(0.0f, 0.0f, 1.0f);
+    const Float3 a(0.0f, 0.0f, 0.0f);
+    const Float3 b(1.0f, 0.0f, 0.0f);
+    const Float3 c(0.0f, 1.0f, 0.0f);
+    const Float3 n(0.0f, 0.0f, 1.0f);
 
     TriangleContainer4 t(a, b, c, n);
 

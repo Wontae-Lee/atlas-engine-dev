@@ -42,7 +42,7 @@ public:
     ATLAS_HOST void
     build() override;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
 public:
@@ -50,7 +50,7 @@ public:
      *  the same `(x, y)` quadrant as the query particle (see this
      *  file's top-of-file documentation). */
     ATLAS_HOST void
-    build_neighbors(int alive, const Vector3* pos);
+    build_neighbors(int alive, const Float3* pos);
 };
 
 /** @brief Fluent builder for `QuadtreeSearcher`; requires non-null
@@ -65,10 +65,10 @@ public:
     ATLAS_HOST Builder&
     with_fluid(FluidHostPtr fluid) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD QuadtreeSearcher
+    ATLAS_NODISCARD ATLAS_HOST QuadtreeSearcher
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<QuadtreeSearcher>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<QuadtreeSearcher>
     make_host_shared() const;
 
 private:

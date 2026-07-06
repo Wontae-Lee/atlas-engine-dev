@@ -28,10 +28,10 @@ public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     Unit(Geometry geometry,
          Sync sync,
-         std::optional<Vector3> velocity,
-         std::optional<Vector3> acceleration,
-         std::optional<Vector3> angular_velocity,
-         std::optional<Vector3> angular_acceleration) noexcept
+         std::optional<Float3> velocity,
+         std::optional<Float3> acceleration,
+         std::optional<Float3> angular_velocity,
+         std::optional<Float3> angular_acceleration) noexcept
         : _geometry(std::move(geometry))
         , _sync(std::move(sync)) {
         Unit::canonicalize_kinematics(
@@ -46,7 +46,7 @@ public:
         _angular_acceleration = std::move(angular_acceleration);
     }
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
@@ -87,19 +87,19 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    move(const Vector3& delta) noexcept {
+    move(const Float3& delta) noexcept {
         _sync.translation += delta;
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    rotate(const Vector3& axis, const float angle_rad) noexcept {
+    rotate(const Float3& axis, const float angle_rad) noexcept {
         const float axis_len2 = axis.length_squared();
 
         if (axis_len2 <= 0.0f) return;
 
-        const Vector3 normalized_axis = atlas::normalized_or(
+        const Float3 normalized_axis = atlas::normalized_or(
             axis,
-            Vector3(0.0f, 0.0f, 0.0f));
+            Float3(0.0f, 0.0f, 0.0f));
 
         const Quaternion rotation = Quaternion::from_axis_angle(normalized_axis, angle_rad);
 
@@ -108,17 +108,17 @@ public:
         _sync.rebuild_matrices();
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const Geometry&
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const Geometry&
     geometry() const noexcept {
         return _geometry;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const Sync&
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const Sync&
     sync() const noexcept {
         return _sync;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE AABB
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AABB
     world_bound() const noexcept {
         const AABB local_bound = _geometry.bound();
 
@@ -135,51 +135,51 @@ public:
         return transformed;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector3>&
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const std::optional<Float3>&
     velocity() const noexcept {
         return _velocity;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector3>&
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const std::optional<Float3>&
     acceleration() const noexcept {
         return _acceleration;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector3>&
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const std::optional<Float3>&
     angular_velocity() const noexcept {
         return _angular_velocity;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE const std::optional<Vector3>&
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const std::optional<Float3>&
     angular_acceleration() const noexcept {
         return _angular_acceleration;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     dynamic() const noexcept {
         return _velocity.has_value() || _angular_velocity.has_value();
     }
 
 private:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static void
-    canonicalize_kinematics(std::optional<Vector3>& velocity,
-                            std::optional<Vector3>& acceleration,
-                            std::optional<Vector3>& angular_velocity,
-                            std::optional<Vector3>& angular_acceleration) noexcept {
+    canonicalize_kinematics(std::optional<Float3>& velocity,
+                            std::optional<Float3>& acceleration,
+                            std::optional<Float3>& angular_velocity,
+                            std::optional<Float3>& angular_acceleration) noexcept {
         if (acceleration.has_value() && !velocity.has_value()) {
-            velocity = Vector3(0.0f, 0.0f, 0.0f);
+            velocity = Float3(0.0f, 0.0f, 0.0f);
         }
 
         if (velocity.has_value() && !acceleration.has_value()) {
-            acceleration = Vector3(0.0f, 0.0f, 0.0f);
+            acceleration = Float3(0.0f, 0.0f, 0.0f);
         }
 
         if (angular_acceleration.has_value() && !angular_velocity.has_value()) {
-            angular_velocity = Vector3(0.0f, 0.0f, 0.0f);
+            angular_velocity = Float3(0.0f, 0.0f, 0.0f);
         }
 
         if (angular_velocity.has_value() && !angular_acceleration.has_value()) {
-            angular_acceleration = Vector3(0.0f, 0.0f, 0.0f);
+            angular_acceleration = Float3(0.0f, 0.0f, 0.0f);
         }
     }
 
@@ -190,13 +190,13 @@ private:
 
     Sync _sync;
 
-    std::optional<Vector3> _velocity;
+    std::optional<Float3> _velocity;
 
-    std::optional<Vector3> _acceleration;
+    std::optional<Float3> _acceleration;
 
-    std::optional<Vector3> _angular_velocity;
+    std::optional<Float3> _angular_velocity;
 
-    std::optional<Vector3> _angular_acceleration;
+    std::optional<Float3> _angular_acceleration;
 };
 
 class Unit::Builder final {
@@ -210,21 +210,21 @@ public:
     with_sync(const SyncHostPtr& sync);
 
     ATLAS_HOST Builder&
-    with_velocity(const Vector3& v) noexcept;
+    with_velocity(const Float3& v) noexcept;
 
     ATLAS_HOST Builder&
-    with_acceleration(const Vector3& a) noexcept;
+    with_acceleration(const Float3& a) noexcept;
 
     ATLAS_HOST Builder&
-    with_angular_velocity(const Vector3& w) noexcept;
+    with_angular_velocity(const Float3& w) noexcept;
 
     ATLAS_HOST Builder&
-    with_angular_acceleration(const Vector3& alpha) noexcept;
+    with_angular_acceleration(const Float3& alpha) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD Unit
+    ATLAS_NODISCARD ATLAS_HOST Unit
     build();
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Unit>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Unit>
     make_host_shared();
 
 private:
@@ -236,13 +236,13 @@ private:
 
     std::optional<Sync> _sync;
 
-    std::optional<Vector3> _velocity;
+    std::optional<Float3> _velocity;
 
-    std::optional<Vector3> _acceleration;
+    std::optional<Float3> _acceleration;
 
-    std::optional<Vector3> _angular_velocity;
+    std::optional<Float3> _angular_velocity;
 
-    std::optional<Vector3> _angular_acceleration;
+    std::optional<Float3> _angular_acceleration;
 };
 
 using UnitHostPtr = atlas::host_shared_ptr<Unit>;

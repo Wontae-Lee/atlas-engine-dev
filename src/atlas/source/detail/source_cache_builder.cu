@@ -14,7 +14,7 @@ SourceCacheBuilder::rebuild(const DeviceBuffer<Unit>& units,
                             const float spacing,
                             const float tolerance,
                             HostBuffer<int>& local_unit_counts,
-                            DeviceBuffer<Vector3>& flat_local_positions,
+                            DeviceBuffer<Float3>& flat_local_positions,
                             DeviceBuffer<int>& flat_unit_indices,
                             std::size_t& local_particle_count,
                             DeviceBuffer<std::size_t>& species_cache,
@@ -43,7 +43,7 @@ SourceCacheBuilder::rebuild(const DeviceBuffer<Unit>& units,
     local_unit_counts.clear();
     local_unit_counts.resize(host_units.size(), 0);
 
-    HostBuffer<Vector3> host_flat_positions;
+    HostBuffer<Float3> host_flat_positions;
     HostBuffer<int> host_flat_unit_indices;
 
     const std::size_t spawn_operator_count = host_spawn_operators.size();
@@ -71,7 +71,7 @@ SourceCacheBuilder::rebuild(const DeviceBuffer<Unit>& units,
             for (int iz = 0; iz < nz; ++iz) {
                 for (int iy = 0; iy < ny; ++iy) {
                     for (int ix = 0; ix < nx; ++ix) {
-                        const Vector3 sample(
+                        const Float3 sample(
                             lower.x + static_cast<float>(ix) * spacing,
                             lower.y + static_cast<float>(iy) * spacing,
                             lower.z + static_cast<float>(iz) * spacing);
@@ -105,7 +105,7 @@ SourceCacheBuilder::rebuild(const DeviceBuffer<Unit>& units,
         return;
     }
 
-    flat_local_positions = DeviceBuffer<Vector3>(host_flat_positions.begin(), host_flat_positions.end());
+    flat_local_positions = DeviceBuffer<Float3>(host_flat_positions.begin(), host_flat_positions.end());
     flat_unit_indices    = DeviceBuffer<int>(host_flat_unit_indices.begin(), host_flat_unit_indices.end());
 
     species_cache.resize(total_count);
@@ -132,7 +132,7 @@ SourceCacheBuilder::rebuild(const DeviceBuffer<Unit>& units,
 
 void
 SourceCacheBuilder::clear(HostBuffer<int>& local_unit_counts,
-                          DeviceBuffer<Vector3>& flat_local_positions,
+                          DeviceBuffer<Float3>& flat_local_positions,
                           DeviceBuffer<int>& flat_unit_indices,
                           std::size_t& local_particle_count,
                           DeviceBuffer<std::size_t>& species_cache,

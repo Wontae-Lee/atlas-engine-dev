@@ -74,19 +74,19 @@ SAHBVH::assign_solid_angle_moment(
     const int start,
     const int end,
     const HostBuffer<TriangleContainer4>& triangles) const noexcept {
-    node.solid_angle_moment      = Vector3(0.0f, 0.0f, 0.0f);
-    node.solid_angle_normal_area = Vector3(0.0f, 0.0f, 0.0f);
+    node.solid_angle_moment      = Float3(0.0f, 0.0f, 0.0f);
+    node.solid_angle_normal_area = Float3(0.0f, 0.0f, 0.0f);
     node.solid_angle_area        = 0.0f;
 
     for (int i = start; i < end; ++i) {
         const int pid = h_indices[i];
 
-        const Vector3& a = triangles[pid].a();
-        const Vector3& b = triangles[pid].b();
-        const Vector3& c = triangles[pid].c();
+        const Float3& a = triangles[pid].a();
+        const Float3& b = triangles[pid].b();
+        const Float3& c = triangles[pid].c();
 
-        const Vector3 normal_area = atlas::cross(b - a, c - a) * 0.5f;
-        const float area          = normal_area.length();
+        const Float3 normal_area = atlas::cross(b - a, c - a) * 0.5f;
+        const float area         = normal_area.length();
 
         if (!(area > 0.0f)) {
             continue;
@@ -131,11 +131,11 @@ SAHBVH::build_recursive(
         centroid_bounds.merge(h_centroids[pid]);
     }
 
-    const Vector3 ext     = centroid_bounds.extents();
+    const Float3 ext      = centroid_bounds.extents();
     // All centroids coincide (or nearly so) on every axis: there is no
     // meaningful spatial spread left to split on, so stop recursing rather
     // than attempt (and fail) to find a useful SAH split.
-    const bool degenerate = atlas::all(ext <= Vector3(eps));
+    const bool degenerate = atlas::all(ext <= Float3(eps));
     const int count       = end - start;
 
     if (count <= _leaf_size || degenerate) {

@@ -1,7 +1,7 @@
 #pragma once
 #include <atlas/math/constants.h>
-#include <atlas/math/matrix/matrix3x3.h>
+#include <atlas/math/matrix/float3x3.h>
 #include <atlas/math/quaternion.h>
 #include <atlas/math/vector/bool3.h>
-#include <atlas/math/vector/vector3.h>
-#include <atlas/math/vector/vector3i.h>
+#include <atlas/math/vector/float3.h>
+#include <atlas/math/vector/int3.h>

@@ -125,11 +125,12 @@ public:
 
     DsmcSolver() = default;
 
-    ATLAS_HOST DsmcSolver(UniverseHostPtr universe,
-                          FluidHostPtr fluid,
-                          SearcherHostPtr searcher,
-                          DsmcKernelType kernel_type              = DsmcKernelType::hard_sphere,
-                          DsmcCollisionWorkloadType workload_type = DsmcCollisionWorkloadType::cell) noexcept;
+    ATLAS_HOST
+    DsmcSolver(UniverseHostPtr universe,
+               FluidHostPtr fluid,
+               SearcherHostPtr searcher,
+               DsmcKernelType kernel_type              = DsmcKernelType::hard_sphere,
+               DsmcCollisionWorkloadType workload_type = DsmcCollisionWorkloadType::cell) noexcept;
 
     ~DsmcSolver() override = default;
 
@@ -146,10 +147,10 @@ public:
     ATLAS_HOST void
     solve(const DeviceBuffer<int>* allocated_solver, int index, float dt) override;
 
-    ATLAS_HOST ATLAS_NODISCARD DsmcKernelType
+    ATLAS_NODISCARD ATLAS_HOST DsmcKernelType
     kernel_type() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD DsmcCollisionWorkloadType
+    ATLAS_NODISCARD ATLAS_HOST DsmcCollisionWorkloadType
     workload_type() const noexcept;
 
     ATLAS_HOST void
@@ -249,7 +250,7 @@ public:
      *        particle index, or `-1` on any out-of-range/invalid input
      *        (used as the sentinel `collide_indexed_pair` checks for).
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static int
     particle_at(int nth,
                 int begin,
                 int end,
@@ -333,8 +334,8 @@ DsmcSolver::collide_indexed_pair(const Probe& probe,
         return false;
     }
 
-    Vector3 lhs_velocity = probe.velocity_ptr[particle_i];
-    Vector3 rhs_velocity = probe.velocity_ptr[particle_j];
+    Float3 lhs_velocity = probe.velocity_ptr[particle_i];
+    Float3 rhs_velocity = probe.velocity_ptr[particle_j];
 
     const float relative_speed_squared = (lhs_velocity - rhs_velocity).length_squared();
     const float sigma_g                = probe.kernel.sigma_g(

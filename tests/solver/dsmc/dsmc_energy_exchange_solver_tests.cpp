@@ -137,8 +137,8 @@ TEST(DsmcEnergyExchangeSolver, ExchangeParticleInternalEnergyWritesModeSplit) {
 
 TEST(DsmcEnergyExchangeSolver, RescaleRelativeVelocityPreservesCenterVelocity) {
     const auto material = atlas::test::make_dsmc_material();
-    atlas::Vector3 lhs(1.0f, 0.0f, 0.0f);
-    atlas::Vector3 rhs(-1.0f, 0.0f, 0.0f);
+    atlas::Float3 lhs(1.0f, 0.0f, 0.0f);
+    atlas::Float3 rhs(-1.0f, 0.0f, 0.0f);
 
     Solver::rescale_relative_velocity(lhs, rhs, material, material, 1.0f);
 

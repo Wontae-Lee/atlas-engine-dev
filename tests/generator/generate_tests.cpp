@@ -9,10 +9,10 @@ using atlas::GenerateType;
 using atlas::MaxwellBoltzmannGenerate;
 using atlas::MaxwellSigmaGenerate;
 using atlas::UniformGenerate;
-using atlas::Vector3;
+using atlas::Float3;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, atlas::tol);
     EXPECT_NEAR(actual.y, expected.y, atlas::tol);
     EXPECT_NEAR(actual.z, expected.z, atlas::tol);
@@ -69,7 +69,7 @@ TEST(Generate, InvalidPhysicalParametersReturnZeroForBoltzmannAndSigma) {
     const Generate sigma(GenerateType::maxwell_sigma, 7u);
     const Generate boltzmann(GenerateType::maxwell_boltzmann, 9u);
 
-    expect_vec_near(sigma.generate(0.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f));
-    expect_vec_near(boltzmann.generate(0.0f, 1.0f), Vector3(0.0f, 0.0f, 0.0f));
-    expect_vec_near(boltzmann.generate(300.0f, 0.0f), Vector3(0.0f, 0.0f, 0.0f));
+    expect_vec_near(sigma.generate(0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f));
+    expect_vec_near(boltzmann.generate(0.0f, 1.0f), Float3(0.0f, 0.0f, 0.0f));
+    expect_vec_near(boltzmann.generate(300.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f));
 }

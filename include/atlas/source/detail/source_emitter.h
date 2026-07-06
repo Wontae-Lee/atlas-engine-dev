@@ -58,7 +58,7 @@ public:
 
                 const auto sample_seed = static_cast<unsigned int>(shuffle(dst, device_probe.emission_seed));
 
-                Vector3 world_pos;
+                Float3 world_pos;
                 device_probe.units[unit_index].sync().sync_to_world(
                     device_probe.flat_local_positions[i],
                     world_pos);

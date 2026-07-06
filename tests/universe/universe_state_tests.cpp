@@ -7,7 +7,7 @@
 namespace {
 
 bool
-expect_vec_near(const atlas::Vector3& a, const atlas::Vector3& b) {
+expect_vec_near(const atlas::Float3& a, const atlas::Float3& b) {
     return std::abs(a.x - b.x) <= atlas::tol
         && std::abs(a.y - b.y) <= atlas::tol
         && std::abs(a.z - b.z) <= atlas::tol;
@@ -32,12 +32,12 @@ TEST(UniverseState, TemperatureStateStoresScalarData) {
 TEST(UniverseState, BulkVelocityStateStoresVectorData) {
     atlas::UniverseBulkVelocityState state(2);
 
-    state.data()[0] = atlas::Vector3(1.0f, 2.0f, 3.0f);
+    state.data()[0] = atlas::Float3(1.0f, 2.0f, 3.0f);
 
-    const atlas::Vector3 v = state.data()[0];
+    const atlas::Float3 v = state.data()[0];
 
     EXPECT_EQ(state.size(), 2u);
-    EXPECT_TRUE(expect_vec_near(v, atlas::Vector3(1.0f, 2.0f, 3.0f)));
+    EXPECT_TRUE(expect_vec_near(v, atlas::Float3(1.0f, 2.0f, 3.0f)));
 }
 
 TEST(UniverseState, ThermalEnergyStateStoresScalarData) {

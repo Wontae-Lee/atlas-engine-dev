@@ -41,14 +41,14 @@ Searcher::reset() noexcept {
     _is_invalidated = true;
 }
 
-Vector3
+Float3
 Searcher::lower_corner() const noexcept {
-    return _universe ? _universe->lower_corner() : Vector3(0.0f, 0.0f, 0.0f);
+    return _universe ? _universe->lower_corner() : Float3(0.0f, 0.0f, 0.0f);
 }
 
-Vector3i
+Int3
 Searcher::grid_size() const noexcept {
-    return _universe ? _universe->grid_size() : Vector3i(0, 0, 0);
+    return _universe ? _universe->grid_size() : Int3(0, 0, 0);
 }
 
 float
@@ -91,7 +91,7 @@ Searcher::neighbor_count() const noexcept {
     return _neighbor_count;
 }
 
-const Vector3*
+const Float3*
 Searcher::position_ptr() const noexcept {
     if (!_fluid) {
         return nullptr;
@@ -131,20 +131,20 @@ Searcher::init_indices_iota(const int alive) {
 }
 
 void
-Searcher::compute_grid_keys(const int alive, const Vector3* positions) {
+Searcher::compute_grid_keys(const int alive, const Float3* positions) {
     auto* keys_ptr    = atlas::raw_pointer_cast(_keys.data());
     auto* indices_ptr = atlas::raw_pointer_cast(_indices.data());
-    const Vector3 lc  = _universe->lower_corner();
+    const Float3 lc   = _universe->lower_corner();
     const float inv_h = _universe->inverse_cell_size();
-    const Vector3i gs = _universe->grid_size();
+    const Int3 gs     = _universe->grid_size();
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         alive,
         [=] ATLAS_ALL_DEVICE(const int i) {
-            const Vector3i ijk = Searcher::cell_for(positions[i], lc, inv_h, gs);
-            keys_ptr[i]        = Searcher::linear_key(ijk.x, ijk.y, ijk.z, gs);
-            indices_ptr[i]     = i;
+            const Int3 ijk = Searcher::cell_for(positions[i], lc, inv_h, gs);
+            keys_ptr[i]    = Searcher::linear_key(ijk.x, ijk.y, ijk.z, gs);
+            indices_ptr[i] = i;
         });
 }
 
@@ -163,8 +163,8 @@ Searcher::sort_by_key(const int alive) {
 void
 Searcher::build_cell_ranges(const int alive) {
     const int cell_count = _universe->cell_count();
-    auto* start            = atlas::raw_pointer_cast(_cell_start.data());
-    auto* end              = atlas::raw_pointer_cast(_cell_end.data());
+    auto* start          = atlas::raw_pointer_cast(_cell_start.data());
+    auto* end            = atlas::raw_pointer_cast(_cell_end.data());
 
     // -1 sentinel marks a cell with no particles at all (distinguishes
     // "empty cell" from "cell 0..0", which build_cell_neighbors and

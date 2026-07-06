@@ -18,10 +18,10 @@ using atlas::FluidPositionState;
 using atlas::SearcherHostPtr;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
-using atlas::Vector3;
+using atlas::Float3;
 
 inline bool
-expect_vec_near(const Vector3& a, const Vector3& b) {
+expect_vec_near(const Float3& a, const Float3& b) {
     return std::abs(a.x - b.x) <= atlas::tol
         && std::abs(a.y - b.y) <= atlas::tol
         && std::abs(a.z - b.z) <= atlas::tol;
@@ -39,7 +39,7 @@ public:
 
     void
     build() override {
-        const Vector3* positions = position_ptr();
+        const Float3* positions = position_ptr();
         const int alive          = active_count();
 
         if (!positions || alive <= 0) {
@@ -97,8 +97,8 @@ public:
 inline UniverseHostPtr
 make_universe() {
     return Universe::builder()
-        .with_lower_corner(Vector3(0.0f, 0.0f, 0.0f))
-        .with_upper_corner(Vector3(1.0f, 1.0f, 1.0f))
+        .with_lower_corner(Float3(0.0f, 0.0f, 0.0f))
+        .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
         .with_cell_size(0.5f)
         .make_host_shared();
 }
@@ -116,10 +116,10 @@ make_neighbor_fluid() {
 
     fluid->set_particle_count(4);
     auto& positions = fluid->state<FluidPositionState>()->data();
-    positions[0]    = Vector3(0.10f, 0.10f, 0.10f);
-    positions[1]    = Vector3(0.20f, 0.10f, 0.10f);
-    positions[2]    = Vector3(0.85f, 0.85f, 0.85f);
-    positions[3]    = Vector3(0.95f, 0.85f, 0.85f);
+    positions[0]    = Float3(0.10f, 0.10f, 0.10f);
+    positions[1]    = Float3(0.20f, 0.10f, 0.10f);
+    positions[2]    = Float3(0.85f, 0.85f, 0.85f);
+    positions[3]    = Float3(0.95f, 0.85f, 0.85f);
 
     return fluid;
 }
@@ -130,10 +130,10 @@ make_grid_fluid() {
 
     fluid->set_particle_count(4);
     auto& positions = fluid->state<FluidPositionState>()->data();
-    positions[0]    = Vector3(0.10f, 0.10f, 0.10f);
-    positions[1]    = Vector3(0.75f, 0.10f, 0.10f);
-    positions[2]    = Vector3(1.20f, 1.20f, 1.20f);
-    positions[3]    = Vector3(-0.20f, 0.70f, 0.10f);
+    positions[0]    = Float3(0.10f, 0.10f, 0.10f);
+    positions[1]    = Float3(0.75f, 0.10f, 0.10f);
+    positions[2]    = Float3(1.20f, 1.20f, 1.20f);
+    positions[3]    = Float3(-0.20f, 0.70f, 0.10f);
 
     return fluid;
 }
@@ -144,9 +144,9 @@ make_axis_pruning_fluid() {
 
     fluid->set_particle_count(3);
     auto& positions = fluid->state<FluidPositionState>()->data();
-    positions[0]    = Vector3(0.10f, 0.10f, 0.10f);
-    positions[1]    = Vector3(0.55f, 0.10f, 0.10f);
-    positions[2]    = Vector3(0.90f, 0.10f, 0.10f);
+    positions[0]    = Float3(0.10f, 0.10f, 0.10f);
+    positions[1]    = Float3(0.55f, 0.10f, 0.10f);
+    positions[2]    = Float3(0.90f, 0.10f, 0.10f);
 
     return fluid;
 }
@@ -157,10 +157,10 @@ make_quadrant_fluid() {
 
     fluid->set_particle_count(4);
     auto& positions = fluid->state<FluidPositionState>()->data();
-    positions[0]    = Vector3(0.10f, 0.10f, 0.10f);
-    positions[1]    = Vector3(0.20f, 0.20f, 0.40f);
-    positions[2]    = Vector3(0.70f, 0.20f, 0.10f);
-    positions[3]    = Vector3(0.80f, 0.20f, 0.10f);
+    positions[0]    = Float3(0.10f, 0.10f, 0.10f);
+    positions[1]    = Float3(0.20f, 0.20f, 0.40f);
+    positions[2]    = Float3(0.70f, 0.20f, 0.10f);
+    positions[3]    = Float3(0.80f, 0.20f, 0.10f);
 
     return fluid;
 }
@@ -171,10 +171,10 @@ make_octant_fluid() {
 
     fluid->set_particle_count(4);
     auto& positions = fluid->state<FluidPositionState>()->data();
-    positions[0]    = Vector3(0.10f, 0.10f, 0.10f);
-    positions[1]    = Vector3(0.20f, 0.20f, 0.20f);
-    positions[2]    = Vector3(0.70f, 0.20f, 0.20f);
-    positions[3]    = Vector3(0.80f, 0.20f, 0.20f);
+    positions[0]    = Float3(0.10f, 0.10f, 0.10f);
+    positions[1]    = Float3(0.20f, 0.20f, 0.20f);
+    positions[2]    = Float3(0.70f, 0.20f, 0.20f);
+    positions[3]    = Float3(0.80f, 0.20f, 0.20f);
 
     return fluid;
 }

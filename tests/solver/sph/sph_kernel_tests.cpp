@@ -9,11 +9,11 @@ using atlas::SphKernel;
 using atlas::SphKernelType;
 using atlas::StandardSphKernel;
 using atlas::tol;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::WendlandQuinticSphKernel;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected, const float tolerance) {
+expect_vec_near(const Float3& actual, const Float3& expected, const float tolerance) {
     EXPECT_NEAR(actual.x, expected.x, tolerance);
     EXPECT_NEAR(actual.y, expected.y, tolerance);
     EXPECT_NEAR(actual.z, expected.z, tolerance);
@@ -28,7 +28,7 @@ TEST(SphKernel, DefaultConstructorSelectsStandardKernel) {
 }
 
 TEST(SphKernel, StaticDispatchMatchesConcreteKernels) {
-    const Vector3 delta(0.25f, 0.0f, 0.0f);
+    const Float3 delta(0.25f, 0.0f, 0.0f);
 
     EXPECT_NEAR(
         SphKernel::density_weight(SphKernelType::standard, 0.25f, 1.0f),

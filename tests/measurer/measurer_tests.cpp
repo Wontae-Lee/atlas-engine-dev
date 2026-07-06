@@ -18,7 +18,7 @@ using atlas::SearcherHostPtr;
 using atlas::SpatialHashingSearcher;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
-using atlas::Vector3;
+using atlas::Float3;
 
 class DummyMeasure final : public Measurer {
 public:
@@ -50,8 +50,8 @@ private:
 UniverseHostPtr
 make_universe() {
     return Universe::builder()
-        .with_lower_corner(Vector3(0.0f, 0.0f, 0.0f))
-        .with_upper_corner(Vector3(1.0f, 1.0f, 1.0f))
+        .with_lower_corner(Float3(0.0f, 0.0f, 0.0f))
+        .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
         .with_cell_size(1.0f)
         .make_host_shared();
 }

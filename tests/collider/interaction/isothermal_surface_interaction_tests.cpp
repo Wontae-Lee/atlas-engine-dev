@@ -9,19 +9,19 @@ namespace {
 
 using atlas::DiffuseSampling;
 using atlas::IsothermalSurfaceInteraction;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::reflected;
 using atlas::tol;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, tol);
     EXPECT_NEAR(actual.y, expected.y, tol);
     EXPECT_NEAR(actual.z, expected.z, tol);
 }
 
 bool
-is_finite_vec(const Vector3& v) {
+is_finite_vec(const Float3& v) {
     return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
 }
 
@@ -98,12 +98,12 @@ TEST(IsothermalSurfaceInteraction, SpecularModeMatchesReflectedDirection) {
     interaction.set_restitution(0.5f);
     interaction.set_momentum_acc(0.0f);
 
-    const Vector3 incident(1.0f, -2.0f, 0.0f);
-    const Vector3 normal(0.0f, 1.0f, 0.0f);
+    const Float3 incident(1.0f, -2.0f, 0.0f);
+    const Float3 normal(0.0f, 1.0f, 0.0f);
 
-    const Vector3 out = interaction(incident, normal);
+    const Float3 out = interaction(incident, normal);
 
-    const Vector3 expected = reflected(incident, normal) * 0.5f;
+    const Float3 expected = reflected(incident, normal) * 0.5f;
     expect_vec_near(out, expected);
 }
 
@@ -112,9 +112,9 @@ TEST(IsothermalSurfaceInteraction, DiffuseModeReturnsFiniteDirection) {
     interaction.set_restitution(0.5f);
     interaction.set_momentum_acc(1.0f);
 
-    const Vector3 incident(1.0f, -1.0f, 0.5f);
+    const Float3 incident(1.0f, -1.0f, 0.5f);
 
-    const Vector3 out = interaction(incident, Vector3(0.0f, 1.0f, 0.0f));
+    const Float3 out = interaction(incident, Float3(0.0f, 1.0f, 0.0f));
 
     EXPECT_TRUE(is_finite_vec(out));
     EXPECT_GT(out.length(), 0.0f);

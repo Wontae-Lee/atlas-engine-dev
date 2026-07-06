@@ -56,14 +56,15 @@ public:
 public:
     BoltzmannMeasurer() = default;
 
-    ATLAS_HOST BoltzmannMeasurer(UniverseHostPtr universe,
-                                 FluidHostPtr fluid,
-                                 SearcherHostPtr searcher,
-                                 MeasureModeType measure_mode = MeasureModeType::all) noexcept;
+    ATLAS_HOST
+    BoltzmannMeasurer(UniverseHostPtr universe,
+                      FluidHostPtr fluid,
+                      SearcherHostPtr searcher,
+                      MeasureModeType measure_mode = MeasureModeType::all) noexcept;
 
     ~BoltzmannMeasurer() override = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     /** @brief Rebuilds the probe and runs `measure_field()` (and
@@ -77,7 +78,7 @@ public:
     ATLAS_HOST void
     measure(float dt) override;
 
-    ATLAS_HOST ATLAS_NODISCARD MeasureModeType
+    ATLAS_NODISCARD ATLAS_HOST MeasureModeType
     measure_mode() const noexcept override;
 
 public:
@@ -115,10 +116,10 @@ public:
     ATLAS_HOST Builder&
     with_measure_mode(MeasureModeType measure_mode) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD BoltzmannMeasurer
+    ATLAS_NODISCARD ATLAS_HOST BoltzmannMeasurer
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<BoltzmannMeasurer>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<BoltzmannMeasurer>
     make_host_shared() const;
 
 private:

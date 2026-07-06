@@ -87,8 +87,8 @@ VolumeMeasurer::measure_volume() {
         return;
     }
 
-    const Vector3 lower_corner = _universe->lower_corner();
-    const Vector3i grid_size   = _universe->grid_size();
+    const Float3 lower_corner  = _universe->lower_corner();
+    const Int3 grid_size       = _universe->grid_size();
     const float cell_size      = _universe->cell_size();
     const float cell_volume    = _universe->cell_volume();
     const float inv_cell_size  = _universe->inverse_cell_size();
@@ -96,7 +96,7 @@ VolumeMeasurer::measure_volume() {
     const int samples_per_cell = samples_axis * samples_axis * samples_axis;
     const float sample_step    = cell_size / static_cast<float>(samples_axis);
     const float sample_volume  = cell_volume / static_cast<float>(samples_per_cell);
-    const int cell_count     = _universe->cell_count();
+    const int cell_count       = _universe->cell_count();
 
     auto& volume = state->data();
     if (volume.size() != static_cast<std::size_t>(cell_count)) {
@@ -115,12 +115,12 @@ VolumeMeasurer::measure_volume() {
     }
 
     _unit_regions.resize(_universe->measurer_units().size());
-    const Vector3i grid_low(0, 0, 0);
-    const Vector3i grid_high = grid_size - Vector3i(1, 1, 1);
+    const Int3 grid_low(0, 0, 0);
+    const Int3 grid_high = grid_size - Int3(1, 1, 1);
     const atlas::AABB grid_bound(
         lower_corner,
         lower_corner + atlas::to_vector3(grid_size) * cell_size);
-    const Vector3i expand(1, 1, 1);
+    const Int3 expand(1, 1, 1);
 
     auto* units_ptr         = atlas::raw_pointer_cast(_universe->measurer_units().units().data());
     auto* regions_ptr       = atlas::raw_pointer_cast(_unit_regions.data());
@@ -186,21 +186,21 @@ VolumeMeasurer::measure_volume() {
         0,
         cell_count,
         [=] ATLAS_ALL_DEVICE(const int cell_index) {
-            const Vector3i cell(
+            const Int3 cell(
                 cell_index % grid_size.x,
                 (cell_index / grid_size.x) % grid_size.y,
                 cell_index / xy_cell_count);
-            const Vector3 cell_origin = lower_corner + atlas::to_vector3(cell) * cell_size;
+            const Float3 cell_origin = lower_corner + atlas::to_vector3(cell) * cell_size;
 
             int occupied_samples = 0;
 
             for (int sample = 0; sample < samples_per_cell; ++sample) {
-                const Vector3i sample_ijk(
+                const Int3 sample_ijk(
                     sample % samples_axis,
                     (sample / samples_axis) % samples_axis,
                     sample / (samples_axis * samples_axis));
-                const Vector3 sample_point = cell_origin
-                    + (atlas::to_vector3(sample_ijk) + Vector3(0.5f, 0.5f, 0.5f)) * sample_step;
+                const Float3 sample_point = cell_origin
+                    + (atlas::to_vector3(sample_ijk) + Float3(0.5f, 0.5f, 0.5f)) * sample_step;
 
                 for (int unit_index = 0; unit_index < unit_count; ++unit_index) {
                     const UnitRegion& region = regions_ptr[unit_index];
@@ -208,8 +208,8 @@ VolumeMeasurer::measure_volume() {
                         continue;
                     }
 
-                    const auto& unit          = units_ptr[unit_index];
-                    const Vector3 local_point = unit.sync().sync_to_local(sample_point);
+                    const auto& unit         = units_ptr[unit_index];
+                    const Float3 local_point = unit.sync().sync_to_local(sample_point);
                     if (unit.geometry().is_inside(local_point, 0.0f)) {
                         ++occupied_samples;
                         break;

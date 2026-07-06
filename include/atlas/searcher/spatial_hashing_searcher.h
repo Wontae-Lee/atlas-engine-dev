@@ -43,7 +43,7 @@ public:
     ATLAS_HOST void
     reset() noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     /** @brief Public-facing wrapper around `Searcher::prepare_grid_buffers`
@@ -57,7 +57,7 @@ public:
 
     /** @brief Public-facing wrapper around `Searcher::compute_grid_keys`. */
     ATLAS_HOST void
-    compute_keys(int alive, const Vector3* pos);
+    compute_keys(int alive, const Float3* pos);
 
     ATLAS_HOST void
     sort_by_key(int active);
@@ -70,31 +70,31 @@ public:
      *  documentation) — the unfiltered baseline the other three
      *  searchers restrict further. */
     ATLAS_HOST void
-    build_neighbors(int alive, const Vector3* pos);
+    build_neighbors(int alive, const Float3* pos);
 
-    ATLAS_HOST ATLAS_NODISCARD Vector3
+    ATLAS_NODISCARD ATLAS_HOST Float3
     lower_corner() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD Vector3i
+    ATLAS_NODISCARD ATLAS_HOST Int3
     grid_size() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     inverse_cell_size() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     cell_size() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD const int*
+    ATLAS_NODISCARD ATLAS_HOST const int*
     indices() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD const int*
+    ATLAS_NODISCARD ATLAS_HOST const int*
     cell_start() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD const int*
+    ATLAS_NODISCARD ATLAS_HOST const int*
     cell_end() const noexcept override;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static std::uint32_t
-    linear_key(const int ix, const int iy, const int iz, const Vector3i& gs) noexcept {
+    linear_key(const int ix, const int iy, const int iz, const Int3& gs) noexcept {
         return Searcher::linear_key(ix, iy, iz, gs);
     }
 };
@@ -111,10 +111,10 @@ public:
     ATLAS_HOST Builder&
     with_fluid(FluidHostPtr fluid) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD SpatialHashingSearcher
+    ATLAS_NODISCARD ATLAS_HOST SpatialHashingSearcher
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<SpatialHashingSearcher>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<SpatialHashingSearcher>
     make_host_shared() const;
 
 private:

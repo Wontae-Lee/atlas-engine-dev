@@ -11,7 +11,7 @@ MaxwellBoltzmannGenerator::builder() noexcept {
 
 MaxwellBoltzmannGenerator::MaxwellBoltzmannGenerator(const float temperature,
                                                      const float molecular_mass,
-                                                     const Vector3& bulk_velocity,
+                                                     const Float3& bulk_velocity,
                                                      const unsigned int seed) noexcept
     : _temperature(temperature)
     , _molecular_mass(molecular_mass)
@@ -19,7 +19,7 @@ MaxwellBoltzmannGenerator::MaxwellBoltzmannGenerator(const float temperature,
     , _operator(MaxwellBoltzmannGenerate(seed, bulk_velocity)) {
 }
 
-Vector3
+Float3
 MaxwellBoltzmannGenerator::generate() const {
     return _operator.generate(_temperature, _molecular_mass);
 }
@@ -62,7 +62,7 @@ MaxwellBoltzmannGenerator::Builder::with_molecular_mass(const float molecular_ma
 }
 
 MaxwellBoltzmannGenerator::Builder&
-MaxwellBoltzmannGenerator::Builder::with_bulk_velocity(const Vector3& bulk_velocity) noexcept {
+MaxwellBoltzmannGenerator::Builder::with_bulk_velocity(const Float3& bulk_velocity) noexcept {
     _bulk_velocity = bulk_velocity;
     return *this;
 }

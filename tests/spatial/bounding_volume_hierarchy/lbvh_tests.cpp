@@ -18,15 +18,15 @@ using atlas::MORTON_EXPAND_BITS_SECOND_MULTIPLIER;
 using atlas::MORTON_EXPAND_BITS_THIRD_MASK;
 using atlas::MORTON_EXPAND_BITS_THIRD_MULTIPLIER;
 using atlas::TriangleContainer4;
-using atlas::Vector3;
+using atlas::Float3;
 
 
 HostBuffer<TriangleContainer4>
 make_triangles() {
-    const TriangleContainer4 triangle(Vector3(0.0f, 0.0f, 0.0f),
-                                      Vector3(1.0f, 0.0f, 0.0f),
-                                      Vector3(0.0f, 1.0f, 0.0f),
-                                      Vector3(0.0f, 0.0f, 1.0f));
+    const TriangleContainer4 triangle(Float3(0.0f, 0.0f, 0.0f),
+                                      Float3(1.0f, 0.0f, 0.0f),
+                                      Float3(0.0f, 1.0f, 0.0f),
+                                      Float3(0.0f, 0.0f, 1.0f));
 
     HostBuffer<TriangleContainer4> triangles;
     triangles.push_back(triangle);

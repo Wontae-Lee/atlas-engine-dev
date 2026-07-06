@@ -129,9 +129,9 @@ Sink::despawn_particles(const SinkProbe& probe, int* removed_unit_indices) {
                 return;
             }
 
-            const Vector3& position = device_probe.positions[i];
-            bool should_despawn     = false;
-            int matched_unit_index  = -1;
+            const Float3& position = device_probe.positions[i];
+            bool should_despawn    = false;
+            int matched_unit_index = -1;
 
             for (int unit_index = 0; unit_index < device_probe.unit_count; ++unit_index) {
                 const int despawn_operator_index
@@ -151,8 +151,8 @@ Sink::despawn_particles(const SinkProbe& probe, int* removed_unit_indices) {
                             continue;
                         }
 
-                        const Vector3& velocity = device_probe.velocities[i];
-                        const float speed       = velocity.length();
+                        const Float3& velocity = device_probe.velocities[i];
+                        const float speed      = velocity.length();
                         if (!(device_probe.time_step > 0.0f) || !(speed > 0.0f)) {
                             continue;
                         }
@@ -166,12 +166,12 @@ Sink::despawn_particles(const SinkProbe& probe, int* removed_unit_indices) {
                     }
                 }
 
-                const auto& unit             = device_probe.units[unit_index];
-                const auto& sync_op          = unit.sync();
-                const auto& geometry_op      = unit.geometry();
-                const Vector3 local_position = sync_op.sync_to_local(position);
-                Vector3 despawn_vector       = local_position;
-                float despawn_value          = device_probe.tolerance;
+                const auto& unit            = device_probe.units[unit_index];
+                const auto& sync_op         = unit.sync();
+                const auto& geometry_op     = unit.geometry();
+                const Float3 local_position = sync_op.sync_to_local(position);
+                Float3 despawn_vector       = local_position;
+                float despawn_value         = device_probe.tolerance;
 
                 if (despawn_operator.type == DespawnType::tracing) {
                     if (device_probe.velocities == nullptr) {

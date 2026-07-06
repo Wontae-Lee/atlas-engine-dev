@@ -33,7 +33,7 @@ make_fluid(const std::size_t buffer_size = 8) {
     generators[0] = atlas::MaxwellBoltzmannGenerator::builder()
                         .with_temperature(300.0f)
                         .with_molecular_mass(4.651734e-26f)
-                        .with_bulk_velocity(atlas::Vector3(0.0f, 0.0f, 0.0f))
+                        .with_bulk_velocity(atlas::Float3(0.0f, 0.0f, 0.0f))
                         .with_seed(7u)
                         .make_host_shared();
 
@@ -47,8 +47,8 @@ make_fluid(const std::size_t buffer_size = 8) {
 atlas::Unit
 make_unit() {
     const auto geometry = atlas::Box::builder()
-                              .with_lower_corner(atlas::Vector3(-1.0f, -1.0f, -1.0f))
-                              .with_upper_corner(atlas::Vector3(1.0f, 1.0f, 1.0f))
+                              .with_lower_corner(atlas::Float3(-1.0f, -1.0f, -1.0f))
+                              .with_upper_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
                               .make_host_shared();
 
     const auto sync = atlas::Sync::builder()
@@ -68,8 +68,8 @@ make_spawn_operator() {
 atlas::UniverseHostPtr
 make_universe(const atlas::HostBuffer<atlas::Unit>& source_units) {
     return atlas::Universe::builder()
-        .with_lower_corner(atlas::Vector3(-10.0f, -10.0f, -10.0f))
-        .with_upper_corner(atlas::Vector3(10.0f, 10.0f, 10.0f))
+        .with_lower_corner(atlas::Float3(-10.0f, -10.0f, -10.0f))
+        .with_upper_corner(atlas::Float3(10.0f, 10.0f, 10.0f))
         .with_cell_size(1.0f)
         .with_source_units(source_units)
         .make_host_shared();

@@ -25,18 +25,18 @@ using atlas::Sync;
 using atlas::Unit;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::tol;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, tol);
     EXPECT_NEAR(actual.y, expected.y, tol);
     EXPECT_NEAR(actual.z, expected.z, tol);
 }
 
 FluidHostPtr
-make_fluid(const Vector3& position, const Vector3& velocity) {
+make_fluid(const Float3& position, const Float3& velocity) {
     auto fluid = Fluid::builder()
                      .with_buffer_size(1)
                      .make_host_shared();
@@ -51,17 +51,17 @@ make_fluid(const Vector3& position, const Vector3& velocity) {
 UniverseHostPtr
 make_universe(const HostBuffer<Unit>& collider_units) {
     return Universe::builder()
-        .with_lower_corner(Vector3(-10.0f, -10.0f, -10.0f))
-        .with_upper_corner(Vector3(10.0f, 10.0f, 10.0f))
+        .with_lower_corner(Float3(-10.0f, -10.0f, -10.0f))
+        .with_upper_corner(Float3(10.0f, 10.0f, 10.0f))
         .with_cell_size(1.0f)
         .with_collider_units(collider_units)
         .make_host_shared();
 }
 
 Unit
-make_plane_unit(const Vector3& linear_velocity = Vector3(0.0f, 0.0f, 0.0f)) {
+make_plane_unit(const Float3& linear_velocity = Float3(0.0f, 0.0f, 0.0f)) {
     static const auto geometry = Plane::builder()
-                                     .with_point_normal(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f))
+                                     .with_point_normal(Float3(0.0f, 0.0f, 0.0f), Float3(1.0f, 0.0f, 0.0f))
                                      .make_host_shared();
 
     const auto sync = Sync::builder()
@@ -88,8 +88,8 @@ make_specular_interaction() {
 
 void
 apply_kernel(PostColliderType type,
-             Vector3& position,
-             Vector3& velocity,
+             Float3& position,
+             Float3& velocity,
              const Unit& unit,
              float hit_distance,
              float sweep_speed) {
@@ -99,9 +99,9 @@ apply_kernel(PostColliderType type,
     kernel(
         position,
         velocity,
-        Vector3(2.0f, 0.0f, 0.0f),
-        Vector3(0.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f),
+        Float3(2.0f, 0.0f, 0.0f),
+        Float3(0.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
         hit_distance,
         sweep_speed,
         1.0f,
@@ -109,15 +109,15 @@ apply_kernel(PostColliderType type,
         interaction);
 }
 
-Vector3
+Float3
 collide_position(PostColliderType type) {
     const auto fluid = make_fluid(
-        Vector3(-1.0f, 0.0f, 0.0f),
-        Vector3(2.0f, 0.0f, 0.0f));
+        Float3(-1.0f, 0.0f, 0.0f),
+        Float3(2.0f, 0.0f, 0.0f));
 
     auto collider = Collider::builder()
                         .with_universe(make_universe(HostBuffer<Unit> {
-                            make_plane_unit(Vector3(0.5f, 0.0f, 0.0f))
+                            make_plane_unit(Float3(0.5f, 0.0f, 0.0f))
                         }))
                         .with_fluid(fluid)
                         .with_surface_interactions(
@@ -129,7 +129,7 @@ collide_position(PostColliderType type) {
 
     expect_vec_near(
         fluid->state<FluidVelocityState>()->data()[0],
-        Vector3(-1.0f, 0.0f, 0.0f));
+        Float3(-1.0f, 0.0f, 0.0f));
 
     return fluid->state<FluidPositionState>()->data()[0];
 }
@@ -160,8 +160,8 @@ TEST(PostColliderKernel, CopyAndAssignmentPreserveActiveKernel) {
 }
 
 TEST(PostColliderKernel, FastStopsAtHitPointAndUpdatesVelocity) {
-    Vector3 position(-1.0f, 0.0f, 0.0f);
-    Vector3 velocity(2.0f, 0.0f, 0.0f);
+    Float3 position(-1.0f, 0.0f, 0.0f);
+    Float3 velocity(2.0f, 0.0f, 0.0f);
 
     apply_kernel(
         PostColliderType::fast,
@@ -171,13 +171,13 @@ TEST(PostColliderKernel, FastStopsAtHitPointAndUpdatesVelocity) {
         1.0f,
         2.0f);
 
-    expect_vec_near(position, Vector3(tol, 0.0f, 0.0f));
-    expect_vec_near(velocity, Vector3(-2.0f, 0.0f, 0.0f));
+    expect_vec_near(position, Float3(tol, 0.0f, 0.0f));
+    expect_vec_near(velocity, Float3(-2.0f, 0.0f, 0.0f));
 }
 
 TEST(PostColliderKernel, DtRemainMovesForRemainingStepAfterVelocityUpdate) {
-    Vector3 position(-1.0f, 0.0f, 0.0f);
-    Vector3 velocity(2.0f, 0.0f, 0.0f);
+    Float3 position(-1.0f, 0.0f, 0.0f);
+    Float3 velocity(2.0f, 0.0f, 0.0f);
 
     apply_kernel(
         PostColliderType::dt_remain,
@@ -187,37 +187,37 @@ TEST(PostColliderKernel, DtRemainMovesForRemainingStepAfterVelocityUpdate) {
         1.0f,
         2.0f);
 
-    expect_vec_near(position, Vector3(-1.0f + tol, 0.0f, 0.0f));
-    expect_vec_near(velocity, Vector3(-2.0f, 0.0f, 0.0f));
+    expect_vec_near(position, Float3(-1.0f + tol, 0.0f, 0.0f));
+    expect_vec_near(velocity, Float3(-2.0f, 0.0f, 0.0f));
 }
 
 TEST(PostColliderKernel, PreciseSweepUsesColliderSurfaceMotion) {
-    const auto unit = make_plane_unit(Vector3(0.5f, 0.0f, 0.0f));
+    const auto unit = make_plane_unit(Float3(0.5f, 0.0f, 0.0f));
     const PostColliderKernel kernel(PostColliderType::precise);
 
-    Vector3 sweep_direction {};
+    Float3 sweep_direction {};
     float sweep_speed {};
     float sweep_length {};
 
     kernel.sweep_motion(
         unit,
-        Vector3(-1.0f, 0.0f, 0.0f),
-        Vector3(2.0f, 0.0f, 0.0f),
+        Float3(-1.0f, 0.0f, 0.0f),
+        Float3(2.0f, 0.0f, 0.0f),
         2.0f,
         1.0f,
         sweep_direction,
         sweep_speed,
         sweep_length);
 
-    expect_vec_near(sweep_direction, Vector3(1.5f, 0.0f, 0.0f));
+    expect_vec_near(sweep_direction, Float3(1.5f, 0.0f, 0.0f));
     EXPECT_NEAR(sweep_speed, 1.5f, tol);
     EXPECT_NEAR(sweep_length, 1.5f, tol);
 }
 
 TEST(Collider, PostColliderTypeControlsPostHitPosition) {
-    const Vector3 fast_position    = collide_position(PostColliderType::fast);
-    const Vector3 dt_position      = collide_position(PostColliderType::dt_remain);
-    const Vector3 precise_position = collide_position(PostColliderType::precise);
+    const Float3 fast_position    = collide_position(PostColliderType::fast);
+    const Float3 dt_position      = collide_position(PostColliderType::dt_remain);
+    const Float3 precise_position = collide_position(PostColliderType::precise);
 
     EXPECT_NEAR(fast_position.x, tol, tol);
     EXPECT_NEAR(dt_position.x, -0.5f + tol, tol);

@@ -25,7 +25,7 @@ Cylinder::Builder::make_host_shared() const {
 }
 
 Cylinder::Builder&
-Cylinder::Builder::with_center(const Vector3& center_) noexcept {
+Cylinder::Builder::with_center(const Float3& center_) noexcept {
     _center = center_;
     return *this;
 }

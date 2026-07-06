@@ -86,7 +86,7 @@ public:
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~IsothermalSurfaceInteraction() noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_HOST void
@@ -101,16 +101,16 @@ public:
     ATLAS_HOST void
     set_temperature(float temperature) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD DiffuseSampling
+    ATLAS_NODISCARD ATLAS_HOST DiffuseSampling
     diffuse_sampling() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     restitution() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     momentum_acc() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     temperature() const noexcept;
 
     /**
@@ -120,16 +120,16 @@ public:
      *        diffuse hemisphere direction by `_momentum_acc`. See this
      *        file's top-of-file documentation for the full derivation.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
-    operator()(const Vector3& incident, const Vector3& normal) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    operator()(const Float3& incident, const Float3& normal) const noexcept {
         const float incident_speed = incident.length();
 
         if (incident_speed <= atlas::tol) {
-            return Vector3(0.0f, 0.0f, 0.0f);
+            return Float3(0.0f, 0.0f, 0.0f);
         }
 
-        const Vector3 specular_dir  = atlas::reflected(incident, normal);
-        const Vector3 specular_unit = specular_dir.normalized();
+        const Float3 specular_dir  = atlas::reflected(incident, normal);
+        const Float3 specular_unit = specular_dir.normalized();
 
         if (_momentum_acc <= 0.0f) {
             return specular_unit * (incident_speed * _restitution_coeff);
@@ -143,7 +143,7 @@ public:
             normal + incident,
             atlas::RANDOM_HASH_SALT_DIFFUSE_U2);
 
-        Vector3 diffuse_dir {};
+        Float3 diffuse_dir {};
 
         if (_diffuse_sampling == DiffuseSampling::cosine_weighted) {
             diffuse_dir = atlas::sample_cosine_hemisphere(normal, u1, u2);
@@ -155,7 +155,7 @@ public:
             incident + normal * atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX,
             atlas::RANDOM_HASH_SALT_MIX);
 
-        const Vector3 out_unit = (mix < _momentum_acc)
+        const Float3 out_unit = (mix < _momentum_acc)
             ? diffuse_dir.normalized()
             : specular_unit;
 
@@ -170,10 +170,10 @@ public:
      *        satisfy the common interface `SurfaceInteractionKernel`
      *        dispatches through.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE FluidInternalEnergy
     internal_energy(const FluidInternalEnergy& incident_energy,
-                    const Vector3& incident_velocity,
-                    const Vector3& normal,
+                    const Float3& incident_velocity,
+                    const Float3& normal,
                     const MaterialProperties& material) const noexcept {
         static_cast<void>(incident_velocity);
         static_cast<void>(normal);
@@ -212,10 +212,10 @@ public:
     ATLAS_HOST Builder&
     with_temperature(float temperature) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD IsothermalSurfaceInteraction
+    ATLAS_NODISCARD ATLAS_HOST IsothermalSurfaceInteraction
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<IsothermalSurfaceInteraction>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<IsothermalSurfaceInteraction>
     make_host_shared() const;
 
 private:

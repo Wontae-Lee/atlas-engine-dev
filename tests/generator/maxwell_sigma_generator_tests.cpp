@@ -11,10 +11,10 @@ namespace {
 using atlas::GenerateType;
 using atlas::MaxwellSigmaGenerate;
 using atlas::MaxwellSigmaGenerator;
-using atlas::Vector3;
+using atlas::Float3;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, atlas::tol);
     EXPECT_NEAR(actual.y, expected.y, atlas::tol);
     EXPECT_NEAR(actual.z, expected.z, atlas::tol);
@@ -25,8 +25,8 @@ expect_vec_near(const Vector3& actual, const Vector3& expected) {
 TEST(MaxwellSigmaGenerator, OperatorReturnsZeroForNonPositiveSigma) {
     const MaxwellSigmaGenerate generator(13u);
 
-    expect_vec_near(generator.generate(0.0f), Vector3(0.0f, 0.0f, 0.0f));
-    expect_vec_near(generator.generate(-1.0f), Vector3(0.0f, 0.0f, 0.0f));
+    expect_vec_near(generator.generate(0.0f), Float3(0.0f, 0.0f, 0.0f));
+    expect_vec_near(generator.generate(-1.0f), Float3(0.0f, 0.0f, 0.0f));
 }
 
 TEST(MaxwellSigmaGenerator, DirectConstructorExposesConfiguredParameters) {

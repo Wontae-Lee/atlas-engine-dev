@@ -33,11 +33,11 @@ struct SinkProbe {
      *  when `despawn_operator_count == 1`. */
     const Despawn* despawn_operators {};
     /** Particle world-space positions, owned by `Fluid`. */
-    const Vector3* positions {};
+    const Float3* positions {};
     /** Particle world-space velocities, owned by `Fluid`; `nullptr` if
      *  the fluid does not track velocity (only needed for `Tracing`
      *  despawn rules). */
-    const Vector3* velocities {};
+    const Float3* velocities {};
     /** Particle active flags, owned by `Fluid`; written in place — `0`
      *  marks a particle for removal by `Sink::compact_fluid_particles`. */
     int* active {};

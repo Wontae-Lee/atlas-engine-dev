@@ -53,9 +53,10 @@ class Measurer {
 public:
     Measurer() = default;
 
-    ATLAS_HOST Measurer(UniverseHostPtr universe,
-                        FluidHostPtr fluid,
-                        SearcherHostPtr searcher) noexcept;
+    ATLAS_HOST
+    Measurer(UniverseHostPtr universe,
+             FluidHostPtr fluid,
+             SearcherHostPtr searcher) noexcept;
 
     virtual ~Measurer() = default;
 
@@ -80,13 +81,13 @@ public:
     ATLAS_HOST virtual void
     measure(float dt);
 
-    ATLAS_HOST ATLAS_NODISCARD virtual MeasureModeType
+    ATLAS_NODISCARD ATLAS_HOST virtual MeasureModeType
     measure_mode() const noexcept = 0;
 
     /** @brief Rebuilds `_probe` from the current universe/fluid/
      *  searcher state; `false` if any is null or the required universe/
      *  fluid states/searcher arrays are missing. */
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() noexcept;
 
 protected:

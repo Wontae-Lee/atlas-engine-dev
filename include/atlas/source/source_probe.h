@@ -40,11 +40,11 @@ struct SourceProbe {
 
     /** Particle world-space positions, owned by `Fluid`; written for
      *  newly emitted particles at `[dst_offset, dst_offset+emit_count)`. */
-    Vector3* positions {};
+    Float3* positions {};
     /** Particle world-space velocities, owned by `Fluid`; written for
      *  newly emitted particles, drawn from the assigned species'
      *  generator at `temperature`. */
-    Vector3* velocities {};
+    Float3* velocities {};
     /** Particle species indices, owned by `Fluid`; written for newly
      *  emitted particles. */
     std::size_t* species {};
@@ -54,7 +54,7 @@ struct SourceProbe {
 
     /** Cached candidate spawn positions in each candidate's owning
      *  unit's local frame (see `detail::SourceCacheBuilder`). */
-    const Vector3* flat_local_positions {};
+    const Float3* flat_local_positions {};
 
     /** Owning unit index for each entry of `flat_local_positions`
      *  (parallel array). */

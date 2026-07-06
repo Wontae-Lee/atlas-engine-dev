@@ -32,11 +32,11 @@ public:
      *         states, so callers can skip emission entirely; `true`
      *         otherwise.
      */
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     make(const FluidHostPtr& fluid,
          const DeviceBuffer<Unit>& units,
          const DeviceBuffer<std::size_t>& shuffled_species,
-         const DeviceBuffer<Vector3>& flat_local_positions,
+         const DeviceBuffer<Float3>& flat_local_positions,
          const DeviceBuffer<int>& flat_unit_indices,
          float temperature,
          std::uint64_t emission_seed,

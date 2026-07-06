@@ -23,7 +23,7 @@ struct MeasurerProbe {
     float* field_temperature_ptr {};
     /** Per-cell mean particle velocity, owned by
      *  `UniverseBulkVelocityState`. */
-    Vector3* bulk_velocity_ptr {};
+    Float3* bulk_velocity_ptr {};
     /** Per-cell summed squared velocity fluctuation
      *  (`sum |v - bulk_velocity|^2`), owned by
      *  `UniverseThermalEnergyState`. */
@@ -32,7 +32,7 @@ struct MeasurerProbe {
     float* number_particle_ptr {};
     /** Particle world-space velocities, owned by `Fluid` (read-only
      *  input). */
-    const Vector3* velocity_ptr {};
+    const Float3* velocity_ptr {};
     /** Per-particle temperature, owned by `FluidTemperatureState`;
      *  `nullptr` if the fluid does not track it. */
     float* particle_temperature_ptr {};

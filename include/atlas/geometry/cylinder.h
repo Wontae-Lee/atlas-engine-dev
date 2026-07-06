@@ -17,38 +17,40 @@ public:
     class Builder;
 
 public:
-    Vector3 center = Vector3(0.0f, 0.0f, 0.0f);
-    float radius   = 1.0f;
-    float height   = 1.0f;
-    bool open      = false;
+    Float3 center = Float3(0.0f, 0.0f, 0.0f);
+    float radius  = 1.0f;
+    float height  = 1.0f;
+    bool open     = false;
 
     Cylinder() noexcept = default;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Cylinder(const Vector3& center_, float radius_, float height_) noexcept
+    Cylinder(const Float3& center_, float radius_, float height_) noexcept
         : center(center_)
         , radius(radius_)
         , height(height_)
         , open(false) { }
 
-    Cylinder(const Cylinder& other) noexcept            = default;
-    Cylinder(Cylinder&& other) noexcept                 = default;
-    Cylinder& operator=(const Cylinder& other) noexcept = default;
-    Cylinder& operator=(Cylinder&& other) noexcept      = default;
+    Cylinder(const Cylinder& other) noexcept = default;
+    Cylinder(Cylinder&& other) noexcept      = default;
+    Cylinder&
+    operator=(const Cylinder& other) noexcept = default;
+    Cylinder&
+    operator=(Cylinder&& other) noexcept = default;
 
     ~Cylinder() noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    closest_point(const Vector3& p) const noexcept {
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    closest_point(const Float3& p) const noexcept {
         const float hz              = height * 0.5f;
         const float zmin            = center.z - hz;
         const float zmax            = center.z + hz;
         const bool is_open_cylinder = open;
 
-        const Vector3 d = p - center;
+        const Float3 d  = p - center;
         const float rho = atlas::xy_length(d);
 
         const float zc = (p.z < zmin) ? zmin
@@ -64,7 +66,7 @@ public:
             sy              = center.y + d.y * (radius * inv);
         }
 
-        Vector3 cp(sx, sy, zc);
+        Float3 cp(sx, sy, zc);
 
         const bool inside_radial = (rho <= radius);
         const bool inside_z      = (p.z >= zmin) && (p.z <= zmax);
@@ -113,23 +115,23 @@ public:
         return cp;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    closest_normal(const Vector3& p) const noexcept {
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    closest_normal(const Float3& p) const noexcept {
         const float hz              = height * 0.5f;
         const float zmin            = center.z - hz;
         const float zmax            = center.z + hz;
         const bool is_open_cylinder = open;
 
-        const Vector3 d = p - center;
+        const Float3 d  = p - center;
         const float rho = atlas::xy_length(d);
 
         const bool inside_radial = (rho <= radius);
         const bool inside_z      = (p.z >= zmin) && (p.z <= zmax);
 
         if (is_open_cylinder) {
-            const Vector3 cp = closest_point(p);
-            const Vector3 cd = cp - center;
-            return atlas::xy_normalized_or(cd, Vector3(1.0f, 0.0f, 0.0f));
+            const Float3 cp = closest_point(p);
+            const Float3 cd = cp - center;
+            return atlas::xy_normalized_or(cd, Float3(1.0f, 0.0f, 0.0f));
         }
 
         if (inside_radial && inside_z) {
@@ -138,31 +140,31 @@ public:
             const float d_to_top  = zmax - p.z;
 
             if (d_to_side <= d_to_bot && d_to_side <= d_to_top) {
-                return atlas::xy_normalized_or(d, Vector3(1.0f, 0.0f, 0.0f));
+                return atlas::xy_normalized_or(d, Float3(1.0f, 0.0f, 0.0f));
             }
 
             return (d_to_bot <= d_to_top)
-                ? Vector3(0.0f, 0.0f, -1.0f)
-                : Vector3(0.0f, 0.0f, 1.0f);
+                ? Float3(0.0f, 0.0f, -1.0f)
+                : Float3(0.0f, 0.0f, 1.0f);
         }
 
-        const Vector3 cp = closest_point(p);
-        const float e    = std::numeric_limits<float>::epsilon();
+        const Float3 cp = closest_point(p);
+        const float e   = std::numeric_limits<float>::epsilon();
 
         if (std::abs(cp.z - zmin) <= e) {
-            return Vector3(0.0f, 0.0f, -1.0f);
+            return Float3(0.0f, 0.0f, -1.0f);
         }
 
         if (std::abs(cp.z - zmax) <= e) {
-            return Vector3(0.0f, 0.0f, 1.0f);
+            return Float3(0.0f, 0.0f, 1.0f);
         }
 
-        const Vector3 cd = cp - center;
-        return atlas::xy_normalized_or(cd, Vector3(1.0f, 0.0f, 0.0f));
+        const Float3 cd = cp - center;
+        return atlas::xy_normalized_or(cd, Float3(1.0f, 0.0f, 0.0f));
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    signed_distance(const Vector3& p) const noexcept {
+    signed_distance(const Float3& p) const noexcept {
         const bool is_open_cylinder = open;
 
         float qx;
@@ -188,8 +190,8 @@ public:
         return outside + inside;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const Vector3& p, const float tolerance = 0.0f) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    is_inside(const Float3& p, const float tolerance = 0.0f) const noexcept {
         const bool is_open_cylinder = open;
 
         float qx;
@@ -215,15 +217,15 @@ public:
         return (ax * ax + ay * ay) <= (tolerance * tolerance);
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const Vector3& p, const float tolerance = 0.0f) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    is_on_surface(const Float3& p, const float tolerance = 0.0f) const noexcept {
         if (!(radius > 0.0f) || !(height > 0.0f) || tolerance < 0.0f) {
             return false;
         }
 
         if (open) {
-            const float hz  = height * 0.5f;
-            const Vector3 d = p - center;
+            const float hz = height * 0.5f;
+            const Float3 d = p - center;
 
             const float rho  = atlas::xy_length(d);
             const float zmin = center.z - hz;
@@ -249,7 +251,7 @@ public:
         return ax * ax + ay * ay <= tolerance * tolerance;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     centroid() const noexcept {
         return center;
     }
@@ -259,21 +261,21 @@ public:
         const float hz = height * 0.5f;
 
         return AABB(
-            Vector3(center.x - radius, center.y - radius, center.z - hz),
-            Vector3(center.x + radius, center.y + radius, center.z + hz));
+            Float3(center.x - radius, center.y - radius, center.z - hz),
+            Float3(center.x + radius, center.y + radius, center.z + hz));
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     is_valid() const noexcept {
         return radius > 0.0f && height > 0.0f;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     trace(const Ray& ray) const noexcept {
         HitSurface out {};
 
-        const Vector3 ro = ray.origin - center;
-        const Vector3 rd = ray.direction;
+        const Float3 ro = ray.origin - center;
+        const Float3 rd = ray.direction;
 
         const float r               = radius;
         const float hz              = height * 0.5f;
@@ -282,7 +284,7 @@ public:
         const bool is_open_cylinder = open;
 
         float best_t = std::numeric_limits<float>::infinity();
-        Vector3 best_n(0.0f, 0.0f, 0.0f);
+        Float3 best_n(0.0f, 0.0f, 0.0f);
 
         bool z_ok       = true;
         float t_z_enter = -std::numeric_limits<float>::infinity();
@@ -332,9 +334,10 @@ public:
                     auto set_side_hit = [&](const float t) {
                         best_t = t;
 
-                        const Vector3 ph = ro + rd * t;
-                        best_n           = atlas::xy_normalized_or(
-                            ph, Vector3(1.0f, 0.0f, 0.0f));
+                        const Float3 ph = ro + rd * t;
+                        best_n          = atlas::xy_normalized_or(
+                            ph,
+                            Float3(1.0f, 0.0f, 0.0f));
                     };
 
                     if (accept_side(t0)) {
@@ -356,11 +359,11 @@ public:
                     return;
                 }
 
-                const Vector3 ph = ro + rd * t;
+                const Float3 ph = ro + rd * t;
 
                 if (atlas::xy_length_squared(ph) <= r * r) {
                     best_t = t;
-                    best_n = Vector3(0.0f, 0.0f, nz);
+                    best_n = Float3(0.0f, 0.0f, nz);
                 }
             };
 
@@ -388,16 +391,16 @@ public:
         return out;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     operator()(const Ray& ray) const noexcept {
         return trace(ray);
     }
 
 private:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    radial_axial(const Vector3& p, float& qx, float& qy) const noexcept {
-        const float hz  = height * 0.5f;
-        const Vector3 d = p - center;
+    radial_axial(const Float3& p, float& qx, float& qy) const noexcept {
+        const float hz = height * 0.5f;
+        const Float3 d = p - center;
 
         qx = atlas::xy_length(d) - radius;
         qy = std::abs(d.z) - hz;
@@ -408,14 +411,14 @@ class Cylinder::Builder final {
 public:
     Builder() = default;
 
-    ATLAS_HOST ATLAS_NODISCARD Cylinder
+    ATLAS_NODISCARD ATLAS_HOST Cylinder
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Cylinder>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Cylinder>
     make_host_shared() const;
 
     ATLAS_HOST Builder&
-    with_center(const Vector3& center_) noexcept;
+    with_center(const Float3& center_) noexcept;
 
     ATLAS_HOST Builder&
     with_radius(float radius_) noexcept;
@@ -431,10 +434,10 @@ private:
     validate() const;
 
 private:
-    Vector3 _center = Vector3(0.0f, 0.0f, 0.0f);
-    float _radius   = 1.0f;
-    float _height   = 1.0f;
-    bool _open      = false;
+    Float3 _center = Float3(0.0f, 0.0f, 0.0f);
+    float _radius  = 1.0f;
+    float _height  = 1.0f;
+    bool _open     = false;
 };
 
 using CylinderHostPtr = atlas::host_shared_ptr<Cylinder>;

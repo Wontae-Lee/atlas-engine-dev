@@ -15,7 +15,7 @@ MaxwellSigmaGenerator::MaxwellSigmaGenerator(const float sigma,
     , _operator(MaxwellSigmaGenerate(seed)) {
 }
 
-Vector3
+Float3
 MaxwellSigmaGenerator::generate() const {
     return _operator.generate(_sigma);
 }

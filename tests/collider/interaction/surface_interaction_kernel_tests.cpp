@@ -10,11 +10,11 @@ using atlas::MaterialProperties;
 using atlas::MaxwellianSurfaceInteraction;
 using atlas::SurfaceInteractionKernel;
 using atlas::SurfaceInteractionType;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::tol;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, tol);
     EXPECT_NEAR(actual.y, expected.y, tol);
     EXPECT_NEAR(actual.z, expected.z, tol);
@@ -50,10 +50,10 @@ TEST(SurfaceInteractionKernel, VelocityDispatchUsesActiveInteraction) {
     const SurfaceInteractionKernel kernel(isothermal);
 
     const auto out = kernel(
-        Vector3(1.0f, -2.0f, 0.0f),
-        Vector3(0.0f, 1.0f, 0.0f));
+        Float3(1.0f, -2.0f, 0.0f),
+        Float3(0.0f, 1.0f, 0.0f));
 
-    expect_vec_near(out, Vector3(1.0f, 2.0f, 0.0f));
+    expect_vec_near(out, Float3(1.0f, 2.0f, 0.0f));
 }
 
 TEST(SurfaceInteractionKernel, IsothermalInteractionPreservesInternalEnergy) {
@@ -70,8 +70,8 @@ TEST(SurfaceInteractionKernel, IsothermalInteractionPreservesInternalEnergy) {
 
     const auto out = kernel.internal_energy(
         incident,
-        Vector3(1.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
         material);
 
     EXPECT_NEAR(out.translational, incident.translational, tol);
@@ -93,14 +93,14 @@ TEST(SurfaceInteractionKernel, MaxwellianInteractionAppliesInternalEnergyAccommo
                               .build();
     const auto expected = maxwellian.internal_energy(
         incident,
-        Vector3(1.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
         material);
 
     const auto out = kernel.internal_energy(
         incident,
-        Vector3(1.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
         material);
 
     EXPECT_NEAR(out.translational, expected.translational, tol);

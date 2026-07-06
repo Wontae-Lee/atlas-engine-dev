@@ -21,30 +21,30 @@ class JitteringGenerator final : public Generator {
 public:
     class Builder;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_HOST
     JitteringGenerator(float base_value,
-                      float jitter_radius,
-                      unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
+                       float jitter_radius,
+                       unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD Vector3
+    ATLAS_NODISCARD ATLAS_HOST Float3
     generate() const override;
 
-    ATLAS_HOST ATLAS_NODISCARD const Generate&
+    ATLAS_NODISCARD ATLAS_HOST const Generate&
     generate_operator() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD Generate
+    ATLAS_NODISCARD ATLAS_HOST Generate
     make_generate_operator() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     param0() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     param1() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD GenerateType
+    ATLAS_NODISCARD ATLAS_HOST GenerateType
     type() const noexcept override;
 
 private:
@@ -68,10 +68,10 @@ public:
     ATLAS_HOST Builder&
     with_seed(unsigned int seed) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD JitteringGenerator
+    ATLAS_NODISCARD ATLAS_HOST JitteringGenerator
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<JitteringGenerator>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<JitteringGenerator>
     make_host_shared() const;
 
 private:

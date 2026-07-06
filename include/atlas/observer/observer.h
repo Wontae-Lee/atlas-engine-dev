@@ -31,7 +31,7 @@ public:
     Observer&
     operator=(Observer&&) noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     template <typename SensorMetricsT, typename... Args>
@@ -47,25 +47,25 @@ public:
     }
 
     template <typename SensorMetricsT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE SensorMetricsT*
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE SensorMetricsT*
     sensor_metrics() noexcept {
         return _sensor_metrics.template get<SensorMetricsT>();
     }
 
     template <typename SensorMetricsT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const SensorMetricsT*
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE const SensorMetricsT*
     sensor_metrics() const noexcept {
         return _sensor_metrics.template get<SensorMetricsT>();
     }
 
     template <typename SensorMetricsT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE bool
     has_sensor_metrics() const noexcept {
         return _sensor_metrics.template contains<SensorMetricsT>();
     }
 
     template <typename SensorMetricsT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unique_ptr<SensorMetricsT>
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE std::unique_ptr<SensorMetricsT>
     remove_sensor_metrics() {
         return _sensor_metrics.template remove<SensorMetricsT>();
     }
@@ -73,10 +73,10 @@ public:
     ATLAS_HOST void
     export_csv(const std::filesystem::path& output_directory) const;
 
-    ATLAS_HOST ATLAS_NODISCARD SensorMetricsStore&
+    ATLAS_NODISCARD ATLAS_HOST SensorMetricsStore&
     sensor_metrics() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const SensorMetricsStore&
+    ATLAS_NODISCARD ATLAS_HOST const SensorMetricsStore&
     sensor_metrics() const noexcept;
 
 private:
@@ -93,10 +93,10 @@ public:
     ATLAS_HOST Builder&
     with_sink_sensor_metrics(std::size_t reserve_count = 0) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD Observer
+    ATLAS_NODISCARD ATLAS_HOST Observer
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Observer>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Observer>
     make_host_shared() const;
 
 private:

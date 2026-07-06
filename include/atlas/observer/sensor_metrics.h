@@ -39,7 +39,7 @@ public:
     SensorMetrics&
     operator=(SensorMetrics&&) noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
+    ATLAS_NODISCARD ATLAS_HOST virtual std::size_t
     size() const noexcept = 0;
 
     ATLAS_HOST virtual void
@@ -57,14 +57,14 @@ public:
            std::size_t unit_index,
            std::size_t particle_count);
 
-    ATLAS_HOST ATLAS_NODISCARD const HostBuffer<Record>&
+    ATLAS_NODISCARD ATLAS_HOST const HostBuffer<Record>&
     records() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
 protected:
-    ATLAS_HOST ATLAS_NODISCARD virtual std::string_view
+    ATLAS_NODISCARD ATLAS_HOST virtual std::string_view
     filename() const noexcept = 0;
 
     ATLAS_HOST void
@@ -82,7 +82,7 @@ public:
     export_csv(const std::filesystem::path& output_directory) const override;
 
 protected:
-    ATLAS_HOST ATLAS_NODISCARD std::string_view
+    ATLAS_NODISCARD ATLAS_HOST std::string_view
     filename() const noexcept override;
 };
 
@@ -94,7 +94,7 @@ public:
     export_csv(const std::filesystem::path& output_directory) const override;
 
 protected:
-    ATLAS_HOST ATLAS_NODISCARD std::string_view
+    ATLAS_NODISCARD ATLAS_HOST std::string_view
     filename() const noexcept override;
 };
 

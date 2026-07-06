@@ -54,17 +54,17 @@ public:
      *        angular velocity configured, so a static unit returns the
      *        zero vector cheaply.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static Float3
     surface_velocity(const Unit& unit,
-                     const Vector3& surface_point) noexcept {
-        Vector3 velocity(0.0f, 0.0f, 0.0f);
+                     const Float3& surface_point) noexcept {
+        Float3 velocity(0.0f, 0.0f, 0.0f);
 
         if (unit.velocity().has_value()) {
             velocity += *unit.velocity();
         }
 
         if (unit.angular_velocity().has_value()) {
-            const Vector3 radius = surface_point - unit.sync().translation;
+            const Float3 radius = surface_point - unit.sync().translation;
             velocity += atlas::cross(*unit.angular_velocity(), radius);
         }
 
@@ -80,11 +80,11 @@ public:
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     sweep_motion(const Unit&,
-                 const Vector3&,
-                 const Vector3& incident,
+                 const Float3&,
+                 const Float3& incident,
                  const float incident_speed,
                  const float dt,
-                 Vector3& sweep_direction,
+                 Float3& sweep_direction,
                  float& sweep_speed,
                  float& sweep_length) const noexcept {
         sweep_direction = incident * dt;
@@ -103,18 +103,18 @@ public:
      *        other kernels in this family, which do use them.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    operator()(Vector3& position,
-               Vector3& velocity,
-               const Vector3& incident,
-               const Vector3& hit_position,
-               const Vector3& hit_normal,
+    operator()(Float3& position,
+               Float3& velocity,
+               const Float3& incident,
+               const Float3& hit_position,
+               const Float3& hit_normal,
                const float,
                const float,
                const float,
                const Unit& unit,
                const SurfaceInteractionKernel& interaction) const noexcept {
-        const Vector3 wall_velocity     = surface_velocity(unit, hit_position);
-        const Vector3 relative_incident = incident - wall_velocity;
+        const Float3 wall_velocity     = surface_velocity(unit, hit_position);
+        const Float3 relative_incident = incident - wall_velocity;
 
         position = hit_position + hit_normal * atlas::tol;
         velocity = interaction(relative_incident, hit_normal) + wall_velocity;

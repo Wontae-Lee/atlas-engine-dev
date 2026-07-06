@@ -32,16 +32,16 @@ struct ColliderHit final {
      *  moment of impact; used to convert `distance` into a time-of-impact. */
     float speed {};
     /** World-space point of intersection. */
-    Vector3 position {};
+    Float3 position {};
     /** World-space surface normal at the intersection (pre-flip; see
      *  `ColliderProbe::flips`). */
-    Vector3 normal {};
+    Float3 normal {};
     /** Index into `ColliderProbe::units` of the hit surface, or `-1` if no
      *  surface was hit within the sweep. */
     int unit_index { -1 };
 
     /** @brief Whether a surface was hit (`unit_index >= 0`). */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     found() const noexcept {
         return unit_index >= 0;
     }

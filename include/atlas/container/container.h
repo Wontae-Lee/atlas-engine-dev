@@ -166,6 +166,6 @@ using Container3 = Container<T, 3>;
 template <typename T>
 using Container4 = Container<T, 4>;
 
-using TriangleContainer4 = Container4<Vector3>;
+using TriangleContainer4 = Container4<Float3>;
 
 }

@@ -8,7 +8,7 @@
 
 namespace {
 
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::build_orthonormal_basis;
 using atlas::default_random_engine;
 using atlas::dot;
@@ -33,10 +33,10 @@ TEST(Sampling, GenerateStandardNormalReturnsFiniteValue) {
 }
 
 TEST(Sampling, BuildOrthonormalBasisProducesOrthogonalVectors) {
-    const Vector3 normal = Vector3(1.0f, 2.0f, 3.0f).normalized();
+    const Float3 normal = Float3(1.0f, 2.0f, 3.0f).normalized();
 
-    Vector3 tangent;
-    Vector3 bitangent;
+    Float3 tangent;
+    Float3 bitangent;
     build_orthonormal_basis(normal, tangent, bitangent);
 
     EXPECT_NEAR(dot(normal, tangent), 0.0f, tol);
@@ -46,18 +46,18 @@ TEST(Sampling, BuildOrthonormalBasisProducesOrthogonalVectors) {
 }
 
 TEST(Sampling, UniformHemisphereSampleIsUnitLengthAndInHemisphere) {
-    const Vector3 normal(0.0f, 0.0f, 1.0f);
+    const Float3 normal(0.0f, 0.0f, 1.0f);
 
-    const Vector3 sample = sample_uniform_hemisphere(normal, 0.25f, 0.5f);
+    const Float3 sample = sample_uniform_hemisphere(normal, 0.25f, 0.5f);
 
     EXPECT_NEAR(sample.length(), 1.0f, tol);
     EXPECT_GE(dot(sample, normal), 0.0f);
 }
 
 TEST(Sampling, CosineHemisphereSampleIsUnitLengthAndInHemisphere) {
-    const Vector3 normal(0.0f, 1.0f, 0.0f);
+    const Float3 normal(0.0f, 1.0f, 0.0f);
 
-    const Vector3 sample = sample_cosine_hemisphere(normal, 0.25f, 0.5f);
+    const Float3 sample = sample_cosine_hemisphere(normal, 0.25f, 0.5f);
 
     EXPECT_NEAR(sample.length(), 1.0f, tol);
     EXPECT_GE(dot(sample, normal), 0.0f);
@@ -66,16 +66,16 @@ TEST(Sampling, CosineHemisphereSampleIsUnitLengthAndInHemisphere) {
 TEST(Sampling, RandomUnitVectorHasUnitLength) {
     default_random_engine engine(9u);
 
-    const Vector3 sample = sample_random_unit_vector(engine);
+    const Float3 sample = sample_random_unit_vector(engine);
 
     EXPECT_NEAR(sample.length(), 1.0f, tol);
 }
 
 TEST(Sampling, DirectionalUnitVectorHasUnitLength) {
     default_random_engine engine(11u);
-    const Vector3 incoming = Vector3(1.0f, 1.0f, 1.0f).normalized();
+    const Float3 incoming = Float3(1.0f, 1.0f, 1.0f).normalized();
 
-    const Vector3 sample = sample_directional_unit_vector(incoming, 2.0f, engine);
+    const Float3 sample = sample_directional_unit_vector(incoming, 2.0f, engine);
 
     EXPECT_NEAR(sample.length(), 1.0f, tol);
 }
@@ -87,7 +87,7 @@ TEST(Sampling, SampleAxisCountHandlesValidAndInvalidInputs) {
 }
 
 TEST(Sampling, HashedUnitIntervalIsDeterministicAndBounded) {
-    const Vector3 seed(1.0f, 2.0f, 3.0f);
+    const Float3 seed(1.0f, 2.0f, 3.0f);
 
     const float value0 = sample_hashed_unit_interval(seed, 0.5f);
     const float value1 = sample_hashed_unit_interval(seed, 0.5f);

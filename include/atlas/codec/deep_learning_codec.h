@@ -38,9 +38,10 @@ public:
 
     DeepLearningCodec() = default;
 
-    ATLAS_HOST DeepLearningCodec(UniverseHostPtr domain,
-                                 FluidHostPtr fluid,
-                                 SearcherHostPtr searcher);
+    ATLAS_HOST
+    DeepLearningCodec(UniverseHostPtr domain,
+                      FluidHostPtr fluid,
+                      SearcherHostPtr searcher);
 
     ~DeepLearningCodec() override = default;
 
@@ -54,7 +55,7 @@ public:
     ATLAS_HOST void
     decode() override;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 };
 
@@ -83,10 +84,10 @@ public:
     ATLAS_HOST Builder&
     with_fixed_region(DeviceBuffer<int> fixed_region) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD DeepLearningCodec
+    ATLAS_NODISCARD ATLAS_HOST DeepLearningCodec
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<DeepLearningCodec>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<DeepLearningCodec>
     make_host_shared() const;
 
 private:

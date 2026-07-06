@@ -24,7 +24,7 @@ Triangle::Builder::build() const {
     } else {
         t.normal = atlas::normalized_or(
             atlas::cross(t.b - t.a, t.c - t.a),
-            Vector3(0.0f, 0.0f, 0.0f));
+            Float3(0.0f, 0.0f, 0.0f));
     }
 
     return t;
@@ -37,25 +37,25 @@ Triangle::Builder::make_host_shared() const {
 }
 
 Triangle::Builder&
-Triangle::Builder::with_a(const Vector3& a_) noexcept {
+Triangle::Builder::with_a(const Float3& a_) noexcept {
     _a = a_;
     return *this;
 }
 
 Triangle::Builder&
-Triangle::Builder::with_b(const Vector3& b_) noexcept {
+Triangle::Builder::with_b(const Float3& b_) noexcept {
     _b = b_;
     return *this;
 }
 
 Triangle::Builder&
-Triangle::Builder::with_c(const Vector3& c_) noexcept {
+Triangle::Builder::with_c(const Float3& c_) noexcept {
     _c = c_;
     return *this;
 }
 
 Triangle::Builder&
-Triangle::Builder::with_vertices(const Vector3& a_, const Vector3& b_, const Vector3& c_) noexcept {
+Triangle::Builder::with_vertices(const Float3& a_, const Float3& b_, const Float3& c_) noexcept {
     _a = a_;
     _b = b_;
     _c = c_;
@@ -63,7 +63,7 @@ Triangle::Builder::with_vertices(const Vector3& a_, const Vector3& b_, const Vec
 }
 
 Triangle::Builder&
-Triangle::Builder::with_normal(const Vector3& normal_) noexcept {
+Triangle::Builder::with_normal(const Float3& normal_) noexcept {
     _normal = normal_;
     return *this;
 }

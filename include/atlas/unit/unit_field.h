@@ -58,26 +58,26 @@ public:
     refresh_bounds();
 
     /** @brief The units, as one device buffer. */
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Unit>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Unit>&
     units() const noexcept;
 
     /** @brief Per-unit world-space bounds, indexed like `units()`. */
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Bound>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Bound>&
     unit_bounds() const noexcept;
 
     /** @brief Union of every unit's bound as of the last `refresh_bounds()`. */
-    ATLAS_HOST ATLAS_NODISCARD const Bound&
+    ATLAS_NODISCARD ATLAS_HOST const Bound&
     scene_bound() const noexcept;
 
     /** @brief Whether `scene_bound()` is a valid, up-to-date superset of
      *  every unit's bound (safe as a broad-phase reject test). */
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     covers_units() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     empty() const noexcept;
 
 private:

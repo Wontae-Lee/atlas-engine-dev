@@ -12,22 +12,22 @@ OctreeSearcher::OctreeSearcher(UniverseHostPtr universe, FluidHostPtr fluid)
 }
 
 void
-OctreeSearcher::build_neighbors(const int alive, const Vector3* pos) {
+OctreeSearcher::build_neighbors(const int alive, const Float3* pos) {
     // Not an actual recursive octree — this filter restricts
     // SpatialHashingSearcher's ordinary neighbor search to candidates
     // sharing the same octant (one bit per axis, comparing each of x/y/z
     // against the domain's midpoint independently) as the query particle;
     // see octree_searcher.h's top-of-file documentation for why this is
     // only a single level of partitioning, not a real tree.
-    const Vector3 center = (lower_corner() + _universe->upper_corner()) * 0.5f;
+    const Float3 center = (lower_corner() + _universe->upper_corner()) * 0.5f;
 
     build_cell_neighbors(
         alive,
         pos,
         [=] ATLAS_ALL_DEVICE(const int,
-                         const int,
-                         const Vector3& pi,
-                         const Vector3& pj) {
+                             const int,
+                             const Float3& pi,
+                             const Float3& pj) {
             const int ix = pi.x >= center.x ? 1 : 0;
             const int iy = pi.y >= center.y ? 1 : 0;
             const int iz = pi.z >= center.z ? 1 : 0;
@@ -42,8 +42,8 @@ void
 OctreeSearcher::build() {
     if (!_is_invalidated) return;
 
-    const Vector3* positions = position_ptr();
-    const int alive          = active_count();
+    const Float3* positions = position_ptr();
+    const int alive         = active_count();
 
     if (!positions || alive <= 0) {
         reset();

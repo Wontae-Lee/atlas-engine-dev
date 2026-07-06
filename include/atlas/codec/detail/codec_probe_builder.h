@@ -34,7 +34,7 @@ public:
      *         `searcher` is null; otherwise `true` iff
      *         `universe->cell_count() > 0`.
      */
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     make(CodecProbe& probe,
          const UniverseHostPtr& universe,
          const FluidHostPtr& fluid,

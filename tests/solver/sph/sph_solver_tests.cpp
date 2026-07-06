@@ -31,13 +31,13 @@ using atlas::Universe;
 using atlas::UniverseFieldForceState;
 using atlas::UniverseHostPtr;
 using atlas::UniverseNumberParticleState;
-using atlas::Vector3;
+using atlas::Float3;
 
 UniverseHostPtr
 make_universe() {
     return Universe::builder()
-        .with_lower_corner(Vector3(0.0f, 0.0f, 0.0f))
-        .with_upper_corner(Vector3(1.0f, 1.0f, 1.0f))
+        .with_lower_corner(Float3(0.0f, 0.0f, 0.0f))
+        .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
         .with_cell_size(0.5f)
         .make_host_shared();
 }
@@ -129,10 +129,10 @@ TEST(SphSolver, SolveUpdatesVelocityFromLocalNeighborhood) {
     const auto searcher = make_searcher(universe, fluid);
 
     fluid->set_particle_count(2);
-    fluid->state<FluidPositionState>()->data()[0] = Vector3(0.20f, 0.25f, 0.25f);
-    fluid->state<FluidPositionState>()->data()[1] = Vector3(0.30f, 0.25f, 0.25f);
-    fluid->state<FluidVelocityState>()->data()[0] = Vector3(0.0f, 0.0f, 0.0f);
-    fluid->state<FluidVelocityState>()->data()[1] = Vector3(0.0f, 0.0f, 0.0f);
+    fluid->state<FluidPositionState>()->data()[0] = Float3(0.20f, 0.25f, 0.25f);
+    fluid->state<FluidPositionState>()->data()[1] = Float3(0.30f, 0.25f, 0.25f);
+    fluid->state<FluidVelocityState>()->data()[0] = Float3(0.0f, 0.0f, 0.0f);
+    fluid->state<FluidVelocityState>()->data()[1] = Float3(0.0f, 0.0f, 0.0f);
     fluid->state<FluidSpeciesState>()->data()[0] = 0u;
     fluid->state<FluidSpeciesState>()->data()[1] = 0u;
 
@@ -140,9 +140,9 @@ TEST(SphSolver, SolveUpdatesVelocityFromLocalNeighborhood) {
 
     solver.solve(0.01f);
 
-    const Vector3 lhs_velocity = fluid->state<FluidVelocityState>()->data()[0];
-    const Vector3 rhs_velocity = fluid->state<FluidVelocityState>()->data()[1];
-    const Vector3 cell_force = universe->state<UniverseFieldForceState>()->data()[0];
+    const Float3 lhs_velocity = fluid->state<FluidVelocityState>()->data()[0];
+    const Float3 rhs_velocity = fluid->state<FluidVelocityState>()->data()[1];
+    const Float3 cell_force = universe->state<UniverseFieldForceState>()->data()[0];
 
     EXPECT_LT(lhs_velocity.x, 0.0f);
     EXPECT_GT(rhs_velocity.x, 0.0f);

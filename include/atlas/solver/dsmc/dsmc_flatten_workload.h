@@ -53,7 +53,7 @@ public:
     int flattened_collision_count {};
 
     /** @brief The exclusive-prefix-sum offsets buffer (`collision_offsets`). */
-    ATLAS_HOST ATLAS_NODISCARD const atlas::DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST const atlas::DeviceBuffer<int>&
     offsets() const noexcept;
 
     /** @brief Releases all buffers and resets `flattened_collision_count`

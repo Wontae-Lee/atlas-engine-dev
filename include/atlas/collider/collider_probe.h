@@ -68,10 +68,10 @@ struct ColliderProbe {
 
     /** Particle world-space positions, owned by `Fluid`; updated in place
      *  by the collision kernel. */
-    Vector3* positions {};
+    Float3* positions {};
     /** Particle world-space velocities, owned by `Fluid`; updated in
      *  place (reflected/thermalized on a wall hit). */
-    Vector3* velocities {};
+    Float3* velocities {};
     /** Particle rotational/vibrational/translational energy, owned by
      *  `Fluid`; `nullptr` if the fluid does not track internal energy. */
     FluidInternalEnergy* internal_energies {};

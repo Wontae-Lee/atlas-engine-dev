@@ -98,7 +98,7 @@ namespace atlas {
  */
 struct TriangleMeshGeometryOperator {
 
-    const Vector3* vertices = nullptr;
+    const Float3* vertices = nullptr;
 
     const int* indices = nullptr;
 
@@ -113,7 +113,7 @@ struct TriangleMeshGeometryOperator {
     int bvh_root = -1;
 
 private:
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     has_bvh() const noexcept {
 #if defined(ATLAS_TASKING_CUDA) && !defined(__CUDA_ARCH__)
         return false;
@@ -123,9 +123,9 @@ private:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    closest_point_linear(const Vector3& p,
-                         Vector3* best_point,
-                         Vector3* best_normal,
+    closest_point_linear(const Float3& p,
+                         Float3* best_point,
+                         Float3* best_normal,
                          const float limit) const noexcept {
         if (!vertices || !indices || triangle_count <= 0) {
             return limit;
@@ -139,16 +139,16 @@ private:
             const int i1 = indices[3 * t + 1];
             const int i2 = indices[3 * t + 2];
 
-            const Vector3& a = vertices[i0];
-            const Vector3& b = vertices[i1];
-            const Vector3& c = vertices[i2];
+            const Float3& a = vertices[i0];
+            const Float3& b = vertices[i1];
+            const Float3& c = vertices[i2];
 
             tri.a = a;
             tri.b = b;
             tri.c = c;
 
-            const Vector3 cp = tri.closest_point(p);
-            const float d2   = (cp - p).length_squared();
+            const Float3 cp = tri.closest_point(p);
+            const float d2  = (cp - p).length_squared();
 
             if (d2 < best_d2) {
                 best_d2 = d2;
@@ -160,7 +160,7 @@ private:
                 if (best_normal) {
                     *best_normal = atlas::normalized_or(
                         atlas::cross(b - a, c - a),
-                        Vector3(0.0f, 0.0f, 1.0f));
+                        Float3(0.0f, 0.0f, 1.0f));
                 }
             }
         }
@@ -169,9 +169,9 @@ private:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    closest_point_bvh(const Vector3& p,
-                      Vector3* best_point,
-                      Vector3* best_normal,
+    closest_point_bvh(const Float3& p,
+                      Float3* best_point,
+                      Float3* best_normal,
                       const float limit) const noexcept {
         if (!has_bvh()) {
             return limit;
@@ -205,8 +205,8 @@ private:
                     tri_op.n      = tri.d();
                     tri_op.normal = tri.d();
 
-                    const Vector3 cp = tri_op.closest_point(p);
-                    const float d2   = (cp - p).length_squared();
+                    const Float3 cp = tri_op.closest_point(p);
+                    const float d2  = (cp - p).length_squared();
 
                     if (d2 < best_d2) {
                         best_d2 = d2;
@@ -269,14 +269,14 @@ private:
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
     approximate_solid_angle(const BVHNode& node,
-                            const Vector3& p) const noexcept {
+                            const Float3& p) const noexcept {
         if (!(node.solid_angle_area > 0.0f)) {
             return 0.0f;
         }
 
-        const Vector3 center = node.solid_angle_moment / node.solid_angle_area;
-        const Vector3 r      = center - p;
-        const float r2       = r.length_squared();
+        const Float3 center = node.solid_angle_moment / node.solid_angle_area;
+        const Float3 r      = center - p;
+        const float r2      = r.length_squared();
 
         if (!(r2 > std::numeric_limits<float>::epsilon())) {
             return 0.0f;
@@ -287,7 +287,7 @@ private:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    fast_winding_number_bvh(const Vector3& p) const noexcept {
+    fast_winding_number_bvh(const Float3& p) const noexcept {
         if (!has_bvh()) {
             return winding_number(p);
         }
@@ -309,7 +309,7 @@ private:
                 continue;
             }
 
-            const Vector3 center  = nd.solid_angle_moment / nd.solid_angle_area;
+            const Float3 center   = nd.solid_angle_moment / nd.solid_angle_area;
             const float distance2 = (center - p).length_squared();
             const float size2     = nd.bounds.diagonal_length_squared();
 
@@ -347,13 +347,13 @@ private:
 
 public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    solid_angle(const Vector3& p,
-                const Vector3& a,
-                const Vector3& b,
-                const Vector3& c) const noexcept {
-        const Vector3 va = a - p;
-        const Vector3 vb = b - p;
-        const Vector3 vc = c - p;
+    solid_angle(const Float3& p,
+                const Float3& a,
+                const Float3& b,
+                const Float3& c) const noexcept {
+        const Float3 va = a - p;
+        const Float3 vb = b - p;
+        const Float3 vc = c - p;
 
         const float la = va.length();
         const float lb = vb.length();
@@ -376,7 +376,7 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    winding_number(const Vector3& p) const noexcept {
+    winding_number(const Float3& p) const noexcept {
         float solid_angle_sum = 0.0f;
 
         for (int t = 0; t < triangle_count; ++t) {
@@ -385,9 +385,9 @@ public:
             const int i1 = indices[3 * t + 1];
             const int i2 = indices[3 * t + 2];
 
-            const Vector3& a = vertices[i0];
-            const Vector3& b = vertices[i1];
-            const Vector3& c = vertices[i2];
+            const Float3& a = vertices[i0];
+            const Float3& b = vertices[i1];
+            const Float3& c = vertices[i2];
 
             solid_angle_sum += solid_angle(p, a, b, c);
         }
@@ -397,13 +397,13 @@ public:
         return solid_angle_sum / four_pi;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    closest_point(const Vector3& p) const noexcept {
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    closest_point(const Float3& p) const noexcept {
         if (!vertices || !indices || triangle_count <= 0) {
             return p;
         }
 
-        Vector3 best_cp = p;
+        Float3 best_cp = p;
 
         if (has_bvh()) {
             closest_point_bvh(p, &best_cp, nullptr, std::numeric_limits<float>::max());
@@ -414,13 +414,13 @@ public:
         return best_cp;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    closest_normal(const Vector3& p) const noexcept {
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    closest_normal(const Float3& p) const noexcept {
         if (!vertices || !indices || triangle_count <= 0) {
-            return Vector3(0.0f, 0.0f, 1.0f);
+            return Float3(0.0f, 0.0f, 1.0f);
         }
 
-        Vector3 best_n(0.0f, 0.0f, 1.0f);
+        Float3 best_n(0.0f, 0.0f, 1.0f);
 
         if (has_bvh()) {
             closest_point_bvh(p, nullptr, &best_n, std::numeric_limits<float>::max());
@@ -432,7 +432,7 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    signed_distance(const Vector3& p) const noexcept {
+    signed_distance(const Float3& p) const noexcept {
         if (!vertices || !indices || triangle_count <= 0) {
             return std::numeric_limits<float>::infinity();
         }
@@ -455,8 +455,8 @@ public:
         return inside ? -dist : dist;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const Vector3& p, const float tolerance = 0.0f) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    is_inside(const Float3& p, const float tolerance = 0.0f) const noexcept {
         if (!vertices || !indices || triangle_count <= 0) {
             return false;
         }
@@ -485,8 +485,8 @@ public:
                       : best_d2 <= tolerance2;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const Vector3& p, const float tolerance = 0.0f) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    is_on_surface(const Float3& p, const float tolerance = 0.0f) const noexcept {
         if (!vertices || !indices || triangle_count <= 0 || tolerance < 0.0f) {
             return false;
         }
@@ -501,13 +501,13 @@ public:
         return best_d2 <= tolerance2;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     centroid() const noexcept {
         if (!vertices || !indices || triangle_count <= 0) {
-            return Vector3(0.0f, 0.0f, 0.0f);
+            return Float3(0.0f, 0.0f, 0.0f);
         }
 
-        Vector3 sum(0.0f, 0.0f, 0.0f);
+        Float3 sum(0.0f, 0.0f, 0.0f);
 
         for (int t = 0; t < triangle_count; ++t) {
 
@@ -515,9 +515,9 @@ public:
             const int i1 = indices[3 * t + 1];
             const int i2 = indices[3 * t + 2];
 
-            const Vector3& a = vertices[i0];
-            const Vector3& b = vertices[i1];
-            const Vector3& c = vertices[i2];
+            const Float3& a = vertices[i0];
+            const Float3& b = vertices[i1];
+            const Float3& c = vertices[i2];
 
             sum += (a + b + c) * (1.0f / 3.0f);
         }
@@ -532,8 +532,8 @@ public:
         }
 
         const int i0 = indices[0];
-        Vector3 mn   = vertices[i0];
-        Vector3 mx   = vertices[i0];
+        Float3 mn    = vertices[i0];
+        Float3 mx    = vertices[i0];
 
         for (int t = 0; t < triangle_count; ++t) {
 
@@ -553,7 +553,7 @@ public:
         return AABB(mn, mx);
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     is_valid() const noexcept {
         if (!vertices || !indices) {
             return false;
@@ -569,9 +569,9 @@ public:
             const int j1 = indices[3 * t + 1];
             const int j2 = indices[3 * t + 2];
 
-            const Vector3 ab = vertices[j1] - vertices[j0];
-            const Vector3 ac = vertices[j2] - vertices[j0];
-            const Vector3 n  = atlas::cross(ab, ac);
+            const Float3 ab = vertices[j1] - vertices[j0];
+            const Float3 ac = vertices[j2] - vertices[j0];
+            const Float3 n  = atlas::cross(ab, ac);
 
             if (!(n.length_squared() > atlas::eps)) {
                 return false;
@@ -581,7 +581,7 @@ public:
         return true;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     trace(const Ray& r) const noexcept {
         HitSurface out {};
 
@@ -604,9 +604,9 @@ public:
                 const int i1 = indices[3 * t + 1];
                 const int i2 = indices[3 * t + 2];
 
-                const Vector3& a = vertices[i0];
-                const Vector3& b = vertices[i1];
-                const Vector3& c = vertices[i2];
+                const Float3& a = vertices[i0];
+                const Float3& b = vertices[i1];
+                const Float3& c = vertices[i2];
 
                 tri_op.a      = a;
                 tri_op.b      = b;
@@ -629,8 +629,8 @@ public:
         }
 
         float best_t = std::numeric_limits<float>::max();
-        Vector3 best_p;
-        Vector3 best_n;
+        Float3 best_p;
+        Float3 best_n;
         bool found = false;
 
         int stack[64];
@@ -698,7 +698,7 @@ public:
         return out;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     operator()(const Ray& ray) const noexcept {
         return trace(ray);
     }
@@ -733,7 +733,7 @@ public:
 
     ATLAS_HOST explicit TriangleMesh(HostBuffer<TriangleContainer4>&& triangles_) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_HOST
@@ -753,38 +753,37 @@ public:
     ATLAS_HOST void
     set_triangles(const HostBuffer<TriangleContainer4>& triangles_);
 
-    ATLAS_HOST ATLAS_NODISCARD Geometry
+    ATLAS_NODISCARD ATLAS_HOST Geometry
     make_device_geometry_view() const;
 
     /** @brief Loads triangle data from a Wavefront OBJ file at
      *  `filename`, replacing `triangles`; `false` on failure. */
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     load_from_obj(const std::string& filename, bool verbose = false);
 
-    ATLAS_HOST Vector3
-    closest_point(const Vector3& p) const noexcept;
+    ATLAS_HOST Float3
+    closest_point(const Float3& p) const noexcept;
 
-    ATLAS_HOST Vector3
-    closest_normal(const Vector3& p) const noexcept;
+    ATLAS_HOST Float3
+    closest_normal(const Float3& p) const noexcept;
 
     ATLAS_HOST float
-    signed_distance(const Vector3& p) const noexcept;
+    signed_distance(const Float3& p) const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD bool
-    is_inside(const Vector3& p, float tolerance) const noexcept;
+    ATLAS_NODISCARD ATLAS_HOST bool
+    is_inside(const Float3& p, float tolerance) const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD bool
-    is_on_surface(const Vector3& p, float tolerance) const noexcept;
+    ATLAS_NODISCARD ATLAS_HOST bool
+    is_on_surface(const Float3& p, float tolerance) const noexcept;
 
-    ATLAS_HOST Vector3
+    ATLAS_HOST Float3
     centroid() const noexcept;
 
     ATLAS_HOST AABB
     bound() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     is_valid() const noexcept;
-
 
 private:
     friend class Builder;
@@ -792,7 +791,7 @@ private:
 private:
     BVHHostPtr _bvh = nullptr;
 
-    mutable HostBuffer<Vector3> _query_vertices;
+    mutable HostBuffer<Float3> _query_vertices;
 
     mutable HostBuffer<int> _query_indices;
 
@@ -837,10 +836,10 @@ class TriangleMesh::Builder final {
 public:
     Builder() = default;
 
-    ATLAS_HOST ATLAS_NODISCARD TriangleMesh
+    ATLAS_NODISCARD ATLAS_HOST TriangleMesh
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<TriangleMesh>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<TriangleMesh>
     make_host_shared() const;
 
     ATLAS_HOST Builder&

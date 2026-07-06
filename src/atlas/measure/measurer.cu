@@ -37,8 +37,8 @@ Measurer::make_probe() noexcept {
     _probe.velocity_ptr             = atlas::raw_pointer_cast(_fluid->state<atlas::FluidVelocityState>()->data().data());
     _probe.particle_temperature_ptr = detail::optional_state_ptr(fluid_temperature);
     detail::fill_cell_partition(_probe, _searcher);
-    _probe.particle_count           = static_cast<int>(_fluid->particle_count());
-    _probe.cell_count             = _universe->cell_count();
+    _probe.particle_count = static_cast<int>(_fluid->particle_count());
+    _probe.cell_count     = _universe->cell_count();
 
     return _probe.particle_count >= 0
         && _probe.cell_count > 0

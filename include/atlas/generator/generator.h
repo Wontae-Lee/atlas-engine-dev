@@ -51,31 +51,31 @@ public:
 
     /** @brief Draws one sample host-side, using this generator's own
      *  internal stateful engine. */
-    ATLAS_HOST ATLAS_NODISCARD virtual Vector3
+    ATLAS_NODISCARD ATLAS_HOST virtual Float3
     generate() const = 0;
 
     /** @brief The `Generate` value this generator owns
      *  (constructed once, reused). */
-    ATLAS_HOST ATLAS_NODISCARD virtual const Generate&
+    ATLAS_NODISCARD ATLAS_HOST virtual const Generate&
     generate_operator() const noexcept = 0;
 
     /** @brief Constructs a fresh `Generate` value matching this
      *  generator's configuration, for callers that need their own copy
      *  (e.g. to embed into a per-species device array). */
-    ATLAS_HOST ATLAS_NODISCARD virtual Generate
+    ATLAS_NODISCARD ATLAS_HOST virtual Generate
     make_generate_operator() const noexcept = 0;
 
     /** @brief The first parameter this generator's `Generate`
      *  expects (meaning depends on `type()`; see `generate.h`). */
-    ATLAS_HOST ATLAS_NODISCARD virtual float
+    ATLAS_NODISCARD ATLAS_HOST virtual float
     param0() const noexcept = 0;
 
     /** @brief The second parameter (meaning depends on `type()`). */
-    ATLAS_HOST ATLAS_NODISCARD virtual float
+    ATLAS_NODISCARD ATLAS_HOST virtual float
     param1() const noexcept = 0;
 
     /** @brief Which `GenerateType` this generator wraps. */
-    ATLAS_HOST ATLAS_NODISCARD virtual GenerateType
+    ATLAS_NODISCARD ATLAS_HOST virtual GenerateType
     type() const noexcept = 0;
 };
 

@@ -224,8 +224,8 @@ namespace detail {
         return u > atlas::eps ? u : atlas::eps;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    maxwellian_tangent_seed(const Vector3& normal, const Vector3& seed) noexcept {
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    maxwellian_tangent_seed(const Float3& normal, const Float3& seed) noexcept {
         return atlas::orthogonal_unit_vector(normal, seed, atlas::tol);
     }
 
@@ -258,7 +258,7 @@ public:
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE ~MaxwellianSurfaceInteraction() noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_HOST void
@@ -288,28 +288,28 @@ public:
     ATLAS_HOST void
     set_accommodation(float momentum_acc, float trans_acc, float rot_acc, float vib_acc) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     temperature() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     molecular_mass() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     momentum_acc() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     trans_acc() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     rot_acc() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     vib_acc() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD MaxwellianInternalEnergyStyle
+    ATLAS_NODISCARD ATLAS_HOST MaxwellianInternalEnergyStyle
     rot_style() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD MaxwellianInternalEnergyStyle
+    ATLAS_NODISCARD ATLAS_HOST MaxwellianInternalEnergyStyle
     vib_style() const noexcept;
 
     /**
@@ -320,7 +320,7 @@ public:
      * by `sample()`: the sampled normal and tangential speed components
      * are each `v_mp` times a dimensionless random factor.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
     most_probable_speed() const noexcept {
         return atlas::sqrt_nonnegative(
             2.0f * atlas::boltzmann_constant * _temperature / _molecular_mass);
@@ -338,8 +338,8 @@ public:
      * derivation and this file's top-of-file documentation for the
      * underlying physical model.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
-    operator()(const Vector3& incident, const Vector3& normal) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    operator()(const Float3& incident, const Float3& normal) const noexcept {
         const float branch_sample = atlas::sample_hashed_unit_interval(
             incident + normal * atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX,
             atlas::RANDOM_HASH_SALT_MIX);
@@ -356,7 +356,7 @@ public:
             incident + normal * 3.0f,
             4.19f);
 
-        const Vector3 tangent_seed(
+        const Float3 tangent_seed(
             atlas::sample_hashed_unit_interval(incident, 5.11f),
             atlas::sample_hashed_unit_interval(normal, 6.23f),
             atlas::sample_hashed_unit_interval(incident + normal, 7.37f));
@@ -392,14 +392,14 @@ public:
      * zero); `tangent2` completes a right-handed basis via `normal x
      * tangent1`.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
-    sample(const Vector3& incident,
-           const Vector3& normal,
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    sample(const Float3& incident,
+           const Float3& normal,
            const float branch_sample,
            const float perpendicular_sample,
            const float theta_sample,
            const float tangent_sample,
-           const Vector3& tangent_seed) const noexcept {
+           const Float3& tangent_seed) const noexcept {
         if (branch_sample > _momentum_acc) {
             return atlas::reflected(incident, normal);
         }
@@ -411,7 +411,7 @@ public:
         const float vtan1    = vtangent * std::sin(theta);
         const float vtan2    = vtangent * std::cos(theta);
 
-        Vector3 tangent1 = atlas::reject(incident, normal);
+        Float3 tangent1 = atlas::reject(incident, normal);
 
         if (tangent1.length_squared() == 0.0f) {
             tangent1 = detail::maxwellian_tangent_seed(normal, tangent_seed);
@@ -419,7 +419,7 @@ public:
             tangent1 = tangent1.normalized();
         }
 
-        const Vector3 tangent2 = atlas::cross(normal, tangent1);
+        const Float3 tangent2 = atlas::cross(normal, tangent1);
 
         return normal * vperp + tangent1 * vtan1 + tangent2 * vtan2;
     }
@@ -436,9 +436,9 @@ public:
      * touched at all, matching the translational reflection branch in
      * `sample()`.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE FluidInternalEnergy
     internal_energy(const FluidInternalEnergy& incident) const noexcept {
-        const Vector3 seed(incident.translational, incident.rotational, incident.vibrational);
+        const Float3 seed(incident.translational, incident.rotational, incident.vibrational);
 
         return sample_internal_energy(
             incident,
@@ -458,10 +458,10 @@ public:
      *        one interaction event). Leaves `incident_energy` unchanged on
      *        the specular branch.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE FluidInternalEnergy
     internal_energy(const FluidInternalEnergy& incident_energy,
-                    const Vector3& incident_velocity,
-                    const Vector3& normal) const noexcept {
+                    const Float3& incident_velocity,
+                    const Float3& normal) const noexcept {
         const float branch_sample = atlas::sample_hashed_unit_interval(
             incident_velocity + normal * atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX,
             atlas::RANDOM_HASH_SALT_MIX);
@@ -481,10 +481,10 @@ public:
      *        energy is assumed unaffected by internal-mode relaxation
      *        here).
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE FluidInternalEnergy
     internal_energy(const FluidInternalEnergy& incident_energy,
-                    const Vector3& incident_velocity,
-                    const Vector3& normal,
+                    const Float3& incident_velocity,
+                    const Float3& normal,
                     const MaterialProperties& material) const noexcept {
         const float branch_sample = atlas::sample_hashed_unit_interval(
             incident_velocity + normal * atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX,
@@ -494,7 +494,7 @@ public:
             return incident_energy;
         }
 
-        const Vector3 seed(
+        const Float3 seed(
             incident_energy.translational + incident_velocity.x,
             incident_energy.rotational + incident_velocity.y,
             incident_energy.vibrational + incident_velocity.z);
@@ -513,7 +513,7 @@ public:
      *        (`_trans_acc`, `_rot_acc`, `_vib_acc`) and an independent
      *        pair of hashed uniforms per mode.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE FluidInternalEnergy
     sample_internal_energy(const FluidInternalEnergy& incident,
                            const float trans_sample,
                            const float trans_theta_sample,
@@ -558,7 +558,7 @@ public:
      * relaxation (cf. R. G. Lord's extension of the Cercignani-Lampis-Lord
      * kernel to internal energy, Phys. Fluids A 3(4), 1991, pp. 706-710).
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
     sample_internal_energy_mode(const float incident,
                                 const float acc,
                                 const float sample,
@@ -589,9 +589,9 @@ public:
      * `smooth`-style path delegates to `sample_diffuse_smooth_energy`
      * (Derivation D3).
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
     sample_diffuse_rotational_energy(const MaterialProperties& material,
-                                     const Vector3& seed) const noexcept {
+                                     const Float3& seed) const noexcept {
         const int dof = material.rotational_dof.has_value() ? *material.rotational_dof : 0;
         if (_rot_style == MaxwellianInternalEnergyStyle::none || dof < 2) {
             return 0.0f;
@@ -621,9 +621,9 @@ public:
      *        — i.e. a simple-harmonic-oscillator model of the vibrational
      *        mode when `_vib_style == discrete` and `dof == 2`.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
     sample_diffuse_vibrational_energy(const MaterialProperties& material,
-                                      const Vector3& seed) const noexcept {
+                                      const Float3& seed) const noexcept {
         const int dof = material.vibrational_dof.has_value() ? *material.vibrational_dof : 0;
         if (_vib_style == MaxwellianInternalEnergyStyle::none || dof < 2) {
             return 0.0f;
@@ -660,9 +660,9 @@ public:
      * hash salt by `0.37` so retries are independent draws from the same
      * deterministic hash seed).
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
     sample_diffuse_smooth_energy(const int dof,
-                                 const Vector3& seed,
+                                 const Float3& seed,
                                  const float salt) const noexcept {
         if (dof == 2) {
             const float sample = detail::maxwellian_unit_sample(
@@ -737,10 +737,10 @@ public:
     ATLAS_HOST Builder&
     with_accommodation(float momentum_acc, float trans_acc, float rot_acc, float vib_acc) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD MaxwellianSurfaceInteraction
+    ATLAS_NODISCARD ATLAS_HOST MaxwellianSurfaceInteraction
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<MaxwellianSurfaceInteraction>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<MaxwellianSurfaceInteraction>
     make_host_shared() const;
 
 private:

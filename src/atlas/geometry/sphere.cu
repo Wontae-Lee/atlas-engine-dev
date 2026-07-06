@@ -22,7 +22,7 @@ Sphere::Builder::make_host_shared() const {
 }
 
 Sphere::Builder&
-Sphere::Builder::with_center(const Vector3& c) noexcept {
+Sphere::Builder::with_center(const Float3& c) noexcept {
     _center = c;
     return *this;
 }

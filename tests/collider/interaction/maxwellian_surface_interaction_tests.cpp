@@ -11,20 +11,20 @@ using atlas::FluidInternalEnergy;
 using atlas::MaterialProperties;
 using atlas::MaxwellianInternalEnergyStyle;
 using atlas::MaxwellianSurfaceInteraction;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::boltzmann_constant;
 using atlas::reflected;
 using atlas::tol;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, tol);
     EXPECT_NEAR(actual.y, expected.y, tol);
     EXPECT_NEAR(actual.z, expected.z, tol);
 }
 
 bool
-is_finite_vec(const Vector3& v) {
+is_finite_vec(const Float3& v) {
     return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
 }
 
@@ -159,17 +159,17 @@ TEST(MaxwellianSurfaceInteraction, MomentumAccommodationZeroUsesSpecularReflecti
                                  .with_momentum_acc(0.0f)
                                  .build();
 
-    const Vector3 incident(1.0f, -2.0f, 0.5f);
-    const Vector3 normal(0.0f, 1.0f, 0.0f);
+    const Float3 incident(1.0f, -2.0f, 0.5f);
+    const Float3 normal(0.0f, 1.0f, 0.0f);
 
-    const Vector3 out = interaction.sample(
+    const Float3 out = interaction.sample(
         incident,
         normal,
         1.0f,
         0.5f,
         0.25f,
         0.75f,
-        Vector3(1.0f, 0.0f, 0.0f));
+        Float3(1.0f, 0.0f, 0.0f));
 
     expect_vec_near(out, reflected(incident, normal));
 }
@@ -181,14 +181,14 @@ TEST(MaxwellianSurfaceInteraction, MomentumAccommodationOneUsesDiffuseMaxwellian
                                  .with_momentum_acc(1.0f)
                                  .build();
 
-    const Vector3 out = interaction.sample(
-        Vector3(1.0f, -2.0f, 0.5f),
-        Vector3(0.0f, 1.0f, 0.0f),
+    const Float3 out = interaction.sample(
+        Float3(1.0f, -2.0f, 0.5f),
+        Float3(0.0f, 1.0f, 0.0f),
         1.0f,
         0.5f,
         0.25f,
         0.75f,
-        Vector3(1.0f, 0.0f, 0.0f));
+        Float3(1.0f, 0.0f, 0.0f));
 
     EXPECT_TRUE(is_finite_vec(out));
     EXPECT_GT(out.length(), 0.0f);
@@ -200,8 +200,8 @@ TEST(MaxwellianSurfaceInteraction, OperatorProducesFiniteOutgoingVelocity) {
                                  .build();
 
     const auto out = interaction(
-        Vector3(1.0f, -2.0f, 0.5f),
-        Vector3(0.0f, 1.0f, 0.0f));
+        Float3(1.0f, -2.0f, 0.5f),
+        Float3(0.0f, 1.0f, 0.0f));
 
     EXPECT_TRUE(is_finite_vec(out));
     EXPECT_GT(out.length(), 0.0f);
@@ -299,8 +299,8 @@ TEST(MaxwellianSurfaceInteraction, SpecularSurfaceHitPreservesInternalEnergy) {
     const FluidInternalEnergy incident { 1.0f, 2.0f, 3.0f };
     const auto out = interaction.internal_energy(
         incident,
-        Vector3(1.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f));
+        Float3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f));
 
     EXPECT_NEAR(out.translational, incident.translational, tol);
     EXPECT_NEAR(out.rotational, incident.rotational, tol);
@@ -315,8 +315,8 @@ TEST(MaxwellianSurfaceInteraction, DiffuseSurfaceHitAppliesInternalEnergyAccommo
     const FluidInternalEnergy incident { 1.0f, 2.0f, 3.0f };
     const auto out = interaction.internal_energy(
         incident,
-        Vector3(1.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f));
+        Float3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f));
 
     EXPECT_TRUE(std::isfinite(out.translational));
     EXPECT_TRUE(std::isfinite(out.rotational));
@@ -340,8 +340,8 @@ TEST(MaxwellianSurfaceInteraction, DiffuseSurfaceHitSamplesSpartaInternalEnergyF
     const FluidInternalEnergy incident { 1.0f, 2.0f, 3.0f };
     const auto out = interaction.internal_energy(
         incident,
-        Vector3(1.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
         material);
 
     EXPECT_NEAR(out.translational, incident.translational, tol);
@@ -362,8 +362,8 @@ TEST(MaxwellianSurfaceInteraction, DiffuseSurfaceHitClearsDisabledInternalEnergy
 
     const auto out = interaction.internal_energy(
         FluidInternalEnergy { 1.0f, 2.0f, 3.0f },
-        Vector3(1.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
         material);
 
     EXPECT_NEAR(out.rotational, 0.0f, tol);
@@ -382,7 +382,7 @@ TEST(MaxwellianSurfaceInteraction, DiffuseRotationalEnergySamplerUsesMaterialDof
 
     const float out = interaction.sample_diffuse_rotational_energy(
         material,
-        Vector3(1.0f, 2.0f, 3.0f));
+        Float3(1.0f, 2.0f, 3.0f));
 
     EXPECT_TRUE(std::isfinite(out));
     EXPECT_GE(out, 0.0f);
@@ -402,8 +402,8 @@ TEST(MaxwellianSurfaceInteraction, DiffuseRotationalEnergySamplerHandlesDiscrete
                               .with_rotational_temperature(100.0f)
                               .build();
 
-    const float discrete_energy = discrete.sample_diffuse_rotational_energy(material, Vector3(1.0f, 2.0f, 3.0f));
-    const float disabled_energy = disabled.sample_diffuse_rotational_energy(material, Vector3(1.0f, 2.0f, 3.0f));
+    const float discrete_energy = discrete.sample_diffuse_rotational_energy(material, Float3(1.0f, 2.0f, 3.0f));
+    const float disabled_energy = disabled.sample_diffuse_rotational_energy(material, Float3(1.0f, 2.0f, 3.0f));
 
     EXPECT_TRUE(std::isfinite(discrete_energy));
     EXPECT_GE(discrete_energy, 0.0f);
@@ -422,7 +422,7 @@ TEST(MaxwellianSurfaceInteraction, DiffuseVibrationalEnergySamplerUsesMaterialDo
 
     const float out = interaction.sample_diffuse_vibrational_energy(
         material,
-        Vector3(1.0f, 2.0f, 3.0f));
+        Float3(1.0f, 2.0f, 3.0f));
 
     EXPECT_TRUE(std::isfinite(out));
     EXPECT_GE(out, 0.0f);
@@ -442,8 +442,8 @@ TEST(MaxwellianSurfaceInteraction, DiffuseVibrationalEnergySamplerHandlesDiscret
                               .with_characteristic_vibrational_temperature(100.0f)
                               .build();
 
-    const float discrete_energy = discrete.sample_diffuse_vibrational_energy(material, Vector3(1.0f, 2.0f, 3.0f));
-    const float disabled_energy = disabled.sample_diffuse_vibrational_energy(material, Vector3(1.0f, 2.0f, 3.0f));
+    const float discrete_energy = discrete.sample_diffuse_vibrational_energy(material, Float3(1.0f, 2.0f, 3.0f));
+    const float disabled_energy = disabled.sample_diffuse_vibrational_energy(material, Float3(1.0f, 2.0f, 3.0f));
 
     EXPECT_TRUE(std::isfinite(discrete_energy));
     EXPECT_GE(discrete_energy, 0.0f);
@@ -455,7 +455,7 @@ TEST(MaxwellianSurfaceInteraction, DiffuseSmoothEnergySamplerHandlesHigherDof) {
 
     const float out = interaction.sample_diffuse_smooth_energy(
         4,
-        Vector3(1.0f, 2.0f, 3.0f),
+        Float3(1.0f, 2.0f, 3.0f),
         0.5f);
 
     EXPECT_TRUE(std::isfinite(out));

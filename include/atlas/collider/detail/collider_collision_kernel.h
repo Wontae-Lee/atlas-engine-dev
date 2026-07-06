@@ -99,13 +99,13 @@ private:
      */
     struct ParticleSweep {
         /** Segment start (the particle's current position). */
-        Vector3 origin {};
+        Float3 origin {};
         /** Particle velocity used to build this sweep (world-space,
          *  before any per-unit relative-frame adjustment). */
-        Vector3 velocity {};
+        Float3 velocity {};
         /** Segment displacement (`velocity * dt`, or its wall-relative
          *  equivalent per unit under `precise`). */
-        Vector3 direction {};
+        Float3 direction {};
         /** Segment speed (`|direction| / dt`). */
         float speed {};
         /** Segment length (`speed * dt`). */
@@ -168,9 +168,9 @@ private:
     make_particle_sweep(const ColliderProbe& probe,
                         const int particle_index,
                         const float dt) {
-        const Vector3 velocity  = probe.velocities[particle_index];
-        const Vector3 direction = velocity * dt;
-        const float speed       = velocity.length();
+        const Float3 velocity  = probe.velocities[particle_index];
+        const Float3 direction = velocity * dt;
+        const float speed      = velocity.length();
 
         return ParticleSweep {
             probe.positions[particle_index],
@@ -203,10 +203,10 @@ private:
         }
 
         for (int unit_index = 0; unit_index < probe.unit_count; ++unit_index) {
-            const Unit* unit        = nullptr;
-            Vector3 sweep_direction = sweep.direction;
-            float sweep_speed       = sweep.speed;
-            float sweep_length      = sweep.length;
+            const Unit* unit       = nullptr;
+            Float3 sweep_direction = sweep.direction;
+            float sweep_speed      = sweep.speed;
+            float sweep_length     = sweep.length;
 
             if (moving_surface_sweep) {
                 unit = probe.units + unit_index;
@@ -281,7 +281,7 @@ private:
                    ? 0
                    : hit.unit_index;
         const bool flip_normal      = probe.flip_count > 0 && probe.flips[flip_index] != std::uint8_t { 0 };
-        const Vector3 hit_normal    = flip_normal ? -hit.normal : hit.normal;
+        const Float3 hit_normal     = flip_normal ? -hit.normal : hit.normal;
         const auto& hit_unit        = probe.units[hit.unit_index];
         const auto& interaction     = probe.surface_interactions[interaction_index];
 
@@ -306,7 +306,7 @@ private:
             return;
         }
 
-        const Vector3 wall_velocity             = FastColliderKernel::surface_velocity(hit_unit, hit.position);
+        const Float3 wall_velocity              = FastColliderKernel::surface_velocity(hit_unit, hit.position);
         probe.internal_energies[particle_index] = interaction.internal_energy(
             probe.internal_energies[particle_index],
             sweep.velocity - wall_velocity,

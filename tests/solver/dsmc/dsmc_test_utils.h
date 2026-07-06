@@ -27,8 +27,8 @@ make_dsmc_material() {
 inline atlas::UniverseHostPtr
 make_dsmc_universe() {
     return atlas::Universe::builder()
-        .with_lower_corner(atlas::Vector3(-1.0f, -1.0f, -1.0f))
-        .with_upper_corner(atlas::Vector3(1.0f, 1.0f, 1.0f))
+        .with_lower_corner(atlas::Float3(-1.0f, -1.0f, -1.0f))
+        .with_upper_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
         .with_cell_size(1.0f)
         .make_host_shared();
 }

@@ -24,38 +24,38 @@ class MaxwellBoltzmannGenerator final : public Generator {
 public:
     class Builder;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_HOST
     MaxwellBoltzmannGenerator(
         float temperature,
         float molecular_mass,
-        const Vector3& bulk_velocity = Vector3(0.0f, 0.0f, 0.0f),
-        unsigned int seed            = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
+        const Float3& bulk_velocity = Float3(0.0f, 0.0f, 0.0f),
+        unsigned int seed           = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD Vector3
+    ATLAS_NODISCARD ATLAS_HOST Float3
     generate() const override;
 
-    ATLAS_HOST ATLAS_NODISCARD const Generate&
+    ATLAS_NODISCARD ATLAS_HOST const Generate&
     generate_operator() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD Generate
+    ATLAS_NODISCARD ATLAS_HOST Generate
     make_generate_operator() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     param0() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     param1() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD GenerateType
+    ATLAS_NODISCARD ATLAS_HOST GenerateType
     type() const noexcept override;
 
 private:
     float _temperature;
     float _molecular_mass;
-    Vector3 _bulk_velocity;
+    Float3 _bulk_velocity;
     Generate _operator;
 };
 
@@ -73,15 +73,15 @@ public:
     with_molecular_mass(float molecular_mass) noexcept;
 
     ATLAS_HOST Builder&
-    with_bulk_velocity(const Vector3& bulk_velocity) noexcept;
+    with_bulk_velocity(const Float3& bulk_velocity) noexcept;
 
     ATLAS_HOST Builder&
     with_seed(unsigned int seed) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD MaxwellBoltzmannGenerator
+    ATLAS_NODISCARD ATLAS_HOST MaxwellBoltzmannGenerator
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<MaxwellBoltzmannGenerator>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<MaxwellBoltzmannGenerator>
     make_host_shared() const;
 
 private:
@@ -91,8 +91,8 @@ private:
 private:
     std::optional<float> _temperature;
     std::optional<float> _molecular_mass;
-    Vector3 _bulk_velocity = Vector3(0.0f, 0.0f, 0.0f);
-    unsigned int _seed     = atlas::DEFAULT_UNSIGNED_INT_SEED;
+    Float3 _bulk_velocity = Float3(0.0f, 0.0f, 0.0f);
+    unsigned int _seed    = atlas::DEFAULT_UNSIGNED_INT_SEED;
 };
 
 }

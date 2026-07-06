@@ -10,14 +10,14 @@ JitteringGenerator::builder() noexcept {
 }
 
 JitteringGenerator::JitteringGenerator(const float base_value,
-                                     const float jitter_radius,
-                                     const unsigned int seed) noexcept
+                                       const float jitter_radius,
+                                       const unsigned int seed) noexcept
     : _base_value(base_value)
     , _jitter_radius(jitter_radius)
     , _operator(JitteringGenerate(seed, base_value, jitter_radius)) {
 }
 
-Vector3
+Float3
 JitteringGenerator::generate() const {
     return _operator.generate(_base_value, _jitter_radius);
 }

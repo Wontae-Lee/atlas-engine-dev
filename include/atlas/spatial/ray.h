@@ -29,9 +29,9 @@ struct SurfaceRayIntersection {
 
     float distance = std::numeric_limits<float>::max();
 
-    Vector3 point = Vector3(0.0f, 0.0f, 0.0f);
+    Float3 point = Float3(0.0f, 0.0f, 0.0f);
 
-    Vector3 normal = Vector3(0.0f, 0.0f, 1.0f);
+    Float3 normal = Float3(0.0f, 0.0f, 1.0f);
 };
 
 /**
@@ -43,9 +43,9 @@ struct SurfaceRayIntersection {
  */
 class Ray final {
 public:
-    Vector3 origin;
+    Float3 origin;
 
-    Vector3 direction;
+    Float3 direction;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     Ray() noexcept
@@ -53,15 +53,15 @@ public:
         , direction(1.0f, 0.0f, 0.0f) { }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Ray(const Vector3& origin_, const Vector3& direction_) noexcept
+    Ray(const Float3& origin_, const Float3& direction_) noexcept
         : origin(origin_)
         , direction(atlas::normalized_or(
               direction_,
-              Vector3(0.0f, 0.0f, 0.0f))) { }
+              Float3(0.0f, 0.0f, 0.0f))) { }
 
     Ray(const Ray& other) noexcept = default;
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     point_at(const float t) const noexcept {
         return origin + t * direction;
     }
@@ -77,8 +77,8 @@ public:
  *        parallel-and-coincident case handle it separately.
  */
 ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
-ray_plane_distance(const Vector3& plane_point,
-                   const Vector3& plane_normal,
+ray_plane_distance(const Float3& plane_point,
+                   const Float3& plane_normal,
                    const Ray& ray,
                    float& distance) noexcept {
     const float denominator = plane_normal.dot(ray.direction);
