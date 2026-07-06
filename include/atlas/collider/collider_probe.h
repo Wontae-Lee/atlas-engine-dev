@@ -24,7 +24,7 @@
  * works around this: a probe is a small, trivially-copyable struct of raw
  * pointers and counts into buffers that are actually owned elsewhere
  * (here, by `Collider`, its `Unit` buffer, and the `Fluid` it acts on).
- * The probe is rebuilt (`ColliderProbeBuilder::make`) whenever those
+ * The probe is rebuilt (`Collider::make_probe`) whenever those
  * owners' buffers might have been reallocated, then captured by value
  * into a device lambda for one collision pass.
  *

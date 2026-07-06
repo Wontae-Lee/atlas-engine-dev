@@ -1,9 +1,10 @@
 #include <atlas/solver/sph/sph_solver.h>
 
+#include <atlas/fluid/fluid_state.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
-#include <atlas/solver/sph/detail/sph_probe_builder.h>
+#include <atlas/solver/detail/solver_probe_common.h>
 #include <atlas/universe/universe_state.h>
 
 #include <cstddef>
@@ -11,6 +12,29 @@
 #include <utility>
 
 namespace atlas {
+
+namespace {
+
+bool
+has_particle_states(const FluidHostPtr& fluid) noexcept {
+    return fluid != nullptr
+        && fluid->state<FluidPositionState>() != nullptr
+        && fluid->state<FluidVelocityState>() != nullptr
+        && fluid->state<FluidSpeciesState>() != nullptr;
+}
+
+bool
+sph_probe_ready(const UniverseHostPtr& universe,
+                const FluidHostPtr& fluid,
+                const SearcherHostPtr& searcher) noexcept {
+    return universe != nullptr
+        && searcher != nullptr
+        && has_particle_states(fluid)
+        && universe->state<UniverseNumberParticleState>() != nullptr
+        && universe->state<UniverseFieldForceState>() != nullptr;
+}
+
+}
 
 SphSolver::SphSolver(UniverseHostPtr universe,
                      FluidHostPtr fluid,
@@ -97,7 +121,7 @@ SphSolver::initialize_context() noexcept {
         return false;
     }
 
-    if (!atlas::detail::SphProbeBuilder::has_particle_states(this->_fluid)) {
+    if (!has_particle_states(this->_fluid)) {
         reset_fields();
         _density.resize(0);
         _pressure.resize(0);
@@ -115,12 +139,26 @@ bool
 SphSolver::make_probe() noexcept {
     _probe = {};
 
-    return atlas::detail::SphProbeBuilder::make(
-        _probe,
-        this->_universe,
-        this->_fluid,
-        this->_searcher,
-        _kernel);
+    if (!sph_probe_ready(this->_universe, this->_fluid, this->_searcher)) {
+        return false;
+    }
+
+    detail::fill_common_solver_probe(_probe, this->_universe, this->_fluid, this->_searcher);
+
+    _probe.position_ptr         = atlas::raw_pointer_cast(this->_fluid->state<FluidPositionState>()->data().data());
+    _probe.field_force_ptr      = atlas::raw_pointer_cast(this->_universe->state<UniverseFieldForceState>()->data().data());
+    _probe.neighbor_offsets_ptr = this->_searcher->neighbor_offsets();
+    _probe.neighbor_indices_ptr = this->_searcher->neighbor_indices();
+    _probe.lower_corner         = this->_searcher->lower_corner();
+    _probe.grid_size            = this->_searcher->grid_size();
+    _probe.inverse_cell_size    = this->_searcher->inverse_cell_size();
+    _probe.cell_size            = this->_searcher->cell_size();
+    _probe.particle_count       = static_cast<int>(this->_fluid->particle_count());
+    _probe.cell_count           = this->_universe->cell_count();
+    _probe.property_count       = static_cast<int>(this->_fluid->particle_properties().size());
+    _probe.kernel               = _kernel;
+
+    return true;
 }
 
 bool

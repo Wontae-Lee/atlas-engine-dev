@@ -23,13 +23,14 @@ before inventing a new layout.
   and src/atlas/material/ (definition).
 - The legacy .h/.hpp template pairs are being removed module by module; do not
   add new ones.
-- detail/ subdirectories hold internal helpers (kernels, probe builders,
-  caches) that are not part of the module's primary surface.
+- detail/ subdirectories hold internal helpers (kernels, caches) that are not
+  part of the module's primary surface. Probe assembly is not a detail/ helper:
+  each owner fills its own probe view directly in its `make_probe()`.
 ```
 
 Follow the nearest sibling module's organization. Keep helper types close to
 the owner they support, and split them out only when the role is substantial
-and clearly named (a kernel, builder, probe builder, interaction, or policy).
+and clearly named (a kernel, builder, interaction, or policy).
 
 ---
 

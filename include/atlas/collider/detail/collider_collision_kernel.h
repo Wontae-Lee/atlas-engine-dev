@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atlas/collider/collider_probe.h>
-#include <atlas/collider/detail/collider_hit.h>
+#include <atlas/collider/detail/hit_collider.h>
 #include <atlas/collider/kernel/post_collider_kernel.h>
 #include <atlas/core/macros.h>
 #include <atlas/parallel/parallel_for.h>
@@ -140,7 +140,7 @@ public:
                     return;
                 }
 
-                const ColliderHit hit = ColliderCollisionKernel::closest_hit(
+                const HitCollider hit = ColliderCollisionKernel::closest_hit(
                     collision_probe,
                     post_collider_kernel,
                     sweep,
@@ -184,12 +184,12 @@ private:
     /** @brief Broad-phase-culled, closest-in-time ray-vs-all-units
      *  intersection query: step 3 of the algorithm in this file's
      *  top-of-file docs. */
-    ATLAS_ALL_DEVICE static ColliderHit
+    ATLAS_ALL_DEVICE static HitCollider
     closest_hit(const ColliderProbe& probe,
                 const PostColliderKernel& post_collider_kernel,
                 const ParticleSweep& sweep,
                 const float dt) {
-        ColliderHit hit {};
+        HitCollider hit {};
         float closest_time = atlas::far;
 
         const bool moving_surface_sweep = post_collider_kernel.type == PostColliderType::precise;
@@ -256,7 +256,7 @@ private:
             closest_time   = hit_time;
             hit.distance   = local_hit.distance;
             hit.speed      = sweep_speed;
-            hit.position   = sync_op.sync_to_world(local_hit.point);
+            hit.point   = sync_op.sync_to_world(local_hit.point);
             hit.normal     = sync_op.sync_dir_to_world(local_hit.normal);
             hit.unit_index = unit_index;
         }
@@ -272,7 +272,7 @@ private:
                 const PostColliderKernel& post_collider_kernel,
                 const int particle_index,
                 const ParticleSweep& sweep,
-                const ColliderHit& hit,
+                const HitCollider& hit,
                 const float dt) {
         const int interaction_index = (probe.interaction_count == 1 || hit.unit_index >= probe.interaction_count)
             ? 0
@@ -289,7 +289,7 @@ private:
             probe.positions[particle_index],
             probe.velocities[particle_index],
             sweep.velocity,
-            hit.position,
+            hit.point,
             hit_normal,
             hit.distance,
             hit.speed,
@@ -306,7 +306,7 @@ private:
             return;
         }
 
-        const Float3 wall_velocity              = FastColliderKernel::surface_velocity(hit_unit, hit.position);
+        const Float3 wall_velocity              = FastColliderKernel::surface_velocity(hit_unit, hit.point);
         probe.internal_energies[particle_index] = interaction.internal_energy(
             probe.internal_energies[particle_index],
             sweep.velocity - wall_velocity,

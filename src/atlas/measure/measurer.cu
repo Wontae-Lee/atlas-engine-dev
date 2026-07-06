@@ -1,7 +1,7 @@
 #include <atlas/measure/measurer.h>
 
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/probe/probe_common.h>
+#include <atlas/searcher/searcher.h>
 
 #include <utility>
 
@@ -35,8 +35,10 @@ Measurer::make_probe() noexcept {
     _probe.thermal_energy_ptr       = atlas::raw_pointer_cast(_universe->state<atlas::UniverseThermalEnergyState>()->data().data());
     _probe.number_particle_ptr      = atlas::raw_pointer_cast(_universe->state<atlas::UniverseNumberParticleState>()->data().data());
     _probe.velocity_ptr             = atlas::raw_pointer_cast(_fluid->state<atlas::FluidVelocityState>()->data().data());
-    _probe.particle_temperature_ptr = detail::optional_state_ptr(fluid_temperature);
-    detail::fill_cell_partition(_probe, _searcher);
+    _probe.particle_temperature_ptr = fluid_temperature != nullptr ? atlas::raw_pointer_cast(fluid_temperature->data().data()) : nullptr;
+    _probe.indices_ptr    = _searcher->indices();
+    _probe.cell_start_ptr = _searcher->cell_start();
+    _probe.cell_end_ptr   = _searcher->cell_end();
     _probe.particle_count = static_cast<int>(_fluid->particle_count());
     _probe.cell_count     = _universe->cell_count();
 

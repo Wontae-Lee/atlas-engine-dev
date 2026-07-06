@@ -23,7 +23,7 @@ namespace atlas {
  *        `distance` at `float` max so a closest-hit comparison against
  *        an uninitialized result never spuriously wins.
  */
-struct SurfaceRayIntersection {
+struct HitSurface {
 
     bool is_intersecting = false;
 
@@ -91,8 +91,6 @@ ray_plane_distance(const Float3& plane_point,
 
     return distance >= 0.0f;
 }
-
-using HitSurface = SurfaceRayIntersection;
 
 using RayF = Ray;
 

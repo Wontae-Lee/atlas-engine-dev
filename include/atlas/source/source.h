@@ -126,7 +126,7 @@ public:
     shuffle_species(std::size_t count);
 
     /** @brief Rebuilds `_probe` from the current cache/fluid state
-     *  (`detail::SourceProbeBuilder::make`). */
+     *  (`Source::make_probe`). */
     ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() noexcept;
 

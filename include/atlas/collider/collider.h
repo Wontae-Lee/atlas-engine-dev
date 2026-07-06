@@ -43,7 +43,7 @@
  * integrating a scripted trajectory) and then calls `collide(dt)`.
  * `collide(dt)`:
  *   1. Refreshes `_unit_field`'s bounds from the (possibly just-moved) units.
- *   2. Rebuilds `_probe` (`detail::ColliderProbeBuilder::make`); bails out
+ *   2. Rebuilds `_probe` (`Collider::make_probe`); bails out
  *      early if there is nothing to collide (empty units/interactions,
  *      no fluid, or zero particles).
  *   3. Launches `detail::ColliderCollisionKernel::resolve_particles` for
@@ -116,9 +116,9 @@ public:
 
     /**
      * @brief Rebuilds `_probe` from the collider's current buffers and
-     *        `_fluid`'s current particle state (`detail::ColliderProbeBuilder::make`).
+     *        `_fluid`'s current particle state (`Collider::make_probe`).
      * @return `false` if there is nothing to collide against right now
-     *         (see `detail::ColliderProbeBuilder::make`); `true` if
+     *         (see `Collider::make_probe`); `true` if
      *         `_probe` is now valid for a collision pass.
      */
     ATLAS_NODISCARD ATLAS_HOST bool

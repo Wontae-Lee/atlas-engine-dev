@@ -52,7 +52,7 @@
  * `solve(dt)` runs the whole per-step pipeline: ensure fluid/searcher
  * state exists, rebuild `_probe` (a `DsmcProbe` view into the fluid's
  * velocity/species/internal-energy buffers and the searcher's spatial
- * cell partition — see `detail::DsmcProbeBuilder`), call
+ * cell partition — see `DsmcSolver::make_probe`), call
  * `measure_collision_statistics` to update each cell's candidate count
  * (`DsmcStatistics`/`DsmcSimpleStatistics`), then `apply_collision` to
  * actually run NTC selection and collide accepted pairs — either
@@ -169,7 +169,7 @@ public:
     reset_states();
 
     /** @brief Rebuilds `_probe` from the current fluid/universe/searcher
-     *  state (`detail::DsmcProbeBuilder::make`); must be called whenever
+     *  state (`DsmcSolver::make_probe`); must be called whenever
      *  those buffers may have been reallocated. */
     ATLAS_HOST void
     make_probe() noexcept;

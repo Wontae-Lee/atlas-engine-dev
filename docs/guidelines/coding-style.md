@@ -33,7 +33,7 @@ call site.
   layout.
 - Keep helper types close to the owner they support. Split a helper into its
   own type only when the role is substantial and clearly named — a kernel,
-  builder, probe builder, interaction, or policy.
+  builder, interaction, or policy.
 - Match the file and module conventions (`#pragma once`, `.h` declarations
   with `src/atlas/**/*.cu` definitions, header-inline device code, `detail/`
   for internal helpers). See

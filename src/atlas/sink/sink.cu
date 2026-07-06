@@ -99,14 +99,45 @@ Sink::make_probe(const float dt) noexcept {
 
     refresh_unit_bounds();
 
-    return detail::SinkProbeBuilder::make(_fluid,
-                                          _universe->sink_units().units(),
-                                          _unit_bounds,
-                                          _despawn_operators,
-                                          _flip,
-                                          _tolerance,
-                                          dt,
-                                          _probe);
+    const auto& units = _universe->sink_units().units();
+
+    if (units.empty()) {
+        return false;
+    }
+
+    auto* position_state = _fluid->state<atlas::FluidPositionState>();
+    auto* active_state   = _fluid->state<atlas::FluidActiveState>();
+
+    if (position_state == nullptr || active_state == nullptr) {
+        return false;
+    }
+
+    auto& positions      = position_state->data();
+    auto& active         = active_state->data();
+    auto* velocity_state = _fluid->state<atlas::FluidVelocityState>();
+
+    if (positions.empty() || active.empty() || _fluid->particle_count() == 0 || _unit_bounds.empty()) {
+        return false;
+    }
+
+    _probe.units             = atlas::raw_pointer_cast(units.data());
+    _probe.unit_bounds       = atlas::raw_pointer_cast(_unit_bounds.data());
+    _probe.despawn_operators = atlas::raw_pointer_cast(_despawn_operators.data());
+    _probe.positions         = atlas::raw_pointer_cast(positions.data());
+
+    if (velocity_state != nullptr && !velocity_state->data().empty()) {
+        _probe.velocities = atlas::raw_pointer_cast(velocity_state->data().data());
+    }
+
+    _probe.active                 = atlas::raw_pointer_cast(active.data());
+    _probe.unit_count             = static_cast<int>(units.size());
+    _probe.despawn_operator_count = static_cast<int>(_despawn_operators.size());
+    _probe.particle_count         = _fluid->particle_count();
+    _probe.flip                   = _flip;
+    _probe.tolerance              = _tolerance;
+    _probe.time_step              = dt;
+
+    return true;
 }
 
 void

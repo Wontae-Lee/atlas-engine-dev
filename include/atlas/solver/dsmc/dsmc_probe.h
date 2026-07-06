@@ -19,7 +19,7 @@ namespace atlas {
 /**
  * @brief Non-owning snapshot of a `DsmcSolver`'s fluid/universe/searcher
  *        state, passed by value into the NTC selection and collision
- *        kernels. See `detail::DsmcProbeBuilder` for how it is filled
+ *        kernels. See `DsmcSolver::make_probe` for how it is filled
  *        and `dsmc_solver.h` for how each field is used.
  */
 struct DsmcProbe {
