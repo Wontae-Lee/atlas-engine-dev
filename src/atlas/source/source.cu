@@ -13,64 +13,36 @@
 
 namespace atlas {
 
-namespace {
-
 void
-clear_spawn_cache(HostBuffer<int>& local_unit_counts,
-                  DeviceBuffer<Float3>& flat_local_positions,
-                  DeviceBuffer<int>& flat_unit_indices,
-                  std::size_t& local_particle_count,
-                  DeviceBuffer<std::size_t>& species_cache,
-                  DeviceBuffer<std::size_t>& shuffled_species,
-                  DeviceBuffer<std::uint64_t>& shuffle_keys,
-                  std::uint64_t& shuffle_seed) noexcept {
-    local_unit_counts.clear();
-    flat_local_positions.clear();
-    flat_unit_indices.clear();
-    local_particle_count = 0;
-    species_cache.clear();
-    shuffled_species.clear();
-    shuffle_keys.clear();
-    shuffle_seed = 0;
+Source::clear_spawn_cache() noexcept {
+    _local_unit_counts.clear();
+    _flat_local_positions.clear();
+    _flat_unit_indices.clear();
+    _local_particle_count = 0;
+    _species_cache.clear();
+    _shuffled_species.clear();
+    _shuffle_keys.clear();
+    _shuffle_seed = 0;
 }
 
 void
-rebuild_spawn_cache(const DeviceBuffer<Unit>& units,
-                    const DeviceBuffer<SpawnType>& spawn_types,
-                    const DeviceBuffer<Spawn>& spawn_operators,
-                    const FluidHostPtr& fluid,
-                    const bool flip,
-                    const float spacing,
-                    const float tolerance,
-                    HostBuffer<int>& local_unit_counts,
-                    DeviceBuffer<Float3>& flat_local_positions,
-                    DeviceBuffer<int>& flat_unit_indices,
-                    std::size_t& local_particle_count,
-                    DeviceBuffer<std::size_t>& species_cache,
-                    DeviceBuffer<std::size_t>& shuffled_species,
-                    DeviceBuffer<std::uint64_t>& shuffle_keys,
-                    std::uint64_t& shuffle_seed) noexcept {
-    if (units.empty() || spawn_types.empty() || spawn_operators.empty() || !fluid || fluid->generators().empty()) {
-        clear_spawn_cache(local_unit_counts,
-                          flat_local_positions,
-                          flat_unit_indices,
-                          local_particle_count,
-                          species_cache,
-                          shuffled_species,
-                          shuffle_keys,
-                          shuffle_seed);
+Source::rebuild_spawn_cache() noexcept {
+    const auto& units = _universe->source_units().units();
+
+    if (units.empty() || _spawn_types.empty() || _spawn_operators.empty() || !_fluid || _fluid->generators().empty()) {
+        clear_spawn_cache();
         return;
     }
 
-    const auto& generators = fluid->generators();
+    const auto& generators = _fluid->generators();
 
     const HostBuffer<Unit> host_units(units.begin(), units.end());
     const HostBuffer<Spawn> host_spawn_operators(
-        spawn_operators.begin(),
-        spawn_operators.end());
+        _spawn_operators.begin(),
+        _spawn_operators.end());
 
-    local_unit_counts.clear();
-    local_unit_counts.resize(host_units.size(), 0);
+    _local_unit_counts.clear();
+    _local_unit_counts.resize(host_units.size(), 0);
 
     HostBuffer<Float3> host_flat_positions;
     HostBuffer<int> host_flat_unit_indices;
@@ -84,9 +56,9 @@ rebuild_spawn_cache(const DeviceBuffer<Unit>& units,
         const auto& upper    = bounds.upper_corner;
         const auto& spawn_op = host_spawn_operators[(spawn_operator_count == 1) ? 0 : unit_index];
 
-        const int nx = atlas::sample_axis_count(lower.x, upper.x, spacing);
-        const int ny = atlas::sample_axis_count(lower.y, upper.y, spacing);
-        const int nz = atlas::sample_axis_count(lower.z, upper.z, spacing);
+        const int nx = atlas::sample_axis_count(lower.x, upper.x, _spacing);
+        const int ny = atlas::sample_axis_count(lower.y, upper.y, _spacing);
+        const int nz = atlas::sample_axis_count(lower.z, upper.z, _spacing);
 
         std::size_t accepted_count = 0;
 
@@ -101,13 +73,13 @@ rebuild_spawn_cache(const DeviceBuffer<Unit>& units,
                 for (int iy = 0; iy < ny; ++iy) {
                     for (int ix = 0; ix < nx; ++ix) {
                         const Float3 sample(
-                            lower.x + static_cast<float>(ix) * spacing,
-                            lower.y + static_cast<float>(iy) * spacing,
-                            lower.z + static_cast<float>(iz) * spacing);
+                            lower.x + static_cast<float>(ix) * _spacing,
+                            lower.y + static_cast<float>(iy) * _spacing,
+                            lower.z + static_cast<float>(iz) * _spacing);
 
-                        const bool accepted = spawn_op.spawn(geometry, sample, tolerance);
+                        const bool accepted = spawn_op.spawn(geometry, sample, _tolerance);
 
-                        if (flip ? !accepted : accepted) {
+                        if (_flip ? !accepted : accepted) {
                             host_flat_positions.push_back(sample);
                             host_flat_unit_indices.push_back(static_cast<int>(unit_index));
                             ++accepted_count;
@@ -117,33 +89,33 @@ rebuild_spawn_cache(const DeviceBuffer<Unit>& units,
             }
         }
 
-        local_unit_counts[unit_index] = static_cast<int>(accepted_count);
+        _local_unit_counts[unit_index] = static_cast<int>(accepted_count);
     }
 
-    species_cache.clear();
-    shuffled_species.clear();
-    shuffle_keys.clear();
+    _species_cache.clear();
+    _shuffled_species.clear();
+    _shuffle_keys.clear();
 
     const std::size_t total_count = host_flat_positions.size();
-    local_particle_count          = total_count;
+    _local_particle_count         = total_count;
 
     if (total_count == 0) {
-        flat_local_positions.clear();
-        flat_unit_indices.clear();
-        shuffle_seed = 0;
+        _flat_local_positions.clear();
+        _flat_unit_indices.clear();
+        _shuffle_seed = 0;
         return;
     }
 
-    flat_local_positions = DeviceBuffer<Float3>(host_flat_positions.begin(), host_flat_positions.end());
-    flat_unit_indices    = DeviceBuffer<int>(host_flat_unit_indices.begin(), host_flat_unit_indices.end());
+    _flat_local_positions = DeviceBuffer<Float3>(host_flat_positions.begin(), host_flat_positions.end());
+    _flat_unit_indices    = DeviceBuffer<int>(host_flat_unit_indices.begin(), host_flat_unit_indices.end());
 
-    species_cache.resize(total_count);
-    shuffled_species.resize(total_count);
-    shuffle_keys.resize(total_count);
+    _species_cache.resize(total_count);
+    _shuffled_species.resize(total_count);
+    _shuffle_keys.resize(total_count);
 
     const int count         = static_cast<int>(total_count);
     const int species_count = static_cast<int>(generators.size());
-    auto* cache             = atlas::raw_pointer_cast(species_cache.data());
+    auto* cache             = atlas::raw_pointer_cast(_species_cache.data());
 
     // Round-robin species assignment keeps species proportions balanced
     // across the candidate pool; permute_species later randomizes
@@ -156,26 +128,22 @@ rebuild_spawn_cache(const DeviceBuffer<Unit>& units,
             cache[i] = static_cast<std::size_t>(i % species_count);
         });
 
-    shuffle_seed = 0;
+    _shuffle_seed = 0;
 }
 
 void
-permute_species(const DeviceBuffer<std::size_t>& species_cache,
-                DeviceBuffer<std::size_t>& shuffled_species,
-                DeviceBuffer<std::uint64_t>& shuffle_keys,
-                std::uint64_t& shuffle_seed,
-                const std::size_t count) {
+Source::permute_species(const std::size_t count) {
     if (count == 0) {
-        shuffled_species.clear();
-        shuffle_keys.clear();
+        _shuffled_species.clear();
+        _shuffle_keys.clear();
         return;
     }
 
-    const std::uint64_t seed = shuffle_seed++;
+    const std::uint64_t seed = _shuffle_seed++;
 
-    const auto* cache = atlas::raw_pointer_cast(species_cache.data());
-    auto* shuffled    = atlas::raw_pointer_cast(shuffled_species.data());
-    auto* keys        = atlas::raw_pointer_cast(shuffle_keys.data());
+    const auto* cache = atlas::raw_pointer_cast(_species_cache.data());
+    auto* shuffled    = atlas::raw_pointer_cast(_shuffled_species.data());
+    auto* keys        = atlas::raw_pointer_cast(_shuffle_keys.data());
 
     const Shuffle shuffle {};
 
@@ -188,17 +156,15 @@ permute_species(const DeviceBuffer<std::size_t>& species_cache,
         });
 
     atlas::parallel_sort_by_key<ExecutionPolicy::device>(
-        shuffle_keys.begin(),
-        shuffle_keys.begin() + static_cast<std::ptrdiff_t>(count),
-        shuffled_species.begin());
+        _shuffle_keys.begin(),
+        _shuffle_keys.begin() + static_cast<std::ptrdiff_t>(count),
+        _shuffled_species.begin());
 }
 
 void
-emit_particles(const SourceProbe& probe,
-               const std::size_t dst_offset,
-               const std::size_t emit_count) {
+Source::emit_particles(const std::size_t dst_offset, const std::size_t emit_count) {
     const Shuffle shuffle {};
-    const auto device_probe = probe;
+    const auto device_probe = _probe;
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -227,8 +193,6 @@ emit_particles(const SourceProbe& probe,
             device_probe.species[dst] = sid;
             device_probe.active[dst]  = 1;
         });
-}
-
 }
 
 Source::Source(UniverseHostPtr universe,
@@ -277,28 +241,14 @@ Source::rebuild_cache() noexcept {
         return;
     }
 
-    rebuild_spawn_cache(_universe->source_units().units(),
-                           _spawn_types,
-                           _spawn_operators,
-                           _fluid,
-                           _flip,
-                           _spacing,
-                           _tolerance,
-                           _local_unit_counts,
-                           _flat_local_positions,
-                           _flat_unit_indices,
-                           _local_particle_count,
-                           _species_cache,
-                           _shuffled_species,
-                           _shuffle_keys,
-                           _shuffle_seed);
+    rebuild_spawn_cache();
 
     _is_invalidated_cache = false;
 }
 
 void
 Source::shuffle_species(const std::size_t count) {
-    permute_species(_species_cache, _shuffled_species, _shuffle_keys, _shuffle_seed, count);
+    permute_species(count);
 }
 
 void
@@ -370,8 +320,6 @@ Source::emit() {
         return;
     }
 
-    const auto probe = _probe;
-
     if (source_sensor_metrics != nullptr) {
         int offset = 0;
         for (std::size_t u = 0; u < _local_unit_counts.size(); ++u) {
@@ -385,7 +333,7 @@ Source::emit() {
         }
     }
 
-    emit_particles(probe, current_particle_count, emit_count);
+    emit_particles(current_particle_count, emit_count);
 
     _fluid->set_particle_count(current_particle_count + emit_count);
 
