@@ -409,4 +409,4 @@ Each case has a single `main.cu` entry point; nvcc compiles it for both device s
 
 ## License
 
-See the repository license files and project metadata for licensing terms.
+Licensed under the GNU General Public License v3.0 (GPLv3) or later. See [`LICENSE`](LICENSE) for the full text.
