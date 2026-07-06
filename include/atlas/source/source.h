@@ -127,6 +127,18 @@ public:
     make_probe() noexcept;
 
 private:
+    ATLAS_HOST void
+    rebuild_spawn_cache() noexcept;
+
+    ATLAS_HOST void
+    clear_spawn_cache() noexcept;
+
+    ATLAS_HOST void
+    permute_species(std::size_t count);
+
+    ATLAS_HOST void
+    emit_particles(std::size_t dst_offset, std::size_t emit_count);
+
     UniverseHostPtr _universe;
 
     DeviceBuffer<SpawnType> _spawn_types;
