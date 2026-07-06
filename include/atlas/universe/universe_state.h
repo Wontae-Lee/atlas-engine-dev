@@ -81,7 +81,7 @@ public:
     UniverseState&
     operator=(UniverseState&&) noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
+    ATLAS_NODISCARD ATLAS_HOST virtual std::size_t
     size() const noexcept = 0;
 
     ATLAS_HOST virtual void
@@ -109,16 +109,16 @@ public:
 
     ATLAS_HOST explicit UniverseTemperatureState(DeviceBuffer<float> temperature) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
@@ -132,22 +132,22 @@ public:
 
     ATLAS_HOST explicit UniverseBulkVelocityState(std::size_t cell_count);
 
-    ATLAS_HOST explicit UniverseBulkVelocityState(DeviceBuffer<Vector3> bulk_velocity) noexcept;
+    ATLAS_HOST explicit UniverseBulkVelocityState(DeviceBuffer<Float3> bulk_velocity) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<Float3>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Float3>&
     data() const noexcept;
 
 private:
-    DeviceBuffer<Vector3> _bulk_velocity;
+    DeviceBuffer<Float3> _bulk_velocity;
 };
 
 /** @brief Per-cell averaged SPH force diagnostic. */
@@ -157,22 +157,22 @@ public:
 
     ATLAS_HOST explicit UniverseFieldForceState(std::size_t cell_count);
 
-    ATLAS_HOST explicit UniverseFieldForceState(DeviceBuffer<Vector3> field_force) noexcept;
+    ATLAS_HOST explicit UniverseFieldForceState(DeviceBuffer<Float3> field_force) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<Float3>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Float3>&
     data() const noexcept;
 
 private:
-    DeviceBuffer<Vector3> _field_force;
+    DeviceBuffer<Float3> _field_force;
 };
 
 /** @brief Per-cell external body-force (gravity) field. */
@@ -182,22 +182,22 @@ public:
 
     ATLAS_HOST explicit UniverseGravityState(std::size_t cell_count);
 
-    ATLAS_HOST explicit UniverseGravityState(DeviceBuffer<Vector3> gravity) noexcept;
+    ATLAS_HOST explicit UniverseGravityState(DeviceBuffer<Float3> gravity) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<Float3>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Float3>&
     data() const noexcept;
 
 private:
-    DeviceBuffer<Vector3> _gravity;
+    DeviceBuffer<Float3> _gravity;
 };
 
 /** @brief Per-cell running maximum relative speed sampled among
@@ -210,16 +210,16 @@ public:
 
     ATLAS_HOST explicit UniverseMaxRelativeSpeedState(DeviceBuffer<float> max_relative_speed) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
@@ -236,16 +236,16 @@ public:
 
     ATLAS_HOST explicit UniverseMaxSigmaGState(DeviceBuffer<float> max_sigma_g) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
@@ -262,16 +262,16 @@ public:
 
     ATLAS_HOST explicit UniverseVolumeState(DeviceBuffer<float> volume) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
@@ -288,16 +288,16 @@ public:
 
     ATLAS_HOST explicit UniverseThermalEnergyState(DeviceBuffer<float> thermal_energy) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
@@ -314,16 +314,16 @@ public:
 
     ATLAS_HOST explicit UniverseNumberParticleState(DeviceBuffer<float> number_particle) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
@@ -340,16 +340,16 @@ public:
 
     ATLAS_HOST explicit UniverseCollisionCountState(DeviceBuffer<int> collision_count) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
     data() const noexcept;
 
 private:
@@ -366,16 +366,16 @@ public:
 
     ATLAS_HOST explicit UniverseCollisionRemainderState(DeviceBuffer<float> collision_remainder) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
@@ -391,16 +391,16 @@ public:
 
     ATLAS_HOST explicit UniverseKnudsenNumberState(DeviceBuffer<float> knudsen_number) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
@@ -426,7 +426,7 @@ public:
     ATLAS_HOST explicit UniverseMaterialRatioState(DeviceBuffer<ratio_type> material_ratio) noexcept
         : _material_ratio(std::move(material_ratio)) { }
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override {
         return _material_ratio.size();
     }
@@ -436,12 +436,12 @@ public:
         reset_buffer(_material_ratio);
     }
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<ratio_type>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<ratio_type>&
     data() noexcept {
         return _material_ratio;
     }
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<ratio_type>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<ratio_type>&
     data() const noexcept {
         return _material_ratio;
     }

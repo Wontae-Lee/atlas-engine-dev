@@ -8,7 +8,7 @@ bool
 SourceProbeBuilder::make(const FluidHostPtr& fluid,
                          const DeviceBuffer<Unit>& units,
                          const DeviceBuffer<std::size_t>& shuffled_species,
-                         const DeviceBuffer<Vector3>& flat_local_positions,
+                         const DeviceBuffer<Float3>& flat_local_positions,
                          const DeviceBuffer<int>& flat_unit_indices,
                          const float temperature,
                          const std::uint64_t emission_seed,

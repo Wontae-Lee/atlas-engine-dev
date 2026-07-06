@@ -10,7 +10,7 @@ namespace {
 
 using atlas::QuadtreeSearcher;
 using atlas::SearcherHostPtr;
-using atlas::Vector3i;
+using atlas::Int3;
 using atlas::test::searcher::contains_neighbor;
 using atlas::test::searcher::make_fluid;
 using atlas::test::searcher::make_quadrant_fluid;
@@ -28,7 +28,7 @@ TEST(QuadtreeSearcher, BuilderConstructsUsableSearcher) {
                               .with_fluid(fluid)
                               .build();
 
-    EXPECT_TRUE(searcher.grid_size() == Vector3i(3, 3, 3));
+    EXPECT_TRUE(searcher.grid_size() == Int3(3, 3, 3));
     EXPECT_FLOAT_EQ(searcher.cell_size(), 0.5f);
     EXPECT_FLOAT_EQ(searcher.inverse_cell_size(), 2.0f);
 }
@@ -62,7 +62,7 @@ TEST(QuadtreeSearcher, BuildsThroughAbstractSearcherInterface) {
     ASSERT_NE(searcher, nullptr);
     EXPECT_NO_THROW(searcher->build());
     EXPECT_EQ(searcher->neighbor_count(), 4);
-    EXPECT_TRUE(searcher->grid_size() == Vector3i(3, 3, 3));
+    EXPECT_TRUE(searcher->grid_size() == Int3(3, 3, 3));
 }
 
 TEST(QuadtreeSearcher, SameQuadrantParticlesBecomeNeighbors) {

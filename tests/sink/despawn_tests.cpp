@@ -11,13 +11,13 @@ using atlas::Box;
 using atlas::Despawn;
 using atlas::DespawnType;
 using atlas::Geometry;
-using atlas::Vector3;
+using atlas::Float3;
 
 Geometry
 make_box_operator() {
     static const auto box = Box::builder()
-                                .with_lower_corner(Vector3(-1.0f, -1.0f, -1.0f))
-                                .with_upper_corner(Vector3(1.0f, 1.0f, 1.0f))
+                                .with_lower_corner(Float3(-1.0f, -1.0f, -1.0f))
+                                .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
                                 .build();
     return Geometry(box);
 }
@@ -56,12 +56,12 @@ TEST(Despawn, DespawnDispatchesToActiveVariant) {
     const Despawn volume_operator(DespawnType::volume);
     const Despawn tracing_operator(DespawnType::tracing);
 
-    EXPECT_TRUE(surface_operator.despawn(geometry_operator, Vector3(1.0f, 0.0f, 0.0f), 0.0f));
-    EXPECT_FALSE(surface_operator.despawn(geometry_operator, Vector3(0.0f, 0.0f, 0.0f), 0.0f));
-    EXPECT_TRUE(volume_operator.despawn(geometry_operator, Vector3(0.0f, 0.0f, 0.0f), 0.0f));
-    EXPECT_FALSE(volume_operator.despawn(geometry_operator, Vector3(2.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_TRUE(surface_operator.despawn(geometry_operator, Float3(1.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_FALSE(surface_operator.despawn(geometry_operator, Float3(0.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_TRUE(volume_operator.despawn(geometry_operator, Float3(0.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_FALSE(volume_operator.despawn(geometry_operator, Float3(2.0f, 0.0f, 0.0f), 0.0f));
     EXPECT_TRUE(tracing_operator.despawn(
-        geometry_operator, Vector3(-2.0f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f), 1.0f));
+        geometry_operator, Float3(-2.0f, 0.0f, 0.0f), Float3(1.0f, 0.0f, 0.0f), 1.0f));
     EXPECT_FALSE(tracing_operator.despawn(
-        geometry_operator, Vector3(-2.0f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f), 0.0f));
+        geometry_operator, Float3(-2.0f, 0.0f, 0.0f), Float3(1.0f, 0.0f, 0.0f), 0.0f));
 }

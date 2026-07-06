@@ -104,7 +104,7 @@ public:
     /** @brief Current buffer capacity (not necessarily equal to
      *  `Fluid::particle_count()` — states are sized to the fluid's
      *  buffer capacity, not the live particle count). */
-    ATLAS_HOST ATLAS_NODISCARD virtual std::size_t
+    ATLAS_NODISCARD ATLAS_HOST virtual std::size_t
     size() const noexcept = 0;
 
     /** @brief Gathers this state's buffer through `compact_indices`,
@@ -185,9 +185,9 @@ public:
 
     ATLAS_HOST explicit FluidPositionState(std::size_t buffer_size);
 
-    ATLAS_HOST explicit FluidPositionState(DeviceBuffer<Vector3> position) noexcept;
+    ATLAS_HOST explicit FluidPositionState(DeviceBuffer<Float3> position) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
@@ -196,14 +196,14 @@ public:
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<Float3>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Float3>&
     data() const noexcept;
 
 private:
-    DeviceBuffer<Vector3> _position;
+    DeviceBuffer<Float3> _position;
 };
 
 /** @brief Per-particle world-space velocity buffer. */
@@ -213,9 +213,9 @@ public:
 
     ATLAS_HOST explicit FluidVelocityState(std::size_t buffer_size);
 
-    ATLAS_HOST explicit FluidVelocityState(DeviceBuffer<Vector3> velocity) noexcept;
+    ATLAS_HOST explicit FluidVelocityState(DeviceBuffer<Float3> velocity) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
@@ -224,14 +224,14 @@ public:
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<Float3>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Vector3>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Float3>&
     data() const noexcept;
 
 private:
-    DeviceBuffer<Vector3> _velocity;
+    DeviceBuffer<Float3> _velocity;
 };
 
 /** @brief Per-particle species index buffer (indexes into
@@ -244,7 +244,7 @@ public:
 
     ATLAS_HOST explicit FluidSpeciesState(DeviceBuffer<std::size_t> species) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
@@ -253,10 +253,10 @@ public:
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<std::size_t>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<std::size_t>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<std::size_t>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<std::size_t>&
     data() const noexcept;
 
 private:
@@ -273,7 +273,7 @@ public:
 
     ATLAS_HOST explicit FluidActiveState(DeviceBuffer<int> active) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
@@ -282,10 +282,10 @@ public:
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<int>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
     data() const noexcept;
 
 private:
@@ -303,7 +303,7 @@ public:
 
     ATLAS_HOST explicit FluidTemperatureState(DeviceBuffer<float> temperature) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
@@ -312,10 +312,10 @@ public:
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<float>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
@@ -333,7 +333,7 @@ public:
 
     ATLAS_HOST explicit FluidInternalEnergyState(DeviceBuffer<FluidInternalEnergy> internal_energy) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
 
     ATLAS_HOST void
@@ -342,10 +342,10 @@ public:
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<FluidInternalEnergy>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<FluidInternalEnergy>&
     data() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<FluidInternalEnergy>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<FluidInternalEnergy>&
     data() const noexcept;
 
 private:

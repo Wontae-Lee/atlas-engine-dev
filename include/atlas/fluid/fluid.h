@@ -87,23 +87,23 @@ public:
     Fluid&
     operator=(Fluid&&) noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     /** Per-species velocity generator table, indexed by
      *  `FluidSpeciesState`; see `generate.h`. */
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Generate>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Generate>&
     generators() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<Generate>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<Generate>&
     generators() noexcept;
 
     /** Per-species material properties table, indexed by
      *  `FluidSpeciesState`; see `material_properties.h`. */
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<MaterialProperties>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<MaterialProperties>&
     particle_properties() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD DeviceBuffer<MaterialProperties>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<MaterialProperties>&
     particle_properties() noexcept;
 
     /** @brief Sets the live particle count (must not exceed
@@ -132,20 +132,20 @@ public:
     /** @brief The registered `StateT`, or `nullptr` if this fluid does
      *  not have one. */
     template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE StateT*
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE StateT*
     state() noexcept {
         return _states.template get<StateT>();
     }
 
     template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const StateT*
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE const StateT*
     state() const noexcept {
         return _states.template get<StateT>();
     }
 
     /** @brief Whether a `StateT` is currently registered. */
     template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE bool
     has_state() const noexcept {
         return _states.template contains<StateT>();
     }
@@ -153,7 +153,7 @@ public:
     /** @brief Unregisters and returns a `StateT`, or `nullptr` if none
      *  was registered. */
     template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unique_ptr<StateT>
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE std::unique_ptr<StateT>
     remove_state() {
         return _states.template remove<StateT>();
     }
@@ -161,30 +161,30 @@ public:
     /** @brief The underlying heterogeneous state store; for callers
      *  that need to iterate every registered state generically (e.g.
      *  `Sink::compact_fluid_particles`). */
-    ATLAS_HOST ATLAS_NODISCARD FluidStateStore&
+    ATLAS_NODISCARD ATLAS_HOST FluidStateStore&
     states() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const FluidStateStore&
+    ATLAS_NODISCARD ATLAS_HOST const FluidStateStore&
     states() const noexcept;
 
     /** @brief Fixed allocation size every registered `FluidState` is
      *  sized to; see this file's top-of-file documentation for the
      *  buffer-size/particle-count split. */
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     buffer_size() const noexcept;
 
     /** @brief Current live particle count (`<= buffer_size()`). */
-    ATLAS_HOST ATLAS_NODISCARD std::size_t
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     particle_count() const noexcept;
 
     /** @brief Real molecules per simulated particle (`F_N`); see this
      *  file's top-of-file documentation. */
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     statistical_weight() const noexcept;
 
     /** @brief Optional attached observer for sensor-metrics recording
      *  (e.g. `SinkSensorMetrics`/`SourceSensorMetrics`); may be null. */
-    ATLAS_HOST ATLAS_NODISCARD const ObserverHostPtr&
+    ATLAS_NODISCARD ATLAS_HOST const ObserverHostPtr&
     observer() const noexcept;
 
     /** @brief Serializes this fluid's particle state to a binary
@@ -220,10 +220,10 @@ class Fluid::Builder final {
 public:
     Builder() = default;
 
-    ATLAS_HOST ATLAS_NODISCARD Fluid
+    ATLAS_NODISCARD ATLAS_HOST Fluid
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Fluid>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Fluid>
     make_host_shared() const;
 
     /** @brief Per-species material properties table. */
@@ -268,9 +268,9 @@ private:
 
     ObserverHostPtr _observer {};
 
-    std::optional<HostBuffer<Vector3>> _position_state;
+    std::optional<HostBuffer<Float3>> _position_state;
 
-    std::optional<HostBuffer<Vector3>> _velocity_state;
+    std::optional<HostBuffer<Float3>> _velocity_state;
 
     std::optional<HostBuffer<std::size_t>> _species_state;
 

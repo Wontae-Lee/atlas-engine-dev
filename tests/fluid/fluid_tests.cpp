@@ -169,10 +169,10 @@ TEST(Fluid, SaveAndReloadBinarySnapshot) {
     ASSERT_NE(active, nullptr);
     ASSERT_NE(temperature, nullptr);
 
-    position->data()[0]    = atlas::Vector3(1.0f, 2.0f, 3.0f);
-    position->data()[1]    = atlas::Vector3(4.0f, 5.0f, 6.0f);
-    velocity->data()[0]    = atlas::Vector3(0.1f, 0.2f, 0.3f);
-    velocity->data()[1]    = atlas::Vector3(0.4f, 0.5f, 0.6f);
+    position->data()[0]    = atlas::Float3(1.0f, 2.0f, 3.0f);
+    position->data()[1]    = atlas::Float3(4.0f, 5.0f, 6.0f);
+    velocity->data()[0]    = atlas::Float3(0.1f, 0.2f, 0.3f);
+    velocity->data()[1]    = atlas::Float3(0.4f, 0.5f, 0.6f);
     species->data()[0]     = 0u;
     species->data()[1]     = 0u;
     active->data()[0]      = 1;
@@ -207,8 +207,8 @@ TEST(Fluid, SaveAndReloadBinarySnapshot) {
     ASSERT_NE(restored_active, nullptr);
     ASSERT_NE(restored_temperature, nullptr);
 
-    const atlas::Vector3 restored_p0 = restored_position->data()[0];
-    const atlas::Vector3 restored_v1 = restored_velocity->data()[1];
+    const atlas::Float3 restored_p0 = restored_position->data()[0];
+    const atlas::Float3 restored_v1 = restored_velocity->data()[1];
 
     EXPECT_FLOAT_EQ(restored_p0.x, 1.0f);
     EXPECT_FLOAT_EQ(restored_p0.y, 2.0f);

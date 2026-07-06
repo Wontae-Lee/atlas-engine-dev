@@ -10,14 +10,14 @@ namespace atlas::detail {
 
 class OrchestratorProbeBuilder final {
 public:
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     make(const UniverseHostPtr& universe,
          const FluidHostPtr& fluid,
          const SearcherHostPtr& searcher,
          OrchestratorProbe& probe) noexcept;
 
 private:
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     load_common_data(const UniverseHostPtr& universe,
                      const FluidHostPtr& fluid,
                      const SearcherHostPtr& searcher,

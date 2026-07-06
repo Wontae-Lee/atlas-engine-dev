@@ -11,10 +11,10 @@ namespace {
 using atlas::MaterialProperties;
 using atlas::MaterialType;
 using atlas::VariableHardSphereKernel;
-using atlas::Vector3;
+using atlas::Float3;
 
 bool
-is_finite_vec(const Vector3& v) {
+is_finite_vec(const Float3& v) {
     return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
 }
 
@@ -49,8 +49,8 @@ TEST(VariableHardSphereKernel, CrossSectionDecreasesWithSpeedAboveHardSphereInde
 
 TEST(VariableHardSphereKernel, CollisionPreservesFiniteVelocities) {
     const auto properties = make_properties();
-    Vector3 lhs(1.0f, 0.0f, 0.0f);
-    Vector3 rhs(-1.0f, 0.0f, 0.0f);
+    Float3 lhs(1.0f, 0.0f, 0.0f);
+    Float3 rhs(-1.0f, 0.0f, 0.0f);
 
     VariableHardSphereKernel {}(lhs, rhs, properties, properties);
 
@@ -62,23 +62,23 @@ TEST(VariableHardSphereKernel, CollisionScatteringSamplesUniformSphere) {
     const auto properties = make_properties();
     constexpr int sample_count = 4096;
 
-    Vector3 mean(0.0f, 0.0f, 0.0f);
-    Vector3 second_moment(0.0f, 0.0f, 0.0f);
+    Float3 mean(0.0f, 0.0f, 0.0f);
+    Float3 second_moment(0.0f, 0.0f, 0.0f);
     int forward_count = 0;
 
     for (int i = 0; i < sample_count; ++i) {
         const auto index = static_cast<float>(i);
-        const Vector3 center(
+        const Float3 center(
             index * 0.61803399f + 0.17f,
             index * 1.41421356f + 0.31f,
             index * 2.71828183f + 0.53f);
 
-        Vector3 lhs = center + Vector3(1.0f, 0.0f, 0.0f);
-        Vector3 rhs = center - Vector3(1.0f, 0.0f, 0.0f);
+        Float3 lhs = center + Float3(1.0f, 0.0f, 0.0f);
+        Float3 rhs = center - Float3(1.0f, 0.0f, 0.0f);
 
         VariableHardSphereKernel {}(lhs, rhs, properties, properties);
 
-        const Vector3 direction = (lhs - rhs).normalized();
+        const Float3 direction = (lhs - rhs).normalized();
         mean += direction;
         second_moment += direction * direction;
         forward_count += direction.x > 0.0f ? 1 : 0;

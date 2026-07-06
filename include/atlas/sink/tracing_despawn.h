@@ -33,10 +33,10 @@ namespace atlas {
  */
 struct TracingDespawn final {
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD static ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE bool
     despawn(const atlas::Geometry& query,
-            const Vector3& position,
-            const Vector3& velocity,
+            const Float3& position,
+            const Float3& velocity,
             const float time = 0.0f) noexcept {
         const float speed = velocity.length();
         if (!(time > 0.0f) || !(speed > 0.0f)) {

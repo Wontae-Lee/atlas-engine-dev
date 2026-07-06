@@ -61,20 +61,22 @@ namespace detail {
     // generic / by-reference-capturing extended `__host__ __device__` lambdas).
     struct DespawnVectorVisitor {
         const atlas::Geometry& query;
-        const Vector3& vector;
+        const Float3& vector;
         float value;
-        template <typename Tag> ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+        template <typename Tag>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
         operator()(Tag) const noexcept {
             using Op = typename Tag::type;
-            return Op::despawn(query, Vector3(0.0f, 0.0f, 0.0f), vector, value);
+            return Op::despawn(query, Float3(0.0f, 0.0f, 0.0f), vector, value);
         }
     };
     struct DespawnPositionVisitor {
         const atlas::Geometry& query;
-        const Vector3& position;
-        const Vector3& vector;
+        const Float3& position;
+        const Float3& vector;
         float value;
-        template <typename Tag> ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+        template <typename Tag>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
         operator()(Tag) const noexcept {
             using Op = typename Tag::type;
             return Op::despawn(query, position, vector, value);
@@ -109,15 +111,16 @@ struct Despawn final {
 
     template <typename Payload,
               std::enable_if_t<detail::DespawnTypeSwitch::holds<std::decay_t<Payload>>, int> = 0>
-    ATLAS_HOST Despawn(const Payload&) noexcept
+    ATLAS_HOST
+    Despawn(const Payload&) noexcept
         : type(detail::DespawnTypeSwitch::tag_of<std::decay_t<Payload>>()) {
     }
 
     /** @brief Position-only despawn test (`Surface`/`Volume` rules);
      *  `vector` is the local particle position, `value` the tolerance. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     despawn(const atlas::Geometry& query,
-            const Vector3& vector,
+            const Float3& vector,
             float value = 0.0f) const noexcept;
 
     /** @brief Position-and-motion despawn test (needed by `Tracing`;
@@ -125,10 +128,10 @@ struct Despawn final {
      *  `position`); `vector` is the local velocity for `Tracing` or
      *  local position otherwise, `value` the tolerance or timestep
      *  respectively. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     despawn(const atlas::Geometry& query,
-            const Vector3& position,
-            const Vector3& vector,
+            const Float3& position,
+            const Float3& vector,
             float value = 0.0f) const noexcept;
 };
 
@@ -139,19 +142,23 @@ Despawn::Despawn(const DespawnType type) noexcept
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
 Despawn::despawn(const atlas::Geometry& query,
-                         const Vector3& vector,
-                         const float value) const noexcept {
+                 const Float3& vector,
+                 const float value) const noexcept {
     return detail::DespawnTypeSwitch::visit(
-        type, detail::DespawnVectorVisitor { query, vector, value }, false);
+        type,
+        detail::DespawnVectorVisitor { query, vector, value },
+        false);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
 Despawn::despawn(const atlas::Geometry& query,
-                         const Vector3& position,
-                         const Vector3& vector,
-                         const float value) const noexcept {
+                 const Float3& position,
+                 const Float3& vector,
+                 const float value) const noexcept {
     return detail::DespawnTypeSwitch::visit(
-        type, detail::DespawnPositionVisitor { query, position, vector, value }, false);
+        type,
+        detail::DespawnPositionVisitor { query, position, vector, value },
+        false);
 }
 
 }

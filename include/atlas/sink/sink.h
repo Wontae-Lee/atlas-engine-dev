@@ -80,7 +80,8 @@ public:
     ~Sink() = default;
 
     Sink&
-    operator=(const Sink&) = delete;
+    operator=(const Sink&)
+        = delete;
 
     Sink&
     operator=(Sink&&) noexcept = default;
@@ -94,7 +95,7 @@ public:
          float tolerance          = 0.0f,
          ObserverHostPtr observer = nullptr) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     /** @brief Advances every unit's own motion by `dt`, then calls
@@ -132,7 +133,7 @@ public:
     /** @brief Refreshes unit bounds and rebuilds `_probe`
      *  (`detail::SinkProbeBuilder::make`); `false` if there is nothing
      *  to despawn against right now. */
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     make_probe(float dt = 0.0f) noexcept;
 
 private:
@@ -191,10 +192,10 @@ class Sink::Builder final {
 public:
     Builder() = default;
 
-    ATLAS_HOST ATLAS_NODISCARD Sink
+    ATLAS_NODISCARD ATLAS_HOST Sink
     build();
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Sink>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Sink>
     make_host_shared();
 
     /** @brief The domain that owns this sink's units (registered via

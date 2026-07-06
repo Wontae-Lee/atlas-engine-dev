@@ -10,7 +10,7 @@
 namespace {
 
 bool
-expect_vec_near(const atlas::Vector3& a, const atlas::Vector3& b) {
+expect_vec_near(const atlas::Float3& a, const atlas::Float3& b) {
     return std::abs(a.x - b.x) <= atlas::tol
         && std::abs(a.y - b.y) <= atlas::tol
         && std::abs(a.z - b.z) <= atlas::tol;
@@ -21,33 +21,33 @@ expect_vec_near(const atlas::Vector3& a, const atlas::Vector3& b) {
 TEST(FluidState, PositionStateStoresVectorData) {
     atlas::FluidPositionState state(3);
 
-    state.data()[0] = atlas::Vector3(1.0f, 2.0f, 3.0f);
-    state.data()[1] = atlas::Vector3(4.0f, 5.0f, 6.0f);
+    state.data()[0] = atlas::Float3(1.0f, 2.0f, 3.0f);
+    state.data()[1] = atlas::Float3(4.0f, 5.0f, 6.0f);
 
-    const atlas::Vector3 p0 = state.data()[0];
-    const atlas::Vector3 p1 = state.data()[1];
+    const atlas::Float3 p0 = state.data()[0];
+    const atlas::Float3 p1 = state.data()[1];
 
     EXPECT_EQ(state.size(), 3u);
-    EXPECT_TRUE(expect_vec_near(p0, atlas::Vector3(1.0f, 2.0f, 3.0f)));
-    EXPECT_TRUE(expect_vec_near(p1, atlas::Vector3(4.0f, 5.0f, 6.0f)));
+    EXPECT_TRUE(expect_vec_near(p0, atlas::Float3(1.0f, 2.0f, 3.0f)));
+    EXPECT_TRUE(expect_vec_near(p1, atlas::Float3(4.0f, 5.0f, 6.0f)));
 }
 
 TEST(FluidState, VelocityStateCompactsKeptEntries) {
     atlas::FluidVelocityState state(4);
     atlas::DeviceBuffer<std::size_t> compact_indices = { 0u, 2u };
 
-    state.data()[0] = atlas::Vector3(1.0f, 0.0f, 0.0f);
-    state.data()[1] = atlas::Vector3(9.0f, 9.0f, 9.0f);
-    state.data()[2] = atlas::Vector3(0.0f, 1.0f, 0.0f);
-    state.data()[3] = atlas::Vector3(0.0f, 0.0f, 1.0f);
+    state.data()[0] = atlas::Float3(1.0f, 0.0f, 0.0f);
+    state.data()[1] = atlas::Float3(9.0f, 9.0f, 9.0f);
+    state.data()[2] = atlas::Float3(0.0f, 1.0f, 0.0f);
+    state.data()[3] = atlas::Float3(0.0f, 0.0f, 1.0f);
 
     state.compact(compact_indices, 2);
 
-    const atlas::Vector3 v0 = state.data()[0];
-    const atlas::Vector3 v1 = state.data()[1];
+    const atlas::Float3 v0 = state.data()[0];
+    const atlas::Float3 v1 = state.data()[1];
 
-    EXPECT_TRUE(expect_vec_near(v0, atlas::Vector3(1.0f, 0.0f, 0.0f)));
-    EXPECT_TRUE(expect_vec_near(v1, atlas::Vector3(0.0f, 1.0f, 0.0f)));
+    EXPECT_TRUE(expect_vec_near(v0, atlas::Float3(1.0f, 0.0f, 0.0f)));
+    EXPECT_TRUE(expect_vec_near(v1, atlas::Float3(0.0f, 1.0f, 0.0f)));
 }
 
 TEST(FluidState, SpeciesStateCompactsKeptEntries) {

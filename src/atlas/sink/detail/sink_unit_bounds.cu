@@ -24,7 +24,7 @@ SinkUnitBounds::refresh(const DeviceBuffer<Unit>& units,
     // shrink the broad-phase box below the unit's exact geometry, or the
     // AABB reject test could wrongly cull a particle the exact query would
     // still have accepted.
-    const float expand = tolerance > 0.0f ? tolerance : 0.0f;
+    const float expand   = tolerance > 0.0f ? tolerance : 0.0f;
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,

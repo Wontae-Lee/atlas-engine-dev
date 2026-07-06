@@ -70,12 +70,12 @@ struct BVHNode {
     /** Area-weighted centroid sum over this subtree's triangles
      *  (`sum(area_i * centroid_i)`), the 1st-moment term of the
      *  hierarchical winding-number approximation. */
-    Vector3 solid_angle_moment = Vector3(0.0f, 0.0f, 0.0f);
+    Float3 solid_angle_moment = Float3(0.0f, 0.0f, 0.0f);
 
     /** Area-weighted (unnormalized) normal sum over this subtree's
      *  triangles, needed to approximate the subtree's aggregate signed
      *  solid angle at a distant query point. */
-    Vector3 solid_angle_normal_area = Vector3(0.0f, 0.0f, 0.0f);
+    Float3 solid_angle_normal_area = Float3(0.0f, 0.0f, 0.0f);
 
     /** Total triangle area in this subtree (the 0th-moment term). */
     float solid_angle_area = 0.0f;

@@ -8,7 +8,7 @@ FluidPositionState::FluidPositionState(const std::size_t buffer_size)
     : _position(buffer_size) {
 }
 
-FluidPositionState::FluidPositionState(DeviceBuffer<Vector3> position) noexcept
+FluidPositionState::FluidPositionState(DeviceBuffer<Float3> position) noexcept
     : _position(std::move(position)) {
 }
 
@@ -27,12 +27,12 @@ FluidPositionState::reset() {
     reset_buffer(_position);
 }
 
-DeviceBuffer<Vector3>&
+DeviceBuffer<Float3>&
 FluidPositionState::data() noexcept {
     return _position;
 }
 
-const DeviceBuffer<Vector3>&
+const DeviceBuffer<Float3>&
 FluidPositionState::data() const noexcept {
     return _position;
 }
@@ -41,7 +41,7 @@ FluidVelocityState::FluidVelocityState(const std::size_t buffer_size)
     : _velocity(buffer_size) {
 }
 
-FluidVelocityState::FluidVelocityState(DeviceBuffer<Vector3> velocity) noexcept
+FluidVelocityState::FluidVelocityState(DeviceBuffer<Float3> velocity) noexcept
     : _velocity(std::move(velocity)) {
 }
 
@@ -60,12 +60,12 @@ FluidVelocityState::reset() {
     reset_buffer(_velocity);
 }
 
-DeviceBuffer<Vector3>&
+DeviceBuffer<Float3>&
 FluidVelocityState::data() noexcept {
     return _velocity;
 }
 
-const DeviceBuffer<Vector3>&
+const DeviceBuffer<Float3>&
 FluidVelocityState::data() const noexcept {
     return _velocity;
 }

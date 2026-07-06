@@ -30,7 +30,7 @@ public:
      *  `UniverseCollisionRemainderState`, `UniverseCollisionCountState`)
      *  plus `FluidVelocityState`/`FluidSpeciesState` already exist —
      *  the precondition `make()` checks before touching any buffer. */
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     ready(const UniverseHostPtr& universe,
           const FluidHostPtr& fluid,
           const SearcherHostPtr& searcher) noexcept;
@@ -47,7 +47,7 @@ public:
      *         positive — an empty fluid still yields a valid, zero-work
      *         probe.
      */
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     make(DsmcProbe& probe,
          const UniverseHostPtr& universe,
          const FluidHostPtr& fluid,

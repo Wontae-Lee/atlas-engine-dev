@@ -101,8 +101,8 @@ TEST(DsmcSolver, MakeProbeCapturesFluidUniverseAndSearcherViews) {
     ExposedDsmcSolver solver(universe, fluid, searcher);
 
     fluid->set_particle_count(1);
-    fluid->state<atlas::FluidPositionState>()->data()[0] = atlas::Vector3(0.0f, 0.0f, 0.0f);
-    fluid->state<atlas::FluidVelocityState>()->data()[0] = atlas::Vector3(1.0f, 0.0f, 0.0f);
+    fluid->state<atlas::FluidPositionState>()->data()[0] = atlas::Float3(0.0f, 0.0f, 0.0f);
+    fluid->state<atlas::FluidVelocityState>()->data()[0] = atlas::Float3(1.0f, 0.0f, 0.0f);
     searcher->build();
     solver.make_probe();
 

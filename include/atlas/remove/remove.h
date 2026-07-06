@@ -26,8 +26,8 @@ remove_if(Iterator first, Iterator last, Predicate pred) {
         auto* raw_first = atlas::raw_pointer_cast(&*first);
         auto* raw_last  = raw_first + static_cast<std::ptrdiff_t>(last - first);
         auto* raw_end   = (P == ExecutionPolicy::serial)
-            ? std::remove_if(raw_first, raw_last, pred)
-            : std::remove_if(std::execution::par, raw_first, raw_last, pred);
+              ? std::remove_if(raw_first, raw_last, pred)
+              : std::remove_if(std::execution::par, raw_first, raw_last, pred);
         return first + static_cast<std::ptrdiff_t>(raw_end - raw_first);
     }
 }

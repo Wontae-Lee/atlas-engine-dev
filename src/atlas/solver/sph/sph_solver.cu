@@ -179,16 +179,16 @@ SphSolver::estimate_density() {
                 return;
             }
 
-            const auto& property   = probe.properties_ptr[species_index];
-            const float h          = probe.cell_size;
-            const float h_squared  = h * h;
-            const float rho0       = SphSolver::rest_density(property);
-            const float k          = SphSolver::pressure_coefficient(property);
-            const Vector3 position = probe.position_ptr[particle_index];
+            const auto& property  = probe.properties_ptr[species_index];
+            const float h         = probe.cell_size;
+            const float h_squared = h * h;
+            const float rho0      = SphSolver::rest_density(property);
+            const float k         = SphSolver::pressure_coefficient(property);
+            const Float3 position = probe.position_ptr[particle_index];
             // density_weight(0, h) is the particle's own contribution to its
             // density estimate (r=0, i.e. a particle always "sees" itself)
             // — the standard SPH self-term, added before summing neighbors.
-            float density = property.mass * probe.kernel.density_weight(0.0f, h);
+            float density         = property.mass * probe.kernel.density_weight(0.0f, h);
 
             const int begin = probe.neighbor_offsets_ptr[particle_index];
             const int end   = probe.neighbor_offsets_ptr[particle_index + 1];
@@ -200,7 +200,7 @@ SphSolver::estimate_density() {
                     continue;
                 }
 
-                const Vector3 delta        = position - probe.position_ptr[neighbor_index];
+                const Float3 delta         = position - probe.position_ptr[neighbor_index];
                 const float radius_squared = delta.length_squared();
 
                 if (radius_squared > h_squared) {
@@ -265,18 +265,18 @@ SphSolver::accelerate(const float dt) {
         [=] ATLAS_ALL_DEVICE(const int particle_index) {
             const std::size_t species_index = probe.species_ptr[particle_index];
             if (species_index >= static_cast<std::size_t>(probe.property_count)) {
-                acceleration_ptr[particle_index] = Vector3(0.0f, 0.0f, 0.0f);
+                acceleration_ptr[particle_index] = Float3(0.0f, 0.0f, 0.0f);
                 return;
             }
 
-            const auto& property   = probe.properties_ptr[species_index];
-            const float h          = probe.cell_size;
-            const float h_squared  = h * h;
-            const float mu         = property.dynamic_viscosity.value_or(0.0f);
-            const float mass       = property.mass;
-            const Vector3 position = probe.position_ptr[particle_index];
-            const Vector3 velocity = probe.velocity_ptr[particle_index];
-            Vector3 acceleration(0.0f, 0.0f, 0.0f);
+            const auto& property  = probe.properties_ptr[species_index];
+            const float h         = probe.cell_size;
+            const float h_squared = h * h;
+            const float mu        = property.dynamic_viscosity.value_or(0.0f);
+            const float mass      = property.mass;
+            const Float3 position = probe.position_ptr[particle_index];
+            const Float3 velocity = probe.velocity_ptr[particle_index];
+            Float3 acceleration(0.0f, 0.0f, 0.0f);
 
             const int begin = probe.neighbor_offsets_ptr[particle_index];
             const int end   = probe.neighbor_offsets_ptr[particle_index + 1];
@@ -303,7 +303,7 @@ SphSolver::accelerate(const float dt) {
                     continue;
                 }
 
-                const Vector3 delta        = position - probe.position_ptr[neighbor_index];
+                const Float3 delta         = position - probe.position_ptr[neighbor_index];
                 const float radius_squared = delta.length_squared();
 
                 if (!(radius_squared > 0.0f) || radius_squared > h_squared) {
@@ -312,7 +312,7 @@ SphSolver::accelerate(const float dt) {
 
                 const float radius = atlas::sqrt_nonnegative(radius_squared);
 
-                const Vector3 grad = probe.kernel.pressure_gradient(delta, radius, h);
+                const Float3 grad = probe.kernel.pressure_gradient(delta, radius, h);
 
                 // Symmetrized pressure force (Muller et al. 2003 form):
                 // averaging this particle's and the neighbor's pressure
@@ -338,7 +338,7 @@ SphSolver::accelerate(const float dt) {
             }
 
             if (!(mass > 0.0f)) {
-                acceleration = Vector3(0.0f, 0.0f, 0.0f);
+                acceleration = Float3(0.0f, 0.0f, 0.0f);
             }
 
             // Semi-implicit Euler: velocity updated here from this step's
@@ -359,11 +359,11 @@ SphSolver::accelerate(const float dt) {
             const int end   = probe.cell_end_ptr[cell];
 
             if (begin < 0 || end <= begin) {
-                probe.field_force_ptr[cell] = Vector3(0.0f, 0.0f, 0.0f);
+                probe.field_force_ptr[cell] = Float3(0.0f, 0.0f, 0.0f);
                 return;
             }
 
-            Vector3 accumulated_force(0.0f, 0.0f, 0.0f);
+            Float3 accumulated_force(0.0f, 0.0f, 0.0f);
             int count = 0;
 
             for (int sorted_index = begin; sorted_index < end; ++sorted_index) {
@@ -385,7 +385,7 @@ SphSolver::accelerate(const float dt) {
             }
 
             probe.field_force_ptr[cell] = count > 0 ? accumulated_force / static_cast<float>(count)
-                                                    : Vector3(0.0f, 0.0f, 0.0f);
+                                                    : Float3(0.0f, 0.0f, 0.0f);
         });
 }
 

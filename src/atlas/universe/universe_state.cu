@@ -36,7 +36,7 @@ UniverseBulkVelocityState::UniverseBulkVelocityState(const std::size_t cell_coun
     : _bulk_velocity(cell_count) {
 }
 
-UniverseBulkVelocityState::UniverseBulkVelocityState(DeviceBuffer<Vector3> bulk_velocity) noexcept
+UniverseBulkVelocityState::UniverseBulkVelocityState(DeviceBuffer<Float3> bulk_velocity) noexcept
     : _bulk_velocity(std::move(bulk_velocity)) {
 }
 
@@ -50,12 +50,12 @@ UniverseBulkVelocityState::reset() {
     reset_buffer(_bulk_velocity);
 }
 
-DeviceBuffer<Vector3>&
+DeviceBuffer<Float3>&
 UniverseBulkVelocityState::data() noexcept {
     return _bulk_velocity;
 }
 
-const DeviceBuffer<Vector3>&
+const DeviceBuffer<Float3>&
 UniverseBulkVelocityState::data() const noexcept {
     return _bulk_velocity;
 }
@@ -64,7 +64,7 @@ UniverseFieldForceState::UniverseFieldForceState(const std::size_t cell_count)
     : _field_force(cell_count) {
 }
 
-UniverseFieldForceState::UniverseFieldForceState(DeviceBuffer<Vector3> field_force) noexcept
+UniverseFieldForceState::UniverseFieldForceState(DeviceBuffer<Float3> field_force) noexcept
     : _field_force(std::move(field_force)) {
 }
 
@@ -78,12 +78,12 @@ UniverseFieldForceState::reset() {
     reset_buffer(_field_force);
 }
 
-DeviceBuffer<Vector3>&
+DeviceBuffer<Float3>&
 UniverseFieldForceState::data() noexcept {
     return _field_force;
 }
 
-const DeviceBuffer<Vector3>&
+const DeviceBuffer<Float3>&
 UniverseFieldForceState::data() const noexcept {
     return _field_force;
 }
@@ -92,7 +92,7 @@ UniverseGravityState::UniverseGravityState(const std::size_t cell_count)
     : _gravity(cell_count) {
 }
 
-UniverseGravityState::UniverseGravityState(DeviceBuffer<Vector3> gravity) noexcept
+UniverseGravityState::UniverseGravityState(DeviceBuffer<Float3> gravity) noexcept
     : _gravity(std::move(gravity)) {
 }
 
@@ -106,12 +106,12 @@ UniverseGravityState::reset() {
     reset_buffer(_gravity);
 }
 
-DeviceBuffer<Vector3>&
+DeviceBuffer<Float3>&
 UniverseGravityState::data() noexcept {
     return _gravity;
 }
 
-const DeviceBuffer<Vector3>&
+const DeviceBuffer<Float3>&
 UniverseGravityState::data() const noexcept {
     return _gravity;
 }

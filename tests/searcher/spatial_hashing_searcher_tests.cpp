@@ -13,8 +13,8 @@ namespace {
 
 using atlas::SearcherHostPtr;
 using atlas::SpatialHashingSearcher;
-using atlas::Vector3;
-using atlas::Vector3i;
+using atlas::Float3;
+using atlas::Int3;
 using atlas::test::searcher::contains_neighbor;
 using atlas::test::searcher::copy_values;
 using atlas::test::searcher::expect_vec_near;
@@ -34,8 +34,8 @@ TEST(SpatialHashingSearcher, BuilderConstructsUsableSearcher) {
                               .with_fluid(fluid)
                               .build();
 
-    EXPECT_TRUE(expect_vec_near(searcher.lower_corner(), Vector3(0.0f, 0.0f, 0.0f)));
-    EXPECT_TRUE(searcher.grid_size() == Vector3i(3, 3, 3));
+    EXPECT_TRUE(expect_vec_near(searcher.lower_corner(), Float3(0.0f, 0.0f, 0.0f)));
+    EXPECT_TRUE(searcher.grid_size() == Int3(3, 3, 3));
     EXPECT_FLOAT_EQ(searcher.cell_size(), 0.5f);
     EXPECT_FLOAT_EQ(searcher.inverse_cell_size(), 2.0f);
 }
@@ -69,11 +69,11 @@ TEST(SpatialHashingSearcher, MakeHostSharedBuildsAbstractCompatibleSearcher) {
     ASSERT_NE(searcher, nullptr);
     EXPECT_NO_THROW(searcher->build());
     EXPECT_FLOAT_EQ(searcher->cell_size(), 0.5f);
-    EXPECT_TRUE(searcher->grid_size() == Vector3i(3, 3, 3));
+    EXPECT_TRUE(searcher->grid_size() == Int3(3, 3, 3));
 }
 
 TEST(SpatialHashingSearcher, LinearKeyForwardsBaseFlattening) {
-    const auto key = SpatialHashingSearcher::linear_key(1, 2, 1, Vector3i(4, 5, 6));
+    const auto key = SpatialHashingSearcher::linear_key(1, 2, 1, Int3(4, 5, 6));
     EXPECT_EQ(key, static_cast<std::uint32_t>(1 + 2 * 4 + 1 * 4 * 5));
 }
 
@@ -132,7 +132,7 @@ TEST(SpatialHashingSearcher, BuildIsSkippedUntilInvalidated) {
     ASSERT_TRUE(contains_neighbor(searcher, 0, 1));
 
     auto& positions = fluid->state<atlas::FluidPositionState>()->data();
-    positions[1]    = Vector3(0.90f, 0.90f, 0.90f);
+    positions[1]    = Float3(0.90f, 0.90f, 0.90f);
 
     searcher->build();
     EXPECT_TRUE(contains_neighbor(searcher, 0, 1));

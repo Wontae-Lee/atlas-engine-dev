@@ -12,17 +12,17 @@
 
 namespace atlas {
 
-Universe::Universe(const Vector3& lower_corner,
-                   const Vector3& upper_corner,
+Universe::Universe(const Float3& lower_corner,
+                   const Float3& upper_corner,
                    const float cell_size)
     : _lower_corner(lower_corner)
     , _upper_corner(upper_corner)
     , _cell_size(cell_size) {
 
-    _cell_volume  = _cell_size * _cell_size * _cell_size;
-    _inv_h        = 1.0f / _cell_size;
-    _grid_size    = compute_grid_size(_lower_corner, _upper_corner, _inv_h);
-    _cell_count = _grid_size.x * _grid_size.y * _grid_size.z;
+    _cell_volume = _cell_size * _cell_size * _cell_size;
+    _inv_h       = 1.0f / _cell_size;
+    _grid_size   = compute_grid_size(_lower_corner, _upper_corner, _inv_h);
+    _cell_count  = _grid_size.x * _grid_size.y * _grid_size.z;
 }
 
 Universe::Builder
@@ -30,12 +30,12 @@ Universe::builder() noexcept {
     return Builder {};
 }
 
-Vector3i
-Universe::compute_grid_size(const Vector3& lower_corner,
-                            const Vector3& upper_corner,
+Int3
+Universe::compute_grid_size(const Float3& lower_corner,
+                            const Float3& upper_corner,
                             const float inverse_cell_size) noexcept {
     return atlas::to_vector3i(atlas::floor((upper_corner - lower_corner) * inverse_cell_size))
-        + Vector3i(1, 1, 1);
+        + Int3(1, 1, 1);
 }
 
 int
@@ -43,17 +43,17 @@ Universe::cell_count() const noexcept {
     return _cell_count;
 }
 
-Vector3
+Float3
 Universe::lower_corner() const noexcept {
     return _lower_corner;
 }
 
-Vector3
+Float3
 Universe::upper_corner() const noexcept {
     return _upper_corner;
 }
 
-Vector3i
+Int3
 Universe::grid_size() const noexcept {
     return _grid_size;
 }
@@ -167,13 +167,13 @@ Universe::Builder::build() const {
     if (_bulk_velocity_state.has_value()) {
         universe.set_state<UniverseBulkVelocityState>(
             std::make_unique<UniverseBulkVelocityState>(
-                DeviceBuffer<Vector3>(_bulk_velocity_state->begin(), _bulk_velocity_state->end())));
+                DeviceBuffer<Float3>(_bulk_velocity_state->begin(), _bulk_velocity_state->end())));
     }
 
     if (_field_force_state.has_value()) {
         universe.set_state<UniverseFieldForceState>(
             std::make_unique<UniverseFieldForceState>(
-                DeviceBuffer<Vector3>(_field_force_state->begin(), _field_force_state->end())));
+                DeviceBuffer<Float3>(_field_force_state->begin(), _field_force_state->end())));
     }
 
     if (_max_relative_speed_state.has_value()) {
@@ -224,13 +224,13 @@ Universe::Builder::with_geometry(const Geometry& geometry) {
 }
 
 Universe::Builder&
-Universe::Builder::with_lower_corner(const Vector3& v) noexcept {
+Universe::Builder::with_lower_corner(const Float3& v) noexcept {
     _lower_corner = v;
     return *this;
 }
 
 Universe::Builder&
-Universe::Builder::with_upper_corner(const Vector3& v) noexcept {
+Universe::Builder::with_upper_corner(const Float3& v) noexcept {
     _upper_corner = v;
     return *this;
 }
@@ -306,9 +306,9 @@ Universe::Builder::validate() const {
 
     const float inv_h = 1.0f / _cell_size;
 
-    const Vector3i gs = Universe::compute_grid_size(_lower_corner, _upper_corner, inv_h);
+    const Int3 gs = Universe::compute_grid_size(_lower_corner, _upper_corner, inv_h);
 
-    atlas::check<std::invalid_argument>(atlas::all(gs >= Vector3i(1, 1, 1)))
+    atlas::check<std::invalid_argument>(atlas::all(gs >= Int3(1, 1, 1)))
         << "Universe::Builder validation failed: computed grid_size must be >= 1 on all axes. "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
 

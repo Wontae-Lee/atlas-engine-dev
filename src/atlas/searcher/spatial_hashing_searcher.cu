@@ -37,7 +37,7 @@ SpatialHashingSearcher::init_indices_iota(const int alive) {
 }
 
 void
-SpatialHashingSearcher::compute_keys(const int alive, const Vector3* pos) {
+SpatialHashingSearcher::compute_keys(const int alive, const Float3* pos) {
     compute_grid_keys(alive, pos);
 }
 
@@ -52,7 +52,7 @@ SpatialHashingSearcher::build_cell_ranges(const int alive) {
 }
 
 void
-SpatialHashingSearcher::build_neighbors(const int alive, const Vector3* pos) {
+SpatialHashingSearcher::build_neighbors(const int alive, const Float3* pos) {
     // Always-accepting filter: this is the unfiltered baseline
     // KdTreeSearcher/OctreeSearcher/QuadtreeSearcher each restrict further
     // with their own geometric predicate (see those files).
@@ -60,9 +60,9 @@ SpatialHashingSearcher::build_neighbors(const int alive, const Vector3* pos) {
         alive,
         pos,
         [] ATLAS_ALL_DEVICE(const int,
-                        const int,
-                        const Vector3&,
-                        const Vector3&) {
+                            const int,
+                            const Float3&,
+                            const Float3&) {
             return true;
         });
 }
@@ -73,8 +73,8 @@ SpatialHashingSearcher::build() {
         return;
     }
 
-    const Vector3* positions = position_ptr();
-    const int alive          = active_count();
+    const Float3* positions = position_ptr();
+    const int alive         = active_count();
 
     if (!positions || alive <= 0) {
         reset();
@@ -89,12 +89,12 @@ SpatialHashingSearcher::build() {
     _is_invalidated = false;
 }
 
-Vector3
+Float3
 SpatialHashingSearcher::lower_corner() const noexcept {
     return Searcher::lower_corner();
 }
 
-Vector3i
+Int3
 SpatialHashingSearcher::grid_size() const noexcept {
     return Searcher::grid_size();
 }

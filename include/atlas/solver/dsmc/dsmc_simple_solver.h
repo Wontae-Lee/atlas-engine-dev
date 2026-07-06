@@ -43,7 +43,7 @@ public:
 
     class Builder;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     /** @brief `DsmcSimpleStatistics::measure` — NTC candidate-count
@@ -81,10 +81,10 @@ public:
     ATLAS_HOST void
     validate() const;
 
-    ATLAS_HOST ATLAS_NODISCARD DsmcSimpleSolver
+    ATLAS_NODISCARD ATLAS_HOST DsmcSimpleSolver
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<DsmcSimpleSolver>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<DsmcSimpleSolver>
     make_host_shared() const;
 
 private:

@@ -34,10 +34,10 @@ namespace atlas {
  */
 struct SphProbe {
     /** Particle positions, owned by `Fluid`. */
-    const Vector3* position_ptr {};
+    const Float3* position_ptr {};
     /** Particle velocities, owned by `Fluid`; updated in place by
      *  `SphSolver::accelerate`. */
-    Vector3* velocity_ptr {};
+    Float3* velocity_ptr {};
     /** Particle species indices, owned by `Fluid`. */
     const std::size_t* species_ptr {};
     /** Per-species material properties (indexed by `species_ptr`). */
@@ -46,7 +46,7 @@ struct SphProbe {
     float* number_particle_ptr {};
     /** Per-cell averaged particle acceleration (mass-weighted mean),
      *  written by `SphSolver::accelerate`'s second pass. */
-    Vector3* field_force_ptr {};
+    Float3* field_force_ptr {};
     /** Searcher's particle indices sorted by cell. */
     const int* indices_ptr {};
     /** Per-cell start offset into `indices_ptr`. */
@@ -60,9 +60,9 @@ struct SphProbe {
      *  `neighbor_offsets_ptr`. */
     const int* neighbor_indices_ptr {};
     /** Spatial grid's world-space lower corner. */
-    Vector3 lower_corner {};
+    Float3 lower_corner {};
     /** Spatial grid's cell counts along each axis. */
-    Vector3i grid_size {};
+    Int3 grid_size {};
     /** `1 / cell_size`, precomputed for grid-index arithmetic. */
     float inverse_cell_size {};
     /** Grid cell size — also the SPH kernel's support radius `h`. */

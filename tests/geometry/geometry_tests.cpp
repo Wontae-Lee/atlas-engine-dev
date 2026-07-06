@@ -24,18 +24,18 @@ using atlas::Sphere;
 using atlas::Triangle;
 using atlas::TriangleContainer4;
 using atlas::TriangleMesh;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::eps;
 
 bool
-is_finite_vec(const Vector3& v) {
+is_finite_vec(const Float3& v) {
     return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
 }
 
 void
 expect_operator_interface(const Geometry& geometry,
                           const GeometryType expected_type,
-                          const Vector3& query_point) {
+                          const Float3& query_point) {
     EXPECT_EQ(geometry.type, expected_type);
     EXPECT_TRUE(geometry.is_valid());
 
@@ -61,32 +61,32 @@ expect_operator_interface(const Geometry& geometry,
 
 TEST(Geometry, BoxDispatchesToBoxShape) {
     const auto box = Box::builder()
-                         .with_lower_corner(Vector3(-1.0f, -2.0f, -3.0f))
-                         .with_upper_corner(Vector3(1.0f, 2.0f, 3.0f))
+                         .with_lower_corner(Float3(-1.0f, -2.0f, -3.0f))
+                         .with_upper_corner(Float3(1.0f, 2.0f, 3.0f))
                          .build();
 
     expect_operator_interface(
         Geometry(box),
         GeometryType::box,
-        Vector3(3.0f, 0.0f, 0.0f));
+        Float3(3.0f, 0.0f, 0.0f));
 }
 
 TEST(Geometry, CircleDispatchesToCircleShape) {
     const auto circle = Circle::builder()
-                            .with_center(Vector3(0.0f, 0.0f, 0.0f))
-                            .with_normal(Vector3(0.0f, 1.0f, 0.0f))
+                            .with_center(Float3(0.0f, 0.0f, 0.0f))
+                            .with_normal(Float3(0.0f, 1.0f, 0.0f))
                             .with_radius(2.0f)
                             .build();
 
     expect_operator_interface(
         Geometry(circle),
         GeometryType::circle,
-        Vector3(1.0f, 3.0f, 0.0f));
+        Float3(1.0f, 3.0f, 0.0f));
 }
 
 TEST(Geometry, CylinderDispatchesToCylinderShape) {
     const auto cylinder = Cylinder::builder()
-                              .with_center(Vector3(0.0f, 0.0f, 0.0f))
+                              .with_center(Float3(0.0f, 0.0f, 0.0f))
                               .with_radius(1.5f)
                               .with_height(4.0f)
                               .build();
@@ -94,52 +94,52 @@ TEST(Geometry, CylinderDispatchesToCylinderShape) {
     expect_operator_interface(
         Geometry(cylinder),
         GeometryType::cylinder,
-        Vector3(2.0f, 0.0f, 0.0f));
+        Float3(2.0f, 0.0f, 0.0f));
 }
 
 TEST(Geometry, PlaneDispatchesToPlaneShape) {
     const auto plane = Plane::builder()
-                           .with_point_normal(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f))
+                           .with_point_normal(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 1.0f, 0.0f))
                            .build();
 
     expect_operator_interface(
         Geometry(plane),
         GeometryType::plane,
-        Vector3(0.0f, 2.0f, 0.0f));
+        Float3(0.0f, 2.0f, 0.0f));
 }
 
 TEST(Geometry, SphereDispatchesToSphereShape) {
     const auto sphere = Sphere::builder()
-                            .with_center(Vector3(0.0f, 0.0f, 0.0f))
+                            .with_center(Float3(0.0f, 0.0f, 0.0f))
                             .with_radius(2.0f)
                             .build();
 
     expect_operator_interface(
         Geometry(sphere),
         GeometryType::sphere,
-        Vector3(4.0f, 0.0f, 0.0f));
+        Float3(4.0f, 0.0f, 0.0f));
 }
 
 TEST(Geometry, TriangleDispatchesToTriangleShape) {
     const auto triangle = Triangle::builder()
                               .with_vertices(
-                                  Vector3(0.0f, 0.0f, 0.0f),
-                                  Vector3(1.0f, 0.0f, 0.0f),
-                                  Vector3(0.0f, 1.0f, 0.0f))
+                                  Float3(0.0f, 0.0f, 0.0f),
+                                  Float3(1.0f, 0.0f, 0.0f),
+                                  Float3(0.0f, 1.0f, 0.0f))
                               .build();
 
     expect_operator_interface(
         Geometry(triangle),
         GeometryType::triangle,
-        Vector3(0.25f, 0.25f, 1.0f));
+        Float3(0.25f, 0.25f, 1.0f));
 }
 
 TEST(Geometry, TriangleMeshDispatchesToMeshShape) {
     TriangleContainer4 triangle {};
-    triangle[0] = Vector3(0.0f, 0.0f, 0.0f);
-    triangle[1] = Vector3(1.0f, 0.0f, 0.0f);
-    triangle[2] = Vector3(0.0f, 1.0f, 0.0f);
-    triangle[3] = Vector3(0.0f, 0.0f, 0.0f);
+    triangle[0] = Float3(0.0f, 0.0f, 0.0f);
+    triangle[1] = Float3(1.0f, 0.0f, 0.0f);
+    triangle[2] = Float3(0.0f, 1.0f, 0.0f);
+    triangle[3] = Float3(0.0f, 0.0f, 0.0f);
 
     const auto mesh = TriangleMesh::builder()
                           .with_triangles(HostBuffer<TriangleContainer4> { triangle })
@@ -148,5 +148,5 @@ TEST(Geometry, TriangleMeshDispatchesToMeshShape) {
     expect_operator_interface(
         mesh.make_device_geometry_view(),
         GeometryType::triangle_mesh,
-        Vector3(0.2f, 0.2f, 0.5f));
+        Float3(0.2f, 0.2f, 0.5f));
 }

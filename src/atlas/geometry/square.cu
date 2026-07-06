@@ -24,13 +24,13 @@ Square::Builder::make_host_shared() const {
 }
 
 Square::Builder&
-Square::Builder::with_center(const Vector3& center_) noexcept {
+Square::Builder::with_center(const Float3& center_) noexcept {
     _center = center_;
     return *this;
 }
 
 Square::Builder&
-Square::Builder::with_normal(const Vector3& normal_) noexcept {
+Square::Builder::with_normal(const Float3& normal_) noexcept {
     _normal = normal_;
     return *this;
 }

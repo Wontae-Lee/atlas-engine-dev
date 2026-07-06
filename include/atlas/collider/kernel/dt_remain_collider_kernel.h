@@ -59,11 +59,11 @@ public:
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     sweep_motion(const Unit&,
-                 const Vector3&,
-                 const Vector3& incident,
+                 const Float3&,
+                 const Float3& incident,
                  const float incident_speed,
                  const float dt,
-                 Vector3& sweep_direction,
+                 Float3& sweep_direction,
                  float& sweep_speed,
                  float& sweep_length) const noexcept {
         sweep_direction = incident * dt;
@@ -80,20 +80,20 @@ public:
      *        near-stationary sweep has no well-defined impact time).
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    operator()(Vector3& position,
-               Vector3& velocity,
-               const Vector3& incident,
-               const Vector3& hit_position,
-               const Vector3& hit_normal,
+    operator()(Float3& position,
+               Float3& velocity,
+               const Float3& incident,
+               const Float3& hit_position,
+               const Float3& hit_normal,
                const float hit_distance,
                const float sweep_speed,
                const float dt,
                const Unit& unit,
                const SurfaceInteractionKernel& interaction) const noexcept {
-        const Vector3 wall_velocity     = FastColliderKernel::surface_velocity(unit, hit_position);
-        const Vector3 relative_incident = incident - wall_velocity;
-        const Vector3 reflected         = interaction(relative_incident, hit_normal) + wall_velocity;
-        const Vector3 offset_position   = hit_position + hit_normal * atlas::tol;
+        const Float3 wall_velocity     = FastColliderKernel::surface_velocity(unit, hit_position);
+        const Float3 relative_incident = incident - wall_velocity;
+        const Float3 reflected         = interaction(relative_incident, hit_normal) + wall_velocity;
+        const Float3 offset_position   = hit_position + hit_normal * atlas::tol;
 
         position = offset_position;
         velocity = reflected;

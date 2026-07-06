@@ -83,6 +83,24 @@ Backend and capacity conventions for specific builders:
   headers) only when explicitly requested.
 ```
 
+Order the leading macros on a declaration as follows:
+
+```text
+ATLAS_NODISCARD  [ATLAS_ALL_DEVICE | ATLAS_HOST | ATLAS_DEVICE]  [static]  ATLAS_FORCE_INLINE  <return type>
+```
+
+```text
+- ATLAS_NODISCARD, when present, comes first. It expands to [[nodiscard]], a
+  standard attribute that only appertains to the function when it leads the
+  declaration. If an execution-space macro precedes it, the attribute binds to
+  the return type instead and is silently dropped — and because ATLAS_ALL_DEVICE
+  and ATLAS_HOST expand to nothing on the host (TBB) build, the loss is only
+  visible on the CUDA build. Keep it in front so the [[nodiscard]] survives.
+- The execution-space macro (ATLAS_ALL_DEVICE / ATLAS_HOST / ATLAS_DEVICE)
+  comes next, then static (where applicable), then ATLAS_FORCE_INLINE, then the
+  return type.
+```
+
 ---
 
 ## 6.5 Active-Prefix Discipline

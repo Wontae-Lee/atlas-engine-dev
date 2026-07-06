@@ -100,7 +100,8 @@ class Searcher {
 public:
     Searcher() = default;
 
-    ATLAS_HOST Searcher(UniverseHostPtr universe, FluidHostPtr fluid);
+    ATLAS_HOST
+    Searcher(UniverseHostPtr universe, FluidHostPtr fluid);
 
     virtual ~Searcher() = default;
 
@@ -129,72 +130,72 @@ public:
     ATLAS_HOST virtual void
     reset() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual Vector3
+    ATLAS_NODISCARD ATLAS_HOST virtual Float3
     lower_corner() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual Vector3i
+    ATLAS_NODISCARD ATLAS_HOST virtual Int3
     grid_size() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual float
+    ATLAS_NODISCARD ATLAS_HOST virtual float
     inverse_cell_size() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual float
+    ATLAS_NODISCARD ATLAS_HOST virtual float
     cell_size() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual const int*
+    ATLAS_NODISCARD ATLAS_HOST virtual const int*
     indices() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual const int*
+    ATLAS_NODISCARD ATLAS_HOST virtual const int*
     cell_start() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual const int*
+    ATLAS_NODISCARD ATLAS_HOST virtual const int*
     cell_end() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual const int*
+    ATLAS_NODISCARD ATLAS_HOST virtual const int*
     neighbor_offsets() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual const int*
+    ATLAS_NODISCARD ATLAS_HOST virtual const int*
     neighbor_indices() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD virtual int
+    ATLAS_NODISCARD ATLAS_HOST virtual int
     neighbor_count() const noexcept;
 
     /** @brief Flattens a 3D cell index into a single grid-linear key
      *  (`x + y*nx + z*nx*ny`), used both to sort particles by cell and
      *  to index `cell_start`/`cell_end`. */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static std::uint32_t
-    linear_key(const int ix, const int iy, const int iz, const Vector3i& gs) noexcept {
+    linear_key(const int ix, const int iy, const int iz, const Int3& gs) noexcept {
         return static_cast<std::uint32_t>(ix + iy * gs.x + iz * gs.x * gs.y);
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static std::uint32_t
-    linear_key(const Vector3i& cell, const Vector3i& gs) noexcept {
+    linear_key(const Int3& cell, const Int3& gs) noexcept {
         return linear_key(cell.x, cell.y, cell.z, gs);
     }
 
     /** @brief World-space position to (clamped-in-range) grid cell
      *  index; the shared position-to-cell mapping every searcher/
      *  consumer uses. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3i
-    cell_for(const Vector3& position,
-             const Vector3& lower_corner,
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static Int3
+    cell_for(const Float3& position,
+             const Float3& lower_corner,
              const float inverse_cell_size,
-             const Vector3i& grid_size) noexcept {
-        const Vector3i cell = atlas::to_vector3i(atlas::floor((position - lower_corner) * inverse_cell_size));
-        return atlas::clamp(cell, Vector3i(0, 0, 0), grid_size - Vector3i(1, 1, 1));
+             const Int3& grid_size) noexcept {
+        const Int3 cell = atlas::to_vector3i(atlas::floor((position - lower_corner) * inverse_cell_size));
+        return atlas::clamp(cell, Int3(0, 0, 0), grid_size - Int3(1, 1, 1));
     }
 
     /** @brief Whether `cell` is within `[0, grid_size)` on every axis. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
-    contains_cell(const Vector3i& cell, const Vector3i& grid_size) noexcept {
-        return atlas::all(cell >= Vector3i(0, 0, 0))
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static bool
+    contains_cell(const Int3& cell, const Int3& grid_size) noexcept {
+        return atlas::all(cell >= Int3(0, 0, 0))
             && atlas::all(cell < grid_size);
     }
 
     /** @brief Number of grid cells a search radius `length` spans,
      *  rounded up (`ceil(length / cell_size)`) — the neighbor-cell
      *  block radius to walk for a query of that reach. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static int
     search_radius_for(const float length, const float cell_size) noexcept {
         return static_cast<int>(std::ceil(length / cell_size));
     }
@@ -205,7 +206,7 @@ protected:
     ATLAS_HOST void
     validate_dependencies(const char* owner) const;
 
-    ATLAS_HOST const Vector3*
+    ATLAS_HOST const Float3*
     position_ptr() const noexcept;
 
     /** @brief Current live particle count from `_fluid`. */
@@ -226,7 +227,7 @@ public:
     /** @brief Assigns each particle's grid-linear key from `positions`
      *  — cell-sort pipeline step 2. */
     ATLAS_HOST void
-    compute_grid_keys(int alive, const Vector3* positions);
+    compute_grid_keys(int alive, const Float3* positions);
 
 protected:
     /** @brief Sorts `_indices` by `_keys` — cell-sort pipeline step 3. */
@@ -250,7 +251,7 @@ protected:
      */
     template <typename CandidateFilter>
     ATLAS_HOST ATLAS_FORCE_INLINE void
-    build_cell_neighbors(const int alive, const Vector3* positions, CandidateFilter filter) {
+    build_cell_neighbors(const int alive, const Float3* positions, CandidateFilter filter) {
         _neighbor_offsets.resize(static_cast<std::size_t>(alive + 1));
         _neighbor_counts.resize(static_cast<std::size_t>(alive));
 
@@ -258,10 +259,10 @@ protected:
         const auto* indices = atlas::raw_pointer_cast(_indices.data());
         const auto* start   = atlas::raw_pointer_cast(_cell_start.data());
         const auto* end     = atlas::raw_pointer_cast(_cell_end.data());
-        const Vector3 lc    = _universe->lower_corner();
+        const Float3 lc     = _universe->lower_corner();
         const float inv_h   = _universe->inverse_cell_size();
         const float radius2 = _universe->cell_size() * _universe->cell_size();
-        const Vector3i gs   = _universe->grid_size();
+        const Int3 gs       = _universe->grid_size();
 
         atlas::parallel_for<ExecutionPolicy::device>(
             0,
@@ -357,23 +358,23 @@ namespace detail {
         const int* indices {};
         const int* start {};
         const int* end {};
-        const Vector3* positions {};
+        const Float3* positions {};
         CandidateFilter filter {};
-        Vector3 lower_corner {};
+        Float3 lower_corner {};
         float inverse_cell_size {};
         float radius_squared {};
-        Vector3i grid_size {};
+        Int3 grid_size {};
 
         ATLAS_ALL_DEVICE void
         operator()(const int i) const {
-            const Vector3 pi    = positions[i];
-            const Vector3i cell = Searcher::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
+            const Float3 pi = positions[i];
+            const Int3 cell = Searcher::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
 
             int count = 0;
             for (int dz = -1; dz <= 1; ++dz) {
                 for (int dy = -1; dy <= 1; ++dy) {
                     for (int dx = -1; dx <= 1; ++dx) {
-                        const Vector3i neighbor_cell = cell + Vector3i(dx, dy, dz);
+                        const Int3 neighbor_cell = cell + Int3(dx, dy, dz);
                         if (!Searcher::contains_cell(neighbor_cell, grid_size)) continue;
 
                         const std::uint32_t key = Searcher::linear_key(neighbor_cell, grid_size);
@@ -385,10 +386,10 @@ namespace detail {
                             const int j = indices[cursor];
                             if (j == i) continue;
 
-                            const Vector3 pj = positions[j];
+                            const Float3 pj = positions[j];
                             if (!filter(i, j, pi, pj)) continue;
 
-                            const Vector3 delta = pj - pi;
+                            const Float3 delta = pj - pi;
                             if (delta.length_squared() <= radius_squared) {
                                 ++count;
                             }
@@ -411,23 +412,23 @@ namespace detail {
         const int* indices {};
         const int* start {};
         const int* end {};
-        const Vector3* positions {};
+        const Float3* positions {};
         CandidateFilter filter {};
-        Vector3 lower_corner {};
+        Float3 lower_corner {};
         float inverse_cell_size {};
         float radius_squared {};
-        Vector3i grid_size {};
+        Int3 grid_size {};
 
         ATLAS_ALL_DEVICE void
         operator()(const int i) const {
-            const Vector3 pi    = positions[i];
-            const Vector3i cell = Searcher::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
+            const Float3 pi = positions[i];
+            const Int3 cell = Searcher::cell_for(pi, lower_corner, inverse_cell_size, grid_size);
 
             int write = offsets[i];
             for (int dz = -1; dz <= 1; ++dz) {
                 for (int dy = -1; dy <= 1; ++dy) {
                     for (int dx = -1; dx <= 1; ++dx) {
-                        const Vector3i neighbor_cell = cell + Vector3i(dx, dy, dz);
+                        const Int3 neighbor_cell = cell + Int3(dx, dy, dz);
                         if (!Searcher::contains_cell(neighbor_cell, grid_size)) continue;
 
                         const std::uint32_t key = Searcher::linear_key(neighbor_cell, grid_size);
@@ -439,10 +440,10 @@ namespace detail {
                             const int j = indices[cursor];
                             if (j == i) continue;
 
-                            const Vector3 pj = positions[j];
+                            const Float3 pj = positions[j];
                             if (!filter(i, j, pi, pj)) continue;
 
-                            const Vector3 delta = pj - pi;
+                            const Float3 delta = pj - pi;
                             if (delta.length_squared() <= radius_squared) {
                                 neighbors[write++] = j;
                             }

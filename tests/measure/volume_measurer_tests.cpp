@@ -23,25 +23,25 @@ using atlas::Sync;
 using atlas::Unit;
 using atlas::Universe;
 using atlas::UniverseVolumeState;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::VolumeMeasurer;
 
 auto
 make_universe(const HostBuffer<Unit>& measurer_units) {
     return Universe::builder()
-        .with_lower_corner(Vector3(0.0f, 0.0f, 0.0f))
-        .with_upper_corner(Vector3(1.0f, 1.0f, 1.0f))
+        .with_lower_corner(Float3(0.0f, 0.0f, 0.0f))
+        .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
         .with_cell_size(0.5f)
         .with_measurer_units(measurer_units)
         .make_host_shared();
 }
 
 Unit
-make_box_unit(const Vector3& lower,
-              const Vector3& upper,
-              const Vector3& translation,
+make_box_unit(const Float3& lower,
+              const Float3& upper,
+              const Float3& translation,
               const Quaternion& orientation = Quaternion(),
-              const Vector3& velocity = Vector3(0.0f, 0.0f, 0.0f)) {
+              const Float3& velocity = Float3(0.0f, 0.0f, 0.0f)) {
     const auto geometry = Box::builder()
                               .with_lower_corner(lower)
                               .with_upper_corner(upper)
@@ -71,9 +71,9 @@ linear_key(const int ix, const int iy, const int iz) {
 
 TEST(VolumeMeasurer, MeasuresRemainingCellVolume) {
     const auto unit = make_box_unit(
-        Vector3(-0.2f, -0.2f, -0.2f),
-        Vector3(0.2f, 0.2f, 0.2f),
-        Vector3(0.25f, 0.25f, 0.25f));
+        Float3(-0.2f, -0.2f, -0.2f),
+        Float3(0.2f, 0.2f, 0.2f),
+        Float3(0.25f, 0.25f, 0.25f));
     const auto universe = make_universe(HostBuffer<Unit> { unit });
 
     auto measurer = VolumeMeasurer::builder()
@@ -114,11 +114,11 @@ TEST(VolumeMeasurer, StoresUnitsInDeviceBufferAndHandlesEmptyUnits) {
 
 TEST(VolumeMeasurer, AdvancesUnitsByDtBeforeMeasuring) {
     const auto unit = make_box_unit(
-        Vector3(-0.2f, -0.2f, -0.2f),
-        Vector3(0.2f, 0.2f, 0.2f),
-        Vector3(-0.5f, 0.25f, 0.25f),
+        Float3(-0.2f, -0.2f, -0.2f),
+        Float3(0.2f, 0.2f, 0.2f),
+        Float3(-0.5f, 0.25f, 0.25f),
         Quaternion(),
-        Vector3(0.75f, 0.0f, 0.0f));
+        Float3(0.75f, 0.0f, 0.0f));
     const auto universe = make_universe(HostBuffer<Unit> { unit });
 
     auto measurer = VolumeMeasurer::builder()
@@ -136,10 +136,10 @@ TEST(VolumeMeasurer, AdvancesUnitsByDtBeforeMeasuring) {
 
 TEST(VolumeMeasurer, AppliesUnitRotationDuringInsideTest) {
     const auto unit = make_box_unit(
-        Vector3(-0.3f, -0.05f, -0.1f),
-        Vector3(0.3f, 0.05f, 0.1f),
-        Vector3(0.75f, 0.5f, 0.75f),
-        Quaternion(Vector3(0.0f, 0.0f, 1.0f), atlas::pi * 0.5f));
+        Float3(-0.3f, -0.05f, -0.1f),
+        Float3(0.3f, 0.05f, 0.1f),
+        Float3(0.75f, 0.5f, 0.75f),
+        Quaternion(Float3(0.0f, 0.0f, 1.0f), atlas::pi * 0.5f));
     const auto universe = make_universe(HostBuffer<Unit> { unit });
 
     auto measurer = VolumeMeasurer::builder()
@@ -157,13 +157,13 @@ TEST(VolumeMeasurer, AppliesUnitRotationDuringInsideTest) {
 
 TEST(VolumeMeasurer, ParallelCellPassMeasuresIndependentCells) {
     const auto first_unit = make_box_unit(
-        Vector3(-0.2f, -0.2f, -0.2f),
-        Vector3(0.2f, 0.2f, 0.2f),
-        Vector3(0.25f, 0.25f, 0.25f));
+        Float3(-0.2f, -0.2f, -0.2f),
+        Float3(0.2f, 0.2f, 0.2f),
+        Float3(0.25f, 0.25f, 0.25f));
     const auto second_unit = make_box_unit(
-        Vector3(-0.2f, -0.2f, -0.2f),
-        Vector3(0.2f, 0.2f, 0.2f),
-        Vector3(0.75f, 0.25f, 0.25f));
+        Float3(-0.2f, -0.2f, -0.2f),
+        Float3(0.2f, 0.2f, 0.2f),
+        Float3(0.75f, 0.25f, 0.25f));
     const auto universe = make_universe(HostBuffer<Unit> { first_unit, second_unit });
 
     auto measurer = VolumeMeasurer::builder()
@@ -185,13 +185,13 @@ TEST(VolumeMeasurer, ParallelCellPassMeasuresIndependentCells) {
 
 TEST(VolumeMeasurer, OverlappingUnitsSubtractSampleVolumeOnlyOnce) {
     const auto first_unit = make_box_unit(
-        Vector3(-0.2f, -0.2f, -0.2f),
-        Vector3(0.2f, 0.2f, 0.2f),
-        Vector3(0.25f, 0.25f, 0.25f));
+        Float3(-0.2f, -0.2f, -0.2f),
+        Float3(0.2f, 0.2f, 0.2f),
+        Float3(0.25f, 0.25f, 0.25f));
     const auto second_unit = make_box_unit(
-        Vector3(-0.2f, -0.2f, -0.2f),
-        Vector3(0.2f, 0.2f, 0.2f),
-        Vector3(0.25f, 0.25f, 0.25f));
+        Float3(-0.2f, -0.2f, -0.2f),
+        Float3(0.2f, 0.2f, 0.2f),
+        Float3(0.25f, 0.25f, 0.25f));
     const auto universe = make_universe(HostBuffer<Unit> { first_unit, second_unit });
 
     auto measurer = VolumeMeasurer::builder()

@@ -11,7 +11,7 @@
 namespace {
 
 struct DsmcStatisticsFixture {
-    atlas::DeviceBuffer<atlas::Vector3> velocity = atlas::DeviceBuffer<atlas::Vector3>(2);
+    atlas::DeviceBuffer<atlas::Float3> velocity = atlas::DeviceBuffer<atlas::Float3>(2);
     atlas::DeviceBuffer<std::size_t> species = atlas::DeviceBuffer<std::size_t>(2);
     atlas::DeviceBuffer<atlas::MaterialProperties> properties =
         atlas::DeviceBuffer<atlas::MaterialProperties>(1);
@@ -26,8 +26,8 @@ struct DsmcStatisticsFixture {
     atlas::DsmcProbe probe {};
 
     DsmcStatisticsFixture() {
-        velocity[0] = atlas::Vector3(1.0f, 0.0f, 0.0f);
-        velocity[1] = atlas::Vector3(-1.0f, 0.0f, 0.0f);
+        velocity[0] = atlas::Float3(1.0f, 0.0f, 0.0f);
+        velocity[1] = atlas::Float3(-1.0f, 0.0f, 0.0f);
         species[0] = 0;
         species[1] = 0;
         properties[0] = atlas::test::make_dsmc_material();

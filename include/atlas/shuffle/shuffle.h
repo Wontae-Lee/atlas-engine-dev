@@ -9,7 +9,7 @@ namespace atlas {
 
 class Shuffle final {
 public:
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE std::uint64_t
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE std::uint64_t
     shuffle_key(const int index,
                 const std::uint64_t seed) const noexcept {
         std::uint64_t value = static_cast<std::uint64_t>(index) + seed + atlas::SHUFFLE_HASH_INDEX_OFFSET;
@@ -18,7 +18,7 @@ public:
         return value ^ (value >> atlas::SHUFFLE_HASH_FINAL_SHIFT);
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE std::uint64_t
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE std::uint64_t
     operator()(const int index,
                const std::uint64_t seed) const noexcept {
         return shuffle_key(index, seed);

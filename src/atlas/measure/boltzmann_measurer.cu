@@ -95,7 +95,7 @@ BoltzmannMeasurer::measure_field() {
             // fully known before the second pass can measure each
             // particle's *fluctuation* about it — computing them in one
             // pass would conflate bulk flow with thermal motion.
-            Vector3 mean_velocity(0.0f, 0.0f, 0.0f);
+            Float3 mean_velocity(0.0f, 0.0f, 0.0f);
             int count = 0;
 
             for (int k = begin; k < end; ++k) {
@@ -111,7 +111,7 @@ BoltzmannMeasurer::measure_field() {
 
             if (count <= 0) {
 
-                probe.bulk_velocity_ptr[cell]     = Vector3(0.0f, 0.0f, 0.0f);
+                probe.bulk_velocity_ptr[cell]     = Float3(0.0f, 0.0f, 0.0f);
                 probe.thermal_energy_ptr[cell]    = 0.0f;
                 probe.number_particle_ptr[cell]   = 0.0f;
                 probe.field_temperature_ptr[cell] = 0.0f;
@@ -131,7 +131,7 @@ BoltzmannMeasurer::measure_field() {
                     continue;
                 }
 
-                const Vector3 dv = probe.velocity_ptr[particle_index] - mean_velocity;
+                const Float3 dv = probe.velocity_ptr[particle_index] - mean_velocity;
 
                 thermal_energy_sum += dv.length_squared();
             }

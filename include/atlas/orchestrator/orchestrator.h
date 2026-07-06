@@ -54,10 +54,10 @@ public:
     ATLAS_HOST void
     update(float dt);
 
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_HOST void
@@ -81,22 +81,22 @@ public:
     ATLAS_HOST void
     add_solver(SolveHostPtr solver) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const SearcherHostPtr&
+    ATLAS_NODISCARD ATLAS_HOST const SearcherHostPtr&
     searcher() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const UniverseHostPtr&
+    ATLAS_NODISCARD ATLAS_HOST const UniverseHostPtr&
     universe() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const FluidHostPtr&
+    ATLAS_NODISCARD ATLAS_HOST const FluidHostPtr&
     fluid() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const CodecHostPtr&
+    ATLAS_NODISCARD ATLAS_HOST const CodecHostPtr&
     codec() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const MeasurerHostPtr&
+    ATLAS_NODISCARD ATLAS_HOST const MeasurerHostPtr&
     measurer() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const HostBuffer<SolveHostPtr>&
+    ATLAS_NODISCARD ATLAS_HOST const HostBuffer<SolveHostPtr>&
     solvers() const noexcept;
 
     ATLAS_HOST void
@@ -152,15 +152,15 @@ public:
     with_measurer(MeasurerHostPtr measurer) noexcept;
 
     ATLAS_HOST Builder&
-    with_gravity(const Vector3& gravity) noexcept;
+    with_gravity(const Float3& gravity) noexcept;
 
     ATLAS_HOST Builder&
     with_solver(SolveHostPtr solver) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD Orchestrator
+    ATLAS_NODISCARD ATLAS_HOST Orchestrator
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Orchestrator>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Orchestrator>
     make_host_shared() const;
 
 private:
@@ -181,7 +181,7 @@ private:
 
     MeasurerHostPtr _measurer {};
 
-    std::optional<Vector3> _gravity {};
+    std::optional<Float3> _gravity {};
 
     HostBuffer<SolveHostPtr> _solvers {};
 };

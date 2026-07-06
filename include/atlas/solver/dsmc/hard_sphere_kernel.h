@@ -100,7 +100,7 @@ public:
      *        `lhs`/`rhs`'s `reference_diameter`. `0` if either species
      *        lacks a `reference_diameter` or the mean is non-positive.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     cross_section(const MaterialProperties& lhs,
                   const MaterialProperties& rhs) noexcept;
 
@@ -111,7 +111,7 @@ public:
      *        `relative_speed` is ignored and this simply forwards to the
      *        two-argument `cross_section`.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     cross_section(const MaterialProperties& lhs,
                   const MaterialProperties& rhs,
                   float relative_speed) noexcept;
@@ -125,8 +125,8 @@ public:
      *        to scatter).
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    operator()(Vector3& lhs_velocity,
-               Vector3& rhs_velocity,
+    operator()(Float3& lhs_velocity,
+               Float3& rhs_velocity,
                const MaterialProperties& lhs,
                const MaterialProperties& rhs) const noexcept;
 };
@@ -157,8 +157,8 @@ HardSphereKernel::cross_section(const MaterialProperties& lhs,
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-HardSphereKernel::operator()(Vector3& lhs_velocity,
-                             Vector3& rhs_velocity,
+HardSphereKernel::operator()(Float3& lhs_velocity,
+                             Float3& rhs_velocity,
                              const MaterialProperties& lhs,
                              const MaterialProperties& rhs) const noexcept {
 
@@ -170,19 +170,19 @@ HardSphereKernel::operator()(Vector3& lhs_velocity,
         return;
     }
 
-    const Vector3 relative = lhs_velocity - rhs_velocity;
-    const float speed      = relative.length();
+    const Float3 relative = lhs_velocity - rhs_velocity;
+    const float speed     = relative.length();
 
     if (!(speed > 0.0f)) {
         return;
     }
 
-    const Vector3 center = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
+    const Float3 center = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
 
-    const Vector3 axis = relative / speed;
+    const Float3 axis = relative / speed;
 
-    const Vector3 sample_seed = relative + center * atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX
-        + Vector3(lhs_mass, rhs_mass, lhs_mass + rhs_mass);
+    const Float3 sample_seed = relative + center * atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX
+        + Float3(lhs_mass, rhs_mass, lhs_mass + rhs_mass);
 
     const float u1 = atlas::sample_hashed_unit_interval(
         sample_seed,
@@ -195,8 +195,8 @@ HardSphereKernel::operator()(Vector3& lhs_velocity,
     const float cos_chi = 2.0f * u1 - 1.0f;
     const float phi     = 2.0f * atlas::pi * u2;
 
-    const Vector3 scattered_axis     = atlas::spherical_direction(axis, cos_chi, phi);
-    const Vector3 scattered_relative = scattered_axis * speed;
+    const Float3 scattered_axis     = atlas::spherical_direction(axis, cos_chi, phi);
+    const Float3 scattered_relative = scattered_axis * speed;
 
     lhs_velocity = center + scattered_relative * (rhs_mass / mass_sum);
     rhs_velocity = center - scattered_relative * (lhs_mass / mass_sum);

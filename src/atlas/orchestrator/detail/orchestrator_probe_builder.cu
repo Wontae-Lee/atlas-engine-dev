@@ -43,7 +43,7 @@ OrchestratorProbeBuilder::load_common_data(const UniverseHostPtr& universe,
     auto& velocity = velocity_state->data();
 
     probe.particle_count = static_cast<int>(fluid->particle_count());
-    probe.cell_count   = universe->cell_count();
+    probe.cell_count     = universe->cell_count();
     probe.velocity_ptr   = atlas::raw_pointer_cast(velocity.data());
 
     fill_cell_partition(probe, searcher);
@@ -74,7 +74,7 @@ OrchestratorProbeBuilder::load_species_data(const FluidHostPtr& fluid,
 
     probe.species_ptr    = atlas::raw_pointer_cast(species.data());
     probe.properties_ptr = atlas::raw_pointer_cast(particle_properties.data());
-    probe.species_count = static_cast<int>(particle_properties.size());
+    probe.species_count  = static_cast<int>(particle_properties.size());
 }
 
 void

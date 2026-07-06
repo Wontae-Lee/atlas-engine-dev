@@ -31,8 +31,8 @@ OrchestratorForceApplier::apply_all(const OrchestratorProbe& probe, const float 
                 return;
             }
 
-            const Vector3 gravity_value = gravity_cell ? probe.gravity_ptr[cell] : Vector3();
-            const Vector3 force_value   = field_force_cell ? probe.field_force_ptr[cell] : Vector3();
+            const Float3 gravity_value = gravity_cell ? probe.gravity_ptr[cell] : Float3();
+            const Float3 force_value   = field_force_cell ? probe.field_force_ptr[cell] : Float3();
 
             for (int sorted_index = start; sorted_index < end; ++sorted_index) {
                 const int particle_index = probe.indices_ptr[sorted_index];
@@ -41,7 +41,7 @@ OrchestratorForceApplier::apply_all(const OrchestratorProbe& probe, const float 
                     continue;
                 }
 
-                Vector3 delta_velocity;
+                Float3 delta_velocity;
                 bool update_velocity = false;
 
                 if (gravity_cell) {
@@ -82,7 +82,7 @@ OrchestratorForceApplier::apply_gravity(const OrchestratorProbe& probe, const fl
                 return;
             }
 
-            const Vector3 cell_gravity = probe.gravity_ptr[cell];
+            const Float3 cell_gravity = probe.gravity_ptr[cell];
 
             for (int sorted_index = start; sorted_index < end; ++sorted_index) {
                 const int particle_index = probe.indices_ptr[sorted_index];
@@ -109,7 +109,7 @@ OrchestratorForceApplier::apply_field_force(const OrchestratorProbe& probe, cons
                 return;
             }
 
-            const Vector3 force = probe.field_force_ptr[cell];
+            const Float3 force = probe.field_force_ptr[cell];
 
             for (int sorted_index = start; sorted_index < end; ++sorted_index) {
                 const int particle_index = probe.indices_ptr[sorted_index];

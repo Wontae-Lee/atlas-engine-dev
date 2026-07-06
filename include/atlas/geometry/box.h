@@ -15,29 +15,31 @@ public:
     class Builder;
 
 public:
-    Vector3 lower_corner = Vector3(-1.0f, -1.0f, -1.0f);
-    Vector3 upper_corner = Vector3(1.0f, 1.0f, 1.0f);
+    Float3 lower_corner = Float3(-1.0f, -1.0f, -1.0f);
+    Float3 upper_corner = Float3(1.0f, 1.0f, 1.0f);
 
     Box() noexcept = default;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Box(const Vector3& lower_corner_, const Vector3& upper_corner_) noexcept
+    Box(const Float3& lower_corner_, const Float3& upper_corner_) noexcept
         : lower_corner(lower_corner_)
         , upper_corner(upper_corner_) { }
 
-    Box(const Box& other) noexcept            = default;
-    Box(Box&& other) noexcept                 = default;
-    Box& operator=(const Box& other) noexcept = default;
-    Box& operator=(Box&& other) noexcept      = default;
+    Box(const Box& other) noexcept = default;
+    Box(Box&& other) noexcept      = default;
+    Box&
+    operator=(const Box& other) noexcept = default;
+    Box&
+    operator=(Box&& other) noexcept = default;
 
     ~Box() noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    closest_point(const Vector3& p) const noexcept {
-        Vector3 cp = atlas::clamp(p, lower_corner, upper_corner);
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    closest_point(const Float3& p) const noexcept {
+        Float3 cp = atlas::clamp(p, lower_corner, upper_corner);
 
         const bool inside = atlas::all(p >= lower_corner)
             && atlas::all(p <= upper_corner);
@@ -52,12 +54,12 @@ public:
         return cp;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    closest_normal(const Vector3& p) const noexcept {
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    closest_normal(const Float3& p) const noexcept {
         const bool inside = atlas::all(p >= lower_corner)
             && atlas::all(p <= upper_corner);
 
-        Vector3 n(0.0f);
+        Float3 n(0.0f);
 
         if (inside) {
             bool hit_lower;
@@ -67,8 +69,8 @@ public:
             return n;
         }
 
-        const Vector3 cp = atlas::clamp(p, lower_corner, upper_corner);
-        const Vector3 d  = p - cp;
+        const Float3 cp = atlas::clamp(p, lower_corner, upper_corner);
+        const Float3 d  = p - cp;
 
         const std::size_t axis = atlas::abs(d).major_axis();
 
@@ -77,13 +79,13 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    signed_distance(const Vector3& p) const noexcept {
+    signed_distance(const Float3& p) const noexcept {
         const bool inside = atlas::all(p >= lower_corner)
             && atlas::all(p <= upper_corner);
 
         if (inside) {
-            const Vector3 l_to_p = p - lower_corner;
-            const Vector3 p_to_u = upper_corner - p;
+            const Float3 l_to_p = p - lower_corner;
+            const Float3 p_to_u = upper_corner - p;
 
             const float m1 = l_to_p.min();
             const float m2 = p_to_u.min();
@@ -91,24 +93,24 @@ public:
             return -((m1 < m2) ? m1 : m2);
         }
 
-        const Vector3 cp = atlas::clamp(p, lower_corner, upper_corner);
+        const Float3 cp = atlas::clamp(p, lower_corner, upper_corner);
         return (cp - p).length();
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const Vector3& p, const float tolerance = 0.0f) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    is_inside(const Float3& p, const float tolerance = 0.0f) const noexcept {
         return atlas::all(p >= lower_corner - tolerance)
             && atlas::all(p <= upper_corner + tolerance);
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const Vector3& p, const float tolerance = 0.0f) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    is_on_surface(const Float3& p, const float tolerance = 0.0f) const noexcept {
         if (tolerance < 0.0f) {
             return false;
         }
 
-        const Vector3& lo      = lower_corner;
-        const Vector3& hi      = upper_corner;
+        const Float3& lo       = lower_corner;
+        const Float3& hi       = upper_corner;
         const float tolerance2 = tolerance * tolerance;
 
         const bool inside = atlas::all(p >= lo)
@@ -137,7 +139,7 @@ public:
         return dx * dx + dy * dy + dz * dz <= tolerance2;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     centroid() const noexcept {
         return (lower_corner + upper_corner) * 0.5f;
     }
@@ -147,14 +149,14 @@ public:
         return AABB(lower_corner, upper_corner);
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     is_valid() const noexcept {
         return atlas::isfinite(lower_corner)
             && atlas::isfinite(upper_corner)
             && atlas::all(upper_corner >= lower_corner);
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     trace(const Ray& r) const noexcept {
         HitSurface result {};
 
@@ -175,16 +177,16 @@ public:
         return result;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     operator()(const Ray& ray) const noexcept {
         return trace(ray);
     }
 
 private:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE std::size_t
-    nearest_face(const Vector3& p, bool& hit_lower) const noexcept {
-        const Vector3 l_to_p = p - lower_corner;
-        const Vector3 p_to_u = upper_corner - p;
+    nearest_face(const Float3& p, bool& hit_lower) const noexcept {
+        const Float3 l_to_p = p - lower_corner;
+        const Float3 p_to_u = upper_corner - p;
 
         hit_lower = (l_to_p.min() < p_to_u.min());
 
@@ -196,25 +198,25 @@ class Box::Builder final {
 public:
     Builder() = default;
 
-    ATLAS_HOST ATLAS_NODISCARD Box
+    ATLAS_NODISCARD ATLAS_HOST Box
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Box>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Box>
     make_host_shared() const;
 
     ATLAS_HOST Builder&
-    with_lower_corner(const Vector3& lower_corner_) noexcept;
+    with_lower_corner(const Float3& lower_corner_) noexcept;
 
     ATLAS_HOST Builder&
-    with_upper_corner(const Vector3& upper_corner_) noexcept;
+    with_upper_corner(const Float3& upper_corner_) noexcept;
 
 private:
     ATLAS_HOST void
     validate() const;
 
 private:
-    Vector3 _lower_corner = Vector3(-1.0f, -1.0f, -1.0f);
-    Vector3 _upper_corner = Vector3(1.0f, 1.0f, 1.0f);
+    Float3 _lower_corner = Float3(-1.0f, -1.0f, -1.0f);
+    Float3 _upper_corner = Float3(1.0f, 1.0f, 1.0f);
 };
 
 using BoxHostPtr = atlas::host_shared_ptr<Box>;

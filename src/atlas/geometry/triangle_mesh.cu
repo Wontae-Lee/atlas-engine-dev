@@ -254,17 +254,17 @@ TriangleMesh::load_from_obj(const std::string& filename, const bool verbose) {
                 continue;
             }
 
-            const Vector3 a(
+            const Float3 a(
                 static_cast<float>(v[o0 + 0]),
                 static_cast<float>(v[o0 + 1]),
                 static_cast<float>(v[o0 + 2]));
 
-            const Vector3 b(
+            const Float3 b(
                 static_cast<float>(v[o1 + 0]),
                 static_cast<float>(v[o1 + 1]),
                 static_cast<float>(v[o1 + 2]));
 
-            const Vector3 c(
+            const Float3 c(
                 static_cast<float>(v[o2 + 0]),
                 static_cast<float>(v[o2 + 1]),
                 static_cast<float>(v[o2 + 2]));
@@ -277,7 +277,7 @@ TriangleMesh::load_from_obj(const std::string& filename, const bool verbose) {
 
             tc.d() = atlas::normalized_or(
                 atlas::cross(b - a, c - a),
-                Vector3(0.0f, 0.0f, 1.0f));
+                Float3(0.0f, 0.0f, 1.0f));
 
             triangles.push_back(tc);
         }
@@ -297,32 +297,32 @@ TriangleMesh::load_from_obj(const std::string& filename, const bool verbose) {
     return true;
 }
 
-Vector3
-TriangleMesh::closest_point(const Vector3& p) const noexcept {
+Float3
+TriangleMesh::closest_point(const Float3& p) const noexcept {
     return _operator.closest_point(p);
 }
 
-Vector3
-TriangleMesh::closest_normal(const Vector3& p) const noexcept {
+Float3
+TriangleMesh::closest_normal(const Float3& p) const noexcept {
     return _operator.closest_normal(p);
 }
 
 float
-TriangleMesh::signed_distance(const Vector3& p) const noexcept {
+TriangleMesh::signed_distance(const Float3& p) const noexcept {
     return _operator.signed_distance(p);
 }
 
 bool
-TriangleMesh::is_inside(const Vector3& p, const float tolerance) const noexcept {
+TriangleMesh::is_inside(const Float3& p, const float tolerance) const noexcept {
     return _operator.is_inside(p, tolerance);
 }
 
 bool
-TriangleMesh::is_on_surface(const Vector3& p, const float tolerance) const noexcept {
+TriangleMesh::is_on_surface(const Float3& p, const float tolerance) const noexcept {
     return _operator.is_on_surface(p, tolerance);
 }
 
-Vector3
+Float3
 TriangleMesh::centroid() const noexcept {
     return _operator.centroid();
 }

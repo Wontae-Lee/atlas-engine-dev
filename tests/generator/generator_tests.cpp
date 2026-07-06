@@ -12,10 +12,10 @@ using atlas::Generator;
 using atlas::GeneratorHostPtr;
 using atlas::make_host_shared;
 using atlas::UniformGenerate;
-using atlas::Vector3;
+using atlas::Float3;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, atlas::tol);
     EXPECT_NEAR(actual.y, expected.y, atlas::tol);
     EXPECT_NEAR(actual.z, expected.z, atlas::tol);
@@ -23,12 +23,12 @@ expect_vec_near(const Vector3& actual, const Vector3& expected) {
 
 class DummyGenerator final : public Generator {
 public:
-    explicit DummyGenerator(const Vector3& sample = Vector3(1.0f, 2.0f, 3.0f))
+    explicit DummyGenerator(const Float3& sample = Float3(1.0f, 2.0f, 3.0f))
         : _sample(sample)
         , _operator(UniformGenerate(17u)) {
     }
 
-    Vector3
+    Float3
     generate() const override {
         return _sample;
     }
@@ -59,7 +59,7 @@ public:
     }
 
 private:
-    Vector3 _sample;
+    Float3 _sample;
     Generate _operator;
 };
 
@@ -68,7 +68,7 @@ private:
 TEST(Generator, DerivedImplementationSatisfiesInterface) {
     const DummyGenerator generator;
 
-    expect_vec_near(generator.generate(), Vector3(1.0f, 2.0f, 3.0f));
+    expect_vec_near(generator.generate(), Float3(1.0f, 2.0f, 3.0f));
     EXPECT_EQ(generator.type(), GenerateType::uniform);
     EXPECT_NEAR(generator.param0(), 4.0f, atlas::tol);
     EXPECT_NEAR(generator.param1(), 9.0f, atlas::tol);
@@ -77,8 +77,8 @@ TEST(Generator, DerivedImplementationSatisfiesInterface) {
 }
 
 TEST(Generator, HostSharedAliasCanOwnDerivedImplementation) {
-    GeneratorHostPtr generator = make_host_shared<DummyGenerator>(Vector3(3.0f, 2.0f, 1.0f));
+    GeneratorHostPtr generator = make_host_shared<DummyGenerator>(Float3(3.0f, 2.0f, 1.0f));
 
     ASSERT_NE(generator, nullptr);
-    expect_vec_near(generator->generate(), Vector3(3.0f, 2.0f, 1.0f));
+    expect_vec_near(generator->generate(), Float3(3.0f, 2.0f, 1.0f));
 }

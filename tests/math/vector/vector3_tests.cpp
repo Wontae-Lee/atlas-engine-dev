@@ -1,4 +1,4 @@
-#include <atlas/math/vector/vector3.h>
+#include <atlas/math/vector/float3.h>
 
 #include <cmath>
 #include <cstddef>
@@ -11,35 +11,35 @@ constexpr float k_eps = 1e-6f;
 }
 
 TEST(Vector3, DefaultConstructibleToZero) {
-    const atlas::Vector3 v {};
+    const atlas::Float3 v {};
     EXPECT_FLOAT_EQ(v.x, 0.0f);
     EXPECT_FLOAT_EQ(v.y, 0.0f);
     EXPECT_FLOAT_EQ(v.z, 0.0f);
 }
 
 TEST(Vector3, UniformScalarConstructor) {
-    const atlas::Vector3 v(2.5f);
+    const atlas::Float3 v(2.5f);
     EXPECT_FLOAT_EQ(v.x, 2.5f);
     EXPECT_FLOAT_EQ(v.y, 2.5f);
     EXPECT_FLOAT_EQ(v.z, 2.5f);
 }
 
 TEST(Vector3, ComponentConstructor) {
-    const atlas::Vector3 v(1.0f, 2.0f, 3.0f);
+    const atlas::Float3 v(1.0f, 2.0f, 3.0f);
     EXPECT_FLOAT_EQ(v.x, 1.0f);
     EXPECT_FLOAT_EQ(v.y, 2.0f);
     EXPECT_FLOAT_EQ(v.z, 3.0f);
 }
 
 TEST(Vector3, InitializerListConstructor) {
-    const atlas::Vector3 v { 1.0f, 2.0f, 3.0f };
+    const atlas::Float3 v { 1.0f, 2.0f, 3.0f };
     EXPECT_FLOAT_EQ(v.x, 1.0f);
     EXPECT_FLOAT_EQ(v.y, 2.0f);
     EXPECT_FLOAT_EQ(v.z, 3.0f);
 }
 
 TEST(Vector3, DataAndIndexAccess) {
-    atlas::Vector3 v(1.0f, 2.0f, 3.0f);
+    atlas::Float3 v(1.0f, 2.0f, 3.0f);
 
     const float* p = v.data();
     ASSERT_NE(p, nullptr);
@@ -61,7 +61,7 @@ TEST(Vector3, DataAndIndexAccess) {
 }
 
 TEST(Vector3, SetAndSetZero) {
-    atlas::Vector3 v(1.0f, 2.0f, 3.0f);
+    atlas::Float3 v(1.0f, 2.0f, 3.0f);
 
     v.set(7.0f);
     EXPECT_FLOAT_EQ(v.x, 7.0f);
@@ -80,7 +80,7 @@ TEST(Vector3, SetAndSetZero) {
 }
 
 TEST(Vector3, ScalarOpsInPlace) {
-    atlas::Vector3 v(1.0f, 2.0f, 3.0f);
+    atlas::Float3 v(1.0f, 2.0f, 3.0f);
 
     v.add(1.0f);
     EXPECT_FLOAT_EQ(v.y, 3.0f);
@@ -96,29 +96,29 @@ TEST(Vector3, ScalarOpsInPlace) {
 }
 
 TEST(Vector3, VectorOpsInPlace) {
-    atlas::Vector3 a(1.0f, 2.0f, 3.0f);
-    const atlas::Vector3 b(10.0f, 20.0f, 30.0f);
+    atlas::Float3 a(1.0f, 2.0f, 3.0f);
+    const atlas::Float3 b(10.0f, 20.0f, 30.0f);
 
     a.add(b);
     EXPECT_FLOAT_EQ(a.x, 11.0f);
 
-    a.sub(atlas::Vector3(1.0f, 2.0f, 3.0f));
+    a.sub(atlas::Float3(1.0f, 2.0f, 3.0f));
     EXPECT_FLOAT_EQ(a.x, 10.0f);
 
-    a.mul(atlas::Vector3(2.0f, 3.0f, 4.0f));
+    a.mul(atlas::Float3(2.0f, 3.0f, 4.0f));
     EXPECT_FLOAT_EQ(a.z, 120.0f);
 
-    a.div(atlas::Vector3(2.0f, 3.0f, 4.0f));
+    a.div(atlas::Float3(2.0f, 3.0f, 4.0f));
     EXPECT_FLOAT_EQ(a.z, 30.0f);
 }
 
 TEST(Vector3, CompoundOperators) {
-    atlas::Vector3 v(1.0f, 2.0f, 3.0f);
+    atlas::Float3 v(1.0f, 2.0f, 3.0f);
 
-    v += atlas::Vector3(1.0f, 1.0f, 1.0f);
+    v += atlas::Float3(1.0f, 1.0f, 1.0f);
     v -= 1.0f;
     v *= 2.0f;
-    v /= atlas::Vector3(2.0f, 2.0f, 2.0f);
+    v /= atlas::Float3(2.0f, 2.0f, 2.0f);
 
     EXPECT_FLOAT_EQ(v.x, 1.0f);
     EXPECT_FLOAT_EQ(v.y, 2.0f);
@@ -126,45 +126,45 @@ TEST(Vector3, CompoundOperators) {
 }
 
 TEST(Vector3, EqualityIsExact) {
-    const atlas::Vector3 a(1.0f, 2.0f, 3.0f);
-    const atlas::Vector3 b(1.0f, 2.0f, 3.0f);
-    const atlas::Vector3 c(1.0f, 2.0f, 3.5f);
+    const atlas::Float3 a(1.0f, 2.0f, 3.0f);
+    const atlas::Float3 b(1.0f, 2.0f, 3.0f);
+    const atlas::Float3 c(1.0f, 2.0f, 3.5f);
 
     EXPECT_TRUE(a == b);
     EXPECT_TRUE(a != c);
 }
 
 TEST(Vector3, MinMax) {
-    const atlas::Vector3 v(-1.0f, 3.0f, 2.0f);
+    const atlas::Float3 v(-1.0f, 3.0f, 2.0f);
     EXPECT_FLOAT_EQ(v.min(), -1.0f);
     EXPECT_FLOAT_EQ(v.max(), 3.0f);
 }
 
 TEST(Vector3, DotAndCross) {
-    const atlas::Vector3 a(1.0f, 2.0f, 3.0f);
-    const atlas::Vector3 b(4.0f, 5.0f, 6.0f);
+    const atlas::Float3 a(1.0f, 2.0f, 3.0f);
+    const atlas::Float3 b(4.0f, 5.0f, 6.0f);
 
     EXPECT_FLOAT_EQ(a.dot(b), 32.0f);
     EXPECT_FLOAT_EQ(atlas::dot(a, b), 32.0f);
 
-    const atlas::Vector3 c = a.cross(b);
+    const atlas::Float3 c = a.cross(b);
     EXPECT_FLOAT_EQ(c.x, -3.0f);
     EXPECT_FLOAT_EQ(c.y, 6.0f);
     EXPECT_FLOAT_EQ(c.z, -3.0f);
 
-    const atlas::Vector3 c2 = atlas::cross(a, b);
+    const atlas::Float3 c2 = atlas::cross(a, b);
     EXPECT_FLOAT_EQ(c2.x, -3.0f);
     EXPECT_FLOAT_EQ(c2.y, 6.0f);
     EXPECT_FLOAT_EQ(c2.z, -3.0f);
 }
 
 TEST(Vector3, LengthAndNormalize) {
-    atlas::Vector3 v(3.0f, 4.0f, 12.0f);
+    atlas::Float3 v(3.0f, 4.0f, 12.0f);
 
     EXPECT_FLOAT_EQ(v.length_squared(), 169.0f);
     EXPECT_FLOAT_EQ(v.length(), 13.0f);
 
-    const atlas::Vector3 n = v.normalized();
+    const atlas::Float3 n = v.normalized();
     EXPECT_NEAR(n.length(), 1.0f, k_eps);
 
     v.normalize();
@@ -172,13 +172,13 @@ TEST(Vector3, LengthAndNormalize) {
 }
 
 TEST(Vector3, NormalizeZeroVectorIsNoOp) {
-    atlas::Vector3 v {};
+    atlas::Float3 v {};
     v.normalize();
     EXPECT_FLOAT_EQ(v.length(), 0.0f);
 }
 
 TEST(Vector3, MajorMinorAxisDefinition) {
-    const atlas::Vector3 v(1.0f, -5.0f, 3.0f);
+    const atlas::Float3 v(1.0f, -5.0f, 3.0f);
 
     const std::size_t maj = v.major_axis();
     const std::size_t min = v.minor_axis();
@@ -193,26 +193,26 @@ TEST(Vector3, MajorMinorAxisDefinition) {
 }
 
 TEST(Vector3, ReflectedAndProjected) {
-    const atlas::Vector3 v(1.0f, -2.0f, 3.0f);
-    const atlas::Vector3 n(0.0f, 1.0f, 0.0f);
+    const atlas::Float3 v(1.0f, -2.0f, 3.0f);
+    const atlas::Float3 n(0.0f, 1.0f, 0.0f);
 
-    const atlas::Vector3 r = v.reflected(n);
+    const atlas::Float3 r = v.reflected(n);
     EXPECT_NEAR(r.x, 1.0f, k_eps);
     EXPECT_NEAR(r.y, 2.0f, k_eps);
     EXPECT_NEAR(r.z, 3.0f, k_eps);
 
-    const atlas::Vector3 p = v.projected(n);
+    const atlas::Float3 p = v.projected(n);
     EXPECT_NEAR(p.y, 0.0f, k_eps);
 
-    const atlas::Vector3 r2 = atlas::reflected(v, n);
+    const atlas::Float3 r2 = atlas::reflected(v, n);
     EXPECT_NEAR(r2.y, 2.0f, k_eps);
 
-    const atlas::Vector3 p2 = atlas::projected(v, n);
+    const atlas::Float3 p2 = atlas::projected(v, n);
     EXPECT_NEAR(p2.y, 0.0f, k_eps);
 }
 
 TEST(Vector3, TangentialBasisOrthogonality) {
-    const atlas::Vector3 n(0.0f, 0.0f, 1.0f);
+    const atlas::Float3 n(0.0f, 0.0f, 1.0f);
 
     const auto [t0, t1] = n.tangential();
 
@@ -225,17 +225,17 @@ TEST(Vector3, TangentialBasisOrthogonality) {
 }
 
 TEST(Vector3, FreeOperatorsBasic) {
-    const atlas::Vector3 a(1.0f, 2.0f, 3.0f);
-    const atlas::Vector3 b(10.0f, 20.0f, 30.0f);
+    const atlas::Float3 a(1.0f, 2.0f, 3.0f);
+    const atlas::Float3 b(10.0f, 20.0f, 30.0f);
 
-    EXPECT_TRUE((a + b) == atlas::Vector3(11.0f, 22.0f, 33.0f));
-    EXPECT_TRUE((a - b) == atlas::Vector3(-9.0f, -18.0f, -27.0f));
-    EXPECT_TRUE((a * 2.0f) == atlas::Vector3(2.0f, 4.0f, 6.0f));
-    EXPECT_TRUE((2.0f * a) == atlas::Vector3(2.0f, 4.0f, 6.0f));
-    EXPECT_TRUE((a * b) == atlas::Vector3(10.0f, 40.0f, 90.0f));
-    EXPECT_TRUE((-a) == atlas::Vector3(-1.0f, -2.0f, -3.0f));
+    EXPECT_TRUE((a + b) == atlas::Float3(11.0f, 22.0f, 33.0f));
+    EXPECT_TRUE((a - b) == atlas::Float3(-9.0f, -18.0f, -27.0f));
+    EXPECT_TRUE((a * 2.0f) == atlas::Float3(2.0f, 4.0f, 6.0f));
+    EXPECT_TRUE((2.0f * a) == atlas::Float3(2.0f, 4.0f, 6.0f));
+    EXPECT_TRUE((a * b) == atlas::Float3(10.0f, 40.0f, 90.0f));
+    EXPECT_TRUE((-a) == atlas::Float3(-1.0f, -2.0f, -3.0f));
 
-    const atlas::Vector3 q = b / 10.0f;
+    const atlas::Float3 q = b / 10.0f;
     EXPECT_NEAR(q.x, 1.0f, k_eps);
     EXPECT_NEAR(q.y, 2.0f, k_eps);
     EXPECT_NEAR(q.z, 3.0f, k_eps);
@@ -247,21 +247,21 @@ TEST(Vector3, FreeOperatorsBasic) {
 }
 
 TEST(Vector3, ClampFloorCeilAbs) {
-    const atlas::Vector3 v(-1.5f, 0.5f, 2.5f);
+    const atlas::Float3 v(-1.5f, 0.5f, 2.5f);
 
-    const atlas::Vector3 c = atlas::clamp(v, atlas::Vector3(0.0f), atlas::Vector3(1.0f));
-    EXPECT_TRUE(c == atlas::Vector3(0.0f, 0.5f, 1.0f));
+    const atlas::Float3 c = atlas::clamp(v, atlas::Float3(0.0f), atlas::Float3(1.0f));
+    EXPECT_TRUE(c == atlas::Float3(0.0f, 0.5f, 1.0f));
 
-    EXPECT_TRUE(atlas::floor(v) == atlas::Vector3(-2.0f, 0.0f, 2.0f));
-    EXPECT_TRUE(atlas::ceil(v) == atlas::Vector3(-1.0f, 1.0f, 3.0f));
-    EXPECT_TRUE(atlas::abs(v) == atlas::Vector3(1.5f, 0.5f, 2.5f));
+    EXPECT_TRUE(atlas::floor(v) == atlas::Float3(-2.0f, 0.0f, 2.0f));
+    EXPECT_TRUE(atlas::ceil(v) == atlas::Float3(-1.0f, 1.0f, 3.0f));
+    EXPECT_TRUE(atlas::abs(v) == atlas::Float3(1.5f, 0.5f, 2.5f));
 }
 
 TEST(Vector3, RelationalOperatorsWithBool3) {
-    const atlas::Vector3 lo(0.0f, 0.0f, 0.0f);
-    const atlas::Vector3 hi(1.0f, 1.0f, 1.0f);
-    const atlas::Vector3 inside(0.5f, 0.5f, 0.5f);
-    const atlas::Vector3 outside(0.5f, 2.0f, 0.5f);
+    const atlas::Float3 lo(0.0f, 0.0f, 0.0f);
+    const atlas::Float3 hi(1.0f, 1.0f, 1.0f);
+    const atlas::Float3 inside(0.5f, 0.5f, 0.5f);
+    const atlas::Float3 outside(0.5f, 2.0f, 0.5f);
 
     EXPECT_TRUE(atlas::all(inside >= lo));
     EXPECT_TRUE(atlas::all(inside <= hi));
@@ -271,26 +271,26 @@ TEST(Vector3, RelationalOperatorsWithBool3) {
 }
 
 TEST(Vector3, IsFinite) {
-    EXPECT_TRUE(atlas::isfinite(atlas::Vector3(1.0f, 2.0f, 3.0f)));
-    EXPECT_FALSE(atlas::isfinite(atlas::Vector3(1.0f, atlas::inf, 3.0f)));
+    EXPECT_TRUE(atlas::isfinite(atlas::Float3(1.0f, 2.0f, 3.0f)));
+    EXPECT_FALSE(atlas::isfinite(atlas::Float3(1.0f, atlas::inf, 3.0f)));
 }
 
 TEST(Vector3, NormalizedOrFallback) {
-    const atlas::Vector3 fallback(1.0f, 0.0f, 0.0f);
+    const atlas::Float3 fallback(1.0f, 0.0f, 0.0f);
 
-    const atlas::Vector3 n = atlas::normalized_or(atlas::Vector3(0.0f, 3.0f, 0.0f), fallback);
+    const atlas::Float3 n = atlas::normalized_or(atlas::Float3(0.0f, 3.0f, 0.0f), fallback);
     EXPECT_NEAR(n.y, 1.0f, k_eps);
 
-    const atlas::Vector3 f = atlas::normalized_or(atlas::Vector3 {}, fallback);
+    const atlas::Float3 f = atlas::normalized_or(atlas::Float3 {}, fallback);
     EXPECT_TRUE(f == fallback);
 }
 
 TEST(Vector3, OrthonormalBasis) {
-    const atlas::Vector3 normal(0.0f, 0.0f, 2.0f);
+    const atlas::Float3 normal(0.0f, 0.0f, 2.0f);
 
-    atlas::Vector3 unit_normal;
-    atlas::Vector3 tangent;
-    atlas::Vector3 bitangent;
+    atlas::Float3 unit_normal;
+    atlas::Float3 tangent;
+    atlas::Float3 bitangent;
     ASSERT_TRUE(atlas::orthonormal_basis(normal, unit_normal, tangent, bitangent));
 
     EXPECT_NEAR(unit_normal.length(), 1.0f, k_eps);
@@ -300,27 +300,27 @@ TEST(Vector3, OrthonormalBasis) {
     EXPECT_NEAR(unit_normal.dot(bitangent), 0.0f, k_eps);
     EXPECT_NEAR(tangent.dot(bitangent), 0.0f, k_eps);
 
-    EXPECT_FALSE(atlas::orthonormal_basis(atlas::Vector3 {}, unit_normal, tangent, bitangent));
+    EXPECT_FALSE(atlas::orthonormal_basis(atlas::Float3 {}, unit_normal, tangent, bitangent));
 }
 
 TEST(Vector3, SphericalDirectionIsUnit) {
-    const atlas::Vector3 axis(0.0f, 0.0f, 1.0f);
+    const atlas::Float3 axis(0.0f, 0.0f, 1.0f);
 
-    const atlas::Vector3 d1 = atlas::spherical_direction(axis, 0.5f, 1.2f);
+    const atlas::Float3 d1 = atlas::spherical_direction(axis, 0.5f, 1.2f);
     EXPECT_NEAR(d1.length(), 1.0f, k_eps);
 
-    const atlas::Vector3 d2 = atlas::spherical_direction(0.5f, 1.2f);
+    const atlas::Float3 d2 = atlas::spherical_direction(0.5f, 1.2f);
     EXPECT_NEAR(d2.length(), 1.0f, k_eps);
     EXPECT_NEAR(d2.z, 0.5f, k_eps);
 }
 
 TEST(Vector3, XyHelpers) {
-    const atlas::Vector3 a(3.0f, 4.0f, 100.0f);
+    const atlas::Float3 a(3.0f, 4.0f, 100.0f);
 
     EXPECT_FLOAT_EQ(atlas::xy_length_squared(a), 25.0f);
     EXPECT_FLOAT_EQ(atlas::xy_length(a), 5.0f);
 
-    const atlas::Vector3 n = atlas::xy_normalized_or(a, atlas::Vector3(1.0f, 0.0f, 0.0f));
+    const atlas::Float3 n = atlas::xy_normalized_or(a, atlas::Float3(1.0f, 0.0f, 0.0f));
     EXPECT_NEAR(n.x, 0.6f, k_eps);
     EXPECT_NEAR(n.y, 0.8f, k_eps);
     EXPECT_FLOAT_EQ(n.z, 0.0f);

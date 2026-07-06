@@ -2,8 +2,8 @@
 
 #include <atlas/core/macros.h>
 #include <atlas/math/constants.h>
-#include <atlas/math/matrix/matrix3x3.h>
-#include <atlas/math/vector/vector3.h>
+#include <atlas/math/matrix/float3x3.h>
+#include <atlas/math/vector/float3.h>
 
 #include <cmath>
 #include <initializer_list>
@@ -42,7 +42,7 @@ public:
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Quaternion(const Vector3& axis, const float radians) noexcept {
+    Quaternion(const Float3& axis, const float radians) noexcept {
         *this = from_axis_angle(axis, radians);
     }
 
@@ -51,7 +51,7 @@ public:
         *this = from_euler_xyz(rx, ry, rz);
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Quaternion(const Matrix3x3& m) noexcept {
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Quaternion(const Float3x3& m) noexcept {
         *this = from_matrix3x3(m);
     }
 
@@ -63,7 +63,7 @@ public:
     operator=(Quaternion&&) noexcept = default;
 
     ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE Quaternion
-    from_axis_angle(const Vector3& axis, const float radians) noexcept {
+    from_axis_angle(const Float3& axis, const float radians) noexcept {
         const float half = radians * 0.5f;
         const float s    = std::sin(half);
         return Quaternion(std::cos(half), axis.x * s, axis.y * s, axis.z * s);
@@ -84,7 +84,7 @@ public:
     }
 
     ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE Quaternion
-    from_matrix3x3(const Matrix3x3& m) noexcept {
+    from_matrix3x3(const Float3x3& m) noexcept {
         const float tr = m.m00 + m.m11 + m.m22;
         if (tr > 0.0f) {
             const float s = std::sqrt(tr + 1.0f) * 2.0f;
@@ -180,8 +180,8 @@ public:
             && std::abs(z) < tolerance;
     }
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    rotate(const Vector3& v) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    rotate(const Float3& v) const noexcept {
         const float uxv_x  = y * v.z - z * v.y;
         const float uxv_y  = z * v.x - x * v.z;
         const float uxv_z  = x * v.y - y * v.x;
@@ -190,19 +190,17 @@ public:
         const float scale  = std::fma(w, w, -uu);
         const float two_uv = 2.0f * uv;
         const float two_w  = 2.0f * w;
-        return Vector3(std::fma(two_w, uxv_x, std::fma(two_uv, x, scale * v.x)),
-                       std::fma(two_w, uxv_y, std::fma(two_uv, y, scale * v.y)),
-                       std::fma(two_w, uxv_z, std::fma(two_uv, z, scale * v.z)));
+        return Float3(std::fma(two_w, uxv_x, std::fma(two_uv, x, scale * v.x)),
+                      std::fma(two_w, uxv_y, std::fma(two_uv, y, scale * v.y)),
+                      std::fma(two_w, uxv_z, std::fma(two_uv, z, scale * v.z)));
     }
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Matrix3x3
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3x3
     to_matrix3x3() const noexcept {
         const float xx = x * x, yy = y * y, zz = z * z;
         const float xy = x * y, xz = x * z, yz = y * z;
         const float wx = w * x, wy = w * y, wz = w * z;
-        return Matrix3x3(1.0f - 2.0f * (yy + zz), 2.0f * (xy - wz), 2.0f * (xz + wy),
-                         2.0f * (xy + wz), 1.0f - 2.0f * (xx + zz), 2.0f * (yz - wx),
-                         2.0f * (xz - wy), 2.0f * (yz + wx), 1.0f - 2.0f * (xx + yy));
+        return Float3x3(1.0f - 2.0f * (yy + zz), 2.0f * (xy - wz), 2.0f * (xz + wy), 2.0f * (xy + wz), 1.0f - 2.0f * (xx + zz), 2.0f * (yz - wx), 2.0f * (xz - wy), 2.0f * (yz + wx), 1.0f - 2.0f * (xx + yy));
     }
 
     ATLAS_ALL_DEVICE static ATLAS_FORCE_INLINE Quaternion
@@ -320,7 +318,6 @@ public:
         return !(*this == q);
     }
 };
-
 
 ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
 isfinite(const Quaternion& q) noexcept {

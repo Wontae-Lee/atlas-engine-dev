@@ -14,20 +14,20 @@ using atlas::Plane;
 using atlas::PreciseColliderKernel;
 using atlas::Sync;
 using atlas::Unit;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::tol;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, tol);
     EXPECT_NEAR(actual.y, expected.y, tol);
     EXPECT_NEAR(actual.z, expected.z, tol);
 }
 
 Unit
-make_plane_unit(const Vector3& linear_velocity = Vector3(0.0f, 0.0f, 0.0f)) {
+make_plane_unit(const Float3& linear_velocity = Float3(0.0f, 0.0f, 0.0f)) {
     static const auto geometry = Plane::builder()
-                                     .with_point_normal(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f))
+                                     .with_point_normal(Float3(0.0f, 0.0f, 0.0f), Float3(1.0f, 0.0f, 0.0f))
                                      .make_host_shared();
     const auto sync = Sync::builder()
                           .make_host_shared();
@@ -55,42 +55,42 @@ make_specular_interaction() {
 
 TEST(PreciseColliderKernel, SweepMotionUsesVelocityRelativeToMovingSurface) {
     const PreciseColliderKernel kernel;
-    Vector3 sweep_direction {};
+    Float3 sweep_direction {};
     float sweep_speed {};
     float sweep_length {};
 
     kernel.sweep_motion(
-        make_plane_unit(Vector3(0.5f, 0.0f, 0.0f)),
-        Vector3(-1.0f, 0.0f, 0.0f),
-        Vector3(2.0f, 0.0f, 0.0f),
+        make_plane_unit(Float3(0.5f, 0.0f, 0.0f)),
+        Float3(-1.0f, 0.0f, 0.0f),
+        Float3(2.0f, 0.0f, 0.0f),
         2.0f,
         1.0f,
         sweep_direction,
         sweep_speed,
         sweep_length);
 
-    expect_vec_near(sweep_direction, Vector3(1.5f, 0.0f, 0.0f));
+    expect_vec_near(sweep_direction, Float3(1.5f, 0.0f, 0.0f));
     EXPECT_NEAR(sweep_speed, 1.5f, tol);
     EXPECT_NEAR(sweep_length, 1.5f, tol);
 }
 
 TEST(PreciseColliderKernel, OperatorUsesRemainingTimePlacement) {
     const PreciseColliderKernel kernel;
-    Vector3 position(-1.0f, 0.0f, 0.0f);
-    Vector3 velocity(2.0f, 0.0f, 0.0f);
+    Float3 position(-1.0f, 0.0f, 0.0f);
+    Float3 velocity(2.0f, 0.0f, 0.0f);
 
     kernel(
         position,
         velocity,
-        Vector3(2.0f, 0.0f, 0.0f),
-        Vector3(0.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f),
+        Float3(2.0f, 0.0f, 0.0f),
+        Float3(0.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
         1.0f,
         2.0f,
         1.0f,
         make_plane_unit(),
         make_specular_interaction());
 
-    expect_vec_near(position, Vector3(-1.0f + tol, 0.0f, 0.0f));
-    expect_vec_near(velocity, Vector3(-2.0f, 0.0f, 0.0f));
+    expect_vec_near(position, Float3(-1.0f + tol, 0.0f, 0.0f));
+    expect_vec_near(velocity, Float3(-2.0f, 0.0f, 0.0f));
 }

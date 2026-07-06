@@ -26,13 +26,13 @@ public:
     /** @brief Whether `fluid` has `FluidPositionState`,
      *  `FluidVelocityState`, and `FluidSpeciesState` — the minimal
      *  particle state SPH needs before anything else is checked. */
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     has_particle_states(const FluidHostPtr& fluid) noexcept;
 
     /** @brief Whether `universe`/`fluid`/`searcher` are non-null,
      *  `has_particle_states(fluid)` holds, and the required per-cell
      *  universe states exist — the precondition `make()` checks. */
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     ready(const UniverseHostPtr& universe,
           const FluidHostPtr& fluid,
           const SearcherHostPtr& searcher) noexcept;
@@ -45,7 +45,7 @@ public:
      * @return `true` iff `ready()` holds; `false` (leaving `probe`
      *         zeroed) otherwise.
      */
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     make(SphProbe& probe,
          const UniverseHostPtr& universe,
          const FluidHostPtr& fluid,

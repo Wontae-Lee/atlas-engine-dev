@@ -25,15 +25,15 @@ void
 LBVH::assign_solid_angle_moment(
     BVHNode& node,
     const TriangleContainer4& triangle) noexcept {
-    const Vector3& a = triangle.a();
-    const Vector3& b = triangle.b();
-    const Vector3& c = triangle.c();
+    const Float3& a = triangle.a();
+    const Float3& b = triangle.b();
+    const Float3& c = triangle.c();
 
-    const Vector3 normal_area = atlas::cross(b - a, c - a) * 0.5f;
-    const float area          = normal_area.length();
+    const Float3 normal_area = atlas::cross(b - a, c - a) * 0.5f;
+    const float area         = normal_area.length();
 
-    node.solid_angle_moment      = Vector3(0.0f, 0.0f, 0.0f);
-    node.solid_angle_normal_area = Vector3(0.0f, 0.0f, 0.0f);
+    node.solid_angle_moment      = Float3(0.0f, 0.0f, 0.0f);
+    node.solid_angle_normal_area = Float3(0.0f, 0.0f, 0.0f);
     node.solid_angle_area        = 0.0f;
 
     if (!(area > 0.0f)) {
@@ -110,13 +110,13 @@ LBVH::clz64(const uint64_t x) noexcept {
 
 uint32_t
 LBVH::morton3(
-    const Vector3& p,
+    const Float3& p,
     const AABB& cb,
     const int bits) const noexcept {
-    const Vector3& minp = cb.lower_corner;
-    const Vector3& maxp = cb.upper_corner;
+    const Float3& minp = cb.lower_corner;
+    const Float3& maxp = cb.upper_corner;
 
-    const Vector3 ext(
+    const Float3 ext(
         maxp.x - minp.x,
         maxp.y - minp.y,
         maxp.z - minp.z);
@@ -276,7 +276,7 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
         // index as a tiebreaker guarantees strictly increasing keys along
         // the sorted array, at the cost of only affecting the LCP once the
         // full 32-bit Morton code already matches exactly.
-        keys_sorted[i] = (static_cast<uint64_t>(morton_sorted[i]) << 32)
+        keys_sorted[i]   = (static_cast<uint64_t>(morton_sorted[i]) << 32)
             | static_cast<uint32_t>(i);
 
         indices_sorted[i] = h_indices[oi];

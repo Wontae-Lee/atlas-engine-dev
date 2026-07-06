@@ -84,15 +84,15 @@ struct SurfaceInteractionKernel final {
     ATLAS_ALL_DEVICE explicit SurfaceInteractionKernel(const Payload& interaction) noexcept;
 
     /** @brief Dispatches to the active payload's reflection sampling. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
-    operator()(const Vector3& incident, const Vector3& normal) const noexcept;
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    operator()(const Float3& incident, const Float3& normal) const noexcept;
 
     /** @brief Dispatches to the active payload's internal-energy
      *  exchange (a no-op passthrough for `isothermal`). */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE FluidInternalEnergy
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE FluidInternalEnergy
     internal_energy(const FluidInternalEnergy& incident_energy,
-                    const Vector3& incident_velocity,
-                    const Vector3& normal,
+                    const Float3& incident_velocity,
+                    const Float3& normal,
                     const MaterialProperties& material) const noexcept;
 };
 
@@ -108,17 +108,19 @@ namespace detail {
     // Functor visitors instead of generic device lambdas (nvcc forbids
     // generic / by-reference-capturing extended `__host__ __device__` lambdas).
     struct SurfaceInteractionApply {
-        Vector3 incident;
-        Vector3 normal;
-        template <typename I> ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+        Float3 incident;
+        Float3 normal;
+        template <typename I>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
         operator()(const I& interaction) const noexcept { return interaction(incident, normal); }
     };
     struct SurfaceInteractionInternalEnergy {
         FluidInternalEnergy incident_energy;
-        Vector3 incident_velocity;
-        Vector3 normal;
+        Float3 incident_velocity;
+        Float3 normal;
         MaterialProperties material;
-        template <typename I> ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE FluidInternalEnergy
+        template <typename I>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE FluidInternalEnergy
         operator()(const I& interaction) const noexcept {
             return interaction.internal_energy(incident_energy, incident_velocity, normal, material);
         }
@@ -138,18 +140,20 @@ SurfaceInteractionKernel::SurfaceInteractionKernel(const Payload& interaction) n
     detail::SurfaceInteractionVariant::construct_payload(*this, interaction);
 }
 
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-SurfaceInteractionKernel::operator()(const Vector3& incident,
-                                     const Vector3& normal) const noexcept {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+SurfaceInteractionKernel::operator()(const Float3& incident,
+                                     const Float3& normal) const noexcept {
     return detail::SurfaceInteractionVariant::visit(
-        *this, detail::SurfaceInteractionApply { incident, normal }, Vector3(0.0f, 0.0f, 0.0f));
+        *this,
+        detail::SurfaceInteractionApply { incident, normal },
+        Float3(0.0f, 0.0f, 0.0f));
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE FluidInternalEnergy
 SurfaceInteractionKernel::internal_energy(
     const FluidInternalEnergy& incident_energy,
-    const Vector3& incident_velocity,
-    const Vector3& normal,
+    const Float3& incident_velocity,
+    const Float3& normal,
     const MaterialProperties& material) const noexcept {
     return detail::SurfaceInteractionVariant::visit(
         *this,

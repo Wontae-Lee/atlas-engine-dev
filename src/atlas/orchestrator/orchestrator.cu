@@ -215,7 +215,7 @@ Orchestrator::Builder::with_measurer(MeasurerHostPtr measurer) noexcept {
 }
 
 Orchestrator::Builder&
-Orchestrator::Builder::with_gravity(const Vector3& gravity) noexcept {
+Orchestrator::Builder::with_gravity(const Float3& gravity) noexcept {
     _gravity = gravity;
     return *this;
 }

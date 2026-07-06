@@ -67,15 +67,15 @@ namespace {
 
     void
     set_vector3(atlas::proto::Vector3* target,
-                const Vector3& value) {
+                const Float3& value) {
         target->set_x(static_cast<double>(value.x));
         target->set_y(static_cast<double>(value.y));
         target->set_z(static_cast<double>(value.z));
     }
 
-    Vector3
+    Float3
     read_vector3(const atlas::proto::Vector3& value) {
-        return Vector3(
+        return Float3(
             static_cast<float>(value.x()),
             static_cast<float>(value.y()),
             static_cast<float>(value.z()));
@@ -115,25 +115,25 @@ namespace {
     }
 
     std::string
-    pack_vector3_buffer(const HostBuffer<Vector3>& values) {
+    pack_vector3_buffer(const HostBuffer<Float3>& values) {
         if (values.empty()) {
             return {};
         }
 
         std::string bytes;
-        bytes.resize(values.size() * sizeof(Vector3));
+        bytes.resize(values.size() * sizeof(Float3));
         std::memcpy(bytes.data(), values.data(), bytes.size());
         return bytes;
     }
 
-    HostBuffer<Vector3>
+    HostBuffer<Float3>
     unpack_vector3_buffer(const atlas::proto::RawBuffer& raw_buffer,
                           const char* context) {
         if (raw_buffer.element_count() == 0) {
             return {};
         }
 
-        const auto expected_byte_size = static_cast<std::size_t>(raw_buffer.element_count()) * sizeof(Vector3);
+        const auto expected_byte_size = static_cast<std::size_t>(raw_buffer.element_count()) * sizeof(Float3);
 
         if (raw_buffer.data().size() != static_cast<int>(expected_byte_size)) {
             throw std::runtime_error(
@@ -141,7 +141,7 @@ namespace {
                 + ": vector buffer byte size does not match the encoded element count.");
         }
 
-        HostBuffer<Vector3> values(static_cast<std::size_t>(raw_buffer.element_count()));
+        HostBuffer<Float3> values(static_cast<std::size_t>(raw_buffer.element_count()));
         std::memcpy(values.data(), raw_buffer.data().data(), expected_byte_size);
         return values;
     }
@@ -284,7 +284,7 @@ namespace {
 
     void
     set_vector_raw_buffer(atlas::proto::RawBuffer* target,
-                          const HostBuffer<Vector3>& values) {
+                          const HostBuffer<Float3>& values) {
         target->set_element_count(values.size());
         target->set_data(pack_vector3_buffer(values));
     }
@@ -301,7 +301,7 @@ namespace {
     void
     append_universe_vector_state(atlas::proto::UniverseSnapshot* snapshot,
                                  const atlas::proto::UniverseStateKind kind,
-                                 const HostBuffer<Vector3>& values) {
+                                 const HostBuffer<Float3>& values) {
         auto* state = snapshot->add_states();
         state->set_kind(kind);
         set_vector_raw_buffer(state->mutable_vector_buffer(), values);
@@ -351,14 +351,14 @@ save_fluid_binary(const atlas::Fluid& fluid, std::string_view path) {
 
     if (const auto* position_state = fluid.state<atlas::FluidPositionState>();
         position_state != nullptr) {
-        const HostBuffer<Vector3> positions(position_state->data().begin(), position_state->data().end());
+        const HostBuffer<Float3> positions(position_state->data().begin(), position_state->data().end());
         set_vector_raw_buffer(snapshot.mutable_positions(), positions);
         ++known_state_count;
     }
 
     if (const auto* velocity_state = fluid.state<atlas::FluidVelocityState>();
         velocity_state != nullptr) {
-        const HostBuffer<Vector3> velocities(velocity_state->data().begin(), velocity_state->data().end());
+        const HostBuffer<Float3> velocities(velocity_state->data().begin(), velocity_state->data().end());
         set_vector_raw_buffer(snapshot.mutable_velocities(), velocities);
         ++known_state_count;
     }
@@ -485,7 +485,7 @@ save_universe_binary(const atlas::Universe& universe, std::string_view path) {
         append_universe_vector_state(
             &snapshot,
             atlas::proto::UNIVERSE_BULK_VELOCITY,
-            HostBuffer<Vector3>(bulk_velocity_state->data().begin(), bulk_velocity_state->data().end()));
+            HostBuffer<Float3>(bulk_velocity_state->data().begin(), bulk_velocity_state->data().end()));
         ++known_state_count;
     }
 
@@ -494,7 +494,7 @@ save_universe_binary(const atlas::Universe& universe, std::string_view path) {
         append_universe_vector_state(
             &snapshot,
             atlas::proto::UNIVERSE_FIELD_FORCE,
-            HostBuffer<Vector3>(field_force_state->data().begin(), field_force_state->data().end()));
+            HostBuffer<Float3>(field_force_state->data().begin(), field_force_state->data().end()));
         ++known_state_count;
     }
 

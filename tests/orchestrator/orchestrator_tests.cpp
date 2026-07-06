@@ -39,10 +39,10 @@ using atlas::Universe;
 using atlas::UniverseFieldForceState;
 using atlas::UniverseGravityState;
 using atlas::UniverseHostPtr;
-using atlas::Vector3;
+using atlas::Float3;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, tol);
     EXPECT_NEAR(actual.y, expected.y, tol);
     EXPECT_NEAR(actual.z, expected.z, tol);
@@ -141,8 +141,8 @@ make_fluid() {
 UniverseHostPtr
 make_universe() {
     return Universe::builder()
-        .with_lower_corner(Vector3(0.0f, 0.0f, 0.0f))
-        .with_upper_corner(Vector3(1.0f, 1.0f, 1.0f))
+        .with_lower_corner(Float3(0.0f, 0.0f, 0.0f))
+        .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
         .with_cell_size(1.0f)
         .make_host_shared();
 }
@@ -157,7 +157,7 @@ make_searcher(const UniverseHostPtr& universe,
 }
 
 void
-seed_one_particle(const FluidHostPtr& fluid, const Vector3& position, const Vector3& velocity) {
+seed_one_particle(const FluidHostPtr& fluid, const Float3& position, const Float3& velocity) {
     auto* position_state = fluid->state<FluidPositionState>();
     auto* velocity_state = fluid->state<FluidVelocityState>();
     auto* species_state  = fluid->state<FluidSpeciesState>();
@@ -190,7 +190,7 @@ TEST(Orchestrator, BuilderWithGravityCreatesGravityState) {
 
     const auto orchestrator = Orchestrator::builder()
                                   .with_universe(universe)
-                                  .with_gravity(Vector3(0.0f, -9.81f, 1.25f))
+                                  .with_gravity(Float3(0.0f, -9.81f, 1.25f))
                                   .build();
 
     static_cast<void>(orchestrator);
@@ -198,7 +198,7 @@ TEST(Orchestrator, BuilderWithGravityCreatesGravityState) {
     const auto* gravity_state = universe->state<UniverseGravityState>();
     ASSERT_NE(gravity_state, nullptr);
     ASSERT_EQ(gravity_state->size(), static_cast<std::size_t>(universe->cell_count()));
-    expect_vec_near(gravity_state->data()[0], Vector3(0.0f, -9.81f, 1.25f));
+    expect_vec_near(gravity_state->data()[0], Float3(0.0f, -9.81f, 1.25f));
 }
 
 TEST(Orchestrator, UpdateWithoutCodecUsesPlainSolverAndMeasurer) {
@@ -269,21 +269,21 @@ TEST(Orchestrator, ApplyGravityUpdatesParticleVelocity) {
     const auto universe = make_universe();
     const auto searcher = make_searcher(universe, fluid);
 
-    seed_one_particle(fluid, Vector3(0.25f, 0.25f, 0.25f), Vector3(1.0f, 2.0f, 3.0f));
+    seed_one_particle(fluid, Float3(0.25f, 0.25f, 0.25f), Float3(1.0f, 2.0f, 3.0f));
     searcher->build();
 
     auto orchestrator = Orchestrator::builder()
                             .with_universe(universe)
                             .with_fluid(fluid)
                             .with_searcher(searcher)
-                            .with_gravity(Vector3(0.0f, -9.0f, 2.0f))
+                            .with_gravity(Float3(0.0f, -9.0f, 2.0f))
                             .build();
 
     orchestrator.update(0.5f);
 
     const auto* velocity_state = fluid->state<FluidVelocityState>();
     ASSERT_NE(velocity_state, nullptr);
-    expect_vec_near(velocity_state->data()[0], Vector3(1.0f, -2.5f, 4.0f));
+    expect_vec_near(velocity_state->data()[0], Float3(1.0f, -2.5f, 4.0f));
 }
 
 TEST(Orchestrator, ApplyFieldForceUpdatesParticleVelocityUsingMass) {
@@ -291,12 +291,12 @@ TEST(Orchestrator, ApplyFieldForceUpdatesParticleVelocityUsingMass) {
     const auto universe = make_universe();
     const auto searcher = make_searcher(universe, fluid);
 
-    seed_one_particle(fluid, Vector3(0.25f, 0.25f, 0.25f), Vector3(0.0f, 0.0f, 0.0f));
+    seed_one_particle(fluid, Float3(0.25f, 0.25f, 0.25f), Float3(0.0f, 0.0f, 0.0f));
     searcher->build();
 
     universe->set_state<UniverseFieldForceState>(
         std::make_unique<UniverseFieldForceState>(
-            DeviceBuffer<Vector3>(static_cast<std::size_t>(universe->cell_count()), Vector3(2.0f, 0.0f, 0.0f))));
+            DeviceBuffer<Float3>(static_cast<std::size_t>(universe->cell_count()), Float3(2.0f, 0.0f, 0.0f))));
 
     auto orchestrator = Orchestrator::builder()
                             .with_universe(universe)
@@ -308,5 +308,5 @@ TEST(Orchestrator, ApplyFieldForceUpdatesParticleVelocityUsingMass) {
 
     const auto* velocity_state = fluid->state<FluidVelocityState>();
     ASSERT_NE(velocity_state, nullptr);
-    expect_vec_near(velocity_state->data()[0], Vector3(0.5f, 0.0f, 0.0f));
+    expect_vec_near(velocity_state->data()[0], Float3(0.5f, 0.0f, 0.0f));
 }

@@ -133,7 +133,7 @@ public:
         return h_prim_bounds;
     }
 
-    ATLAS_NODISCARD const HostBuffer<Vector3>&
+    ATLAS_NODISCARD const HostBuffer<Float3>&
     centroids() const noexcept {
         return h_centroids;
     }
@@ -160,7 +160,7 @@ private:
 
     HostBuffer<AABB> h_prim_bounds;
 
-    HostBuffer<Vector3> h_centroids;
+    HostBuffer<Float3> h_centroids;
 
     int _root = -1;
 
@@ -191,7 +191,7 @@ private:
     expand_bits(unsigned v) noexcept;
 
     ATLAS_NODISCARD uint32_t
-    morton3(const Vector3& p, const AABB& cb, int bits) const noexcept;
+    morton3(const Float3& p, const AABB& cb, int bits) const noexcept;
 
     ATLAS_NODISCARD static int
     clz32(uint32_t x) noexcept;
@@ -205,6 +205,5 @@ private:
     ATLAS_NODISCARD static int
     find_split(const HostBuffer<uint32_t>& codes, int first, int last) noexcept;
 };
-
 
 }

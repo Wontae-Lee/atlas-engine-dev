@@ -69,20 +69,20 @@ struct StandardSphKernel final {
 
     /** @brief Poly6 density weight `(315/(64*pi*h^9)) * (h^2-r^2)^3`;
      *  `0` outside `[0, cell_size]`. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     density_weight(float radius, float cell_size) noexcept;
 
     /** @brief Spiky-kernel gradient, scaled along `delta`; chosen for
      *  its non-vanishing repulsive gradient as `radius -> 0` (see this
      *  file's top-of-file documentation). `0` outside `(0, cell_size]`. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static Vector3
-    pressure_gradient(const Vector3& delta,
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static Float3
+    pressure_gradient(const Float3& delta,
                       float radius,
                       float cell_size) noexcept;
 
     /** @brief Linear, always-non-negative viscosity Laplacian
      *  `(45/(pi*h^6)) * (h-r)`; `0` outside `[0, cell_size]`. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     viscosity_laplacian(float radius, float cell_size) noexcept;
 };
 
@@ -105,13 +105,13 @@ StandardSphKernel::density_weight(const float radius, const float cell_size) noe
            * cell_size * cell_size * cell_size);
 }
 
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-StandardSphKernel::pressure_gradient(const Vector3& delta,
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+StandardSphKernel::pressure_gradient(const Float3& delta,
                                      const float radius,
                                      const float cell_size) noexcept {
 
     if (!(cell_size > 0.0f) || !(radius > 0.0f) || radius > cell_size) {
-        return Vector3(0.0f, 0.0f, 0.0f);
+        return Float3(0.0f, 0.0f, 0.0f);
     }
 
     const float coeff = static_cast<float>(-45.0 / atlas::pi);

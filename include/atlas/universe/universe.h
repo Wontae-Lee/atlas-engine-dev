@@ -61,9 +61,10 @@ public:
 
     Universe() = delete;
 
-    ATLAS_HOST Universe(const Vector3& lower_corner,
-                        const Vector3& upper_corner,
-                        float cell_size);
+    ATLAS_HOST
+    Universe(const Float3& lower_corner,
+             const Float3& upper_corner,
+             float cell_size);
 
     Universe(const Universe&) = delete;
 
@@ -78,7 +79,7 @@ public:
     Universe&
     operator=(Universe&&) noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     template <typename StateT, typename... Args>
@@ -94,61 +95,61 @@ public:
     }
 
     template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE StateT*
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE StateT*
     state() noexcept {
         return _states.template get<StateT>();
     }
 
     template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const StateT*
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE const StateT*
     state() const noexcept {
         return _states.template get<StateT>();
     }
 
     template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE bool
     has_state() const noexcept {
         return _states.template contains<StateT>();
     }
 
     template <typename StateT>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unique_ptr<StateT>
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE std::unique_ptr<StateT>
     remove_state() {
         return _states.template remove<StateT>();
     }
 
     /** @brief Total number of cells (`grid_size().x * .y * .z`). */
-    ATLAS_HOST ATLAS_NODISCARD int
+    ATLAS_NODISCARD ATLAS_HOST int
     cell_count() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD Vector3
+    ATLAS_NODISCARD ATLAS_HOST Float3
     lower_corner() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD Vector3
+    ATLAS_NODISCARD ATLAS_HOST Float3
     upper_corner() const noexcept;
 
     /** @brief Per-axis cell counts; see this file's top-of-file
      *  documentation for the `compute_grid_size` derivation. */
-    ATLAS_HOST ATLAS_NODISCARD Vector3i
+    ATLAS_NODISCARD ATLAS_HOST Int3
     grid_size() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     cell_size() const noexcept;
 
     /** @brief `cell_size()^3`. */
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     cell_volume() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD float
+    ATLAS_NODISCARD ATLAS_HOST float
     inverse_cell_size() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const ObserverHostPtr&
+    ATLAS_NODISCARD ATLAS_HOST const ObserverHostPtr&
     observer() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD UniverseStateStore&
+    ATLAS_NODISCARD ATLAS_HOST UniverseStateStore&
     states() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const UniverseStateStore&
+    ATLAS_NODISCARD ATLAS_HOST const UniverseStateStore&
     states() const noexcept;
 
     /**
@@ -159,28 +160,28 @@ public:
      *        with, so unit pose integration and world-bound caching happen
      *        once here rather than being re-implemented per role.
      */
-    ATLAS_HOST ATLAS_NODISCARD UnitField&
+    ATLAS_NODISCARD ATLAS_HOST UnitField&
     source_units() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const UnitField&
+    ATLAS_NODISCARD ATLAS_HOST const UnitField&
     source_units() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD UnitField&
+    ATLAS_NODISCARD ATLAS_HOST UnitField&
     sink_units() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const UnitField&
+    ATLAS_NODISCARD ATLAS_HOST const UnitField&
     sink_units() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD UnitField&
+    ATLAS_NODISCARD ATLAS_HOST UnitField&
     collider_units() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const UnitField&
+    ATLAS_NODISCARD ATLAS_HOST const UnitField&
     collider_units() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD UnitField&
+    ATLAS_NODISCARD ATLAS_HOST UnitField&
     measurer_units() noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD const UnitField&
+    ATLAS_NODISCARD ATLAS_HOST const UnitField&
     measurer_units() const noexcept;
 
     /** @brief Serializes this universe's state to a binary snapshot at
@@ -191,16 +192,16 @@ public:
 private:
     /** @brief `floor((upper - lower) * inverse_cell_size) + 1` per
      *  axis; see this file's top-of-file documentation. */
-    ATLAS_HOST ATLAS_NODISCARD static Vector3i
-    compute_grid_size(const Vector3& lower_corner,
-                      const Vector3& upper_corner,
+    ATLAS_NODISCARD ATLAS_HOST static Int3
+    compute_grid_size(const Float3& lower_corner,
+                      const Float3& upper_corner,
                       float inverse_cell_size) noexcept;
 
-    Vector3 _lower_corner;
+    Float3 _lower_corner;
 
-    Vector3 _upper_corner;
+    Float3 _upper_corner;
 
-    Vector3i _grid_size = Vector3i(1, 1, 1);
+    Int3 _grid_size = Int3(1, 1, 1);
 
     float _cell_size = 1.0f;
 
@@ -234,10 +235,10 @@ class Universe::Builder final {
 public:
     Builder() = default;
 
-    ATLAS_HOST ATLAS_NODISCARD Universe
+    ATLAS_NODISCARD ATLAS_HOST Universe
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Universe>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Universe>
     make_host_shared() const;
 
     /** @brief Sets `_lower_corner`/`_upper_corner` to `geometry`'s
@@ -246,10 +247,10 @@ public:
     with_geometry(const Geometry& geometry);
 
     ATLAS_HOST Builder&
-    with_lower_corner(const Vector3& v) noexcept;
+    with_lower_corner(const Float3& v) noexcept;
 
     ATLAS_HOST Builder&
-    with_upper_corner(const Vector3& v) noexcept;
+    with_upper_corner(const Float3& v) noexcept;
 
     /** @brief The uniform cube cell size (`h`); required, must be
      *  positive. */
@@ -289,9 +290,9 @@ private:
     validate() const;
 
 private:
-    Vector3 _lower_corner = Vector3(0.0f, 0.0f, 0.0f);
+    Float3 _lower_corner = Float3(0.0f, 0.0f, 0.0f);
 
-    Vector3 _upper_corner = Vector3(1.0f, 1.0f, 1.0f);
+    Float3 _upper_corner = Float3(1.0f, 1.0f, 1.0f);
 
     float _cell_size = 1.0f;
 
@@ -307,9 +308,9 @@ private:
 
     std::optional<HostBuffer<float>> _temperature_state;
 
-    std::optional<HostBuffer<Vector3>> _bulk_velocity_state;
+    std::optional<HostBuffer<Float3>> _bulk_velocity_state;
 
-    std::optional<HostBuffer<Vector3>> _field_force_state;
+    std::optional<HostBuffer<Float3>> _field_force_state;
 
     std::optional<HostBuffer<float>> _max_relative_speed_state;
 

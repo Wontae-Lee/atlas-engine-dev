@@ -82,7 +82,8 @@ public:
     ~Source() = default;
 
     Source&
-    operator=(const Source&) = delete;
+    operator=(const Source&)
+        = delete;
 
     Source&
     operator=(Source&&) noexcept = default;
@@ -98,7 +99,7 @@ public:
            float temperature        = 273.15f,
            ObserverHostPtr observer = nullptr) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     /** @brief Advances every unit's own motion by `dt`, then calls
@@ -126,7 +127,7 @@ public:
 
     /** @brief Rebuilds `_probe` from the current cache/fluid state
      *  (`detail::SourceProbeBuilder::make`). */
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() noexcept;
 
 private:
@@ -150,7 +151,7 @@ private:
 
     HostBuffer<int> _local_unit_counts;
 
-    DeviceBuffer<Vector3> _flat_local_positions;
+    DeviceBuffer<Float3> _flat_local_positions;
 
     DeviceBuffer<int> _flat_unit_indices;
 
@@ -187,10 +188,10 @@ class Source::Builder final {
 public:
     Builder() = default;
 
-    ATLAS_HOST ATLAS_NODISCARD Source
+    ATLAS_NODISCARD ATLAS_HOST Source
     build();
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Source>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Source>
     make_host_shared();
 
     /** @brief The domain that owns this source's units (registered via

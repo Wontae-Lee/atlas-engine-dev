@@ -38,12 +38,12 @@ public:
         _values.reserve(capacity);
     }
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::size_t
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE std::size_t
     size() const noexcept {
         return _values.size();
     }
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE bool
     empty() const noexcept {
         return _values.empty();
     }
@@ -79,7 +79,7 @@ public:
     }
 
     template <typename Value>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE Value*
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE Value*
     get() noexcept {
         static_assert(std::is_base_of_v<Base, Value>,
                       "Value must derive from the TypeStore base type.");
@@ -89,7 +89,7 @@ public:
     }
 
     template <typename Value>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const Value*
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE const Value*
     get() const noexcept {
         static_assert(std::is_base_of_v<Base, Value>,
                       "Value must derive from the TypeStore base type.");
@@ -99,7 +99,7 @@ public:
     }
 
     template <typename Value>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE bool
     contains() const noexcept {
         static_assert(std::is_base_of_v<Base, Value>,
                       "Value must derive from the TypeStore base type.");
@@ -107,7 +107,7 @@ public:
     }
 
     template <typename Value>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE std::unique_ptr<Value>
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE std::unique_ptr<Value>
     remove() {
         static_assert(std::is_base_of_v<Base, Value>,
                       "Value must derive from the TypeStore base type.");
@@ -122,39 +122,39 @@ public:
         return value;
     }
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE iterator
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE iterator
     begin() noexcept {
         return _values.begin();
     }
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE iterator
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE iterator
     end() noexcept {
         return _values.end();
     }
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const_iterator
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE const_iterator
     begin() const noexcept {
         return _values.begin();
     }
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const_iterator
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE const_iterator
     end() const noexcept {
         return _values.end();
     }
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const_iterator
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE const_iterator
     cbegin() const noexcept {
         return _values.cbegin();
     }
 
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE const_iterator
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE const_iterator
     cend() const noexcept {
         return _values.cend();
     }
 
 private:
     template <typename Value>
-    ATLAS_HOST ATLAS_NODISCARD ATLAS_FORCE_INLINE static const key_type&
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE static const key_type&
     key() noexcept {
         static_assert(std::is_base_of_v<Base, Value>,
                       "Value must derive from the TypeStore base type.");

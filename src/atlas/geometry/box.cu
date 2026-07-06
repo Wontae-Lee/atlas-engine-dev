@@ -22,13 +22,13 @@ Box::Builder::make_host_shared() const {
 }
 
 Box::Builder&
-Box::Builder::with_lower_corner(const Vector3& lower_corner_) noexcept {
+Box::Builder::with_lower_corner(const Float3& lower_corner_) noexcept {
     _lower_corner = lower_corner_;
     return *this;
 }
 
 Box::Builder&
-Box::Builder::with_upper_corner(const Vector3& upper_corner_) noexcept {
+Box::Builder::with_upper_corner(const Float3& upper_corner_) noexcept {
     _upper_corner = upper_corner_;
     return *this;
 }

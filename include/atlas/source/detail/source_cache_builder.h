@@ -72,7 +72,7 @@ public:
             float spacing,
             float tolerance,
             HostBuffer<int>& local_unit_counts,
-            DeviceBuffer<Vector3>& flat_local_positions,
+            DeviceBuffer<Float3>& flat_local_positions,
             DeviceBuffer<int>& flat_unit_indices,
             std::size_t& local_particle_count,
             DeviceBuffer<std::size_t>& species_cache,
@@ -83,7 +83,7 @@ public:
 private:
     ATLAS_HOST void
     clear(HostBuffer<int>& local_unit_counts,
-          DeviceBuffer<Vector3>& flat_local_positions,
+          DeviceBuffer<Float3>& flat_local_positions,
           DeviceBuffer<int>& flat_unit_indices,
           std::size_t& local_particle_count,
           DeviceBuffer<std::size_t>& species_cache,

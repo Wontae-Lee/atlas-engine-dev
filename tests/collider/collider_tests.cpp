@@ -34,11 +34,11 @@ using atlas::Sync;
 using atlas::Unit;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::tol;
 
 void
-expect_vec_near(const Vector3& actual, const Vector3& expected) {
+expect_vec_near(const Float3& actual, const Float3& expected) {
     EXPECT_NEAR(actual.x, expected.x, tol);
     EXPECT_NEAR(actual.y, expected.y, tol);
     EXPECT_NEAR(actual.z, expected.z, tol);
@@ -54,8 +54,8 @@ make_fluid() {
 UniverseHostPtr
 make_universe(const HostBuffer<Unit>& collider_units) {
     return Universe::builder()
-        .with_lower_corner(Vector3(-10.0f, -10.0f, -10.0f))
-        .with_upper_corner(Vector3(10.0f, 10.0f, 10.0f))
+        .with_lower_corner(Float3(-10.0f, -10.0f, -10.0f))
+        .with_upper_corner(Float3(10.0f, 10.0f, 10.0f))
         .with_cell_size(1.0f)
         .with_collider_units(collider_units)
         .make_host_shared();
@@ -64,8 +64,8 @@ make_universe(const HostBuffer<Unit>& collider_units) {
 Unit
 make_unit() {
     static const auto geometry = Box::builder()
-                                     .with_lower_corner(Vector3(-1.0f, -1.0f, -1.0f))
-                                     .with_upper_corner(Vector3(1.0f, 1.0f, 1.0f))
+                                     .with_lower_corner(Float3(-1.0f, -1.0f, -1.0f))
+                                     .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
                                      .make_host_shared();
 
     const auto sync = Sync::builder()
@@ -78,10 +78,10 @@ make_unit() {
 }
 
 Unit
-make_plane_unit(const Vector3& linear_velocity  = Vector3(0.0f, 0.0f, 0.0f),
-                const Vector3& angular_velocity = Vector3(0.0f, 0.0f, 0.0f)) {
+make_plane_unit(const Float3& linear_velocity  = Float3(0.0f, 0.0f, 0.0f),
+                const Float3& angular_velocity = Float3(0.0f, 0.0f, 0.0f)) {
     static const auto geometry = Plane::builder()
-                                     .with_point_normal(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f))
+                                     .with_point_normal(Float3(0.0f, 0.0f, 0.0f), Float3(1.0f, 0.0f, 0.0f))
                                      .make_host_shared();
 
     const auto sync = Sync::builder()
@@ -314,12 +314,12 @@ TEST(Collider, CollideAccountsForColliderLinearVelocityInSurfaceResponse) {
     ASSERT_NE(positions, nullptr);
     ASSERT_NE(velocities, nullptr);
 
-    positions->data()[0]  = Vector3(-1.0f, 0.0f, 0.0f);
-    velocities->data()[0] = Vector3(1.0f, 0.0f, 0.0f);
+    positions->data()[0]  = Float3(-1.0f, 0.0f, 0.0f);
+    velocities->data()[0] = Float3(1.0f, 0.0f, 0.0f);
 
     auto collider = Collider::builder()
                         .with_universe(make_universe(HostBuffer<Unit> {
-                            make_plane_unit(Vector3(0.0f, 2.0f, 0.0f))
+                            make_plane_unit(Float3(0.0f, 2.0f, 0.0f))
                         }))
                         .with_fluid(fluid)
                         .with_surface_interactions(
@@ -330,7 +330,7 @@ TEST(Collider, CollideAccountsForColliderLinearVelocityInSurfaceResponse) {
 
     expect_vec_near(
         fluid->state<FluidVelocityState>()->data()[0],
-        Vector3(-1.0f, 0.0f, 0.0f));
+        Float3(-1.0f, 0.0f, 0.0f));
 }
 
 TEST(Collider, CollideAccountsForColliderAngularVelocityAtContactPoint) {
@@ -342,12 +342,12 @@ TEST(Collider, CollideAccountsForColliderAngularVelocityAtContactPoint) {
     ASSERT_NE(positions, nullptr);
     ASSERT_NE(velocities, nullptr);
 
-    positions->data()[0]  = Vector3(-1.0f, 1.0f, 0.0f);
-    velocities->data()[0] = Vector3(1.0f, 0.0f, 0.0f);
+    positions->data()[0]  = Float3(-1.0f, 1.0f, 0.0f);
+    velocities->data()[0] = Float3(1.0f, 0.0f, 0.0f);
 
     auto collider = Collider::builder()
                         .with_universe(make_universe(HostBuffer<Unit> {
-                            make_plane_unit(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f))
+                            make_plane_unit(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 1.0f))
                         }))
                         .with_fluid(fluid)
                         .with_surface_interactions(
@@ -358,7 +358,7 @@ TEST(Collider, CollideAccountsForColliderAngularVelocityAtContactPoint) {
 
     expect_vec_near(
         fluid->state<FluidVelocityState>()->data()[0],
-        Vector3(-3.0f, 0.0f, 0.0f));
+        Float3(-3.0f, 0.0f, 0.0f));
 }
 
 TEST(Collider, CollideUpdatesInternalEnergyThroughSurfaceInteraction) {
@@ -373,8 +373,8 @@ TEST(Collider, CollideUpdatesInternalEnergyThroughSurfaceInteraction) {
     ASSERT_NE(velocities, nullptr);
     ASSERT_NE(species, nullptr);
 
-    positions->data()[0]        = Vector3(-1.0f, 0.0f, 0.0f);
-    velocities->data()[0]       = Vector3(1.0f, 0.0f, 0.0f);
+    positions->data()[0]        = Float3(-1.0f, 0.0f, 0.0f);
+    velocities->data()[0]       = Float3(1.0f, 0.0f, 0.0f);
     species->data()[0]          = 0u;
     internal_energies.data()[0] = FluidInternalEnergy { 1.0f, 2.0f, 3.0f };
     const auto material = MaterialProperties::builder()
@@ -392,8 +392,8 @@ TEST(Collider, CollideUpdatesInternalEnergyThroughSurfaceInteraction) {
                                  .build();
     const auto expected = interaction.internal_energy(
         FluidInternalEnergy { 1.0f, 2.0f, 3.0f },
-        Vector3(1.0f, 0.0f, 0.0f),
-        Vector3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
+        Float3(1.0f, 0.0f, 0.0f),
         material);
 
     auto collider = Collider::builder()
@@ -425,8 +425,8 @@ TEST(Collider, CollidePreservesInternalEnergyForIsothermalSurfaceInteraction) {
     ASSERT_NE(species, nullptr);
 
     const FluidInternalEnergy incident_energy { 1.0f, 2.0f, 3.0f };
-    positions->data()[0]        = Vector3(-1.0f, 0.0f, 0.0f);
-    velocities->data()[0]       = Vector3(1.0f, 0.0f, 0.0f);
+    positions->data()[0]        = Float3(-1.0f, 0.0f, 0.0f);
+    velocities->data()[0]       = Float3(1.0f, 0.0f, 0.0f);
     species->data()[0]          = 0u;
     internal_energies.data()[0] = incident_energy;
     fluid->particle_properties().push_back(

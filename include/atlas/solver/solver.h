@@ -56,7 +56,8 @@ class Solver {
 public:
     Solver() = default;
 
-    ATLAS_HOST Solver(UniverseHostPtr universe, FluidHostPtr fluid, SearcherHostPtr searcher) noexcept;
+    ATLAS_HOST
+    Solver(UniverseHostPtr universe, FluidHostPtr fluid, SearcherHostPtr searcher) noexcept;
 
     virtual ~Solver() = default;
 

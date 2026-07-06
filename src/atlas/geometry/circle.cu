@@ -22,13 +22,13 @@ Circle::Builder::make_host_shared() const {
 }
 
 Circle::Builder&
-Circle::Builder::with_center(const Vector3& center_) noexcept {
+Circle::Builder::with_center(const Float3& center_) noexcept {
     _center = center_;
     return *this;
 }
 
 Circle::Builder&
-Circle::Builder::with_normal(const Vector3& normal_) noexcept {
+Circle::Builder::with_normal(const Float3& normal_) noexcept {
     _normal = normal_;
     return *this;
 }

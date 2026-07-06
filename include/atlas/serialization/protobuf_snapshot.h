@@ -27,21 +27,21 @@ struct FluidBinarySnapshot final {
     HostBuffer<MaterialProperties> properties;
     HostBuffer<Generate> generators;
 
-    std::optional<HostBuffer<Vector3>> positions;
-    std::optional<HostBuffer<Vector3>> velocities;
+    std::optional<HostBuffer<Float3>> positions;
+    std::optional<HostBuffer<Float3>> velocities;
     std::optional<HostBuffer<std::size_t>> species;
     std::optional<HostBuffer<int>> active;
     std::optional<HostBuffer<float>> temperature;
 };
 
 struct UniverseBinarySnapshot final {
-    Vector3 lower_corner = Vector3(0.0f, 0.0f, 0.0f);
-    Vector3 upper_corner = Vector3(0.0f, 0.0f, 0.0f);
-    float cell_size      = 1.0f;
+    Float3 lower_corner = Float3(0.0f, 0.0f, 0.0f);
+    Float3 upper_corner = Float3(0.0f, 0.0f, 0.0f);
+    float cell_size     = 1.0f;
 
     std::optional<HostBuffer<float>> temperature;
-    std::optional<HostBuffer<Vector3>> bulk_velocity;
-    std::optional<HostBuffer<Vector3>> field_force;
+    std::optional<HostBuffer<Float3>> bulk_velocity;
+    std::optional<HostBuffer<Float3>> field_force;
     std::optional<HostBuffer<float>> max_relative_speed;
     std::optional<HostBuffer<float>> thermal_energy;
     std::optional<HostBuffer<float>> number_particle;

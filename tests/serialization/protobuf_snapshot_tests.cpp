@@ -12,7 +12,7 @@
 namespace {
 
 bool
-expect_vec_near(const atlas::Vector3& a, const atlas::Vector3& b) {
+expect_vec_near(const atlas::Float3& a, const atlas::Float3& b) {
     return std::abs(a.x - b.x) <= atlas::tol
         && std::abs(a.y - b.y) <= atlas::tol
         && std::abs(a.z - b.z) <= atlas::tol;
@@ -53,10 +53,10 @@ TEST(ProtobufSnapshot, SaveAndLoadFluidBinarySnapshotPayload) {
     ASSERT_NE(active, nullptr);
     ASSERT_NE(temperature, nullptr);
 
-    position->data()[0]    = atlas::Vector3(1.0f, 2.0f, 3.0f);
-    position->data()[1]    = atlas::Vector3(4.0f, 5.0f, 6.0f);
-    velocity->data()[0]    = atlas::Vector3(0.1f, 0.2f, 0.3f);
-    velocity->data()[1]    = atlas::Vector3(0.4f, 0.5f, 0.6f);
+    position->data()[0]    = atlas::Float3(1.0f, 2.0f, 3.0f);
+    position->data()[1]    = atlas::Float3(4.0f, 5.0f, 6.0f);
+    velocity->data()[0]    = atlas::Float3(0.1f, 0.2f, 0.3f);
+    velocity->data()[1]    = atlas::Float3(0.4f, 0.5f, 0.6f);
     species->data()[0]     = 0u;
     species->data()[1]     = 0u;
     active->data()[0]      = 1;
@@ -84,8 +84,8 @@ TEST(ProtobufSnapshot, SaveAndLoadFluidBinarySnapshotPayload) {
     ASSERT_TRUE(snapshot.active.has_value());
     ASSERT_TRUE(snapshot.temperature.has_value());
 
-    EXPECT_TRUE(expect_vec_near((*snapshot.positions)[0], atlas::Vector3(1.0f, 2.0f, 3.0f)));
-    EXPECT_TRUE(expect_vec_near((*snapshot.velocities)[1], atlas::Vector3(0.4f, 0.5f, 0.6f)));
+    EXPECT_TRUE(expect_vec_near((*snapshot.positions)[0], atlas::Float3(1.0f, 2.0f, 3.0f)));
+    EXPECT_TRUE(expect_vec_near((*snapshot.velocities)[1], atlas::Float3(0.4f, 0.5f, 0.6f)));
     EXPECT_EQ((*snapshot.species)[1], 0u);
     EXPECT_EQ((*snapshot.active)[0], 1);
     EXPECT_FLOAT_EQ((*snapshot.temperature)[1], 450.0f);
@@ -95,8 +95,8 @@ TEST(ProtobufSnapshot, SaveAndLoadFluidBinarySnapshotPayload) {
 
 TEST(ProtobufSnapshot, SaveAndLoadUniverseBinarySnapshotPayload) {
     auto universe = atlas::Universe::builder()
-                        .with_lower_corner(atlas::Vector3(-1.0f, -2.0f, -3.0f))
-                        .with_upper_corner(atlas::Vector3(1.0f, 2.0f, 3.0f))
+                        .with_lower_corner(atlas::Float3(-1.0f, -2.0f, -3.0f))
+                        .with_upper_corner(atlas::Float3(1.0f, 2.0f, 3.0f))
                         .with_cell_size(1.0f)
                         .build();
 
@@ -105,10 +105,10 @@ TEST(ProtobufSnapshot, SaveAndLoadUniverseBinarySnapshotPayload) {
             atlas::DeviceBuffer<float> { 300.0f, 325.0f, 350.0f }));
     universe.set_state<atlas::UniverseBulkVelocityState>(
         std::make_unique<atlas::UniverseBulkVelocityState>(
-            atlas::DeviceBuffer<atlas::Vector3> {
-                atlas::Vector3(1.0f, 0.0f, 0.0f),
-                atlas::Vector3(0.0f, 1.0f, 0.0f),
-                atlas::Vector3(0.0f, 0.0f, 1.0f),
+            atlas::DeviceBuffer<atlas::Float3> {
+                atlas::Float3(1.0f, 0.0f, 0.0f),
+                atlas::Float3(0.0f, 1.0f, 0.0f),
+                atlas::Float3(0.0f, 0.0f, 1.0f),
             }));
     universe.set_state<atlas::UniverseCollisionCountState>(
         std::make_unique<atlas::UniverseCollisionCountState>(
@@ -123,8 +123,8 @@ TEST(ProtobufSnapshot, SaveAndLoadUniverseBinarySnapshotPayload) {
     atlas::save_universe_binary(universe, snapshot_path.string());
     const auto snapshot = atlas::load_universe_binary(snapshot_path.string());
 
-    EXPECT_TRUE(expect_vec_near(snapshot.lower_corner, atlas::Vector3(-1.0f, -2.0f, -3.0f)));
-    EXPECT_TRUE(expect_vec_near(snapshot.upper_corner, atlas::Vector3(1.0f, 2.0f, 3.0f)));
+    EXPECT_TRUE(expect_vec_near(snapshot.lower_corner, atlas::Float3(-1.0f, -2.0f, -3.0f)));
+    EXPECT_TRUE(expect_vec_near(snapshot.upper_corner, atlas::Float3(1.0f, 2.0f, 3.0f)));
     EXPECT_FLOAT_EQ(snapshot.cell_size, 1.0f);
 
     ASSERT_TRUE(snapshot.temperature.has_value());
@@ -133,7 +133,7 @@ TEST(ProtobufSnapshot, SaveAndLoadUniverseBinarySnapshotPayload) {
     ASSERT_TRUE(snapshot.knudsen_number.has_value());
 
     EXPECT_FLOAT_EQ((*snapshot.temperature)[1], 325.0f);
-    EXPECT_TRUE(expect_vec_near((*snapshot.bulk_velocity)[2], atlas::Vector3(0.0f, 0.0f, 1.0f)));
+    EXPECT_TRUE(expect_vec_near((*snapshot.bulk_velocity)[2], atlas::Float3(0.0f, 0.0f, 1.0f)));
     EXPECT_EQ((*snapshot.collision_count)[0], 2);
     EXPECT_NEAR((*snapshot.knudsen_number)[2], 0.3f, atlas::tol);
 

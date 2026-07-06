@@ -15,7 +15,7 @@ using atlas::BVHHostPtr;
 using atlas::BvhGeometryOperator;
 using atlas::HostBuffer;
 using atlas::TriangleContainer4;
-using atlas::Vector3;
+using atlas::Float3;
 using atlas::device_shared_ptr;
 using atlas::host_shared_ptr;
 
@@ -50,10 +50,10 @@ TEST(BVH, AliasTypesCompile) {
 TEST(BVH, DerivedImplementationCanBuild) {
     DummyBvh bvh;
 
-    const TriangleContainer4 triangle(Vector3(0.0f, 0.0f, 0.0f),
-                                      Vector3(1.0f, 0.0f, 0.0f),
-                                      Vector3(0.0f, 1.0f, 0.0f),
-                                      Vector3(0.0f, 0.0f, 0.0f));
+    const TriangleContainer4 triangle(Float3(0.0f, 0.0f, 0.0f),
+                                      Float3(1.0f, 0.0f, 0.0f),
+                                      Float3(0.0f, 1.0f, 0.0f),
+                                      Float3(0.0f, 0.0f, 0.0f));
 
     HostBuffer<TriangleContainer4> triangles;
     triangles.push_back(triangle);

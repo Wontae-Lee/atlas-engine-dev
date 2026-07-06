@@ -10,8 +10,8 @@ namespace {
 atlas::Geometry
 make_box_operator() {
     static const auto box = atlas::Box::builder()
-                                .with_lower_corner(atlas::Vector3(-1.0f, -1.0f, -1.0f))
-                                .with_upper_corner(atlas::Vector3(1.0f, 1.0f, 1.0f))
+                                .with_lower_corner(atlas::Float3(-1.0f, -1.0f, -1.0f))
+                                .with_upper_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
                                 .build();
     return atlas::Geometry(box);
 }
@@ -21,15 +21,15 @@ make_box_operator() {
 TEST(Spawn, SurfaceOperatorDetectsSurfacePoints) {
     const auto geometry_operator = make_box_operator();
 
-    EXPECT_TRUE(atlas::SurfaceSpawn::spawn(geometry_operator, atlas::Vector3(1.0f, 0.0f, 0.0f), 0.0f));
-    EXPECT_FALSE(atlas::SurfaceSpawn::spawn(geometry_operator, atlas::Vector3(0.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_TRUE(atlas::SurfaceSpawn::spawn(geometry_operator, atlas::Float3(1.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_FALSE(atlas::SurfaceSpawn::spawn(geometry_operator, atlas::Float3(0.0f, 0.0f, 0.0f), 0.0f));
 }
 
 TEST(Spawn, VolumeOperatorDetectsInteriorPoints) {
     const auto geometry_operator = make_box_operator();
 
-    EXPECT_TRUE(atlas::VolumeSpawn::spawn(geometry_operator, atlas::Vector3(0.0f, 0.0f, 0.0f), 0.0f));
-    EXPECT_FALSE(atlas::VolumeSpawn::spawn(geometry_operator, atlas::Vector3(3.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_TRUE(atlas::VolumeSpawn::spawn(geometry_operator, atlas::Float3(0.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_FALSE(atlas::VolumeSpawn::spawn(geometry_operator, atlas::Float3(3.0f, 0.0f, 0.0f), 0.0f));
 }
 
 TEST(Spawn, DefaultConstructorCreatesSurfaceVariant) {
@@ -69,8 +69,8 @@ TEST(Spawn, SpawnDispatchesToActiveVariant) {
     const atlas::Spawn surface_operator(atlas::SpawnType::surface);
     const atlas::Spawn volume_operator(atlas::SpawnType::volume);
 
-    EXPECT_TRUE(surface_operator.spawn(geometry_operator, atlas::Vector3(1.0f, 0.0f, 0.0f), 0.0f));
-    EXPECT_FALSE(surface_operator.spawn(geometry_operator, atlas::Vector3(0.0f, 0.0f, 0.0f), 0.0f));
-    EXPECT_TRUE(volume_operator.spawn(geometry_operator, atlas::Vector3(0.0f, 0.0f, 0.0f), 0.0f));
-    EXPECT_FALSE(volume_operator.spawn(geometry_operator, atlas::Vector3(2.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_TRUE(surface_operator.spawn(geometry_operator, atlas::Float3(1.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_FALSE(surface_operator.spawn(geometry_operator, atlas::Float3(0.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_TRUE(volume_operator.spawn(geometry_operator, atlas::Float3(0.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_FALSE(volume_operator.spawn(geometry_operator, atlas::Float3(2.0f, 0.0f, 0.0f), 0.0f));
 }

@@ -11,7 +11,7 @@ Sync::builder() noexcept {
 }
 
 Sync::Builder&
-Sync::Builder::with_rigid_pose(const Vector3& translation_,
+Sync::Builder::with_rigid_pose(const Float3& translation_,
                                const Quaternion& orientation_) noexcept {
     _translation = translation_;
     _orientation = orientation_;

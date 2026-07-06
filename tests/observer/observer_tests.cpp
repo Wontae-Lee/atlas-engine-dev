@@ -44,7 +44,7 @@ using atlas::Sync;
 using atlas::Unit;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
-using atlas::Vector3;
+using atlas::Float3;
 
 FluidHostPtr
 make_observed_fluid(const ObserverHostPtr& observer,
@@ -63,7 +63,7 @@ make_observed_fluid(const ObserverHostPtr& observer,
     generators[0] = MaxwellBoltzmannGenerator::builder()
                         .with_temperature(300.0f)
                         .with_molecular_mass(4.651734e-26f)
-                        .with_bulk_velocity(Vector3(0.0f, 0.0f, 0.0f))
+                        .with_bulk_velocity(Float3(0.0f, 0.0f, 0.0f))
                         .with_seed(7u)
                         .make_host_shared();
 
@@ -76,8 +76,8 @@ make_observed_fluid(const ObserverHostPtr& observer,
 }
 
 Unit
-make_unit(const Vector3& lower = Vector3(-1.0f, -1.0f, -1.0f),
-          const Vector3& upper = Vector3(1.0f, 1.0f, 1.0f)) {
+make_unit(const Float3& lower = Float3(-1.0f, -1.0f, -1.0f),
+          const Float3& upper = Float3(1.0f, 1.0f, 1.0f)) {
     const auto geometry = Box::builder()
                               .with_lower_corner(lower)
                               .with_upper_corner(upper)
@@ -94,8 +94,8 @@ make_unit(const Vector3& lower = Vector3(-1.0f, -1.0f, -1.0f),
 UniverseHostPtr
 make_source_universe(const HostBuffer<Unit>& source_units) {
     return Universe::builder()
-        .with_lower_corner(Vector3(-10.0f, -10.0f, -10.0f))
-        .with_upper_corner(Vector3(10.0f, 10.0f, 10.0f))
+        .with_lower_corner(Float3(-10.0f, -10.0f, -10.0f))
+        .with_upper_corner(Float3(10.0f, 10.0f, 10.0f))
         .with_cell_size(1.0f)
         .with_source_units(source_units)
         .make_host_shared();
@@ -104,8 +104,8 @@ make_source_universe(const HostBuffer<Unit>& source_units) {
 UniverseHostPtr
 make_sink_universe(const HostBuffer<Unit>& sink_units) {
     return Universe::builder()
-        .with_lower_corner(Vector3(-10.0f, -10.0f, -10.0f))
-        .with_upper_corner(Vector3(10.0f, 10.0f, 10.0f))
+        .with_lower_corner(Float3(-10.0f, -10.0f, -10.0f))
+        .with_upper_corner(Float3(10.0f, 10.0f, 10.0f))
         .with_cell_size(1.0f)
         .with_sink_units(sink_units)
         .make_host_shared();
@@ -157,8 +157,8 @@ TEST(Observer, SourceRecordsPerUnitEmissionCounts) {
 
     auto source = Source::builder()
                       .with_universe(make_source_universe(HostBuffer<Unit> {
-                          make_unit(Vector3(-1.0f, -1.0f, -1.0f), Vector3(1.0f, 1.0f, 1.0f)),
-                          make_unit(Vector3(-0.5f, -0.5f, -0.5f), Vector3(0.5f, 0.5f, 0.5f)),
+                          make_unit(Float3(-1.0f, -1.0f, -1.0f), Float3(1.0f, 1.0f, 1.0f)),
+                          make_unit(Float3(-0.5f, -0.5f, -0.5f), Float3(0.5f, 0.5f, 0.5f)),
                       }))
                       .with_fluid(fluid)
                       .with_observer(observer)
@@ -196,8 +196,8 @@ TEST(Observer, SinkRecordsPerUnitRemovalCounts) {
     auto& positions = fluid->state<FluidPositionState>()->data();
     auto& active    = fluid->state<FluidActiveState>()->data();
 
-    positions[0] = Vector3(1.0f, 0.0f, 0.0f);
-    positions[1] = Vector3(-1.0f, 0.0f, 0.0f);
+    positions[0] = Float3(1.0f, 0.0f, 0.0f);
+    positions[1] = Float3(-1.0f, 0.0f, 0.0f);
     active[0]    = 1;
     active[1]    = 1;
     fluid->set_particle_count(2);
@@ -233,8 +233,8 @@ TEST(Observer, SinkRecordsFlippedSingleUnitRemovalCounts) {
     auto& positions = fluid->state<FluidPositionState>()->data();
     auto& active    = fluid->state<FluidActiveState>()->data();
 
-    positions[0] = Vector3(2.0f, 0.0f, 0.0f);
-    positions[1] = Vector3(-2.0f, 0.0f, 0.0f);
+    positions[0] = Float3(2.0f, 0.0f, 0.0f);
+    positions[1] = Float3(-2.0f, 0.0f, 0.0f);
     active[0]    = 1;
     active[1]    = 1;
     fluid->set_particle_count(2);

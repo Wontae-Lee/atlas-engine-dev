@@ -17,56 +17,58 @@ public:
     class Builder;
 
 public:
-    Vector3 normal = Vector3(0.0f, 0.0f, 1.0f);
+    Float3 normal = Float3(0.0f, 0.0f, 1.0f);
 
     float offset = 0.0f;
 
     Plane() noexcept = default;
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Plane(const Vector3& normal_, float offset_) noexcept
+    Plane(const Float3& normal_, float offset_) noexcept
         : normal(normal_)
         , offset(offset_) { }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    Plane(const Vector3& point, const Vector3& normal_) noexcept
+    Plane(const Float3& point, const Float3& normal_) noexcept
         : normal(normal_)
         , offset(-(normal_.dot(point))) { }
 
-    Plane(const Plane& other) noexcept            = default;
-    Plane(Plane&& other) noexcept                 = default;
-    Plane& operator=(const Plane& other) noexcept = default;
-    Plane& operator=(Plane&& other) noexcept      = default;
+    Plane(const Plane& other) noexcept = default;
+    Plane(Plane&& other) noexcept      = default;
+    Plane&
+    operator=(const Plane& other) noexcept = default;
+    Plane&
+    operator=(Plane&& other) noexcept = default;
 
     ~Plane() noexcept = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    closest_point(const Vector3& p) const noexcept {
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    closest_point(const Float3& p) const noexcept {
         const float sdev = normal.dot(p) + offset;
 
         return p - sdev * normal;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-    closest_normal(const Vector3&) const noexcept {
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    closest_normal(const Float3&) const noexcept {
         return normal;
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    signed_distance(const Vector3& p) const noexcept {
+    signed_distance(const Float3& p) const noexcept {
         return normal.dot(p) + offset;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_inside(const Vector3& p, const float tolerance = 0.0f) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    is_inside(const Float3& p, const float tolerance = 0.0f) const noexcept {
         return normal.dot(p) + offset <= tolerance;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-    is_on_surface(const Vector3& p, const float tolerance = 0.0f) const noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    is_on_surface(const Float3& p, const float tolerance = 0.0f) const noexcept {
         if (tolerance < 0.0f) {
             return false;
         }
@@ -75,9 +77,9 @@ public:
         return distance >= -tolerance && distance <= tolerance;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     centroid() const noexcept {
-        return Vector3(0.0f, 0.0f, 0.0f);
+        return Float3(0.0f, 0.0f, 0.0f);
     }
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AABB
@@ -86,11 +88,11 @@ public:
         const float hi = std::numeric_limits<float>::max();
 
         return AABB(
-            Vector3(lo, lo, lo),
-            Vector3(hi, hi, hi));
+            Float3(lo, lo, lo),
+            Float3(hi, hi, hi));
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     is_valid() const noexcept {
         const float n2 = normal.length_squared();
         return atlas::isfinite(normal)
@@ -98,7 +100,7 @@ public:
             && atlas::isfinite(offset);
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     trace(const Ray& ray) const noexcept {
         HitSurface result {};
 
@@ -134,7 +136,7 @@ public:
         return result;
     }
 
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE HitSurface
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     operator()(const Ray& ray) const noexcept {
         return trace(ray);
     }
@@ -144,30 +146,30 @@ class Plane::Builder final {
 public:
     Builder() = default;
 
-    ATLAS_HOST ATLAS_NODISCARD Plane
+    ATLAS_NODISCARD ATLAS_HOST Plane
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Plane>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Plane>
     make_host_shared() const;
 
     ATLAS_HOST Builder&
-    with_normal(const Vector3& normal_) noexcept;
+    with_normal(const Float3& normal_) noexcept;
 
     ATLAS_HOST Builder&
     with_offset(float offset_) noexcept;
 
     ATLAS_HOST Builder&
-    with_normal_offset(const Vector3& normal_, float offset_) noexcept;
+    with_normal_offset(const Float3& normal_, float offset_) noexcept;
 
     ATLAS_HOST Builder&
-    with_point_normal(const Vector3& point, const Vector3& normal_) noexcept;
+    with_point_normal(const Float3& point, const Float3& normal_) noexcept;
 
 private:
     ATLAS_HOST void
     validate() const;
 
 private:
-    Vector3 _normal = Vector3(0.0f, 0.0f, 1.0f);
+    Float3 _normal = Float3(0.0f, 0.0f, 1.0f);
 
     float _offset = 0.0f;
 };

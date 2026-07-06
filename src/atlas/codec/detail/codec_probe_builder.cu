@@ -33,10 +33,10 @@ CodecProbeBuilder::make(CodecProbe& probe,
     probe.fixed_solver_ptr     = optional_buffer_ptr(fixed_solver);
     probe.fixed_region_ptr     = optional_buffer_ptr(fixed_region);
     fill_cell_partition(probe, searcher);
-    probe.particle_count       = static_cast<int>(fluid->particle_count());
+    probe.particle_count     = static_cast<int>(fluid->particle_count());
     probe.cell_count         = universe->cell_count();
-    probe.cell_volume          = universe->cell_volume();
-    probe.statistical_weight   = fluid->statistical_weight();
+    probe.cell_volume        = universe->cell_volume();
+    probe.statistical_weight = fluid->statistical_weight();
 
     return probe.cell_count > 0;
 }

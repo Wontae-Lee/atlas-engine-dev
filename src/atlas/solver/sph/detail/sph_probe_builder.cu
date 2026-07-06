@@ -49,8 +49,8 @@ SphProbeBuilder::make(SphProbe& probe,
     probe.inverse_cell_size    = searcher->inverse_cell_size();
     probe.cell_size            = searcher->cell_size();
     probe.particle_count       = static_cast<int>(fluid->particle_count());
-    probe.cell_count         = universe->cell_count();
-    probe.property_count    = static_cast<int>(fluid->particle_properties().size());
+    probe.cell_count           = universe->cell_count();
+    probe.property_count       = static_cast<int>(fluid->particle_properties().size());
     probe.kernel               = kernel;
     return true;
 }

@@ -72,15 +72,15 @@ public:
      *  during sampling. `active == false` marks a unit whose bound
      *  doesn't overlap the grid at all this step. */
     struct UnitRegion {
-        Vector3i begin {};
-        Vector3i end {};
+        Int3 begin {};
+        Int3 end {};
         bool active {};
 
         /** @brief Whether `cell` falls within this unit's conservative
          *  index range (a necessary, not sufficient, condition for the
          *  cell to actually be occluded by this unit). */
-        ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE bool
-        contains(const Vector3i& cell) const noexcept {
+        ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+        contains(const Int3& cell) const noexcept {
             return active && atlas::all((cell >= begin) & (cell <= end));
         }
     };
@@ -93,7 +93,7 @@ public:
 
     ~VolumeMeasurer() override = default;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     /** @brief `measure(0.0f)` — units are not advanced. */
@@ -108,13 +108,13 @@ public:
 
     /** @brief Always `MeasureModeType::field` — this measurer only
      *  writes per-cell `UniverseVolumeState`. */
-    ATLAS_HOST ATLAS_NODISCARD MeasureModeType
+    ATLAS_NODISCARD ATLAS_HOST MeasureModeType
     measure_mode() const noexcept override;
 
-    ATLAS_HOST ATLAS_NODISCARD const DeviceBuffer<Unit>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Unit>&
     units() const noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD int
+    ATLAS_NODISCARD ATLAS_HOST int
     samples_per_axis() const noexcept;
 
 private:
@@ -157,10 +157,10 @@ public:
     ATLAS_HOST Builder&
     with_samples_per_axis(int samples_per_axis);
 
-    ATLAS_HOST ATLAS_NODISCARD VolumeMeasurer
+    ATLAS_NODISCARD ATLAS_HOST VolumeMeasurer
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<VolumeMeasurer>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<VolumeMeasurer>
     make_host_shared() const;
 
 private:

@@ -84,7 +84,7 @@ public:
     ATLAS_HOST void
     build(const HostBuffer<TriangleContainer4>& triangles) override;
 
-    ATLAS_HOST ATLAS_NODISCARD BvhGeometryOperator
+    ATLAS_NODISCARD ATLAS_HOST BvhGeometryOperator
     make_geometry_operator() const override;
 
     ATLAS_HOST void
@@ -141,7 +141,7 @@ public:
         return h_prim_bounds;
     }
 
-    ATLAS_NODISCARD const HostBuffer<Vector3>&
+    ATLAS_NODISCARD const HostBuffer<Float3>&
     centroids() const noexcept {
         return h_centroids;
     }
@@ -168,7 +168,7 @@ private:
 
     HostBuffer<AABB> h_prim_bounds;
 
-    HostBuffer<Vector3> h_centroids;
+    HostBuffer<Float3> h_centroids;
 
     int _root = -1;
 
@@ -233,6 +233,5 @@ private:
                     int& node_count,
                     const HostBuffer<TriangleContainer4>& triangles);
 };
-
 
 }

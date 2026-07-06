@@ -11,8 +11,8 @@ namespace {
 using atlas::FluidHostPtr;
 using atlas::Searcher;
 using atlas::UniverseHostPtr;
-using atlas::Vector3;
-using atlas::Vector3i;
+using atlas::Float3;
+using atlas::Int3;
 using atlas::test::searcher::copy_values;
 using atlas::test::searcher::expect_vec_near;
 using atlas::test::searcher::ExposedSearcher;
@@ -25,8 +25,8 @@ using atlas::test::searcher::make_universe;
 TEST(Searcher, DefaultConstructedInheritedStateHasSafeFallbacks) {
     ExposedSearcher searcher;
 
-    EXPECT_TRUE(expect_vec_near(searcher.lower_corner(), Vector3(0.0f, 0.0f, 0.0f)));
-    EXPECT_TRUE(searcher.grid_size() == Vector3i(0, 0, 0));
+    EXPECT_TRUE(expect_vec_near(searcher.lower_corner(), Float3(0.0f, 0.0f, 0.0f)));
+    EXPECT_TRUE(searcher.grid_size() == Int3(0, 0, 0));
     EXPECT_FLOAT_EQ(searcher.cell_size(), 1.0f);
     EXPECT_FLOAT_EQ(searcher.inverse_cell_size(), 1.0f);
     EXPECT_EQ(searcher.neighbor_count(), 0);
@@ -47,11 +47,11 @@ TEST(Searcher, InheritedConstructorRejectsMissingDependencies) {
 }
 
 TEST(Searcher, LinearKeyUsesRowMajorCellFlattening) {
-    EXPECT_EQ(Searcher::linear_key(0, 0, 0, Vector3i(4, 5, 6)), 0u);
-    EXPECT_EQ(Searcher::linear_key(1, 0, 0, Vector3i(4, 5, 6)), 1u);
-    EXPECT_EQ(Searcher::linear_key(0, 1, 0, Vector3i(4, 5, 6)), 4u);
-    EXPECT_EQ(Searcher::linear_key(0, 0, 1, Vector3i(4, 5, 6)), 20u);
-    EXPECT_EQ(Searcher::linear_key(3, 4, 5, Vector3i(4, 5, 6)), 119u);
+    EXPECT_EQ(Searcher::linear_key(0, 0, 0, Int3(4, 5, 6)), 0u);
+    EXPECT_EQ(Searcher::linear_key(1, 0, 0, Int3(4, 5, 6)), 1u);
+    EXPECT_EQ(Searcher::linear_key(0, 1, 0, Int3(4, 5, 6)), 4u);
+    EXPECT_EQ(Searcher::linear_key(0, 0, 1, Int3(4, 5, 6)), 20u);
+    EXPECT_EQ(Searcher::linear_key(3, 4, 5, Int3(4, 5, 6)), 119u);
 }
 
 TEST(Searcher, InheritedResetClearsParticleAndNeighborBuffers) {

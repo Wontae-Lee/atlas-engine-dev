@@ -77,7 +77,8 @@ public:
     ~Collider() = default;
 
     Collider&
-    operator=(const Collider&) = delete;
+    operator=(const Collider&)
+        = delete;
 
     Collider&
     operator=(Collider&&) noexcept = default;
@@ -89,7 +90,7 @@ public:
              PostColliderType post_collider_type,
              atlas::host_shared_ptr<atlas::Fluid> fluid) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     /**
@@ -110,7 +111,7 @@ public:
 
     /** @brief Whether there is nothing to collide: no units, no surface
      *  interactions configured, or no fluid attached. */
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     empty() const noexcept;
 
     /**
@@ -120,7 +121,7 @@ public:
      *         (see `detail::ColliderProbeBuilder::make`); `true` if
      *         `_probe` is now valid for a collision pass.
      */
-    ATLAS_HOST ATLAS_NODISCARD bool
+    ATLAS_NODISCARD ATLAS_HOST bool
     make_probe() const noexcept;
 
 private:
@@ -203,10 +204,10 @@ public:
     ATLAS_HOST Builder&
     with_post_collider_type(PostColliderType type) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD Collider
+    ATLAS_NODISCARD ATLAS_HOST Collider
     build();
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<Collider>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Collider>
     make_host_shared();
 
 private:

@@ -44,7 +44,7 @@ public:
     ATLAS_HOST void
     build() override;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
 public:
@@ -52,7 +52,7 @@ public:
      *  the same octant as the query particle (see this file's
      *  top-of-file documentation). */
     ATLAS_HOST void
-    build_neighbors(int alive, const Vector3* pos);
+    build_neighbors(int alive, const Float3* pos);
 };
 
 /** @brief Fluent builder for `OctreeSearcher`; requires non-null
@@ -67,10 +67,10 @@ public:
     ATLAS_HOST Builder&
     with_fluid(FluidHostPtr fluid) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD OctreeSearcher
+    ATLAS_NODISCARD ATLAS_HOST OctreeSearcher
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<OctreeSearcher>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<OctreeSearcher>
     make_host_shared() const;
 
 private:

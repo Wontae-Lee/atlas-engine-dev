@@ -28,7 +28,7 @@ public:
      *         particles, so callers can skip the despawn pass entirely;
      *         `true` otherwise.
      */
-    ATLAS_HOST ATLAS_NODISCARD static bool
+    ATLAS_NODISCARD ATLAS_HOST static bool
     make(const FluidHostPtr& fluid,
          const DeviceBuffer<Unit>& units,
          const DeviceBuffer<atlas::AABB>& unit_bounds,

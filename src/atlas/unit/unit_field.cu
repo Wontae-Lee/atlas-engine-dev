@@ -80,14 +80,20 @@ UnitField::refresh_bounds() {
     // scene-level merge so a single unbounded unit does not make
     // scene_bound() useless as a broad-phase reject test.
     _scene_bound = atlas::transform_reduce<ExecutionPolicy::device>(
-        _unit_bounds.begin(), _unit_bounds.end(), Bound {},
-        SceneBoundTransform {}, SceneBoundMerge {});
+        _unit_bounds.begin(),
+        _unit_bounds.end(),
+        Bound {},
+        SceneBoundTransform {},
+        SceneBoundMerge {});
 
     // covers_units() is only true if every unit contributed a valid bound;
     // a single unbounded unit makes the scene-level early-out unsafe.
     _covers_units = atlas::transform_reduce<ExecutionPolicy::device>(
-        _unit_bounds.begin(), _unit_bounds.end(), true,
-        BoundIsValid {}, BoolAnd {});
+        _unit_bounds.begin(),
+        _unit_bounds.end(),
+        true,
+        BoundIsValid {},
+        BoolAnd {});
 }
 
 const DeviceBuffer<Unit>&

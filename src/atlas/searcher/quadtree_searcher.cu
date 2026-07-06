@@ -12,19 +12,19 @@ QuadtreeSearcher::QuadtreeSearcher(UniverseHostPtr universe, FluidHostPtr fluid)
 }
 
 void
-QuadtreeSearcher::build_neighbors(const int alive, const Vector3* pos) {
+QuadtreeSearcher::build_neighbors(const int alive, const Float3* pos) {
     // Not an actual recursive quadtree — the 2D analog of OctreeSearcher's
     // single-level octant filter (x/y only, z ignored); see
     // quadtree_searcher.h's top-of-file documentation.
-    const Vector3 center = (lower_corner() + _universe->upper_corner()) * 0.5f;
+    const Float3 center = (lower_corner() + _universe->upper_corner()) * 0.5f;
 
     build_cell_neighbors(
         alive,
         pos,
         [=] ATLAS_ALL_DEVICE(const int,
-                         const int,
-                         const Vector3& pi,
-                         const Vector3& pj) {
+                             const int,
+                             const Float3& pi,
+                             const Float3& pj) {
             const int ix = pi.x >= center.x ? 1 : 0;
             const int iy = pi.y >= center.y ? 1 : 0;
             const int jx = pj.x >= center.x ? 1 : 0;
@@ -37,8 +37,8 @@ void
 QuadtreeSearcher::build() {
     if (!_is_invalidated) return;
 
-    const Vector3* positions = position_ptr();
-    const int alive          = active_count();
+    const Float3* positions = position_ptr();
+    const int alive         = active_count();
 
     if (!positions || alive <= 0) {
         reset();

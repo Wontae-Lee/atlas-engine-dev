@@ -29,25 +29,25 @@ Unit::Builder::with_sync(const SyncHostPtr& sync) {
 }
 
 Unit::Builder&
-Unit::Builder::with_velocity(const Vector3& v) noexcept {
+Unit::Builder::with_velocity(const Float3& v) noexcept {
     _velocity = v;
     return *this;
 }
 
 Unit::Builder&
-Unit::Builder::with_acceleration(const Vector3& a) noexcept {
+Unit::Builder::with_acceleration(const Float3& a) noexcept {
     _acceleration = a;
     return *this;
 }
 
 Unit::Builder&
-Unit::Builder::with_angular_velocity(const Vector3& w) noexcept {
+Unit::Builder::with_angular_velocity(const Float3& w) noexcept {
     _angular_velocity = w;
     return *this;
 }
 
 Unit::Builder&
-Unit::Builder::with_angular_acceleration(const Vector3& alpha) noexcept {
+Unit::Builder::with_angular_acceleration(const Float3& alpha) noexcept {
     _angular_acceleration = alpha;
     return *this;
 }
@@ -69,8 +69,8 @@ Unit::Builder::build() {
 
     Unit u {};
 
-    u._geometry    = std::move(*_geometry);
-    u._sync        = std::move(*_sync);
+    u._geometry             = std::move(*_geometry);
+    u._sync                 = std::move(*_sync);
     u._velocity             = std::move(velocity);
     u._acceleration         = std::move(acceleration);
     u._angular_velocity     = std::move(angular_velocity);

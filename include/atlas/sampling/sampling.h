@@ -1,12 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 #include <atlas/random/default_random_engine.h>
 #include <atlas/random/seed.h>
 #include <atlas/random/uniform_real_distribution.h>
 #include <atlas/shuffle/shuffle.h>
-#include <algorithm>
 #include <cmath>
 #include <cstdint>
 
@@ -42,18 +42,18 @@ generate_standard_normal(atlas::default_random_engine& engine) {
     return first;
 }
 
-ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
+ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
 sample_uniform_vector(atlas::default_random_engine& engine,
                       const float min_value,
                       const float max_value) {
     atlas::uniform_real_distribution<float> distribution(min_value, max_value);
-    return Vector3(
+    return Float3(
         distribution(engine),
         distribution(engine),
         distribution(engine));
 }
 
-ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
+ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
 sample_normal_vector(atlas::default_random_engine& engine,
                      const float sigma) {
     float x {};
@@ -62,24 +62,24 @@ sample_normal_vector(atlas::default_random_engine& engine,
     float unused {};
     atlas::generate_standard_normal_pair(engine, x, y);
     atlas::generate_standard_normal_pair(engine, z, unused);
-    return Vector3(
+    return Float3(
         sigma * x,
         sigma * y,
         sigma * z);
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-build_orthonormal_basis(const Vector3& n,
-                        Vector3& t,
-                        Vector3& b) {
+build_orthonormal_basis(const Float3& n,
+                        Float3& t,
+                        Float3& b) {
     if (!atlas::orthonormal_basis(n, t, b)) {
-        t = Vector3(1.0f, 0.0f, 0.0f);
-        b = Vector3(0.0f, 1.0f, 0.0f);
+        t = Float3(1.0f, 0.0f, 0.0f);
+        b = Float3(0.0f, 1.0f, 0.0f);
     }
 }
 
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-sample_uniform_hemisphere(const Vector3& n, const float u1, const float u2) {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+sample_uniform_hemisphere(const Float3& n, const float u1, const float u2) {
 
     const float phi       = 2.0f * atlas::pi * u2;
     const float cos_theta = 1.0f - u1;
@@ -87,8 +87,8 @@ sample_uniform_hemisphere(const Vector3& n, const float u1, const float u2) {
     return atlas::spherical_direction(n, cos_theta, phi);
 }
 
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-sample_cosine_hemisphere(const Vector3& n, const float u1, const float u2) {
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+sample_cosine_hemisphere(const Float3& n, const float u1, const float u2) {
 
     const float phi       = 2.0f * atlas::pi * u1;
     const float cos_theta = atlas::sqrt_nonnegative(1.0f - u2);
@@ -96,7 +96,7 @@ sample_cosine_hemisphere(const Vector3& n, const float u1, const float u2) {
     return atlas::spherical_direction(n, cos_theta, phi);
 }
 
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
 sample_random_unit_vector(atlas::default_random_engine& engine) noexcept {
     atlas::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
@@ -110,8 +110,8 @@ sample_random_unit_vector(atlas::default_random_engine& engine) noexcept {
     return atlas::spherical_direction(cos_theta, phi);
 }
 
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
-sample_directional_unit_vector(const Vector3& incoming_direction,
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+sample_directional_unit_vector(const Float3& incoming_direction,
                                float alpha,
                                atlas::default_random_engine& engine) noexcept {
     atlas::uniform_real_distribution<float> dist(0.0f, 1.0f);
@@ -141,7 +141,7 @@ sample_axis_count(const float lower, const float upper, const float spacing) noe
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-sample_hashed_unit_interval(const Vector3& seed, const float salt) noexcept {
+sample_hashed_unit_interval(const Float3& seed, const float salt) noexcept {
 
     const float phase = seed.x * atlas::RANDOM_HASH_PHASE_COEFF_X
         + seed.y * atlas::RANDOM_HASH_PHASE_COEFF_Y

@@ -58,17 +58,17 @@ public:
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     sweep_motion(const Unit& unit,
-                 const Vector3& origin,
-                 const Vector3& incident,
+                 const Float3& origin,
+                 const Float3& incident,
                  const float,
                  const float dt,
-                 Vector3& sweep_direction,
+                 Float3& sweep_direction,
                  float& sweep_speed,
                  float& sweep_length) const noexcept {
-        const Vector3 relative_velocity = incident - FastColliderKernel::surface_velocity(unit, origin);
-        sweep_direction                 = relative_velocity * dt;
-        sweep_speed                     = relative_velocity.length();
-        sweep_length                    = sweep_speed * dt;
+        const Float3 relative_velocity = incident - FastColliderKernel::surface_velocity(unit, origin);
+        sweep_direction                = relative_velocity * dt;
+        sweep_speed                    = relative_velocity.length();
+        sweep_length                   = sweep_speed * dt;
     }
 
     /**
@@ -78,11 +78,11 @@ public:
      *        hit-finding sweep (above) differs between the two kernels.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    operator()(Vector3& position,
-               Vector3& velocity,
-               const Vector3& incident,
-               const Vector3& hit_position,
-               const Vector3& hit_normal,
+    operator()(Float3& position,
+               Float3& velocity,
+               const Float3& incident,
+               const Float3& hit_position,
+               const Float3& hit_normal,
                const float hit_distance,
                const float sweep_speed,
                const float dt,

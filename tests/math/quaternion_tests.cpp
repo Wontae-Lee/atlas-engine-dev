@@ -10,7 +10,7 @@ constexpr float k_eps = 1e-5f;
 constexpr float k_pi = 3.14159265358979323846f;
 
 void
-expect_vector_near(const atlas::Vector3& a, const atlas::Vector3& b, const float tolerance) {
+expect_vector_near(const atlas::Float3& a, const atlas::Float3& b, const float tolerance) {
     EXPECT_NEAR(a.x, b.x, tolerance);
     EXPECT_NEAR(a.y, b.y, tolerance);
     EXPECT_NEAR(a.z, b.z, tolerance);
@@ -50,18 +50,18 @@ TEST(Quaternion, DotLengthNormalize) {
 }
 
 TEST(Quaternion, AxisAngleRotationRotatesVector) {
-    const atlas::Vector3 axis(0.0f, 0.0f, 1.0f);
+    const atlas::Float3 axis(0.0f, 0.0f, 1.0f);
     const atlas::Quaternion q = atlas::Quaternion::from_axis_angle(axis, k_pi * 0.5f);
 
-    const atlas::Vector3 r = q.rotate(atlas::Vector3(1.0f, 0.0f, 0.0f));
-    expect_vector_near(r, atlas::Vector3(0.0f, 1.0f, 0.0f), k_eps);
+    const atlas::Float3 r = q.rotate(atlas::Float3(1.0f, 0.0f, 0.0f));
+    expect_vector_near(r, atlas::Float3(0.0f, 1.0f, 0.0f), k_eps);
 }
 
 TEST(Quaternion, ConjugateReversesRotation) {
-    const atlas::Quaternion q = atlas::Quaternion::from_axis_angle(atlas::Vector3(0.0f, 1.0f, 0.0f), 0.7f);
-    const atlas::Vector3 v(1.0f, 2.0f, 3.0f);
+    const atlas::Quaternion q = atlas::Quaternion::from_axis_angle(atlas::Float3(0.0f, 1.0f, 0.0f), 0.7f);
+    const atlas::Float3 v(1.0f, 2.0f, 3.0f);
 
-    const atlas::Vector3 round_trip = q.conjugate().rotate(q.rotate(v));
+    const atlas::Float3 round_trip = q.conjugate().rotate(q.rotate(v));
     expect_vector_near(round_trip, v, k_eps);
 }
 
@@ -74,9 +74,9 @@ TEST(Quaternion, InverseUndoesMultiplication) {
 
 TEST(Quaternion, MatrixRoundTrip) {
     const atlas::Quaternion q = atlas::Quaternion::from_axis_angle(
-        atlas::Vector3(1.0f, 1.0f, 0.0f).normalized(), 0.8f);
+        atlas::Float3(1.0f, 1.0f, 0.0f).normalized(), 0.8f);
 
-    const atlas::Matrix3x3 m  = q.to_matrix3x3();
+    const atlas::Float3x3 m  = q.to_matrix3x3();
     const atlas::Quaternion r = atlas::Quaternion::from_matrix3x3(m);
 
     const float sign = (q.dot(r) < 0.0f) ? -1.0f : 1.0f;
@@ -88,10 +88,10 @@ TEST(Quaternion, MatrixRoundTrip) {
 
 TEST(Quaternion, MatrixMatchesRotate) {
     const atlas::Quaternion q = atlas::Quaternion::from_euler_xyz(0.1f, 0.4f, -0.3f);
-    const atlas::Vector3 v(0.5f, -1.5f, 2.0f);
+    const atlas::Float3 v(0.5f, -1.5f, 2.0f);
 
-    const atlas::Vector3 by_quat   = q.rotate(v);
-    const atlas::Vector3 by_matrix = q.to_matrix3x3() * v;
+    const atlas::Float3 by_quat   = q.rotate(v);
+    const atlas::Float3 by_matrix = q.to_matrix3x3() * v;
     expect_vector_near(by_quat, by_matrix, k_eps);
 }
 
@@ -129,19 +129,19 @@ TEST(Quaternion, IdentityIsMultiplicativeNeutral) {
 
 TEST(Quaternion, SlerpEndpointsAndMidpoint) {
     const atlas::Quaternion a;
-    const atlas::Quaternion b = atlas::Quaternion::from_axis_angle(atlas::Vector3(0.0f, 0.0f, 1.0f), k_pi * 0.5f);
+    const atlas::Quaternion b = atlas::Quaternion::from_axis_angle(atlas::Float3(0.0f, 0.0f, 1.0f), k_pi * 0.5f);
 
     EXPECT_TRUE(atlas::Quaternion::slerp(a, b, 0.0f) == a);
     EXPECT_TRUE(atlas::Quaternion::slerp(a, b, 1.0f) == b);
 
     const atlas::Quaternion mid      = atlas::Quaternion::slerp(a, b, 0.5f);
-    const atlas::Quaternion expected = atlas::Quaternion::from_axis_angle(atlas::Vector3(0.0f, 0.0f, 1.0f), k_pi * 0.25f);
+    const atlas::Quaternion expected = atlas::Quaternion::from_axis_angle(atlas::Float3(0.0f, 0.0f, 1.0f), k_pi * 0.25f);
     EXPECT_TRUE(mid == expected);
 }
 
 TEST(Quaternion, NlerpIsNormalized) {
     const atlas::Quaternion a;
-    const atlas::Quaternion b = atlas::Quaternion::from_axis_angle(atlas::Vector3(1.0f, 0.0f, 0.0f), 1.0f);
+    const atlas::Quaternion b = atlas::Quaternion::from_axis_angle(atlas::Float3(1.0f, 0.0f, 0.0f), 1.0f);
 
     const atlas::Quaternion n = atlas::Quaternion::nlerp(a, b, 0.3f);
     EXPECT_NEAR(n.length(), 1.0f, k_eps);

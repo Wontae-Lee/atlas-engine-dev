@@ -81,7 +81,7 @@ class VariableSoftSphereKernel final {
 public:
     /** @brief Identical to `VariableHardSphereKernel::cross_section`
      *  (VSS reuses the VHS cross-section formula unchanged). */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     cross_section(const MaterialProperties& lhs,
                   const MaterialProperties& rhs,
                   float relative_speed) noexcept;
@@ -95,8 +95,8 @@ public:
      *        this file's top-of-file documentation for the derivation.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    operator()(Vector3& lhs_velocity,
-               Vector3& rhs_velocity,
+    operator()(Float3& lhs_velocity,
+               Float3& rhs_velocity,
                const MaterialProperties& lhs,
                const MaterialProperties& rhs) const noexcept;
 };
@@ -110,8 +110,8 @@ VariableSoftSphereKernel::cross_section(const MaterialProperties& lhs,
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-VariableSoftSphereKernel::operator()(Vector3& lhs_velocity,
-                                     Vector3& rhs_velocity,
+VariableSoftSphereKernel::operator()(Float3& lhs_velocity,
+                                     Float3& rhs_velocity,
                                      const MaterialProperties& lhs,
                                      const MaterialProperties& rhs) const noexcept {
 
@@ -128,19 +128,19 @@ VariableSoftSphereKernel::operator()(Vector3& lhs_velocity,
         return;
     }
 
-    const Vector3 relative = lhs_velocity - rhs_velocity;
-    const float speed      = relative.length();
+    const Float3 relative = lhs_velocity - rhs_velocity;
+    const float speed     = relative.length();
 
     if (!(speed > 0.0f)) {
         return;
     }
 
-    const Vector3 center = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
+    const Float3 center = (lhs_velocity * lhs_mass + rhs_velocity * rhs_mass) / mass_sum;
 
-    const Vector3 axis = relative / speed;
+    const Float3 axis = relative / speed;
 
-    const Vector3 sample_seed = relative + center * atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX
-        + Vector3(lhs_mass, rhs_mass, lhs_mass + rhs_mass);
+    const Float3 sample_seed = relative + center * atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX
+        + Float3(lhs_mass, rhs_mass, lhs_mass + rhs_mass);
 
     const float u1 = atlas::sample_hashed_unit_interval(
         sample_seed,
@@ -153,8 +153,8 @@ VariableSoftSphereKernel::operator()(Vector3& lhs_velocity,
 
     const float phi = 2.0f * atlas::pi * u2;
 
-    const Vector3 scattered_axis     = atlas::spherical_direction(axis, cos_chi, phi);
-    const Vector3 scattered_relative = scattered_axis * speed;
+    const Float3 scattered_axis     = atlas::spherical_direction(axis, cos_chi, phi);
+    const Float3 scattered_relative = scattered_axis * speed;
 
     lhs_velocity = center + scattered_relative * (rhs_mass / mass_sum);
     rhs_velocity = center - scattered_relative * (lhs_mass / mass_sum);

@@ -80,11 +80,12 @@ public:
 
     KnudsenCodec() = default;
 
-    ATLAS_HOST KnudsenCodec(UniverseHostPtr domain,
-                            FluidHostPtr fluid,
-                            SearcherHostPtr searcher,
-                            float characteristic_length,
-                            float representative_collision_cross_sectional_area = 1.0f);
+    ATLAS_HOST
+    KnudsenCodec(UniverseHostPtr domain,
+                 FluidHostPtr fluid,
+                 SearcherHostPtr searcher,
+                 float characteristic_length,
+                 float representative_collision_cross_sectional_area = 1.0f);
 
     ~KnudsenCodec() override = default;
 
@@ -101,7 +102,7 @@ public:
     ATLAS_HOST void
     decode() override;
 
-    ATLAS_HOST ATLAS_NODISCARD static Builder
+    ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
 public:
@@ -114,7 +115,7 @@ public:
 private:
     /** @brief Whether `cell` is exempt from automatic classification
      *  (`CodecProbe::fixed_region_ptr[cell] == 1`); see `codec.h`. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static bool
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static bool
     fixed_cell(const CodecProbe& probe, const int cell) noexcept {
         return probe.fixed_region_ptr != nullptr && probe.fixed_region_ptr[cell] == 1;
     }
@@ -129,7 +130,7 @@ private:
      *        (density, characteristic length, cross-section) is
      *        non-positive.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static float
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     knudsen_number(const float particle_count,
                    const float statistical_weight,
                    const float cell_volume,
@@ -160,7 +161,7 @@ private:
      *        (transitional), `3` (free-molecular) — see this file's
      *        top-of-file documentation for the regime meanings.
      */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE static int
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static int
     solver_index(const float kn, const float* splits, const int split_count) noexcept {
         int index = 0;
         while (index < split_count && !(kn < splits[index])) {
@@ -210,10 +211,10 @@ public:
     ATLAS_HOST Builder&
     with_fixed_region(DeviceBuffer<int> fixed_region) noexcept;
 
-    ATLAS_HOST ATLAS_NODISCARD KnudsenCodec
+    ATLAS_NODISCARD ATLAS_HOST KnudsenCodec
     build() const;
 
-    ATLAS_HOST ATLAS_NODISCARD atlas::host_shared_ptr<KnudsenCodec>
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<KnudsenCodec>
     make_host_shared() const;
 
 private:

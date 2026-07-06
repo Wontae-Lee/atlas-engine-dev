@@ -17,7 +17,7 @@ UniformGenerator::UniformGenerator(const float min_value,
     , _operator(UniformGenerate(seed)) {
 }
 
-Vector3
+Float3
 UniformGenerator::generate() const {
     return _operator.generate(_min_value, _max_value);
 }

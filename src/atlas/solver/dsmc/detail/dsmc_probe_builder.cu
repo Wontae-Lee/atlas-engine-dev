@@ -54,7 +54,7 @@ DsmcProbeBuilder::make(DsmcProbe& probe,
     }
     probe.particle_count     = static_cast<int>(fluid->particle_count());
     probe.species_count      = static_cast<int>(fluid->particle_properties().size());
-    probe.cell_count       = universe->cell_count();
+    probe.cell_count         = universe->cell_count();
     probe.cell_volume        = universe->cell_volume();
     probe.statistical_weight = fluid->statistical_weight();
     probe.kernel             = kernel;

@@ -72,7 +72,7 @@ struct Generate final {
 
     ATLAS_ALL_DEVICE
     Generate(GenerateType type,
-                     unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
+             unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
 
     ATLAS_ALL_DEVICE
     Generate(const Generate& other) noexcept = default;
@@ -89,7 +89,7 @@ struct Generate final {
 
     /** @brief Dispatches to the active payload's `generate()` using its
      *  own internal (mutable, stateful) RNG engine. */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     generate(float param0,
              float param1 = 1.0f) const;
 
@@ -97,7 +97,7 @@ struct Generate final {
      *  fresh engine seeded from `seed` — the stateless form used for
      *  independent per-thread device draws (see this file's
      *  top-of-file documentation). */
-    ATLAS_ALL_DEVICE ATLAS_NODISCARD ATLAS_FORCE_INLINE Vector3
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
     generate(unsigned int seed,
              float param0,
              float param1 = 1.0f) const;
@@ -119,14 +119,16 @@ namespace detail {
     struct GenerateSample {
         float param0;
         float param1;
-        template <typename P> ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+        template <typename P>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
         operator()(const P& op) const { return op.generate(param0, param1); }
     };
     struct GenerateSampleSeeded {
         unsigned int seed;
         float param0;
         float param1;
-        template <typename P> ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+        template <typename P>
+        ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
         operator()(const P& op) const { return op.generate(seed, param0, param1); }
     };
 
@@ -139,7 +141,7 @@ Generate::Generate() noexcept {
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
 Generate::Generate(const GenerateType type,
-                                   const unsigned int seed) noexcept {
+                   const unsigned int seed) noexcept {
     detail::GenerateVariant::construct(*this, type, seed);
 }
 
@@ -150,19 +152,23 @@ Generate::Generate(const Payload& op) {
     detail::GenerateVariant::construct_payload(*this, op);
 }
 
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
 Generate::generate(const float param0,
-                           const float param1) const {
+                   const float param1) const {
     return detail::GenerateVariant::visit(
-        *this, detail::GenerateSample { param0, param1 }, Vector3(0.0f, 0.0f, 0.0f));
+        *this,
+        detail::GenerateSample { param0, param1 },
+        Float3(0.0f, 0.0f, 0.0f));
 }
 
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Vector3
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
 Generate::generate(const unsigned int seed,
-                           const float param0,
-                           const float param1) const {
+                   const float param0,
+                   const float param1) const {
     return detail::GenerateVariant::visit(
-        *this, detail::GenerateSampleSeeded { seed, param0, param1 }, Vector3(0.0f, 0.0f, 0.0f));
+        *this,
+        detail::GenerateSampleSeeded { seed, param0, param1 },
+        Float3(0.0f, 0.0f, 0.0f));
 }
 
 }
