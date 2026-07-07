@@ -1,6 +1,6 @@
 #pragma once
 
-#include <../core/device_variant.h>
+#include <atlas/core/device_variant.h>
 #include <atlas/generator/generate_payload.h>
 #include <atlas/random/seed.h>
 
