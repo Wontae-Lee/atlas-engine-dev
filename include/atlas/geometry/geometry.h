@@ -1,6 +1,6 @@
 #pragma once
 
-#include <../core/device_variant.h>
+#include <atlas/core/device_variant.h>
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/circle.h>
 #include <atlas/geometry/cylinder.h>
