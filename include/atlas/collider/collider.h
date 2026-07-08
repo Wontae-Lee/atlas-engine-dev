@@ -8,9 +8,19 @@
 #include <atlas/memory/memory.h>
 #include <atlas/spatial/ray.h>
 
+#include <concepts>
 #include <type_traits>
 
 namespace atlas {
+
+template <typename C>
+concept ConceptCollider = requires(C collider, const HitSurface hit, Float3 vec, float dt) {
+    { collider.trace(vec, vec, dt) } -> std::same_as<HitSurface>;
+    { collider.collide(hit, vec, vec, dt) } -> std::same_as<void>;
+    { collider.advance(dt) } -> std::same_as<void>;
+};
+
+static_assert(ConceptCollider<IsothermalCollider>);
 
 struct Collider final {
 
