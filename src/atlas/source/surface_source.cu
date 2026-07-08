@@ -1,0 +1,145 @@
+#include <atlas/source/surface_source.h>
+
+#include <atlas/fluid/fluid_state.h>
+#include <atlas/geometry/geometry.h>
+#include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/parallel/parallel_for.h>
+#include <atlas/sampling/sampling.h>
+#include <atlas/spatial/axis_aligned_bounding_box.h>
+#include <atlas/sync/sync.h>
+
+#include <algorithm>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
+namespace atlas {
+
+SurfaceSource::SurfaceSource(Unit unit, const float tolerance, const float spacing)
+    : _unit(std::move(unit))
+    , _tolerance(tolerance)
+    , _spacing(spacing) {
+
+    const Geometry& geometry = _unit.geometry();
+    const AABB      bound    = geometry.bound();
+
+    if (!bound.is_valid() || !(spacing > 0.0f)) {
+        return;
+    }
+
+    const Float3 lower = bound.lower_corner;
+    const Float3 upper = bound.upper_corner;
+
+    const int nx = atlas::sample_axis_count(lower.x, upper.x, spacing);
+    const int ny = atlas::sample_axis_count(lower.y, upper.y, spacing);
+    const int nz = atlas::sample_axis_count(lower.z, upper.z, spacing);
+
+    std::vector<Float3> local_positions;
+
+    for (int ix = 0; ix < nx; ++ix) {
+        for (int iy = 0; iy < ny; ++iy) {
+            for (int iz = 0; iz < nz; ++iz) {
+                const Float3 sample(
+                    lower.x + static_cast<float>(ix) * spacing,
+                    lower.y + static_cast<float>(iy) * spacing,
+                    lower.z + static_cast<float>(iz) * spacing);
+
+                if (geometry.is_on_surface(sample, tolerance)) {
+                    local_positions.push_back(sample);
+                }
+            }
+        }
+    }
+
+    _cache = DeviceBuffer<Float3>(local_positions.begin(), local_positions.end());
+}
+
+SurfaceSource::Builder
+SurfaceSource::builder() noexcept {
+    return Builder {};
+}
+
+int
+SurfaceSource::spawn(FluidPositionState* positions, const std::size_t offset) const {
+    if (positions == nullptr || _cache.empty()) {
+        return 0;
+    }
+
+    DeviceBuffer<Float3>& out = positions->data();
+
+    if (offset >= out.size()) {
+        return 0;
+    }
+
+    const std::size_t writable = std::min(_cache.size(), out.size() - offset);
+
+    if (writable == 0) {
+        return 0;
+    }
+
+    const Sync     sync      = _unit.sync();
+    const Float3*  cache_ptr = atlas::raw_pointer_cast(_cache.data());
+    Float3*        out_ptr   = atlas::raw_pointer_cast(out.data());
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        std::size_t { 0 },
+        writable,
+        [=] ATLAS_ALL_DEVICE(const std::size_t i) {
+            out_ptr[offset + i] = sync.sync_to_world(cache_ptr[i]);
+        });
+
+    return static_cast<int>(writable);
+}
+
+SurfaceSource::Builder&
+SurfaceSource::Builder::with_unit(Unit unit) {
+    _unit = std::move(unit);
+    return *this;
+}
+
+SurfaceSource::Builder&
+SurfaceSource::Builder::with_tolerance(const float tolerance) noexcept {
+    _tolerance = tolerance;
+    return *this;
+}
+
+SurfaceSource::Builder&
+SurfaceSource::Builder::with_spacing(const float spacing) noexcept {
+    _spacing = spacing;
+    return *this;
+}
+
+SurfaceSource
+SurfaceSource::Builder::build() {
+    validate();
+
+    SurfaceSource source(std::move(*_unit), _tolerance, _spacing);
+
+    _unit.reset();
+    _tolerance = 0.0f;
+    _spacing   = 0.1f;
+
+    return source;
+}
+
+atlas::host_shared_ptr<SurfaceSource>
+SurfaceSource::Builder::make_host_shared() {
+    return atlas::make_host_shared<SurfaceSource>(build());
+}
+
+void
+SurfaceSource::Builder::validate() const {
+    if (!_unit) {
+        throw std::runtime_error("SurfaceSource::Builder: unit must not be null.");
+    }
+
+    if (!atlas::isfinite(_tolerance) || _tolerance < 0.0f) {
+        throw std::runtime_error("SurfaceSource::Builder: tolerance must be finite and non-negative.");
+    }
+
+    if (!atlas::isfinite(_spacing) || !(_spacing > 0.0f)) {
+        throw std::runtime_error("SurfaceSource::Builder: spacing must be finite and positive.");
+    }
+}
+
+}

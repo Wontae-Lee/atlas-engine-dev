@@ -1,292 +1,127 @@
 #include <atlas/source/source.h>
 
-#include <atlas/fluid/fluid.h>
-#include <atlas/generator/maxwell_boltzmann_generator.h>
-#include <atlas/geometry/geometry.h>
+#include <atlas/fluid/fluid_state.h>
 #include <atlas/geometry/box.h>
+#include <atlas/geometry/geometry.h>
+#include <atlas/math/math.h>
+#include <atlas/source/source_type.h>
+#include <atlas/source/surface_source.h>
+#include <atlas/source/volume_source.h>
 #include <atlas/sync/sync.h>
 #include <atlas/unit/unit.h>
-#include <atlas/universe/universe.h>
 
 #include <gtest/gtest.h>
 
-#include <cmath>
 #include <cstddef>
-#include <limits>
-#include <stdexcept>
+#include <utility>
 
 namespace {
 
-atlas::FluidHostPtr
-make_fluid(const std::size_t buffer_size = 8) {
-    atlas::HostBuffer<atlas::MaterialProperties> properties(1);
-    atlas::HostBuffer<atlas::GeneratorHostPtr> generators(1);
+using atlas::Box;
+using atlas::FluidPositionState;
+using atlas::Geometry;
+using atlas::Quaternion;
+using atlas::Source;
+using atlas::SourceType;
+using atlas::SurfaceSource;
+using atlas::Sync;
+using atlas::SyncHostPtr;
+using atlas::Unit;
+using atlas::VolumeSource;
+using atlas::Float3;
+using atlas::tol;
 
-    properties[0] = atlas::MaterialProperties::builder()
-                        .with_type(atlas::MaterialType::molecule)
-                        .with_mass(4.651734e-26f)
-                        .with_molecular_mass(4.651734e-26f)
-                        .with_species_id(0)
-                        .with_reference_diameter(4.17e-10f)
-                        .build();
-
-    generators[0] = atlas::MaxwellBoltzmannGenerator::builder()
-                        .with_temperature(300.0f)
-                        .with_molecular_mass(4.651734e-26f)
-                        .with_bulk_velocity(atlas::Float3(0.0f, 0.0f, 0.0f))
-                        .with_seed(7u)
-                        .make_host_shared();
-
-    return atlas::Fluid::builder()
-        .with_buffer_size(buffer_size)
-        .with_properties(properties)
-        .with_generators(generators)
+SyncHostPtr
+make_sync(const Float3& translation) {
+    return Sync::builder()
+        .with_rigid_pose(translation, Quaternion(1.0f, 0.0f, 0.0f, 0.0f))
         .make_host_shared();
 }
 
-atlas::Unit
-make_unit() {
-    const auto geometry = atlas::Box::builder()
-                              .with_lower_corner(atlas::Float3(-1.0f, -1.0f, -1.0f))
-                              .with_upper_corner(atlas::Float3(1.0f, 1.0f, 1.0f))
-                              .make_host_shared();
+Geometry
+make_unit_box() {
+    return Geometry(Box::builder()
+                        .with_lower_corner(Float3(-1.0f, -1.0f, -1.0f))
+                        .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
+                        .build());
+}
 
-    const auto sync = atlas::Sync::builder()
-                          .make_host_shared();
+Unit
+make_unit(const Float3& translation, const Float3& velocity, const bool dynamic) {
+    auto builder = Unit::builder()
+                       .with_geometry(make_unit_box())
+                       .with_sync(make_sync(translation));
 
-    return atlas::Unit::builder()
-        .with_geometry(atlas::Geometry(*geometry))
-        .with_sync(sync)
+    return dynamic ? builder.with_velocity(velocity).build() : builder.build();
+}
+
+SurfaceSource
+make_surface_source() {
+    return SurfaceSource::builder()
+        .with_unit(make_unit(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), false))
+        .with_tolerance(0.01f)
+        .with_spacing(1.0f)
         .build();
 }
 
-atlas::Spawn
-make_spawn_operator() {
-    return atlas::Spawn(atlas::SpawnType::surface);
-}
-
-atlas::UniverseHostPtr
-make_universe(const atlas::HostBuffer<atlas::Unit>& source_units) {
-    return atlas::Universe::builder()
-        .with_lower_corner(atlas::Float3(-10.0f, -10.0f, -10.0f))
-        .with_upper_corner(atlas::Float3(10.0f, 10.0f, 10.0f))
-        .with_cell_size(1.0f)
-        .with_source_units(source_units)
-        .make_host_shared();
-}
-
-atlas::HostBuffer<atlas::Unit>
-make_units(const std::size_t count = 1) {
-    atlas::HostBuffer<atlas::Unit> units(count);
-    for (std::size_t i = 0; i < count; ++i) {
-        units[i] = make_unit();
-    }
-    return units;
-}
-
-atlas::HostBuffer<atlas::SpawnType>
-make_spawn_types(const std::size_t count, const atlas::SpawnType type) {
-    return atlas::HostBuffer<atlas::SpawnType>(count, type);
-}
-
-atlas::HostBuffer<atlas::Spawn>
-make_spawn_operators(const std::size_t count) {
-    return atlas::HostBuffer<atlas::Spawn>(count, make_spawn_operator());
-}
-
-std::size_t
-box_axis_sample_count() {
-    constexpr float lower   = -1.0f;
-    constexpr float upper   = 1.0f;
-    constexpr float spacing = 1.0f;
-    return static_cast<std::size_t>(std::floor((upper - lower) / spacing)) + 1u;
+VolumeSource
+make_volume_source(const Float3& velocity, const bool dynamic) {
+    return VolumeSource::builder()
+        .with_unit(make_unit(Float3(0.0f, 0.0f, 0.0f), velocity, dynamic))
+        .with_tolerance(0.0f)
+        .with_spacing(1.0f)
+        .build();
 }
 
 }
 
-TEST(Source, BuilderConstructsUsableSource) {
-    const auto fluid = make_fluid();
+TEST(Source, DefaultConstructsSurface) {
+    const Source source {};
 
-    auto source = atlas::Source::builder()
-                      .with_universe(make_universe(make_units()))
-                      .with_fluid(fluid)
-                      .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                      .with_spawn_operator(make_spawn_operator())
-                      .with_spacing(0.5f)
-                      .with_tolerance(0.1f)
-                      .with_temperature(300.0f)
-                      .with_flip(true)
-                      .build();
-
-    EXPECT_NO_THROW(source.update(0.1f));
-    EXPECT_NO_THROW(source.rebuild_cache());
-    EXPECT_NO_THROW(source.emit());
+    EXPECT_EQ(source.type, SourceType::surface);
 }
 
-TEST(Source, BuilderRejectsMissingDependencies) {
-    const auto fluid = make_fluid();
+TEST(Source, WrapsSurfaceLeaf) {
+    const Source source(make_surface_source());
 
-    EXPECT_THROW(static_cast<void>(atlas::Source::builder()
-                                       .with_fluid(fluid)
-                                       .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                                       .with_spawn_operator(make_spawn_operator())
-                                       .build()),
-                 std::runtime_error);
-
-    EXPECT_THROW(static_cast<void>(atlas::Source::builder()
-                                       .with_universe(make_universe(make_units()))
-                                       .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                                       .with_spawn_operator(make_spawn_operator())
-                                       .build()),
-                 std::runtime_error);
-
-    EXPECT_THROW(static_cast<void>(atlas::Source::builder()
-                                       .with_universe(make_universe(atlas::HostBuffer<atlas::Unit> {}))
-                                       .with_fluid(fluid)
-                                       .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                                       .with_spawn_operator(make_spawn_operator())
-                                       .build()),
-                 std::runtime_error);
+    EXPECT_EQ(source.type, SourceType::surface);
 }
 
-TEST(Source, BuilderRejectsMismatchedSpawnConfigurationSizes) {
-    const auto fluid = make_fluid();
+TEST(Source, WrapsVolumeLeaf) {
+    const Source source(make_volume_source(Float3(0.0f, 0.0f, 0.0f), false));
 
-    EXPECT_THROW(static_cast<void>(atlas::Source::builder()
-                                       .with_universe(make_universe(make_units(2)))
-                                       .with_fluid(fluid)
-                                       .with_spawn_types(make_spawn_types(3, atlas::SpawnType::surface))
-                                       .with_spawn_operator(make_spawn_operator())
-                                       .build()),
-                 std::runtime_error);
-
-    EXPECT_THROW(static_cast<void>(atlas::Source::builder()
-                                       .with_universe(make_universe(make_units(2)))
-                                       .with_fluid(fluid)
-                                       .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                                       .with_spawn_operators(make_spawn_operators(3))
-                                       .build()),
-                 std::runtime_error);
+    EXPECT_EQ(source.type, SourceType::volume);
 }
 
-TEST(Source, BuilderRejectsInvalidImmediateInputs) {
-    EXPECT_THROW(atlas::Source::builder()
-                     .with_spawn_types(atlas::HostBuffer<atlas::SpawnType> {}),
-                 std::runtime_error);
+TEST(Source, SpawnDispatchesToLeaf) {
+    auto              leaf  = make_volume_source(Float3(0.0f, 0.0f, 0.0f), false);
+    const std::size_t count = leaf.cached_count();
+    ASSERT_GT(count, std::size_t { 0 });
 
-    EXPECT_THROW(atlas::Source::builder()
-                     .with_spawn_operators(atlas::HostBuffer<atlas::Spawn> {}),
-                 std::runtime_error);
+    const Source       source(std::move(leaf));
+    FluidPositionState positions(count + 8);
+
+    EXPECT_EQ(static_cast<std::size_t>(source.spawn(&positions, 0)), count);
 }
 
-TEST(Source, BuilderRejectsInvalidNumericConfiguration) {
-    const auto fluid = make_fluid();
+TEST(Source, AdvanceDispatchesToLeaf) {
+    Source source(make_volume_source(Float3(0.0f, 0.0f, 1.0f), true));
 
-    EXPECT_THROW(static_cast<void>(atlas::Source::builder()
-                                       .with_universe(make_universe(make_units()))
-                                       .with_fluid(fluid)
-                                       .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                                       .with_spawn_operator(make_spawn_operator())
-                                       .with_spacing(0.0f)
-                                       .build()),
-                 std::runtime_error);
+    source.advance(0.5f);
 
-    EXPECT_THROW(static_cast<void>(atlas::Source::builder()
-                                       .with_universe(make_universe(make_units()))
-                                       .with_fluid(fluid)
-                                       .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                                       .with_spawn_operator(make_spawn_operator())
-                                       .with_tolerance(std::numeric_limits<float>::infinity())
-                                       .build()),
-                 std::runtime_error);
+    EXPECT_NEAR(source.volume.unit().sync().translation.z, 0.5f, tol);
 }
 
-TEST(Source, MakeHostSharedBuildsSource) {
-    const auto fluid = make_fluid();
+TEST(Source, MoveConstructPreservesBehaviour) {
+    auto              leaf  = make_volume_source(Float3(0.0f, 0.0f, 0.0f), false);
+    const std::size_t count = leaf.cached_count();
+    ASSERT_GT(count, std::size_t { 0 });
 
-    const auto source = atlas::Source::builder()
-                            .with_universe(make_universe(make_units()))
-                            .with_fluid(fluid)
-                            .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                            .with_spawn_operator(make_spawn_operator())
-                            .make_host_shared();
+    Source       source(std::move(leaf));
+    const Source moved = std::move(source);
 
-    ASSERT_NE(source, nullptr);
-    EXPECT_NO_THROW(source->update(0.1f));
-}
+    EXPECT_EQ(moved.type, SourceType::volume);
 
-TEST(Source, UpdateIgnoresNonPositiveDt) {
-    const auto fluid = make_fluid();
-
-    auto source = atlas::Source::builder()
-                      .with_universe(make_universe(make_units()))
-                      .with_fluid(fluid)
-                      .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                      .with_spawn_operator(make_spawn_operator())
-                      .build();
-
-    EXPECT_NO_THROW(source.update(0.0f));
-}
-
-TEST(Source, EmitIncreasesParticleCount) {
-    const auto fluid = make_fluid();
-
-    auto source = atlas::Source::builder()
-                      .with_universe(make_universe(make_units()))
-                      .with_fluid(fluid)
-                      .with_spawn_types(make_spawn_types(1, atlas::SpawnType::volume))
-                      .with_spawn_operator(atlas::Spawn(atlas::SpawnType::volume))
-                      .with_spacing(1.0f)
-                      .with_temperature(300.0f)
-                      .build();
-
-    source.emit();
-
-    EXPECT_GT(fluid->particle_count(), 0u);
-    EXPECT_LE(fluid->particle_count(), fluid->buffer_size());
-}
-
-TEST(Source, EmitMatchesExpectedVolumeParticleCountForBoxSpacing) {
-    constexpr float spacing                    = 1.0f;
-    const std::size_t samples_per_axis         = box_axis_sample_count();
-    const std::size_t expected_particle_count  = samples_per_axis * samples_per_axis * samples_per_axis;
-    const auto fluid                           = make_fluid(expected_particle_count);
-
-    auto source = atlas::Source::builder()
-                      .with_universe(make_universe(make_units()))
-                      .with_fluid(fluid)
-                      .with_spawn_types(make_spawn_types(1, atlas::SpawnType::volume))
-                      .with_spawn_operator(atlas::Spawn(atlas::SpawnType::volume))
-                      .with_spacing(spacing)
-                      .with_temperature(300.0f)
-                      .build();
-
-    source.emit();
-
-    EXPECT_EQ(expected_particle_count, 27u);
-    EXPECT_EQ(fluid->particle_count(), expected_particle_count);
-}
-
-TEST(Source, EmitMatchesExpectedSurfaceParticleCountForBoxSpacing) {
-    constexpr float spacing                    = 1.0f;
-    const std::size_t samples_per_axis         = box_axis_sample_count();
-    const std::size_t volume_sample_count      = samples_per_axis * samples_per_axis * samples_per_axis;
-    const std::size_t interior_sample_count    = (samples_per_axis - 2u) * (samples_per_axis - 2u) * (samples_per_axis - 2u);
-    const std::size_t expected_particle_count  = volume_sample_count - interior_sample_count;
-    const auto fluid                           = make_fluid(expected_particle_count);
-
-    auto source = atlas::Source::builder()
-                      .with_universe(make_universe(make_units()))
-                      .with_fluid(fluid)
-                      .with_spawn_types(make_spawn_types(1, atlas::SpawnType::surface))
-                      .with_spawn_operator(atlas::Spawn(atlas::SpawnType::surface))
-                      .with_spacing(spacing)
-                      .with_tolerance(0.0f)
-                      .with_temperature(300.0f)
-                      .build();
-
-    source.emit();
-
-    EXPECT_EQ(expected_particle_count, 26u);
-    EXPECT_EQ(fluid->particle_count(), expected_particle_count);
+    FluidPositionState positions(count + 8);
+    EXPECT_EQ(static_cast<std::size_t>(moved.spawn(&positions, 0)), count);
 }
