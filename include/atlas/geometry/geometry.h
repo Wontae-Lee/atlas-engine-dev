@@ -18,7 +18,7 @@
 namespace atlas {
 
 template <typename S>
-concept Shape = requires(const S s, const Float3 p, const Ray r, float tolerance) {
+concept ConceptGeometry = requires(const S s, const Float3 p, const Ray r, float tolerance) {
     { s.closest_point(p) } -> std::same_as<Float3>;
     { s.closest_normal(p) } -> std::same_as<Float3>;
     { s.signed_distance(p) } -> std::same_as<float>;
@@ -30,14 +30,14 @@ concept Shape = requires(const S s, const Float3 p, const Ray r, float tolerance
     { s.trace(r) } -> std::same_as<HitSurface>;
 };
 
-static_assert(Shape<Box>);
-static_assert(Shape<Circle>);
-static_assert(Shape<Cylinder>);
-static_assert(Shape<Plane>);
-static_assert(Shape<Sphere>);
-static_assert(Shape<Square>);
-static_assert(Shape<Triangle>);
-static_assert(Shape<TriangleMeshGeometryOperator>);
+static_assert(ConceptGeometry<Box>);
+static_assert(ConceptGeometry<Circle>);
+static_assert(ConceptGeometry<Cylinder>);
+static_assert(ConceptGeometry<Plane>);
+static_assert(ConceptGeometry<Sphere>);
+static_assert(ConceptGeometry<Square>);
+static_assert(ConceptGeometry<Triangle>);
+static_assert(ConceptGeometry<TriangleMeshGeometryOperator>);
 
 struct Geometry {
 
