@@ -1,155 +1,113 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
-#include <atlas/buffer/host_buffer.h>
-#include <atlas/fluid/fluid.h>
+#include <atlas/core/device_variant.h>
+#include <atlas/core/macros.h>
+#include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
-#include <atlas/observer/observer.h>
-#include <atlas/sink/despawn.h>
-#include <atlas/sink/sink_probe.h>
-#include <atlas/spatial/axis_aligned_bounding_box.h>
-#include <atlas/unit/unit.h>
-#include <atlas/universe/universe.h>
+#include <atlas/sink/sink_type.h>
+#include <atlas/sink/surface_sink.h>
+#include <atlas/sink/tracing_sink.h>
+#include <atlas/sink/volume_sink.h>
 
-#include <cstddef>
+#include <concepts>
+#include <type_traits>
 
 namespace atlas {
 
-class Sink final {
-public:
-    class Builder;
-
-public:
-    Sink() = default;
-
-    Sink(const Sink&) = delete;
-
-    Sink(Sink&&) noexcept = default;
-
-    ~Sink() = default;
-
-    Sink&
-    operator=(const Sink&)
-        = delete;
-
-    Sink&
-    operator=(Sink&&) noexcept = default;
-
-    ATLAS_HOST
-    Sink(UniverseHostPtr universe,
-         DeviceBuffer<DespawnType> despawn_types,
-         DeviceBuffer<Despawn> despawn_operators,
-         atlas::host_shared_ptr<atlas::Fluid> fluid,
-         bool flip                = false,
-         float tolerance          = 0.0f,
-         ObserverHostPtr observer = nullptr) noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST static Builder
-    builder() noexcept;
-
-    ATLAS_HOST void
-    update(float dt);
-
-    ATLAS_HOST void
-    sink(float dt = 0.0f);
-
-    ATLAS_HOST void
-    compact_fluid_particles();
-
-    ATLAS_NODISCARD ATLAS_HOST bool
-    make_probe(float dt = 0.0f) noexcept;
-
-    ATLAS_HOST void
-    refresh_unit_bounds() noexcept;
-
-    ATLAS_HOST void
-    despawn_particles(const SinkProbe& probe, int* removed_unit_indices);
-
-private:
-    UniverseHostPtr _universe;
-
-    DeviceBuffer<atlas::AABB> _unit_bounds;
-
-    DeviceBuffer<DespawnType> _despawn_types;
-
-    DeviceBuffer<Despawn> _despawn_operators;
-
-    atlas::host_shared_ptr<atlas::Fluid> _fluid;
-
-    ObserverHostPtr _observer {};
-
-    bool _flip = false;
-
-    float _tolerance = 0.0f;
-
-    DeviceBuffer<std::size_t> _keep;
-
-    DeviceBuffer<std::size_t> _offsets;
-
-    DeviceBuffer<std::size_t> _compact_indices;
-
-    DeviceBuffer<int> _despawned_unit_indices;
-
-    DeviceBuffer<std::size_t> _total_count_buffer {};
-
-    SinkProbe _probe {};
-
-    std::size_t _step_index = 0;
+template <typename S>
+concept ConceptSink = requires(S sink, const Float3 vec, float dt) {
+    { sink.despawn(vec, vec, dt) } -> std::same_as<bool>;
+    { sink.advance(dt) } -> std::same_as<void>;
 };
 
-class Sink::Builder final {
-public:
-    Builder() = default;
+static_assert(ConceptSink<SurfaceSink>);
+static_assert(ConceptSink<VolumeSink>);
+static_assert(ConceptSink<TracingSink>);
 
-    ATLAS_NODISCARD ATLAS_HOST Sink
-    build();
+struct Sink final {
 
-    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Sink>
-    make_host_shared();
+    SinkType type = SinkType::surface;
 
-    ATLAS_HOST Builder&
-    with_universe(UniverseHostPtr universe) noexcept;
+    union {
 
-    ATLAS_HOST Builder&
-    with_fluid(atlas::host_shared_ptr<atlas::Fluid> fluid) noexcept;
+        SurfaceSink surface;
 
-    ATLAS_HOST Builder&
-    with_observer(ObserverHostPtr observer) noexcept;
+        VolumeSink volume;
 
-    ATLAS_HOST Builder&
-    with_despawn_types(const HostBuffer<DespawnType>& despawn_types);
+        TracingSink tracing;
+    };
 
-    ATLAS_HOST Builder&
-    with_despawn_operator(const Despawn& despawn_operator) noexcept;
+    ATLAS_ALL_DEVICE
+    Sink() noexcept;
 
-    ATLAS_HOST Builder&
-    with_despawn_operators(const HostBuffer<Despawn>& despawn_operators);
+    ATLAS_ALL_DEVICE
+    Sink(const Sink& other) noexcept = default;
 
-    ATLAS_HOST Builder&
-    with_tolerance(float tolerance) noexcept;
+    ATLAS_ALL_DEVICE Sink&
+    operator=(const Sink& other) noexcept = default;
 
-    ATLAS_HOST Builder&
-    with_flip(bool flip) noexcept;
+    ATLAS_ALL_DEVICE
+    ~Sink() noexcept = default;
 
-private:
-    ATLAS_HOST void
-    validate() const;
+    template <typename Payload,
+              std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, Sink>, int> = 0>
+    ATLAS_ALL_DEVICE explicit Sink(const Payload& op) noexcept;
 
-private:
-    UniverseHostPtr _universe;
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    advance(float dt) noexcept;
 
-    FluidHostPtr _fluid;
-
-    ObserverHostPtr _observer {};
-
-    HostBuffer<DespawnType> _despawn_types;
-
-    HostBuffer<Despawn> _despawn_operators;
-
-    bool _flip = false;
-
-    float _tolerance = 0.0f;
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    despawn(const Float3& position, const Float3& velocity, float dt) const noexcept;
 };
+
+using SinkVariant = DeviceVariant<
+    Sink,
+    SinkType,
+    SinkType::surface,
+    DeviceVariantCase<SinkType::surface, &Sink::surface>,
+    DeviceVariantCase<SinkType::volume, &Sink::volume>,
+    DeviceVariantCase<SinkType::tracing, &Sink::tracing>>;
+
+struct SinkAdvance {
+    float dt;
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    operator()(S& sink) const noexcept { sink.advance(dt); }
+};
+
+struct SinkDespawn {
+    const Float3& position;
+    const Float3& velocity;
+    float dt;
+    template <typename S>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+    operator()(const S& sink) const noexcept { return sink.despawn(position, velocity, dt); }
+};
+
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+Sink::Sink() noexcept {
+    SinkVariant::construct(*this, SinkType::surface);
+}
+
+template <typename Payload,
+          std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, Sink>, int>>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+Sink::Sink(const Payload& op) noexcept {
+    SinkVariant::construct_payload(*this, op);
+}
+
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+Sink::advance(const float dt) noexcept {
+    SinkVariant::apply(*this, SinkAdvance { dt });
+}
+
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
+Sink::despawn(const Float3& position, const Float3& velocity, const float dt) const noexcept {
+    return SinkVariant::visit(
+        *this,
+        SinkDespawn { position, velocity, dt },
+        false);
+}
 
 using SinkHostPtr = atlas::host_shared_ptr<Sink>;
 

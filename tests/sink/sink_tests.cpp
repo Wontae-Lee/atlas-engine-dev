@@ -1,223 +1,114 @@
 #include <atlas/sink/sink.h>
 
-#include <atlas/fluid/fluid.h>
-#include <atlas/geometry/geometry.h>
 #include <atlas/geometry/box.h>
+#include <atlas/geometry/geometry.h>
+#include <atlas/geometry/plane.h>
+#include <atlas/math/math.h>
+#include <atlas/sink/sink_type.h>
+#include <atlas/sink/surface_sink.h>
+#include <atlas/sink/tracing_sink.h>
+#include <atlas/sink/volume_sink.h>
 #include <atlas/sync/sync.h>
 #include <atlas/unit/unit.h>
-#include <atlas/universe/universe.h>
 
 #include <gtest/gtest.h>
 
-#include <cstddef>
-#include <stdexcept>
+#include <type_traits>
+#include <utility>
 
 namespace {
 
 using atlas::Box;
-using atlas::Despawn;
-using atlas::DespawnType;
-using atlas::Fluid;
-using atlas::FluidHostPtr;
-using atlas::HostBuffer;
+using atlas::Geometry;
+using atlas::Plane;
+using atlas::Quaternion;
 using atlas::Sink;
+using atlas::SinkType;
+using atlas::SurfaceSink;
 using atlas::Sync;
+using atlas::SyncHostPtr;
+using atlas::TracingSink;
 using atlas::Unit;
-using atlas::Universe;
-using atlas::UniverseHostPtr;
+using atlas::VolumeSink;
 using atlas::Float3;
 using atlas::tol;
 
-void
-expect_vec_near(const Float3& actual, const Float3& expected) {
-    EXPECT_NEAR(actual.x, expected.x, tol);
-    EXPECT_NEAR(actual.y, expected.y, tol);
-    EXPECT_NEAR(actual.z, expected.z, tol);
-}
-
-FluidHostPtr
-make_fluid() {
-    return Fluid::builder()
-        .with_buffer_size(8)
-        .make_host_shared();
-}
-
-UniverseHostPtr
-make_universe(const HostBuffer<Unit>& sink_units) {
-    return Universe::builder()
-        .with_lower_corner(Float3(-10.0f, -10.0f, -10.0f))
-        .with_upper_corner(Float3(10.0f, 10.0f, 10.0f))
-        .with_cell_size(1.0f)
-        .with_sink_units(sink_units)
+SyncHostPtr
+make_identity_sync() {
+    return Sync::builder()
+        .with_rigid_pose(Float3(0.0f, 0.0f, 0.0f), Quaternion(1.0f, 0.0f, 0.0f, 0.0f))
         .make_host_shared();
 }
 
 Unit
-make_unit() {
-    static const auto geometry = Box::builder()
-                                     .with_lower_corner(Float3(-1.0f, -1.0f, -1.0f))
-                                     .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
-                                     .make_host_shared();
+make_box_unit(const Float3& velocity, const bool dynamic) {
+    auto builder = Unit::builder()
+                       .with_geometry(Geometry(Box::builder()
+                                                   .with_lower_corner(Float3(-1.0f, -1.0f, -1.0f))
+                                                   .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
+                                                   .build()))
+                       .with_sync(make_identity_sync());
 
-    const auto sync = Sync::builder()
-                          .make_host_shared();
-
-    return Unit::builder()
-        .with_geometry(atlas::Geometry(*geometry))
-        .with_sync(sync)
-        .build();
+    return dynamic ? builder.with_velocity(velocity).build() : builder.build();
 }
 
 Unit
-make_tracing_unit() {
-    static const auto geometry = Box::builder()
-                                     .with_lower_corner(Float3(2.0f, -1.0f, -1.0f))
-                                     .with_upper_corner(Float3(3.0f, 1.0f, 1.0f))
-                                     .make_host_shared();
-
-    const auto sync = Sync::builder()
-                          .make_host_shared();
-
+make_plane_unit() {
     return Unit::builder()
-        .with_geometry(atlas::Geometry(*geometry))
-        .with_sync(sync)
+        .with_geometry(Geometry(Plane(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 1.0f))))
+        .with_sync(make_identity_sync())
         .build();
 }
 
-Despawn
-make_despawn_operator() {
-    return Despawn(DespawnType::surface);
 }
 
+static_assert(std::is_trivially_copyable_v<Sink>,
+              "Sink must be trivially copyable for device buffers");
+
+TEST(Sink, DefaultConstructsSurface) {
+    const Sink sink {};
+
+    EXPECT_EQ(sink.type, SinkType::surface);
 }
 
-TEST(Sink, BuilderConstructsUsableSink) {
-    const auto fluid = make_fluid();
+TEST(Sink, WrapsVolumeLeafAndDispatchesDespawn) {
+    const Sink sink(VolumeSink::builder().with_unit(make_box_unit(Float3(0.0f, 0.0f, 0.0f), false)).build());
 
-    auto sink = Sink::builder()
-                    .with_universe(make_universe(HostBuffer<Unit> { make_unit() }))
-                    .with_fluid(fluid)
-                    .with_despawn_types(HostBuffer<DespawnType> { DespawnType::surface })
-                    .with_despawn_operator(make_despawn_operator())
-                    .with_tolerance(0.1f)
-                    .with_flip(true)
-                    .build();
-
-    EXPECT_NO_THROW(sink.update(0.1f));
-    EXPECT_NO_THROW(sink.sink());
+    EXPECT_EQ(sink.type, SinkType::volume);
+    EXPECT_TRUE(sink.despawn(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+    EXPECT_FALSE(sink.despawn(Float3(5.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
 }
 
-TEST(Sink, BuilderRejectsMissingDependencies) {
-    const auto fluid = make_fluid();
+TEST(Sink, WrapsSurfaceLeaf) {
+    const Sink sink(SurfaceSink::builder()
+                        .with_unit(make_box_unit(Float3(0.0f, 0.0f, 0.0f), false))
+                        .with_tolerance(0.01f)
+                        .build());
 
-    EXPECT_THROW(static_cast<void>(Sink::builder()
-                                       .with_fluid(fluid)
-                                       .with_despawn_types(HostBuffer<DespawnType> { DespawnType::surface })
-                                       .with_despawn_operator(make_despawn_operator())
-                                       .build()),
-                 std::runtime_error);
-
-    EXPECT_THROW(static_cast<void>(Sink::builder()
-                                       .with_universe(make_universe(HostBuffer<Unit> { make_unit() }))
-                                       .with_despawn_types(HostBuffer<DespawnType> { DespawnType::surface })
-                                       .with_despawn_operator(make_despawn_operator())
-                                       .build()),
-                 std::runtime_error);
-
-    EXPECT_THROW(static_cast<void>(Sink::builder()
-                                       .with_universe(make_universe(HostBuffer<Unit> {}))
-                                       .with_fluid(fluid)
-                                       .with_despawn_types(HostBuffer<DespawnType> { DespawnType::surface })
-                                       .with_despawn_operator(make_despawn_operator())
-                                       .build()),
-                 std::runtime_error);
+    EXPECT_EQ(sink.type, SinkType::surface);
+    EXPECT_TRUE(sink.despawn(Float3(1.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
 }
 
-TEST(Sink, BuilderRejectsMismatchedDespawnConfigurationSizes) {
-    const auto fluid = make_fluid();
+TEST(Sink, WrapsTracingLeafAndDispatchesDespawn) {
+    const Sink sink(TracingSink::builder().with_unit(make_plane_unit()).build());
 
-    EXPECT_THROW(static_cast<void>(Sink::builder()
-                                       .with_universe(make_universe(HostBuffer<Unit> { make_unit(), make_unit() }))
-                                       .with_fluid(fluid)
-                                       .with_despawn_types(HostBuffer<DespawnType> { DespawnType::surface })
-                                       .with_despawn_operators(HostBuffer<Despawn> { make_despawn_operator(), make_despawn_operator(), make_despawn_operator() })
-                                       .build()),
-                 std::runtime_error);
-
-    EXPECT_THROW(static_cast<void>(Sink::builder()
-                                       .with_universe(make_universe(HostBuffer<Unit> { make_unit(), make_unit() }))
-                                       .with_fluid(fluid)
-                                       .with_despawn_types(HostBuffer<DespawnType> { DespawnType::surface, DespawnType::volume, DespawnType::surface })
-                                       .with_despawn_operator(make_despawn_operator())
-                                       .build()),
-                 std::runtime_error);
+    EXPECT_EQ(sink.type, SinkType::tracing);
+    EXPECT_TRUE(sink.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, -1.0f), 2.0f));
+    EXPECT_FALSE(sink.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, 1.0f), 2.0f));
 }
 
-TEST(Sink, BuilderRejectsInvalidImmediateInputs) {
-    EXPECT_THROW(Sink::builder()
-                     .with_despawn_types(HostBuffer<DespawnType> {}),
-                 std::runtime_error);
+TEST(Sink, AdvanceDispatchesToLeaf) {
+    Sink sink(VolumeSink::builder().with_unit(make_box_unit(Float3(0.0f, 0.0f, 1.0f), true)).build());
 
-    EXPECT_THROW(Sink::builder()
-                     .with_despawn_operators(HostBuffer<Despawn> {}),
-                 std::runtime_error);
+    sink.advance(0.5f);
+
+    EXPECT_NEAR(sink.volume.unit().sync().translation.z, 0.5f, tol);
 }
 
-TEST(Sink, MakeHostSharedBuildsSink) {
-    const auto fluid = make_fluid();
+TEST(Sink, CopyPreservesBehaviour) {
+    const Sink sink(VolumeSink::builder().with_unit(make_box_unit(Float3(0.0f, 0.0f, 0.0f), false)).build());
+    const Sink copy = sink;
 
-    const auto sink = Sink::builder()
-                          .with_universe(make_universe(HostBuffer<Unit> { make_unit() }))
-                          .with_fluid(fluid)
-                          .with_despawn_types(HostBuffer<DespawnType> { DespawnType::surface })
-                          .with_despawn_operator(make_despawn_operator())
-                          .make_host_shared();
-
-    ASSERT_NE(sink, nullptr);
-    EXPECT_NO_THROW(sink->update(0.1f));
-}
-
-TEST(Sink, UpdateIgnoresNonPositiveDt) {
-    const auto fluid = make_fluid();
-
-    auto sink = Sink::builder()
-                    .with_universe(make_universe(HostBuffer<Unit> { make_unit() }))
-                    .with_fluid(fluid)
-                    .with_despawn_types(HostBuffer<DespawnType> { DespawnType::surface })
-                    .with_despawn_operator(make_despawn_operator())
-                    .build();
-
-    EXPECT_NO_THROW(sink.update(0.0f));
-}
-
-TEST(Sink, TracingDespawnUsesPositionVelocityAndUpdateDt) {
-    const auto fluid = make_fluid();
-    fluid->set_particle_count(2);
-
-    auto* position_state = fluid->state<atlas::FluidPositionState>();
-    auto* velocity_state = fluid->state<atlas::FluidVelocityState>();
-    auto* active_state   = fluid->state<atlas::FluidActiveState>();
-    ASSERT_NE(position_state, nullptr);
-    ASSERT_NE(velocity_state, nullptr);
-    ASSERT_NE(active_state, nullptr);
-
-    position_state->data()[0] = Float3(1.0f, 0.0f, 0.0f);
-    position_state->data()[1] = Float3(-2.0f, 0.0f, 0.0f);
-    velocity_state->data()[0] = Float3(1.0f, 0.0f, 0.0f);
-    velocity_state->data()[1] = Float3(1.0f, 0.0f, 0.0f);
-    active_state->data()[0]   = 1;
-    active_state->data()[1]   = 1;
-
-    auto sink = Sink::builder()
-                    .with_universe(make_universe(HostBuffer<Unit> { make_tracing_unit() }))
-                    .with_fluid(fluid)
-                    .with_despawn_types(HostBuffer<DespawnType> { DespawnType::tracing })
-                    .with_despawn_operator(Despawn(DespawnType::tracing))
-                    .build();
-
-    sink.update(2.5f);
-
-    EXPECT_EQ(fluid->particle_count(), std::size_t { 1 });
-    const Float3 remaining_position = position_state->data()[0];
-    expect_vec_near(remaining_position, Float3(-2.0f, 0.0f, 0.0f));
+    EXPECT_EQ(copy.type, SinkType::volume);
+    EXPECT_TRUE(copy.despawn(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
 }
