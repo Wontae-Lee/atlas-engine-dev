@@ -22,7 +22,8 @@ concept ConceptCollider = requires(C collider, const HitSurface hit, Float3 vec,
 
 static_assert(ConceptCollider<IsothermalCollider>);
 
-struct Collider final {
+class Collider final {
+public:
 
     ColliderType type = ColliderType::isothermal;
 
@@ -63,14 +64,16 @@ using ColliderVariant = DeviceVariant<
     ColliderType::isothermal,
     DeviceVariantCase<ColliderType::isothermal, &Collider::isothermal>>;
 
-struct ColliderAdvance {
+class ColliderAdvance {
+public:
     float dt;
     template <typename C>
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(C& collider) const noexcept { collider.advance(dt); }
 };
 
-struct ColliderTrace {
+class ColliderTrace {
+public:
     const Float3& position;
     const Float3& velocity;
     float dt;
@@ -79,7 +82,8 @@ struct ColliderTrace {
     operator()(const C& collider) const noexcept { return collider.trace(position, velocity, dt); }
 };
 
-struct ColliderCollide {
+class ColliderCollide {
+public:
     const HitSurface& hit;
     Float3& position;
     Float3& velocity;

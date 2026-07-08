@@ -6,11 +6,21 @@
 #include <atlas/random/default_random_engine.h>
 #include <atlas/random/seed.h>
 #include <atlas/random/uniform_real_distribution.h>
-#include <atlas/shuffle/shuffle.h>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 
 namespace atlas {
+
+// Hashes (index, seed) into a shuffled key so consumers can derive an
+// independent, reproducible random stream per index.
+ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE std::uint64_t
+shuffle_key(const int index, const std::uint64_t seed) noexcept {
+    std::uint64_t value = static_cast<std::uint64_t>(index) + seed + atlas::SHUFFLE_HASH_INDEX_OFFSET;
+    value               = (value ^ (value >> atlas::SHUFFLE_HASH_FIRST_SHIFT)) * atlas::SHUFFLE_HASH_FIRST_MULTIPLIER;
+    value               = (value ^ (value >> atlas::SHUFFLE_HASH_SECOND_SHIFT)) * atlas::SHUFFLE_HASH_SECOND_MULTIPLIER;
+    return value ^ (value >> atlas::SHUFFLE_HASH_FINAL_SHIFT);
+}
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
 generate_standard_normal_pair(atlas::default_random_engine& engine,
@@ -152,7 +162,7 @@ sample_hashed_unit_interval(const Float3& seed, const float salt) noexcept {
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
 sample_hashed_unit_interval(const int index, const std::uint64_t seed) noexcept {
-    const std::uint64_t value = atlas::Shuffle {}(index, seed);
+    const std::uint64_t value = atlas::shuffle_key(index, seed);
     return static_cast<float>(value >> atlas::RANDOM_HASH_UNIT_INTERVAL_SHIFT)
         * atlas::RANDOM_HASH_UNIT_INTERVAL_SCALE;
 }
@@ -165,8 +175,44 @@ sample_hashed_index(const int index,
         return 0;
     }
 
-    const std::uint64_t value = atlas::Shuffle {}(index, seed);
+    const std::uint64_t value = atlas::shuffle_key(index, seed);
     return static_cast<int>(value % static_cast<std::uint64_t>(upper_bound));
+}
+
+// Picks an index in [0, count) by cumulative weight using a uniform draw.
+ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
+sample_weighted_index(const float* weights,
+                      const int count,
+                      atlas::default_random_engine& engine) noexcept {
+    if (count <= 0) {
+        return 0;
+    }
+
+    atlas::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+    const float                             u = distribution(engine);
+
+    float cumulative = 0.0f;
+    for (int k = 0; k < count; ++k) {
+        cumulative += weights[k];
+        if (u <= cumulative) {
+            return k;
+        }
+    }
+
+    return count - 1;
+}
+
+// Picks one of `values` by cumulative weight from `weights` using a uniform draw.
+ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE std::size_t
+sample_weighted_choice(const float* weights,
+                       const float* values,
+                       const int count,
+                       atlas::default_random_engine& engine) noexcept {
+    if (count <= 0) {
+        return std::size_t { 0 };
+    }
+
+    return static_cast<std::size_t>(values[sample_weighted_index(weights, count, engine)]);
 }
 
 }

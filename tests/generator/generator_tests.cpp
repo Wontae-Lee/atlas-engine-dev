@@ -1,84 +1,86 @@
 #include <atlas/generator/generator.h>
 
-#include <atlas/generator/generate.h>
+#include <atlas/fluid/fluid_state.h>
+#include <atlas/generator/generator_type.h>
+#include <atlas/generator/maxwell_sigma_generator.h>
+#include <atlas/generator/uniform_generator.h>
+#include <atlas/math/math.h>
 
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <utility>
+
 namespace {
 
-using atlas::Generate;
-using atlas::GenerateType;
+using atlas::FluidSpeciesState;
+using atlas::FluidTemperatureState;
+using atlas::FluidVelocityState;
 using atlas::Generator;
-using atlas::GeneratorHostPtr;
-using atlas::make_host_shared;
-using atlas::UniformGenerate;
-using atlas::Float3;
+using atlas::GeneratorType;
+using atlas::MaxwellSigmaGenerator;
+using atlas::UniformGenerator;
+using atlas::tol;
 
-void
-expect_vec_near(const Float3& actual, const Float3& expected) {
-    EXPECT_NEAR(actual.x, expected.x, atlas::tol);
-    EXPECT_NEAR(actual.y, expected.y, atlas::tol);
-    EXPECT_NEAR(actual.z, expected.z, atlas::tol);
+UniformGenerator
+make_uniform() {
+    return UniformGenerator::builder()
+        .with_species_ratios({ 1.0f })
+        .with_species_numbers({ 3.0f })
+        .with_temperature(250.0f)
+        .with_min_value(-1.0f)
+        .with_max_value(1.0f)
+        .with_seed(7u)
+        .build();
 }
 
-class DummyGenerator final : public Generator {
-public:
-    explicit DummyGenerator(const Float3& sample = Float3(1.0f, 2.0f, 3.0f))
-        : _sample(sample)
-        , _operator(UniformGenerate(17u)) {
-    }
-
-    Float3
-    generate() const override {
-        return _sample;
-    }
-
-    const Generate&
-    generate_operator() const noexcept override {
-        return _operator;
-    }
-
-    Generate
-    make_generate_operator() const noexcept override {
-        return _operator;
-    }
-
-    float
-    param0() const noexcept override {
-        return 4.0f;
-    }
-
-    float
-    param1() const noexcept override {
-        return 9.0f;
-    }
-
-    GenerateType
-    type() const noexcept override {
-        return GenerateType::uniform;
-    }
-
-private:
-    Float3 _sample;
-    Generate _operator;
-};
+MaxwellSigmaGenerator
+make_maxwell_sigma() {
+    return MaxwellSigmaGenerator::builder()
+        .with_species_ratios({ 1.0f })
+        .with_species_numbers({ 9.0f })
+        .with_temperature(273.15f)
+        .with_sigma(1.0f)
+        .with_seed(5u)
+        .build();
+}
 
 }
 
-TEST(Generator, DerivedImplementationSatisfiesInterface) {
-    const DummyGenerator generator;
+TEST(Generator, DefaultConstructsUniform) {
+    const Generator generator {};
 
-    expect_vec_near(generator.generate(), Float3(1.0f, 2.0f, 3.0f));
-    EXPECT_EQ(generator.type(), GenerateType::uniform);
-    EXPECT_NEAR(generator.param0(), 4.0f, atlas::tol);
-    EXPECT_NEAR(generator.param1(), 9.0f, atlas::tol);
-    EXPECT_EQ(generator.generate_operator().type, GenerateType::uniform);
-    EXPECT_EQ(generator.make_generate_operator().type, GenerateType::uniform);
+    EXPECT_EQ(generator.type, GeneratorType::uniform);
 }
 
-TEST(Generator, HostSharedAliasCanOwnDerivedImplementation) {
-    GeneratorHostPtr generator = make_host_shared<DummyGenerator>(Float3(3.0f, 2.0f, 1.0f));
+TEST(Generator, WrapsMaxwellSigmaLeaf) {
+    const Generator generator(make_maxwell_sigma());
 
-    ASSERT_NE(generator, nullptr);
-    expect_vec_near(generator->generate(), Float3(3.0f, 2.0f, 1.0f));
+    EXPECT_EQ(generator.type, GeneratorType::maxwell_sigma);
+}
+
+TEST(Generator, GenerateDispatchesToLeaf) {
+    const Generator       generator(make_uniform());
+    const std::size_t     count = 8;
+    FluidVelocityState    velocities(count);
+    FluidTemperatureState temperatures(count);
+    FluidSpeciesState     species(count);
+
+    const int filled = generator.generate(&velocities, &temperatures, &species, 0, count);
+
+    EXPECT_EQ(filled, static_cast<int>(count));
+    EXPECT_EQ(species.data()[0], std::size_t { 3 });
+    EXPECT_NEAR(temperatures.data()[0], 250.0f, tol);
+}
+
+TEST(Generator, MoveConstructPreservesBehaviour) {
+    Generator       source(make_maxwell_sigma());
+    const Generator moved = std::move(source);
+
+    EXPECT_EQ(moved.type, GeneratorType::maxwell_sigma);
+
+    FluidVelocityState    velocities(4);
+    FluidTemperatureState temperatures(4);
+    FluidSpeciesState     species(4);
+    EXPECT_EQ(moved.generate(&velocities, &temperatures, &species, 0, 4), 4);
 }

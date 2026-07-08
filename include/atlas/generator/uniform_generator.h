@@ -1,52 +1,76 @@
 #pragma once
 
-#include <atlas/generator/generate.h>
-#include <atlas/generator/generator.h>
+#include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
+#include <atlas/core/macros.h>
+#include <atlas/fluid/fluid_state.h>
+#include <atlas/math/math.h>
+#include <atlas/memory/memory.h>
 #include <atlas/random/seed.h>
 
-#include <optional>
+#include <cstddef>
+#include <utility>
 
 namespace atlas {
 
-class UniformGenerator final : public Generator {
+// Emits velocities drawn uniformly in [min, max]^3, tagging each particle with a
+// species sampled from its per-species ratio table and writing its temperature.
+class UniformGenerator final {
 public:
     class Builder;
+
+public:
+    UniformGenerator() = default;
+
+    ATLAS_HOST
+    UniformGenerator(DeviceBuffer<float> species_ratios,
+                     DeviceBuffer<float> species_numbers,
+                     float temperature,
+                     float min_value,
+                     float max_value,
+                     unsigned int seed) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    ATLAS_HOST
-    UniformGenerator(float min_value,
-                     float max_value,
-                     unsigned int seed = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST Float3
-    generate() const override;
-
-    ATLAS_NODISCARD ATLAS_HOST const Generate&
-    generate_operator() const noexcept override;
-
-    ATLAS_NODISCARD ATLAS_HOST Generate
-    make_generate_operator() const noexcept override;
-
     ATLAS_NODISCARD ATLAS_HOST float
-    param0() const noexcept override;
+    temperature() const noexcept {
+        return _temperature;
+    }
 
-    ATLAS_NODISCARD ATLAS_HOST float
-    param1() const noexcept override;
-
-    ATLAS_NODISCARD ATLAS_HOST GenerateType
-    type() const noexcept override;
+    ATLAS_NODISCARD ATLAS_HOST int
+    generate(FluidVelocityState* velocities,
+             FluidTemperatureState* temperatures,
+             FluidSpeciesState* species,
+             std::size_t offset,
+             std::size_t count) const;
 
 private:
-    float _min_value;
-    float _max_value;
-    Generate _operator;
+    DeviceBuffer<float> _species_ratios;
+
+    DeviceBuffer<float> _species_numbers;
+
+    float _temperature { 273.15f };
+
+    float _min_value { 0.0f };
+
+    float _max_value { 0.0f };
+
+    unsigned int _seed { atlas::DEFAULT_UNSIGNED_INT_SEED };
 };
 
 class UniformGenerator::Builder final {
 public:
     Builder() = default;
+
+    ATLAS_HOST Builder&
+    with_species_ratios(const HostBuffer<float>& species_ratios);
+
+    ATLAS_HOST Builder&
+    with_species_numbers(const HostBuffer<float>& species_numbers);
+
+    ATLAS_HOST Builder&
+    with_temperature(float temperature) noexcept;
 
     ATLAS_HOST Builder&
     with_min_value(float min_value) noexcept;
@@ -58,19 +82,31 @@ public:
     with_seed(unsigned int seed) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST UniformGenerator
-    build() const;
+    build();
 
     ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<UniformGenerator>
-    make_host_shared() const;
+    make_host_shared();
 
 private:
     ATLAS_HOST void
     validate() const;
 
 private:
-    std::optional<float> _min_value;
-    std::optional<float> _max_value;
-    unsigned int _seed = atlas::DEFAULT_UNSIGNED_INT_SEED;
+    HostBuffer<float> _species_ratios;
+
+    HostBuffer<float> _species_numbers;
+
+    float _temperature { 273.15f };
+
+    float _min_value { 0.0f };
+
+    float _max_value { 0.0f };
+
+    unsigned int _seed { atlas::DEFAULT_UNSIGNED_INT_SEED };
 };
+
+using UniformGeneratorHostPtr = atlas::host_shared_ptr<UniformGenerator>;
+
+using UniformGeneratorDevicePtr = atlas::device_shared_ptr<UniformGenerator>;
 
 }

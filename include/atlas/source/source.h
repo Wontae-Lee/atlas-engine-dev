@@ -1,6 +1,8 @@
 #pragma once
 
+#include <atlas/core/host_variant.h>
 #include <atlas/core/macros.h>
+#include <atlas/fluid/fluid_state.h>
 #include <atlas/memory/memory.h>
 #include <atlas/source/source_type.h>
 #include <atlas/source/surface_source.h>
@@ -8,12 +10,9 @@
 
 #include <concepts>
 #include <cstddef>
-#include <new>
 #include <utility>
 
 namespace atlas {
-
-class FluidPositionState;
 
 template <typename S>
 concept ConceptSource = requires(S source, const S const_source, FluidPositionState* positions, std::size_t offset, float dt) {
@@ -24,9 +23,9 @@ concept ConceptSource = requires(S source, const S const_source, FluidPositionSt
 static_assert(ConceptSource<SurfaceSource>);
 static_assert(ConceptSource<VolumeSource>);
 
-// Host-side tagged union over the concrete source leaves. Unlike Sink/Collider
-// it is not a DeviceVariant: each leaf owns a DeviceBuffer<Float3> cache, so the
-// union is host-only and move-only (its special members are written by hand).
+// Host-side tagged union over the concrete source leaves. Each leaf owns a
+// DeviceBuffer<Float3> cache, so this uses HostVariant (host-only, move-based)
+// rather than a DeviceVariant.
 class Source final {
 public:
     SourceType type = SourceType::surface;
@@ -39,22 +38,13 @@ public:
     };
 
     ATLAS_HOST
-    Source() noexcept
-        : type(SourceType::surface)
-        , surface() {
-    }
+    Source() noexcept;
 
     ATLAS_HOST explicit
-    Source(SurfaceSource op) noexcept
-        : type(SourceType::surface)
-        , surface(std::move(op)) {
-    }
+    Source(SurfaceSource op) noexcept;
 
     ATLAS_HOST explicit
-    Source(VolumeSource op) noexcept
-        : type(SourceType::volume)
-        , volume(std::move(op)) {
-    }
+    Source(VolumeSource op) noexcept;
 
     Source(const Source&) = delete;
 
@@ -63,74 +53,85 @@ public:
         = delete;
 
     ATLAS_HOST
-    Source(Source&& other) noexcept
-        : type(other.type) {
-        construct_from(std::move(other));
-    }
+    Source(Source&& other) noexcept;
 
     ATLAS_HOST Source&
-    operator=(Source&& other) noexcept {
-        if (this != &other) {
-            destroy();
-            type = other.type;
-            construct_from(std::move(other));
-        }
-        return *this;
-    }
+    operator=(Source&& other) noexcept;
 
     ATLAS_HOST
-    ~Source() noexcept {
-        destroy();
-    }
+    ~Source() noexcept;
 
     ATLAS_HOST void
-    advance(const float dt) noexcept {
-        switch (type) {
-            case SourceType::surface:
-                surface.advance(dt);
-                break;
-            case SourceType::volume:
-                volume.advance(dt);
-                break;
-        }
-    }
+    advance(float dt) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST int
-    spawn(FluidPositionState* positions, const std::size_t offset) const {
-        switch (type) {
-            case SourceType::surface:
-                return surface.spawn(positions, offset);
-            case SourceType::volume:
-                return volume.spawn(positions, offset);
-        }
-        return 0;
-    }
-
-private:
-    ATLAS_HOST void
-    construct_from(Source&& other) noexcept {
-        switch (type) {
-            case SourceType::surface:
-                new (&surface) SurfaceSource(std::move(other.surface));
-                break;
-            case SourceType::volume:
-                new (&volume) VolumeSource(std::move(other.volume));
-                break;
-        }
-    }
-
-    ATLAS_HOST void
-    destroy() noexcept {
-        switch (type) {
-            case SourceType::surface:
-                surface.~SurfaceSource();
-                break;
-            case SourceType::volume:
-                volume.~VolumeSource();
-                break;
-        }
-    }
+    spawn(FluidPositionState* positions, std::size_t offset) const;
 };
+
+using SourceVariant = HostVariant<
+    Source,
+    SourceType,
+    SourceType::surface,
+    HostVariantCase<SourceType::surface, &Source::surface>,
+    HostVariantCase<SourceType::volume, &Source::volume>>;
+
+class SourceAdvance {
+public:
+    float dt;
+    template <typename S>
+    ATLAS_HOST void
+    operator()(S& source) const noexcept { source.advance(dt); }
+};
+
+class SourceSpawn {
+public:
+    FluidPositionState* positions;
+    std::size_t offset;
+    template <typename S>
+    ATLAS_HOST int
+    operator()(const S& source) const { return source.spawn(positions, offset); }
+};
+
+ATLAS_HOST ATLAS_FORCE_INLINE
+Source::Source() noexcept {
+    SourceVariant::construct(*this, SourceType::surface);
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE
+Source::Source(SurfaceSource op) noexcept {
+    SourceVariant::construct_payload(*this, std::move(op));
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE
+Source::Source(VolumeSource op) noexcept {
+    SourceVariant::construct_payload(*this, std::move(op));
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE
+Source::Source(Source&& other) noexcept {
+    SourceVariant::move_construct(*this, std::move(other));
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE Source&
+Source::operator=(Source&& other) noexcept {
+    SourceVariant::move_assign(*this, std::move(other));
+    return *this;
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE
+Source::~Source() noexcept {
+    SourceVariant::destroy(*this);
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE void
+Source::advance(const float dt) noexcept {
+    SourceVariant::apply(*this, SourceAdvance { dt });
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE int
+Source::spawn(FluidPositionState* positions, const std::size_t offset) const {
+    return SourceVariant::visit(*this, SourceSpawn { positions, offset }, 0);
+}
 
 using SourceHostPtr = atlas::host_shared_ptr<Source>;
 
