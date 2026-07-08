@@ -2,6 +2,7 @@
 
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
+#include <atlas/spatial/ray.h>
 #include <atlas/sync/sync.h>
 
 #include <optional>
@@ -116,6 +117,35 @@ public:
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const Sync&
     sync() const noexcept {
         return _sync;
+    }
+
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
+    trace(const Ray& world_ray) const noexcept {
+        const Ray  local_ray = _sync.sync_to_local(world_ray);
+        HitSurface hit       = _geometry.trace(local_ray);
+
+        if (hit.is_intersecting) {
+            hit.point  = _sync.sync_to_world(hit.point);
+            hit.normal = _sync.sync_dir_to_world(hit.normal);
+        }
+
+        return hit;
+    }
+
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE Float3
+    surface_velocity(const Float3& surface_point) const noexcept {
+        Float3 velocity(0.0f, 0.0f, 0.0f);
+
+        if (_velocity.has_value()) {
+            velocity += *_velocity;
+        }
+
+        if (_angular_velocity.has_value()) {
+            const Float3 radius = surface_point - _sync.translation;
+            velocity += atlas::cross(*_angular_velocity, radius);
+        }
+
+        return velocity;
     }
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AABB

@@ -1,131 +1,117 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
-#include <atlas/buffer/host_buffer.h>
-#include <atlas/collider/collider_probe.h>
-#include <atlas/collider/interaction/surface_interaction_kernel.h>
-#include <atlas/collider/kernel/collider_collision_kernel.h>
-#include <atlas/collider/kernel/post_collider_kernel.h>
-#include <atlas/fluid/fluid.h>
+#include <atlas/collider/collider_type.h>
+#include <atlas/collider/isothermal_collider.h>
+#include <atlas/core/device_variant.h>
+#include <atlas/core/macros.h>
+#include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
-#include <atlas/unit/unit.h>
-#include <atlas/universe/universe.h>
+#include <atlas/spatial/ray.h>
 
-#include <cstdint>
+#include <type_traits>
 
 namespace atlas {
 
-class Collider final {
-public:
-    class Builder;
+struct Collider final {
 
-public:
-    Collider() = default;
+    ColliderType type = ColliderType::isothermal;
 
-    Collider(const Collider&) = delete;
+    union {
 
-    Collider(Collider&&) noexcept = default;
+        IsothermalCollider isothermal;
+    };
 
-    ~Collider() = default;
+    ATLAS_ALL_DEVICE
+    Collider() noexcept;
 
-    Collider&
-    operator=(const Collider&)
-        = delete;
+    ATLAS_ALL_DEVICE
+    Collider(const Collider& other) noexcept = default;
 
-    Collider&
-    operator=(Collider&&) noexcept = default;
+    ATLAS_ALL_DEVICE Collider&
+    operator=(const Collider& other) noexcept = default;
 
-    ATLAS_HOST
-    Collider(UniverseHostPtr universe,
-             DeviceBuffer<SurfaceInteractionKernel> surface_interactions,
-             DeviceBuffer<std::uint8_t> flips,
-             PostColliderType post_collider_type,
-             atlas::host_shared_ptr<atlas::Fluid> fluid) noexcept;
+    ATLAS_ALL_DEVICE
+    ~Collider() noexcept = default;
 
-    ATLAS_NODISCARD ATLAS_HOST static Builder
-    builder() noexcept;
+    template <typename Payload,
+              std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, Collider>, int> = 0>
+    ATLAS_ALL_DEVICE explicit Collider(const Payload& collider) noexcept;
 
-    ATLAS_HOST void
-    update(float dt);
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    advance(float dt) noexcept;
 
-    ATLAS_HOST void
-    collide(float dt) const;
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
+    trace(const Float3& position, const Float3& velocity, float dt) const noexcept;
 
-    ATLAS_NODISCARD ATLAS_HOST bool
-    empty() const noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST bool
-    make_probe() const noexcept;
-
-private:
-    UniverseHostPtr _universe;
-
-    FluidHostPtr _fluid;
-
-    DeviceBuffer<SurfaceInteractionKernel> _surface_interactions;
-
-    DeviceBuffer<std::uint8_t> _flips;
-
-    PostColliderType _post_collider_type { PostColliderType::fast };
-
-    mutable ColliderProbe _probe {};
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    collide(const HitSurface& hit, Float3& position, Float3& velocity, float dt) const noexcept;
 };
 
-class Collider::Builder final {
-public:
-    Builder() = default;
+using ColliderVariant = DeviceVariant<
+    Collider,
+    ColliderType,
+    ColliderType::isothermal,
+    DeviceVariantCase<ColliderType::isothermal, &Collider::isothermal>>;
 
-    ATLAS_HOST Builder&
-    with_universe(UniverseHostPtr universe) noexcept;
-
-    ATLAS_HOST Builder&
-    with_fluid(atlas::host_shared_ptr<atlas::Fluid> fluid) noexcept;
-
-    ATLAS_HOST Builder&
-    with_surface_interactions(const HostBuffer<IsothermalSurfaceInteraction>& surface_interactions);
-
-    ATLAS_HOST Builder&
-    with_surface_interactions(const HostBuffer<MaxwellianSurfaceInteraction>& surface_interactions);
-
-    ATLAS_HOST Builder&
-    with_surface_interaction_kernel(const SurfaceInteractionKernel& surface_interaction);
-
-    ATLAS_HOST Builder&
-    with_surface_interaction_kernels(const HostBuffer<SurfaceInteractionKernel>& surface_interactions);
-
-    ATLAS_HOST Builder&
-    with_flip(bool flip) noexcept;
-
-    ATLAS_HOST Builder&
-    with_flips(const HostBuffer<std::uint8_t>& flips);
-
-    ATLAS_HOST Builder&
-    with_post_collider_type(PostColliderType type) noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST Collider
-    build();
-
-    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Collider>
-    make_host_shared();
-
-private:
-    ATLAS_HOST void
-    validate() const;
-
-private:
-    UniverseHostPtr _universe;
-
-    FluidHostPtr _fluid;
-
-    HostBuffer<SurfaceInteractionKernel> _surface_interactions;
-
-    HostBuffer<std::uint8_t> _flips;
-
-    PostColliderType _post_collider_type { PostColliderType::fast };
+struct ColliderAdvance {
+    float dt;
+    template <typename C>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    operator()(C& collider) const noexcept { collider.advance(dt); }
 };
+
+struct ColliderTrace {
+    const Float3& position;
+    const Float3& velocity;
+    float dt;
+    template <typename C>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
+    operator()(const C& collider) const noexcept { return collider.trace(position, velocity, dt); }
+};
+
+struct ColliderCollide {
+    const HitSurface& hit;
+    Float3& position;
+    Float3& velocity;
+    float dt;
+    template <typename C>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    operator()(const C& collider) const noexcept { collider.collide(hit, position, velocity, dt); }
+};
+
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+Collider::Collider() noexcept {
+    ColliderVariant::construct(*this, ColliderType::isothermal);
+}
+
+template <typename Payload,
+          std::enable_if_t<!std::is_same_v<std::decay_t<Payload>, Collider>, int>>
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+Collider::Collider(const Payload& collider) noexcept {
+    ColliderVariant::construct_payload(*this, collider);
+}
+
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+Collider::advance(const float dt) noexcept {
+    ColliderVariant::apply(*this, ColliderAdvance { dt });
+}
+
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
+Collider::trace(const Float3& position, const Float3& velocity, const float dt) const noexcept {
+    return ColliderVariant::visit(
+        *this,
+        ColliderTrace { position, velocity, dt },
+        HitSurface {});
+}
+
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+Collider::collide(const HitSurface& hit, Float3& position, Float3& velocity, const float dt) const noexcept {
+    ColliderVariant::apply(
+        *this,
+        ColliderCollide { hit, position, velocity, dt });
+}
 
 using ColliderHostPtr = atlas::host_shared_ptr<Collider>;
-
 using ColliderDevicePtr = atlas::device_shared_ptr<Collider>;
 
 }
