@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <utility>
-#include <vector>
+#include <atlas/buffer/host_buffer.h>
 
 namespace atlas {
 
@@ -34,7 +34,7 @@ VolumeSource::VolumeSource(Unit unit, const float tolerance, const float spacing
     const int ny = atlas::sample_axis_count(lower.y, upper.y, spacing);
     const int nz = atlas::sample_axis_count(lower.z, upper.z, spacing);
 
-    std::vector<Float3> local_positions;
+    HostBuffer<Float3> local_positions;
 
     for (int ix = 0; ix < nx; ++ix) {
         for (int iy = 0; iy < ny; ++iy) {

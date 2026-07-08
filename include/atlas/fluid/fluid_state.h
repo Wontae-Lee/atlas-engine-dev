@@ -13,15 +13,6 @@
 
 namespace atlas {
 
-struct FluidInternalEnergy final {
-
-    float translational {};
-
-    float rotational {};
-
-    float vibrational {};
-};
-
 class FluidState {
 public:
     FluidState() = default;
@@ -237,13 +228,13 @@ private:
     DeviceBuffer<float> _temperature;
 };
 
-class FluidInternalEnergyState final : public FluidState {
+class FluidTranslationalEnergyState final : public FluidState {
 public:
-    FluidInternalEnergyState() = default;
+    FluidTranslationalEnergyState() = default;
 
-    ATLAS_HOST explicit FluidInternalEnergyState(std::size_t buffer_size);
+    ATLAS_HOST explicit FluidTranslationalEnergyState(std::size_t buffer_size);
 
-    ATLAS_HOST explicit FluidInternalEnergyState(DeviceBuffer<FluidInternalEnergy> internal_energy) noexcept;
+    ATLAS_HOST explicit FluidTranslationalEnergyState(DeviceBuffer<float> translational_energy) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST std::size_t
     size() const noexcept override;
@@ -254,14 +245,68 @@ public:
     ATLAS_HOST void
     reset() override;
 
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<FluidInternalEnergy>&
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
     data() noexcept;
 
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<FluidInternalEnergy>&
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
     data() const noexcept;
 
 private:
-    DeviceBuffer<FluidInternalEnergy> _internal_energy;
+    DeviceBuffer<float> _translational_energy;
+};
+
+class FluidRotationalEnergyState final : public FluidState {
+public:
+    FluidRotationalEnergyState() = default;
+
+    ATLAS_HOST explicit FluidRotationalEnergyState(std::size_t buffer_size);
+
+    ATLAS_HOST explicit FluidRotationalEnergyState(DeviceBuffer<float> rotational_energy) noexcept;
+
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST void
+    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST void
+    reset() override;
+
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
+    data() noexcept;
+
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<float> _rotational_energy;
+};
+
+class FluidVibrationalEnergyState final : public FluidState {
+public:
+    FluidVibrationalEnergyState() = default;
+
+    ATLAS_HOST explicit FluidVibrationalEnergyState(std::size_t buffer_size);
+
+    ATLAS_HOST explicit FluidVibrationalEnergyState(DeviceBuffer<float> vibrational_energy) noexcept;
+
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST void
+    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
+
+    ATLAS_HOST void
+    reset() override;
+
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
+    data() noexcept;
+
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<float> _vibrational_energy;
 };
 
 }

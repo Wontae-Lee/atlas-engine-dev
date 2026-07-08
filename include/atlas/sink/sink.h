@@ -24,7 +24,8 @@ static_assert(ConceptSink<SurfaceSink>);
 static_assert(ConceptSink<VolumeSink>);
 static_assert(ConceptSink<TracingSink>);
 
-struct Sink final {
+class Sink final {
+public:
 
     SinkType type = SinkType::surface;
 
@@ -68,14 +69,16 @@ using SinkVariant = DeviceVariant<
     DeviceVariantCase<SinkType::volume, &Sink::volume>,
     DeviceVariantCase<SinkType::tracing, &Sink::tracing>>;
 
-struct SinkAdvance {
+class SinkAdvance {
+public:
     float dt;
     template <typename S>
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(S& sink) const noexcept { sink.advance(dt); }
 };
 
-struct SinkDespawn {
+class SinkDespawn {
+public:
     const Float3& position;
     const Float3& velocity;
     float dt;

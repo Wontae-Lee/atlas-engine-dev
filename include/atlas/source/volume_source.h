@@ -2,6 +2,7 @@
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/core/macros.h>
+#include <atlas/fluid/fluid_state.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
 #include <atlas/unit/unit.h>
@@ -11,8 +12,6 @@
 #include <utility>
 
 namespace atlas {
-
-class FluidPositionState;
 
 // Caches the accepted interior sample points of its unit (in the unit's local
 // frame) and emits them, transformed to world space via the unit's sync, into

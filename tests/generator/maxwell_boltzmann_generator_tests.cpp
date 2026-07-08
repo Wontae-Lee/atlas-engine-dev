@@ -1,85 +1,103 @@
 #include <atlas/generator/maxwell_boltzmann_generator.h>
 
-#include <atlas/generator/generate.h>
+#include <atlas/fluid/fluid_state.h>
+#include <atlas/material/material.h>
+#include <atlas/material/material_dictionary.h>
+#include <atlas/math/math.h>
 
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <stdexcept>
 
 namespace {
 
-using atlas::GenerateType;
-using atlas::MaxwellBoltzmannGenerate;
+using atlas::FluidSpeciesState;
+using atlas::FluidTemperatureState;
+using atlas::FluidVelocityState;
+using atlas::Material;
+using atlas::MaterialDictionary;
+using atlas::MaterialDictionaryHostPtr;
 using atlas::MaxwellBoltzmannGenerator;
-using atlas::Float3;
+using atlas::MoleculeMaterial;
+using atlas::tol;
 
-void
-expect_vec_near(const Float3& actual, const Float3& expected) {
-    EXPECT_NEAR(actual.x, expected.x, atlas::tol);
-    EXPECT_NEAR(actual.y, expected.y, atlas::tol);
-    EXPECT_NEAR(actual.z, expected.z, atlas::tol);
+MaxwellBoltzmannGenerator
+make_generator_with_direct_mass() {
+    return MaxwellBoltzmannGenerator::builder()
+        .with_species_ratios({ 1.0f })
+        .with_species_numbers({ 5.0f })
+        .with_species_mass({ 2.0f })
+        .with_temperature(300.0f)
+        .with_seed(7u)
+        .build();
+}
+
+MaterialDictionaryHostPtr
+make_dictionary(const float mass) {
+    MoleculeMaterial molecule;
+    molecule.mass = mass;
+
+    return MaterialDictionary::builder()
+        .with_material(Material(molecule))
+        .make_host_shared();
 }
 
 }
 
-TEST(MaxwellBoltzmannGenerator, OperatorReturnsZeroForInvalidPhysicalParameters) {
-    const MaxwellBoltzmannGenerate generator(13u, Float3(1.0f, 2.0f, 3.0f));
-
-    expect_vec_near(generator.generate(0.0f, 1.0f), Float3(0.0f, 0.0f, 0.0f));
-    expect_vec_near(generator.generate(300.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f));
+TEST(MaxwellBoltzmannGenerator, BuilderRejectsEmptySpecies) {
+    EXPECT_THROW(
+        static_cast<void>(MaxwellBoltzmannGenerator::builder().with_species_mass({ 2.0f }).build()),
+        std::runtime_error);
 }
 
-TEST(MaxwellBoltzmannGenerator, DirectConstructorExposesConfiguredParameters) {
-    const MaxwellBoltzmannGenerator generator(300.0f, 4.65e-26f, Float3(1.0f, 2.0f, 3.0f), 31u);
-
-    EXPECT_EQ(generator.type(), GenerateType::maxwell_boltzmann);
-    EXPECT_NEAR(generator.param0(), 300.0f, atlas::tol);
-    EXPECT_NEAR(generator.param1(), 4.65e-26f, atlas::tol);
-    EXPECT_EQ(generator.generate_operator().type, GenerateType::maxwell_boltzmann);
-    EXPECT_EQ(generator.make_generate_operator().type, GenerateType::maxwell_boltzmann);
-    EXPECT_TRUE(atlas::isfinite(generator.generate()));
+TEST(MaxwellBoltzmannGenerator, BuilderRejectsMissingMassSource) {
+    EXPECT_THROW(
+        static_cast<void>(MaxwellBoltzmannGenerator::builder().with_species_ratios({ 1.0f }).with_species_numbers({ 5.0f }).build()),
+        std::runtime_error);
 }
 
-TEST(MaxwellBoltzmannGenerator, BuilderConstructsConfiguredGenerator) {
+TEST(MaxwellBoltzmannGenerator, BuilderRejectsMassSizeMismatch) {
+    EXPECT_THROW(
+        static_cast<void>(MaxwellBoltzmannGenerator::builder()
+                              .with_species_ratios({ 1.0f })
+                              .with_species_numbers({ 5.0f })
+                              .with_species_mass({ 2.0f, 3.0f })
+                              .build()),
+        std::runtime_error);
+}
+
+TEST(MaxwellBoltzmannGenerator, GenerateFillsStatesWithDirectMass) {
+    const auto            generator = make_generator_with_direct_mass();
+    const std::size_t     count     = 8;
+    FluidVelocityState    velocities(count);
+    FluidTemperatureState temperatures(count);
+    FluidSpeciesState     species(count);
+
+    const int filled = generator.generate(&velocities, &temperatures, &species, 0, count);
+
+    EXPECT_EQ(filled, static_cast<int>(count));
+    EXPECT_EQ(species.data()[0], std::size_t { 5 });
+    EXPECT_NEAR(temperatures.data()[0], 300.0f, tol);
+    EXPECT_TRUE(atlas::isfinite(velocities.data()[0]));
+}
+
+TEST(MaxwellBoltzmannGenerator, GenerateUsesDictionaryMass) {
     const auto generator = MaxwellBoltzmannGenerator::builder()
-                               .with_temperature(350.0f)
-                               .with_molecular_mass(3.0e-26f)
-                               .with_bulk_velocity(Float3(1.0f, 0.0f, 0.0f))
-                               .with_seed(9u)
+                               .with_species_ratios({ 1.0f })
+                               .with_species_numbers({ 0.0f })
+                               .with_material_dictionary(make_dictionary(2.0f))
+                               .with_temperature(300.0f)
+                               .with_seed(3u)
                                .build();
 
-    EXPECT_NEAR(generator.param0(), 350.0f, atlas::tol);
-    EXPECT_NEAR(generator.param1(), 3.0e-26f, atlas::tol);
-}
+    FluidVelocityState    velocities(4);
+    FluidTemperatureState temperatures(4);
+    FluidSpeciesState     species(4);
 
-TEST(MaxwellBoltzmannGenerator, BuilderRejectsMissingOrInvalidParameters) {
-    EXPECT_THROW(
-        static_cast<void>(MaxwellBoltzmannGenerator::builder()
-                              .with_molecular_mass(1.0f)
-                              .build()),
-        std::runtime_error);
+    const int filled = generator.generate(&velocities, &temperatures, &species, 0, 4);
 
-    EXPECT_THROW(
-        static_cast<void>(MaxwellBoltzmannGenerator::builder()
-                              .with_temperature(0.0f)
-                              .with_molecular_mass(1.0f)
-                              .build()),
-        std::runtime_error);
-
-    EXPECT_THROW(
-        static_cast<void>(MaxwellBoltzmannGenerator::builder()
-                              .with_temperature(300.0f)
-                              .with_molecular_mass(0.0f)
-                              .build()),
-        std::runtime_error);
-}
-
-TEST(MaxwellBoltzmannGenerator, MakeHostSharedReturnsUsableGenerator) {
-    const auto generator = MaxwellBoltzmannGenerator::builder()
-                               .with_temperature(300.0f)
-                               .with_molecular_mass(4.65e-26f)
-                               .make_host_shared();
-
-    ASSERT_NE(generator, nullptr);
-    EXPECT_EQ(generator->type(), GenerateType::maxwell_boltzmann);
+    EXPECT_EQ(filled, 4);
+    EXPECT_EQ(species.data()[0], std::size_t { 0 });
+    EXPECT_TRUE(atlas::isfinite(velocities.data()[0]));
 }

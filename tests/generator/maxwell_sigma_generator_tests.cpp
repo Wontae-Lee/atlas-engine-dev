@@ -1,72 +1,58 @@
 #include <atlas/generator/maxwell_sigma_generator.h>
 
-#include <atlas/generator/generate.h>
+#include <atlas/fluid/fluid_state.h>
+#include <atlas/math/math.h>
 
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <stdexcept>
 
 namespace {
 
-using atlas::GenerateType;
-using atlas::MaxwellSigmaGenerate;
+using atlas::FluidSpeciesState;
+using atlas::FluidTemperatureState;
+using atlas::FluidVelocityState;
 using atlas::MaxwellSigmaGenerator;
 using atlas::Float3;
+using atlas::tol;
 
-void
-expect_vec_near(const Float3& actual, const Float3& expected) {
-    EXPECT_NEAR(actual.x, expected.x, atlas::tol);
-    EXPECT_NEAR(actual.y, expected.y, atlas::tol);
-    EXPECT_NEAR(actual.z, expected.z, atlas::tol);
+MaxwellSigmaGenerator
+make_generator() {
+    return MaxwellSigmaGenerator::builder()
+        .with_species_ratios({ 1.0f })
+        .with_species_numbers({ 9.0f })
+        .with_temperature(273.15f)
+        .with_sigma(2.0f)
+        .with_seed(5u)
+        .build();
 }
 
 }
 
-TEST(MaxwellSigmaGenerator, OperatorReturnsZeroForNonPositiveSigma) {
-    const MaxwellSigmaGenerate generator(13u);
-
-    expect_vec_near(generator.generate(0.0f), Float3(0.0f, 0.0f, 0.0f));
-    expect_vec_near(generator.generate(-1.0f), Float3(0.0f, 0.0f, 0.0f));
-}
-
-TEST(MaxwellSigmaGenerator, DirectConstructorExposesConfiguredParameters) {
-    const MaxwellSigmaGenerator generator(0.75f, 31u);
-
-    EXPECT_EQ(generator.type(), GenerateType::maxwell_sigma);
-    EXPECT_NEAR(generator.param0(), 0.75f, atlas::tol);
-    EXPECT_NEAR(generator.param1(), 1.0f, atlas::tol);
-    EXPECT_EQ(generator.generate_operator().type, GenerateType::maxwell_sigma);
-    EXPECT_EQ(generator.make_generate_operator().type, GenerateType::maxwell_sigma);
-    EXPECT_TRUE(atlas::isfinite(generator.generate()));
-}
-
-TEST(MaxwellSigmaGenerator, BuilderConstructsConfiguredGenerator) {
-    const auto generator = MaxwellSigmaGenerator::builder()
-                               .with_sigma(0.5f)
-                               .with_seed(9u)
-                               .build();
-
-    EXPECT_NEAR(generator.param0(), 0.5f, atlas::tol);
-}
-
-TEST(MaxwellSigmaGenerator, BuilderRejectsMissingOrInvalidSigma) {
+TEST(MaxwellSigmaGenerator, BuilderRejectsEmptySpecies) {
     EXPECT_THROW(
-        static_cast<void>(MaxwellSigmaGenerator::builder()
-                              .build()),
-        std::runtime_error);
-
-    EXPECT_THROW(
-        static_cast<void>(MaxwellSigmaGenerator::builder()
-                              .with_sigma(0.0f)
-                              .build()),
+        static_cast<void>(MaxwellSigmaGenerator::builder().with_sigma(1.0f).build()),
         std::runtime_error);
 }
 
-TEST(MaxwellSigmaGenerator, MakeHostSharedReturnsUsableGenerator) {
-    const auto generator = MaxwellSigmaGenerator::builder()
-                               .with_sigma(0.5f)
-                               .make_host_shared();
+TEST(MaxwellSigmaGenerator, BuilderRejectsNegativeSigma) {
+    EXPECT_THROW(
+        static_cast<void>(MaxwellSigmaGenerator::builder().with_species_ratios({ 1.0f }).with_species_numbers({ 9.0f }).with_sigma(-1.0f).build()),
+        std::runtime_error);
+}
 
-    ASSERT_NE(generator, nullptr);
-    EXPECT_EQ(generator->type(), GenerateType::maxwell_sigma);
+TEST(MaxwellSigmaGenerator, GenerateFillsStatesAndReturnsCount) {
+    const auto            generator = make_generator();
+    const std::size_t     count     = 8;
+    FluidVelocityState    velocities(count);
+    FluidTemperatureState temperatures(count);
+    FluidSpeciesState     species(count);
+
+    const int filled = generator.generate(&velocities, &temperatures, &species, 0, count);
+
+    EXPECT_EQ(filled, static_cast<int>(count));
+    EXPECT_EQ(species.data()[0], std::size_t { 9 });
+    EXPECT_NEAR(temperatures.data()[0], 273.15f, tol);
+    EXPECT_TRUE(atlas::isfinite(velocities.data()[0]));
 }

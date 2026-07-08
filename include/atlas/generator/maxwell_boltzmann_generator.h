@@ -1,51 +1,64 @@
 #pragma once
 
-#include <atlas/generator/generate.h>
-#include <atlas/generator/generator.h>
+#include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
+#include <atlas/core/macros.h>
+#include <atlas/fluid/fluid_state.h>
+#include <atlas/material/material_dictionary.h>
 #include <atlas/math/math.h>
+#include <atlas/memory/memory.h>
 #include <atlas/random/seed.h>
 
-#include <optional>
+#include <cstddef>
+#include <utility>
 
 namespace atlas {
 
-class MaxwellBoltzmannGenerator final : public Generator {
+// Emits Maxwell-Boltzmann distributed velocities using the per-species mass
+// (derived from a MaterialDictionary or supplied directly), tagging each
+// particle with a species sampled from its ratio table and writing temperature.
+class MaxwellBoltzmannGenerator final {
 public:
     class Builder;
+
+public:
+    MaxwellBoltzmannGenerator() = default;
+
+    ATLAS_HOST
+    MaxwellBoltzmannGenerator(DeviceBuffer<float> species_ratios,
+                              DeviceBuffer<float> species_numbers,
+                              DeviceBuffer<float> species_mass,
+                              float temperature,
+                              Float3 bulk_velocity,
+                              unsigned int seed) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    ATLAS_HOST
-    MaxwellBoltzmannGenerator(
-        float temperature,
-        float molecular_mass,
-        const Float3& bulk_velocity = Float3(0.0f, 0.0f, 0.0f),
-        unsigned int seed           = atlas::DEFAULT_UNSIGNED_INT_SEED) noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST Float3
-    generate() const override;
-
-    ATLAS_NODISCARD ATLAS_HOST const Generate&
-    generate_operator() const noexcept override;
-
-    ATLAS_NODISCARD ATLAS_HOST Generate
-    make_generate_operator() const noexcept override;
-
     ATLAS_NODISCARD ATLAS_HOST float
-    param0() const noexcept override;
+    temperature() const noexcept {
+        return _temperature;
+    }
 
-    ATLAS_NODISCARD ATLAS_HOST float
-    param1() const noexcept override;
-
-    ATLAS_NODISCARD ATLAS_HOST GenerateType
-    type() const noexcept override;
+    ATLAS_NODISCARD ATLAS_HOST int
+    generate(FluidVelocityState* velocities,
+             FluidTemperatureState* temperatures,
+             FluidSpeciesState* species,
+             std::size_t offset,
+             std::size_t count) const;
 
 private:
-    float _temperature;
-    float _molecular_mass;
-    Float3 _bulk_velocity;
-    Generate _operator;
+    DeviceBuffer<float> _species_ratios;
+
+    DeviceBuffer<float> _species_numbers;
+
+    DeviceBuffer<float> _species_mass;
+
+    float _temperature { 273.15f };
+
+    Float3 _bulk_velocity { 0.0f, 0.0f, 0.0f };
+
+    unsigned int _seed { atlas::DEFAULT_UNSIGNED_INT_SEED };
 };
 
 class MaxwellBoltzmannGenerator::Builder final {
@@ -53,10 +66,21 @@ public:
     Builder() = default;
 
     ATLAS_HOST Builder&
-    with_temperature(float temperature) noexcept;
+    with_species_ratios(const HostBuffer<float>& species_ratios);
 
     ATLAS_HOST Builder&
-    with_molecular_mass(float molecular_mass) noexcept;
+    with_species_numbers(const HostBuffer<float>& species_numbers);
+
+    // Per-species mass is derived by looking each species number up in the
+    // dictionary, or supplied directly via with_species_mass.
+    ATLAS_HOST Builder&
+    with_material_dictionary(MaterialDictionaryHostPtr material_dictionary) noexcept;
+
+    ATLAS_HOST Builder&
+    with_species_mass(const HostBuffer<float>& species_mass);
+
+    ATLAS_HOST Builder&
+    with_temperature(float temperature) noexcept;
 
     ATLAS_HOST Builder&
     with_bulk_velocity(const Float3& bulk_velocity) noexcept;
@@ -65,20 +89,36 @@ public:
     with_seed(unsigned int seed) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST MaxwellBoltzmannGenerator
-    build() const;
+    build();
 
     ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<MaxwellBoltzmannGenerator>
-    make_host_shared() const;
+    make_host_shared();
 
 private:
+    ATLAS_HOST HostBuffer<float>
+    resolve_species_mass() const;
+
     ATLAS_HOST void
     validate() const;
 
 private:
-    std::optional<float> _temperature;
-    std::optional<float> _molecular_mass;
-    Float3 _bulk_velocity = Float3(0.0f, 0.0f, 0.0f);
-    unsigned int _seed    = atlas::DEFAULT_UNSIGNED_INT_SEED;
+    HostBuffer<float> _species_ratios;
+
+    HostBuffer<float> _species_numbers;
+
+    HostBuffer<float> _species_mass;
+
+    MaterialDictionaryHostPtr _material_dictionary;
+
+    float _temperature { 273.15f };
+
+    Float3 _bulk_velocity { 0.0f, 0.0f, 0.0f };
+
+    unsigned int _seed { atlas::DEFAULT_UNSIGNED_INT_SEED };
 };
+
+using MaxwellBoltzmannGeneratorHostPtr = atlas::host_shared_ptr<MaxwellBoltzmannGenerator>;
+
+using MaxwellBoltzmannGeneratorDevicePtr = atlas::device_shared_ptr<MaxwellBoltzmannGenerator>;
 
 }
