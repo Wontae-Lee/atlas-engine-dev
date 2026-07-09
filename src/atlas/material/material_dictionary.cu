@@ -21,7 +21,7 @@ MaterialDictionary::Builder::with_material(const Material& material) {
 }
 
 MaterialDictionary::Builder&
-MaterialDictionary::Builder::with_materials(const std::vector<Material>& materials) {
+MaterialDictionary::Builder::with_materials(const HostBuffer<Material>& materials) {
     _materials.insert(_materials.end(), materials.begin(), materials.end());
     return *this;
 }

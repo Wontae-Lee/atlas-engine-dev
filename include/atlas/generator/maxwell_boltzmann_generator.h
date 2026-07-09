@@ -35,6 +35,16 @@ public:
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
+    ATLAS_HOST void
+    set_bulk_velocity(const Float3& bulk_velocity) noexcept {
+        _bulk_velocity = bulk_velocity;
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST Float3
+    bulk_velocity() const noexcept {
+        return _bulk_velocity;
+    }
+
     ATLAS_NODISCARD ATLAS_HOST float
     temperature() const noexcept {
         return _temperature;
@@ -42,7 +52,6 @@ public:
 
     ATLAS_NODISCARD ATLAS_HOST int
     generate(FluidVelocityState* velocities,
-             FluidTemperatureState* temperatures,
              FluidSpeciesState* species,
              std::size_t offset,
              std::size_t count) const;
@@ -72,9 +81,10 @@ public:
     with_species_numbers(const HostBuffer<float>& species_numbers);
 
     // Per-species mass is derived by looking each species number up in the
-    // dictionary, or supplied directly via with_species_mass.
+    // dictionary, or supplied directly via with_species_mass. Only the mass of
+    // each material is taken; the dictionary itself is not retained.
     ATLAS_HOST Builder&
-    with_material_dictionary(MaterialDictionaryHostPtr material_dictionary) noexcept;
+    with_material_dictionary(const MaterialDictionary& material_dictionary);
 
     ATLAS_HOST Builder&
     with_species_mass(const HostBuffer<float>& species_mass);
@@ -108,7 +118,8 @@ private:
 
     HostBuffer<float> _species_mass;
 
-    MaterialDictionaryHostPtr _material_dictionary;
+    // Mass of every material in the dictionary, indexed by species id.
+    HostBuffer<float> _material_mass;
 
     float _temperature { 273.15f };
 

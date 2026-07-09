@@ -17,6 +17,7 @@ template <typename C>
 concept ConceptCollider = requires(C collider, const HitSurface hit, Float3 vec, float dt) {
     { collider.trace(vec, vec, dt) } -> std::same_as<HitSurface>;
     { collider.collide(hit, vec, vec, dt) } -> std::same_as<void>;
+    { collider.bound() } -> std::same_as<const AABB&>;
     { collider.advance(dt) } -> std::same_as<void>;
 };
 
@@ -51,6 +52,9 @@ public:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     advance(float dt) noexcept;
 
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const AABB&
+    bound() const noexcept;
+
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     trace(const Float3& position, const Float3& velocity, float dt) const noexcept;
 
@@ -70,6 +74,13 @@ public:
     template <typename C>
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(C& collider) const noexcept { collider.advance(dt); }
+};
+
+class ColliderBound {
+public:
+    template <typename C>
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const AABB*
+    operator()(const C& collider) const noexcept { return &collider.bound(); }
 };
 
 class ColliderTrace {
@@ -108,6 +119,14 @@ Collider::Collider(const Payload& collider) noexcept {
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
 Collider::advance(const float dt) noexcept {
     ColliderVariant::apply(*this, ColliderAdvance { dt });
+}
+
+ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const AABB&
+Collider::bound() const noexcept {
+    return *ColliderVariant::visit(
+        *this,
+        ColliderBound {},
+        static_cast<const AABB*>(nullptr));
 }
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface

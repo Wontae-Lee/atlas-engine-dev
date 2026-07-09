@@ -8,6 +8,7 @@
 #include <atlas/generator/maxwell_boltzmann_generator.h>
 #include <atlas/generator/maxwell_sigma_generator.h>
 #include <atlas/generator/uniform_generator.h>
+#include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
 
 #include <concepts>
@@ -17,13 +18,15 @@
 namespace atlas {
 
 template <typename G>
-concept ConceptGenerator = requires(const G generator,
+concept ConceptGenerator = requires(G generator,
+                                    const G const_generator,
                                     FluidVelocityState* velocities,
-                                    FluidTemperatureState* temperatures,
                                     FluidSpeciesState* species,
+                                    const Float3 bulk_velocity,
                                     std::size_t offset,
                                     std::size_t count) {
-    { generator.generate(velocities, temperatures, species, offset, count) } -> std::same_as<int>;
+    { const_generator.generate(velocities, species, offset, count) } -> std::same_as<int>;
+    { generator.set_bulk_velocity(bulk_velocity) } -> std::same_as<void>;
 };
 
 static_assert(ConceptGenerator<UniformGenerator>);
@@ -81,10 +84,12 @@ public:
 
     ATLAS_NODISCARD ATLAS_HOST int
     generate(FluidVelocityState* velocities,
-             FluidTemperatureState* temperatures,
              FluidSpeciesState* species,
              std::size_t offset,
              std::size_t count) const;
+
+    ATLAS_HOST void
+    set_bulk_velocity(const Float3& bulk_velocity) noexcept;
 };
 
 using GeneratorVariant = HostVariant<
@@ -99,15 +104,22 @@ using GeneratorVariant = HostVariant<
 class GeneratorGenerate {
 public:
     FluidVelocityState* velocities;
-    FluidTemperatureState* temperatures;
     FluidSpeciesState* species;
     std::size_t offset;
     std::size_t count;
     template <typename G>
     ATLAS_HOST int
     operator()(const G& generator) const {
-        return generator.generate(velocities, temperatures, species, offset, count);
+        return generator.generate(velocities, species, offset, count);
     }
+};
+
+class GeneratorSetBulkVelocity {
+public:
+    const Float3& bulk_velocity;
+    template <typename G>
+    ATLAS_HOST void
+    operator()(G& generator) const { generator.set_bulk_velocity(bulk_velocity); }
 };
 
 ATLAS_HOST ATLAS_FORCE_INLINE
@@ -153,14 +165,18 @@ Generator::~Generator() noexcept {
 
 ATLAS_HOST ATLAS_FORCE_INLINE int
 Generator::generate(FluidVelocityState* velocities,
-                    FluidTemperatureState* temperatures,
                     FluidSpeciesState* species,
                     const std::size_t offset,
                     const std::size_t count) const {
     return GeneratorVariant::visit(
         *this,
-        GeneratorGenerate { velocities, temperatures, species, offset, count },
+        GeneratorGenerate { velocities, species, offset, count },
         0);
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE void
+Generator::set_bulk_velocity(const Float3& bulk_velocity) noexcept {
+    GeneratorVariant::apply(*this, GeneratorSetBulkVelocity { bulk_velocity });
 }
 
 using GeneratorHostPtr = atlas::host_shared_ptr<Generator>;

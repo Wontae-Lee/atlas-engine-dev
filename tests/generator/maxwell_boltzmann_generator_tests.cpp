@@ -13,13 +13,11 @@
 namespace {
 
 using atlas::FluidSpeciesState;
-using atlas::FluidTemperatureState;
 using atlas::FluidVelocityState;
 using atlas::Material;
 using atlas::MaterialDictionary;
-using atlas::MaterialDictionaryHostPtr;
 using atlas::MaxwellBoltzmannGenerator;
-using atlas::MoleculeMaterial;
+using atlas::Molecule;
 using atlas::tol;
 
 MaxwellBoltzmannGenerator
@@ -33,14 +31,11 @@ make_generator_with_direct_mass() {
         .build();
 }
 
-MaterialDictionaryHostPtr
+MaterialDictionary
 make_dictionary(const float mass) {
-    MoleculeMaterial molecule;
-    molecule.mass = mass;
-
     return MaterialDictionary::builder()
-        .with_material(Material(molecule))
-        .make_host_shared();
+        .with_material(Material(Molecule(mass, 0.0f, 0.0f, 0.0f)))
+        .build();
 }
 
 }
@@ -71,14 +66,12 @@ TEST(MaxwellBoltzmannGenerator, GenerateFillsStatesWithDirectMass) {
     const auto            generator = make_generator_with_direct_mass();
     const std::size_t     count     = 8;
     FluidVelocityState    velocities(count);
-    FluidTemperatureState temperatures(count);
     FluidSpeciesState     species(count);
 
-    const int filled = generator.generate(&velocities, &temperatures, &species, 0, count);
+    const int filled = generator.generate(&velocities, &species, 0, count);
 
     EXPECT_EQ(filled, static_cast<int>(count));
     EXPECT_EQ(species.data()[0], std::size_t { 5 });
-    EXPECT_NEAR(temperatures.data()[0], 300.0f, tol);
     EXPECT_TRUE(atlas::isfinite(velocities.data()[0]));
 }
 
@@ -92,10 +85,9 @@ TEST(MaxwellBoltzmannGenerator, GenerateUsesDictionaryMass) {
                                .build();
 
     FluidVelocityState    velocities(4);
-    FluidTemperatureState temperatures(4);
     FluidSpeciesState     species(4);
 
-    const int filled = generator.generate(&velocities, &temperatures, &species, 0, 4);
+    const int filled = generator.generate(&velocities, &species, 0, 4);
 
     EXPECT_EQ(filled, 4);
     EXPECT_EQ(species.data()[0], std::size_t { 0 });

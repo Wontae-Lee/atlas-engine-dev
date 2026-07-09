@@ -28,10 +28,21 @@ public:
                           DeviceBuffer<float> species_numbers,
                           float temperature,
                           float sigma,
+                          Float3 bulk_velocity,
                           unsigned int seed) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
+
+    ATLAS_HOST void
+    set_bulk_velocity(const Float3& bulk_velocity) noexcept {
+        _bulk_velocity = bulk_velocity;
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST Float3
+    bulk_velocity() const noexcept {
+        return _bulk_velocity;
+    }
 
     ATLAS_NODISCARD ATLAS_HOST float
     temperature() const noexcept {
@@ -40,7 +51,6 @@ public:
 
     ATLAS_NODISCARD ATLAS_HOST int
     generate(FluidVelocityState* velocities,
-             FluidTemperatureState* temperatures,
              FluidSpeciesState* species,
              std::size_t offset,
              std::size_t count) const;
@@ -53,6 +63,8 @@ private:
     float _temperature { 273.15f };
 
     float _sigma { 0.0f };
+
+    Float3 _bulk_velocity { 0.0f, 0.0f, 0.0f };
 
     unsigned int _seed { atlas::DEFAULT_UNSIGNED_INT_SEED };
 };
@@ -72,6 +84,9 @@ public:
 
     ATLAS_HOST Builder&
     with_sigma(float sigma) noexcept;
+
+    ATLAS_HOST Builder&
+    with_bulk_velocity(const Float3& bulk_velocity) noexcept;
 
     ATLAS_HOST Builder&
     with_seed(unsigned int seed) noexcept;
@@ -94,6 +109,8 @@ private:
     float _temperature { 273.15f };
 
     float _sigma { 0.0f };
+
+    Float3 _bulk_velocity { 0.0f, 0.0f, 0.0f };
 
     unsigned int _seed { atlas::DEFAULT_UNSIGNED_INT_SEED };
 };

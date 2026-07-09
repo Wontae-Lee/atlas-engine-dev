@@ -332,6 +332,30 @@ private:
     DeviceBuffer<float> _knudsen_number;
 };
 
+class UniverseAllocatedSolverState final : public UniverseState {
+public:
+    UniverseAllocatedSolverState() = default;
+
+    ATLAS_HOST explicit UniverseAllocatedSolverState(std::size_t cell_count);
+
+    ATLAS_HOST explicit UniverseAllocatedSolverState(DeviceBuffer<int> allocated_solver) noexcept;
+
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
+    size() const noexcept override;
+
+    ATLAS_HOST void
+    reset() override;
+
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
+    data() noexcept;
+
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
+    data() const noexcept;
+
+private:
+    DeviceBuffer<int> _allocated_solver;
+};
+
 template <std::size_t N>
 class UniverseMaterialRatioState final : public UniverseState {
 public:

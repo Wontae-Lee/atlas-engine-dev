@@ -1,90 +1,118 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
-#include <atlas/codec/codec_probe.h>
+#include <atlas/codec/codec_type.h>
+#include <atlas/codec/knudsen_codec.h>
+#include <atlas/core/host_variant.h>
 #include <atlas/core/macros.h>
-#include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
-#include <atlas/searcher/searcher.h>
-#include <atlas/universe/universe.h>
+#include <atlas/universe/universe_state.h>
+
+#include <concepts>
+#include <utility>
 
 namespace atlas {
 
-class Codec {
+template <typename C>
+concept ConceptCodec = requires(const C codec,
+                                const UniverseTemperatureState* temperature,
+                                const UniverseNumberParticleState* number_particle,
+                                UniverseAllocatedSolverState* allocated_solver) {
+    { codec.allocate(temperature, number_particle, allocated_solver) } -> std::same_as<void>;
+};
+
+static_assert(ConceptCodec<KnudsenCodec>);
+
+// Host-side tagged union over the concrete codecs. Each leaf owns DeviceBuffer
+// tables, so this uses HostVariant (host-only, move-based) rather than a
+// DeviceVariant.
+class Codec final {
 public:
-    Codec() = default;
+    CodecType type = CodecType::knudsen;
+
+    union {
+
+        KnudsenCodec knudsen;
+    };
 
     ATLAS_HOST
-    Codec(UniverseHostPtr domain,
-          FluidHostPtr fluid,
-          SearcherHostPtr searcher);
+    Codec() noexcept;
 
-    virtual ~Codec() = default;
+    ATLAS_HOST explicit
+    Codec(KnudsenCodec op) noexcept;
 
-    Codec(const Codec&) = default;
+    Codec(const Codec&) = delete;
+
     Codec&
     operator=(const Codec&)
-        = default;
-    Codec(Codec&&) noexcept = default;
-    Codec&
-    operator=(Codec&&) noexcept = default;
+        = delete;
 
-    ATLAS_HOST virtual void
-    update();
+    ATLAS_HOST
+    Codec(Codec&& other) noexcept;
 
-    ATLAS_HOST virtual void
-    encode()
-        = 0;
+    ATLAS_HOST Codec&
+    operator=(Codec&& other) noexcept;
 
-    ATLAS_HOST virtual void
-    decode()
-        = 0;
+    ATLAS_HOST
+    ~Codec() noexcept;
 
     ATLAS_HOST void
-    reset() noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
-    allocated_solver() noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
-    allocated_solver() const noexcept;
-
-    ATLAS_HOST void
-    set_fixed_solver(DeviceBuffer<int> fixed_solver);
-
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
-    fixed_solver() noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
-    fixed_solver() const noexcept;
-
-    ATLAS_HOST void
-    set_fixed_region(DeviceBuffer<int> fixed_region);
-
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
-    fixed_region() noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
-    fixed_region() const noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST bool
-    make_probe() noexcept;
-
-protected:
-    UniverseHostPtr _universe {};
-
-    FluidHostPtr _fluid {};
-
-    SearcherHostPtr _searcher {};
-
-    DeviceBuffer<int> d_allocated_solver;
-
-    DeviceBuffer<int> d_fixed_solver;
-
-    DeviceBuffer<int> d_fixed_region;
-
-    CodecProbe _probe {};
+    allocate(const UniverseTemperatureState* temperature,
+             const UniverseNumberParticleState* number_particle,
+             UniverseAllocatedSolverState* allocated_solver) const;
 };
+
+using CodecVariant = HostVariant<
+    Codec,
+    CodecType,
+    CodecType::knudsen,
+    HostVariantCase<CodecType::knudsen, &Codec::knudsen>>;
+
+class CodecAllocate {
+public:
+    const UniverseTemperatureState* temperature;
+    const UniverseNumberParticleState* number_particle;
+    UniverseAllocatedSolverState* allocated_solver;
+    template <typename C>
+    ATLAS_HOST void
+    operator()(const C& codec) const {
+        codec.allocate(temperature, number_particle, allocated_solver);
+    }
+};
+
+ATLAS_HOST ATLAS_FORCE_INLINE
+Codec::Codec() noexcept {
+    CodecVariant::construct(*this, CodecType::knudsen);
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE
+Codec::Codec(KnudsenCodec op) noexcept {
+    CodecVariant::construct_payload(*this, std::move(op));
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE
+Codec::Codec(Codec&& other) noexcept {
+    CodecVariant::move_construct(*this, std::move(other));
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE Codec&
+Codec::operator=(Codec&& other) noexcept {
+    CodecVariant::move_assign(*this, std::move(other));
+    return *this;
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE
+Codec::~Codec() noexcept {
+    CodecVariant::destroy(*this);
+}
+
+ATLAS_HOST ATLAS_FORCE_INLINE void
+Codec::allocate(const UniverseTemperatureState* temperature,
+                const UniverseNumberParticleState* number_particle,
+                UniverseAllocatedSolverState* allocated_solver) const {
+    CodecVariant::apply(
+        *this,
+        CodecAllocate { temperature, number_particle, allocated_solver });
+}
 
 using CodecHostPtr = atlas::host_shared_ptr<Codec>;
 

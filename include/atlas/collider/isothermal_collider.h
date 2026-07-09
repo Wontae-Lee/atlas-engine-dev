@@ -28,7 +28,8 @@ public:
         : _unit(std::move(unit))
         , _momentum_accommodation_coefficient(momentum_accommodation_coefficient)
         , _restitution(restitution)
-        , _diffuse_sampling(diffuse_sampling) {
+        , _diffuse_sampling(diffuse_sampling)
+        , _bound(_unit.world_bound()) {
     }
 
     ATLAS_NODISCARD ATLAS_HOST static Builder
@@ -44,9 +45,18 @@ public:
         return _momentum_accommodation_coefficient;
     }
 
+    // The unit only moves in advance(), so its world bound is cached rather
+    // than rebuilt (8 corners through the sync transform) on every query.
+    // Invalid for an unbounded geometry such as a plane.
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const AABB&
+    bound() const noexcept {
+        return _bound;
+    }
+
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     advance(const float dt) noexcept {
         _unit.update(dt);
+        _bound = _unit.world_bound();
     }
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
@@ -130,6 +140,8 @@ private:
     float _restitution { 1.0f };
 
     DiffuseSampling _diffuse_sampling { DiffuseSampling::uniform };
+
+    AABB _bound {};
 };
 
 class IsothermalCollider::Builder final {
