@@ -17,7 +17,6 @@
 
 namespace atlas {
 
-
 template <typename G>
 concept ConceptGenerator = requires(G generator,
                                     const G const_generator,
@@ -35,9 +34,6 @@ static_assert(ConceptGenerator<JitteringGenerator>);
 static_assert(ConceptGenerator<MaxwellSigmaGenerator>);
 static_assert(ConceptGenerator<MaxwellBoltzmannGenerator>);
 
-// Host-side tagged union over the concrete generators. Each leaf owns
-// DeviceBuffer species tables, so this uses HostVariant (host-only, move-based)
-// rather than a DeviceVariant.
 class Generator final {
 public:
     GeneratorType type = GeneratorType::uniform;
@@ -56,17 +52,13 @@ public:
     ATLAS_HOST
     Generator() noexcept;
 
-    ATLAS_HOST explicit
-    Generator(UniformGenerator op) noexcept;
+    ATLAS_HOST explicit Generator(UniformGenerator op) noexcept;
 
-    ATLAS_HOST explicit
-    Generator(JitteringGenerator op) noexcept;
+    ATLAS_HOST explicit Generator(JitteringGenerator op) noexcept;
 
-    ATLAS_HOST explicit
-    Generator(MaxwellSigmaGenerator op) noexcept;
+    ATLAS_HOST explicit Generator(MaxwellSigmaGenerator op) noexcept;
 
-    ATLAS_HOST explicit
-    Generator(MaxwellBoltzmannGenerator op) noexcept;
+    ATLAS_HOST explicit Generator(MaxwellBoltzmannGenerator op) noexcept;
 
     Generator(const Generator&) = delete;
 
@@ -160,7 +152,7 @@ Generator::operator=(Generator&& other) noexcept {
 }
 
 ATLAS_HOST ATLAS_FORCE_INLINE
-Generator::~Generator() noexcept {
+    Generator::~Generator() noexcept {
     GeneratorVariant::destroy(*this);
 }
 

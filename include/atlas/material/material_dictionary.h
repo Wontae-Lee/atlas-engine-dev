@@ -10,7 +10,6 @@
 
 namespace atlas {
 
-// Owns the device-side table of materials (indexed by species).
 class MaterialDictionary final {
 public:
     class Builder;
@@ -31,8 +30,7 @@ public:
     MaterialDictionary&
     operator=(MaterialDictionary&&) noexcept = default;
 
-    ATLAS_HOST explicit
-    MaterialDictionary(DeviceBuffer<Material> materials) noexcept;
+    ATLAS_HOST explicit MaterialDictionary(DeviceBuffer<Material> materials) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;

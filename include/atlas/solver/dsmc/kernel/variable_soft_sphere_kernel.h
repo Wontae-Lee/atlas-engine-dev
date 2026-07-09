@@ -1,16 +1,13 @@
 #pragma once
 
 #include <atlas/core/macros.h>
+#include <atlas/material/material.h>
 #include <atlas/math/math.h>
 #include <atlas/solver/dsmc/kernel/dsmc_scatter.h>
-#include <atlas/material/material.h>
 #include <atlas/solver/dsmc/kernel/variable_hard_sphere_kernel.h>
 
 namespace atlas {
 
-// The variable hard sphere cross-section, but the deflection is forward-biased
-// by the pair's scattering parameter instead of isotropic — which is what lets
-// the model match a gas's diffusion coefficient as well as its viscosity.
 class VariableSoftSphereKernel final {
 public:
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float

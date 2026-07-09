@@ -12,9 +12,6 @@
 
 namespace atlas {
 
-// Runs the per-cell physics for one step. It holds the fluid and the universe
-// it drives, plus the solvers it dispatches to: a cell's allocated solver index
-// is a position in that list.
 class Orchestrator final {
 public:
     class Builder;
@@ -30,8 +27,6 @@ public:
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    // Creates (or resizes) every state the registered solvers read and write.
-    // Called once when the orchestrator is built.
     ATLAS_HOST void
     initialize_states();
 
@@ -67,7 +62,6 @@ private:
 
     UniverseHostPtr _universe {};
 
-    // Indexed by the solver a cell is allocated to.
     HostBuffer<SolverHostPtr> _solvers;
 };
 
@@ -81,8 +75,6 @@ public:
     ATLAS_HOST Builder&
     with_universe(UniverseHostPtr universe) noexcept;
 
-    // Appends a solver. Its position becomes the index the codec allocates
-    // cells to.
     ATLAS_HOST Builder&
     with_solver(SolverHostPtr solver);
 

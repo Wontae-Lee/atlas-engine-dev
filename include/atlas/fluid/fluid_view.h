@@ -10,15 +10,6 @@
 
 namespace atlas {
 
-// A view is the raw-pointer face of a set of fluid states, gathered once on the
-// host so a kernel can capture it by value. Views own nothing; a state the
-// fluid does not carry shows up as a null pointer.
-//
-// Pull one out with Fluid::view<FluidDsmcView>(). Adding a view means adding a
-// struct here with a static make(Fluid&) — nothing in Fluid changes.
-
-// The per-particle data a DSMC collision step reads and writes: it scatters
-// velocities in place and looks each particle's species up in its own table.
 struct FluidDsmcView final {
 
     Float3* velocity {};

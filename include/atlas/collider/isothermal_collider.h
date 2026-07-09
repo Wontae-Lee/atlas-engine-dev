@@ -45,9 +45,6 @@ public:
         return _momentum_accommodation_coefficient;
     }
 
-    // The unit only moves in advance(), so its world bound is cached rather
-    // than rebuilt (8 corners through the sync transform) on every query.
-    // Invalid for an unbounded geometry such as a plane.
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const AABB&
     bound() const noexcept {
         return _bound;

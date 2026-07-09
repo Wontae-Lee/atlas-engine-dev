@@ -34,10 +34,6 @@ public:
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    // Writes <output_directory>/data/fluid_<step>.csv and universe_<step>.csv:
-    // one row per particle and one per cell, columned by whichever states the
-    // fluid and the universe actually carry. Does nothing on a step that is not
-    // a multiple of the interval, or when the interval is zero.
     ATLAS_HOST void
     observe(const Fluid& fluid, const Universe& universe, std::size_t step) const;
 
@@ -54,7 +50,6 @@ public:
 private:
     friend class Builder;
 
-    // Zero disables the state dump.
     std::size_t _interval = 0;
 
     std::filesystem::path _output_directory;
@@ -64,7 +59,6 @@ class Observer::Builder final {
 public:
     Builder() = default;
 
-    // How many steps between state dumps. Zero, the default, disables them.
     ATLAS_HOST Builder&
     with_interval(std::size_t interval) noexcept;
 

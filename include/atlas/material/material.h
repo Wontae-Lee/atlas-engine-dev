@@ -34,7 +34,6 @@ static_assert(ConceptMaterial<Solid>);
 
 class Material final {
 public:
-
     MaterialType type = MaterialType::molecule;
 
     union {

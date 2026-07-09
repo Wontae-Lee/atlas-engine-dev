@@ -7,17 +7,6 @@
 
 namespace atlas {
 
-// A view is the raw-pointer face of a set of universe states, gathered once on
-// the host so a kernel can capture it by value. Views own nothing; a state the
-// universe does not carry shows up as a null pointer.
-//
-// Pull one out with Universe::view<UniverseDsmcView>(). Adding a view means
-// adding a struct here with a static make(Universe&) — nothing in Universe
-// changes.
-
-// The per-cell data a DSMC collision step reads and writes. number_particle is
-// produced by the searcher; allocated_solver is optional (a null one means
-// every cell belongs to this solver).
 struct UniverseDsmcView final {
 
     const float* number_particle {};

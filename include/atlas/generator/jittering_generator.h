@@ -13,9 +13,6 @@
 
 namespace atlas {
 
-// Emits velocities jittered uniformly within a radius around a base value,
-// tagging each particle with a species sampled from its per-species ratio table
-// and writing its temperature.
 class JitteringGenerator final {
 public:
     class Builder;

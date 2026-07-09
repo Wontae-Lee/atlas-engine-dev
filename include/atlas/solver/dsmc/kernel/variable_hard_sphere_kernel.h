@@ -1,17 +1,14 @@
 #pragma once
 
 #include <atlas/core/macros.h>
+#include <atlas/material/material.h>
 #include <atlas/math/math.h>
 #include <atlas/solver/dsmc/kernel/dsmc_scatter.h>
-#include <atlas/material/material.h>
 
 #include <cmath>
 
 namespace atlas {
 
-// The cross-section falls off with relative speed as (2kT_ref / m_r g^2)^(w-1/2),
-// normalised by Gamma(5/2 - w), so the model reproduces a gas whose viscosity
-// scales as T^w. Scattering stays isotropic.
 class VariableHardSphereKernel final {
 public:
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float

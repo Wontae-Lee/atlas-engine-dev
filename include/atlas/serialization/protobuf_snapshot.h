@@ -12,15 +12,11 @@
 
 namespace atlas {
 
-// The fluid's own data, read back from a snapshot. Sources, generators,
-// colliders and sinks belong to the system that drives the fluid, not to the
-// fluid, so none of them appear here.
 struct FluidBinarySnapshot final {
     std::size_t buffer_size    = 0;
     std::size_t particle_count = 0;
     float statistical_weight   = 1.0f;
 
-    // Indexed by species id.
     HostBuffer<Material> materials;
 
     std::optional<HostBuffer<Float3>> positions;
@@ -63,9 +59,6 @@ save_universe_binary(const atlas::Universe& universe, std::string_view path);
 UniverseBinarySnapshot
 load_universe_binary(std::string_view path);
 
-// Rebuilds the object a snapshot was taken of, restoring its material
-// dictionary and every state the snapshot carries. Together these are what a
-// restart needs: a fluid and a universe that resume where the run stopped.
 FluidHostPtr
 restore_fluid(std::string_view path);
 

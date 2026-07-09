@@ -28,11 +28,8 @@ static_assert(ConceptDsmcKernel<HardSphereKernel>);
 static_assert(ConceptDsmcKernel<VariableHardSphereKernel>);
 static_assert(ConceptDsmcKernel<VariableSoftSphereKernel>);
 
-// The collision model, as a tagged union of stateless leaves. Trivially
-// copyable, so a kernel captures it by value.
 class DsmcKernel final {
 public:
-
     DsmcKernelType type = DsmcKernelType::hard_sphere;
 
     union {
@@ -47,8 +44,7 @@ public:
     ATLAS_ALL_DEVICE
     DsmcKernel() noexcept;
 
-    ATLAS_ALL_DEVICE explicit
-    DsmcKernel(DsmcKernelType kernel_type) noexcept;
+    ATLAS_ALL_DEVICE explicit DsmcKernel(DsmcKernelType kernel_type) noexcept;
 
     ATLAS_ALL_DEVICE
     DsmcKernel(const DsmcKernel& other) noexcept = default;
@@ -62,7 +58,6 @@ public:
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
     cross_section(const Material& lhs, const Material& rhs, float relative_speed) const noexcept;
 
-    // The collision rate factor of a candidate pair: sigma(g) * g.
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
     sigma_g(const Material* materials,
             std::size_t lhs_species,
