@@ -172,34 +172,6 @@ UniverseMaxSigmaGState::data() const noexcept {
     return _max_sigma_g;
 }
 
-UniverseVolumeState::UniverseVolumeState(const std::size_t cell_count)
-    : _volume(cell_count) {
-}
-
-UniverseVolumeState::UniverseVolumeState(DeviceBuffer<float> volume) noexcept
-    : _volume(std::move(volume)) {
-}
-
-std::size_t
-UniverseVolumeState::size() const noexcept {
-    return _volume.size();
-}
-
-void
-UniverseVolumeState::reset() {
-    reset_buffer(_volume);
-}
-
-DeviceBuffer<float>&
-UniverseVolumeState::data() noexcept {
-    return _volume;
-}
-
-const DeviceBuffer<float>&
-UniverseVolumeState::data() const noexcept {
-    return _volume;
-}
-
 UniverseThermalEnergyState::UniverseThermalEnergyState(const std::size_t cell_count)
     : _thermal_energy(cell_count) {
 }
@@ -282,34 +254,6 @@ UniverseCollisionCountState::data() noexcept {
 const DeviceBuffer<int>&
 UniverseCollisionCountState::data() const noexcept {
     return _collision_count;
-}
-
-UniverseCollisionRemainderState::UniverseCollisionRemainderState(const std::size_t cell_count)
-    : _collision_remainder(cell_count) {
-}
-
-UniverseCollisionRemainderState::UniverseCollisionRemainderState(DeviceBuffer<float> collision_remainder) noexcept
-    : _collision_remainder(std::move(collision_remainder)) {
-}
-
-std::size_t
-UniverseCollisionRemainderState::size() const noexcept {
-    return _collision_remainder.size();
-}
-
-void
-UniverseCollisionRemainderState::reset() {
-    reset_buffer(_collision_remainder);
-}
-
-DeviceBuffer<float>&
-UniverseCollisionRemainderState::data() noexcept {
-    return _collision_remainder;
-}
-
-const DeviceBuffer<float>&
-UniverseCollisionRemainderState::data() const noexcept {
-    return _collision_remainder;
 }
 
 UniverseKnudsenNumberState::UniverseKnudsenNumberState(const std::size_t cell_count)

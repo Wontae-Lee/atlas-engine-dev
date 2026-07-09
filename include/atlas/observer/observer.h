@@ -1,18 +1,18 @@
 #pragma once
 
-#include <atlas/container/type_store.h>
 #include <atlas/core/macros.h>
 #include <atlas/memory/memory.h>
-#include <atlas/observer/sensor_metrics.h>
 
 #include <cstddef>
 #include <filesystem>
-#include <memory>
 #include <utility>
 
 namespace atlas {
+class Fluid;
+class Universe;
+}
 
-using SensorMetricsStore = TypeStore<SensorMetrics>;
+namespace atlas {
 
 class Observer final {
 public:
@@ -34,64 +34,42 @@ public:
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    template <typename SensorMetricsT, typename... Args>
-    ATLAS_HOST ATLAS_FORCE_INLINE SensorMetricsT&
-    emplace_sensor_metrics(Args&&... args) {
-        return _sensor_metrics.template emplace<SensorMetricsT>(std::forward<Args>(args)...);
-    }
-
-    template <typename SensorMetricsT>
-    ATLAS_HOST ATLAS_FORCE_INLINE void
-    set_sensor_metrics(std::unique_ptr<SensorMetricsT> sensor_metrics) {
-        _sensor_metrics.template set<SensorMetricsT>(std::move(sensor_metrics));
-    }
-
-    template <typename SensorMetricsT>
-    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE SensorMetricsT*
-    sensor_metrics() noexcept {
-        return _sensor_metrics.template get<SensorMetricsT>();
-    }
-
-    template <typename SensorMetricsT>
-    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE const SensorMetricsT*
-    sensor_metrics() const noexcept {
-        return _sensor_metrics.template get<SensorMetricsT>();
-    }
-
-    template <typename SensorMetricsT>
-    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE bool
-    has_sensor_metrics() const noexcept {
-        return _sensor_metrics.template contains<SensorMetricsT>();
-    }
-
-    template <typename SensorMetricsT>
-    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE std::unique_ptr<SensorMetricsT>
-    remove_sensor_metrics() {
-        return _sensor_metrics.template remove<SensorMetricsT>();
-    }
-
+    // Writes <output_directory>/data/fluid_<step>.csv and universe_<step>.csv:
+    // one row per particle and one per cell, columned by whichever states the
+    // fluid and the universe actually carry. Does nothing on a step that is not
+    // a multiple of the interval, or when the interval is zero.
     ATLAS_HOST void
-    export_csv(const std::filesystem::path& output_directory) const;
+    observe(const Fluid& fluid, const Universe& universe, std::size_t step) const;
 
-    ATLAS_NODISCARD ATLAS_HOST SensorMetricsStore&
-    sensor_metrics() noexcept;
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
+    interval() const noexcept {
+        return _interval;
+    }
 
-    ATLAS_NODISCARD ATLAS_HOST const SensorMetricsStore&
-    sensor_metrics() const noexcept;
+    ATLAS_NODISCARD ATLAS_HOST const std::filesystem::path&
+    output_directory() const noexcept {
+        return _output_directory;
+    }
 
 private:
-    SensorMetricsStore _sensor_metrics;
+    friend class Builder;
+
+    // Zero disables the state dump.
+    std::size_t _interval = 0;
+
+    std::filesystem::path _output_directory;
 };
 
 class Observer::Builder final {
 public:
     Builder() = default;
 
+    // How many steps between state dumps. Zero, the default, disables them.
     ATLAS_HOST Builder&
-    with_source_sensor_metrics(std::size_t reserve_count = 0) noexcept;
+    with_interval(std::size_t interval) noexcept;
 
     ATLAS_HOST Builder&
-    with_sink_sensor_metrics(std::size_t reserve_count = 0) noexcept;
+    with_output_directory(std::filesystem::path output_directory);
 
     ATLAS_NODISCARD ATLAS_HOST Observer
     build() const;
@@ -100,10 +78,8 @@ public:
     make_host_shared() const;
 
 private:
-    bool _with_source_sensor_metrics  = false;
-    bool _with_sink_sensor_metrics    = false;
-    std::size_t _source_reserve_count = 0;
-    std::size_t _sink_reserve_count   = 0;
+    std::size_t _interval = 0;
+    std::filesystem::path _output_directory;
 };
 
 using ObserverHostPtr = host_shared_ptr<Observer>;

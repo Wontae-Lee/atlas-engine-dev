@@ -26,7 +26,7 @@ using atlas::tol;
 
 Material
 make_molecule(const float mass) {
-    return Material(Molecule(mass, 1.0f, 2.0f, 3.0f));
+    return Material(Molecule(mass, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 0.5f, 1.0f));
 }
 
 }
@@ -40,7 +40,7 @@ TEST(MaterialDictionary, BuilderRejectsEmpty) {
 TEST(MaterialDictionary, BuildsDeviceBufferOfMaterials) {
     auto dictionary = MaterialDictionary::builder()
                           .with_material(make_molecule(2.0f))
-                          .with_material(Material(Atom(4.0f, 1.0f, 2.0f, 3.0f)))
+                          .with_material(Material(Atom(4.0f, 1.0f, 2.0f, 3.0f, 5.0f, 6.0f, 0.5f, 1.0f)))
                           .build();
 
     EXPECT_EQ(dictionary.size(), std::size_t { 2 });
@@ -65,7 +65,7 @@ TEST(MaterialDictionary, RoundTripsSolidThroughDeviceBuffer) {
 
     EXPECT_EQ(solid.type, MaterialType::solid);
     EXPECT_NEAR(solid.mass(), 7.0f, tol);
-    EXPECT_THROW(static_cast<void>(solid.translational_energy()), std::runtime_error);
+    EXPECT_NEAR(solid.translational_energy(), 1.0f, tol);
 }
 
 TEST(MaterialDictionary, WithMaterialsAppendsRange) {

@@ -60,6 +60,21 @@ SpatialHashingSearcher::reset() {
     _cell_end.assign(static_cast<std::size_t>(_cell_count), -1);
 }
 
+SpatialHashingSearcherView
+SpatialHashingSearcher::view() const noexcept {
+    return SpatialHashingSearcherView {
+        cell_key(),
+        indices(),
+        cell_start(),
+        cell_end()
+    };
+}
+
+const std::uint32_t*
+SpatialHashingSearcher::cell_key() const noexcept {
+    return atlas::raw_pointer_cast(_keys.data());
+}
+
 const int*
 SpatialHashingSearcher::indices() const noexcept {
     return atlas::raw_pointer_cast(_indices.data());

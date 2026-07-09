@@ -174,33 +174,6 @@ private:
     DeviceBuffer<std::size_t> _species;
 };
 
-class FluidActiveState final : public FluidState {
-public:
-    FluidActiveState() = default;
-
-    ATLAS_HOST explicit FluidActiveState(std::size_t buffer_size);
-
-    ATLAS_HOST explicit FluidActiveState(DeviceBuffer<int> active) noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST std::size_t
-    size() const noexcept override;
-
-    ATLAS_HOST void
-    compact(const DeviceBuffer<std::size_t>& compact_indices, std::size_t kept) override;
-
-    ATLAS_HOST void
-    reset() override;
-
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
-    data() noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
-    data() const noexcept;
-
-private:
-    DeviceBuffer<int> _active;
-};
-
 class FluidTemperatureState final : public FluidState {
 public:
     FluidTemperatureState() = default;

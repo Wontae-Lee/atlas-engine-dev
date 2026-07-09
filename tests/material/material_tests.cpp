@@ -35,12 +35,16 @@ static_assert(std::is_trivially_copyable_v<Neutron>);
 static_assert(std::is_trivially_copyable_v<Solid>);
 
 TEST(Molecule, GettersReturnConstructedValues) {
-    const Molecule leaf(2.0f, 1.5f, 2.5f, 3.5f);
+    const Molecule leaf(2.0f, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f, 0.75f, 1.25f);
 
     EXPECT_NEAR(leaf.mass(), 2.0f, tol);
     EXPECT_NEAR(leaf.translational_energy(), 1.5f, tol);
     EXPECT_NEAR(leaf.rotational_energy(), 2.5f, tol);
     EXPECT_NEAR(leaf.vibrational_energy(), 3.5f, tol);
+    EXPECT_NEAR(leaf.reference_diameter(), 4.5f, tol);
+    EXPECT_NEAR(leaf.reference_temperature(), 5.5f, tol);
+    EXPECT_NEAR(leaf.viscosity_index(), 0.75f, tol);
+    EXPECT_NEAR(leaf.scattering_parameter(), 1.25f, tol);
 }
 
 TEST(Molecule, DefaultConstructsZeroed) {
@@ -50,10 +54,14 @@ TEST(Molecule, DefaultConstructsZeroed) {
     EXPECT_NEAR(leaf.translational_energy(), 0.0f, tol);
     EXPECT_NEAR(leaf.rotational_energy(), 0.0f, tol);
     EXPECT_NEAR(leaf.vibrational_energy(), 0.0f, tol);
+    EXPECT_NEAR(leaf.reference_diameter(), 0.0f, tol);
+    EXPECT_NEAR(leaf.reference_temperature(), 0.0f, tol);
+    EXPECT_NEAR(leaf.viscosity_index(), 0.5f, tol);
+    EXPECT_NEAR(leaf.scattering_parameter(), 1.0f, tol);
 }
 
 TEST(Atom, GettersReturnConstructedValues) {
-    const Atom leaf(4.0f, 1.0f, 2.0f, 3.0f);
+    const Atom leaf(4.0f, 1.0f, 2.0f, 3.0f, 5.0f, 6.0f, 0.75f, 1.25f);
 
     EXPECT_NEAR(leaf.mass(), 4.0f, tol);
     EXPECT_NEAR(leaf.translational_energy(), 1.0f, tol);
@@ -62,7 +70,7 @@ TEST(Atom, GettersReturnConstructedValues) {
 }
 
 TEST(Ion, GettersReturnConstructedValues) {
-    const Ion leaf(5.0f, 1.0f, 2.0f, 3.0f);
+    const Ion leaf(5.0f, 1.0f, 2.0f, 3.0f, 6.0f, 7.0f, 0.75f, 1.25f);
 
     EXPECT_NEAR(leaf.mass(), 5.0f, tol);
     EXPECT_NEAR(leaf.translational_energy(), 1.0f, tol);
@@ -71,7 +79,7 @@ TEST(Ion, GettersReturnConstructedValues) {
 }
 
 TEST(Neutron, GettersReturnConstructedValues) {
-    const Neutron leaf(6.0f, 1.0f, 2.0f, 3.0f);
+    const Neutron leaf(6.0f, 1.0f, 2.0f, 3.0f, 7.0f, 8.0f, 0.75f, 1.25f);
 
     EXPECT_NEAR(leaf.mass(), 6.0f, tol);
     EXPECT_NEAR(leaf.translational_energy(), 1.0f, tol);
@@ -86,12 +94,16 @@ TEST(Solid, CarriesOnlyMass) {
     EXPECT_EQ(sizeof(Solid), sizeof(float));
 }
 
-TEST(Solid, InternalEnergyGettersThrow) {
+TEST(Solid, AbsentPropertiesReadAsOne) {
     const Solid leaf(7.0f);
 
-    EXPECT_THROW(static_cast<void>(leaf.translational_energy()), std::runtime_error);
-    EXPECT_THROW(static_cast<void>(leaf.rotational_energy()), std::runtime_error);
-    EXPECT_THROW(static_cast<void>(leaf.vibrational_energy()), std::runtime_error);
+    EXPECT_NEAR(leaf.translational_energy(), 1.0f, tol);
+    EXPECT_NEAR(leaf.rotational_energy(), 1.0f, tol);
+    EXPECT_NEAR(leaf.vibrational_energy(), 1.0f, tol);
+    EXPECT_NEAR(leaf.reference_diameter(), 1.0f, tol);
+    EXPECT_NEAR(leaf.reference_temperature(), 1.0f, tol);
+    EXPECT_NEAR(leaf.viscosity_index(), 1.0f, tol);
+    EXPECT_NEAR(leaf.scattering_parameter(), 1.0f, tol);
 }
 
 TEST(Material, DefaultConstructsMolecule) {
@@ -102,17 +114,21 @@ TEST(Material, DefaultConstructsMolecule) {
 }
 
 TEST(Material, WrapsMoleculeLeafAndExposesGetters) {
-    const Material material(Molecule(2.0f, 1.5f, 2.5f, 3.5f));
+    const Material material(Molecule(2.0f, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f, 0.75f, 1.25f));
 
     EXPECT_EQ(material.type, MaterialType::molecule);
     EXPECT_NEAR(material.mass(), 2.0f, tol);
     EXPECT_NEAR(material.translational_energy(), 1.5f, tol);
     EXPECT_NEAR(material.rotational_energy(), 2.5f, tol);
     EXPECT_NEAR(material.vibrational_energy(), 3.5f, tol);
+    EXPECT_NEAR(material.reference_diameter(), 4.5f, tol);
+    EXPECT_NEAR(material.reference_temperature(), 5.5f, tol);
+    EXPECT_NEAR(material.viscosity_index(), 0.75f, tol);
+    EXPECT_NEAR(material.scattering_parameter(), 1.25f, tol);
 }
 
 TEST(Material, WrapsAtomLeaf) {
-    const Material material(Atom(4.0f, 1.0f, 2.0f, 3.0f));
+    const Material material(Atom(4.0f, 1.0f, 2.0f, 3.0f, 5.0f, 6.0f, 0.75f, 1.25f));
 
     EXPECT_EQ(material.type, MaterialType::atom);
     EXPECT_NEAR(material.mass(), 4.0f, tol);
@@ -120,7 +136,7 @@ TEST(Material, WrapsAtomLeaf) {
 }
 
 TEST(Material, WrapsIonLeaf) {
-    const Material material(Ion(5.0f, 1.0f, 2.0f, 3.0f));
+    const Material material(Ion(5.0f, 1.0f, 2.0f, 3.0f, 6.0f, 7.0f, 0.75f, 1.25f));
 
     EXPECT_EQ(material.type, MaterialType::ion);
     EXPECT_NEAR(material.mass(), 5.0f, tol);
@@ -128,7 +144,7 @@ TEST(Material, WrapsIonLeaf) {
 }
 
 TEST(Material, WrapsNeutronLeaf) {
-    const Material material(Neutron(6.0f, 1.0f, 2.0f, 3.0f));
+    const Material material(Neutron(6.0f, 1.0f, 2.0f, 3.0f, 7.0f, 8.0f, 0.75f, 1.25f));
 
     EXPECT_EQ(material.type, MaterialType::neutron);
     EXPECT_NEAR(material.mass(), 6.0f, tol);
@@ -142,16 +158,20 @@ TEST(Material, WrapsSolidLeafAndExposesMass) {
     EXPECT_NEAR(material.mass(), 7.0f, tol);
 }
 
-TEST(Material, SolidInternalEnergyGettersThrow) {
+TEST(Material, SolidAbsentPropertiesReadAsOne) {
     const Material material(Solid(7.0f));
 
-    EXPECT_THROW(static_cast<void>(material.translational_energy()), std::runtime_error);
-    EXPECT_THROW(static_cast<void>(material.rotational_energy()), std::runtime_error);
-    EXPECT_THROW(static_cast<void>(material.vibrational_energy()), std::runtime_error);
+    EXPECT_NEAR(material.translational_energy(), 1.0f, tol);
+    EXPECT_NEAR(material.rotational_energy(), 1.0f, tol);
+    EXPECT_NEAR(material.vibrational_energy(), 1.0f, tol);
+    EXPECT_NEAR(material.reference_diameter(), 1.0f, tol);
+    EXPECT_NEAR(material.reference_temperature(), 1.0f, tol);
+    EXPECT_NEAR(material.viscosity_index(), 1.0f, tol);
+    EXPECT_NEAR(material.scattering_parameter(), 1.0f, tol);
 }
 
 TEST(Material, CopyPreservesActiveLeaf) {
-    const Material material(Ion(5.0f, 1.0f, 2.0f, 3.0f));
+    const Material material(Ion(5.0f, 1.0f, 2.0f, 3.0f, 6.0f, 7.0f, 0.75f, 1.25f));
     const Material copy = material;
 
     EXPECT_EQ(copy.type, MaterialType::ion);
@@ -160,11 +180,11 @@ TEST(Material, CopyPreservesActiveLeaf) {
 }
 
 TEST(Material, AssignmentReplacesActiveLeaf) {
-    Material material(Molecule(2.0f, 1.5f, 2.5f, 3.5f));
+    Material material(Molecule(2.0f, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f, 0.75f, 1.25f));
 
     material = Material(Solid(7.0f));
 
     EXPECT_EQ(material.type, MaterialType::solid);
     EXPECT_NEAR(material.mass(), 7.0f, tol);
-    EXPECT_THROW(static_cast<void>(material.rotational_energy()), std::runtime_error);
+    EXPECT_NEAR(material.rotational_energy(), 1.0f, tol);
 }

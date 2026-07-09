@@ -34,7 +34,7 @@ make_generator_with_direct_mass() {
 MaterialDictionary
 make_dictionary(const float mass) {
     return MaterialDictionary::builder()
-        .with_material(Material(Molecule(mass, 0.0f, 0.0f, 0.0f)))
+        .with_material(Material(Molecule(mass, 0.0f, 0.0f, 0.0f, 3.0e-10f, 273.0f, 0.5f, 1.0f)))
         .build();
 }
 

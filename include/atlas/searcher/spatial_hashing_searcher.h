@@ -5,6 +5,7 @@
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
+#include <atlas/searcher/spatial_hashing_searcher_view.h>
 #include <atlas/universe/universe.h>
 #include <atlas/universe/universe_state.h>
 
@@ -71,10 +72,12 @@ public:
         return _cell_count;
     }
 
-    ATLAS_NODISCARD ATLAS_HOST int
-    particle_count() const noexcept {
-        return static_cast<int>(_indices.size());
-    }
+    // The four device arrays as raw pointers, for a kernel to capture by value.
+    ATLAS_NODISCARD ATLAS_HOST SpatialHashingSearcherView
+    view() const noexcept;
+
+    ATLAS_NODISCARD ATLAS_HOST const std::uint32_t*
+    cell_key() const noexcept;
 
     // Particle indices in cell-sorted order. Cell c owns the slice
     // indices[cell_start[c] .. cell_end[c]); cell_start[c] < 0 means the cell
@@ -113,7 +116,8 @@ public:
             && atlas::all(cell < grid_size);
     }
 
-private:
+    // The steps classify() runs, in order. Public only because nvcc refuses an
+    // extended __host__ __device__ lambda inside a private member function.
     ATLAS_HOST void
     compute_keys(int alive, const Float3* positions);
 

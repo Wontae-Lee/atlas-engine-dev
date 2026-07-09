@@ -2,16 +2,6 @@ syntax = "proto3";
 
 package atlas.proto;
 
-message OptionalDouble {
-  bool has_value = 1;
-  double value = 2;
-}
-
-message OptionalInt32 {
-  bool has_value = 1;
-  int32 value = 2;
-}
-
 message Vector3 {
   double x = 1;
   double y = 2;
@@ -23,36 +13,18 @@ message RawBuffer {
   bytes data = 2;
 }
 
-message MaterialProperty {
+// One entry of a MaterialDictionary, indexed by species id. A solid carries
+// only mass; the remaining fields read back as one, so they round-trip.
+message Material {
   int32 type = 1;
   double mass = 2;
-  double molecular_mass = 3;
-  OptionalDouble translational_energy = 4;
-  OptionalDouble rotational_energy = 5;
-  OptionalDouble vibrational_energy = 6;
-  OptionalInt32 species_id = 7;
-  OptionalDouble reference_diameter = 8;
-  OptionalDouble viscosity_index = 9;
-  OptionalDouble scattering_parameter = 10;
-  OptionalDouble rest_density = 11;
-  OptionalDouble pressure_coefficient = 12;
-  OptionalDouble dynamic_viscosity = 13;
-  reserved 14;
-  OptionalDouble electronic_energy = 15;
-  OptionalInt32 charge = 16;
-  OptionalDouble reference_temperature = 17;
-}
-
-enum GeneratorType {
-  GENERATOR_MAXWELL_SIGMA = 0;
-  GENERATOR_MAXWELL_BOLTZMANN = 1;
-  GENERATOR_UNIFORM = 2;
-}
-
-message GeneratorOperator {
-  GeneratorType type = 1;
-  uint32 seed = 2;
-  Vector3 bulk_velocity = 3;
+  double translational_energy = 3;
+  double rotational_energy = 4;
+  double vibrational_energy = 5;
+  double reference_diameter = 6;
+  double reference_temperature = 7;
+  double viscosity_index = 8;
+  double scattering_parameter = 9;
 }
 
 enum ScalarType {
@@ -66,14 +38,22 @@ message FluidSnapshot {
   uint64 buffer_size = 3;
   uint64 particle_count = 4;
   double statistical_weight = 5;
-  repeated MaterialProperty properties = 6;
-  repeated GeneratorOperator generators = 7;
+  // 6 was the MaterialProperty table, 7 the generator operators. Generators
+  // are no longer owned by the fluid.
+  reserved 6, 7;
   RawBuffer positions = 8;
   RawBuffer velocities = 9;
   RawBuffer species = 10;
   RawBuffer active = 11;
   RawBuffer temperature = 12;
   bool includes_temperature_state = 13;
+  repeated Material materials = 14;
+  RawBuffer translational_energy = 15;
+  bool includes_translational_energy_state = 16;
+  RawBuffer rotational_energy = 17;
+  bool includes_rotational_energy_state = 18;
+  RawBuffer vibrational_energy = 19;
+  bool includes_vibrational_energy_state = 20;
 }
 
 enum UniverseStateKind {
@@ -85,6 +65,9 @@ enum UniverseStateKind {
   UNIVERSE_NUMBER_PARTICLE = 5;
   UNIVERSE_COLLISION_COUNT = 6;
   UNIVERSE_KNUDSEN_NUMBER = 7;
+  UNIVERSE_MAX_SIGMA_G = 8;
+  UNIVERSE_ALLOCATED_SOLVER = 9;
+  UNIVERSE_GRAVITY = 10;
 }
 
 message UniverseState {

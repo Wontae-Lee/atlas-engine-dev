@@ -63,31 +63,6 @@ public:
         return index;
     }
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    representative_characteristic_length() const noexcept {
-        return _representative_characteristic_length;
-    }
-
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    representative_collision_cross_sectional_area() const noexcept {
-        return _representative_collision_cross_sectional_area;
-    }
-
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    representative_statistical_weight() const noexcept {
-        return _representative_statistical_weight;
-    }
-
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
-    representative_cell_volume() const noexcept {
-        return _representative_cell_volume;
-    }
-
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const SplitTable&
-    kn_split() const noexcept {
-        return _kn_split;
-    }
-
 private:
     float _representative_characteristic_length = 1.0f;
 
