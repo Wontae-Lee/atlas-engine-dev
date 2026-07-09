@@ -11,7 +11,6 @@
 namespace {
 
 using atlas::FluidSpeciesState;
-using atlas::FluidTemperatureState;
 using atlas::FluidVelocityState;
 using atlas::UniformGenerator;
 using atlas::Float3;
@@ -53,14 +52,12 @@ TEST(UniformGenerator, GenerateFillsStatesAndReturnsCount) {
     const auto            generator = make_generator();
     const std::size_t     count     = 8;
     FluidVelocityState    velocities(count);
-    FluidTemperatureState temperatures(count);
     FluidSpeciesState     species(count);
 
-    const int filled = generator.generate(&velocities, &temperatures, &species, 0, count);
+    const int filled = generator.generate(&velocities, &species, 0, count);
 
     EXPECT_EQ(filled, static_cast<int>(count));
     EXPECT_EQ(species.data()[0], std::size_t { 3 });
-    EXPECT_NEAR(temperatures.data()[0], 250.0f, tol);
 
     const Float3 v = velocities.data()[0];
     EXPECT_TRUE(atlas::isfinite(v));
@@ -70,8 +67,7 @@ TEST(UniformGenerator, GenerateFillsStatesAndReturnsCount) {
 
 TEST(UniformGenerator, GenerateRejectsNullState) {
     const auto            generator = make_generator();
-    FluidTemperatureState temperatures(4);
     FluidSpeciesState     species(4);
 
-    EXPECT_EQ(generator.generate(nullptr, &temperatures, &species, 0, 4), 0);
+    EXPECT_EQ(generator.generate(nullptr, &species, 0, 4), 0);
 }

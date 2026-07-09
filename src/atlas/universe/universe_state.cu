@@ -340,4 +340,32 @@ UniverseKnudsenNumberState::data() const noexcept {
     return _knudsen_number;
 }
 
+UniverseAllocatedSolverState::UniverseAllocatedSolverState(const std::size_t cell_count)
+    : _allocated_solver(cell_count) {
+}
+
+UniverseAllocatedSolverState::UniverseAllocatedSolverState(DeviceBuffer<int> allocated_solver) noexcept
+    : _allocated_solver(std::move(allocated_solver)) {
+}
+
+std::size_t
+UniverseAllocatedSolverState::size() const noexcept {
+    return _allocated_solver.size();
+}
+
+void
+UniverseAllocatedSolverState::reset() {
+    reset_buffer(_allocated_solver);
+}
+
+DeviceBuffer<int>&
+UniverseAllocatedSolverState::data() noexcept {
+    return _allocated_solver;
+}
+
+const DeviceBuffer<int>&
+UniverseAllocatedSolverState::data() const noexcept {
+    return _allocated_solver;
+}
+
 }

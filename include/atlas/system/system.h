@@ -1,16 +1,23 @@
 #pragma once
 
+#include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/collider/collider.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
+#include <atlas/generator/generator.h>
 #include <atlas/memory/memory.h>
-#include <atlas/orchestrator/orchestrator.h>
-#include <atlas/sink/sink.h>
+#include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/source/source.h>
 #include <atlas/universe/universe.h>
 
+#include <cstddef>
+
 namespace atlas {
 
+// Drives one simulation step. Only the emission stage exists so far: every
+// source spawns particle positions into the fluid and its paired generator
+// fills the remaining per-particle states.
 class System final {
 public:
     class Builder;
@@ -21,58 +28,90 @@ public:
     ATLAS_HOST
     System(FluidHostPtr fluid,
            UniverseHostPtr universe,
-           SourceHostPtr source,
-           SinkHostPtr sink,
-           ColliderHostPtr collider,
-           OrchestratorHostPtr orchestrator,
-           float dt = 0.01f);
+           HostBuffer<SourceHostPtr> sources,
+           HostBuffer<GeneratorHostPtr> generators,
+           const HostBuffer<Collider>& colliders,
+           float dt);
+
+    System(const System&) = default;
+
+    System(System&&) noexcept = default;
 
     ~System() = default;
+
+    System&
+    operator=(const System&)
+        = default;
+
+    System&
+    operator=(System&&) noexcept = default;
 
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
     ATLAS_HOST void
-    update();
-
-    ATLAS_HOST void
     emit();
 
+    // Sorts the live particles into the universe's grid. The per-cell particle
+    // counts land in UniverseNumberParticleState when the universe carries one.
     ATLAS_HOST void
-    orchestrate();
+    search();
 
+    // Moves every particle over one step. A particle whose swept segment hits a
+    // collider is reflected off the nearest one instead of being integrated;
+    // the colliders' own units then advance.
     ATLAS_HOST void
     advect();
 
-    ATLAS_HOST void
-    remove();
-
-    ATLAS_HOST void
-    time_integration();
-
     ATLAS_NODISCARD ATLAS_HOST float
-    dt() const noexcept;
+    dt() const noexcept {
+        return _dt;
+    }
 
     ATLAS_NODISCARD ATLAS_HOST const FluidHostPtr&
-    fluid() const noexcept;
+    fluid() const noexcept {
+        return _fluid;
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST const UniverseHostPtr&
+    universe() const noexcept {
+        return _universe;
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST const SpatialHashingSearcherHostPtr&
+    searcher() const noexcept {
+        return _searcher;
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
+    source_count() const noexcept {
+        return _sources.size();
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
+    collider_count() const noexcept {
+        return _colliders.size();
+    }
 
 private:
+    float _dt = 0.01f;
+
     FluidHostPtr _fluid {};
 
     UniverseHostPtr _universe {};
 
-    SourceHostPtr _source {};
+    // Built from the universe's grid when the system is constructed.
+    SpatialHashingSearcherHostPtr _searcher {};
 
-    SinkHostPtr _sink {};
+    // Parallel to _generators: source i emits positions, generator i fills the
+    // states that spawn() does not write.
+    HostBuffer<SourceHostPtr> _sources;
 
-    ColliderHostPtr _collider {};
+    HostBuffer<GeneratorHostPtr> _generators;
 
-    OrchestratorHostPtr _orchestrator {};
-
-    float _dt { 0.01f };
-
-    FluidPositionState* _cached_position_state {};
-    FluidVelocityState* _cached_velocity_state {};
+    // Trivially copyable, so the colliders live on the device and every
+    // particle walks the whole set. Each one caches its own world AABB.
+    DeviceBuffer<Collider> _colliders;
 };
 
 class System::Builder final {
@@ -80,22 +119,18 @@ public:
     Builder() = default;
 
     ATLAS_HOST Builder&
-    with_fluid(const FluidHostPtr& fluid) noexcept;
+    with_fluid(FluidHostPtr fluid) noexcept;
 
     ATLAS_HOST Builder&
-    with_domain(const UniverseHostPtr& universe) noexcept;
+    with_universe(UniverseHostPtr universe) noexcept;
+
+    // Appends one source and the generator that populates the particles it
+    // spawns. The two are stored together.
+    ATLAS_HOST Builder&
+    with_emitter(SourceHostPtr source, GeneratorHostPtr generator);
 
     ATLAS_HOST Builder&
-    with_source(const SourceHostPtr& source) noexcept;
-
-    ATLAS_HOST Builder&
-    with_sink(const SinkHostPtr& sink) noexcept;
-
-    ATLAS_HOST Builder&
-    with_collider(const ColliderHostPtr& collider) noexcept;
-
-    ATLAS_HOST Builder&
-    with_solver(const OrchestratorHostPtr& orchestrator) noexcept;
+    with_collider(const Collider& collider);
 
     ATLAS_HOST Builder&
     with_dt(float dt) noexcept;
@@ -111,19 +146,17 @@ private:
     validate() const;
 
 private:
+    float _dt = 0.01f;
+
     FluidHostPtr _fluid {};
 
     UniverseHostPtr _universe {};
 
-    SourceHostPtr _source {};
+    HostBuffer<SourceHostPtr> _sources;
 
-    SinkHostPtr _sink {};
+    HostBuffer<GeneratorHostPtr> _generators;
 
-    ColliderHostPtr _collider {};
-
-    OrchestratorHostPtr _orchestrator {};
-
-    float _dt { 0.01f };
+    HostBuffer<Collider> _colliders;
 };
 
 using SystemHostPtr = atlas::host_shared_ptr<System>;

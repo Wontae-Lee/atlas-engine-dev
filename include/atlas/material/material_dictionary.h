@@ -1,12 +1,12 @@
 #pragma once
 
 #include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/core/macros.h>
 #include <atlas/material/material.h>
 #include <atlas/memory/memory.h>
 
 #include <cstddef>
-#include <vector>
 
 namespace atlas {
 
@@ -69,7 +69,7 @@ public:
     with_material(const Material& material);
 
     ATLAS_HOST Builder&
-    with_materials(const std::vector<Material>& materials);
+    with_materials(const HostBuffer<Material>& materials);
 
     ATLAS_NODISCARD ATLAS_HOST MaterialDictionary
     build();
@@ -82,7 +82,7 @@ private:
     validate() const;
 
 private:
-    std::vector<Material> _materials;
+    HostBuffer<Material> _materials;
 };
 
 using MaterialDictionaryHostPtr = atlas::host_shared_ptr<MaterialDictionary>;

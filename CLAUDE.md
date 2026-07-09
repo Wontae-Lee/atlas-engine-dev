@@ -48,6 +48,7 @@ host+device, `DeviceBuffer<T>`-capable); leaves that own a `DeviceBuffer` use
 
 | Module | Read |
 |---|---|
+| Codec — per-cell solver selection | [atlas/codec/codec.md](docs/atlas/codec/codec.md) |
 | Collider — particle/boundary collision resolution | [atlas/collider/collider.md](docs/atlas/collider/collider.md) |
 | Sink — particle removal (despawn) at a boundary | [atlas/sink/sink.md](docs/atlas/sink/sink.md) |
 | Source — particle emission from a boundary | [atlas/source/source.md](docs/atlas/source/source.md) |

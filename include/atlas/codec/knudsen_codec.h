@@ -1,89 +1,103 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
-#include <atlas/codec/codec.h>
+#include <atlas/container/container.h>
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 #include <atlas/memory/memory.h>
-#include <atlas/universe/universe.h>
+#include <atlas/universe/universe_state.h>
+
+#include <cstddef>
 
 namespace atlas {
 
-class KnudsenCodec final : public Codec {
+// Reads each cell's number particle count, turns it into a Knudsen number, and
+// buckets that number into a solver index — in one pass over every cell.
+class KnudsenCodec final {
 public:
     class Builder;
+    static constexpr int split_count = 4;
+    using SplitTable = Container<float, static_cast<std::size_t>(split_count)>;
 
+public:
     KnudsenCodec() = default;
 
     ATLAS_HOST
-    KnudsenCodec(UniverseHostPtr domain,
-                 FluidHostPtr fluid,
-                 SearcherHostPtr searcher,
-                 float characteristic_length,
-                 float representative_collision_cross_sectional_area = 1.0f);
-
-    ~KnudsenCodec() override = default;
-
-    ATLAS_HOST void
-    encode() override;
-
-    ATLAS_HOST void
-    decode() override;
+    KnudsenCodec(float representative_characteristic_length,
+                 float representative_collision_cross_sectional_area,
+                 float representative_statistical_weight,
+                 float representative_cell_volume);
 
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-public:
     ATLAS_HOST void
-    encode_cells();
+    allocate(const UniverseTemperatureState* temperature,
+             const UniverseNumberParticleState* number_particle,
+             UniverseAllocatedSolverState* allocated_solver) const;
 
-    ATLAS_HOST void
-    decode_cells();
-
-private:
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static bool
-    fixed_cell(const CodecProbe& probe, const int cell) noexcept {
-        return probe.fixed_region_ptr != nullptr && probe.fixed_region_ptr[cell] == 1;
-    }
-
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
-    knudsen_number(const float particle_count,
-                   const float statistical_weight,
-                   const float cell_volume,
-                   const float characteristic_length,
-                   const float representative_collision_cross_sectional_area) noexcept {
-        const float number_density = cell_volume > 0.0f
-            ? particle_count * statistical_weight / cell_volume
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    knudsen_number(const float particle_count) const noexcept {
+        const float number_density = _representative_cell_volume > 0.0f
+            ? particle_count * _representative_statistical_weight / _representative_cell_volume
             : 0.0f;
 
         if (!(number_density > 0.0f)
-            || !(characteristic_length > 0.0f)
-            || !(representative_collision_cross_sectional_area > 0.0f)) {
+            || !(_representative_characteristic_length > 0.0f)
+            || !(_representative_collision_cross_sectional_area > 0.0f)) {
             return 0.0f;
         }
 
         const float mean_free_path = 1.0f
             / (atlas::SQRT_TWO
                * number_density
-               * representative_collision_cross_sectional_area);
-        return mean_free_path / characteristic_length;
+               * _representative_collision_cross_sectional_area);
+        return mean_free_path / _representative_characteristic_length;
     }
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static int
-    solver_index(const float kn, const float* splits, const int split_count) noexcept {
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
+    solver_index(const float kn) const noexcept {
         int index = 0;
-        while (index < split_count && !(kn < splits[index])) {
+        while (index < split_count && !(kn < _kn_split[static_cast<std::size_t>(index)])) {
             ++index;
         }
         return index;
     }
 
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    representative_characteristic_length() const noexcept {
+        return _representative_characteristic_length;
+    }
+
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    representative_collision_cross_sectional_area() const noexcept {
+        return _representative_collision_cross_sectional_area;
+    }
+
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    representative_statistical_weight() const noexcept {
+        return _representative_statistical_weight;
+    }
+
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    representative_cell_volume() const noexcept {
+        return _representative_cell_volume;
+    }
+
+    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const SplitTable&
+    kn_split() const noexcept {
+        return _kn_split;
+    }
+
 private:
-    float _characteristic_length = 1.0f;
+    float _representative_characteristic_length = 1.0f;
 
     float _representative_collision_cross_sectional_area = 1.0f;
 
-    DeviceBuffer<float> d_kn_split {};
+    float _representative_statistical_weight = 1.0f;
+
+    float _representative_cell_volume = 1.0f;
+
+    SplitTable _kn_split { 0.01f, 0.1f, 1.0f, 10.0f };
 };
 
 class KnudsenCodec::Builder final {
@@ -91,26 +105,17 @@ public:
     Builder() = default;
 
     ATLAS_HOST Builder&
-    with_domain(UniverseHostPtr domain) noexcept;
-
-    ATLAS_HOST Builder&
-    with_fluid(FluidHostPtr fluid) noexcept;
-
-    ATLAS_HOST Builder&
-    with_searcher(SearcherHostPtr searcher) noexcept;
-
-    ATLAS_HOST Builder&
-    with_characteristic_length(float characteristic_length) noexcept;
+    with_representative_characteristic_length(float representative_characteristic_length) noexcept;
 
     ATLAS_HOST Builder&
     with_representative_collision_cross_sectional_area(
         float representative_collision_cross_sectional_area) noexcept;
 
     ATLAS_HOST Builder&
-    with_fixed_solver(DeviceBuffer<int> fixed_solver) noexcept;
+    with_representative_statistical_weight(float representative_statistical_weight) noexcept;
 
     ATLAS_HOST Builder&
-    with_fixed_region(DeviceBuffer<int> fixed_region) noexcept;
+    with_representative_cell_volume(float representative_cell_volume) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST KnudsenCodec
     build() const;
@@ -123,19 +128,13 @@ private:
     validate() const;
 
 private:
-    UniverseHostPtr _domain {};
-
-    FluidHostPtr _fluid {};
-
-    SearcherHostPtr _searcher {};
-
-    float _characteristic_length = 1.0f;
+    float _representative_characteristic_length = 1.0f;
 
     float _representative_collision_cross_sectional_area = 1.0f;
 
-    DeviceBuffer<int> _fixed_solver {};
+    float _representative_statistical_weight = 1.0f;
 
-    DeviceBuffer<int> _fixed_region {};
+    float _representative_cell_volume = 1.0f;
 };
 
 using KnudsenCodecHostPtr = atlas::host_shared_ptr<KnudsenCodec>;

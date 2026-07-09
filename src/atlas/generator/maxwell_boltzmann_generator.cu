@@ -34,20 +34,17 @@ MaxwellBoltzmannGenerator::builder() noexcept {
 
 int
 MaxwellBoltzmannGenerator::generate(FluidVelocityState* velocities,
-                                    FluidTemperatureState* temperatures,
                                     FluidSpeciesState* species,
                                     const std::size_t offset,
                                     const std::size_t count) const {
-    if (velocities == nullptr || temperatures == nullptr || species == nullptr || count == 0) {
+    if (velocities == nullptr || species == nullptr || count == 0) {
         return 0;
     }
 
-    DeviceBuffer<Float3>&      velocity_buffer    = velocities->data();
-    DeviceBuffer<float>&       temperature_buffer = temperatures->data();
-    DeviceBuffer<std::size_t>& species_buffer     = species->data();
+    DeviceBuffer<Float3>&      velocity_buffer = velocities->data();
+    DeviceBuffer<std::size_t>& species_buffer  = species->data();
 
-    const std::size_t capacity = std::min(velocity_buffer.size(),
-                                          std::min(temperature_buffer.size(), species_buffer.size()));
+    const std::size_t capacity = std::min(velocity_buffer.size(), species_buffer.size());
     if (offset >= capacity) {
         return 0;
     }
@@ -66,7 +63,6 @@ MaxwellBoltzmannGenerator::generate(FluidVelocityState* velocities,
     const float* numbers         = atlas::raw_pointer_cast(_species_numbers.data());
     const float* masses          = atlas::raw_pointer_cast(_species_mass.data());
     Float3*      velocity_ptr    = atlas::raw_pointer_cast(velocity_buffer.data());
-    float*       temperature_ptr = atlas::raw_pointer_cast(temperature_buffer.data());
     std::size_t* species_ptr     = atlas::raw_pointer_cast(species_buffer.data());
 
     atlas::parallel_for<ExecutionPolicy::device>(
@@ -83,7 +79,6 @@ MaxwellBoltzmannGenerator::generate(FluidVelocityState* velocities,
             const int selected = atlas::sample_weighted_index(ratios, species_count, engine);
 
             species_ptr[index]     = static_cast<std::size_t>(numbers[selected]);
-            temperature_ptr[index] = temperature;
 
             const float molecular_mass = masses[selected];
 
@@ -112,8 +107,15 @@ MaxwellBoltzmannGenerator::Builder::with_species_numbers(const HostBuffer<float>
 }
 
 MaxwellBoltzmannGenerator::Builder&
-MaxwellBoltzmannGenerator::Builder::with_material_dictionary(MaterialDictionaryHostPtr material_dictionary) noexcept {
-    _material_dictionary = std::move(material_dictionary);
+MaxwellBoltzmannGenerator::Builder::with_material_dictionary(const MaterialDictionary& material_dictionary) {
+    const HostBuffer<Material> materials(material_dictionary.materials().begin(),
+                                         material_dictionary.materials().end());
+
+    _material_mass.resize(materials.size());
+    for (std::size_t species_id = 0; species_id < materials.size(); ++species_id) {
+        _material_mass[species_id] = materials[species_id].mass();
+    }
+
     return *this;
 }
 
@@ -147,16 +149,13 @@ MaxwellBoltzmannGenerator::Builder::resolve_species_mass() const {
         return _species_mass;
     }
 
-    const DeviceBuffer<Material>& materials = _material_dictionary->materials();
-
     HostBuffer<float> masses(_species_numbers.size());
     for (std::size_t k = 0; k < _species_numbers.size(); ++k) {
         const std::size_t species_id = static_cast<std::size_t>(_species_numbers[k]);
-        if (species_id >= materials.size()) {
+        if (species_id >= _material_mass.size()) {
             throw std::runtime_error("MaxwellBoltzmannGenerator::Builder: species number out of dictionary range.");
         }
-        const Material material = materials[species_id];
-        masses[k]              = material.mass();
+        masses[k] = _material_mass[species_id];
     }
     return masses;
 }
@@ -178,7 +177,7 @@ MaxwellBoltzmannGenerator::Builder::build() {
     _species_ratios.clear();
     _species_numbers.clear();
     _species_mass.clear();
-    _material_dictionary.reset();
+    _material_mass.clear();
     _temperature   = 273.15f;
     _bulk_velocity = Float3(0.0f, 0.0f, 0.0f);
     _seed          = atlas::DEFAULT_UNSIGNED_INT_SEED;
@@ -205,7 +204,7 @@ MaxwellBoltzmannGenerator::Builder::validate() const {
         if (_species_mass.size() != _species_numbers.size()) {
             throw std::runtime_error("MaxwellBoltzmannGenerator::Builder: species mass size must match species count.");
         }
-    } else if (!_material_dictionary) {
+    } else if (_material_mass.empty()) {
         throw std::runtime_error("MaxwellBoltzmannGenerator::Builder: a material dictionary or species mass is required.");
     }
 

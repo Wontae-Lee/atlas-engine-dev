@@ -1,26 +1,21 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
-#include <atlas/buffer/host_buffer.h>
 #include <atlas/container/type_store.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid_state.h>
-#include <atlas/generator/generator.h>
-#include <atlas/material/material_properties.h>
 #include <atlas/memory/memory.h>
-#include <atlas/observer/observer.h>
 
 #include <cstddef>
 #include <memory>
-#include <optional>
-#include <string>
-#include <string_view>
 #include <utility>
 
 namespace atlas {
 
 using FluidStateStore = TypeStore<FluidState>;
 
+// Owns the particle buffers (as a store of FluidState leaves) and the two
+// counters describing how much of them is live. Materials, generators and
+// observers are held by whoever drives the simulation, not by the fluid.
 class Fluid final {
 public:
     class Builder;
@@ -44,18 +39,6 @@ public:
 
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<Generate>&
-    generators() const noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<Generate>&
-    generators() noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<MaterialProperties>&
-    particle_properties() const noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<MaterialProperties>&
-    particle_properties() noexcept;
 
     ATLAS_HOST void
     set_particle_count(std::size_t particle_count);
@@ -111,26 +94,14 @@ public:
     ATLAS_NODISCARD ATLAS_HOST float
     statistical_weight() const noexcept;
 
-    ATLAS_NODISCARD ATLAS_HOST const ObserverHostPtr&
-    observer() const noexcept;
-
-    ATLAS_HOST void
-    save(std::string_view path) const;
-
 private:
     friend class Builder;
-
-    DeviceBuffer<MaterialProperties> _particle_properties;
-
-    DeviceBuffer<Generate> _generators;
 
     std::size_t _particle_count = 0;
 
     std::size_t _buffer_size = 0;
 
     float _statistical_weight = 1.0f;
-
-    ObserverHostPtr _observer {};
 
     FluidStateStore _states;
 };
@@ -139,56 +110,31 @@ class Fluid::Builder final {
 public:
     Builder() = default;
 
+    ATLAS_HOST Builder&
+    with_buffer_size(std::size_t buffer_size) noexcept;
+
+    ATLAS_HOST Builder&
+    with_particle_count(std::size_t particle_count) noexcept;
+
+    ATLAS_HOST Builder&
+    with_statistical_weight(float statistical_weight) noexcept;
+
     ATLAS_NODISCARD ATLAS_HOST Fluid
     build() const;
 
     ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Fluid>
     make_host_shared() const;
 
-    ATLAS_HOST Builder&
-    with_properties(const HostBuffer<MaterialProperties>& properties);
-
-    ATLAS_HOST Builder&
-    with_generators(const HostBuffer<GeneratorHostPtr>& generators);
-
-    ATLAS_HOST Builder&
-    with_buffer_size(std::size_t buffer_size) noexcept;
-
-    ATLAS_HOST Builder&
-    with_statistical_weight(float statistical_weight) noexcept;
-
-    ATLAS_HOST Builder&
-    with_observer(ObserverHostPtr observer) noexcept;
-
-    ATLAS_HOST Builder&
-    with_binary(const std::string& path);
-
 private:
     ATLAS_HOST void
     validate() const;
 
 private:
-    HostBuffer<MaterialProperties> _particles;
-
-    HostBuffer<Generate> _generators;
+    std::size_t _particle_count = 0;
 
     std::size_t _buffer_size = 0;
 
     float _statistical_weight = 1.0f;
-
-    ObserverHostPtr _observer {};
-
-    std::optional<HostBuffer<Float3>> _position_state;
-
-    std::optional<HostBuffer<Float3>> _velocity_state;
-
-    std::optional<HostBuffer<std::size_t>> _species_state;
-
-    std::optional<HostBuffer<int>> _active_state;
-
-    std::optional<HostBuffer<float>> _temperature_state;
-
-    std::optional<std::size_t> _particle_count;
 };
 
 using FluidHostPtr = atlas::host_shared_ptr<Fluid>;

@@ -14,7 +14,6 @@
 namespace {
 
 using atlas::FluidSpeciesState;
-using atlas::FluidTemperatureState;
 using atlas::FluidVelocityState;
 using atlas::Generator;
 using atlas::GeneratorType;
@@ -63,14 +62,12 @@ TEST(Generator, GenerateDispatchesToLeaf) {
     const Generator       generator(make_uniform());
     const std::size_t     count = 8;
     FluidVelocityState    velocities(count);
-    FluidTemperatureState temperatures(count);
     FluidSpeciesState     species(count);
 
-    const int filled = generator.generate(&velocities, &temperatures, &species, 0, count);
+    const int filled = generator.generate(&velocities, &species, 0, count);
 
     EXPECT_EQ(filled, static_cast<int>(count));
     EXPECT_EQ(species.data()[0], std::size_t { 3 });
-    EXPECT_NEAR(temperatures.data()[0], 250.0f, tol);
 }
 
 TEST(Generator, MoveConstructPreservesBehaviour) {
@@ -80,7 +77,6 @@ TEST(Generator, MoveConstructPreservesBehaviour) {
     EXPECT_EQ(moved.type, GeneratorType::maxwell_sigma);
 
     FluidVelocityState    velocities(4);
-    FluidTemperatureState temperatures(4);
     FluidSpeciesState     species(4);
-    EXPECT_EQ(moved.generate(&velocities, &temperatures, &species, 0, 4), 4);
+    EXPECT_EQ(moved.generate(&velocities, &species, 0, 4), 4);
 }
