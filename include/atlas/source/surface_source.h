@@ -13,9 +13,6 @@
 
 namespace atlas {
 
-// Caches the accepted surface sample points of its unit (in the unit's local
-// frame) and emits them, transformed to world space via the unit's sync, into
-// a fluid position buffer.
 class SurfaceSource final {
 public:
     class Builder;

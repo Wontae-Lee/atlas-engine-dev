@@ -10,13 +10,11 @@
 
 namespace atlas {
 
-// Reads each cell's number particle count, turns it into a Knudsen number, and
-// buckets that number into a solver index — in one pass over every cell.
 class KnudsenCodec final {
 public:
     class Builder;
     static constexpr int split_count = 4;
-    using SplitTable = Container<float, static_cast<std::size_t>(split_count)>;
+    using SplitTable                 = Container<float, static_cast<std::size_t>(split_count)>;
 
 public:
     KnudsenCodec() = default;

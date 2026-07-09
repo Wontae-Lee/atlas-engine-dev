@@ -25,7 +25,6 @@ static_assert(ConceptCollider<IsothermalCollider>);
 
 class Collider final {
 public:
-
     ColliderType type = ColliderType::isothermal;
 
     union {
@@ -144,7 +143,7 @@ Collider::collide(const HitSurface& hit, Float3& position, Float3& velocity, con
         ColliderCollide { hit, position, velocity, dt });
 }
 
-using ColliderHostPtr = atlas::host_shared_ptr<Collider>;
+using ColliderHostPtr   = atlas::host_shared_ptr<Collider>;
 using ColliderDevicePtr = atlas::device_shared_ptr<Collider>;
 
 }

@@ -23,9 +23,6 @@ concept ConceptSource = requires(S source, const S const_source, FluidPositionSt
 static_assert(ConceptSource<SurfaceSource>);
 static_assert(ConceptSource<VolumeSource>);
 
-// Host-side tagged union over the concrete source leaves. Each leaf owns a
-// DeviceBuffer<Float3> cache, so this uses HostVariant (host-only, move-based)
-// rather than a DeviceVariant.
 class Source final {
 public:
     SourceType type = SourceType::surface;
@@ -40,11 +37,9 @@ public:
     ATLAS_HOST
     Source() noexcept;
 
-    ATLAS_HOST explicit
-    Source(SurfaceSource op) noexcept;
+    ATLAS_HOST explicit Source(SurfaceSource op) noexcept;
 
-    ATLAS_HOST explicit
-    Source(VolumeSource op) noexcept;
+    ATLAS_HOST explicit Source(VolumeSource op) noexcept;
 
     Source(const Source&) = delete;
 
@@ -119,7 +114,7 @@ Source::operator=(Source&& other) noexcept {
 }
 
 ATLAS_HOST ATLAS_FORCE_INLINE
-Source::~Source() noexcept {
+    Source::~Source() noexcept {
     SourceVariant::destroy(*this);
 }
 

@@ -12,14 +12,6 @@
 
 namespace atlas {
 
-// Direct Simulation Monte Carlo. Per cell it draws the NTC number of candidate
-// pairs, accepts each with probability sigma*g / (sigma*g)_max, and scatters the
-// accepted ones through its DsmcKernel.
-//
-// The candidates are flattened into one work item each before they are drawn,
-// so a dense cell does not stall a whole warp while its sparse neighbours idle.
-// Cell occupancy is wildly uneven whenever the grid is not tuned to the flow,
-// which is the common case.
 class DsmcSolver final : public Solver {
 public:
     class Builder;
@@ -54,24 +46,16 @@ public:
         return _kernel.type;
     }
 
-    // How many candidate pairs a cell samples when estimating its majorant.
     ATLAS_NODISCARD ATLAS_HOST int
     majorant_sample_pairs() const noexcept {
         return _majorant_sample_pairs;
     }
 
-    // At or above this occupancy the exhaustive C(n,2) scan gives way to that
-    // sample.
     ATLAS_NODISCARD ATLAS_HOST int
     majorant_exhaustive_limit() const noexcept {
         return _majorant_exhaustive_limit;
     }
 
-    // Turns the per-cell candidate counts into one work item per candidate.
-    // Returns how many there are; zero means there is nothing to collide.
-    //
-    // Public only because nvcc refuses an extended __host__ __device__ lambda
-    // inside a private member function.
     ATLAS_NODISCARD ATLAS_HOST int
     flatten_candidates(const UniverseDsmcView& universe_view, int index);
 
@@ -82,12 +66,8 @@ private:
 
     DsmcKernel _kernel {};
 
-    // Bumped every step, so the hashed sample streams differ between steps.
     std::uint64_t _collision_seed = 0;
 
-    // Scratch for flatten_candidates(): the exclusive prefix sum of the per-cell
-    // candidate counts, the owning cell of every flattened candidate, the counts
-    // masked to this solver's cells, and a one-element device total.
     DeviceBuffer<int> _candidate_offsets;
 
     DeviceBuffer<int> _candidate_cells;

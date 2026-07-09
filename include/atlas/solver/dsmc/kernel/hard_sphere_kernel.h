@@ -1,14 +1,12 @@
 #pragma once
 
 #include <atlas/core/macros.h>
+#include <atlas/material/material.h>
 #include <atlas/math/math.h>
 #include <atlas/solver/dsmc/kernel/dsmc_scatter.h>
-#include <atlas/material/material.h>
 
 namespace atlas {
 
-// A speed-independent cross-section from the pair's mean diameter, and
-// isotropic scattering.
 class HardSphereKernel final {
 public:
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float

@@ -12,8 +12,6 @@
 
 namespace atlas {
 
-// Hashes (index, seed) into a shuffled key so consumers can derive an
-// independent, reproducible random stream per index.
 ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE std::uint64_t
 shuffle_key(const int index, const std::uint64_t seed) noexcept {
     std::uint64_t value = static_cast<std::uint64_t>(index) + seed + atlas::SHUFFLE_HASH_INDEX_OFFSET;
@@ -179,7 +177,6 @@ sample_hashed_index(const int index,
     return static_cast<int>(value % static_cast<std::uint64_t>(upper_bound));
 }
 
-// Picks an index in [0, count) by cumulative weight using a uniform draw.
 ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
 sample_weighted_index(const float* weights,
                       const int count,
@@ -189,7 +186,7 @@ sample_weighted_index(const float* weights,
     }
 
     atlas::uniform_real_distribution<float> distribution(0.0f, 1.0f);
-    const float                             u = distribution(engine);
+    const float u = distribution(engine);
 
     float cumulative = 0.0f;
     for (int k = 0; k < count; ++k) {
@@ -202,7 +199,6 @@ sample_weighted_index(const float* weights,
     return count - 1;
 }
 
-// Picks one of `values` by cumulative weight from `weights` using a uniform draw.
 ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE std::size_t
 sample_weighted_choice(const float* weights,
                        const float* values,

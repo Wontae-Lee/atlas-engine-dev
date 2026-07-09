@@ -13,10 +13,6 @@
 
 namespace atlas {
 
-// Sorts particles into a uniform grid keyed by cell. What it produces is the
-// sorted particle order (indices) plus, for every cell, the half-open range
-// [cell_start, cell_end) of that order belonging to the cell. Walking a
-// neighborhood is left to the consumer, which reads those three arrays.
 class SpatialHashingSearcher final {
 public:
     class Builder;
@@ -32,13 +28,6 @@ public:
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    // Classifies particle_count positions into cells. The cell ranges already
-    // hold how many particles each cell received, so it also writes that count
-    // into number_particle rather than let a consumer rescan for it — but only
-    // the DSMC solver and the Knudsen codec need it, so number_particle is an
-    // optional output: a null one, or one sized against a different grid, is
-    // skipped. Calling this again rebuilds from scratch; there is no
-    // cached-result short circuit.
     ATLAS_HOST void
     classify(const FluidPositionState* positions,
              UniverseNumberParticleState* number_particle,
@@ -72,16 +61,12 @@ public:
         return _cell_count;
     }
 
-    // The four device arrays as raw pointers, for a kernel to capture by value.
     ATLAS_NODISCARD ATLAS_HOST SpatialHashingSearcherView
     view() const noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST const std::uint32_t*
     cell_key() const noexcept;
 
-    // Particle indices in cell-sorted order. Cell c owns the slice
-    // indices[cell_start[c] .. cell_end[c]); cell_start[c] < 0 means the cell
-    // holds no particles.
     ATLAS_NODISCARD ATLAS_HOST const int*
     indices() const noexcept;
 
@@ -116,8 +101,6 @@ public:
             && atlas::all(cell < grid_size);
     }
 
-    // The steps classify() runs, in order. Public only because nvcc refuses an
-    // extended __host__ __device__ lambda inside a private member function.
     ATLAS_HOST void
     compute_keys(int alive, const Float3* positions);
 
@@ -154,8 +137,6 @@ class SpatialHashingSearcher::Builder final {
 public:
     Builder() = default;
 
-    // Convenience: takes lower_corner, cell_size and grid_size off the
-    // universe. The universe itself is not retained.
     ATLAS_HOST Builder&
     with_universe(const Universe& universe);
 

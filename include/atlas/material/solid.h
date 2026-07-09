@@ -4,16 +4,11 @@
 
 namespace atlas {
 
-// A boundary, not a colliding species: it has mass and nothing else. The
-// properties it does not carry read as one rather than being absent, which
-// keeps every material accessor device-callable and keeps a solid out of the
-// denominators a collision model divides by.
 class Solid final {
 public:
     Solid() = default;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
-    Solid(const float mass) noexcept
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit Solid(const float mass) noexcept
         : _mass(mass) {
     }
 

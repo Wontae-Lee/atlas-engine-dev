@@ -29,11 +29,6 @@ struct HostVariantCase final {
     static constexpr auto member = Member;
 };
 
-// Host-only counterpart to DeviceVariant: manages a tagged union whose leaves
-// may own host-only resources (e.g. DeviceBuffer). Its members are ATLAS_HOST,
-// so — unlike DeviceVariant — nvcc never instantiates the union machinery for
-// the device and thus never rejects host-only leaf constructors/destructors.
-// It is move-based (the leaves are typically move-only).
 template <typename Owner,
           typename Tag,
           Tag DefaultTag,

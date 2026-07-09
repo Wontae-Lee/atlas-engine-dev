@@ -14,9 +14,6 @@
 
 namespace atlas {
 
-// Emits Maxwell-Boltzmann distributed velocities using the per-species mass
-// (derived from a MaterialDictionary or supplied directly), tagging each
-// particle with a species sampled from its ratio table and writing temperature.
 class MaxwellBoltzmannGenerator final {
 public:
     class Builder;
@@ -80,9 +77,6 @@ public:
     ATLAS_HOST Builder&
     with_species_numbers(const HostBuffer<float>& species_numbers);
 
-    // Per-species mass is derived by looking each species number up in the
-    // dictionary, or supplied directly via with_species_mass. Only the mass of
-    // each material is taken; the dictionary itself is not retained.
     ATLAS_HOST Builder&
     with_material_dictionary(const MaterialDictionary& material_dictionary);
 
@@ -118,7 +112,6 @@ private:
 
     HostBuffer<float> _species_mass;
 
-    // Mass of every material in the dictionary, indexed by species id.
     HostBuffer<float> _material_mass;
 
     float _temperature { 273.15f };

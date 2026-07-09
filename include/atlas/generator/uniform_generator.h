@@ -13,8 +13,6 @@
 
 namespace atlas {
 
-// Emits velocities drawn uniformly in [min, max]^3, tagging each particle with a
-// species sampled from its per-species ratio table and writing its temperature.
 class UniformGenerator final {
 public:
     class Builder;

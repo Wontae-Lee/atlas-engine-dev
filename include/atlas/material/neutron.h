@@ -10,13 +10,13 @@ public:
 
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     Neutron(const float mass,
-        const float translational_energy,
-        const float rotational_energy,
-        const float vibrational_energy,
-        const float reference_diameter,
-        const float reference_temperature,
-        const float viscosity_index,
-     const float scattering_parameter) noexcept
+            const float translational_energy,
+            const float rotational_energy,
+            const float vibrational_energy,
+            const float reference_diameter,
+            const float reference_temperature,
+            const float viscosity_index,
+            const float scattering_parameter) noexcept
         : _mass(mass)
         , _translational_energy(translational_energy)
         , _rotational_energy(rotational_energy)
@@ -47,9 +47,6 @@ public:
         return _vibrational_energy;
     }
 
-    // The collision properties a DSMC kernel needs: a hard sphere uses only the
-    // reference diameter, a variable hard sphere adds the reference temperature
-    // and the viscosity index, a variable soft sphere the scattering parameter.
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
     reference_diameter() const noexcept {
         return _reference_diameter;

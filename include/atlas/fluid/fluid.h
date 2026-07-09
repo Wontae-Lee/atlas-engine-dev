@@ -15,10 +15,6 @@ namespace atlas {
 
 using FluidStateStore = TypeStore<FluidState>;
 
-// Owns the particle buffers (as a store of FluidState leaves), the survival
-// flag that drives compaction, and the two counters describing how much of the
-// buffers is live. Materials, generators and observers are held by whoever
-// drives the simulation, not by the fluid.
 class Fluid final {
 public:
     class Builder;
@@ -49,18 +45,12 @@ public:
     ATLAS_HOST void
     set_particle_count(std::size_t particle_count);
 
-    // One entry per particle: non-zero keeps it, zero drops it at the next
-    // compact(). Whoever despawns particles writes here.
     ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
     active() noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
     active() const noexcept;
 
-    // Drops every particle the active flags mark dead, gathering the survivors
-    // to the front of every state and shrinking particle_count to match.
-    // Returns how many survived; a fluid whose particles all survive is left
-    // untouched.
     ATLAS_HOST std::size_t
     compact();
 
@@ -100,8 +90,6 @@ public:
         return _states.template remove<StateT>();
     }
 
-    // The raw-pointer face of a set of states, for a kernel to capture by
-    // value. See fluid_view.h; ViewT only has to expose a static make(Fluid&).
     template <typename ViewT>
     ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE ViewT
     view() {
@@ -123,7 +111,6 @@ public:
     ATLAS_NODISCARD ATLAS_HOST float
     statistical_weight() const noexcept;
 
-    // The per-species properties, indexed by FluidSpeciesState.
     ATLAS_NODISCARD ATLAS_HOST const MaterialDictionaryHostPtr&
     materials() const noexcept;
 
@@ -142,8 +129,6 @@ private:
 
     DeviceBuffer<int> _active;
 
-    // Scratch for compact(): the exclusive prefix sum of the survival flags,
-    // the gather indices it produces, and a one-element device total.
     DeviceBuffer<int> _survivor_offsets;
 
     DeviceBuffer<std::size_t> _compact_indices;

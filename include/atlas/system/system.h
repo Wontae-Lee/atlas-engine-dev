@@ -22,9 +22,6 @@
 
 namespace atlas {
 
-// Drives one simulation step. Only the emission stage exists so far: every
-// source spawns particle positions into the fluid and its paired generator
-// fills the remaining per-particle states.
 class System final {
 public:
     class Builder;
@@ -60,35 +57,24 @@ public:
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
 
-    // One simulation step, in order.
     ATLAS_HOST void
     update();
 
     ATLAS_HOST void
     emit();
 
-    // Sorts the live particles into the universe's grid. The per-cell particle
-    // counts land in UniverseNumberParticleState when the universe carries one.
     ATLAS_HOST void
     search();
 
-    // Buckets each cell into the solver the orchestrator runs there, from the
-    // per-cell counts search() has just written.
     ATLAS_HOST void
     allocate();
 
-    // Runs the per-cell physics on the classified particles.
     ATLAS_HOST void
     orchestrate();
 
-    // Moves every particle over one step. A particle whose swept segment hits a
-    // collider is reflected off the nearest one instead of being integrated;
-    // the colliders' own units then advance.
     ATLAS_HOST void
     advect();
 
-    // Despawns every particle a sink claims, then compacts the survivors to the
-    // front of every fluid state. The sinks' own units then advance.
     ATLAS_HOST void
     remove();
 
@@ -127,17 +113,12 @@ public:
         return _observer;
     }
 
-    // Writes the step's snapshot into <directory>/time_step_<step>/, as
-    // fluid.bin and universe.bin. Reading them back with restore_fluid /
-    // restore_universe and handing the results to a Builder resumes the run.
     ATLAS_HOST void
     save(const std::filesystem::path& directory) const;
 
-    // The directory a step's snapshot files live in.
     ATLAS_NODISCARD ATLAS_HOST static std::string
     snapshot_directory_name(std::size_t step);
 
-    // How many times update() has run.
     ATLAS_NODISCARD ATLAS_HOST std::size_t
     step() const noexcept {
         return _step;
@@ -158,10 +139,6 @@ public:
         return _sinks.size();
     }
 
-    // Writes each particle's survival into the fluid's active flags.
-    //
-    // Public only because nvcc refuses an extended __host__ __device__ lambda
-    // inside a private member function.
     ATLAS_HOST void
     mark_survivors(int particle_count);
 
@@ -172,7 +149,6 @@ private:
 
     UniverseHostPtr _universe {};
 
-    // Built from the universe's grid when the system is constructed.
     SpatialHashingSearcherHostPtr _searcher {};
 
     std::size_t _step = 0;
@@ -183,14 +159,10 @@ private:
 
     ObserverHostPtr _observer {};
 
-    // Parallel to _generators: source i emits positions, generator i fills the
-    // states that spawn() does not write.
     HostBuffer<SourceHostPtr> _sources;
 
     HostBuffer<GeneratorHostPtr> _generators;
 
-    // Trivially copyable, so the colliders live on the device and every
-    // particle walks the whole set. Each one caches its own world AABB.
     DeviceBuffer<Collider> _colliders;
 
     DeviceBuffer<Sink> _sinks;
@@ -209,8 +181,6 @@ public:
     ATLAS_HOST Builder&
     with_orchestrator(OrchestratorHostPtr orchestrator) noexcept;
 
-    // Appends one source and the generator that populates the particles it
-    // spawns. The two are stored together.
     ATLAS_HOST Builder&
     with_emitter(SourceHostPtr source, GeneratorHostPtr generator);
 

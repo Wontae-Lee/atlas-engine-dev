@@ -14,9 +14,6 @@ namespace atlas {
 
 using UniverseStateStore = TypeStore<UniverseState>;
 
-// The simulation domain: an axis-aligned box discretised into a uniform grid,
-// plus the per-cell states living on that grid. Units, observers and
-// serialization belong to whoever drives the simulation, not to the universe.
 class Universe {
 public:
     class Builder;
@@ -80,9 +77,6 @@ public:
         return _states.template remove<StateT>();
     }
 
-    // The raw-pointer face of a set of states, for a kernel to capture by
-    // value. See universe_view.h; ViewT only has to expose a static
-    // make(Universe&).
     template <typename ViewT>
     ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE ViewT
     view() {

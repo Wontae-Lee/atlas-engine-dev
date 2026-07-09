@@ -1,21 +1,15 @@
 #pragma once
 
 #include <atlas/core/macros.h>
+#include <atlas/material/material.h>
 #include <atlas/math/math.h>
 #include <atlas/random/seed.h>
 #include <atlas/sampling/sampling.h>
-#include <atlas/material/material.h>
 
 #include <cmath>
 
 namespace atlas {
 
-// The post-collision velocities every DSMC kernel produces: momentum and
-// kinetic energy are conserved by scattering the relative velocity about the
-// centre of mass and splitting it back by the mass ratio.
-//
-// scattering_parameter selects the deflection law: 1 gives the isotropic
-// scattering of a hard sphere, anything else the forward-biased VSS law.
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
 dsmc_scatter(Float3& lhs_velocity,
              Float3& rhs_velocity,

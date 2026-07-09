@@ -9,8 +9,6 @@
 
 namespace atlas {
 
-// The base every solver derives from. A solver names itself, so an orchestrator
-// can prepare the states it needs without being told which one it is.
 class Solver {
 public:
     Solver() = default;
@@ -29,13 +27,8 @@ public:
     operator=(Solver&&) noexcept = default;
 
     ATLAS_NODISCARD ATLAS_HOST virtual SolverType
-    type() const noexcept
-        = 0;
+    type() const noexcept = 0;
 
-    // Runs one step over the cells allocated to this solver. A cell belongs to
-    // it when the universe's allocated solver state holds `index` there; the
-    // solver reads every buffer it needs out of the fluid, the universe and the
-    // searcher's cell-sorted arrays.
     ATLAS_HOST virtual void
     solve(Fluid& fluid,
           Universe& universe,

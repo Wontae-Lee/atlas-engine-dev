@@ -26,7 +26,6 @@ static_assert(ConceptSink<TracingSink>);
 
 class Sink final {
 public:
-
     SinkType type = SinkType::surface;
 
     union {

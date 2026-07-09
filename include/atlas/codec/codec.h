@@ -22,9 +22,6 @@ concept ConceptCodec = requires(const C codec,
 
 static_assert(ConceptCodec<KnudsenCodec>);
 
-// Host-side tagged union over the concrete codecs. Each leaf owns DeviceBuffer
-// tables, so this uses HostVariant (host-only, move-based) rather than a
-// DeviceVariant.
 class Codec final {
 public:
     CodecType type = CodecType::knudsen;
@@ -37,8 +34,7 @@ public:
     ATLAS_HOST
     Codec() noexcept;
 
-    ATLAS_HOST explicit
-    Codec(KnudsenCodec op) noexcept;
+    ATLAS_HOST explicit Codec(KnudsenCodec op) noexcept;
 
     Codec(const Codec&) = delete;
 
@@ -101,7 +97,7 @@ Codec::operator=(Codec&& other) noexcept {
 }
 
 ATLAS_HOST ATLAS_FORCE_INLINE
-Codec::~Codec() noexcept {
+    Codec::~Codec() noexcept {
     CodecVariant::destroy(*this);
 }
 

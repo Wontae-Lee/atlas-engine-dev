@@ -18,8 +18,7 @@ public:
 public:
     TracingSink() = default;
 
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit
-    TracingSink(Unit unit) noexcept
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE explicit TracingSink(Unit unit) noexcept
         : _unit(std::move(unit)) {
     }
 

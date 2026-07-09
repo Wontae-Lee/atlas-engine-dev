@@ -13,9 +13,6 @@
 
 namespace atlas {
 
-// Emits normally-distributed velocities with a fixed standard deviation (sigma),
-// tagging each particle with a species sampled from its per-species ratio table
-// and writing its temperature.
 class MaxwellSigmaGenerator final {
 public:
     class Builder;

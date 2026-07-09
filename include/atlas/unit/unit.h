@@ -121,8 +121,8 @@ public:
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     trace(const Ray& world_ray) const noexcept {
-        const Ray  local_ray = _sync.sync_to_local(world_ray);
-        HitSurface hit       = _geometry.trace(local_ray);
+        const Ray local_ray = _sync.sync_to_local(world_ray);
+        HitSurface hit      = _geometry.trace(local_ray);
 
         if (hit.is_intersecting) {
             hit.point  = _sync.sync_to_world(hit.point);
