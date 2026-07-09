@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atlas/buffer/device_buffer.h>
-#include <atlas/container/container.h>
 #include <atlas/core/macros.h>
 #include <atlas/math/math.h>
 #include <atlas/parallel/parallel_fill.h>
@@ -188,30 +187,6 @@ private:
     DeviceBuffer<float> _max_sigma_g;
 };
 
-class UniverseVolumeState final : public UniverseState {
-public:
-    UniverseVolumeState() = default;
-
-    ATLAS_HOST explicit UniverseVolumeState(std::size_t cell_count);
-
-    ATLAS_HOST explicit UniverseVolumeState(DeviceBuffer<float> volume) noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST std::size_t
-    size() const noexcept override;
-
-    ATLAS_HOST void
-    reset() override;
-
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
-    data() noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
-    data() const noexcept;
-
-private:
-    DeviceBuffer<float> _volume;
-};
-
 class UniverseThermalEnergyState final : public UniverseState {
 public:
     UniverseThermalEnergyState() = default;
@@ -284,30 +259,6 @@ private:
     DeviceBuffer<int> _collision_count;
 };
 
-class UniverseCollisionRemainderState final : public UniverseState {
-public:
-    UniverseCollisionRemainderState() = default;
-
-    ATLAS_HOST explicit UniverseCollisionRemainderState(std::size_t cell_count);
-
-    ATLAS_HOST explicit UniverseCollisionRemainderState(DeviceBuffer<float> collision_remainder) noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST std::size_t
-    size() const noexcept override;
-
-    ATLAS_HOST void
-    reset() override;
-
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<float>&
-    data() noexcept;
-
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<float>&
-    data() const noexcept;
-
-private:
-    DeviceBuffer<float> _collision_remainder;
-};
-
 class UniverseKnudsenNumberState final : public UniverseState {
 public:
     UniverseKnudsenNumberState() = default;
@@ -354,45 +305,6 @@ public:
 
 private:
     DeviceBuffer<int> _allocated_solver;
-};
-
-template <std::size_t N>
-class UniverseMaterialRatioState final : public UniverseState {
-public:
-    static_assert(N >= 1, "UniverseMaterialRatioState dimension must be >= 1.");
-
-    using ratio_type = Container<float, N>;
-
-    UniverseMaterialRatioState() = default;
-
-    ATLAS_HOST explicit UniverseMaterialRatioState(const std::size_t cell_count)
-        : _material_ratio(cell_count) { }
-
-    ATLAS_HOST explicit UniverseMaterialRatioState(DeviceBuffer<ratio_type> material_ratio) noexcept
-        : _material_ratio(std::move(material_ratio)) { }
-
-    ATLAS_NODISCARD ATLAS_HOST std::size_t
-    size() const noexcept override {
-        return _material_ratio.size();
-    }
-
-    ATLAS_HOST void
-    reset() override {
-        reset_buffer(_material_ratio);
-    }
-
-    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<ratio_type>&
-    data() noexcept {
-        return _material_ratio;
-    }
-
-    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<ratio_type>&
-    data() const noexcept {
-        return _material_ratio;
-    }
-
-private:
-    DeviceBuffer<ratio_type> _material_ratio;
 };
 
 }

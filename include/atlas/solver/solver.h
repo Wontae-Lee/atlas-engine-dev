@@ -1,49 +1,52 @@
 #pragma once
 
-#include <atlas/buffer/device_buffer.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/memory/memory.h>
-#include <atlas/searcher/searcher.h>
+#include <atlas/searcher/spatial_hashing_searcher_view.h>
+#include <atlas/solver/solver_type.h>
 #include <atlas/universe/universe.h>
 
 namespace atlas {
 
+// The base every solver derives from. A solver names itself, so an orchestrator
+// can prepare the states it needs without being told which one it is.
 class Solver {
 public:
     Solver() = default;
 
-    ATLAS_HOST
-    Solver(UniverseHostPtr universe, FluidHostPtr fluid, SearcherHostPtr searcher) noexcept;
+    Solver(const Solver&) = default;
+
+    Solver(Solver&&) noexcept = default;
 
     virtual ~Solver() = default;
 
-    Solver(const Solver&) = default;
     Solver&
     operator=(const Solver&)
         = default;
-    Solver(Solver&&) noexcept = default;
+
     Solver&
     operator=(Solver&&) noexcept = default;
 
+    ATLAS_NODISCARD ATLAS_HOST virtual SolverType
+    type() const noexcept
+        = 0;
+
+    // Runs one step over the cells allocated to this solver. A cell belongs to
+    // it when the universe's allocated solver state holds `index` there; the
+    // solver reads every buffer it needs out of the fluid, the universe and the
+    // searcher's cell-sorted arrays.
     ATLAS_HOST virtual void
-    solve(float dt);
-
-    ATLAS_HOST virtual void
-    solve(const DeviceBuffer<int>* allocated_solver, int index, float dt);
-
-protected:
-    UniverseHostPtr _universe {};
-
-    FluidHostPtr _fluid {};
-
-    SearcherHostPtr _searcher {};
+    solve(Fluid& fluid,
+          Universe& universe,
+          const SpatialHashingSearcherView& searcher_view,
+          int index,
+          float dt)
+        = 0;
 };
 
-using Solve = atlas::Solver;
+using SolverHostPtr = atlas::host_shared_ptr<Solver>;
 
-using SolveHostPtr = atlas::host_shared_ptr<atlas::Solver>;
-
-using SolveDevicePtr = atlas::device_shared_ptr<atlas::Solver>;
+using SolverDevicePtr = atlas::device_shared_ptr<Solver>;
 
 }

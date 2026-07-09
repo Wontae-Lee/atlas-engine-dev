@@ -30,16 +30,10 @@ function(atlas_add_benchmark_case target_name relative_dir)
     endif ()
 endfunction()
 
-atlas_add_benchmark_case(atlas_benchmark_cylinder_continum     cylinder/continum)
-atlas_add_benchmark_case(atlas_benchmark_cylinder_rarefied_gas cylinder/rarefied_gas)
-atlas_add_benchmark_case(atlas_benchmark_inflow                inflow)
-atlas_add_benchmark_case(atlas_benchmark_waterfall             waterfall)
+# The four cases (cylinder/continum, cylinder/rarefied_gas, inflow, waterfall)
+# were removed with the engine restructuring: every one of them drove the old
+# MaterialProperties / SphSolver / measurer API. Add new cases here with
+# atlas_add_benchmark_case once they are written against the current System.
 
 # Aggregate convenience target so the whole set can be built at once.
-add_custom_target(atlas_benchmarks
-        DEPENDS
-        atlas_benchmark_cylinder_continum
-        atlas_benchmark_cylinder_rarefied_gas
-        atlas_benchmark_inflow
-        atlas_benchmark_waterfall
-)
+add_custom_target(atlas_benchmarks)

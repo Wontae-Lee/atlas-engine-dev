@@ -103,39 +103,6 @@ FluidSpeciesState::data() const noexcept {
     return _species;
 }
 
-FluidActiveState::FluidActiveState(const std::size_t buffer_size)
-    : _active(buffer_size) {
-}
-
-FluidActiveState::FluidActiveState(DeviceBuffer<int> active) noexcept
-    : _active(std::move(active)) {
-}
-
-std::size_t
-FluidActiveState::size() const noexcept {
-    return _active.size();
-}
-
-void
-FluidActiveState::compact(const DeviceBuffer<std::size_t>& compact_indices, const std::size_t kept) {
-    compact_buffer(_active, compact_indices, kept);
-}
-
-void
-FluidActiveState::reset() {
-    reset_buffer(_active);
-}
-
-DeviceBuffer<int>&
-FluidActiveState::data() noexcept {
-    return _active;
-}
-
-const DeviceBuffer<int>&
-FluidActiveState::data() const noexcept {
-    return _active;
-}
-
 FluidTemperatureState::FluidTemperatureState(const std::size_t buffer_size)
     : _temperature(buffer_size) {
 }

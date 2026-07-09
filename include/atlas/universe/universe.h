@@ -80,6 +80,15 @@ public:
         return _states.template remove<StateT>();
     }
 
+    // The raw-pointer face of a set of states, for a kernel to capture by
+    // value. See universe_view.h; ViewT only has to expose a static
+    // make(Universe&).
+    template <typename ViewT>
+    ATLAS_NODISCARD ATLAS_HOST ATLAS_FORCE_INLINE ViewT
+    view() {
+        return ViewT::make(*this);
+    }
+
     ATLAS_NODISCARD ATLAS_HOST int
     cell_count() const noexcept;
 

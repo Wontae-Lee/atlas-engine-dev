@@ -17,6 +17,7 @@
 
 namespace atlas {
 
+
 template <typename G>
 concept ConceptGenerator = requires(G generator,
                                     const G const_generator,

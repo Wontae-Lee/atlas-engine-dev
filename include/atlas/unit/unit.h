@@ -275,8 +275,4 @@ private:
     std::optional<Float3> _angular_acceleration;
 };
 
-using UnitHostPtr = atlas::host_shared_ptr<Unit>;
-
-using UnitDevicePtr = atlas::device_shared_ptr<Unit>;
-
 }
