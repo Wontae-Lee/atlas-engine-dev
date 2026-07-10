@@ -602,7 +602,7 @@ restore_fluid(const std::string_view path) {
                      .with_particle_count(snapshot.particle_count)
                      .with_statistical_weight(snapshot.statistical_weight)
                      .with_materials(materials)
-                     .make_host_shared();
+                     .make_host_unique();
 
     if (snapshot.positions.has_value()) {
         fluid->set_state<FluidPositionState>(std::make_unique<FluidPositionState>(
@@ -654,7 +654,7 @@ restore_universe(const std::string_view path) {
                         .with_lower_corner(snapshot.lower_corner)
                         .with_upper_corner(snapshot.upper_corner)
                         .with_cell_size(snapshot.cell_size)
-                        .make_host_shared();
+                        .make_host_unique();
 
     if (snapshot.temperature.has_value()) {
         universe->set_state<UniverseTemperatureState>(std::make_unique<UniverseTemperatureState>(

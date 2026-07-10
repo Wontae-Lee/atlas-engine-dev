@@ -45,7 +45,7 @@ set(ATLAS_PROTOBUF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/protobuf")
 set(ATLAS_PROTOBUF_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/protobuf")
 add_subdirectory("${ATLAS_PROTOBUF_SOURCE_DIR}" "${ATLAS_PROTOBUF_BINARY_DIR}" EXCLUDE_FROM_ALL)
 
-set(ATLAS_PROTO_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/serialization/proto")
+set(ATLAS_PROTO_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/atlas/serialization/proto")
 set(ATLAS_PROTO_SCHEMA "${ATLAS_PROTO_SCHEMA_DIR}/atlas_snapshot.proto")
 set(ATLAS_PROTO_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(ATLAS_PROTO_SOURCES
@@ -66,9 +66,13 @@ add_custom_command(
         VERBATIM
 )
 
+# protobuf's message_lite.h declares a static variable template of incomplete
+# type (EnumTraitsImpl::Undefined), which nvcc's frontend rejects. This
+# translation unit stays .cpp so the host compiler handles it; it holds no
+# device code.
 add_library(atlas-serialization STATIC
         ${ATLAS_PROTO_OUTPUT_DIR}/atlas_snapshot.pb.cc
-        src/serialization/protobuf_snapshot.cpp
+        src/atlas/serialization/protobuf_snapshot.cpp
 )
 add_library(atlas::serialization ALIAS atlas-serialization)
 
