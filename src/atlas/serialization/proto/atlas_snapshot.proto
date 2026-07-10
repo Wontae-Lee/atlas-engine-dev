@@ -1,87 +1,111 @@
 syntax = "proto3";
 
+// Wire schema for Atlas snapshot files. Compiled by protoc into atlas_snapshot.pb.h,
+// which src/atlas/serialization/protobuf_snapshot.cpp reads and writes. Field numbers
+// are part of the on-disk format: never renumber or reuse a tag, and add new fields only
+// at fresh numbers so old snapshots keep parsing.
 package atlas.proto;
 
+// A 3D vector stored at double precision so a snapshot survives independently of the
+// engine's runtime float width; the codec narrows back to float on read.
 message Vector3 {
-  double x = 1;
-  double y = 2;
-  double z = 3;
+  double x = 1;  // Component along the x axis.
+  double y = 2;  // Component along the y axis.
+  double z = 3;  // Component along the z axis.
 }
 
+// A flat, untyped byte blob for one device column. The bytes are the raw little-endian
+// element array; element_count is how many elements they encode, letting the reader
+// verify data.size() == element_count * sizeof(element) before reinterpreting.
 message RawBuffer {
-  uint64 element_count = 1;
-  bytes data = 2;
+  uint64 element_count = 1;  // Number of elements the byte payload encodes.
+  bytes data = 2;            // Raw element bytes; length must equal element_count * sizeof(element).
 }
 
 // One entry of a MaterialDictionary, indexed by species id. A solid carries
 // only mass; the remaining fields read back as one, so they round-trip.
 message Material {
-  int32 type = 1;
-  double mass = 2;
-  double translational_energy = 3;
-  double rotational_energy = 4;
-  double vibrational_energy = 5;
-  double reference_diameter = 6;
-  double reference_temperature = 7;
-  double viscosity_index = 8;
-  double scattering_parameter = 9;
+  int32 type = 1;                    // MaterialType enumerator (molecule/atom/ion/neutron/solid) as int.
+  double mass = 2;                   // Particle mass, kg.
+  double translational_energy = 3;   // Translational degrees-of-freedom energy contribution.
+  double rotational_energy = 4;      // Rotational energy contribution (1.0 for a solid).
+  double vibrational_energy = 5;     // Vibrational energy contribution (1.0 for a solid).
+  double reference_diameter = 6;     // VHS reference collision diameter, m.
+  double reference_temperature = 7;  // VHS reference temperature, K.
+  double viscosity_index = 8;        // VHS viscosity-temperature index (omega).
+  double scattering_parameter = 9;   // VHS/VSS scattering exponent.
 }
 
+// Element width the buffers were encoded with, so a reader can reject a snapshot whose
+// precision differs from the engine build that is loading it. The codec only writes and
+// accepts SCALAR_FLOAT32; SCALAR_FLOAT64 is reserved for a future double-precision build.
 enum ScalarType {
-  SCALAR_FLOAT32 = 0;
-  SCALAR_FLOAT64 = 1;
+  SCALAR_FLOAT32 = 0;  // Buffers encode 32-bit floats.
+  SCALAR_FLOAT64 = 1;  // Buffers encode 64-bit doubles (not currently produced or accepted).
 }
 
+// A complete capture of one Fluid. Because a proto3 message field is indistinguishable
+// from an empty one, each optional per-particle state pairs its RawBuffer with an explicit
+// includes_* flag so the reader can tell "state absent" from "state present but empty".
 message FluidSnapshot {
-  uint32 version = 1;
-  ScalarType scalar_type = 2;
-  uint64 buffer_size = 3;
-  uint64 particle_count = 4;
-  double statistical_weight = 5;
+  uint32 version = 1;                // Format version; must equal kAtlasSnapshotVersion to load.
+  ScalarType scalar_type = 2;        // Element precision the buffers were written with.
+  uint64 buffer_size = 3;            // Column capacity, in particles.
+  uint64 particle_count = 4;         // Live particle count; must not exceed buffer_size.
+  double statistical_weight = 5;     // Real molecules represented per simulated particle.
   // 6 was the MaterialProperty table, 7 the generator operators. Generators
   // are no longer owned by the fluid.
   reserved 6, 7;
-  RawBuffer positions = 8;
-  RawBuffer velocities = 9;
-  RawBuffer species = 10;
-  RawBuffer active = 11;
-  RawBuffer temperature = 12;
-  bool includes_temperature_state = 13;
-  repeated Material materials = 14;
-  RawBuffer translational_energy = 15;
-  bool includes_translational_energy_state = 16;
-  RawBuffer rotational_energy = 17;
-  bool includes_rotational_energy_state = 18;
-  RawBuffer vibrational_energy = 19;
-  bool includes_vibrational_energy_state = 20;
+  RawBuffer positions = 8;           // Float3 per particle: world positions.
+  RawBuffer velocities = 9;          // Float3 per particle: velocities.
+  RawBuffer species = 10;            // size_t per particle: species id into materials.
+  RawBuffer active = 11;             // int per particle: survivor flag (nonzero = alive).
+  RawBuffer temperature = 12;        // float per particle: temperature.
+  bool includes_temperature_state = 13;  // True when the temperature state was attached.
+  repeated Material materials = 14;  // Species table, indexed by species id.
+  RawBuffer translational_energy = 15;    // float per particle: translational energy.
+  bool includes_translational_energy_state = 16;  // True when that state was attached.
+  RawBuffer rotational_energy = 17;       // float per particle: rotational energy.
+  bool includes_rotational_energy_state = 18;      // True when that state was attached.
+  RawBuffer vibrational_energy = 19;      // float per particle: vibrational energy.
+  bool includes_vibrational_energy_state = 20;     // True when that state was attached.
 }
 
+// Tag identifying which per-cell universe field a UniverseState carries. The reader
+// switches on this to route the buffer into the right slot; the enumerator determines
+// which of UniverseState's three typed buffers is populated.
 enum UniverseStateKind {
-  UNIVERSE_TEMPERATURE = 0;
-  UNIVERSE_BULK_VELOCITY = 1;
-  UNIVERSE_FIELD_FORCE = 2;
-  UNIVERSE_MAX_RELATIVE_SPEED = 3;
-  UNIVERSE_THERMAL_ENERGY = 4;
-  UNIVERSE_NUMBER_PARTICLE = 5;
-  UNIVERSE_COLLISION_COUNT = 6;
-  UNIVERSE_KNUDSEN_NUMBER = 7;
-  UNIVERSE_MAX_SIGMA_G = 8;
-  UNIVERSE_ALLOCATED_SOLVER = 9;
-  UNIVERSE_GRAVITY = 10;
+  UNIVERSE_TEMPERATURE = 0;         // Per-cell temperature (scalar_buffer).
+  UNIVERSE_BULK_VELOCITY = 1;       // Per-cell bulk velocity (vector_buffer).
+  UNIVERSE_FIELD_FORCE = 2;         // Per-cell external field force (vector_buffer).
+  UNIVERSE_MAX_RELATIVE_SPEED = 3;  // Per-cell NTC max relative speed (scalar_buffer).
+  UNIVERSE_THERMAL_ENERGY = 4;      // Per-cell thermal energy (scalar_buffer).
+  UNIVERSE_NUMBER_PARTICLE = 5;     // Per-cell particle-count estimate (scalar_buffer).
+  UNIVERSE_COLLISION_COUNT = 6;     // Per-cell collision tally (int_buffer).
+  UNIVERSE_KNUDSEN_NUMBER = 7;      // Per-cell Knudsen number (scalar_buffer).
+  UNIVERSE_MAX_SIGMA_G = 8;         // Per-cell NTC max sigma*g (scalar_buffer).
+  UNIVERSE_ALLOCATED_SOLVER = 9;    // Per-cell selected-solver id (int_buffer).
+  UNIVERSE_GRAVITY = 10;            // Per-cell gravity vector (vector_buffer).
 }
 
+// One per-cell universe field. Exactly one of the three buffers is meaningful, selected
+// by kind: scalar_buffer for float fields, vector_buffer for Float3 fields, int_buffer
+// for int fields. Bundling all three keeps the outer snapshot list homogeneous.
 message UniverseState {
-  UniverseStateKind kind = 1;
-  RawBuffer scalar_buffer = 2;
-  RawBuffer vector_buffer = 3;
-  RawBuffer int_buffer = 4;
+  UniverseStateKind kind = 1;    // Which field this entry holds, and which buffer is used.
+  RawBuffer scalar_buffer = 2;   // float-per-cell payload; used for scalar kinds.
+  RawBuffer vector_buffer = 3;   // Float3-per-cell payload; used for vector kinds.
+  RawBuffer int_buffer = 4;      // int-per-cell payload; used for integer kinds.
 }
 
+// A complete capture of one Universe: its grid geometry plus a flat list of whichever
+// per-cell states were attached. Absent fields are simply omitted from `states`, so no
+// includes_* flags are needed here.
 message UniverseSnapshot {
-  uint32 version = 1;
-  ScalarType scalar_type = 2;
-  Vector3 lower_corner = 3;
-  Vector3 upper_corner = 4;
-  double cell_size = 5;
-  repeated UniverseState states = 6;
+  uint32 version = 1;            // Format version; must equal kAtlasSnapshotVersion to load.
+  ScalarType scalar_type = 2;    // Element precision the buffers were written with.
+  Vector3 lower_corner = 3;      // Minimum corner of the domain, world units.
+  Vector3 upper_corner = 4;      // Maximum corner of the domain, world units.
+  double cell_size = 5;          // Edge length of a cubic cell, world units.
+  repeated UniverseState states = 6;  // The attached per-cell fields, in write order.
 }

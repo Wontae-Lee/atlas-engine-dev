@@ -1,3 +1,14 @@
+/**
+ * @file triangle_mesh.cu
+ * @brief Host-side implementation of @ref atlas::TriangleMesh.
+ *
+ * Implements construction, the copy/move special members (each of which must
+ * repoint the cached @ref atlas::TriangleMeshView at the owning instance), the
+ * lazy BVH / query-cache builders, OBJ loading, and the thin query forwarders
+ * that delegate to the cached view. All code here runs on the host; the view's
+ * query math lives in the header so it can also be compiled for the device.
+ */
+
 #include <atlas/geometry/geometry.h>
 #include <atlas/geometry/triangle_mesh.h>
 #include <atlas/memory/raw_pointer_cast.h>
@@ -31,6 +42,8 @@ TriangleMesh::TriangleMesh(HostBuffer<TriangleContainer4>&& triangles_) noexcept
     ensure_query_cache();
 }
 
+// Copy/move must not reuse the source's view: its pointers alias the source's
+// buffers. Rebuild the view so it points into this instance's members instead.
 TriangleMesh::TriangleMesh(const TriangleMesh& other)
     : triangles(other.triangles)
     , _bvh(other._bvh)
@@ -52,6 +65,8 @@ TriangleMesh::TriangleMesh(TriangleMesh&& other) noexcept
 
     update_view();
 
+    // The moved-from mesh keeps its (emptied) buffers but must report an empty,
+    // consistent view rather than pointers into buffers it no longer owns.
     other.bvh_built         = false;
     other.query_cache_built = false;
 
@@ -120,6 +135,7 @@ TriangleMesh::set_triangles(const HostBuffer<TriangleContainer4>& triangles_) {
 void
 TriangleMesh::ensure_bvh() noexcept {
 
+    // Allocate the concrete BVH implementation on first use only.
     if (!_bvh) {
         _bvh = atlas::make_host_shared<SAHBVH>();
     }
@@ -132,6 +148,7 @@ TriangleMesh::build_bvh() {
         return;
     }
 
+    // An empty mesh has no hierarchy; leave the flat-soup fallback in charge.
     if (triangles.empty()) {
         bvh_built = false;
         return;
@@ -166,6 +183,8 @@ TriangleMesh::rebuild_query_cache() const {
         _query_vertices[base + 1] = tri.b();
         _query_vertices[base + 2] = tri.c();
 
+        // Indices are identity here: vertices are not shared between triangles,
+        // so each triangle owns its own three consecutive vertex slots.
         _query_indices[base + 0] = static_cast<int>(base + 0);
         _query_indices[base + 1] = static_cast<int>(base + 1);
         _query_indices[base + 2] = static_cast<int>(base + 2);
@@ -179,17 +198,21 @@ TriangleMesh::rebuild_query_cache() const {
 void
 TriangleMesh::update_view() const {
 
+    // Publish raw pointers into the flat cache; null out empties so the view's
+    // guards treat a zero-triangle mesh as absent rather than dereferencing.
     _view.vertices       = _query_vertices.empty() ? nullptr : atlas::raw_pointer_cast(_query_vertices.data());
     _view.indices        = _query_indices.empty() ? nullptr : atlas::raw_pointer_cast(_query_indices.data());
     _view.triangle_count = static_cast<int>(triangles.size());
 
     if (_bvh && bvh_built) {
 
-        const auto bvh_view     = _bvh->view();
-        _view.bvh_nodes   = bvh_view.bvh_nodes;
-        _view.bvh_indices = bvh_view.bvh_indices;
-        _view.bvh_tris    = bvh_view.bvh_tris;
-        _view.bvh_root    = bvh_view.bvh_root;
+        // The BVH view carries pointers into BVH-owned storage (device memory in
+        // a CUDA build); copy them across so device queries can use the tree.
+        const auto bvh_view = _bvh->view();
+        _view.bvh_nodes     = bvh_view.bvh_nodes;
+        _view.bvh_indices   = bvh_view.bvh_indices;
+        _view.bvh_tris      = bvh_view.bvh_tris;
+        _view.bvh_root      = bvh_view.bvh_root;
     } else {
 
         _view.bvh_nodes   = nullptr;
@@ -202,6 +225,8 @@ TriangleMesh::update_view() const {
 Geometry
 TriangleMesh::make_device_geometry_view() const {
 
+    // Guarantee the view's pointers are current before it is copied into the
+    // union; the returned Geometry aliases this mesh's buffers.
     ensure_query_cache();
 
     return Geometry(_view);
@@ -242,6 +267,7 @@ TriangleMesh::load_from_obj(const std::string& filename, const bool verbose) {
             const int vi1 = idx[f + 1].vertex_index;
             const int vi2 = idx[f + 2].vertex_index;
 
+            // Skip faces with unspecified vertices (OBJ allows -1 for missing).
             if (vi0 < 0 || vi1 < 0 || vi2 < 0) {
                 continue;
             }
@@ -250,6 +276,7 @@ TriangleMesh::load_from_obj(const std::string& filename, const bool verbose) {
             const std::size_t o1 = static_cast<std::size_t>(3) * static_cast<std::size_t>(vi1);
             const std::size_t o2 = static_cast<std::size_t>(3) * static_cast<std::size_t>(vi2);
 
+            // Guard against a malformed file indexing past the vertex array.
             if (o0 + 2 >= vcount || o1 + 2 >= vcount || o2 + 2 >= vcount) {
                 continue;
             }
@@ -275,6 +302,8 @@ TriangleMesh::load_from_obj(const std::string& filename, const bool verbose) {
             tc.b() = b;
             tc.c() = c;
 
+            // Store a unit face normal in the 4th slot; fall back to +Z when the
+            // face is degenerate so the normal is always well defined.
             tc.d() = atlas::normalized_or(
                 atlas::cross(b - a, c - a),
                 Float3(0.0f, 0.0f, 1.0f));
@@ -292,7 +321,7 @@ TriangleMesh::load_from_obj(const std::string& filename, const bool verbose) {
     build_bvh();
     ensure_query_cache();
 
-    (void)verbose;
+    (void)verbose; // reserved for future diagnostics; intentionally unused
 
     return true;
 }
@@ -342,6 +371,8 @@ TriangleMesh::Builder::build() const {
 
     validate();
 
+    // Construct empty, then prime the acceleration structures explicitly so the
+    // move out of this function returns a fully-built mesh.
     TriangleMesh m {};
     m.triangles = _triangles;
 
@@ -375,6 +406,8 @@ TriangleMesh::Builder::with_triangles(HostBuffer<TriangleContainer4>&& ts) {
 
 TriangleMesh::Builder&
 TriangleMesh::Builder::load_from_obj(const std::string& filename, const bool verbose) {
+    // Reuse the mesh's own OBJ parser via a throwaway instance, then steal just
+    // its triangles; the temporary's BVH/cache are discarded.
     TriangleMesh tmp {};
 
     const bool ok = tmp.load_from_obj(filename, verbose);

@@ -11,9 +11,11 @@ Cylinder::builder() noexcept {
 
 Cylinder
 Cylinder::Builder::build() const {
+    // Positive radius and height are enforced here.
     validate();
 
     Cylinder c(_center, _radius, _height);
+    // The constructor always makes a capped cylinder, so apply the flag after.
     c.open = _open;
 
     return c;
@@ -50,6 +52,7 @@ Cylinder::Builder::with_open(const bool open_) noexcept {
 
 void
 Cylinder::Builder::validate() const {
+    // The open flag never affects validity, so a capped probe instance suffices.
     if (!Cylinder(_center, _radius, _height).is_valid()) {
         throw std::runtime_error("Cylinder::Builder: invalid parameters.");
     }

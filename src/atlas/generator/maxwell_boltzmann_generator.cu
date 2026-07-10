@@ -41,47 +41,54 @@ MaxwellBoltzmannGenerator::generate(FluidVelocityState* velocities,
         return 0;
     }
 
-    DeviceBuffer<Float3>&      velocity_buffer = velocities->data();
-    DeviceBuffer<std::size_t>& species_buffer  = species->data();
+    DeviceBuffer<Float3>& velocity_buffer     = velocities->data();
+    DeviceBuffer<std::size_t>& species_buffer = species->data();
 
+    // Usable capacity is bounded by the shorter of the velocity/species buffers.
     const std::size_t capacity = std::min(velocity_buffer.size(), species_buffer.size());
     if (offset >= capacity) {
         return 0;
     }
 
+    // Clamp the request to what actually fits from offset onward.
     const std::size_t writable = std::min(count, capacity - offset);
     if (writable == 0) {
         return 0;
     }
 
-    const float        temperature   = _temperature;
-    const Float3       bulk          = _bulk_velocity;
-    const unsigned int seed          = _seed;
-    const int          species_count = static_cast<int>(_species_ratios.size());
+    const float temperature = _temperature;
+    const Float3 bulk       = _bulk_velocity;
+    const unsigned int seed = _seed;
+    const int species_count = static_cast<int>(_species_ratios.size());
 
-    const float* ratios          = atlas::raw_pointer_cast(_species_ratios.data());
-    const float* numbers         = atlas::raw_pointer_cast(_species_numbers.data());
-    const float* masses          = atlas::raw_pointer_cast(_species_mass.data());
-    Float3*      velocity_ptr    = atlas::raw_pointer_cast(velocity_buffer.data());
-    std::size_t* species_ptr     = atlas::raw_pointer_cast(species_buffer.data());
+    const float* ratios      = atlas::raw_pointer_cast(_species_ratios.data());
+    const float* numbers     = atlas::raw_pointer_cast(_species_numbers.data());
+    const float* masses      = atlas::raw_pointer_cast(_species_mass.data());
+    Float3* velocity_ptr     = atlas::raw_pointer_cast(velocity_buffer.data());
+    std::size_t* species_ptr = atlas::raw_pointer_cast(species_buffer.data());
 
+    // Capture-by-value lambda: every dependency is copied into the device closure.
     atlas::parallel_for<ExecutionPolicy::device>(
         std::size_t { 0 },
         writable,
         [=] ATLAS_ALL_DEVICE(const std::size_t i) {
-            const std::size_t   index = offset + i;
-            const std::uint64_t key   = atlas::shuffle_key(
+            const std::size_t index = offset + i;
+            // Fold the absolute slot index with the seed for a per-particle stream.
+            const std::uint64_t key = atlas::shuffle_key(
                 static_cast<int>(index),
                 static_cast<std::uint64_t>(seed));
 
             atlas::default_random_engine engine(static_cast<unsigned int>(key));
 
+            // Draw the array index once so the species id and its mass stay paired.
             const int selected = atlas::sample_weighted_index(ratios, species_count, engine);
 
-            species_ptr[index]     = static_cast<std::size_t>(numbers[selected]);
+            species_ptr[index] = static_cast<std::size_t>(numbers[selected]);
 
             const float molecular_mass = masses[selected];
 
+            // Maxwell-Boltzmann per-component sigma = sqrt(k_B * T / m); fall back to
+            // pure drift when temperature or mass is non-positive (sigma undefined).
             if (temperature > 0.0f && molecular_mass > 0.0f) {
                 const float sigma = atlas::sqrt_nonnegative(
                     atlas::boltzmann_constant * temperature / molecular_mass);
@@ -111,6 +118,7 @@ MaxwellBoltzmannGenerator::Builder::with_material_dictionary(const MaterialDicti
     const HostBuffer<Material> materials(material_dictionary.materials().begin(),
                                          material_dictionary.materials().end());
 
+    // Cache mass indexed by material (species) id so build() can look up by id.
     _material_mass.resize(materials.size());
     for (std::size_t species_id = 0; species_id < materials.size(); ++species_id) {
         _material_mass[species_id] = materials[species_id].mass();
@@ -145,10 +153,13 @@ MaxwellBoltzmannGenerator::Builder::with_seed(const unsigned int seed) noexcept 
 
 HostBuffer<float>
 MaxwellBoltzmannGenerator::Builder::resolve_species_mass() const {
+    // Explicit per-species masses win outright over the dictionary lookup.
     if (!_species_mass.empty()) {
         return _species_mass;
     }
 
+    // Otherwise map each selectable species id through the cached mass table,
+    // producing a mass array parallel to the ratios/numbers arrays.
     HostBuffer<float> masses(_species_numbers.size());
     for (std::size_t k = 0; k < _species_numbers.size(); ++k) {
         const std::size_t species_id = static_cast<std::size_t>(_species_numbers[k]);
@@ -164,8 +175,10 @@ MaxwellBoltzmannGenerator
 MaxwellBoltzmannGenerator::Builder::build() {
     validate();
 
+    // Resolve masses (explicit or dictionary-derived) before moving to device.
     const HostBuffer<float> species_mass = resolve_species_mass();
 
+    // Range constructors copy the staged host buffers onto the device.
     MaxwellBoltzmannGenerator generator(
         DeviceBuffer<float>(_species_ratios.begin(), _species_ratios.end()),
         DeviceBuffer<float>(_species_numbers.begin(), _species_numbers.end()),
@@ -174,6 +187,7 @@ MaxwellBoltzmannGenerator::Builder::build() {
         _bulk_velocity,
         _seed);
 
+    // Reset to defaults so the builder can be reused for another leaf.
     _species_ratios.clear();
     _species_numbers.clear();
     _species_mass.clear();

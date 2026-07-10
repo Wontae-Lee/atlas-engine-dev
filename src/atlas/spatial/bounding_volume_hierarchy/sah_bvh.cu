@@ -14,6 +14,8 @@ BvhView
 SAHBVH::view() const {
     BvhView view {};
 
+    // Strip the device_vector wrappers down to raw device pointers so the view
+    // is trivially copyable and a device lambda can capture it by value.
     view.bvh_nodes   = atlas::raw_pointer_cast(d_nodes.data());
     view.bvh_indices = atlas::raw_pointer_cast(d_indices.data());
     view.bvh_tris    = atlas::raw_pointer_cast(d_triangles.data());
@@ -35,6 +37,7 @@ SAHBVH::build(
     h_centroids.resize(n);
     h_indices.resize(n);
 
+    // Per-primitive bounds and centroids (independent across i).
     atlas::parallel_for<ExecutionPolicy::host>(
         0,
         n,
@@ -52,6 +55,8 @@ SAHBVH::build(
             h_indices[i]      = i;
         });
 
+    // Over-allocate to the worst case (2n-1 nodes for all-singleton leaves),
+    // then trim to the count the recursion actually produced.
     h_nodes.resize(std::max(1, 2 * n - 1), BVHNode());
 
     int next_node = 0;

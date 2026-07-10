@@ -9,8 +9,33 @@
 
 namespace atlas {
 
+/**
+ * @brief Variable Hard Sphere (VHS) kernel: speed-dependent cross section, isotropic scatter.
+ *
+ * Refines the hard-sphere model so the cross section falls off with relative speed as a power
+ * law set by the viscosity index omega, reproducing a realistic temperature-dependent
+ * viscosity while keeping scattering isotropic (same @ref dsmc_scatter with `alpha = 1` as
+ * @ref HardSphereKernel). Every pair property is the arithmetic mean of the two species'
+ * values. Stateless and trivially copyable so it fits inside @ref DsmcKernel's union.
+ */
 class VariableHardSphereKernel final {
 public:
+    /**
+     * @brief Speed-dependent VHS cross section for a material pair.
+     *
+     * Evaluates the VHS law
+     * `sigma = pi d_ref^2 * (2 k T_ref / (m_r g^2))^(omega - 1/2) / Gamma(5/2 - omega)`,
+     * with `d_ref`, `T_ref`, and the viscosity index `omega` taken as pair means, `m_r` the
+     * reduced mass, `g` the relative speed, and `k` Boltzmann's constant. Each intermediate is
+     * guarded so a degenerate species (zero mass, diameter, temperature, or an out-of-range
+     * viscosity index making the Gamma argument non-positive) yields a `0` cross section
+     * rather than a NaN.
+     *
+     * @param lhs           First partner's material.
+     * @param rhs           Second partner's material.
+     * @param relative_speed Magnitude of the relative velocity (m/s); must be positive.
+     * @return Cross section in m^2, or `0` for any degenerate or non-positive input.
+     */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE static float
     cross_section(const Material& lhs,
                   const Material& rhs,
@@ -19,6 +44,8 @@ public:
         const float rhs_mass = rhs.mass();
         const float mass_sum = lhs_mass + rhs_mass;
 
+        // A massless species or zero relative speed makes the reduced mass or the thermal ratio
+        // undefined; reject the pair.
         if (!(lhs_mass > 0.0f) || !(rhs_mass > 0.0f) || !(mass_sum > 0.0f)
             || !(relative_speed > 0.0f)) {
             return 0.0f;
@@ -32,6 +59,7 @@ public:
             return 0.0f;
         }
 
+        // The VHS normalization carries Gamma(5/2 - omega); its argument must stay positive.
         const float gamma_argument = 2.5f - viscosity_index;
 
         if (!(gamma_argument > 0.0f)) {
@@ -47,6 +75,7 @@ public:
             return 0.0f;
         }
 
+        // tgamma is only available in double precision; evaluate there and narrow back.
         const float gamma_value = static_cast<float>(std::tgamma(static_cast<double>(gamma_argument)));
 
         if (!(gamma_value > 0.0f)) {
@@ -58,6 +87,16 @@ public:
         return reference_area * std::pow(thermal_ratio, viscosity_index - 0.5f) / gamma_value;
     }
 
+    /**
+     * @brief Scatters the pair isotropically via @ref dsmc_scatter with `alpha = 1`.
+     *
+     * VHS shares the isotropic angular law with hard spheres; only its cross section differs.
+     *
+     * @param lhs_velocity First partner's velocity (m/s); updated in place.
+     * @param rhs_velocity Second partner's velocity (m/s); updated in place.
+     * @param lhs          First partner's material.
+     * @param rhs          Second partner's material.
+     */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Float3& lhs_velocity,
                Float3& rhs_velocity,

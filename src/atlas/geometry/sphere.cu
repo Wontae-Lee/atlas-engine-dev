@@ -11,6 +11,7 @@ Sphere::builder() noexcept {
 
 Sphere
 Sphere::Builder::build() const {
+    // Reject a non-positive radius before constructing.
     validate();
 
     return Sphere(_center, _radius);
@@ -35,6 +36,7 @@ Sphere::Builder::with_radius(const float r) noexcept {
 
 void
 Sphere::Builder::validate() const {
+    // Reuse the Sphere's own validity invariant on a throwaway instance.
     if (!Sphere(_center, _radius).is_valid()) {
         throw std::runtime_error("Sphere::Builder: invalid parameters.");
     }

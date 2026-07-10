@@ -19,14 +19,43 @@ namespace atlas {
 
 namespace {
 
+    /**
+     * @brief Whether cell @p cell is scheduled to this solver.
+     *
+     * A null ownership buffer is the "single solver owns everything" case, so every cell
+     * is owned; otherwise ownership is the exact match `allocated_solver[cell] == index`.
+     *
+     * @param allocated_solver Per-cell owning-solver index, or null when unpartitioned.
+     * @param cell             Cell id to test.
+     * @param index            This solver's id.
+     * @return `true` when this solver may process @p cell.
+     */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     owns_cell(const int* allocated_solver, const int cell, const int index) noexcept {
         return allocated_solver == nullptr || allocated_solver[cell] == index;
     }
 
-    // Widens the cell's running majorant with one candidate pair. Kept a free
-    // function rather than a lambda inside the kernel: nvcc restricts what an
-    // extended device lambda may contain.
+    /**
+     * @brief Widens a cell's running majorant with one candidate pair.
+     *
+     * Looks up the two particles at local slots `lhs_local`/`rhs_local` within the cell's
+     * sorted range, and raises @p max_relative_squared and @p max_sigma_g in place if this
+     * pair exceeds them. Used both by the exhaustive scan and the sampled estimate of the
+     * per-cell NTC bound.
+     *
+     * Kept a free function rather than a lambda inside the kernel: nvcc restricts what an
+     * extended device lambda may contain.
+     *
+     * @param fluid_view          Fluid columns (velocity, species).
+     * @param searcher_view       Spatial-hash view giving the sorted particle order.
+     * @param kernel              Collision kernel used to evaluate `sigma * g`.
+     * @param materials           Device material dictionary.
+     * @param begin               Start offset of this cell in the sorted-index array.
+     * @param lhs_local           First particle's local slot within the cell.
+     * @param rhs_local           Second particle's local slot within the cell.
+     * @param max_relative_squared Running max squared relative speed, updated in place.
+     * @param max_sigma_g         Running max `sigma * g`, updated in place.
+     */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     accumulate_majorant(const FluidDsmcView& fluid_view,
                         const SpatialHashingSearcherView& searcher_view,
@@ -58,7 +87,21 @@ namespace {
         }
     }
 
-    // Two distinct local slots of a cell holding `count` particles.
+    /**
+     * @brief Draws two distinct local slots of a cell holding @p count particles.
+     *
+     * Hashes @p cell and @p stream (with partner-selection salts) to pick a first slot in
+     * `[0, count)` and a second in `[0, count - 1)`, then bumps the second past the first
+     * whenever they would collide — the standard trick to sample an unordered distinct pair
+     * uniformly without rejection. Stateless, so the same `(cell, stream)` always yields the
+     * same pair, which is what lets pass 1 and pass 2 agree.
+     *
+     * @param lhs_local Receives the first partner's local slot in `[0, count)`.
+     * @param rhs_local Receives the second partner's local slot, distinct from the first.
+     * @param cell      Cell id, hashed into the draw.
+     * @param count     Number of particles in the cell; must be >= 2.
+     * @param stream    Per-collision stream base (step seed + cell mix + collision index).
+     */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     sample_distinct_pair(int& lhs_local,
                          int& rhs_local,
@@ -68,6 +111,8 @@ namespace {
         lhs_local = atlas::sample_hashed_index(cell, count, stream + atlas::DSMC_COLLISION_LHS_SALT);
         rhs_local = atlas::sample_hashed_index(cell, count - 1, stream + atlas::DSMC_COLLISION_RHS_SALT);
 
+        // Shift the second draw up by one if it landed on or after the first, mapping the
+        // reduced range back onto the distinct-partner slots.
         if (rhs_local >= lhs_local) {
             ++rhs_local;
         }
@@ -112,9 +157,9 @@ DsmcSolver::flatten_candidates(const UniverseDsmcView& universe_view, const int 
             _owned_candidate_counts.resize(cells);
         }
 
-        auto* owned                = atlas::raw_pointer_cast(_owned_candidate_counts.data());
-        const auto* counts         = universe_view.collision_count;
-        const auto* allocated      = universe_view.allocated_solver;
+        auto* owned           = atlas::raw_pointer_cast(_owned_candidate_counts.data());
+        const auto* counts    = universe_view.collision_count;
+        const auto* allocated = universe_view.allocated_solver;
 
         atlas::parallel_for<ExecutionPolicy::device>(
             0,
@@ -136,10 +181,13 @@ DsmcSolver::flatten_candidates(const UniverseDsmcView& universe_view, const int 
         _candidate_total.resize(1);
     }
 
-    auto* total          = atlas::raw_pointer_cast(_candidate_total.data());
-    const auto* offsets  = atlas::raw_pointer_cast(_candidate_offsets.data());
-    const int last_cell  = cell_count - 1;
+    auto* total         = atlas::raw_pointer_cast(_candidate_total.data());
+    const auto* offsets = atlas::raw_pointer_cast(_candidate_offsets.data());
+    const int last_cell = cell_count - 1;
 
+    // The grand total is the last cell's exclusive offset plus its own count; compute it on
+    // the device (one thread) so the counts never round-trip to the host, then read only the
+    // single scalar back.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         1,
@@ -267,9 +315,7 @@ DsmcSolver::solve(Fluid& fluid,
             if (count < majorant_exhaustive_limit) {
                 for (int lhs_local = 0; lhs_local < count; ++lhs_local) {
                     for (int rhs_local = lhs_local + 1; rhs_local < count; ++rhs_local) {
-                        accumulate_majorant(fluid_view, searcher_view, kernel, materials,
-                                            begin, lhs_local, rhs_local,
-                                            max_relative_squared, sampled_max_sigma_g);
+                        accumulate_majorant(fluid_view, searcher_view, kernel, materials, begin, lhs_local, rhs_local, max_relative_squared, sampled_max_sigma_g);
                     }
                 }
             } else {
@@ -282,14 +328,14 @@ DsmcSolver::solve(Fluid& fluid,
                     int rhs_local = 0;
                     sample_distinct_pair(lhs_local, rhs_local, cell, count, stream);
 
-                    accumulate_majorant(fluid_view, searcher_view, kernel, materials,
-                                        begin, lhs_local, rhs_local,
-                                        max_relative_squared, sampled_max_sigma_g);
+                    accumulate_majorant(fluid_view, searcher_view, kernel, materials, begin, lhs_local, rhs_local, max_relative_squared, sampled_max_sigma_g);
                 }
             }
 
             universe_view.max_relative_speed[cell] = atlas::sqrt_nonnegative(max_relative_squared);
 
+            // The majorant persists across steps: start from the cell's stored bound and only
+            // raise it, so a rare fast pair keeps protecting the acceptance test afterwards.
             float max_sigma_g = universe_view.max_sigma_g[cell];
 
             if (sampled_max_sigma_g > max_sigma_g) {
@@ -401,7 +447,6 @@ DsmcSolver::solve(Fluid& fluid,
             fluid_view.velocity[lhs] = lhs_velocity;
             fluid_view.velocity[rhs] = rhs_velocity;
         });
-
 }
 
 DsmcSolver::Builder&

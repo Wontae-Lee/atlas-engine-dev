@@ -5,6 +5,8 @@
 namespace atlas {
 
 UniverseTemperatureState::UniverseTemperatureState(const std::size_t cell_count)
+    // The sized DeviceBuffer constructor value-initializes every element, so the
+    // field starts zero-filled; every state below relies on the same guarantee.
     : _temperature(cell_count) {
 }
 

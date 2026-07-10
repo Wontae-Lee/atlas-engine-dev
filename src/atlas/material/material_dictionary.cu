@@ -22,6 +22,7 @@ MaterialDictionary::Builder::with_material(const Material& material) {
 
 MaterialDictionary::Builder&
 MaterialDictionary::Builder::with_materials(const HostBuffer<Material>& materials) {
+    // Append at the end so previously staged species keep their ids.
     _materials.insert(_materials.end(), materials.begin(), materials.end());
     return *this;
 }
@@ -30,9 +31,12 @@ MaterialDictionary
 MaterialDictionary::Builder::build() {
     validate();
 
+    // Range-construct the device buffer from the staged host range: this is the
+    // single host->device upload of the whole species table.
     MaterialDictionary dictionary(
         DeviceBuffer<Material>(_materials.begin(), _materials.end()));
 
+    // Leave the builder empty so it can be reused without re-uploading these.
     _materials.clear();
 
     return dictionary;

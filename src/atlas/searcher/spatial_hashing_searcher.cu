@@ -33,6 +33,9 @@ void
 SpatialHashingSearcher::classify(const FluidPositionState* positions,
                                  UniverseNumberParticleState* number_particle,
                                  const int particle_count) {
+    // Reject unusable input rather than trust it: a null field, a non-positive
+    // count, or a count exceeding the buffer would let the device kernels read
+    // out of bounds. Fall back to the empty state and publish all-zero counts.
     if (positions == nullptr
         || particle_count <= 0
         || static_cast<std::size_t>(particle_count) > positions->data().size()) {
@@ -46,6 +49,7 @@ SpatialHashingSearcher::classify(const FluidPositionState* positions,
     _keys.resize(static_cast<std::size_t>(particle_count));
     _indices.resize(static_cast<std::size_t>(particle_count));
 
+    // The four-step sort-based spatial hash; each step is a device pass.
     compute_keys(particle_count, position_ptr);
     sort_keys(particle_count);
     build_cell_ranges(particle_count);
@@ -56,6 +60,9 @@ void
 SpatialHashingSearcher::reset() {
     _keys.resize(0);
     _indices.resize(0);
+    // Every cell starts empty: the -1 sentinel lets consumers tell "no particles"
+    // apart from a genuine zero-based range, and keeps cell_start/cell_end sized
+    // to the grid even before any particle is classified.
     _cell_start.assign(static_cast<std::size_t>(_cell_count), -1);
     _cell_end.assign(static_cast<std::size_t>(_cell_count), -1);
 }
@@ -94,6 +101,8 @@ void
 SpatialHashingSearcher::compute_keys(const int alive, const Float3* positions) {
     auto* keys_ptr    = atlas::raw_pointer_cast(_keys.data());
     auto* indices_ptr = atlas::raw_pointer_cast(_indices.data());
+    // Copy the grid geometry into locals so the device lambda captures plain
+    // values by [=], not `this` (a host object the kernel cannot dereference).
     const Float3 lc   = _lower_corner;
     const float inv_h = _inverse_cell_size;
     const Int3 gs     = _grid_size;
@@ -177,6 +186,8 @@ SpatialHashingSearcher::write_cell_counts(UniverseNumberParticleState* number_pa
     const auto* start = atlas::raw_pointer_cast(_cell_start.data());
     const auto* end   = atlas::raw_pointer_cast(_cell_end.data());
 
+    // Downstream cells store counts as float; an empty cell (start == -1) is 0,
+    // otherwise the count is the width of its half-open [start, end) range.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         _cell_count,

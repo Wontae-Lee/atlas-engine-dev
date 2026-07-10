@@ -12,6 +12,7 @@ Square::builder() noexcept {
 
 Square
 Square::Builder::build() const {
+    // Reject non-finite, zero-normal, or non-positive-side parameters.
     validate();
 
     return Square(_center, _normal, _side_length);
@@ -43,10 +44,12 @@ Square::Builder::with_side_length(const float side_length_) noexcept {
 
 void
 Square::Builder::validate() const {
+    // Fast path: a fully valid square needs no diagnosis.
     if (Square(_center, _normal, _side_length).is_valid()) {
         return;
     }
 
+    // Otherwise report the first violated invariant with a specific message.
     if (!atlas::isfinite(_center)
         || !atlas::isfinite(_normal)
         || !atlas::isfinite(_side_length)) {
@@ -57,6 +60,7 @@ Square::Builder::validate() const {
         throw std::runtime_error("Square::Builder: normal must be non-zero.");
     }
 
+    // Only remaining failure once finite and non-zero-normal are ruled out.
     throw std::runtime_error("Square::Builder: side_length must be positive.");
 }
 
