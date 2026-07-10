@@ -60,6 +60,23 @@ TEST(TracingSink, BuilderRejectsMissingUnit) {
         std::runtime_error);
 }
 
+TEST(TracingSink, BuilderConfiguresState) {
+    const auto sink = TracingSink::builder()
+                          .with_unit(make_static_plane_unit())
+                          .build();
+
+    EXPECT_FALSE(sink.unit().dynamic());
+}
+
+TEST(TracingSink, MakeHostSharedBuildsSink) {
+    const auto sink = TracingSink::builder()
+                          .with_unit(make_static_plane_unit())
+                          .make_host_shared();
+
+    ASSERT_TRUE(static_cast<bool>(sink));
+    EXPECT_FALSE(sink->unit().dynamic());
+}
+
 TEST(TracingSink, DespawnDetectsParticleReachingSurface) {
     const auto sink = TracingSink::builder()
                           .with_unit(make_static_plane_unit())
@@ -92,6 +109,15 @@ TEST(TracingSink, DespawnMissesWithZeroTimeStep) {
                           .build();
 
     EXPECT_FALSE(sink.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, -1.0f), 0.0f));
+}
+
+TEST(TracingSink, DespawnMissesStationaryParticle) {
+    const auto sink = TracingSink::builder()
+                          .with_unit(make_static_plane_unit())
+                          .build();
+
+    // Zero speed can travel no distance, so the trace is skipped.
+    EXPECT_FALSE(sink.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, 0.0f), 2.0f));
 }
 
 TEST(TracingSink, AdvanceMovesUnit) {

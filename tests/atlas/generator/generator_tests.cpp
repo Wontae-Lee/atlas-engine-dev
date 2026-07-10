@@ -2,6 +2,8 @@
 
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/generator/generator_type.h>
+#include <atlas/generator/jittering_generator.h>
+#include <atlas/generator/maxwell_boltzmann_generator.h>
 #include <atlas/generator/maxwell_sigma_generator.h>
 #include <atlas/generator/uniform_generator.h>
 #include <atlas/math/math.h>
@@ -17,6 +19,8 @@ using atlas::FluidSpeciesState;
 using atlas::FluidVelocityState;
 using atlas::Generator;
 using atlas::GeneratorType;
+using atlas::JitteringGenerator;
+using atlas::MaxwellBoltzmannGenerator;
 using atlas::MaxwellSigmaGenerator;
 using atlas::UniformGenerator;
 using atlas::tol;
@@ -41,6 +45,28 @@ make_maxwell_sigma() {
         .with_temperature(273.15f)
         .with_sigma(1.0f)
         .with_seed(5u)
+        .build();
+}
+
+JitteringGenerator
+make_jittering() {
+    return JitteringGenerator::builder()
+        .with_species_ratios({ 1.0f })
+        .with_species_numbers({ 2.0f })
+        .with_base_value(0.0f)
+        .with_jitter_radius(0.5f)
+        .with_seed(3u)
+        .build();
+}
+
+MaxwellBoltzmannGenerator
+make_maxwell_boltzmann() {
+    return MaxwellBoltzmannGenerator::builder()
+        .with_species_ratios({ 1.0f })
+        .with_species_numbers({ 4.0f })
+        .with_species_mass({ 2.0f })
+        .with_temperature(300.0f)
+        .with_seed(6u)
         .build();
 }
 
@@ -79,4 +105,38 @@ TEST(Generator, MoveConstructPreservesBehaviour) {
     FluidVelocityState    velocities(4);
     FluidSpeciesState     species(4);
     EXPECT_EQ(moved.generate(&velocities, &species, 0, 4), 4);
+}
+
+TEST(Generator, WrapsJitteringLeaf) {
+    const Generator generator(make_jittering());
+
+    EXPECT_EQ(generator.type, GeneratorType::jittering);
+}
+
+TEST(Generator, WrapsMaxwellBoltzmannLeaf) {
+    const Generator generator(make_maxwell_boltzmann());
+
+    EXPECT_EQ(generator.type, GeneratorType::maxwell_boltzmann);
+}
+
+TEST(Generator, MoveAssignReplacesActiveLeaf) {
+    Generator target(make_uniform());
+    Generator source(make_maxwell_boltzmann());
+
+    target = std::move(source);
+
+    EXPECT_EQ(target.type, GeneratorType::maxwell_boltzmann);
+
+    FluidVelocityState velocities(4);
+    FluidSpeciesState  species(4);
+    EXPECT_EQ(target.generate(&velocities, &species, 0, 4), 4);
+    EXPECT_EQ(species.data()[0], std::size_t { 4 });
+}
+
+TEST(Generator, GenerateWithZeroCountIsNoOp) {
+    const Generator    generator(make_uniform());
+    FluidVelocityState velocities(4);
+    FluidSpeciesState  species(4);
+
+    EXPECT_EQ(generator.generate(&velocities, &species, 0, 0), 0);
 }

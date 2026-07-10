@@ -71,3 +71,11 @@ TEST(UniformGenerator, GenerateRejectsNullState) {
 
     EXPECT_EQ(generator.generate(nullptr, &species, 0, 4), 0);
 }
+
+TEST(UniformGenerator, GenerateWithZeroCountIsNoOp) {
+    const auto         generator = make_generator();
+    FluidVelocityState velocities(4);
+    FluidSpeciesState  species(4);
+
+    EXPECT_EQ(generator.generate(&velocities, &species, 0, 0), 0);
+}

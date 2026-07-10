@@ -124,3 +124,48 @@ TEST(SurfaceSource, SpawnRejectsNullTargetAndOutOfRangeOffset) {
     EXPECT_EQ(source.spawn(nullptr, 0), 0);
     EXPECT_EQ(source.spawn(&positions, 100), 0);
 }
+
+TEST(SurfaceSource, DenserSpacingYieldsMoreSamples) {
+    const auto coarse = SurfaceSource::builder()
+                            .with_unit(make_static_unit(Float3(0.0f, 0.0f, 0.0f)))
+                            .with_tolerance(0.01f)
+                            .with_spacing(1.0f)
+                            .build();
+    const auto fine = SurfaceSource::builder()
+                          .with_unit(make_static_unit(Float3(0.0f, 0.0f, 0.0f)))
+                          .with_tolerance(0.01f)
+                          .with_spacing(0.5f)
+                          .build();
+
+    EXPECT_GT(fine.cached_count(), coarse.cached_count());
+}
+
+TEST(SurfaceSource, MakeHostSharedBuildsCachedSource) {
+    const auto source = SurfaceSource::builder()
+                            .with_unit(make_static_unit(Float3(0.0f, 0.0f, 0.0f)))
+                            .with_tolerance(0.01f)
+                            .with_spacing(1.0f)
+                            .make_host_shared();
+
+    ASSERT_NE(source, nullptr);
+    EXPECT_GT(source->cached_count(), std::size_t { 0 });
+}
+
+TEST(SurfaceSource, DefaultSourceCachesNothingAndSpawnsNothing) {
+    const SurfaceSource source {};
+    EXPECT_EQ(source.cached_count(), std::size_t { 0 });
+
+    FluidPositionState positions(4);
+    EXPECT_EQ(source.spawn(&positions, 0), 0);
+}
+
+TEST(SurfaceSource, SpawnTwiceAppendsAtSuccessiveOffsets) {
+    const auto        source = make_source(make_static_unit(Float3(0.0f, 0.0f, 0.0f)));
+    const std::size_t count  = source.cached_count();
+    ASSERT_GT(count, std::size_t { 0 });
+
+    FluidPositionState positions(2 * count);
+
+    EXPECT_EQ(static_cast<std::size_t>(source.spawn(&positions, 0)), count);
+    EXPECT_EQ(static_cast<std::size_t>(source.spawn(&positions, count)), count);
+}

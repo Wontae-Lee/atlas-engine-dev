@@ -112,3 +112,34 @@ TEST(Sink, CopyPreservesBehaviour) {
     EXPECT_EQ(copy.type, SinkType::volume);
     EXPECT_TRUE(copy.despawn(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
 }
+
+TEST(Sink, CopyAssignPreservesBehaviour) {
+    const Sink sink(SurfaceSink::builder()
+                        .with_unit(make_box_unit(Float3(0.0f, 0.0f, 0.0f), false))
+                        .with_tolerance(0.01f)
+                        .build());
+    Sink target {};
+
+    target = sink;
+
+    EXPECT_EQ(target.type, SinkType::surface);
+    EXPECT_TRUE(target.despawn(Float3(1.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+}
+
+TEST(Sink, MoveConstructPreservesBehaviour) {
+    Sink sink(VolumeSink::builder().with_unit(make_box_unit(Float3(0.0f, 0.0f, 0.0f), false)).build());
+    const Sink moved = std::move(sink);
+
+    EXPECT_EQ(moved.type, SinkType::volume);
+    EXPECT_TRUE(moved.despawn(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+}
+
+TEST(Sink, MoveAssignPreservesBehaviour) {
+    Sink sink(TracingSink::builder().with_unit(make_plane_unit()).build());
+    Sink target {};
+
+    target = std::move(sink);
+
+    EXPECT_EQ(target.type, SinkType::tracing);
+    EXPECT_TRUE(target.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, -1.0f), 2.0f));
+}

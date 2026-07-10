@@ -99,6 +99,26 @@ TEST(SurfaceSink, DespawnDetectsParticleOnSurface) {
     EXPECT_FALSE(sink.despawn(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
 }
 
+TEST(SurfaceSink, DespawnMissesParticleOffSurface) {
+    const auto sink = SurfaceSink::builder()
+                          .with_unit(make_static_box_unit())
+                          .with_tolerance(0.5f)
+                          .build();
+
+    // 1.0 beyond the +x face, well past the tolerance band.
+    EXPECT_FALSE(sink.despawn(Float3(2.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+}
+
+TEST(SurfaceSink, DespawnAcceptsParticleAtToleranceBoundary) {
+    const auto sink = SurfaceSink::builder()
+                          .with_unit(make_static_box_unit())
+                          .with_tolerance(0.5f)
+                          .build();
+
+    // Exactly tolerance (0.5) beyond the +x face; the band is inclusive.
+    EXPECT_TRUE(sink.despawn(Float3(1.5f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+}
+
 TEST(SurfaceSink, AdvanceMovesUnit) {
     auto sink = SurfaceSink::builder()
                     .with_unit(make_dynamic_box_unit(Float3(0.0f, 0.0f, 1.0f)))

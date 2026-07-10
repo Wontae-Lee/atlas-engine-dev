@@ -126,3 +126,51 @@ TEST(Collider, CopyPreservesBehaviour) {
     const HitSurface hit = copy.trace(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, -1.0f), 2.0f);
     EXPECT_TRUE(hit.is_intersecting);
 }
+
+TEST(Collider, MovePreservesBehaviour) {
+    Collider       collider(make_isothermal(Float3(0.0f, 0.0f, 0.0f), false));
+    const Collider moved = std::move(collider);
+
+    EXPECT_EQ(moved.type, ColliderType::isothermal);
+
+    const HitSurface hit = moved.trace(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, -1.0f), 2.0f);
+    EXPECT_TRUE(hit.is_intersecting);
+}
+
+TEST(Collider, BoundDispatchesToLeaf) {
+    const Collider collider(make_isothermal(Float3(0.0f, 0.0f, 0.0f), false));
+
+    // bound() forwards to the active leaf's cached AABB; the umbrella returns a
+    // reference to that very object, so the addresses must coincide.
+    EXPECT_EQ(&collider.bound(), &collider.isothermal.bound());
+}
+
+TEST(Collider, CopyAssignmentReplacesLeafState) {
+    Collider collider {}; // Default leaf: momentum accommodation coefficient == 1.
+    ASSERT_NEAR(collider.isothermal.momentum_accommodation_coefficient(), 1.0f, tol);
+
+    const Collider source(make_isothermal(Float3(0.0f, 0.0f, 0.0f), false));
+    collider = source;
+
+    EXPECT_EQ(collider.type, ColliderType::isothermal);
+    EXPECT_NEAR(collider.isothermal.momentum_accommodation_coefficient(), 0.0f, tol);
+}
+
+TEST(Collider, MoveAssignmentReplacesLeafState) {
+    Collider collider {};
+
+    Collider source(make_isothermal(Float3(0.0f, 0.0f, 0.0f), false));
+    collider = std::move(source);
+
+    EXPECT_EQ(collider.type, ColliderType::isothermal);
+    EXPECT_NEAR(collider.isothermal.momentum_accommodation_coefficient(), 0.0f, tol);
+}
+
+TEST(ColliderType, RoundTripsThroughUnderlyingInt) {
+    static_assert(std::is_same_v<std::underlying_type_t<ColliderType>, int>,
+                  "ColliderType must have a fixed int underlying type for device buffers");
+
+    const auto value = static_cast<int>(ColliderType::isothermal);
+
+    EXPECT_EQ(static_cast<ColliderType>(value), ColliderType::isothermal);
+}

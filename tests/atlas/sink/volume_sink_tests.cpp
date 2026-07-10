@@ -86,6 +86,35 @@ TEST(VolumeSink, DespawnDetectsParticleInsideVolume) {
     EXPECT_FALSE(sink.despawn(Float3(5.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
 }
 
+TEST(VolumeSink, MakeHostSharedBuildsSink) {
+    const auto sink = VolumeSink::builder()
+                          .with_unit(make_static_box_unit())
+                          .make_host_shared();
+
+    ASSERT_TRUE(static_cast<bool>(sink));
+    EXPECT_FALSE(sink->unit().dynamic());
+}
+
+TEST(VolumeSink, DespawnAcceptsPointWithinTolerance) {
+    const auto sink = VolumeSink::builder()
+                          .with_unit(make_static_box_unit())
+                          .with_tolerance(0.5f)
+                          .build();
+
+    // 0.5 past the +x face; the interior test is widened outward by the tolerance.
+    EXPECT_TRUE(sink.despawn(Float3(1.5f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+}
+
+TEST(VolumeSink, DespawnMissesPointBeyondTolerance) {
+    const auto sink = VolumeSink::builder()
+                          .with_unit(make_static_box_unit())
+                          .with_tolerance(0.4f)
+                          .build();
+
+    // 0.5 past the +x face exceeds the 0.4 widening.
+    EXPECT_FALSE(sink.despawn(Float3(1.5f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+}
+
 TEST(VolumeSink, AdvanceMovesUnit) {
     auto sink = VolumeSink::builder()
                     .with_unit(make_dynamic_box_unit(Float3(0.0f, 0.0f, 1.0f)))

@@ -7,11 +7,13 @@
 
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstddef>
 #include <stdexcept>
 
 namespace {
 
+using atlas::Float3;
 using atlas::FluidSpeciesState;
 using atlas::FluidVelocityState;
 using atlas::Material;
@@ -92,4 +94,50 @@ TEST(MaxwellBoltzmannGenerator, GenerateUsesDictionaryMass) {
     EXPECT_EQ(filled, 4);
     EXPECT_EQ(species.data()[0], std::size_t { 0 });
     EXPECT_TRUE(atlas::isfinite(velocities.data()[0]));
+}
+
+TEST(MaxwellBoltzmannGenerator, GenerateRejectsNullState) {
+    const auto        generator = make_generator_with_direct_mass();
+    FluidSpeciesState species(4);
+
+    EXPECT_EQ(generator.generate(nullptr, &species, 0, 4), 0);
+}
+
+TEST(MaxwellBoltzmannGenerator, GenerateWithZeroCountIsNoOp) {
+    const auto         generator = make_generator_with_direct_mass();
+    FluidVelocityState velocities(4);
+    FluidSpeciesState  species(4);
+
+    EXPECT_EQ(generator.generate(&velocities, &species, 0, 0), 0);
+}
+
+TEST(MaxwellBoltzmannGenerator, SampledSpeedsMatchThermalSpeed) {
+    // T = 300 K, m = 2, no bulk drift. The per-component sigma is
+    // sqrt(k_B * T / m) and the mean speed of an isotropic Gaussian is
+    // sigma * sqrt(8 / pi). Every speed must be finite and non-negative, and the
+    // sample mean must land in a generous band around that thermal speed.
+    const auto         generator = make_generator_with_direct_mass();
+    const std::size_t  count     = 4096;
+    FluidVelocityState velocities(count);
+    FluidSpeciesState  species(count);
+
+    ASSERT_EQ(generator.generate(&velocities, &species, 0, count), static_cast<int>(count));
+
+    const double sigma        = std::sqrt(atlas::boltzmann_constant * 300.0 / 2.0);
+    const double expected_mean = sigma * std::sqrt(8.0 / atlas::pi);
+
+    double sum_speed = 0.0;
+    for (std::size_t i = 0; i < count; ++i) {
+        const Float3 v     = velocities.data()[i];
+        ASSERT_TRUE(atlas::isfinite(v));
+        const double speed = std::sqrt(static_cast<double>(v.x) * v.x
+                                       + static_cast<double>(v.y) * v.y
+                                       + static_cast<double>(v.z) * v.z);
+        EXPECT_GE(speed, 0.0);
+        sum_speed += speed;
+    }
+
+    const double mean_speed = sum_speed / static_cast<double>(count);
+    EXPECT_GT(mean_speed, 0.5 * expected_mean);
+    EXPECT_LT(mean_speed, 1.5 * expected_mean);
 }

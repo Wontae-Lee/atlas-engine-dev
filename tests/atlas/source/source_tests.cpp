@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 
 namespace {
@@ -124,4 +125,29 @@ TEST(Source, MoveConstructPreservesBehaviour) {
 
     FluidPositionState positions(count + 8);
     EXPECT_EQ(static_cast<std::size_t>(moved.spawn(&positions, 0)), count);
+}
+
+// The leaves own host-only device buffers, so the umbrella must be move-only.
+TEST(Source, IsMoveOnlyNotCopyable) {
+    EXPECT_FALSE(std::is_copy_constructible_v<Source>);
+    EXPECT_FALSE(std::is_copy_assignable_v<Source>);
+    EXPECT_TRUE(std::is_move_constructible_v<Source>);
+    EXPECT_TRUE(std::is_move_assignable_v<Source>);
+}
+
+TEST(Source, MoveAssignReplacesActiveLeaf) {
+    auto              leaf  = make_volume_source(Float3(0.0f, 0.0f, 0.0f), false);
+    const std::size_t count = leaf.cached_count();
+    ASSERT_GT(count, std::size_t { 0 });
+
+    // Start on the default surface leaf, then move-assign a volume source over it.
+    Source destination {};
+    ASSERT_EQ(destination.type, SourceType::surface);
+
+    destination = Source(std::move(leaf));
+
+    EXPECT_EQ(destination.type, SourceType::volume);
+
+    FluidPositionState positions(count + 8);
+    EXPECT_EQ(static_cast<std::size_t>(destination.spawn(&positions, 0)), count);
 }
