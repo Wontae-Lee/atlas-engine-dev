@@ -1,125 +1,190 @@
 # Material
 
-The material module describes the physical properties of a species and stores
-the per-species table used by the solvers. `Material` is a tagged-union like the
-other modules; `MaterialDictionary` owns the device-side table.
+The material module describes the physical constants of a species and owns the
+per-species table the solvers read on the device. `Material` is a tagged union
+(one leaf per `MaterialType`); `MaterialDictionary` owns a
+`DeviceBuffer<Material>` indexed by species id. It is not a step in
+`System::update()` — it is reference data attached to a `Fluid`
+(`Fluid::materials()` → `MaterialDictionaryHostPtr`) and consulted during the
+**solve** phase (the DSMC kernels read collision parameters) and once at
+**generate** time (`MaxwellBoltzmannGenerator` caches per-species mass).
 
 ## Files
 
 | File | Role |
 |---|---|
-| `include/atlas/material/material.h` | `ConceptMaterial` + `Material` umbrella (`DeviceVariant`) + accessors |
-| `include/atlas/material/material_type.h` | `enum class MaterialType { molecule, atom, ion, neutron, solid }` |
-| `include/atlas/material/molecule.h` | `Molecule` leaf |
-| `include/atlas/material/atom.h` | `Atom` leaf |
-| `include/atlas/material/ion.h` | `Ion` leaf |
-| `include/atlas/material/neutron.h` | `Neutron` leaf |
-| `include/atlas/material/solid.h` | `Solid` leaf |
-| `include/atlas/material/material_dictionary.h` | `MaterialDictionary` (owns `DeviceBuffer<Material>`) + `Builder` |
-| `src/atlas/material/material_dictionary.cu` | `MaterialDictionary::Builder` implementation |
+| `include/atlas/material/material_type.h` | `enum class MaterialType : int { molecule, atom, ion, neutron, solid }` — the discriminant |
+| `include/atlas/material/molecule.h` | `Molecule` leaf — eight `float`s (polyatomic) |
+| `include/atlas/material/atom.h` | `Atom` leaf — same eight fields (monatomic) |
+| `include/atlas/material/ion.h` | `Ion` leaf — same eight fields (charged; charge not modelled) |
+| `include/atlas/material/neutron.h` | `Neutron` leaf — same eight fields (neutral nuclear) |
+| `include/atlas/material/solid.h` | `Solid` leaf — mass only; all other getters return `1.0f` |
+| `include/atlas/material/material.h` | `ConceptMaterial`, the `Material` umbrella (`DeviceVariant`), the eight visitor functors, `MaterialVariant` |
+| `include/atlas/material/material_dictionary.h` | `MaterialDictionary` (owns `DeviceBuffer<Material>`) + nested `Builder` |
+| `src/atlas/material/material_dictionary.cu` | `MaterialDictionary` / `Builder` out-of-line definitions |
 
-## `Material`
+## The leaves
 
-`Material` is a **`DeviceVariant`** over one leaf per `MaterialType`
-(`Molecule`, `Atom`, `Ion`, `Neutron`, `Solid`), each in its own header. Keeping
-them as distinct types lets the per-type physics diverge — `Solid` already does.
-
-Each leaf keeps its state private and exposes it through getters. Every property
-a leaf carries is **always present** — a plain `float`, not
-`std::optional<float>` — and is supplied through the leaf's constructor.
+Four of the five leaves — `Molecule`, `Atom`, `Ion`, `Neutron` — are
+**byte-for-byte identical**: eight `float`s with the same constructor and eight
+getters. They are kept as distinct types purely so per-species physics can
+diverge later; today only `Solid` diverges. Each holds nothing but `float`s, so
+each is trivially copyable and can be captured by value into a device lambda.
 
 ```cpp
-class Molecule {                   // Atom / Ion / Neutron look the same
-public:
-    Molecule() = default;
-    Molecule(float mass,
-             float translational_energy,
-             float rotational_energy,
-             float vibrational_energy);
+Molecule(float mass,                    // kg
+         float translational_energy,    // J
+         float rotational_energy,       // J
+         float vibrational_energy,      // J
+         float reference_diameter,      // m   (VHS/VSS d_ref)
+         float reference_temperature,   // K   (VHS/VSS T_ref)
+         float viscosity_index,         // -   omega; 0.5 = hard sphere
+         float scattering_parameter);   // -   alpha; 1.0 = isotropic (VHS)
+```
 
-    float mass() const;
-    float translational_energy() const;
-    float rotational_energy() const;
-    float vibrational_energy() const;
+The last four fields are the Variable Hard Sphere / Variable Soft Sphere
+(VHS/VSS) cross-section parameters the DSMC kernels consume. `_viscosity_index`
+and `_scattering_parameter` carry in-class defaults `0.5f` / `1.0f` so a
+default-constructed leaf is a hard sphere rather than a degenerate one.
 
-private:
-    float _mass {};
-    float _translational_energy {};
-    float _rotational_energy {};
-    float _vibrational_energy {};
-};
+`Solid` is the wall/boundary species. It stores only `mass()` and returns a
+constant `1.0f` from every other getter (see **Deliberately absent**).
 
-class Solid {                      // no internal energy at all
-public:
-    explicit Solid(float mass);
-    float mass() const;
-    float translational_energy() const;   // throws std::runtime_error
-    float rotational_energy() const;      // throws std::runtime_error
-    float vibrational_energy() const;     // throws std::runtime_error
-private:
-    float _mass {};
-};
+## `ConceptMaterial` and the umbrella
 
+`ConceptMaterial<M>` requires all eight getters, each returning exactly `float`.
+Five `static_assert`s in `material.h` check every leaf conforms — adding a
+property means adding a getter to the concept *and* to every leaf, or the build
+breaks.
+
+```cpp
 template <typename M>
-concept ConceptMaterial = requires(const M material) {
-    { material.mass() } -> std::same_as<float>;
-    { material.translational_energy() } -> std::same_as<float>;
-    { material.rotational_energy() } -> std::same_as<float>;
-    { material.vibrational_energy() } -> std::same_as<float>;
-};
-
-class Material {
-public:
-    MaterialType type;
-    union { Molecule molecule; Atom atom; /* … */ };
-    float mass() const noexcept;          // device-capable, DeviceVariant::visit
-    float translational_energy() const;   // host-only, throws for Solid
-    float rotational_energy() const;      // host-only, throws for Solid
-    float vibrational_energy() const;     // host-only, throws for Solid
+concept ConceptMaterial = requires(const M m) {
+    { m.mass() }                   -> std::same_as<float>;
+    { m.translational_energy() }   -> std::same_as<float>;
+    { m.rotational_energy() }      -> std::same_as<float>;
+    { m.vibrational_energy() }     -> std::same_as<float>;
+    { m.reference_diameter() }     -> std::same_as<float>;
+    { m.reference_temperature() }  -> std::same_as<float>;
+    { m.viscosity_index() }        -> std::same_as<float>;
+    { m.scattering_parameter() }   -> std::same_as<float>;
 };
 ```
 
-Notes:
+`Material` is a **`DeviceVariant`** umbrella — the trivially-copyable variant,
+*not* `HostVariant` — because no leaf owns a `DeviceBuffer`; the whole point is
+that a `Material` lives in a `DeviceBuffer<Material>` and is read inside device
+kernels. It holds `MaterialType type` plus a raw `union` of the five leaves; the
+special members are `= default` and trivially copyable *only because* every leaf
+is. The comment in the header is explicit: do not add a leaf that owns a
+resource.
 
-- The old `MaterialProperties` had both `mass` and `molecular_mass`; the field is
-  now a single **`mass`** (the former `molecular_mass`, renamed). All other
-  legacy fields were dropped in this pass.
-- The leaves are trivially copyable (plain `float`s), so `Material` is trivially
-  copyable and lives in a `DeviceBuffer<Material>`.
-- **`mass()` is the only device-side accessor.** It dispatches through
-  `DeviceVariant::visit`, which is `noexcept` and `__host__ __device__` — so it
-  can neither host a `throw` nor call a host-only getter. The three energy
-  accessors are therefore `ATLAS_HOST` and dispatch with a plain `switch` on
-  `type`, which lets `Solid`'s getters propagate their `std::runtime_error`.
-- `ConceptMaterial` constrains every leaf to the four getters; a `static_assert`
-  in `material.h` checks each one. `Solid` satisfies it by declaring the three
-  energy getters and throwing from them.
-- Construct from a leaf: `Material m(Molecule(mass, e_tra, e_rot, e_vib));` or
-  `Material m(Solid(mass));`.
+```cpp
+class Material final {
+public:
+    MaterialType type = MaterialType::molecule;
+    union { Molecule molecule; Atom atom; Ion ion; Neutron neutron; Solid solid; };
+
+    ATLAS_ALL_DEVICE Material() noexcept;                 // activates molecule
+    template <typename Payload> explicit Material(const Payload&) noexcept;
+
+    float mass() const noexcept;                          // and the seven others
+};
+```
+
+Every getter dispatches through `MaterialVariant::visit(*this, Functor{}, 0.0f)`:
+a plain visitor functor (e.g. `MaterialMass`) is invoked on whichever leaf
+`type` selects. They are functors rather than lambdas specifically because nvcc
+forbids an extended `__host__ __device__` lambda in class scope. The `0.0f` is a
+fallback for a tag that matches no case, which cannot happen for a normalized
+tag — `DeviceVariant::normalize` folds any out-of-range `type` back to
+`molecule`. The leaf-payload constructor deduces the tag from the argument type
+via `MaterialVariant::construct_payload`, so `Material m(Solid(mass))` just
+works; a non-leaf argument trips a `static_assert` inside `DeviceVariant`.
+
+Which getters actually feed physics (all reads are in the DSMC kernels under
+`include/atlas/solver/dsmc/kernel/`, plus mass in the generator):
+
+| Property | Read by |
+|---|---|
+| `mass` | `dsmc_scatter.h`, `variable_hard_sphere_kernel.h`, `maxwell_boltzmann_generator.cu:124` |
+| `reference_diameter` | `hard_sphere_kernel.h`, `variable_hard_sphere_kernel.h` |
+| `reference_temperature`, `viscosity_index` | `variable_hard_sphere_kernel.h` |
+| `scattering_parameter` | `variable_soft_sphere_kernel.h` |
+| `translational/rotational/vibrational_energy` | **nothing** (see Not implemented) |
 
 ## `MaterialDictionary`
 
-`MaterialDictionary` owns the device-side species table as a
-`DeviceBuffer<Material>` (indexed by species id). It is host-side and move-only
-(it owns a device buffer). Build it from host-side `Material` values:
+Owns the device species table as a `DeviceBuffer<Material>` where element `i` is
+species `i`. It is **move-only** — copy is deleted because copying a
+`thrust::device_vector` is a host→device→host round trip. It is a host-side
+handle; only the buffer it wraps lives in device memory. Build it through the
+nested `Builder`, which stages `Material`s in a `HostBuffer<Material>` (append
+order = species id), then `build()` validates (at least one material, else
+`std::runtime_error`), range-constructs the device buffer in a single upload,
+and clears the staging buffer so the builder is reusable.
 
 ```cpp
 auto dictionary = MaterialDictionary::builder()
-    .with_material(Material(Molecule(m0, e_tra, e_rot, e_vib)))
-    .with_materials(more_materials)             // HostBuffer<Material>
-    .build();
-// dictionary.materials()  -> const DeviceBuffer<Material>&
-// dictionary.size(), dictionary.empty()
+    .with_material(Material(Molecule(m0, /* … */)))
+    .with_materials(host_buffer)          // batch append, HostBuffer<Material>
+    .build();                             // or .make_host_shared()
 ```
 
-`MaterialDictionaryHostPtr` (a `host_shared_ptr<MaterialDictionary>`) is what
-consumers such as `MaxwellBoltzmannGenerator::Builder::with_material_dictionary`
-take to resolve per-species mass.
+`Fluid` holds a `MaterialDictionaryHostPtr`
+(`host_shared_ptr<MaterialDictionary>`); the DSMC solver reads
+`fluid.materials()->materials()` and, if the fluid carries no dictionary,
+refuses to solve (`DsmcSolver::solve` logs and returns).
+`MaxwellBoltzmannGenerator` resolves per-species mass through the same handle.
 
-## Adding a leaf / field
+## Deliberately absent
 
-- New material type: add a `MaterialType` value, a leaf header, a union member
-  and a `DeviceVariantCase`.
-- New shared field: add it to every leaf (member + constructor parameter +
-  getter), extend `ConceptMaterial`, and expose a `visit`-based accessor on
-  `Material`.
+- **`Solid`'s non-mass getters return `1.0f`.** A wall never flows, collides as
+  a gas particle, or carries internal energy, so `Solid` stores only `mass`.
+  `1.0f` (not `0.0f`) is chosen because the VHS/VSS math divides by and takes
+  powers of these values; a nonzero finite placeholder keeps any accidental use
+  well-defined instead of producing NaN/Inf. The stub must be `noexcept` and
+  `__host__ __device__` — throwing or returning a sentinel is not an option on
+  the device — so a `Solid` reads as junk-but-finite rather than erroring. It is
+  not expected to be picked as a collision partner.
+- **Charge, nuclear state, per-mode structure are not modelled.** `Ion` stores
+  no field coupling and `Neutron` no nuclear data; both are eight plain `float`s
+  like `Molecule`. Consistent with the engine's large-domain / low-detail aim.
+- **No `std::optional` properties.** Every field is an always-present `float`
+  supplied at construction, so leaves stay trivially copyable for the device.
+
+## Not implemented
+
+Three items exist as declarations but are never produced or consumed by engine
+code. Evidence gathered by grepping `src`, `include`, `benchmarks`, and `tests`,
+excluding each type's own header and the serialization round-trip.
+
+| What | Where | Evidence | Verdict |
+|---|---|---|---|
+| The three internal-energy fields `translational_energy` / `rotational_energy` / `vibrational_energy` on **every** leaf | `molecule.h:150-154` etc.; accessors `material.h:145-160` | Stored, exposed, and round-tripped through `protobuf_snapshot.cpp:210-238`, but **no DSMC kernel or solver ever reads them** — the only `.*_energy()` reads in the whole tree are the serialization getters. | Accepted but ignored — reserved for future collision-energy physics; carried and serialized, never consumed. |
+| `Ion` and `Neutron` leaves | `ion.h`, `neutron.h`; union members `material.h:79,81` | Constructed **only** by deserialization (`protobuf_snapshot.cpp:247,249`) and unit tests. No engine algorithm, benchmark, or example produces one; behaviour is identical to `Molecule` (no divergent physics yet). | Deliberate extension point / union-completeness case — a user *can* supply one via the builder and it will round-trip, but nothing in the shipped engine writes one. |
+| `MaterialDictionaryDevicePtr` alias | `material_dictionary.h:186` | Zero references anywhere outside its own declaration; only `MaterialDictionaryHostPtr` is used (by `Fluid` and serialization). | Dead / provided for symmetry with the host handle. |
+
+Note for contrast: `Atom` is also constructed only in tests and serialization
+within this repo, but it is a realistic monatomic species used by the DSMC
+kernel tests, so it is not listed as dead. The `with_materials` batch appender
+and `make_host_shared` *are* exercised (serialization restore and generator
+tests respectively).
+
+## Extending
+
+- **New leaf type.** Add a `MaterialType` enumerator, a leaf header satisfying
+  `ConceptMaterial`, a union member in `Material`, and a `DeviceVariantCase` in
+  the `MaterialVariant` alias binding the tag to that member. The leaf must be
+  trivially copyable and own no resource, or `Material` stops being trivially
+  copyable and the `= default` members become ill-formed. The
+  `static_assert(ConceptMaterial<NewLeaf>)` line catches a missing getter at
+  compile time.
+- **New shared property.** Add the field + constructor parameter + getter to
+  every leaf, add the requirement to `ConceptMaterial` (this is what forces you
+  to touch all five leaves), add a visitor functor and a `visit`-based accessor
+  on `Material`, and extend the serialization schema/round-trip if it must
+  persist.
+- **Divergent physics for `Ion`/`Neutron`.** Give the leaf its own fields and
+  getter bodies; no umbrella change is needed as long as it still satisfies
+  `ConceptMaterial`.
