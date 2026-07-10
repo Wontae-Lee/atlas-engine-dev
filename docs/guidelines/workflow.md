@@ -57,8 +57,8 @@ Outside these cases, implement the requested behavior directly.
 
 ## 5. Git and Commits
 
-- When the user asks for `git commit`, group all staged changes except
-  `.idea/workspace.xml` by related purpose, then create commits that match those
-  groups.
-- Commit `.idea/workspace.xml` only when the user asks for `git commit all`, and
-  only after all other grouped commits are complete.
+- When the user asks for `git commit`, group the staged changes by related
+  purpose, then create commits that match those groups.
+- `.idea/workspace.xml` is gitignored (see `.gitignore`), so it never enters a
+  commit; other tracked `.idea/` files (for example `editor.xml`, `codeStyles/`)
+  are committed like any other source.
