@@ -15,7 +15,6 @@ target_include_directories(atlas-core
         INTERFACE
         "${ATLAS_CORE_INCLUDE_DIR}"
         "${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobj"
-        "${CMAKE_CURRENT_SOURCE_DIR}/external/lyra/include"
         # Thrust ships with the CUDA toolkit; exposing its include dirs lets
         # host-compiled consumers (e.g. the Python bindings) see the same
         # Thrust headers as nvcc TUs.
