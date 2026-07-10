@@ -10,49 +10,65 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "ATLAS_LOGGING": "OFF",
+        "ATLAS_GOOGLE_TEST": "OFF",
+        "ATLAS_PYTHON": "OFF",
+        "ATLAS_BENCHMARKS": "OFF"
+      }
+    },
+
+    {
+      "name": "debug-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
         "ATLAS_LOGGING": "ON",
         "ATLAS_GOOGLE_TEST": "ON",
-        "ATLAS_BENCHMARKS": "OFF"
+        "ATLAS_PYTHON": "ON",
+        "ATLAS_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "release-base",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
 
     {
       "name": "tbb-debug",
       "displayName": "Atlas TBB Debug (CPU, Thrust device = TBB)",
-      "inherits": "base",
+      "inherits": "debug-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "ATLAS_DEVICE_SYSTEM": "TBB"
       }
     },
     {
       "name": "tbb-release",
       "displayName": "Atlas TBB Release (CPU, Thrust device = TBB)",
-      "inherits": "base",
+      "inherits": "release-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "ATLAS_DEVICE_SYSTEM": "TBB",
-        "ATLAS_GOOGLE_TEST": "OFF"
+        "ATLAS_DEVICE_SYSTEM": "TBB"
       }
     },
 
     {
       "name": "cuda-debug",
       "displayName": "Atlas CUDA Debug (GPU, Thrust device = CUDA)",
-      "inherits": "base",
+      "inherits": "debug-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "ATLAS_DEVICE_SYSTEM": "CUDA"
       }
     },
     {
       "name": "cuda-release",
       "displayName": "Atlas CUDA Release (GPU, Thrust device = CUDA)",
-      "inherits": "base",
+      "inherits": "release-base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "ATLAS_DEVICE_SYSTEM": "CUDA",
-        "ATLAS_GOOGLE_TEST": "OFF"
+        "ATLAS_DEVICE_SYSTEM": "CUDA"
       }
     }
   ],
