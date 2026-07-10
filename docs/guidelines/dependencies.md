@@ -25,7 +25,7 @@ Python 3.8+ interpreter with the development headers.
 
 In-tree dependencies under `external/` include:
 
-- tinyobjloader
+- tinyobj (tinyobjloader)
 - googletest
 - googlebenchmark
 - protobuf

@@ -98,10 +98,9 @@ test lands in the aggregate `atlas_tests` target, and each directory also gets
 its own executable named after the path relative to `tests/atlas/` — so
 `tests/atlas/sink/` builds `atlas_tests_sink`.
 
-Current test locations:
-
-- `tests/atlas/collider/`
-- `tests/atlas/generator/`
-- `tests/atlas/material/`
-- `tests/atlas/sink/`
-- `tests/atlas/source/`
+Tests mirror `include/atlas/`: nearly every module has a directory under
+`tests/atlas/`. The covered modules are `buffer`, `codec`, `collider`,
+`container`, `core`, `fluid`, `generator`, `geometry`, `material`, `math`,
+`memory`, `observer`, `parallel`, `random`, `sampling`, `scan`, `searcher`,
+`sink`, `solver`, `source`, `spatial`, `sync`, `system`, `unit`, and
+`universe`.
