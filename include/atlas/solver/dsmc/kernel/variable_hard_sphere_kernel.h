@@ -31,6 +31,12 @@ public:
      * viscosity index making the Gamma argument non-positive) yields a `0` cross section
      * rather than a NaN.
      *
+     * @warning The reduced mass is evaluated as `m_l * (m_r / (m_l + m_r))`, never as
+     *          `m_l * m_r / (m_l + m_r)`. A molecular mass is around `1e-26` kg, so the
+     *          product of two of them underflows float to zero and the whole expression
+     *          returns `inf` for every relative speed. `m_r * g^2` is guarded for the same
+     *          reason: it underflows once `g` drops below roughly `1e-10` m/s.
+     *
      * @param lhs           First partner's material.
      * @param rhs           Second partner's material.
      * @param relative_speed Magnitude of the relative velocity (m/s); must be positive.
@@ -66,14 +72,20 @@ public:
             return 0.0f;
         }
 
-        const float reduced_mass = lhs_mass * rhs_mass / mass_sum;
+        // Divide before multiplying. A molecular mass is ~1e-26 kg, so `lhs_mass * rhs_mass`
+        // is ~1e-52 and flushes to zero in float long before the division can rescale it.
+        const float reduced_mass = lhs_mass * (rhs_mass / mass_sum);
 
-        const float thermal_ratio = (2.0f * atlas::boltzmann_constant * reference_temperature)
-            / (reduced_mass * relative_speed * relative_speed);
+        const float thermal_energy = reduced_mass * relative_speed * relative_speed;
 
-        if (!(thermal_ratio > 0.0f)) {
+        // Still zero for a relative speed small enough to underflow the square; the pair
+        // contributes no cross-section either way, since sigma * g tends to zero with g.
+        if (!(thermal_energy > 0.0f)) {
             return 0.0f;
         }
+
+        const float thermal_ratio
+            = (2.0f * atlas::boltzmann_constant * reference_temperature) / thermal_energy;
 
         // tgamma is only available in double precision; evaluate there and narrow back.
         const float gamma_value = static_cast<float>(std::tgamma(static_cast<double>(gamma_argument)));
