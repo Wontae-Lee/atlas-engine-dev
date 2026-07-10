@@ -16,9 +16,28 @@
 
 namespace atlas {
 
+namespace {
+
+    template <typename StateT>
+    void
+    ensure_universe_state(Universe& universe, const std::size_t cell_count) {
+        auto* state = universe.state<StateT>();
+
+        if (state == nullptr) {
+            universe.emplace_state<StateT>(cell_count);
+            return;
+        }
+
+        if (state->size() != cell_count) {
+            state->data().resize(cell_count);
+        }
+    }
+
+}
+
 System::System(FluidHostPtr fluid,
                UniverseHostPtr universe,
-               OrchestratorHostPtr orchestrator,
+               HostBuffer<SolverHostPtr> solvers,
                HostBuffer<SourceHostPtr> sources,
                HostBuffer<GeneratorHostPtr> generators,
                const HostBuffer<Collider>& colliders,
@@ -29,7 +48,7 @@ System::System(FluidHostPtr fluid,
     : _dt(dt)
     , _fluid(std::move(fluid))
     , _universe(std::move(universe))
-    , _orchestrator(std::move(orchestrator))
+    , _solvers(std::move(solvers))
     , _codec(std::move(codec))
     , _observer(std::move(observer))
     , _sources(std::move(sources))
@@ -42,6 +61,37 @@ System::System(FluidHostPtr fluid,
                         .with_universe(*_universe)
                         .make_host_shared();
     }
+
+    initialize_states();
+}
+
+void
+System::initialize_states() {
+    if (!_universe) {
+        return;
+    }
+
+    const auto cell_count = static_cast<std::size_t>(_universe->cell_count());
+
+    ensure_universe_state<UniverseAllocatedSolverState>(*_universe, cell_count);
+
+    for (const auto& solver : _solvers) {
+        switch (solver->type()) {
+            case SolverType::dsmc:
+                initialize_dsmc_states();
+                break;
+        }
+    }
+}
+
+void
+System::initialize_dsmc_states() {
+    const auto cell_count = static_cast<std::size_t>(_universe->cell_count());
+
+    ensure_universe_state<UniverseNumberParticleState>(*_universe, cell_count);
+    ensure_universe_state<UniverseMaxRelativeSpeedState>(*_universe, cell_count);
+    ensure_universe_state<UniverseMaxSigmaGState>(*_universe, cell_count);
+    ensure_universe_state<UniverseCollisionCountState>(*_universe, cell_count);
 }
 
 System::Builder
@@ -69,7 +119,7 @@ System::update() {
     emit();
     search();
     allocate();
-    orchestrate();
+    solve();
     advect();
     remove();
 
@@ -147,12 +197,16 @@ System::allocate() {
 }
 
 void
-System::orchestrate() {
-    if (!_orchestrator || !_searcher) {
+System::solve() {
+    if (!_fluid || !_universe || !_searcher || _solvers.empty()) {
         return;
     }
 
-    _orchestrator->orchestrate(_searcher->view(), _dt);
+    const SpatialHashingSearcherView searcher_view = _searcher->view();
+
+    for (std::size_t i = 0; i < _solvers.size(); ++i) {
+        _solvers[i]->solve(*_fluid, *_universe, searcher_view, static_cast<int>(i), _dt);
+    }
 }
 
 void
@@ -311,8 +365,8 @@ System::Builder::with_universe(UniverseHostPtr universe) noexcept {
 }
 
 System::Builder&
-System::Builder::with_orchestrator(OrchestratorHostPtr orchestrator) noexcept {
-    _orchestrator = std::move(orchestrator);
+System::Builder::with_solver(SolverHostPtr solver) {
+    _solvers.push_back(std::move(solver));
     return *this;
 }
 
@@ -377,18 +431,32 @@ System::Builder::validate() const {
         }
     }
 
+    for (const auto& solver : _solvers) {
+        if (!solver) {
+            throw std::runtime_error("System::Builder: a solver must not be null.");
+        }
+    }
 }
 
 System
-System::Builder::build() const {
+System::Builder::build() {
     validate();
 
-    return System(_fluid, _universe, _orchestrator, _sources, _generators, _colliders, _sinks, _codec, _observer, _dt);
+    return System(std::move(_fluid),
+                  std::move(_universe),
+                  _solvers,
+                  std::move(_sources),
+                  std::move(_generators),
+                  _colliders,
+                  _sinks,
+                  _codec,
+                  _observer,
+                  _dt);
 }
 
-atlas::host_shared_ptr<System>
-System::Builder::make_host_shared() const {
-    return atlas::make_host_shared<System>(build());
+atlas::host_unique_ptr<System>
+System::Builder::make_host_unique() {
+    return atlas::make_host_unique<System>(build());
 }
 
 }

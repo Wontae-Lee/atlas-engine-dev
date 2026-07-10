@@ -113,9 +113,9 @@ Universe::Builder::build() const {
     return Universe(_lower_corner, _upper_corner, _cell_size);
 }
 
-atlas::host_shared_ptr<Universe>
-Universe::Builder::make_host_shared() const {
-    return atlas::make_host_shared<Universe>(build());
+atlas::host_unique_ptr<Universe>
+Universe::Builder::make_host_unique() const {
+    return atlas::make_host_unique<Universe>(build());
 }
 
 void

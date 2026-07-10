@@ -155,8 +155,8 @@ public:
     ATLAS_NODISCARD ATLAS_HOST Fluid
     build() const;
 
-    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Fluid>
-    make_host_shared() const;
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_unique_ptr<Fluid>
+    make_host_unique() const;
 
 private:
     ATLAS_HOST void
@@ -172,8 +172,6 @@ private:
     MaterialDictionaryHostPtr _materials {};
 };
 
-using FluidHostPtr = atlas::host_shared_ptr<Fluid>;
-
-using FluidDevicePtr = atlas::device_shared_ptr<Fluid>;
+using FluidHostPtr = atlas::host_unique_ptr<Fluid>;
 
 }

@@ -226,6 +226,16 @@ make_host_shared(Args&&... args) {
 template <typename T>
 using host_shared_ptr = std::shared_ptr<T>;
 
+template <typename T>
+using host_unique_ptr = std::unique_ptr<T>;
+
+template <typename T, typename... Args>
+inline std::unique_ptr<std::decay_t<T>>
+make_host_unique(Args&&... args) {
+    using U = std::decay_t<T>;
+    return std::make_unique<U>(std::forward<Args>(args)...);
+}
+
 }
 
 #else
@@ -242,6 +252,9 @@ using host_shared_ptr = std::shared_ptr<T>;
 template <typename T>
 using device_shared_ptr = std::shared_ptr<T>;
 
+template <typename T>
+using host_unique_ptr = std::unique_ptr<T>;
+
 template <typename T, typename... Args>
 inline std::shared_ptr<std::decay_t<T>>
 make_device_shared(Args&&... args) {
@@ -254,6 +267,13 @@ inline std::shared_ptr<std::decay_t<T>>
 make_host_shared(Args&&... args) {
     using U = std::decay_t<T>;
     return std::make_shared<U>(std::forward<Args>(args)...);
+}
+
+template <typename T, typename... Args>
+inline std::unique_ptr<std::decay_t<T>>
+make_host_unique(Args&&... args) {
+    using U = std::decay_t<T>;
+    return std::make_unique<U>(std::forward<Args>(args)...);
 }
 
 }

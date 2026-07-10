@@ -152,8 +152,8 @@ public:
     ATLAS_NODISCARD ATLAS_HOST Universe
     build() const;
 
-    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<Universe>
-    make_host_shared() const;
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_unique_ptr<Universe>
+    make_host_unique() const;
 
 private:
     ATLAS_HOST void
@@ -167,8 +167,6 @@ private:
     float _cell_size = 1.0f;
 };
 
-using UniverseHostPtr = atlas::host_shared_ptr<Universe>;
-
-using UniverseDevicePtr = atlas::device_shared_ptr<Universe>;
+using UniverseHostPtr = atlas::host_unique_ptr<Universe>;
 
 }

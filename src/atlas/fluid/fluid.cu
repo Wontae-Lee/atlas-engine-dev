@@ -207,9 +207,9 @@ Fluid::Builder::build() const {
     return fluid;
 }
 
-atlas::host_shared_ptr<Fluid>
-Fluid::Builder::make_host_shared() const {
-    return atlas::make_host_shared<Fluid>(build());
+atlas::host_unique_ptr<Fluid>
+Fluid::Builder::make_host_unique() const {
+    return atlas::make_host_unique<Fluid>(build());
 }
 
 }
