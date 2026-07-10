@@ -73,7 +73,7 @@ if (ATLAS_LOGGING)
     message(STATUS "[ATLAS] Logging: ENABLED")
 
     add_library(atlas-logging STATIC
-            "${CMAKE_CURRENT_SOURCE_DIR}/src/logging/logging.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/atlas/logging/logging.cpp"
     )
     add_library(atlas::logging ALIAS atlas-logging)
 
