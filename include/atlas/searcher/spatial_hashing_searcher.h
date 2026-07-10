@@ -45,8 +45,18 @@ public:
     class Builder;
 
 public:
-    /// Construct an empty 1x1x1 searcher with unit cell size; use `builder()` for real grids.
-    SpatialHashingSearcher() = default;
+    /**
+     * @brief Construct an empty 1x1x1 searcher with unit cell size.
+     *
+     * Calls `reset()` so `cell_start`/`cell_end` are sized to `cell_count()` and filled
+     * with the empty sentinel, exactly as the explicit constructor does. Without that the
+     * accessors would report one cell while backing no storage, and a consumer reading
+     * `cell_count()` entries would run off the end of an empty buffer.
+     *
+     * Use `builder()` for real grids.
+     */
+    ATLAS_HOST
+    SpatialHashingSearcher();
 
     /**
      * @brief Construct over an explicit uniform grid and allocate its per-cell arrays.

@@ -13,6 +13,13 @@
 
 namespace atlas {
 
+SpatialHashingSearcher::SpatialHashingSearcher() {
+    // The member initializers already describe the 1x1x1 unit grid; only the per-cell
+    // ranges still need their empty sentinel, so the default grid is as readable as one
+    // the explicit constructor built.
+    reset();
+}
+
 SpatialHashingSearcher::SpatialHashingSearcher(const Float3& lower_corner,
                                                const float cell_size,
                                                const Int3& grid_size)
