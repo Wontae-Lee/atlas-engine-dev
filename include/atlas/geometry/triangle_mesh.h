@@ -15,7 +15,7 @@
 
 namespace atlas {
 
-struct TriangleMeshGeometryOperator {
+struct TriangleMeshView {
 
     const Float3* vertices = nullptr;
 
@@ -616,11 +616,6 @@ public:
 
         return out;
     }
-
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
-    operator()(const Ray& ray) const noexcept {
-        return trace(ray);
-    }
 };
 
 struct Geometry;
@@ -702,7 +697,7 @@ private:
 
     mutable bool query_cache_built = false;
 
-    mutable TriangleMeshGeometryOperator _operator {};
+    mutable TriangleMeshView _view {};
 
     ATLAS_HOST void
     ensure_bvh() noexcept;
@@ -717,7 +712,7 @@ private:
     rebuild_query_cache() const;
 
     ATLAS_HOST void
-    update_operator() const;
+    update_view() const;
 };
 
 class TriangleMesh::Builder final {

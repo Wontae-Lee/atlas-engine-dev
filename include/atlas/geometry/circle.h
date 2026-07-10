@@ -207,11 +207,6 @@ public:
         return result;
     }
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
-    operator()(const Ray& ray) const noexcept {
-        return trace(ray);
-    }
-
 private:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     plane_and_radial(const Float3& p,

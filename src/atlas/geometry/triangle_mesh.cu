@@ -39,7 +39,7 @@ TriangleMesh::TriangleMesh(const TriangleMesh& other)
     , bvh_built(other.bvh_built)
     , query_cache_built(other.query_cache_built) {
 
-    update_operator();
+    update_view();
 }
 
 TriangleMesh::TriangleMesh(TriangleMesh&& other) noexcept
@@ -50,12 +50,12 @@ TriangleMesh::TriangleMesh(TriangleMesh&& other) noexcept
     , bvh_built(other.bvh_built)
     , query_cache_built(other.query_cache_built) {
 
-    update_operator();
+    update_view();
 
     other.bvh_built         = false;
     other.query_cache_built = false;
 
-    other.update_operator();
+    other.update_view();
 }
 
 TriangleMesh&
@@ -72,7 +72,7 @@ TriangleMesh::operator=(const TriangleMesh& other) {
     bvh_built         = other.bvh_built;
     query_cache_built = other.query_cache_built;
 
-    update_operator();
+    update_view();
 
     return *this;
 }
@@ -91,11 +91,11 @@ TriangleMesh::operator=(TriangleMesh&& other) noexcept {
     bvh_built         = other.bvh_built;
     query_cache_built = other.query_cache_built;
 
-    update_operator();
+    update_view();
 
     other.bvh_built         = false;
     other.query_cache_built = false;
-    other.update_operator();
+    other.update_view();
 
     return *this;
 }
@@ -173,29 +173,29 @@ TriangleMesh::rebuild_query_cache() const {
 
     query_cache_built = true;
 
-    update_operator();
+    update_view();
 }
 
 void
-TriangleMesh::update_operator() const {
+TriangleMesh::update_view() const {
 
-    _operator.vertices       = _query_vertices.empty() ? nullptr : atlas::raw_pointer_cast(_query_vertices.data());
-    _operator.indices        = _query_indices.empty() ? nullptr : atlas::raw_pointer_cast(_query_indices.data());
-    _operator.triangle_count = static_cast<int>(triangles.size());
+    _view.vertices       = _query_vertices.empty() ? nullptr : atlas::raw_pointer_cast(_query_vertices.data());
+    _view.indices        = _query_indices.empty() ? nullptr : atlas::raw_pointer_cast(_query_indices.data());
+    _view.triangle_count = static_cast<int>(triangles.size());
 
     if (_bvh && bvh_built) {
 
-        const auto bvh_op     = _bvh->make_geometry_operator();
-        _operator.bvh_nodes   = bvh_op.bvh_nodes;
-        _operator.bvh_indices = bvh_op.bvh_indices;
-        _operator.bvh_tris    = bvh_op.bvh_tris;
-        _operator.bvh_root    = bvh_op.bvh_root;
+        const auto bvh_view     = _bvh->view();
+        _view.bvh_nodes   = bvh_view.bvh_nodes;
+        _view.bvh_indices = bvh_view.bvh_indices;
+        _view.bvh_tris    = bvh_view.bvh_tris;
+        _view.bvh_root    = bvh_view.bvh_root;
     } else {
 
-        _operator.bvh_nodes   = nullptr;
-        _operator.bvh_indices = nullptr;
-        _operator.bvh_tris    = nullptr;
-        _operator.bvh_root    = -1;
+        _view.bvh_nodes   = nullptr;
+        _view.bvh_indices = nullptr;
+        _view.bvh_tris    = nullptr;
+        _view.bvh_root    = -1;
     }
 }
 
@@ -204,7 +204,7 @@ TriangleMesh::make_device_geometry_view() const {
 
     ensure_query_cache();
 
-    return Geometry(_operator);
+    return Geometry(_view);
 }
 
 bool
@@ -299,42 +299,42 @@ TriangleMesh::load_from_obj(const std::string& filename, const bool verbose) {
 
 Float3
 TriangleMesh::closest_point(const Float3& p) const noexcept {
-    return _operator.closest_point(p);
+    return _view.closest_point(p);
 }
 
 Float3
 TriangleMesh::closest_normal(const Float3& p) const noexcept {
-    return _operator.closest_normal(p);
+    return _view.closest_normal(p);
 }
 
 float
 TriangleMesh::signed_distance(const Float3& p) const noexcept {
-    return _operator.signed_distance(p);
+    return _view.signed_distance(p);
 }
 
 bool
 TriangleMesh::is_inside(const Float3& p, const float tolerance) const noexcept {
-    return _operator.is_inside(p, tolerance);
+    return _view.is_inside(p, tolerance);
 }
 
 bool
 TriangleMesh::is_on_surface(const Float3& p, const float tolerance) const noexcept {
-    return _operator.is_on_surface(p, tolerance);
+    return _view.is_on_surface(p, tolerance);
 }
 
 Float3
 TriangleMesh::centroid() const noexcept {
-    return _operator.centroid();
+    return _view.centroid();
 }
 
 AABB
 TriangleMesh::bound() const noexcept {
-    return _operator.bound();
+    return _view.bound();
 }
 
 bool
 TriangleMesh::is_valid() const noexcept {
-    return _operator.is_valid();
+    return _view.is_valid();
 }
 
 TriangleMesh
