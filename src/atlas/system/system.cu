@@ -1,13 +1,13 @@
 #include <atlas/system/system.h>
 
 #include <atlas/fluid/fluid_state.h>
-#include <atlas/serialization/protobuf_snapshot.h>
-#include <atlas/universe/universe_state.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/atomic.h>
 #include <atlas/parallel/parallel_for.h>
+#include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/spatial/ray.h>
+#include <atlas/universe/universe_state.h>
 
 #include <cstddef>
 #include <filesystem>
@@ -19,6 +19,17 @@ namespace atlas {
 
 namespace {
 
+    /**
+     * @brief Guarantees a universe holds a state column of type @p StateT sized to the grid.
+     *
+     * Emplaces the column when absent, otherwise resizes it in place if its length no longer
+     * matches the cell count. Lets @c System provision exactly the per-cell columns its
+     * configured solvers require, idempotently.
+     *
+     * @tparam StateT   The universe state column type to ensure.
+     * @param universe   The universe whose state store is amended.
+     * @param cell_count Number of cells the column must cover.
+     */
     template <typename StateT>
     void
     ensure_universe_state(Universe& universe, const std::size_t cell_count) {
@@ -57,6 +68,7 @@ System::System(FluidHostPtr fluid,
     , _colliders(colliders.begin(), colliders.end())
     , _sinks(sinks.begin(), sinks.end()) {
 
+    // The searcher indexes the universe grid, so it can only exist once a universe does.
     if (_universe) {
         _searcher = SpatialHashingSearcher::builder()
                         .with_universe(*_universe)
@@ -64,6 +76,8 @@ System::System(FluidHostPtr fluid,
     }
 
     if (_observer) {
+        // Without a material dictionary there is a single implicit species; the counter
+        // layout must reserve at least one column so observer bookkeeping stays valid.
         const std::size_t species_count
             = (_fluid && _fluid->materials()) ? _fluid->materials()->size() : std::size_t { 1 };
 
@@ -81,13 +95,15 @@ System::initialize_states() {
 
     const auto cell_count = static_cast<std::size_t>(_universe->cell_count());
 
+    // Every configuration needs the per-cell solver-selection column, regardless of solver.
     ensure_universe_state<UniverseAllocatedSolverState>(*_universe, cell_count);
 
+    // Each solver kind pulls in the extra per-cell columns it reads or writes.
     for (const auto& solver : _solvers) {
         switch (solver->type()) {
-            case SolverType::dsmc:
-                initialize_dsmc_states();
-                break;
+        case SolverType::dsmc:
+            initialize_dsmc_states();
+            break;
         }
     }
 }
@@ -151,9 +167,11 @@ System::emit() {
 
     const std::size_t buffer_size = _fluid->buffer_size();
 
+    // New particles are appended at the current live count and grow it in place.
     std::size_t count = _fluid->particle_count();
 
     for (std::size_t i = 0; i < _sources.size(); ++i) {
+        // Stop once the fixed-capacity fluid buffer is full; excess spawns are dropped.
         if (count >= buffer_size) {
             break;
         }
@@ -164,12 +182,15 @@ System::emit() {
             continue;
         }
 
+        // The paired generator fills velocity and species for exactly the spawned slots;
+        // its returned count is unused because `spawned` already fixes the slot range.
         static_cast<void>(_generators[i]->generate(
             velocities,
             species,
             count,
             static_cast<std::size_t>(spawned)));
 
+        // Record the spawn against the range starting at the pre-increment offset.
         record_spawned(i, count, static_cast<std::size_t>(spawned));
 
         count += static_cast<std::size_t>(spawned);
@@ -177,6 +198,7 @@ System::emit() {
 
     _fluid->set_particle_count(count);
 
+    // Advance the emitter boundaries after emission so the next step sees moved sources.
     for (const auto& source : _sources) {
         source->advance(_dt);
     }
@@ -188,9 +210,11 @@ System::record_spawned(const std::size_t source_index, const std::size_t offset,
         return;
     }
 
-    const auto* species_state = _fluid->state<FluidSpeciesState>();
+    const auto* species_state       = _fluid->state<FluidSpeciesState>();
     const std::size_t species_count = _observer->species_count();
 
+    // Bail unless the species column exists and the counter matrix has its expected
+    // (source_count x species_count) shape; a mismatch means the layout is stale.
     if (species_state == nullptr || species_count == 0
         || _observer->spawned().size() != _sources.size() * species_count) {
         return;
@@ -199,9 +223,10 @@ System::record_spawned(const std::size_t source_index, const std::size_t offset,
     const auto* species = atlas::raw_pointer_cast(species_state->data().data());
     auto* spawned       = atlas::raw_pointer_cast(_observer->spawned().data());
 
-    const auto base    = static_cast<int>(source_index * species_count);
+    // Row offset of this source's counters within the flattened matrix.
+    const auto base          = static_cast<int>(source_index * species_count);
     const auto species_limit = static_cast<int>(species_count);
-    const auto first   = static_cast<int>(offset);
+    const auto first         = static_cast<int>(offset);
 
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
@@ -209,6 +234,7 @@ System::record_spawned(const std::size_t source_index, const std::size_t offset,
         [=] ATLAS_ALL_DEVICE(const int k) {
             const auto id = static_cast<int>(species[first + k]);
 
+            // Guard the species id before indexing; unknown ids are simply not counted.
             if (id >= 0 && id < species_limit) {
                 atlas::atomic_add(spawned + base + id, 1);
             }
@@ -245,8 +271,11 @@ System::solve() {
         return;
     }
 
+    // Gather the trivially-copyable searcher view once so device kernels can capture it.
     const SpatialHashingSearcherView searcher_view = _searcher->view();
 
+    // The loop index doubles as the solver's id, which cells compare against their
+    // allocated-solver selection to decide whose work applies to them.
     for (std::size_t i = 0; i < _solvers.size(); ++i) {
         _solvers[i]->solve(*_fluid, *_universe, searcher_view, static_cast<int>(i), _dt);
     }
@@ -279,6 +308,8 @@ System::advect() {
 
                 const float sweep_length = velocity.length() * dt;
 
+                // A particle that barely moves this step cannot cross a boundary; skip the
+                // collision search entirely and leave its position untouched.
                 if (sweep_length <= atlas::eps) {
                     return;
                 }
@@ -312,6 +343,8 @@ System::advect() {
                     }
                 }
 
+                // Resolve against the nearest hit (which updates position and velocity), or
+                // integrate straight ahead when the swept segment hit nothing.
                 if (nearest_collider >= 0) {
                     colliders[nearest_collider].collide(nearest, position, velocity, dt);
                 } else {
@@ -323,6 +356,8 @@ System::advect() {
             });
     }
 
+    // Advance the collider boundaries in a separate pass, after particles have been traced
+    // against their positions for this step.
     if (collider_count > 0) {
         auto* colliders = atlas::raw_pointer_cast(_colliders.data());
 
@@ -350,9 +385,12 @@ System::mark_survivors(const int particle_count) {
 
     const auto* species_state = _fluid->state<FluidSpeciesState>();
 
-    int* despawned      = nullptr;
+    // Despawn tallying is optional: these stay null unless an observer, a species column,
+    // and a correctly shaped (sink_count x species_count) counter matrix are all present,
+    // in which case the kernel below counts removals per sink and species.
+    int* despawned             = nullptr;
     const std::size_t* species = nullptr;
-    int species_count   = 0;
+    int species_count          = 0;
 
     if (_observer && species_state != nullptr
         && _observer->despawned().size() == _sinks.size() * _observer->species_count()) {
@@ -369,6 +407,7 @@ System::mark_survivors(const int particle_count) {
             const Float3 position = positions[i];
             const Float3 velocity = velocities[i];
 
+            // First sink to claim the particle wins: flag it dead, tally it, and stop.
             for (int s = 0; s < sink_count; ++s) {
                 if (sinks[s].despawn(position, velocity, dt)) {
                     active[i] = 0;
@@ -376,6 +415,7 @@ System::mark_survivors(const int particle_count) {
                     if (despawned != nullptr) {
                         const auto id = static_cast<int>(species[i]);
 
+                        // Guard the species id before indexing the counter row for sink s.
                         if (id >= 0 && id < species_count) {
                             atlas::atomic_add(despawned + s * species_count + id, 1);
                         }
@@ -385,6 +425,7 @@ System::mark_survivors(const int particle_count) {
                 }
             }
 
+            // Survived every sink: mark alive so compact() keeps it.
             active[i] = 1;
         });
 }
@@ -405,6 +446,8 @@ System::remove() {
         static_cast<void>(_fluid->compact());
     }
 
+    // Advance the sink boundaries even when nothing was removed this step (they may still be
+    // moving), so long as any sinks exist.
     if (sink_count > 0) {
         auto* sinks    = atlas::raw_pointer_cast(_sinks.data());
         const float dt = _dt;

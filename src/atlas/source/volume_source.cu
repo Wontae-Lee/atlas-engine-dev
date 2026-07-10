@@ -9,9 +9,9 @@
 #include <atlas/sync/sync.h>
 
 #include <algorithm>
+#include <atlas/buffer/host_buffer.h>
 #include <stdexcept>
 #include <utility>
-#include <atlas/buffer/host_buffer.h>
 
 namespace atlas {
 
@@ -21,8 +21,9 @@ VolumeSource::VolumeSource(Unit unit, const float tolerance, const float spacing
     , _spacing(spacing) {
 
     const Geometry& geometry = _unit.geometry();
-    const AABB      bound    = geometry.bound();
+    const AABB bound         = geometry.bound();
 
+    // No sampleable region (degenerate bound) or no grid step: leave the cache empty.
     if (!bound.is_valid() || !(spacing > 0.0f)) {
         return;
     }
@@ -34,8 +35,11 @@ VolumeSource::VolumeSource(Unit unit, const float tolerance, const float spacing
     const int ny = atlas::sample_axis_count(lower.y, upper.y, spacing);
     const int nz = atlas::sample_axis_count(lower.z, upper.z, spacing);
 
+    // Accumulate on the host first: the accepted count is unknown up front, so
+    // grow a host vector and upload it to the device in one shot at the end.
     HostBuffer<Float3> local_positions;
 
+    // Walk the bound as a regular local-space grid; keep points inside the volume.
     for (int ix = 0; ix < nx; ++ix) {
         for (int iy = 0; iy < ny; ++iy) {
             for (int iz = 0; iz < nz; ++iz) {
@@ -51,6 +55,7 @@ VolumeSource::VolumeSource(Unit unit, const float tolerance, const float spacing
         }
     }
 
+    // Single host→device upload of the accepted local points.
     _cache = DeviceBuffer<Float3>(local_positions.begin(), local_positions.end());
 }
 
@@ -61,26 +66,32 @@ VolumeSource::builder() noexcept {
 
 int
 VolumeSource::spawn(FluidPositionState* positions, const std::size_t offset) const {
+    // Nothing to do without a destination or any cached points.
     if (positions == nullptr || _cache.empty()) {
         return 0;
     }
 
     DeviceBuffer<Float3>& out = positions->data();
 
+    // The write window starts at `offset`; if it is past the end, there is no room.
     if (offset >= out.size()) {
         return 0;
     }
 
+    // Emit at most the cached count, clamped to the free tail of the buffer.
     const std::size_t writable = std::min(_cache.size(), out.size() - offset);
 
     if (writable == 0) {
         return 0;
     }
 
-    const Sync     sync      = _unit.sync();
-    const Float3*  cache_ptr = atlas::raw_pointer_cast(_cache.data());
-    Float3*        out_ptr   = atlas::raw_pointer_cast(out.data());
+    // Snapshot the current pose by value so the device lambda captures a plain
+    // Sync (host+device, trivially copyable) rather than referencing the unit.
+    const Sync sync         = _unit.sync();
+    const Float3* cache_ptr = atlas::raw_pointer_cast(_cache.data());
+    Float3* out_ptr         = atlas::raw_pointer_cast(out.data());
 
+    // Device pass: transform each cached local point to world space into the tail.
     atlas::parallel_for<ExecutionPolicy::device>(
         std::size_t { 0 },
         writable,
@@ -113,8 +124,10 @@ VolumeSource
 VolumeSource::Builder::build() {
     validate();
 
+    // Construction here runs the one-time cache build (grid sample + inside test).
     VolumeSource source(std::move(*_unit), _tolerance, _spacing);
 
+    // Reset so the builder can be reused for another source.
     _unit.reset();
     _tolerance = 0.0f;
     _spacing   = 0.1f;

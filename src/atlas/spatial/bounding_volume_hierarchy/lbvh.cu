@@ -13,6 +13,8 @@ BvhView
 LBVH::view() const {
     BvhView view {};
 
+    // Strip the device_vector wrappers down to raw device pointers so the view
+    // is trivially copyable and a device lambda can capture it by value.
     view.bvh_nodes   = atlas::raw_pointer_cast(d_nodes.data());
     view.bvh_indices = atlas::raw_pointer_cast(d_indices.data());
     view.bvh_tris    = atlas::raw_pointer_cast(d_triangles.data());
@@ -36,10 +38,13 @@ LBVH::assign_solid_angle_moment(
     node.solid_angle_normal_area = Float3(0.0f, 0.0f, 0.0f);
     node.solid_angle_area        = 0.0f;
 
+    // Degenerate (zero-area) triangle contributes nothing; the NaN-safe form
+    // !(area > 0) also rejects a NaN area.
     if (!(area > 0.0f)) {
         return;
     }
 
+    // Area-weighted centroid uses the triangle centroid (a+b+c)/3 scaled by area.
     node.solid_angle_moment      = (a + b + c) * (area / 3.0f);
     node.solid_angle_normal_area = normal_area;
     node.solid_angle_area        = area;
@@ -213,6 +218,7 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
     h_centroids.resize(n);
     h_indices.resize(n);
 
+    // Phase 1: per-primitive bounds and centroids (independent across i).
     atlas::parallel_for<ExecutionPolicy::host>(
         0,
         n,
@@ -230,6 +236,8 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
             h_indices[i]     = i;
         });
 
+    // Morton codes are quantized against the bound of all centroids, so the
+    // full [0, 1] code range is used regardless of the scene's world extent.
     AABB centroid_bounds;
 
     for (int i = 0; i < n; ++i) {
@@ -245,6 +253,8 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
             morton[i] = morton3(h_centroids[i], centroid_bounds, _morton_bits);
         });
 
+    // Sort primitives by Morton code (original index as a stable tiebreak) so
+    // spatially near triangles become array-adjacent for the Karras build.
     HostBuffer<int> order(n);
 
     for (int i = 0; i < n; ++i) {
@@ -284,8 +294,12 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
 
     h_indices = indices_sorted;
 
+    // Exactly 2n-1 nodes: n leaves plus n-1 internal nodes (max(1, ...) keeps a
+    // single-primitive tree from requesting a zero-length allocation).
     h_nodes.resize(std::max(1, 2 * n - 1), BVHNode());
 
+    // Initialize every leaf node from its sorted primitive before the internal
+    // nodes are wired up: leaf k lives at node index (n-1)+k.
     for (int k = 0; k < n; ++k) {
         const int ni  = leaf_node_index(k, n);
         const int pid = h_indices[k];
@@ -299,6 +313,8 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
         assign_solid_angle_moment(leaf, triangles[pid]);
     }
 
+    // Single primitive: there are no internal nodes to build, so the lone leaf
+    // is the root and the Karras loops below are skipped entirely.
     if (n == 1) {
 
         _root       = leaf_node_index(0, n);
@@ -379,6 +395,11 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
         in.count   = 0;
     }
 
+    // Bottom-up refit of internal-node bounds and solid-angle moments in one
+    // reverse pass. Leaves (indices >= n-1) were finalized above, and this pass
+    // assumes each internal node's children are already finalized by the time it
+    // is visited (i.e. that a descending index order is a valid bottom-up order
+    // for this Karras layout).
     for (int i = n - 2; i >= 0; --i) {
         BVHNode& in      = h_nodes[i];
         const BVHNode& L = h_nodes[in.left];
@@ -389,6 +410,7 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
         merge_solid_angle_moment(in, L, R);
     }
 
+    // Karras' layout always roots the tree at internal node 0.
     _root = 0;
 
     d_nodes     = h_nodes;

@@ -19,13 +19,34 @@
 #include <stdexcept>
 #include <string>
 
+/**
+ * @file
+ * @brief Protobuf snapshot codec: convert a live Fluid/Universe to and from a file.
+ *
+ * The public entry points (declared in protobuf_snapshot.h) sit at the bottom; the
+ * anonymous namespace above them holds the low-level plumbing that bridges three
+ * representations: the engine's host/device buffers, the generated protobuf messages
+ * (atlas_snapshot.pb.h), and the on-disk byte stream. Every device buffer is first pulled
+ * to the host, then blitted verbatim into a RawBuffer's byte payload, so save/load is a
+ * plain memcpy with an element-count sanity check rather than a per-element re-encode.
+ */
+
 namespace atlas {
 namespace {
 
+    /// On-disk format version; every message is written with it and rejected on mismatch.
     constexpr std::uint32_t kAtlasSnapshotVersion = 1u;
 
+    /// The only element precision this build produces and accepts (single precision).
     constexpr atlas::proto::ScalarType kAtlasScalarType = atlas::proto::SCALAR_FLOAT32;
 
+    /**
+     * @brief Reject a snapshot whose stored scalar precision differs from this build's.
+     *
+     * @param scalar_type The @c ScalarType read from the snapshot header.
+     * @param context Caller name, prefixed onto the thrown message for diagnosis.
+     * @throws std::runtime_error if @p scalar_type is not @c kAtlasScalarType.
+     */
     void
     validate_scalar_type(const atlas::proto::ScalarType scalar_type,
                          const char* context) {
@@ -36,10 +57,12 @@ namespace {
         }
     }
 
-
-
-
-
+    /**
+     * @brief Store a Float3 into a protobuf @c Vector3, widening float to double.
+     *
+     * @param target Destination message (must be non-null; owned by its parent message).
+     * @param value Source vector in the engine's runtime float precision.
+     */
     void
     set_vector3(atlas::proto::Vector3* target,
                 const Float3& value) {
@@ -48,6 +71,12 @@ namespace {
         target->set_z(static_cast<double>(value.z));
     }
 
+    /**
+     * @brief Read a protobuf @c Vector3 back into a Float3, narrowing double to float.
+     *
+     * @param value Source message.
+     * @return The vector in the engine's runtime float precision.
+     */
     Float3
     read_vector3(const atlas::proto::Vector3& value) {
         return Float3(
@@ -56,6 +85,16 @@ namespace {
             static_cast<float>(value.z()));
     }
 
+    /**
+     * @brief Blit a scalar host buffer into a byte string for a RawBuffer payload.
+     *
+     * Reinterprets the element array as raw bytes with no conversion, so the element type
+     * must be trivially copyable and the reader must use the identical @c sizeof(T).
+     *
+     * @tparam T Element type (e.g. float, int, std::size_t); must be trivially copyable.
+     * @param values Host buffer to encode.
+     * @return The raw little-endian bytes, or an empty string when @p values is empty.
+     */
     template <typename T>
     std::string
     pack_scalar_buffer(const HostBuffer<T>& values) {
@@ -68,6 +107,19 @@ namespace {
             values.size() * sizeof(T));
     }
 
+    /**
+     * @brief Decode a RawBuffer's bytes back into a scalar host buffer, checking its size.
+     *
+     * Guards against a truncated or mislabelled payload by requiring the byte length to
+     * equal @c element_count * sizeof(T) before the memcpy; this is the read-side partner of
+     * @ref pack_scalar_buffer and must use the same @c T the data was written with.
+     *
+     * @tparam T Element type the bytes were encoded as; must be trivially copyable.
+     * @param raw_buffer Source buffer message.
+     * @param context Caller name, prefixed onto any thrown message.
+     * @return The decoded host buffer, or empty when @c element_count is zero.
+     * @throws std::runtime_error if the byte length disagrees with the element count.
+     */
     template <typename T>
     HostBuffer<T>
     unpack_scalar_buffer(const atlas::proto::RawBuffer& raw_buffer,
@@ -89,6 +141,15 @@ namespace {
         return values;
     }
 
+    /**
+     * @brief Blit a Float3 host buffer into a byte string for a RawBuffer payload.
+     *
+     * A dedicated overload rather than @ref pack_scalar_buffer because Float3 needs the
+     * memcpy-into-a-sized-string form; the bytes are the packed x,y,z triples as stored.
+     *
+     * @param values Host buffer of vectors to encode.
+     * @return The raw bytes, or an empty string when @p values is empty.
+     */
     std::string
     pack_vector3_buffer(const HostBuffer<Float3>& values) {
         if (values.empty()) {
@@ -101,6 +162,17 @@ namespace {
         return bytes;
     }
 
+    /**
+     * @brief Decode a RawBuffer's bytes back into a Float3 host buffer, checking its size.
+     *
+     * The vector-typed partner of @ref unpack_scalar_buffer; validates the byte length
+     * against @c element_count * sizeof(Float3) before copying.
+     *
+     * @param raw_buffer Source buffer message.
+     * @param context Caller name, prefixed onto any thrown message.
+     * @return The decoded host buffer, or empty when @c element_count is zero.
+     * @throws std::runtime_error if the byte length disagrees with the element count.
+     */
     HostBuffer<Float3>
     unpack_vector3_buffer(const atlas::proto::RawBuffer& raw_buffer,
                           const char* context) {
@@ -121,6 +193,16 @@ namespace {
         return values;
     }
 
+    /**
+     * @brief Encode one MaterialDictionary entry into a protobuf @c Material message.
+     *
+     * Stores the leaf's discriminant (@c MaterialType) plus every VHS/VSS property queried
+     * through the Material umbrella, widening each to double. A solid reports constants for
+     * everything but mass, and those constants round-trip harmlessly.
+     *
+     * @param target Destination message (owned by its parent snapshot).
+     * @param source The material to encode.
+     */
     void
     set_material(atlas::proto::Material* target, const Material& source) {
         target->set_type(static_cast<int>(source.type));
@@ -134,30 +216,37 @@ namespace {
         target->set_scattering_parameter(static_cast<double>(source.scattering_parameter()));
     }
 
+    /**
+     * @brief Rebuild a Material umbrella from a protobuf @c Material message.
+     *
+     * Narrows every field back to float and reconstructs the concrete leaf named by the
+     * stored @c type discriminant; the solid case rebuilds from mass alone because that is
+     * the only property a solid actually stores.
+     *
+     * @param source The message to decode.
+     * @return The reconstructed Material.
+     * @throws std::runtime_error if @c type is not a known @c MaterialType.
+     */
     Material
     read_material(const atlas::proto::Material& source) {
-        const auto mass                 = static_cast<float>(source.mass());
-        const auto translational_energy = static_cast<float>(source.translational_energy());
-        const auto rotational_energy    = static_cast<float>(source.rotational_energy());
-        const auto vibrational_energy   = static_cast<float>(source.vibrational_energy());
-        const auto reference_diameter   = static_cast<float>(source.reference_diameter());
+        const auto mass                  = static_cast<float>(source.mass());
+        const auto translational_energy  = static_cast<float>(source.translational_energy());
+        const auto rotational_energy     = static_cast<float>(source.rotational_energy());
+        const auto vibrational_energy    = static_cast<float>(source.vibrational_energy());
+        const auto reference_diameter    = static_cast<float>(source.reference_diameter());
         const auto reference_temperature = static_cast<float>(source.reference_temperature());
-        const auto viscosity_index      = static_cast<float>(source.viscosity_index());
-        const auto scattering_parameter = static_cast<float>(source.scattering_parameter());
+        const auto viscosity_index       = static_cast<float>(source.viscosity_index());
+        const auto scattering_parameter  = static_cast<float>(source.scattering_parameter());
 
         switch (static_cast<MaterialType>(source.type())) {
         case MaterialType::molecule:
-            return Material(Molecule(mass, translational_energy, rotational_energy, vibrational_energy,
-                                     reference_diameter, reference_temperature, viscosity_index, scattering_parameter));
+            return Material(Molecule(mass, translational_energy, rotational_energy, vibrational_energy, reference_diameter, reference_temperature, viscosity_index, scattering_parameter));
         case MaterialType::atom:
-            return Material(Atom(mass, translational_energy, rotational_energy, vibrational_energy,
-                                 reference_diameter, reference_temperature, viscosity_index, scattering_parameter));
+            return Material(Atom(mass, translational_energy, rotational_energy, vibrational_energy, reference_diameter, reference_temperature, viscosity_index, scattering_parameter));
         case MaterialType::ion:
-            return Material(Ion(mass, translational_energy, rotational_energy, vibrational_energy,
-                                reference_diameter, reference_temperature, viscosity_index, scattering_parameter));
+            return Material(Ion(mass, translational_energy, rotational_energy, vibrational_energy, reference_diameter, reference_temperature, viscosity_index, scattering_parameter));
         case MaterialType::neutron:
-            return Material(Neutron(mass, translational_energy, rotational_energy, vibrational_energy,
-                                    reference_diameter, reference_temperature, viscosity_index, scattering_parameter));
+            return Material(Neutron(mass, translational_energy, rotational_energy, vibrational_energy, reference_diameter, reference_temperature, viscosity_index, scattering_parameter));
         case MaterialType::solid:
             // A solid carries only mass; everything else it reports is a constant.
             return Material(Solid(mass));
@@ -166,9 +255,15 @@ namespace {
         throw std::runtime_error("load_fluid_binary: unknown material type in snapshot.");
     }
 
-
-
-
+    /**
+     * @brief Serialize a protobuf message to a binary file, truncating any existing one.
+     *
+     * @tparam MessageT The generated message type.
+     * @param message The message to write.
+     * @param path Destination path.
+     * @param context Caller name, prefixed onto any thrown message.
+     * @throws std::runtime_error if the file cannot be opened or the serialization fails.
+     */
     template <typename MessageT>
     void
     write_message(const MessageT& message,
@@ -184,6 +279,15 @@ namespace {
         }
     }
 
+    /**
+     * @brief Parse a protobuf message of a given type from a binary file.
+     *
+     * @tparam MessageT The generated message type to construct and fill.
+     * @param path Source path.
+     * @param context Caller name, prefixed onto any thrown message.
+     * @return The parsed message (by value).
+     * @throws std::runtime_error if the file cannot be opened or the parse fails.
+     */
     template <typename MessageT>
     MessageT
     read_message(std::string_view path,
@@ -202,6 +306,13 @@ namespace {
         return message;
     }
 
+    /**
+     * @brief Fill a RawBuffer from a scalar host buffer: element count plus packed bytes.
+     *
+     * @tparam T Element type; must be trivially copyable.
+     * @param target Destination buffer message (owned by its parent).
+     * @param values Source host buffer.
+     */
     template <typename T>
     void
     set_raw_buffer(atlas::proto::RawBuffer* target,
@@ -210,6 +321,12 @@ namespace {
         target->set_data(pack_scalar_buffer(values));
     }
 
+    /**
+     * @brief Fill a RawBuffer from a Float3 host buffer: element count plus packed bytes.
+     *
+     * @param target Destination buffer message (owned by its parent).
+     * @param values Source host buffer of vectors.
+     */
     void
     set_vector_raw_buffer(atlas::proto::RawBuffer* target,
                           const HostBuffer<Float3>& values) {
@@ -217,6 +334,16 @@ namespace {
         target->set_data(pack_vector3_buffer(values));
     }
 
+    /**
+     * @brief Append a scalar (float) per-cell state to a universe snapshot's state list.
+     *
+     * Adds one @c UniverseState tagged with @p kind and routes @p values into its
+     * @c scalar_buffer, matching the buffer selection documented on @c UniverseStateKind.
+     *
+     * @param snapshot Snapshot to extend.
+     * @param kind The field tag identifying this state.
+     * @param values Per-cell float values to store.
+     */
     void
     append_universe_scalar_state(atlas::proto::UniverseSnapshot* snapshot,
                                  const atlas::proto::UniverseStateKind kind,
@@ -226,6 +353,16 @@ namespace {
         set_raw_buffer(state->mutable_scalar_buffer(), values);
     }
 
+    /**
+     * @brief Append a vector (Float3) per-cell state to a universe snapshot's state list.
+     *
+     * Adds one @c UniverseState tagged with @p kind and routes @p values into its
+     * @c vector_buffer.
+     *
+     * @param snapshot Snapshot to extend.
+     * @param kind The field tag identifying this state.
+     * @param values Per-cell vector values to store.
+     */
     void
     append_universe_vector_state(atlas::proto::UniverseSnapshot* snapshot,
                                  const atlas::proto::UniverseStateKind kind,
@@ -235,6 +372,16 @@ namespace {
         set_vector_raw_buffer(state->mutable_vector_buffer(), values);
     }
 
+    /**
+     * @brief Append an integer per-cell state to a universe snapshot's state list.
+     *
+     * Adds one @c UniverseState tagged with @p kind and routes @p values into its
+     * @c int_buffer.
+     *
+     * @param snapshot Snapshot to extend.
+     * @param kind The field tag identifying this state.
+     * @param values Per-cell int values to store.
+     */
     void
     append_universe_int_state(atlas::proto::UniverseSnapshot* snapshot,
                               const atlas::proto::UniverseStateKind kind,
@@ -256,6 +403,7 @@ save_fluid_binary(const atlas::Fluid& fluid, std::string_view path) {
     snapshot.set_statistical_weight(static_cast<double>(fluid.statistical_weight()));
 
     if (fluid.materials()) {
+        // Pull the species table off the device once, then encode entry by entry.
         const auto& device_materials = fluid.materials()->materials();
         const HostBuffer<Material> materials(device_materials.begin(), device_materials.end());
 
@@ -264,6 +412,8 @@ save_fluid_binary(const atlas::Fluid& fluid, std::string_view path) {
         }
     }
 
+    // Counts the states we recognize and encode below; compared against the fluid's total
+    // state count at the end to guarantee nothing was silently dropped from the snapshot.
     std::size_t known_state_count = 0;
 
     if (const auto* position_state = fluid.state<atlas::FluidPositionState>();
@@ -288,6 +438,8 @@ save_fluid_binary(const atlas::Fluid& fluid, std::string_view path) {
     }
 
     {
+        // The active flag column is intrinsic to the fluid (not an optional state), so it
+        // is always written and is deliberately excluded from the known_state_count tally.
         const HostBuffer<int> active(fluid.active().begin(), fluid.active().end());
         set_raw_buffer(snapshot.mutable_active(), active);
     }
@@ -324,6 +476,8 @@ save_fluid_binary(const atlas::Fluid& fluid, std::string_view path) {
         ++known_state_count;
     }
 
+    // A mismatch means the fluid holds a state type this codec does not encode; fail loudly
+    // rather than write a snapshot that would silently lose it on restore.
     if (fluid.states().size() != known_state_count) {
         throw std::runtime_error(
             "save_fluid_binary: encountered an unsupported fluid state type during protobuf serialization.");
@@ -352,6 +506,8 @@ load_fluid_binary(std::string_view path) {
         fluid_snapshot.materials.push_back(read_material(material));
     }
 
+    // Positions/velocities/species/active predate the includes_* flags, so their presence is
+    // inferred from a nonzero element count; the energy states below carry explicit flags.
     if (snapshot.positions().element_count() > 0) {
         fluid_snapshot.positions = unpack_vector3_buffer(snapshot.positions(), "load_fluid_binary/positions");
     }
@@ -384,11 +540,15 @@ load_fluid_binary(std::string_view path) {
         fluid_snapshot.vibrational_energy = unpack_scalar_buffer<float>(snapshot.vibrational_energy(), "load_fluid_binary/vibrational_energy");
     }
 
+    // Capacity sanity check before the per-column size checks: every state column must be
+    // exactly buffer_size long, and particle_count indexes into that capacity.
     if (fluid_snapshot.particle_count > fluid_snapshot.buffer_size) {
         throw std::runtime_error(
             "load_fluid_binary: particle_count exceeds buffer_size in snapshot.");
     }
 
+    // Rejects a snapshot whose columns disagree in length, which would corrupt the
+    // structure-of-arrays layout once uploaded back to the device.
     const auto validate_state_size = [&](const auto& state_buffer, const char* state_name) {
         if (state_buffer.has_value() && state_buffer->size() != fluid_snapshot.buffer_size) {
             throw std::runtime_error(
@@ -418,6 +578,7 @@ save_universe_binary(const atlas::Universe& universe, std::string_view path) {
     set_vector3(snapshot.mutable_upper_corner(), universe.upper_corner());
     snapshot.set_cell_size(static_cast<double>(universe.cell_size()));
 
+    // Same guard as the fluid path: tally the states we encode, then assert we covered them all.
     std::size_t known_state_count = 0;
 
     if (const auto* temperature_state = universe.state<atlas::UniverseTemperatureState>();
@@ -519,6 +680,8 @@ save_universe_binary(const atlas::Universe& universe, std::string_view path) {
         ++known_state_count;
     }
 
+    // A mismatch means the universe holds a state type this codec does not encode; fail rather
+    // than drop it silently.
     if (universe.states().size() != known_state_count) {
         throw std::runtime_error(
             "save_universe_binary: encountered an unsupported universe state type during protobuf serialization.");
@@ -542,6 +705,7 @@ load_universe_binary(std::string_view path) {
     universe_snapshot.upper_corner = read_vector3(snapshot.upper_corner());
     universe_snapshot.cell_size    = static_cast<float>(snapshot.cell_size());
 
+    // The states are a flat, order-agnostic list; route each into its optional slot by kind.
     for (const auto& state : snapshot.states()) {
         switch (state.kind()) {
         case atlas::proto::UNIVERSE_TEMPERATURE:
@@ -590,6 +754,8 @@ FluidHostPtr
 restore_fluid(const std::string_view path) {
     const auto snapshot = load_fluid_binary(path);
 
+    // Leave the dictionary null when the snapshot carried no materials; the fluid builder
+    // accepts a null dictionary, matching a fluid that was saved without one.
     MaterialDictionaryHostPtr materials;
 
     if (!snapshot.materials.empty()) {
@@ -620,6 +786,8 @@ restore_fluid(const std::string_view path) {
     }
 
     if (snapshot.active.has_value()) {
+        // active is a built-in column, not a pluggable state, so upload it by assigning the
+        // member buffer directly rather than through set_state<>.
         fluid->active() = DeviceBuffer<int>(snapshot.active->begin(), snapshot.active->end());
     }
 

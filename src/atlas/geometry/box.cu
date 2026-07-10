@@ -11,6 +11,7 @@ Box::builder() noexcept {
 
 Box
 Box::Builder::build() const {
+    // Reject inverted or non-finite corners before handing out a Box.
     validate();
 
     return Box(_lower_corner, _upper_corner);
@@ -35,6 +36,7 @@ Box::Builder::with_upper_corner(const Float3& upper_corner_) noexcept {
 
 void
 Box::Builder::validate() const {
+    // Construct a throwaway Box to reuse its own validity invariant.
     if (!Box(_lower_corner, _upper_corner).is_valid()) {
         throw std::runtime_error("Box::Builder: invalid parameters.");
     }

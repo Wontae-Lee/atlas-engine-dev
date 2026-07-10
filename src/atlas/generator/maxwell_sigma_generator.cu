@@ -40,42 +40,47 @@ MaxwellSigmaGenerator::generate(FluidVelocityState* velocities,
         return 0;
     }
 
-    DeviceBuffer<Float3>&      velocity_buffer = velocities->data();
-    DeviceBuffer<std::size_t>& species_buffer  = species->data();
+    DeviceBuffer<Float3>& velocity_buffer     = velocities->data();
+    DeviceBuffer<std::size_t>& species_buffer = species->data();
 
+    // Usable capacity is bounded by the shorter of the velocity/species buffers.
     const std::size_t capacity = std::min(velocity_buffer.size(), species_buffer.size());
     if (offset >= capacity) {
         return 0;
     }
 
+    // Clamp the request to what actually fits from offset onward.
     const std::size_t writable = std::min(count, capacity - offset);
     if (writable == 0) {
         return 0;
     }
 
-    const float        sigma         = _sigma;
-    const Float3       bulk          = _bulk_velocity;
-    const unsigned int seed          = _seed;
-    const int          species_count = static_cast<int>(_species_ratios.size());
+    const float sigma       = _sigma;
+    const Float3 bulk       = _bulk_velocity;
+    const unsigned int seed = _seed;
+    const int species_count = static_cast<int>(_species_ratios.size());
 
-    const float* ratios          = atlas::raw_pointer_cast(_species_ratios.data());
-    const float* numbers         = atlas::raw_pointer_cast(_species_numbers.data());
-    Float3*      velocity_ptr    = atlas::raw_pointer_cast(velocity_buffer.data());
-    std::size_t* species_ptr     = atlas::raw_pointer_cast(species_buffer.data());
+    const float* ratios      = atlas::raw_pointer_cast(_species_ratios.data());
+    const float* numbers     = atlas::raw_pointer_cast(_species_numbers.data());
+    Float3* velocity_ptr     = atlas::raw_pointer_cast(velocity_buffer.data());
+    std::size_t* species_ptr = atlas::raw_pointer_cast(species_buffer.data());
 
+    // Capture-by-value lambda: every dependency is copied into the device closure.
     atlas::parallel_for<ExecutionPolicy::device>(
         std::size_t { 0 },
         writable,
         [=] ATLAS_ALL_DEVICE(const std::size_t i) {
-            const std::size_t   index = offset + i;
-            const std::uint64_t key   = atlas::shuffle_key(
+            const std::size_t index = offset + i;
+            // Fold the absolute slot index with the seed for a per-particle stream.
+            const std::uint64_t key = atlas::shuffle_key(
                 static_cast<int>(index),
                 static_cast<std::uint64_t>(seed));
 
             atlas::default_random_engine engine(static_cast<unsigned int>(key));
 
-            species_ptr[index]     = atlas::sample_weighted_choice(ratios, numbers, species_count, engine);
-            velocity_ptr[index]    = (sigma > 0.0f)
+            // With sigma <= 0 the Gaussian collapses, so emit the pure drift instead.
+            species_ptr[index]  = atlas::sample_weighted_choice(ratios, numbers, species_count, engine);
+            velocity_ptr[index] = (sigma > 0.0f)
                 ? atlas::sample_normal_vector(engine, sigma) + bulk
                 : bulk;
         });
@@ -123,6 +128,7 @@ MaxwellSigmaGenerator
 MaxwellSigmaGenerator::Builder::build() {
     validate();
 
+    // Range constructors copy the staged host buffers onto the device.
     MaxwellSigmaGenerator generator(
         DeviceBuffer<float>(_species_ratios.begin(), _species_ratios.end()),
         DeviceBuffer<float>(_species_numbers.begin(), _species_numbers.end()),
@@ -131,6 +137,7 @@ MaxwellSigmaGenerator::Builder::build() {
         _bulk_velocity,
         _seed);
 
+    // Reset to defaults so the builder can be reused for another leaf.
     _species_ratios.clear();
     _species_numbers.clear();
     _temperature   = 273.15f;

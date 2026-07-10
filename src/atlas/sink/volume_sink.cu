@@ -28,6 +28,8 @@ VolumeSink::Builder::build() {
 
     VolumeSink sink(std::move(*_unit), _tolerance);
 
+    // Consume the accumulated state so a reused builder cannot leak the moved-from
+    // unit or a stale tolerance into a second sink.
     _unit.reset();
     _tolerance = 0.0f;
 
@@ -45,6 +47,8 @@ VolumeSink::Builder::validate() const {
         throw std::runtime_error("VolumeSink::Builder: unit must not be null.");
     }
 
+    // A NaN or negative tolerance would make the interior widening meaningless on the
+    // device, where the test cannot report failure; reject it here on the host.
     if (!atlas::isfinite(_tolerance) || _tolerance < 0.0f) {
         throw std::runtime_error("VolumeSink::Builder: tolerance must be finite and non-negative.");
     }

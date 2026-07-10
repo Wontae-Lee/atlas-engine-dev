@@ -16,6 +16,8 @@ Universe::Universe(const Float3& lower_corner,
     , _upper_corner(upper_corner)
     , _cell_size(cell_size) {
 
+    // Precompute the grid metadata once; these feed hot per-cell math (density,
+    // world-to-cell scaling) so they are cached rather than recomputed per call.
     _cell_volume = _cell_size * _cell_size * _cell_size;
     _inv_h       = 1.0f / _cell_size;
     _grid_size   = compute_grid_size(_lower_corner, _upper_corner, _inv_h);
@@ -31,6 +33,8 @@ Int3
 Universe::compute_grid_size(const Float3& lower_corner,
                             const Float3& upper_corner,
                             const float inverse_cell_size) noexcept {
+    // floor(extent / h) counts the whole cells that fit; the +1 adds the cell
+    // covering the remainder, so any non-degenerate box spans at least one cell.
     return atlas::to_vector3i(atlas::floor((upper_corner - lower_corner) * inverse_cell_size))
         + Int3(1, 1, 1);
 }
@@ -82,6 +86,7 @@ Universe::states() const noexcept {
 
 Universe::Builder&
 Universe::Builder::with_geometry(const Geometry& geometry) {
+    // Fit the grid to the geometry's axis-aligned bound; cell size is unchanged.
     const auto bound = geometry.bound();
     _lower_corner    = bound.lower_corner;
     _upper_corner    = bound.upper_corner;
@@ -132,12 +137,16 @@ Universe::Builder::validate() const {
 
     const float inv_h = 1.0f / _cell_size;
 
+    // Reproduce the constructor's grid so the cell count can be bounds-checked
+    // here, before the (noexcept) constructor commits to it.
     const Int3 gs = Universe::compute_grid_size(_lower_corner, _upper_corner, inv_h);
 
     atlas::check<std::invalid_argument>(atlas::all(gs >= Int3(1, 1, 1)))
         << "Universe::Builder validation failed: computed grid_size must be >= 1 on all axes. "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
 
+    // Widen to 64 bits before multiplying so the product cannot overflow the
+    // check itself; the constructor later stores the count in a 32-bit int.
     const auto nx = static_cast<long long>(gs.x);
     const auto ny = static_cast<long long>(gs.y);
     const auto nz = static_cast<long long>(gs.z);
@@ -148,6 +157,7 @@ Universe::Builder::validate() const {
 
     const long long cells64 = nx * ny * nz;
 
+    // Reject a cell count that would not fit the int the Universe stores it in.
     atlas::check<std::invalid_argument>(
         cells64 > 0 && cells64 <= static_cast<long long>(std::numeric_limits<int>::max()))
         << "Universe::Builder validation failed: cell_count overflow/invalid. "

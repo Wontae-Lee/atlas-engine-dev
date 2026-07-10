@@ -11,6 +11,7 @@ Circle::builder() noexcept {
 
 Circle
 Circle::Builder::build() const {
+    // Reject non-finite, zero-normal, or non-positive-radius parameters.
     validate();
 
     return Circle(_center, _normal, _radius);
@@ -41,6 +42,7 @@ Circle::Builder::with_radius(const float radius_) noexcept {
 
 void
 Circle::Builder::validate() const {
+    // Reuse the Circle's own validity invariant on a throwaway instance.
     if (!Circle(_center, _normal, _radius).is_valid()) {
         throw std::runtime_error("Circle::Builder: invalid parameters.");
     }

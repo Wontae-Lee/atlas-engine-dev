@@ -11,6 +11,7 @@ Plane::builder() noexcept {
 
 Plane
 Plane::Builder::build() const {
+    // Reject non-finite or zero-length normals before constructing.
     validate();
 
     return Plane(_normal, _offset);
@@ -43,12 +44,14 @@ Plane::Builder::with_normal_offset(const Float3& normal_, const float offset_) n
 Plane::Builder&
 Plane::Builder::with_point_normal(const Float3& point, const Float3& normal_) noexcept {
     _normal = normal_;
+    // Encode "plane passes through point" as the Hessian offset.
     _offset = -(normal_.dot(point));
     return *this;
 }
 
 void
 Plane::Builder::validate() const {
+    // Reuse the Plane's own validity invariant on a throwaway instance.
     if (!Plane(_normal, _offset).is_valid()) {
         throw std::runtime_error("Plane::Builder: invalid parameters.");
     }

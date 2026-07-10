@@ -23,6 +23,8 @@ Unit::Builder::with_sync(const SyncHostPtr& sync) {
         throw std::runtime_error("Unit::Builder: sync must not be null.");
     }
 
+    // Store a value copy so the built Unit owns its pose independently of the
+    // shared handle's later mutations or lifetime.
     _sync = *sync;
 
     return *this;
@@ -56,6 +58,8 @@ Unit
 Unit::Builder::build() {
     validate();
 
+    // Canonicalize on local copies so the staged inputs are not mutated before
+    // validation-through-build is fully committed.
     auto velocity             = _velocity;
     auto acceleration         = _acceleration;
     auto angular_velocity     = _angular_velocity;
@@ -67,6 +71,8 @@ Unit::Builder::build() {
         angular_velocity,
         angular_acceleration);
 
+    // Populate a bare Unit member-by-member (via friendship) rather than the
+    // value constructor, because the kinematics are already canonicalized here.
     Unit u {};
 
     u._geometry             = std::move(*_geometry);
@@ -76,6 +82,8 @@ Unit::Builder::build() {
     u._angular_velocity     = std::move(angular_velocity);
     u._angular_acceleration = std::move(angular_acceleration);
 
+    // Reset staged state: the geometry/sync were moved-from, so the builder must
+    // not be reused without reconfiguring it.
     _geometry.reset();
     _sync.reset();
     _velocity.reset();

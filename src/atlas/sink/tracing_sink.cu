@@ -22,6 +22,8 @@ TracingSink::Builder::build() {
 
     TracingSink sink(std::move(*_unit));
 
+    // Consume the accumulated state so a reused builder cannot leak the moved-from
+    // unit into a second sink.
     _unit.reset();
 
     return sink;

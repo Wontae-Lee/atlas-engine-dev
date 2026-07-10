@@ -24,24 +24,33 @@ KnudsenCodec::KnudsenCodec(const float representative_characteristic_length,
 }
 
 void
-KnudsenCodec::allocate(const UniverseTemperatureState*,
+KnudsenCodec::allocate(const UniverseTemperatureState*, // temperature: unused by this leaf
                        const UniverseNumberParticleState* number_particle,
                        UniverseAllocatedSolverState* allocated_solver) const {
+    // Nothing to read or write into: treat a null input or output as a no-op.
     if (number_particle == nullptr || allocated_solver == nullptr) {
         return;
     }
 
     const int cell_count = static_cast<int>(allocated_solver->size());
 
+    // Refuse to run on an empty grid or when the two per-cell buffers disagree in
+    // length; the codec never resizes the output, so a mismatch would be unsafe.
     if (cell_count == 0 || number_particle->size() != allocated_solver->size()) {
         return;
     }
 
+    // Drop the thrust device_vector wrappers to raw device pointers so the extended
+    // lambda below can index them from GPU threads.
     const auto* number_particle_ptr = atlas::raw_pointer_cast(number_particle->data().data());
     auto* allocated_solver_ptr      = atlas::raw_pointer_cast(allocated_solver->data().data());
 
+    // Copy the whole (trivially-copyable) leaf by value so the device lambda captures
+    // its representative scalars and split table without dereferencing `this` on the GPU.
     const KnudsenCodec codec = *this;
 
+    // One thread per cell: estimate the Knudsen number from the cell's particle count
+    // and bucket it into a solver index, writing the result in place.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         cell_count,

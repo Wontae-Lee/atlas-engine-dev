@@ -30,6 +30,8 @@ Sync::Builder::validate() const {
             "Sync::Builder: orientation contains non-finite values.");
     }
 
+    // A zero quaternion cannot be normalized and yields a degenerate rotation
+    // matrix, so it is rejected outright rather than silently producing garbage.
     if (_orientation.w == 0.0f
         && _orientation.x == 0.0f
         && _orientation.y == 0.0f

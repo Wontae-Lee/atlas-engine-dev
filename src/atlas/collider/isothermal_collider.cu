@@ -57,15 +57,19 @@ IsothermalCollider::Builder::build() {
 
 atlas::host_shared_ptr<IsothermalCollider>
 IsothermalCollider::Builder::make_host_shared() {
+    // build() validates and consumes the builder; wrap its result in shared storage.
     return atlas::make_host_shared<IsothermalCollider>(build());
 }
 
 void
 IsothermalCollider::Builder::validate() const {
+    // The unit is the only mandatory field; without it there is no wall to hit.
     if (!_unit) {
         throw std::runtime_error("IsothermalCollider::Builder: unit must not be null.");
     }
 
+    // The accommodation coefficient is used as a probability, so reject NaN/inf
+    // and anything outside [0, 1] before it can bias the specular/diffuse split.
     if (!atlas::isfinite(_momentum_accommodation_coefficient)
         || _momentum_accommodation_coefficient < 0.0f
         || _momentum_accommodation_coefficient > 1.0f) {
@@ -73,6 +77,8 @@ IsothermalCollider::Builder::validate() const {
             "IsothermalCollider::Builder: momentum accommodation coefficient must be finite and within [0, 1].");
     }
 
+    // Restitution scales the reflected speed; negative or non-finite would produce
+    // unphysical velocities. Values > 1 (energy gain) are intentionally allowed.
     if (!atlas::isfinite(_restitution) || _restitution < 0.0f) {
         throw std::runtime_error(
             "IsothermalCollider::Builder: restitution must be finite and non-negative.");

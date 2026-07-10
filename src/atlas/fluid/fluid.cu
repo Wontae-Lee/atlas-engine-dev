@@ -14,6 +14,7 @@ namespace atlas {
 Fluid::Fluid(const std::size_t buffer_size)
     : _buffer_size(buffer_size)
     , _active(buffer_size) {
+    // Seed exactly the three mandatory columns; optional ones are added on demand.
     _states.reserve(3);
     emplace_state<FluidPositionState>(buffer_size);
     emplace_state<FluidVelocityState>(buffer_size);
@@ -52,6 +53,7 @@ std::size_t
 Fluid::compact() {
     const auto alive = _particle_count;
 
+    // Nothing to pack, or the flag buffer is too short to scan safely.
     if (alive == 0 || _active.size() < alive) {
         return alive;
     }
@@ -79,6 +81,8 @@ Fluid::compact() {
     const auto* offsets = atlas::raw_pointer_cast(_survivor_offsets.data());
     const int last      = particle_count - 1;
 
+    // Exclusive scan omits the last flag, so the total is the last offset plus that flag.
+    // A single-thread kernel writes it to device memory to avoid a second scan pass.
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         1,
@@ -86,11 +90,13 @@ Fluid::compact() {
             total[0] = offsets[last] + flags[last];
         });
 
+    // The one host/device sync in this routine: the count drives the host-side control flow.
     int survivors = 0;
     atlas::copy_device_to_host(total, &survivors, 1);
 
     const auto kept = static_cast<std::size_t>(survivors < 0 ? 0 : survivors);
 
+    // All alive: the buffers are already packed, so skip the gather entirely.
     if (kept == alive) {
         return kept;
     }

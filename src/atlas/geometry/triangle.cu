@@ -12,6 +12,7 @@ Triangle::builder() noexcept {
 
 Triangle
 Triangle::Builder::build() const {
+    // Reject collinear (zero-area) vertices before constructing.
     validate();
 
     Triangle t {};
@@ -20,8 +21,10 @@ Triangle::Builder::build() const {
     t.c = _c;
 
     if (_normal.has_value()) {
+        // Caller-supplied normal wins over the geometric one.
         t.normal = *_normal;
     } else {
+        // Derive the unit face normal from the winding of the vertices.
         t.normal = atlas::normalized_or(
             atlas::cross(t.b - t.a, t.c - t.a),
             Float3(0.0f, 0.0f, 0.0f));
@@ -70,6 +73,7 @@ Triangle::Builder::with_normal(const Float3& normal_) noexcept {
 
 void
 Triangle::Builder::validate() const {
+    // Reuse the Triangle's own non-degeneracy invariant on a throwaway instance.
     if (!Triangle(_a, _b, _c).is_valid()) {
         throw std::runtime_error("Triangle::Builder: invalid triangle.");
     }

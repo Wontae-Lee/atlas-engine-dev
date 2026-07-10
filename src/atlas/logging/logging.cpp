@@ -1,3 +1,10 @@
+// Out-of-line implementation of the logging system declared in logging.h.
+//
+// The entire translation unit is compiled only when ATLAS_ENABLE_LOGGING is
+// defined; otherwise the header's no-op stand-ins carry everything and this
+// file emits nothing. It owns the file-scope global configuration state (the
+// per-level destination streams, the active threshold and the serializing
+// mutex) and the routines that format and emit a log line.
 #include <atlas/logging/logging.h>
 
 #ifdef ATLAS_ENABLE_LOGGING
