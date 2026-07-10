@@ -7,10 +7,11 @@
 #              It links no benchmark framework and prints its own timings.
 #   main.cpp — the same case wrapped in Google Benchmark.
 #
-# Both are compiled as CUDA (Atlas is compiled exclusively with nvcc), and each
-# is optional: a case may ship one, the other, or both. The assets directory is
-# passed in as ATLAS_BENCHMARK_ASSETS_DIR so a case can load a mesh without
-# depending on the working directory it is run from.
+# Each is optional: a case may ship one, the other, or both. Both follow the engine's
+# toolchain -- compiled as CUDA when nvcc builds the engine, as plain C++ otherwise --
+# so the .cu / .cpp suffixes name the entry point, not the compiler. The assets directory
+# is passed in as ATLAS_BENCHMARK_ASSETS_DIR so a case can load a mesh without depending
+# on the working directory it is run from.
 # ============================================================
 
 set(ATLAS_BENCHMARK_ASSETS_DIR "${PROJECT_SOURCE_DIR}/assets")
@@ -29,6 +30,10 @@ function(atlas_add_benchmark_case case_name relative_dir)
     if (EXISTS "${standalone_source}")
         set(target "atlas_benchmark_${case_name}")
 
+        if (NOT ATLAS_USE_NVCC)
+            set_source_files_properties("${standalone_source}" PROPERTIES LANGUAGE CXX)
+        endif ()
+
         add_executable(${target} "${standalone_source}")
         atlas_configure_benchmark_target(${target})
 
@@ -38,8 +43,10 @@ function(atlas_add_benchmark_case case_name relative_dir)
     if (EXISTS "${gbench_source}")
         set(target "atlas_benchmark_${case_name}_gbench")
 
-        # Atlas headers pull in device-dispatch code that only nvcc can compile.
-        set_source_files_properties("${gbench_source}" PROPERTIES LANGUAGE CUDA)
+        # Under nvcc the Atlas headers pull in device-dispatch code only nvcc can compile.
+        if (ATLAS_USE_NVCC)
+            set_source_files_properties("${gbench_source}" PROPERTIES LANGUAGE CUDA)
+        endif ()
 
         add_executable(${target} "${gbench_source}")
         atlas_configure_benchmark_target(${target})

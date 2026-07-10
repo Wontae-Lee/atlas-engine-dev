@@ -4,7 +4,7 @@
  * @file memory.h
  * @brief Smart-pointer aliases and a CUDA-managed, device-capturable @c shared_ptr.
  *
- * The whole header has two shapes selected by @c ATLAS_TASKING_CUDA:
+ * The whole header has two shapes selected by @c ATLAS_BACKEND_CUDA:
  *   - When CUDA tasking is on, @c device_shared_ptr is a hand-rolled reference-counted
  *     pointer over @c cudaMallocManaged storage, so the *same* pointer object can be
  *     captured by value into a device lambda and dereferenced on the GPU while its
@@ -13,7 +13,7 @@
  *     @c std::shared_ptr / @c std::unique_ptr, so callers compile unchanged.
  */
 
-#ifdef ATLAS_TASKING_CUDA
+#ifdef ATLAS_BACKEND_CUDA
 
 #include <cuda_runtime.h>
 #include <memory>

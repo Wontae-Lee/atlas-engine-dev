@@ -1,20 +1,29 @@
 # External dependencies and backend definitions shared by every Atlas target.
-# TBB is the Thrust host system in every config (and the CPU device system);
-# CUDAToolkit provides the Thrust headers and the runtime nvcc objects link.
+# TBB backs the host-side parallel algorithms in every configuration. CUDAToolkit is
+# needed only when nvcc compiles the sources; it also supplies the Thrust headers, which
+# is why a TBB build without nvcc needs neither.
 
 find_package(TBB REQUIRED)
-find_package(CUDAToolkit REQUIRED)
 
-# Backend compile definitions applied to every Atlas target so host- and
-# device-compiled TUs agree on the Thrust systems.
-set(ATLAS_BACKEND_COMPILE_DEFINITIONS
-        THRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_TBB
-)
+if (ATLAS_USE_NVCC)
+    find_package(CUDAToolkit REQUIRED)
+endif ()
+
+# Backend compile definitions applied to every Atlas target so all TUs agree on the
+# backend. Exactly one of ATLAS_BACKEND_CUDA / ATLAS_BACKEND_TBB is defined:
+#
+#   ATLAS_BACKEND_CUDA : Thrust containers and algorithms, compiled by nvcc.
+#   ATLAS_BACKEND_TBB  : std::vector and TBB. No Thrust, no CUDA toolkit.
+#
+# The ten headers under buffer/, memory/, parallel/, scan/ branch on these; nothing else
+# in the tree does.
+set(ATLAS_BACKEND_COMPILE_DEFINITIONS "")
 
 if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
     message(STATUS "[ATLAS] Device system: CUDA")
     list(APPEND ATLAS_BACKEND_COMPILE_DEFINITIONS
-            ATLAS_TASKING_CUDA
+            ATLAS_BACKEND_CUDA
+            THRUST_HOST_SYSTEM=THRUST_HOST_SYSTEM_TBB
             THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA
             # Thrust hides its symbols in an inline namespace whose name embeds
             # __CUDA_ARCH_LIST__. That macro exists only under nvcc, so a host-compiled TU
@@ -30,8 +39,7 @@ if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
 else ()
     message(STATUS "[ATLAS] Device system: TBB")
     list(APPEND ATLAS_BACKEND_COMPILE_DEFINITIONS
-            ATLAS_TASKING_TBB
-            THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_TBB
+            ATLAS_BACKEND_TBB
     )
 endif ()
 
@@ -104,5 +112,8 @@ target_link_libraries(atlas-serialization
         protobuf::libprotobuf
         PRIVATE
         TBB::tbb
-        CUDA::cudart
 )
+
+if (ATLAS_USE_NVCC)
+    target_link_libraries(atlas-serialization PRIVATE CUDA::cudart)
+endif ()

@@ -21,10 +21,24 @@ source .venv/bin/activate
 
 ## 2. Toolchain and CMake Presets
 
-Atlas is compiled exclusively with **nvcc**: every translation unit (engine
-`.cu` sources, tests, benchmarks) is compiled as CUDA, and the backend is the
-Thrust device system selected at configure time. A CUDA toolkit is therefore
-always required to build — a GPU is required only to run the CUDA variant.
+Two switches pick the toolchain.
+
+`ATLAS_DEVICE_SYSTEM` selects the parallel backend. `CUDA` compiles every
+translation unit with nvcc and uses Thrust's containers and algorithms. `TBB`
+(the default) uses neither: buffers are `std::vector`, the algorithms are TBB's,
+and the host compiler builds the whole tree. The `.cu` suffix survives on the
+engine sources because they hold no CUDA-only syntax — every kernel is a
+`parallel_for` over an `ATLAS_ALL_DEVICE` lambda, and those annotations vanish
+outside `__CUDACC__`.
+
+`ATLAS_HOST_COMPILER` (`native` | `nvcc`) forces a TBB build through nvcc.
+Keep a CI job on `tbb-nvcc-debug`: **nvcc rejects constructs the host compiler
+accepts** — notably an extended `__host__ __device__` lambda inside a private
+member function, which is the only reason `System::mark_survivors` and friends
+are public. A TBB-only build stops catching those.
+
+A CUDA toolkit is therefore needed only when nvcc is in play. A GPU is needed
+only to *run* the CUDA variant.
 
 The reference development environment is the Docker `dev` image
 (see `Dockerfile`):
@@ -36,11 +50,15 @@ docker run --rm -it -v "$PWD":/workspace atlas-dev
 
 `CMakePresets.json` requires CMake 3.20+ and Ninja. Important presets:
 
-- Configure: `tbb-debug`, `tbb-release` (CPU; Thrust device = TBB),
-  `cuda-debug`, `cuda-release` (GPU; Thrust device = CUDA)
-- Build: `build-tbb-debug`, `build-tbb-release`, `build-cuda-debug`,
-  `build-cuda-release`
-- Test: `ctest-tbb-debug`, `ctest-tbb-release`
+- Configure: `tbb-debug`, `tbb-release` (CPU; host compiler, no CUDA toolkit),
+  `tbb-nvcc-debug` (CPU backend built by nvcc),
+  `cuda-debug`, `cuda-release` (GPU; nvcc + Thrust)
+- Build: `build-tbb-debug`, `build-tbb-release`, `build-tbb-nvcc-debug`,
+  `build-cuda-debug`, `build-cuda-release`
+- Test: `ctest-tbb-debug`, `ctest-tbb-nvcc-debug`, `ctest-cuda-debug`
+
+The debug presets turn logging, tests, the Python module, and the benchmarks on;
+the release presets turn all four off.
 
 ---
 

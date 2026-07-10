@@ -92,7 +92,7 @@ private:
      *
      * @return `true` when all BVH pointers are non-null and the root is valid.
      *
-     * @note In a CUDA build (`ATLAS_TASKING_CUDA`) evaluated on the host
+     * @note In a CUDA build (`ATLAS_BACKEND_CUDA`) evaluated on the host
      *       (`!__CUDA_ARCH__`) this always returns `false`, because the BVH
      *       buffers live in device memory and cannot be dereferenced from the
      *       host. Host-side queries then use the flat triangle soup instead,
@@ -102,7 +102,7 @@ private:
      */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     has_bvh() const noexcept {
-#if defined(ATLAS_TASKING_CUDA) && !defined(__CUDA_ARCH__)
+#if defined(ATLAS_BACKEND_CUDA) && !defined(__CUDA_ARCH__)
         return false;
 #else
         return bvh_nodes && bvh_indices && bvh_tris && bvh_root >= 0;
@@ -785,7 +785,7 @@ public:
 
         // Host side of a CUDA build cannot dereference the device BVH buffers;
         // fall back to the flat-soup scan below. Device / CPU builds use the BVH.
-#if defined(ATLAS_TASKING_CUDA) && !defined(__CUDA_ARCH__)
+#if defined(ATLAS_BACKEND_CUDA) && !defined(__CUDA_ARCH__)
         constexpr bool can_use_bvh = false;
 #else
         constexpr bool can_use_bvh = true;

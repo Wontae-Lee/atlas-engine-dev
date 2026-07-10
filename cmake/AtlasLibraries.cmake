@@ -15,11 +15,13 @@ target_include_directories(atlas-core
         INTERFACE
         "${ATLAS_CORE_INCLUDE_DIR}"
         "${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobj"
-        # Thrust ships with the CUDA toolkit; exposing its include dirs lets
-        # host-compiled consumers (e.g. the Python bindings) see the same
-        # Thrust headers as nvcc TUs.
-        "${CUDAToolkit_INCLUDE_DIRS}"
 )
+
+if (ATLAS_USE_NVCC)
+    # Thrust ships with the CUDA toolkit; exposing its include dirs lets host-compiled
+    # consumers (e.g. the Python bindings) see the same Thrust headers as nvcc TUs.
+    target_include_directories(atlas-core INTERFACE "${CUDAToolkit_INCLUDE_DIRS}")
+endif ()
 
 target_compile_definitions(atlas-core
         INTERFACE
@@ -32,8 +34,11 @@ target_link_libraries(atlas-core
         tinyobjloader
         atlas::serialization
         TBB::tbb
-        CUDA::cudart
 )
+
+if (ATLAS_USE_NVCC)
+    target_link_libraries(atlas-core INTERFACE CUDA::cudart)
+endif ()
 
 # atlas — compiled engine library from the .cu definitions under src/atlas
 # (mirrors include/atlas). nvcc compiles all of it; the Thrust device system
@@ -41,6 +46,13 @@ target_link_libraries(atlas-core
 file(GLOB_RECURSE ATLAS_ENGINE_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/src/atlas/*.cu"
 )
+
+# Without nvcc the .cu suffix is just a name. The sources hold no CUDA-only syntax --
+# every kernel is a parallel_for over an ATLAS_ALL_DEVICE lambda, and those annotations
+# vanish outside __CUDACC__ -- so the host compiler builds them as ordinary C++.
+if (NOT ATLAS_USE_NVCC AND NOT ATLAS_ENGINE_SOURCES STREQUAL "")
+    set_source_files_properties(${ATLAS_ENGINE_SOURCES} PROPERTIES LANGUAGE CXX)
+endif ()
 
 if (ATLAS_ENGINE_SOURCES STREQUAL "")
     message(STATUS "[ATLAS] Engine library: no sources under src/atlas yet; skipping.")

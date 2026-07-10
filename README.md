@@ -4,7 +4,7 @@
 
 # Atlas Engine Dev
 
-Atlas is a C++20 particle simulation engine compiled entirely with **nvcc**, using a single `float` scalar type, with the TBB (CPU) or CUDA (GPU) backend selected through the Thrust device system, protobuf snapshot serialization, and optional nanobind-based Python bindings.
+Atlas is a C++20 particle simulation engine with a single `float` scalar type, a TBB (CPU) or CUDA (GPU) backend chosen at configure time, protobuf snapshot serialization, and optional nanobind-based Python bindings. The CPU build needs **neither nvcc nor the CUDA toolkit**.
 
 The engine targets **large domains, simply and fast**. Where physical fidelity
 trades against speed or simplicity, Atlas takes the simple option — and says so
@@ -22,8 +22,8 @@ All public types live under a single `atlas::` namespace (e.g. `atlas::Fluid`,
 
 ## Features
 
-- single-toolchain (nvcc) build with a `float` scalar simulation core
-- TBB and CUDA Thrust device systems from one source tree — a GPU is needed only to **run** the CUDA build, never to build it
+- one source tree, two backends: a plain host-compiler build on `std::vector` + TBB, or an nvcc build on Thrust + CUDA
+- a GPU is needed only to **run** the CUDA build, never to build it
 - a six-stage step pipeline on one object: `System::update()` runs emit → search → allocate → solve → advect → remove
 - particle compaction in `Fluid`: sinks mark survivors, one scan rebuilds every particle array
 - material records (`Molecule`, `Atom`, `Ion`, `Neutron`, `Solid`) and four particle generators
@@ -56,6 +56,28 @@ out a trivially-copyable **view** of raw pointers instead:
 `SpatialHashingSearcherView`, `FluidDsmcView`, `UniverseDsmcView`,
 `TriangleMeshView`, `BvhView`.
 
+### The backend split
+
+CMake defines exactly one of `ATLAS_BACKEND_CUDA` and `ATLAS_BACKEND_TBB`. Only
+ten headers — under [`buffer/`](include/atlas/buffer/),
+[`memory/`](include/atlas/memory/), [`parallel/`](include/atlas/parallel/), and
+[`scan/`](include/atlas/scan/) — branch on it. The other ~120 files name
+`DeviceBuffer` and `parallel_for` and never learn the difference.
+
+| | CUDA backend | Host backend |
+|---|---|---|
+| `HostBuffer<T>` / `DeviceBuffer<T>` | `thrust::host_vector` / `thrust::device_vector` | `std::vector` / `std::vector` |
+| `parallel_for`, `parallel_fill`, `parallel_sort` | Thrust | TBB |
+| `exclusive_scan` | `thrust::exclusive_scan` | `std::exclusive_scan` |
+| `default_random_engine`, `uniform_real_distribution` | one shared implementation | one shared implementation |
+
+The RNG is written out rather than aliased so both backends draw from the
+identical stream — a case reproduced on the CPU has to match the GPU run it
+checks. The engine holds no `__global__`, no `<<<>>>`, and no
+`cudaMalloc` outside `memory.h`; every kernel is a `parallel_for` over an
+`ATLAS_ALL_DEVICE` lambda, and those annotations vanish outside `__CUDACC__`.
+That is why the `.cu` sources compile as ordinary C++.
+
 ## Requirements
 
 The reference development environment is the Docker `dev` image (see
@@ -65,17 +87,17 @@ The reference development environment is the Docker `dev` image (see
 
 | Dependency | Notes |
 |---|---|
-| CUDA Toolkit 12.x | nvcc compiles every translation unit; also provides Thrust |
-| TBB | Thrust host system in every configuration |
+| TBB | Backs the host-side parallel algorithms in every configuration |
 | CMake 3.20+ | Presets are provided in [`CMakePresets.json`](CMakePresets.json) |
 | C++20 host compiler | GCC 11+ is a reasonable target |
 | Ninja | All presets use Ninja |
 
-### GPU execution only
+### GPU builds only
 
 | Dependency | Notes |
 |---|---|
-| NVIDIA driver | Needed only to run `ATLAS_DEVICE_SYSTEM=CUDA` builds |
+| CUDA Toolkit 12.x | nvcc compiles every translation unit and provides Thrust. Needed for `ATLAS_DEVICE_SYSTEM=CUDA`, or for `ATLAS_HOST_COMPILER=nvcc` |
+| NVIDIA driver | Needed only to **run** `ATLAS_DEVICE_SYSTEM=CUDA` builds |
 
 ### Python Bindings
 
@@ -100,8 +122,8 @@ configure time.
 
 ### Docker (recommended)
 
-Build the development image and work inside it — nvcc, TBB, CMake, and Ninja
-are preinstalled:
+Build the development image and work inside it — the CUDA toolkit, TBB, CMake,
+and Ninja are preinstalled:
 
 ```bash
 docker build --target dev -t atlas-dev .
@@ -110,10 +132,8 @@ docker run --rm -it -v "$PWD":/workspace atlas-dev
 
 ### Build and test
 
-Inside the container (or on a bare-metal host with the CUDA toolkit and TBB
-installed):
-
-CPU (TBB device system) debug build:
+Inside the container, or on a bare-metal host. The CPU build needs only TBB and
+a C++20 compiler:
 
 ```bash
 cmake --preset tbb-debug
@@ -121,7 +141,7 @@ cmake --build build/tbb-debug -j$(nproc)
 ctest --preset ctest-tbb-debug
 ```
 
-GPU (CUDA device system) debug build — a GPU is needed only to run the result:
+GPU build — needs the CUDA toolkit; a GPU only to run the result:
 
 ```bash
 cmake --preset cuda-debug
@@ -133,12 +153,13 @@ cmake --build build/cuda-debug -j$(nproc)
 ```bash
 sudo apt-get update
 sudo apt-get install -y ninja-build libtbb-dev
-# plus the CUDA 12.x toolkit (nvcc) from NVIDIA's repositories
+# that is everything the tbb-* presets need.
+# the cuda-* presets additionally need the CUDA 12.x toolkit from NVIDIA's repositories.
 ```
 
 ## Build Presets
 
-| Kind | TBB | CUDA |
+| Kind | TBB (host compiler) | CUDA (nvcc) |
 |---|---|---|
 | Configure | `tbb-debug`, `tbb-release` | `cuda-debug`, `cuda-release` |
 | Build | `build-tbb-debug`, `build-tbb-release` | `build-cuda-debug`, `build-cuda-release` |
@@ -148,17 +169,24 @@ The debug presets turn **everything** on — logging, tests, the Python module,
 and the benchmark cases. The release presets turn all four off and build the
 engine alone.
 
+`tbb-nvcc-debug` builds the CPU backend *through nvcc*. It exists for CI: nvcc
+rejects constructs the host compiler accepts — notably an extended
+`__host__ __device__` lambda inside a private member function — and a
+host-compiler-only build would stop catching them.
+
 ## Important CMake Options
 
 | Option | Debug presets | Release presets | Meaning |
 |---|---|---|---|
-| `ATLAS_DEVICE_SYSTEM` | — | — | Thrust device system: `TBB` (CPU) or `CUDA` (GPU) |
+| `ATLAS_DEVICE_SYSTEM` | — | — | Parallel backend: `TBB` (CPU, std + TBB) or `CUDA` (GPU, nvcc + Thrust) |
+| `ATLAS_HOST_COMPILER` | `native` | `native` | Compiler for a TBB build: `native` or `nvcc` |
 | `ATLAS_LOGGING` | `ON` | `OFF` | Build logging support (`atlas::warn`, …) |
 | `ATLAS_GOOGLE_TEST` | `ON` | `OFF` | Build GoogleTest-based C++ tests |
 | `ATLAS_PYTHON` | `ON` | `OFF` | Build the nanobind Python bindings |
 | `ATLAS_BENCHMARKS` | `ON` | `OFF` | Build the runnable simulation / benchmark cases |
 
-TBB and the CUDA toolkit are required in every configuration.
+TBB is required in every configuration. The CUDA toolkit is required only when
+nvcc compiles the sources.
 
 ## Running a Simulation
 

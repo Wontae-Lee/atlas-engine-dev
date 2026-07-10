@@ -2,33 +2,38 @@
 
 #include <atlas/core/macros.h>
 
+#if defined(ATLAS_BACKEND_CUDA)
 #include <thrust/device_ptr.h>
+#endif
 
 namespace atlas {
 
 /**
- * @brief Alias for a fancy (tagged) pointer into device memory.
+ * @brief A pointer into the parallel backend's memory.
  *
- * @c thrust::device_ptr<T> carries the "this address lives on the GPU" tag that lets
- * thrust route dereferences and algorithms to the device system. The overloads below
- * strip that tag back down to a bare @c T* for handing to a kernel or another raw API.
+ * Under the CUDA backend this is @c thrust::device_ptr<T>, a tagged pointer that thrust
+ * routes through @c cudaMemcpy when it is dereferenced on the host. Under the host
+ * backend there is no separate memory space, so it is a plain @c T*.
  *
  * @tparam T Pointee type.
  */
+#if defined(ATLAS_BACKEND_CUDA)
 template <typename T>
 using device_ptr = thrust::device_ptr<T>;
+#else
+template <typename T>
+using device_ptr = T*;
+#endif
 
 /**
- * @brief Identity overload: a raw pointer is already raw, so return it unchanged.
+ * @brief Strip any fancy-pointer wrapper and return the underlying raw address.
  *
- * Present so generic code can call @c raw_pointer_cast uniformly on either a bare
- * pointer or a @c device_ptr without knowing which it holds.
+ * The raw-pointer overloads are the identity; they exist so a caller can write
+ * @c raw_pointer_cast(buffer.data()) without knowing which backend supplied the pointer.
  *
  * @tparam T Pointee type.
- * @param p Any pointer (host or device address); ownership and validity are unchanged.
- * @return @p p verbatim.
- * @note @c ATLAS_ALL_DEVICE + @c constexpr: usable in host code, device code, and
- *       constant expressions alike.
+ * @param p Pointer to unwrap; may be null.
+ * @return The raw address @p p refers to.
  */
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr T*
@@ -36,29 +41,25 @@ raw_pointer_cast(T* p) noexcept {
     return p;
 }
 
-/**
- * @brief Const-qualified identity overload of @c raw_pointer_cast.
- *
- * @tparam T Pointee type (the pointer is to @c const @p T).
- * @param p Any pointer to const; returned verbatim.
- * @return @p p verbatim.
- */
+/** @copydoc raw_pointer_cast(T*) */
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE constexpr const T*
 raw_pointer_cast(const T* p) noexcept {
     return p;
 }
 
+#if defined(ATLAS_BACKEND_CUDA)
+
 /**
- * @brief Extract the underlying bare device address from a @c device_ptr<T>.
+ * @brief Unwrap a @c thrust::device_ptr into the bare device address it holds.
  *
- * Delegates to @c thrust::raw_pointer_cast. The result is a plain @c T* holding a GPU
- * address; it is only legal to dereference inside device code (or to pass to a kernel /
- * device-side API), never on the host.
+ * Declared only under the CUDA backend. The host backend aliases @c device_ptr<T> to
+ * @c T*, which would make these redeclarations of the raw-pointer overloads above.
  *
  * @tparam T Pointee type.
- * @param p Fancy device pointer to unwrap.
- * @return The raw device address @p p refers to.
+ * @param p Fancy device pointer.
+ * @return The raw device address: safe to hand to a kernel, not to dereference on the
+ *         host.
  */
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE T*
@@ -66,17 +67,13 @@ raw_pointer_cast(device_ptr<T> p) noexcept {
     return thrust::raw_pointer_cast(p);
 }
 
-/**
- * @brief Const-qualified counterpart: unwrap a @c device_ptr<const T> to @c const T*.
- *
- * @tparam T Pointee type (the fancy pointer targets @c const @p T).
- * @param p Fancy device pointer to const to unwrap.
- * @return The raw device address, as a pointer to const.
- */
+/** @copydoc raw_pointer_cast(device_ptr<T>) */
 template <typename T>
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE const T*
 raw_pointer_cast(device_ptr<const T> p) noexcept {
     return thrust::raw_pointer_cast(p);
 }
+
+#endif
 
 }

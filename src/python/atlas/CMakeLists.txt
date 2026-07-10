@@ -51,7 +51,7 @@ target_compile_definitions(atlas_python PRIVATE ATLAS_VERSION_STRING="0.1.0")
 # can compile; the host compiler reports "unimplemented for this system". Compile
 # the binding TU with nvcc like the rest of the engine. (For the TBB backend the
 # device system is host-executable, so the default host-compiler path is fine.)
-if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
+if (ATLAS_USE_NVCC AND ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
     set_source_files_properties(module.cpp PROPERTIES LANGUAGE CUDA)
 endif ()
 
