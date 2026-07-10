@@ -36,7 +36,8 @@ call site.
   own type only when the role is substantial and clearly named — a kernel,
   builder, interaction, or policy.
 - Match the file and module conventions (`#pragma once`, `.h` declarations
-  with `src/atlas/**/*.cu` definitions, header-inline device code, internal
+  with `src/atlas/**/*.cu` definitions — a couple of host-only modules use
+  `.cpp` — header-inline device code, internal
   helpers kept in the module's own namespace next to their owner). Each module
   doc's "Files" section shows the pairing; see
   [`atlas/core`](../atlas/core/core.md).
@@ -108,7 +109,8 @@ unless asked" default does not apply. Comments are written in **English**.
 ### Form
 
 - Multi-line documentation uses `/** ... */`. Not `///` blocks, not `/*! */`.
-- A one-line note trailing a data member or an enumerator uses `///<`.
+- A one-line note trailing a data member or an enumerator uses `///<`; a
+  one-line note preceding a declaration uses `///`.
 - Inside a function body, use `//`.
 
 ```cpp

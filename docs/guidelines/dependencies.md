@@ -16,35 +16,39 @@ that is, `ATLAS_DEVICE_SYSTEM=CUDA`, or `ATLAS_HOST_COMPILER=nvcc`. A default
 `ATLAS_DEVICE_SYSTEM=CUDA` builds.
 
 CMake defines exactly one of `ATLAS_BACKEND_CUDA` and `ATLAS_BACKEND_TBB`. Ten
-headers under `buffer/`, `memory/`, `parallel/`, and `scan/` branch on it to pick
-the container and the algorithm. Nothing else in the tree names Thrust.
+headers branch on it to pick the container and the algorithm — nine under
+`buffer/`, `memory/`, `parallel/`, and `scan/`, plus `geometry/triangle_mesh.h`
+(where the host cannot dereference a device-resident BVH). A few other files
+mention Thrust only in documentation comments.
 
 The reference development environment is the Docker `dev` image defined in
 `Dockerfile`. Building the optional Python bindings additionally requires a
 Python 3.8+ interpreter with the development headers.
 
-In-tree dependencies under `external/` include:
+Dependencies under `external/` are git submodules, not vendored copies; a fresh
+clone needs `git submodule update --init --recursive` to populate them:
 
 - tinyobj (tinyobjloader)
 - googletest
 - googlebenchmark
 - protobuf
-- nanobind (Python bindings; carries its own submodule, so a clone needs
-  `git submodule update --init --recursive external/nanobind`)
+- nanobind (Python bindings; carries nested submodules, so its init must be
+  `--recursive`)
 
 Do not introduce new dependencies unless explicitly requested.
 
 ---
 
-## 2. Benchmark Reference Submodules
+## 2. Benchmark Reference Code
 
-Benchmark reference submodules live under `benchmarks/`:
+`benchmarks/` currently holds only Atlas's own benchmark targets — the
+`benchmarks/atlas/` cases (for example `cylinder/`), built on Google Benchmark
+and wired only when `ATLAS_BENCHMARKS` is on.
 
-- `benchmarks/dumux`
-- `benchmarks/piclas`
-- `benchmarks/sparta`
-- `benchmarks/splishsplash`
-
-When the user mentions `piclas`, `dumux`, `sparta`, or `splishsplash` in a
-benchmark or reference-code context, treat the name as referring to the
-corresponding submodule directory.
+The four external reference projects — `piclas`, `sparta`, `splishsplash`, and
+`dumux` — were once wired through `ExternalProject_Add`, but they were removed
+with the engine restructuring and were never registered in `.gitmodules`; see
+the note in [`benchmarks/CMakeLists.txt`](../../benchmarks/CMakeLists.txt). They
+are expected to be reinstated later. When the user mentions one of these names in
+a benchmark or reference-code context, treat it as one of those reference
+projects rather than a directory that currently exists in the tree.

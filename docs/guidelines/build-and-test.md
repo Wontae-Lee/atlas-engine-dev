@@ -10,12 +10,9 @@ authoring tests.
 Do not run builds, tests, benchmarks, simulations, generators, or formatters
 unless the user explicitly asks.
 
-If the user asks to run project Python tools, activate the virtual environment
-first:
-
-```bash
-source .venv/bin/activate
-```
+The Python bindings are packaged with scikit-build-core; when the user asks to
+build them, use `scripts/build_wheels.sh` (it installs its own toolchain via
+`pip`). The repo provisions no `.venv`.
 
 ---
 
@@ -72,9 +69,11 @@ Important options:
 
 Constraints:
 
-- The Thrust host system is always TBB; TBB and the CUDA toolkit are required
-  in every configuration.
-- Benchmarks are currently TBB-only (disabled when `ATLAS_DEVICE_SYSTEM=CUDA`).
+- The Thrust host system is always TBB, and TBB is required in every
+  configuration. The CUDA toolkit is required only when nvcc compiles the
+  sources (`ATLAS_DEVICE_SYSTEM=CUDA` or `ATLAS_HOST_COMPILER=nvcc`).
+- Benchmarks build under both backends; they are wired only when
+  `ATLAS_BENCHMARKS` is on.
 - `ATLAS_PYTHON` requires a Python 3.8+ interpreter with development headers.
 
 ---
