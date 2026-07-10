@@ -4,7 +4,11 @@
 
 # Atlas Engine Dev
 
-Atlas is a C++20 particle simulation engine compiled entirely with **nvcc**, using a single `float` scalar type, with the TBB (CPU) or CUDA (GPU) backend selected through the Thrust device system, optional serialization support, and optional nanobind-based Python bindings.
+Atlas is a C++20 particle simulation engine compiled entirely with **nvcc**, using a single `float` scalar type, with the TBB (CPU) or CUDA (GPU) backend selected through the Thrust device system, protobuf snapshot serialization, and optional nanobind-based Python bindings.
+
+The engine targets **large domains, simply and fast**. Where physical fidelity
+trades against speed or simplicity, Atlas takes the simple option — and says so
+where it does.
 
 The whole public API is aggregated through one umbrella header:
 
@@ -14,19 +18,43 @@ The whole public API is aggregated through one umbrella header:
 
 All public types live under a single `atlas::` namespace (e.g. `atlas::Fluid`,
 `atlas::Universe`, `atlas::Float3`, `atlas::Box`); enum values use `snake_case`
-(`atlas::SpawnType::volume`, `atlas::MaterialType::molecule`).
+(`atlas::SourceType::volume`, `atlas::MaterialType::molecule`).
 
 ## Features
 
 - single-toolchain (nvcc) build with a `float` scalar simulation core
 - TBB and CUDA Thrust device systems from one source tree — a GPU is needed only to **run** the CUDA build, never to build it
-- active-prefix particle storage for source emission and sink compaction
-- material records and Maxwell/thermal particle generators
+- a six-stage step pipeline on one object: `System::update()` runs emit → search → allocate → solve → advect → remove
+- particle compaction in `Fluid`: sinks mark survivors, one scan rebuilds every particle array
+- material records (`Molecule`, `Atom`, `Ion`, `Neutron`, `Solid`) and four particle generators
 - analytic geometry: box, sphere, cylinder, plane, circle, square, triangle, and triangle mesh
 - spatial primitives and acceleration structures: rays, AABBs, spatial hashing, BVH, LBVH, and SAH BVH
-- source, sink, collider, orchestrator, observer, and serialization runtime modules
-- DSMC and SPH solver modules
+- DSMC solver with hard-sphere, VHS, and VSS collision kernels
+- source, sink, collider, codec, searcher, observer, and serialization runtime modules
+- CSV observation and protobuf snapshot save / restart
 - optional nanobind-based Python bindings, packaged as self-contained TBB and CUDA wheels (see [Python Bindings](#python-bindings))
+
+### The tagged-union leaf pattern
+
+Most runtime modules share one shape: a concrete umbrella type wraps one of
+several self-contained leaf types and dispatches to it. No virtual dispatch,
+because these types are captured by value into device lambdas.
+
+Which umbrella a module uses is decided by one question — **does the leaf own a
+`DeviceBuffer`?**
+
+| | Modules | Umbrella |
+|---|---|---|
+| Trivially copyable leaves | `Geometry`, `Material`, `Collider`, `Sink`, `DsmcKernel` | [`DeviceVariant`](include/atlas/core/device_variant.h) — host+device, copy-based |
+| Leaves owning a `DeviceBuffer` | `Source`, `Generator`, `Codec` | [`HostVariant`](include/atlas/core/host_variant.h) — host-only, move-based |
+
+`Solver` is the exception: an abstract base class, because a solver's `solve()`
+runs on the host and launches its own kernels.
+
+An object that owns `DeviceBuffer`s cannot itself enter a kernel, so each hands
+out a trivially-copyable **view** of raw pointers instead:
+`SpatialHashingSearcherView`, `FluidDsmcView`, `UniverseDsmcView`,
+`TriangleMeshView`, `BvhView`.
 
 ## Requirements
 
@@ -55,11 +83,18 @@ The reference development environment is the Docker `dev` image (see
 |---|---|
 | Python 3.8+ | Interpreter with development headers (`Development.Module`) |
 
-Enabled with `ATLAS_PYTHON=ON`. nanobind itself is vendored under `external/`.
+nanobind is vendored under `external/`, but it carries its own submodule, so a
+clone that skipped `--recursive` must run this before `ATLAS_PYTHON=ON` will
+configure:
+
+```bash
+git submodule update --init --recursive external/nanobind
+```
 
 Other in-tree dependencies (all vendored under [`external/`](external/)):
-`tinyobjloader` (OBJ mesh loading), `lyra` (CLI parsing), `googletest`,
-`googlebenchmark`, `protobuf` (binary snapshot serialization), and `nanobind`.
+`tinyobjloader` (OBJ mesh loading), `googletest`, `googlebenchmark`, and
+`protobuf` (binary snapshot serialization). protobuf pulls Abseil in at
+configure time.
 
 ## Quick Start
 
@@ -109,66 +144,69 @@ sudo apt-get install -y ninja-build libtbb-dev
 | Build | `build-tbb-debug`, `build-tbb-release` | `build-cuda-debug`, `build-cuda-release` |
 | Test | `ctest-tbb-debug` | `ctest-cuda-debug` |
 
-The `*-release` presets build the engine and Python module only (tests are
-excluded); run tests from the `*-debug` presets.
+The debug presets turn **everything** on — logging, tests, the Python module,
+and the benchmark cases. The release presets turn all four off and build the
+engine alone.
 
 ## Important CMake Options
 
-| Option | Meaning |
-|---|---|
-| `ATLAS_DEVICE_SYSTEM` | Thrust device system: `TBB` (CPU, default) or `CUDA` (GPU) |
-| `ATLAS_LOGGING` | Build logging support |
-| `ATLAS_GOOGLE_TEST` | Build GoogleTest-based C++ tests |
-| `ATLAS_PYTHON` | Build the nanobind Python bindings |
-| `ATLAS_BENCHMARKS` | Build the runnable simulation / benchmark cases |
+| Option | Debug presets | Release presets | Meaning |
+|---|---|---|---|
+| `ATLAS_DEVICE_SYSTEM` | — | — | Thrust device system: `TBB` (CPU) or `CUDA` (GPU) |
+| `ATLAS_LOGGING` | `ON` | `OFF` | Build logging support (`atlas::warn`, …) |
+| `ATLAS_GOOGLE_TEST` | `ON` | `OFF` | Build GoogleTest-based C++ tests |
+| `ATLAS_PYTHON` | `ON` | `OFF` | Build the nanobind Python bindings |
+| `ATLAS_BENCHMARKS` | `ON` | `OFF` | Build the runnable simulation / benchmark cases |
 
-Constraints:
-
-- TBB and the CUDA toolkit are required in every configuration
-- benchmarks are currently TBB-only (disabled when `ATLAS_DEVICE_SYSTEM=CUDA`)
+TBB and the CUDA toolkit are required in every configuration.
 
 ## Running a Simulation
 
 The ready-to-run simulation programs are the cases under
-[`benchmarks/atlas/`](benchmarks/atlas/). Each one is a complete end-to-end
-setup — material and particle generators, a `Universe` that owns the boundary
-units, a `Source` / `Sink` / `Collider`, and a DSMC or SPH solver — driven by
-`System::update()`.
+[`benchmarks/atlas/`](benchmarks/atlas/). Each case directory holds up to two
+entry points:
 
-They are TBB-only and off by default. Enable them at configure time, build the
-case you want, and run the produced executable:
+| File | Target | What it is |
+|---|---|---|
+| `main.cu` | `atlas_benchmark_<case>` | a standalone simulation driven straight through the Atlas API — no benchmark framework, prints its own timings |
+| `main.cpp` | `atlas_benchmark_<case>_gbench` | the same case wrapped in Google Benchmark |
+
+Both are optional; CMake creates a target only for the file that exists.
+
+Benchmarks are on in the debug presets. Build a case and run it:
 
 ```bash
-cmake --preset tbb-debug -DATLAS_BENCHMARKS=ON
-cmake --build build/tbb-debug --target atlas_benchmark_inflow -j$(nproc)
-./build/tbb-debug/benchmarks/atlas/atlas_benchmark_inflow
+cmake --preset tbb-debug
+cmake --build build/tbb-debug --target atlas_benchmark_cylinder -j$(nproc)
+./build/tbb-debug/benchmarks/atlas/atlas_benchmark_cylinder
 ```
 
-Each case is a Google Benchmark executable: running it steps the simulation in a
-timed loop and prints per-step timings. Pass `--help` for benchmark options
-(iteration count, output format, filtering).
-
-| Target | Source | Scenario |
+| Case | Source | Scenario |
 |---|---|---|
-| `atlas_benchmark_inflow` | [`inflow/`](benchmarks/atlas/inflow/) | source-driven DSMC particle inflow |
-| `atlas_benchmark_waterfall` | [`waterfall/`](benchmarks/atlas/waterfall/) | waterfall-style particle scenario |
-| `atlas_benchmark_cylinder_continum` | [`cylinder/continum/`](benchmarks/atlas/cylinder/continum/) | DSMC cylinder flow (continuum) |
-| `atlas_benchmark_cylinder_rarefied_gas` | [`cylinder/rarefied_gas/`](benchmarks/atlas/cylinder/rarefied_gas/) | DSMC cylinder flow (rarefied gas) |
+| `cylinder` | [`cylinder/main.cu`](benchmarks/atlas/cylinder/main.cu) | rarefied N₂ crossflow over a cylinder mesh at Kn ≈ 0.05 |
 
-To see how a simulation is wired up in code — builders, boundary units, and the
-solver pipeline — read a case's `main.cu`, e.g.
-[`inflow/main.cu`](benchmarks/atlas/inflow/main.cu).
+`atlas_benchmark_cylinder [steps] [assets_dir] [output_dir]` loads
+`assets/cylinder.obj`, prints the freestream regime it resolved to, steps the
+`System`, and writes per-step CSV under `<output_dir>/data/`.
+
+To see how a simulation is wired up in code — builders, boundary units, the
+solver, and the observer — read
+[`cylinder/main.cu`](benchmarks/atlas/cylinder/main.cu).
 
 ## Python Bindings
 
-Build the module in-tree:
+Build the module in-tree (the debug presets already enable it):
 
 ```bash
-cmake --preset tbb-debug -DATLAS_PYTHON=ON
+cmake --preset tbb-debug
 cmake --build build/tbb-debug --target atlas_python -j$(nproc)
 ```
 
-Or build self-contained, redistributable wheels (bundling libtbb / libcudart)
+The bindings are currently a stub: `atlas.System` with `update`, `save`, `step`,
+and `dt`, and nothing else. The old module bound types the engine restructuring
+removed; it is being grown back one type at a time.
+
+Self-contained, redistributable wheels (bundling libtbb / libcudart) are built
 inside the packaging image:
 
 ```bash
@@ -180,9 +218,10 @@ docker run --rm -v "$PWD":/workspace -w /workspace atlas-wheel \
 
 ## Tests
 
-Tests live under [`tests/`](tests/) and use GoogleTest directly. C++ tests are
-discovered recursively from `tests/*.cpp` into an aggregate `atlas_tests` binary
-plus per-directory `atlas_tests_<directory>` binaries. Run them from a `*-debug`
+Tests live under [`tests/atlas/`](tests/atlas/), mirroring `include/atlas/` and
+`src/atlas/`, and use GoogleTest directly. Sources are globbed recursively into
+an aggregate `atlas_tests` binary plus one `atlas_tests_<module>` binary per
+directory, so a new test file needs no CMake edit. Run them from a `*-debug`
 preset:
 
 ```bash
@@ -195,13 +234,16 @@ ctest --preset ctest-tbb-debug
 
 Deeper design and contributor material lives in the repository, not this file:
 
-- [`docs/architecture/`](docs/architecture/) — *what the program is*: runtime
-  objects and ownership, the per-step simulation pipeline, the CUDA/TBB backend
-  model, the module map, and structural conventions.
+- [`docs/atlas/`](docs/atlas/) — *per-module documentation*: the tagged-union
+  leaf pattern and how to extend each module. Covers codec, collider, material,
+  sink, and source.
 - [`docs/guidelines/`](docs/guidelines/) — *how to work on it*: workflow, code
-  style, build/test, and dependencies.
+  style, build/test, and dependencies. Start at
+  [`docs/guidelines/README.md`](docs/guidelines/README.md).
 - [`CLAUDE.md`](CLAUDE.md) is the entry map into both directories.
-- Generated API reference (Doxygen) lives under [`docs/doxygen/`](docs/doxygen/).
+- Every header and source under `include/atlas/` and `src/atlas/` carries Doxygen
+  comments; the convention is recorded in
+  [`coding-style.md` §7](docs/guidelines/coding-style.md).
 
 ## License
 
