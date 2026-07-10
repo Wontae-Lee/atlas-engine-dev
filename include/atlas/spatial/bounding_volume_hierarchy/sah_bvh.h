@@ -206,7 +206,7 @@ private:
     /// Root node index, -1 until a successful build.
     int _root = -1;
 
-    /// Maximum primitives per leaf (always >= 1); larger than LBVH's default.
+    /// Maximum primitives per leaf (always >= 1); the recursion stops once a range fits.
     int _leaf_size = 32;
 
     /// Number of SAH bins per split (in [4, 256]).

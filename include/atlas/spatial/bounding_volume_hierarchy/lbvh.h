@@ -24,6 +24,14 @@ namespace atlas {
  * This produces a hierarchy fast and cheaply; it does not minimize a surface-
  * area-heuristic cost the way @ref SAHBVH does, trading build-time SAH quality
  * for speed — in line with the engine's easy/fast, large-domain priorities.
+ *
+ * @note Leaf capacity is not configurable here. Karras' layout stores exactly one
+ *       primitive per leaf: the `2n - 1` node count, the `(n - 1) + k` leaf indexing,
+ *       and the delta metric's assumption that each leaf owns one distinct sorted key
+ *       all depend on it. Packing several primitives into a leaf requires a separate
+ *       subtree-collapse pass over the built tree, which this class does not perform.
+ *       @ref SAHBVH, whose top-down build recurses until a leaf is small enough,
+ *       exposes a `leaf_size` instead.
  */
 class LBVH final : public BVH {
 public:
@@ -62,15 +70,6 @@ public:
     reset();
 
     /**
-     * @brief Set the maximum primitives per leaf, clamped to at least 1.
-     * @param leaf_size Desired leaf capacity; values below 1 are raised to 1.
-     */
-    void
-    set_leaf_size(const int leaf_size) noexcept {
-        _leaf_size = (leaf_size < 1) ? 1 : leaf_size;
-    }
-
-    /**
      * @brief Set the per-axis Morton quantization resolution, clamped to [1, 10].
      *
      * Ten bits per axis is the ceiling because three 10-bit axes pack into the
@@ -85,15 +84,6 @@ public:
         if (morton_bits > 10) morton_bits = 10;
 
         _morton_bits = morton_bits;
-    }
-
-    /**
-     * @brief Current maximum primitives per leaf.
-     * @return The configured leaf size.
-     */
-    ATLAS_NODISCARD int
-    leaf_size() const noexcept {
-        return _leaf_size;
     }
 
     /**
@@ -192,9 +182,6 @@ private:
 
     /// Root node index, -1 until a successful build.
     int _root = -1;
-
-    /// Maximum primitives per leaf (always >= 1).
-    int _leaf_size = 1;
 
     /// Morton quantization bits per axis (in [1, 10]).
     int _morton_bits = 10;

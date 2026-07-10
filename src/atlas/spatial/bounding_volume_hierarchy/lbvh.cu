@@ -325,6 +325,12 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
         return;
     }
 
+    // Parent links, filled as the ranges are derived. The refit below walks upward from the
+    // leaves and cannot be replaced by a descending index sweep: an internal node whose range
+    // *ends* at its own index (direction d == -1) owns a child stored at a smaller index, so
+    // a parent can precede its child in the array.
+    HostBuffer<int> parent(static_cast<std::size_t>(2 * n - 1), -1);
+
     // Karras' (2012) core insight: internal node i's owned leaf range can
     // be computed independently of every other internal node — no
     // recursion, no dependency chain — purely from index i and the global
@@ -393,21 +399,32 @@ LBVH::build(const HostBuffer<TriangleContainer4>& triangles) {
         in.right   = right_child;
         in.start   = -1;
         in.count   = 0;
+
+        parent[left_child]  = i;
+        parent[right_child] = i;
     }
 
-    // Bottom-up refit of internal-node bounds and solid-angle moments in one
-    // reverse pass. Leaves (indices >= n-1) were finalized above, and this pass
-    // assumes each internal node's children are already finalized by the time it
-    // is visited (i.e. that a descending index order is a valid bottom-up order
-    // for this Karras layout).
-    for (int i = n - 2; i >= 0; --i) {
-        BVHNode& in      = h_nodes[i];
-        const BVHNode& L = h_nodes[in.left];
-        const BVHNode& R = h_nodes[in.right];
+    // Bottom-up refit of internal-node bounds and solid-angle moments. Leaves (indices
+    // >= n-1) were finalized above; each internal node is refitted by whichever of its two
+    // children reaches it second, which guarantees both children are final. The counter is a
+    // plain increment here because the build is host-serial; on device it becomes an atomic
+    // and the same walk parallelizes over the leaves.
+    HostBuffer<int> visits(static_cast<std::size_t>(n - 1), 0);
 
-        in.bounds = L.bounds;
-        in.bounds.merge(R.bounds);
-        merge_solid_angle_moment(in, L, R);
+    for (int k = 0; k < n; ++k) {
+        int node = parent[leaf_node_index(k, n)];
+
+        while (node != -1 && ++visits[node] == 2) {
+            BVHNode& in      = h_nodes[node];
+            const BVHNode& L = h_nodes[in.left];
+            const BVHNode& R = h_nodes[in.right];
+
+            in.bounds = L.bounds;
+            in.bounds.merge(R.bounds);
+            merge_solid_angle_moment(in, L, R);
+
+            node = parent[node];
+        }
     }
 
     // Karras' layout always roots the tree at internal node 0.
