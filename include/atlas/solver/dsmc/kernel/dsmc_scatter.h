@@ -3,8 +3,8 @@
 #include <atlas/core/macros.h>
 #include <atlas/material/material.h>
 #include <atlas/math/math.h>
-#include <atlas/random/seed.h>
-#include <atlas/sampling/sampling.h>
+#include <atlas/random/default_random_engine.h>
+#include <atlas/random/uniform_real_distribution.h>
 
 #include <cmath>
 
@@ -19,25 +19,32 @@ namespace atlas {
  * drawn from the VSS law `cos(chi) = 2*u1^(1/alpha) - 1`; with `alpha == 1` this collapses
  * to the isotropic hard-sphere / VHS case `cos(chi) = 2*u1 - 1`. The azimuth is uniform.
  *
- * The two uniform variates come from the low-quality sine hash keyed on the pair's own
- * geometry (relative velocity, centre-of-mass, and masses), so the scatter is stateless and
- * reproducible without carrying an RNG per thread. Distinct salts decorrelate the two draws.
+ * The two uniform variates are drawn from @p engine, which advances twice. Sourcing them
+ * from a seeded stream rather than from a hash of the pair's own geometry keeps the angular
+ * law independent of the collision's velocities: a geometry hash makes cos(chi) a
+ * deterministic function of the pre-collision state, so two particles meeting at the same
+ * relative velocity always deflect the same way, and the sine hash's quality degrades with
+ * the magnitude of its input. Reproducibility now comes from seeding @p engine, which the
+ * caller derives from its own per-cell, per-step stream.
  *
  * @param lhs_velocity        First partner's velocity (m/s); overwritten with the post-collision value.
  * @param rhs_velocity        Second partner's velocity (m/s); overwritten with the post-collision value.
  * @param lhs                 First partner's material, queried for its mass.
  * @param rhs                 Second partner's material, queried for its mass.
  * @param scattering_parameter The VSS exponent alpha (1 = isotropic); must be positive.
+ * @param engine              Generator supplying the deflection and azimuth variates; advanced twice.
  *
  * @note A no-op when either mass, the mass sum, the scattering parameter, or the relative
  *       speed is non-positive — a degenerate pair carries no well-defined scatter direction.
+ *       @p engine is left untouched on those paths, so a rejected pair consumes no variates.
  */
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
 dsmc_scatter(Float3& lhs_velocity,
              Float3& rhs_velocity,
              const Material& lhs,
              const Material& rhs,
-             const float scattering_parameter) noexcept {
+             const float scattering_parameter,
+             default_random_engine& engine) noexcept {
     const float lhs_mass = lhs.mass();
     const float rhs_mass = rhs.mass();
     const float mass_sum = lhs_mass + rhs_mass;
@@ -61,18 +68,12 @@ dsmc_scatter(Float3& lhs_velocity,
 
     const Float3 axis = relative / speed;
 
-    // Seed the stateless hash from the collision's own geometry and masses so identical pairs
-    // reproduce and unrelated pairs decorrelate; the `axis` offset separates the two draws.
-    const Float3 sample_seed = relative + center * atlas::RANDOM_HASH_NORMAL_SCALE_FOR_MIX
-        + Float3(lhs_mass, rhs_mass, mass_sum);
+    // Both variates come from the same stream; the engine's own advance decorrelates them,
+    // so no per-draw salt is needed.
+    const uniform_real_distribution<float> unit_interval;
 
-    const float u1 = atlas::sample_hashed_unit_interval(
-        sample_seed,
-        atlas::RANDOM_HASH_SALT_DIFFUSE_U1);
-
-    const float u2 = atlas::sample_hashed_unit_interval(
-        sample_seed + axis,
-        atlas::RANDOM_HASH_SALT_DIFFUSE_U2);
+    const float u1 = unit_interval(engine);
+    const float u2 = unit_interval(engine);
 
     // VSS deflection cosine; the alpha == 1 branch skips the pow and is exact isotropic scatter.
     const float cos_chi = (scattering_parameter == 1.0f)

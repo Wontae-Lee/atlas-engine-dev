@@ -28,8 +28,11 @@ namespace atlas {
  * make this a @ref HostVariant-style owner (move/host only) rather than a device-capturable
  * leaf; the solver itself is host-owned and dispatched virtually by the System.
  *
- * Randomness is stateless: every draw is a hash of the cell id, a per-step
- * @c _collision_seed, and a purpose salt, so a run is reproducible and restartable.
+ * Partner selection and the NTC acceptance test draw statelessly: each is a hash of the cell
+ * id, a per-step @c _collision_seed, and a purpose salt. The scatter angle instead seeds a
+ * @ref atlas::default_random_engine per collision, because hashing it would key the deflection
+ * on the pair's own velocities. Both paths derive from the same `(cell, stream)` pair, so a run
+ * stays reproducible and restartable.
  *
  * @note Multiple DsmcSolvers can share one grid; each processes only the cells the codec
  *       assigned to it (`allocated_solver[cell] == index`). A null ownership buffer means

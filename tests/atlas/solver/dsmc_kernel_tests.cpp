@@ -4,6 +4,7 @@
 #include <atlas/material/material.h>
 #include <atlas/material/molecule.h>
 #include <atlas/math/math.h>
+#include <atlas/random/default_random_engine.h>
 #include <atlas/solver/dsmc/kernel/hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/kernel/variable_hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/kernel/variable_soft_sphere_kernel.h>
@@ -119,4 +120,113 @@ TEST(DsmcKernel, SigmaGIsFiniteForEveryKernelType) {
             EXPECT_GE(sigma_g, 0.0f);
         }
     }
+}
+
+TEST(DsmcKernel, DefaultConstructsToHardSphereLeaf) {
+    EXPECT_EQ(DsmcKernel().type, DsmcKernelType::hard_sphere);
+}
+
+TEST(DsmcKernel, ExplicitConstructorActivatesRequestedLeaf) {
+    for (const DsmcKernelType type : { DsmcKernelType::hard_sphere,
+                                       DsmcKernelType::variable_hard_sphere,
+                                       DsmcKernelType::variable_soft_sphere }) {
+        EXPECT_EQ(DsmcKernel(type).type, type);
+    }
+}
+
+TEST(DsmcKernel, CrossSectionDispatchesToActiveLeaf) {
+    const Material lhs = nitrogen();
+    const Material rhs = argon();
+    const float    relative_speed = 800.0f;
+
+    EXPECT_FLOAT_EQ(DsmcKernel(DsmcKernelType::hard_sphere).cross_section(lhs, rhs, relative_speed),
+                    HardSphereKernel::cross_section(lhs, rhs, relative_speed));
+    EXPECT_FLOAT_EQ(DsmcKernel(DsmcKernelType::variable_hard_sphere).cross_section(lhs, rhs, relative_speed),
+                    VariableHardSphereKernel::cross_section(lhs, rhs, relative_speed));
+    EXPECT_FLOAT_EQ(DsmcKernel(DsmcKernelType::variable_soft_sphere).cross_section(lhs, rhs, relative_speed),
+                    VariableSoftSphereKernel::cross_section(lhs, rhs, relative_speed));
+}
+
+TEST(DsmcKernel, CopyConstructorPreservesActiveLeaf) {
+    const DsmcKernel original(DsmcKernelType::variable_soft_sphere);
+    const DsmcKernel copy(original);
+
+    EXPECT_EQ(copy.type, DsmcKernelType::variable_soft_sphere);
+    EXPECT_FLOAT_EQ(copy.cross_section(nitrogen(), argon(), 500.0f),
+                    original.cross_section(nitrogen(), argon(), 500.0f));
+}
+
+TEST(DsmcKernel, CopyAssignmentPreservesActiveLeaf) {
+    const DsmcKernel source(DsmcKernelType::variable_hard_sphere);
+    DsmcKernel       target(DsmcKernelType::hard_sphere);
+
+    target = source;
+
+    EXPECT_EQ(target.type, DsmcKernelType::variable_hard_sphere);
+    EXPECT_FLOAT_EQ(target.cross_section(nitrogen(), nitrogen(), 700.0f),
+                    VariableHardSphereKernel::cross_section(nitrogen(), nitrogen(), 700.0f));
+}
+
+TEST(DsmcKernel, SigmaGIsZeroForNonPositiveRelativeSpeedSquared) {
+    const Material   materials[2] = { nitrogen(), argon() };
+    const DsmcKernel kernel(DsmcKernelType::variable_hard_sphere);
+
+    EXPECT_FLOAT_EQ(kernel.sigma_g(materials, 0, 1, 0.0f), 0.0f);
+    EXPECT_FLOAT_EQ(kernel.sigma_g(materials, 0, 1, -4.0f), 0.0f);
+}
+
+TEST(DsmcKernel, ScatterThroughUmbrellaConservesMomentum) {
+    // Unit-scale masses keep the momentum arithmetic well conditioned; the leaf still splits
+    // the post-collision velocities by the mass ratio.
+    const Material lhs = Material(Atom(1.0f, 0.0f, 0.0f, 0.0f, 1.0e-10f, 273.0f, 0.5f, 1.0f));
+    const Material rhs = Material(Atom(3.0f, 0.0f, 0.0f, 0.0f, 1.0e-10f, 273.0f, 0.5f, 1.0f));
+
+    const DsmcKernel kernel(DsmcKernelType::hard_sphere);
+
+    atlas::Float3 lhs_velocity(120.0f, -40.0f, 25.0f);
+    atlas::Float3 rhs_velocity(-60.0f, 80.0f, -15.0f);
+
+    const atlas::Float3 momentum_pre = lhs_velocity * lhs.mass() + rhs_velocity * rhs.mass();
+
+    atlas::default_random_engine engine(1234u);
+    kernel(lhs_velocity, rhs_velocity, lhs, rhs, engine);
+
+    const atlas::Float3 momentum_post = lhs_velocity * lhs.mass() + rhs_velocity * rhs.mass();
+
+    EXPECT_TRUE(atlas::isfinite(lhs_velocity));
+    EXPECT_TRUE(atlas::isfinite(rhs_velocity));
+    EXPECT_NEAR(momentum_post.x, momentum_pre.x, 1.0e-3f * std::abs(momentum_pre.x) + 1.0e-2f);
+    EXPECT_NEAR(momentum_post.y, momentum_pre.y, 1.0e-3f * std::abs(momentum_pre.y) + 1.0e-2f);
+    EXPECT_NEAR(momentum_post.z, momentum_pre.z, 1.0e-3f * std::abs(momentum_pre.z) + 1.0e-2f);
+}
+
+TEST(DsmcKernel, ScatterForwardsEngineToActiveLeaf) {
+    // The umbrella must draw from the same stream and produce the same post-collision state as
+    // invoking the active leaf directly with an identically seeded engine.
+    const Material lhs = Material(Atom(1.0f, 0.0f, 0.0f, 0.0f, 1.0e-10f, 273.0f, 0.5f, 1.0f));
+    const Material rhs = Material(Atom(3.0f, 0.0f, 0.0f, 0.0f, 1.0e-10f, 273.0f, 0.5f, 1.0f));
+
+    const DsmcKernel       umbrella(DsmcKernelType::hard_sphere);
+    const HardSphereKernel leaf {};
+
+    constexpr unsigned  seed = 13572468u;
+    const atlas::Float3 lhs_start(120.0f, -40.0f, 25.0f);
+    const atlas::Float3 rhs_start(-60.0f, 80.0f, -15.0f);
+
+    atlas::default_random_engine engine_umbrella(seed);
+    atlas::Float3                lhs_umbrella = lhs_start;
+    atlas::Float3                rhs_umbrella = rhs_start;
+    umbrella(lhs_umbrella, rhs_umbrella, lhs, rhs, engine_umbrella);
+
+    atlas::default_random_engine engine_leaf(seed);
+    atlas::Float3                lhs_leaf = lhs_start;
+    atlas::Float3                rhs_leaf = rhs_start;
+    leaf(lhs_leaf, rhs_leaf, lhs, rhs, engine_leaf);
+
+    EXPECT_FLOAT_EQ(lhs_umbrella.x, lhs_leaf.x);
+    EXPECT_FLOAT_EQ(lhs_umbrella.y, lhs_leaf.y);
+    EXPECT_FLOAT_EQ(lhs_umbrella.z, lhs_leaf.z);
+    EXPECT_FLOAT_EQ(rhs_umbrella.x, rhs_leaf.x);
+    EXPECT_FLOAT_EQ(rhs_umbrella.y, rhs_leaf.y);
+    EXPECT_FLOAT_EQ(rhs_umbrella.z, rhs_leaf.z);
 }

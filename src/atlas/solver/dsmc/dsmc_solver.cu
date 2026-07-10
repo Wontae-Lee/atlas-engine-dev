@@ -6,6 +6,7 @@
 #include <atlas/memory/copy.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
+#include <atlas/random/default_random_engine.h>
 #include <atlas/random/seed.h>
 #include <atlas/sampling/sampling.h>
 #include <atlas/scan/exclusive_scan.h>
@@ -116,6 +117,28 @@ namespace {
         if (rhs_local >= lhs_local) {
             ++rhs_local;
         }
+    }
+
+    /**
+     * @brief Seeds a scatter engine for one accepted collision.
+     *
+     * Folds the scatter salt into the collision's `(cell, stream)` pair and runs it through
+     * the SplitMix64 finalizer, so neighbouring cells and successive collisions within a cell
+     * start from well-separated states — an LCG seeded with adjacent values would otherwise
+     * emit correlated first draws. The 64-bit key is folded onto 32 bits because the engine's
+     * state is 32-bit; @ref atlas::default_random_engine::seed maps a zero fold onto its
+     * default seed, so no guard is needed here.
+     *
+     * @param cell   Cell id owning the collision.
+     * @param stream Per-collision stream base (step seed + cell mix + collision index).
+     * @return An engine seeded for this collision's scatter draws.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE atlas::default_random_engine
+    make_scatter_engine(const int cell, const std::uint64_t stream) noexcept {
+        const std::uint64_t key
+            = atlas::shuffle_key(cell, stream + atlas::DSMC_COLLISION_SCATTER_SALT);
+
+        return atlas::default_random_engine(static_cast<std::uint32_t>(key ^ (key >> 32)));
     }
 
 }
@@ -442,7 +465,11 @@ DsmcSolver::solve(Fluid& fluid,
                 return;
             }
 
-            kernel(lhs_velocity, rhs_velocity, materials[lhs_species], materials[rhs_species]);
+            // Seeded per collision, so a replay of the same step reproduces the same scatter
+            // while the angle stays independent of the pair's velocities.
+            auto engine = make_scatter_engine(cell, stream);
+
+            kernel(lhs_velocity, rhs_velocity, materials[lhs_species], materials[rhs_species], engine);
 
             fluid_view.velocity[lhs] = lhs_velocity;
             fluid_view.velocity[rhs] = rhs_velocity;

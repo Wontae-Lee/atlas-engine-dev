@@ -4,6 +4,7 @@
 #include <atlas/core/macros.h>
 #include <atlas/material/material.h>
 #include <atlas/math/math.h>
+#include <atlas/random/default_random_engine.h>
 #include <atlas/solver/dsmc/kernel/dsmc_kernel_type.h>
 #include <atlas/solver/dsmc/kernel/hard_sphere_kernel.h>
 #include <atlas/solver/dsmc/kernel/variable_hard_sphere_kernel.h>
@@ -20,8 +21,12 @@ namespace atlas {
  *
  * A conforming leaf exposes a *static* @c cross_section returning the collision cross
  * section (m^2) for two materials at a relative speed, and a *const* call operator that
- * scatters the two velocities in place. Modelling both as required members lets
+ * scatters the two velocities in place, drawing its variates from a caller-supplied
+ * @ref atlas::default_random_engine. Modelling both as required members lets
  * @ref DsmcKernel dispatch to any leaf uniformly through @ref DsmcKernelVariant.
+ *
+ * The engine is passed by reference rather than owned by the leaf so the leaves stay
+ * stateless PODs, which is what keeps @ref DsmcKernel trivially copyable into a device lambda.
  *
  * @tparam K The candidate kernel leaf type.
  */
@@ -29,9 +34,10 @@ template <typename K>
 concept ConceptDsmcKernel = requires(const K kernel,
                                      Float3 velocity,
                                      const Material material,
-                                     float relative_speed) {
+                                     float relative_speed,
+                                     default_random_engine& engine) {
     { K::cross_section(material, material, relative_speed) } -> std::same_as<float>;
-    { kernel(velocity, velocity, material, material) } -> std::same_as<void>;
+    { kernel(velocity, velocity, material, material, engine) } -> std::same_as<void>;
 };
 
 static_assert(ConceptDsmcKernel<HardSphereKernel>);         ///< HS leaf honours the kernel contract.
@@ -129,12 +135,14 @@ public:
      * @param rhs_velocity Second partner's velocity (m/s); updated in place.
      * @param lhs          First partner's material (mass, scattering parameter).
      * @param rhs          Second partner's material.
+     * @param engine       Generator supplying the scatter variates; advanced by the active leaf.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Float3& lhs_velocity,
                Float3& rhs_velocity,
                const Material& lhs,
-               const Material& rhs) const noexcept;
+               const Material& rhs,
+               default_random_engine& engine) const noexcept;
 };
 
 /**
@@ -181,10 +189,11 @@ public:
  */
 class DsmcCollide {
 public:
-    Float3& lhs_velocity; ///< First partner's velocity, updated by the leaf.
-    Float3& rhs_velocity; ///< Second partner's velocity, updated by the leaf.
-    const Material& lhs;  ///< First partner's material.
-    const Material& rhs;  ///< Second partner's material.
+    Float3& lhs_velocity;          ///< First partner's velocity, updated by the leaf.
+    Float3& rhs_velocity;          ///< Second partner's velocity, updated by the leaf.
+    const Material& lhs;           ///< First partner's material.
+    const Material& rhs;           ///< Second partner's material.
+    default_random_engine& engine; ///< Variate source handed to the leaf; advanced in place.
     /**
      * @brief Runs the active leaf's scatter on the captured pair.
      * @tparam K The active kernel leaf type.
@@ -192,7 +201,7 @@ public:
      */
     template <typename K>
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    operator()(const K& kernel) const noexcept { kernel(lhs_velocity, rhs_velocity, lhs, rhs); }
+    operator()(const K& kernel) const noexcept { kernel(lhs_velocity, rhs_velocity, lhs, rhs, engine); }
 };
 
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
@@ -239,10 +248,11 @@ ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
 DsmcKernel::operator()(Float3& lhs_velocity,
                        Float3& rhs_velocity,
                        const Material& lhs,
-                       const Material& rhs) const noexcept {
+                       const Material& rhs,
+                       default_random_engine& engine) const noexcept {
     DsmcKernelVariant::apply(
         *this,
-        DsmcCollide { lhs_velocity, rhs_velocity, lhs, rhs });
+        DsmcCollide { lhs_velocity, rhs_velocity, lhs, rhs, engine });
 }
 
 }
