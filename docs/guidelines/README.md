@@ -99,7 +99,7 @@ state columns, not the objects.
 | `allocate` | `Codec` | `temperature`, `number_particle` | `allocated_solver` |
 | `solve` | `Solver[]` | `velocity`, `species`, cell ranges | `velocity`; `collision_count`, `max_sigma_g`, `max_relative_speed` |
 | `advect` | `Collider[]` | `position`, `velocity` | `position`, `velocity`; advances each collider's `Unit` |
-| `remove` | `Sink[]` | `position` | shrinks `particle_count`, compacts the columns |
+| `remove` | `Sink[]` | `position`, `velocity` | shrinks `particle_count`, compacts the columns |
 
 A few orderings are load-bearing rather than incidental:
 
@@ -121,7 +121,9 @@ interesting.
 
 ### Where the parallelism is
 
-Every stage body is an `atlas::parallel_for` over an `ATLAS_ALL_DEVICE` lambda.
+The work runs through `atlas::parallel_for` over an `ATLAS_ALL_DEVICE` lambda —
+directly in `advect` and `remove`, and inside the policy objects the other
+stages delegate to (`spawn`, `generate`, `classify`, `allocate`, `solve`).
 Which backend that lowers to is a build-time switch (`ATLAS_DEVICE_SYSTEM`, see
 [build-and-test.md](build-and-test.md)) — Thrust/CUDA on a GPU, TBB on the CPU —
 and the engine sources hold no CUDA-only syntax either way.
@@ -136,22 +138,22 @@ writing a kernel:
 - **Owners hand out views.** A `FluidDsmcView`, `UniverseDsmcView` or
   `SpatialHashingSearcherView` is a trivially-copyable bundle of raw device
   pointers. A view aliases its owner's buffers and dies with them — never outlive
-  a resize or a rebuild. Each exposes `is_complete()`; a consumer missing a
-  required state warns and does nothing rather than reading a null column.
+  a resize or a rebuild. The two DSMC views expose `is_complete()`; a consumer
+  missing a required state warns and does nothing rather than reading a null
+  column. The searcher view carries no such method — its consumers null-check
+  the pointers directly.
 
 ### A minimal assembly
 
 ```cpp
 auto system = atlas::System::builder()
-    .with_fluid(fluid)              // particle columns
-    .with_universe(universe)        // cell grid
-    .with_searcher(searcher)        // spatial hash
-    .with_source(source)            // paired 1:1 with a generator
-    .with_generator(generator)
-    .with_collider(collider)        // boundaries
-    .with_sink(sink)                // outflow
-    .with_codec(codec)              // per-cell solver selection
-    .with_solver(solver)            // DsmcSolver
+    .with_fluid(fluid)                 // particle columns
+    .with_universe(universe)           // cell grid; the searcher is built from it
+    .with_emitter(source, generator)   // a source paired 1:1 with a generator
+    .with_collider(collider)           // boundaries
+    .with_sink(sink)                   // outflow
+    .with_codec(codec)                 // per-cell solver selection
+    .with_solver(solver)               // DsmcSolver
     .with_dt(1.0e-6f)
     .build();
 
