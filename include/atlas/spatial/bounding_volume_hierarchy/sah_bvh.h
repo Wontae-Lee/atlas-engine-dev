@@ -23,8 +23,8 @@ public:
     ATLAS_HOST void
     build(const HostBuffer<TriangleContainer4>& triangles) override;
 
-    ATLAS_NODISCARD ATLAS_HOST BvhGeometryOperator
-    make_geometry_operator() const override;
+    ATLAS_NODISCARD ATLAS_HOST BvhView
+    view() const override;
 
     ATLAS_HOST void
     reset();

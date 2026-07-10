@@ -10,16 +10,16 @@
 
 namespace atlas {
 
-BvhGeometryOperator
-SAHBVH::make_geometry_operator() const {
-    BvhGeometryOperator op {};
+BvhView
+SAHBVH::view() const {
+    BvhView view {};
 
-    op.bvh_nodes   = atlas::raw_pointer_cast(d_nodes.data());
-    op.bvh_indices = atlas::raw_pointer_cast(d_indices.data());
-    op.bvh_tris    = atlas::raw_pointer_cast(d_triangles.data());
-    op.bvh_root    = _root;
+    view.bvh_nodes   = atlas::raw_pointer_cast(d_nodes.data());
+    view.bvh_indices = atlas::raw_pointer_cast(d_indices.data());
+    view.bvh_tris    = atlas::raw_pointer_cast(d_triangles.data());
+    view.bvh_root    = _root;
 
-    return op;
+    return view;
 }
 
 void

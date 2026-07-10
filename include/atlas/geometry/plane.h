@@ -135,11 +135,6 @@ public:
 
         return result;
     }
-
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
-    operator()(const Ray& ray) const noexcept {
-        return trace(ray);
-    }
 };
 
 class Plane::Builder final {

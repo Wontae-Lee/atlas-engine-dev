@@ -6,9 +6,9 @@
 
 namespace atlas {
 
-struct TriangleMeshGeometryOperator;
+struct TriangleMeshView;
 
-using BvhGeometryOperator = TriangleMeshGeometryOperator;
+using BvhView = TriangleMeshView;
 
 class BVH {
 public:
@@ -20,8 +20,8 @@ public:
     build(const HostBuffer<TriangleContainer4>& triangles)
         = 0;
 
-    ATLAS_HOST virtual BvhGeometryOperator
-    make_geometry_operator() const = 0;
+    ATLAS_HOST virtual BvhView
+    view() const = 0;
 };
 
 using BVHHostPtr = atlas::host_shared_ptr<BVH>;

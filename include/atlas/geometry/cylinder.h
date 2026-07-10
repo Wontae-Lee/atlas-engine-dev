@@ -391,11 +391,6 @@ public:
         return out;
     }
 
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
-    operator()(const Ray& ray) const noexcept {
-        return trace(ray);
-    }
-
 private:
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     radial_axial(const Float3& p, float& qx, float& qy) const noexcept {

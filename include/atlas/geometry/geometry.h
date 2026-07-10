@@ -37,7 +37,7 @@ static_assert(ConceptGeometry<Plane>);
 static_assert(ConceptGeometry<Sphere>);
 static_assert(ConceptGeometry<Square>);
 static_assert(ConceptGeometry<Triangle>);
-static_assert(ConceptGeometry<TriangleMeshGeometryOperator>);
+static_assert(ConceptGeometry<TriangleMeshView>);
 
 struct Geometry {
 
@@ -59,7 +59,7 @@ struct Geometry {
 
         Triangle triangle;
 
-        TriangleMeshGeometryOperator triangle_mesh;
+        TriangleMeshView triangle_mesh;
     };
 
     ATLAS_ALL_DEVICE
@@ -104,9 +104,6 @@ struct Geometry {
 
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
     trace(const Ray& ray) const noexcept;
-
-    ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
-    operator()(const Ray& ray) const noexcept;
 };
 
 using GeometryVariant = DeviceVariant<
@@ -240,11 +237,6 @@ Geometry::is_valid() const noexcept {
 ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
 Geometry::trace(const Ray& ray) const noexcept {
     return GeometryVariant::visit(*this, GeometryTrace { ray }, HitSurface {});
-}
-
-ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE HitSurface
-Geometry::operator()(const Ray& ray) const noexcept {
-    return trace(ray);
 }
 
 }
