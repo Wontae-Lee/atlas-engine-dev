@@ -97,17 +97,79 @@ call site.
 
 ---
 
-## 7. Comments and Instrumentation
+## 7. Comments
 
-- Do not write source-code comments unless the user explicitly asks for them.
-- When comments are requested, write them in English, and use Doxygen-style
-  comments for public APIs or files that already follow that convention.
+Everything under `include/atlas/` and `src/atlas/` is documented. New code there
+carries documentation too — this is the one place the "don't write comments
+unless asked" default does not apply. Comments are written in **English**.
+
+### Form
+
+- Multi-line documentation uses `/** ... */`. Not `///` blocks, not `/*! */`.
+- A one-line note trailing a data member or an enumerator uses `///<`.
+- Inside a function body, use `//`.
+
+```cpp
+/**
+ * @brief Sorts particles into the grid and records each cell's occupancy.
+ *
+ * Rebuilds every array from scratch; there is no cached-result short circuit,
+ * because a stale index fails silently.
+ *
+ * @param positions      Particle positions. A null state makes the call a no-op.
+ * @param number_particle Optional output. Only the DSMC solver and the Knudsen
+ *                        codec read it; a null or mis-sized state warns and is skipped.
+ * @param particle_count Number of live particles.
+ * @throws std::runtime_error when the grid was never configured.
+ */
+```
+
+### What to document
+
+Every public and protected member function, free function, class, struct, enum
+and enumerator, concept, macro, template parameter, and data member.
+
+Use `@brief`, `@param`, `@tparam`, `@return`, `@throws`, `@note`, `@warning`,
+`@see`.
+
+### What to say
+
+A `@brief` that restates the function's name is worse than nothing — it costs a
+reader a line and teaches them to skip the next one. Document what the signature
+cannot show:
+
+- units, valid ranges, and what a null argument or a zero count does;
+- who owns the memory, and how long a view's pointers stay valid;
+- whether the code runs on the host, on the device, or both;
+- **why the shape is what it is** — a `HostVariant` because the leaf owns a
+  `DeviceBuffer`; a member public only because nvcc rejects an extended
+  `__host__ __device__` lambda in a private member function; a cached `AABB`
+  because recomputing it per particle per collider is the inner loop.
+
+Inside a function body, comment the *why*, never the *what*. The step that
+deserves a comment is the one a reader would otherwise mistake for a bug: an
+algorithm's phase boundary, a host/device transition, a numerical guard, an nvcc
+workaround.
+
+### Deliberate simplifications
+
+The engine targets large domains and skips fine physical detail on purpose. When
+a simplification is deliberate, say so, or the next reader will "fix" it. The
+dropped NTC remainder, `Solid`'s absent properties returning `1.0f`, and the
+missing species-id bounds check on kernel reads are all choices, not oversights.
+Note that the bounds check *is* kept where the species id indexes an atomic
+write, since an out-of-range write corrupts memory rather than just reading junk.
+
+---
+
+## 8. Instrumentation
+
 - Keep temporary logging, counters, assertions, probes, timing code, and
   instrumentation-only fields out of production code unless requested.
 
 ---
 
-## 8. Backend Portability
+## 9. Backend Portability
 
 - Prefer the shared abstractions — `DeviceBuffer<T>`, `HostBuffer<T>`,
   `device_shared_ptr<T>`, and `parallel_for<ExecutionPolicy>(...)` — over
