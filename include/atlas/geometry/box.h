@@ -22,7 +22,7 @@ namespace atlas {
  * `[-1, -1, -1] .. [1, 1, 1]`.
  *
  * @note All queries assume `is_valid()` (finite corners with
- *       `upper_corner >= lower_corner` componentwise); a degenerate or inverted
+ *       `upper_corner > lower_corner` componentwise); a collapsed or inverted
  *       box yields defined but not necessarily meaningful results.
  */
 class Box final {
@@ -253,14 +253,19 @@ public:
 
     /**
      * @brief Reports whether the corners describe a well-formed box.
-     * @return `true` when both corners are finite and `upper_corner >=
-     *         lower_corner` on every axis.
+     *
+     * A box collapsed on any axis encloses no volume, so `is_inside` can never be true
+     * and `closest_normal` has no well-defined face to pick there. Such a box is rejected
+     * rather than silently behaving as a degenerate plane or point.
+     *
+     * @return `true` when both corners are finite and `upper_corner > lower_corner` on
+     *         every axis.
      */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     is_valid() const noexcept {
         return atlas::isfinite(lower_corner)
             && atlas::isfinite(upper_corner)
-            && atlas::all(upper_corner >= lower_corner);
+            && atlas::all(upper_corner > lower_corner);
     }
 
     /**
