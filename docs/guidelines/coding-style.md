@@ -2,9 +2,10 @@
 
 How to write code in Atlas Engine. These guidelines describe the writing
 discipline; the structural conventions that tie code to the architecture
-(file pairing, builders, active-prefix, solver rules, backend portability) live
-in [`docs/architecture/06-conventions.md`](../architecture/06-conventions.md).
-Read both before changing core code.
+(the tagged-union leaf pattern, builders, backend portability, solver rules)
+live in the per-module docs under [`docs/atlas/`](../atlas/) — start with the
+framework overview in [`README.md`](README.md) and the pattern itself in
+[`atlas/core`](../atlas/core/core.md). Read both before changing core code.
 
 The guiding principle: write code that an experienced C++ programmer would
 immediately recognize, and that makes the algorithmic flow understandable at the
@@ -35,9 +36,11 @@ call site.
   own type only when the role is substantial and clearly named — a kernel,
   builder, interaction, or policy.
 - Match the file and module conventions (`#pragma once`, `.h` declarations
-  with `src/atlas/**/*.cu` definitions, header-inline device code, internal
-  helpers kept in the module's own namespace next to their owner). See
-  [`06-conventions.md`](../architecture/06-conventions.md).
+  with `src/atlas/**/*.cu` definitions — a couple of host-only modules use
+  `.cpp` — header-inline device code, internal
+  helpers kept in the module's own namespace next to their owner). Each module
+  doc's "Files" section shows the pairing; see
+  [`atlas/core`](../atlas/core/core.md).
 
 ---
 
@@ -92,8 +95,8 @@ call site.
 - Do not mutate shared solver, universe, fluid, or searcher state from guard
   branches. Update only the state owned by the requested step.
 - Solver code is performance-sensitive: avoid behavior, memory-layout, or
-  ownership changes unless requested. See the solver guidelines in
-  [`06-conventions.md`](../architecture/06-conventions.md).
+  ownership changes unless requested. See
+  [`atlas/solver`](../atlas/solver/solver.md).
 
 ---
 
@@ -106,7 +109,8 @@ unless asked" default does not apply. Comments are written in **English**.
 ### Form
 
 - Multi-line documentation uses `/** ... */`. Not `///` blocks, not `/*! */`.
-- A one-line note trailing a data member or an enumerator uses `///<`.
+- A one-line note trailing a data member or an enumerator uses `///<`; a
+  one-line note preceding a declaration uses `///`.
 - Inside a function body, use `//`.
 
 ```cpp
@@ -176,5 +180,6 @@ write, since an out-of-range write corrupts memory rather than just reading junk
   backend-specific code. Keep backend paths behind `ATLAS_BACKEND_CUDA` /
   `ATLAS_BACKEND_TBB` (defined by CMake; exactly one is present), and give
   device-reachable code the right attributes from `core/macros.h`.
-- The full backend model is in
-  [`04-backend-portability.md`](../architecture/04-backend-portability.md).
+- The full backend model is in the framework overview
+  ([`README.md`](README.md), "Where the parallelism is") and the toolchain
+  switches in [`build-and-test.md`](build-and-test.md).
