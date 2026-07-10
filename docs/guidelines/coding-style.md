@@ -173,8 +173,8 @@ write, since an out-of-range write corrupts memory rather than just reading junk
 
 - Prefer the shared abstractions — `DeviceBuffer<T>`, `HostBuffer<T>`,
   `device_shared_ptr<T>`, and `parallel_for<ExecutionPolicy>(...)` — over
-  backend-specific code. Keep backend paths behind `ATLAS_TASKING_CUDA` /
-  `ATLAS_TASKING_TBB`, and give device-reachable code the right attributes from
-  `core/macros.h`.
+  backend-specific code. Keep backend paths behind `ATLAS_BACKEND_CUDA` /
+  `ATLAS_BACKEND_TBB` (defined by CMake; exactly one is present), and give
+  device-reachable code the right attributes from `core/macros.h`.
 - The full backend model is in
   [`04-backend-portability.md`](../architecture/04-backend-portability.md).

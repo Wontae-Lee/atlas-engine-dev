@@ -24,13 +24,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options.
-#   ATLAS_DEVICE_SYSTEM : Thrust device system / backend, TBB (CPU) or CUDA (GPU)
+#   ATLAS_DEVICE_SYSTEM : parallel backend, TBB (CPU) or CUDA (GPU)
+#   ATLAS_HOST_COMPILER : which compiler builds a TBB configuration
 #   ATLAS_LOGGING       : compiled logging library + feature macros
 #   ATLAS_GOOGLE_TEST   : GoogleTest-based unit tests
 #   ATLAS_PYTHON        : nanobind Python bindings (src/python/atlas)
-#   ATLAS_BENCHMARKS    : benchmark targets (backend permitting)
-set(ATLAS_DEVICE_SYSTEM "TBB" CACHE STRING "Thrust device system: TBB (CPU) or CUDA (GPU)")
+#   ATLAS_BENCHMARKS    : benchmark targets
+set(ATLAS_DEVICE_SYSTEM "TBB" CACHE STRING "Parallel backend: TBB (CPU) or CUDA (GPU)")
 set_property(CACHE ATLAS_DEVICE_SYSTEM PROPERTY STRINGS TBB CUDA)
+
+# A TBB configuration needs neither nvcc nor Thrust, so by default it is built by the host
+# compiler alone and the CUDA toolkit is not even looked for. Setting this to `nvcc` keeps
+# the old behavior: a CPU build compiled by nvcc. That is worth having in CI, because nvcc
+# rejects constructs the host compiler accepts -- notably an extended __host__ __device__
+# lambda inside a private member function -- and a TBB-only build would stop catching them.
+set(ATLAS_HOST_COMPILER "native" CACHE STRING "Compiler for a TBB build: native or nvcc")
+set_property(CACHE ATLAS_HOST_COMPILER PROPERTY STRINGS native nvcc)
 
 option(ATLAS_LOGGING      "Enable logging functionality" ON)
 option(ATLAS_GOOGLE_TEST  "Build GoogleTest-based unit tests" ON)
@@ -40,6 +49,30 @@ option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" OFF)
 if (NOT ATLAS_DEVICE_SYSTEM MATCHES "^(TBB|CUDA)$")
     message(FATAL_ERROR
             "[ATLAS] Invalid ATLAS_DEVICE_SYSTEM='${ATLAS_DEVICE_SYSTEM}'. Expected TBB or CUDA.")
+endif ()
+
+if (NOT ATLAS_HOST_COMPILER MATCHES "^(native|nvcc)$")
+    message(FATAL_ERROR
+            "[ATLAS] Invalid ATLAS_HOST_COMPILER='${ATLAS_HOST_COMPILER}'. Expected native or nvcc.")
+endif ()
+
+# Two independent switches fall out of the pair above.
+#
+#   ATLAS_USE_NVCC    : the .cu sources are compiled by nvcc, so the CUDA toolkit is needed
+#                       to build (not necessarily to run).
+#   ATLAS_USE_THRUST  : the buffers and parallel algorithms are Thrust's. Only the CUDA
+#                       device system defines ATLAS_BACKEND_CUDA; a TBB build defines
+#                       ATLAS_BACKEND_TBB instead.
+if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA" OR ATLAS_HOST_COMPILER STREQUAL "nvcc")
+    set(ATLAS_USE_NVCC ON)
+else ()
+    set(ATLAS_USE_NVCC OFF)
+endif ()
+
+if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
+    set(ATLAS_USE_THRUST ON)
+else ()
+    set(ATLAS_USE_THRUST OFF)
 endif ()
 
 # Tests build only when CTest is enabled and GoogleTest is requested.
@@ -56,7 +89,12 @@ if (ATLAS_PYTHON)
 endif ()
 
 # Toolchain, dependencies, and library targets (cmake/ modules).
-include(CudaToolchain)
+if (ATLAS_USE_NVCC)
+    include(CudaToolchain)
+else ()
+    message(STATUS "[ATLAS] Toolchain: host compiler only (no CUDA toolkit, no Thrust)")
+endif ()
+
 include(Dependencies)
 include(AtlasLibraries)
 

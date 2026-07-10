@@ -1,6 +1,7 @@
 # GoogleTest-based unit tests. Entered from the top level only when
-# ATLAS_ENABLE_TESTS is set (BUILD_TESTING AND ATLAS_GOOGLE_TEST). Every test TU
-# is compiled as CUDA so headers' host/device annotations behave as in the engine.
+# ATLAS_ENABLE_TESTS is set (BUILD_TESTING AND ATLAS_GOOGLE_TEST). When nvcc builds the
+# engine, every test TU is compiled as CUDA too, so the headers' host/device annotations
+# behave exactly as they do there.
 
 add_subdirectory("${CMAKE_SOURCE_DIR}/external/googletest" googletest)
 include(GoogleTest)
@@ -22,7 +23,9 @@ if (ATLAS_TEST_SOURCES STREQUAL "")
     return()
 endif ()
 
-set_source_files_properties(${ATLAS_TEST_SOURCES} PROPERTIES LANGUAGE CUDA)
+if (ATLAS_USE_NVCC)
+    set_source_files_properties(${ATLAS_TEST_SOURCES} PROPERTIES LANGUAGE CUDA)
+endif ()
 
 # Shared configuration for every GoogleTest executable: link the engine and
 # GoogleTest, pthreads on Linux, and register via gtest_discover_tests.

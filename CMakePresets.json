@@ -1,7 +1,10 @@
 {
   "version": 3,
-  "cmakeMinimumRequired": { "major": 3, "minor": 20, "patch": 0 },
-
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "base",
@@ -13,10 +16,10 @@
         "ATLAS_LOGGING": "OFF",
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_PYTHON": "OFF",
-        "ATLAS_BENCHMARKS": "OFF"
+        "ATLAS_BENCHMARKS": "OFF",
+        "ATLAS_HOST_COMPILER": "native"
       }
     },
-
     {
       "name": "debug-base",
       "hidden": true,
@@ -37,13 +40,21 @@
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
-
     {
       "name": "tbb-debug",
       "displayName": "Atlas TBB Debug (CPU, Thrust device = TBB)",
       "inherits": "debug-base",
       "cacheVariables": {
         "ATLAS_DEVICE_SYSTEM": "TBB"
+      }
+    },
+    {
+      "name": "tbb-nvcc-debug",
+      "displayName": "Atlas TBB Debug compiled by nvcc (CI guard)",
+      "inherits": "debug-base",
+      "cacheVariables": {
+        "ATLAS_DEVICE_SYSTEM": "TBB",
+        "ATLAS_HOST_COMPILER": "nvcc"
       }
     },
     {
@@ -54,7 +65,6 @@
         "ATLAS_DEVICE_SYSTEM": "TBB"
       }
     },
-
     {
       "name": "cuda-debug",
       "displayName": "Atlas CUDA Debug (GPU, Thrust device = CUDA)",
@@ -72,28 +82,71 @@
       }
     }
   ],
-
   "buildPresets": [
-    { "name": "build-tbb-debug",    "displayName": "Build TBB Debug",    "configurePreset": "tbb-debug",    "jobs": 0 },
-    { "name": "build-tbb-release",  "displayName": "Build TBB Release",  "configurePreset": "tbb-release",  "jobs": 0 },
-    { "name": "build-cuda-debug",   "displayName": "Build CUDA Debug",   "configurePreset": "cuda-debug",   "jobs": 0 },
-    { "name": "build-cuda-release", "displayName": "Build CUDA Release", "configurePreset": "cuda-release", "jobs": 0 }
+    {
+      "name": "build-tbb-debug",
+      "displayName": "Build TBB Debug",
+      "configurePreset": "tbb-debug",
+      "jobs": 0
+    },
+    {
+      "name": "build-tbb-release",
+      "displayName": "Build TBB Release",
+      "configurePreset": "tbb-release",
+      "jobs": 0
+    },
+    {
+      "name": "build-cuda-debug",
+      "displayName": "Build CUDA Debug",
+      "configurePreset": "cuda-debug",
+      "jobs": 0
+    },
+    {
+      "name": "build-cuda-release",
+      "displayName": "Build CUDA Release",
+      "configurePreset": "cuda-release",
+      "jobs": 0
+    },
+    {
+      "name": "build-tbb-nvcc-debug",
+      "displayName": "Build TBB Debug (nvcc)",
+      "configurePreset": "tbb-nvcc-debug",
+      "jobs": 0
+    }
   ],
-
   "testPresets": [
     {
       "name": "ctest-tbb-debug",
       "displayName": "CTest (TBB Debug)",
       "configurePreset": "tbb-debug",
-      "execution": { "noTestsAction": "error" },
-      "output": { "outputOnFailure": true }
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
     },
     {
       "name": "ctest-cuda-debug",
       "displayName": "CTest (CUDA Debug)",
       "configurePreset": "cuda-debug",
-      "execution": { "noTestsAction": "error" },
-      "output": { "outputOnFailure": true }
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "ctest-tbb-nvcc-debug",
+      "displayName": "CTest (TBB Debug, nvcc)",
+      "configurePreset": "tbb-nvcc-debug",
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }

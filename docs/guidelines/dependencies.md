@@ -6,22 +6,31 @@ The external and in-tree dependencies, and the benchmark reference submodules.
 
 ## 1. Dependencies
 
-External dependencies are TBB and the CUDA 12.x toolkit — both are required in
-every configuration: Atlas compiles exclusively with nvcc, TBB is the Thrust
-host system (and the CPU device system), and Thrust ships with the toolkit.
-A GPU is needed only to run `ATLAS_DEVICE_SYSTEM=CUDA` builds. The reference
-development environment is the Docker `dev` image defined in `Dockerfile`.
-Building the optional Python bindings additionally requires a Python 3.8+
-interpreter with the development headers.
+**TBB** is required in every configuration; it backs the host-side parallel
+algorithms (`parallel_for`, `parallel_sort`, `parallel_fill`).
+
+The **CUDA 12.x toolkit** is required only when nvcc compiles the sources —
+that is, `ATLAS_DEVICE_SYSTEM=CUDA`, or `ATLAS_HOST_COMPILER=nvcc`. A default
+`ATLAS_DEVICE_SYSTEM=TBB` build needs neither nvcc nor Thrust: the buffers are
+`std::vector` and the algorithms are TBB's. A GPU is needed only to *run*
+`ATLAS_DEVICE_SYSTEM=CUDA` builds.
+
+CMake defines exactly one of `ATLAS_BACKEND_CUDA` and `ATLAS_BACKEND_TBB`. Ten
+headers under `buffer/`, `memory/`, `parallel/`, and `scan/` branch on it to pick
+the container and the algorithm. Nothing else in the tree names Thrust.
+
+The reference development environment is the Docker `dev` image defined in
+`Dockerfile`. Building the optional Python bindings additionally requires a
+Python 3.8+ interpreter with the development headers.
 
 In-tree dependencies under `external/` include:
 
 - tinyobjloader
-- Lyra
 - googletest
 - googlebenchmark
 - protobuf
-- nanobind (Python bindings)
+- nanobind (Python bindings; carries its own submodule, so a clone needs
+  `git submodule update --init --recursive external/nanobind`)
 
 Do not introduce new dependencies unless explicitly requested.
 
