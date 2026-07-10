@@ -4,6 +4,7 @@
 #include <atlas/fluid/fluid.h>
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/math/math.h>
+#include <atlas/parallel/parallel_fill.h>
 #include <atlas/universe/universe.h>
 #include <atlas/universe/universe_state.h>
 
@@ -112,6 +113,37 @@ namespace {
         }
     }
 
+    // The counter is row-major [entity][species], so one column per species and
+    // one row per source or sink.
+    void
+    write_counter_csv(const std::filesystem::path& path,
+                      const char* index_header,
+                      const DeviceBuffer<int>& counter,
+                      const std::size_t species_count) {
+        if (species_count == 0) {
+            return;
+        }
+
+        const HostBuffer<int> values(counter.begin(), counter.end());
+        const std::size_t rows = values.size() / species_count;
+
+        std::vector<Column> columns;
+        columns.reserve(species_count);
+
+        for (std::size_t species = 0; species < species_count; ++species) {
+            Column column { "species_" + std::to_string(species), {} };
+            column.values.reserve(rows);
+
+            for (std::size_t row = 0; row < rows; ++row) {
+                column.values.push_back(static_cast<float>(values[row * species_count + species]));
+            }
+
+            columns.push_back(std::move(column));
+        }
+
+        write_csv(path, index_header, columns, rows);
+    }
+
 }
 
 Observer::Builder
@@ -177,6 +209,30 @@ Observer::observe(const Fluid& fluid, const Universe& universe, const std::size_
 
         write_csv(data_directory / ("universe" + suffix), "cell", columns, cells);
     }
+
+    if (!_spawned.empty()) {
+        write_counter_csv(data_directory / ("source" + suffix), "source", _spawned, _species_count);
+    }
+
+    if (!_despawned.empty()) {
+        write_counter_csv(data_directory / ("sink" + suffix), "sink", _despawned, _species_count);
+    }
+}
+
+void
+Observer::resize_counters(const std::size_t source_count,
+                          const std::size_t sink_count,
+                          const std::size_t species_count) {
+    _species_count = species_count;
+
+    _spawned.assign(source_count * species_count, 0);
+    _despawned.assign(sink_count * species_count, 0);
+}
+
+void
+Observer::reset_counters() {
+    atlas::parallel_fill<ExecutionPolicy::device>(_spawned.begin(), _spawned.end(), 0);
+    atlas::parallel_fill<ExecutionPolicy::device>(_despawned.begin(), _despawned.end(), 0);
 }
 
 

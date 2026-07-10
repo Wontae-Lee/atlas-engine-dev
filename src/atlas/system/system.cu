@@ -4,6 +4,7 @@
 #include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/universe/universe_state.h>
 #include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/parallel/atomic.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/spatial/ray.h>
@@ -60,6 +61,13 @@ System::System(FluidHostPtr fluid,
         _searcher = SpatialHashingSearcher::builder()
                         .with_universe(*_universe)
                         .make_host_shared();
+    }
+
+    if (_observer) {
+        const std::size_t species_count
+            = (_fluid && _fluid->materials()) ? _fluid->materials()->size() : std::size_t { 1 };
+
+        _observer->resize_counters(_sources.size(), _sinks.size(), species_count);
     }
 
     initialize_states();
@@ -162,6 +170,8 @@ System::emit() {
             count,
             static_cast<std::size_t>(spawned)));
 
+        record_spawned(i, count, static_cast<std::size_t>(spawned));
+
         count += static_cast<std::size_t>(spawned);
     }
 
@@ -170,6 +180,39 @@ System::emit() {
     for (const auto& source : _sources) {
         source->advance(_dt);
     }
+}
+
+void
+System::record_spawned(const std::size_t source_index, const std::size_t offset, const std::size_t count) {
+    if (!_observer || count == 0) {
+        return;
+    }
+
+    const auto* species_state = _fluid->state<FluidSpeciesState>();
+    const std::size_t species_count = _observer->species_count();
+
+    if (species_state == nullptr || species_count == 0
+        || _observer->spawned().size() != _sources.size() * species_count) {
+        return;
+    }
+
+    const auto* species = atlas::raw_pointer_cast(species_state->data().data());
+    auto* spawned       = atlas::raw_pointer_cast(_observer->spawned().data());
+
+    const auto base    = static_cast<int>(source_index * species_count);
+    const auto species_limit = static_cast<int>(species_count);
+    const auto first   = static_cast<int>(offset);
+
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        static_cast<int>(count),
+        [=] ATLAS_ALL_DEVICE(const int k) {
+            const auto id = static_cast<int>(species[first + k]);
+
+            if (id >= 0 && id < species_limit) {
+                atlas::atomic_add(spawned + base + id, 1);
+            }
+        });
 }
 
 void
@@ -305,6 +348,20 @@ System::mark_survivors(const int particle_count) {
     const int sink_count = static_cast<int>(_sinks.size());
     const float dt       = _dt;
 
+    const auto* species_state = _fluid->state<FluidSpeciesState>();
+
+    int* despawned      = nullptr;
+    const std::size_t* species = nullptr;
+    int species_count   = 0;
+
+    if (_observer && species_state != nullptr
+        && _observer->despawned().size() == _sinks.size() * _observer->species_count()) {
+
+        despawned     = atlas::raw_pointer_cast(_observer->despawned().data());
+        species       = atlas::raw_pointer_cast(species_state->data().data());
+        species_count = static_cast<int>(_observer->species_count());
+    }
+
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         particle_count,
@@ -315,6 +372,15 @@ System::mark_survivors(const int particle_count) {
             for (int s = 0; s < sink_count; ++s) {
                 if (sinks[s].despawn(position, velocity, dt)) {
                     active[i] = 0;
+
+                    if (despawned != nullptr) {
+                        const auto id = static_cast<int>(species[i]);
+
+                        if (id >= 0 && id < species_count) {
+                            atlas::atomic_add(despawned + s * species_count + id, 1);
+                        }
+                    }
+
                     return;
                 }
             }

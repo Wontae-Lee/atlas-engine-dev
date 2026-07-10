@@ -52,6 +52,7 @@
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/observer/observer.h>
+#include <atlas/parallel/atomic.h>
 #include <atlas/parallel/parallel.h>
 #include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
