@@ -150,6 +150,9 @@ public:
     ATLAS_HOST void
     mark_survivors(int particle_count);
 
+    ATLAS_HOST void
+    record_spawned(std::size_t source_index, std::size_t offset, std::size_t count);
+
 private:
     ATLAS_HOST void
     initialize_dsmc_states();

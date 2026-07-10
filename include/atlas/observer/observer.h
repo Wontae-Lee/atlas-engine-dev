@@ -1,16 +1,16 @@
 #pragma once
 
+#include <atlas/buffer/device_buffer.h>
 #include <atlas/core/macros.h>
 #include <atlas/memory/memory.h>
+#include <atlas/fluid/fluid.h>
+#include <atlas/universe/universe.h>
 
 #include <cstddef>
 #include <filesystem>
 #include <utility>
 
-namespace atlas {
-class Fluid;
-class Universe;
-}
+
 
 namespace atlas {
 
@@ -37,6 +37,37 @@ public:
     ATLAS_HOST void
     observe(const Fluid& fluid, const Universe& universe, std::size_t step) const;
 
+    ATLAS_HOST void
+    resize_counters(std::size_t source_count, std::size_t sink_count, std::size_t species_count);
+
+    ATLAS_HOST void
+    reset_counters();
+
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
+    species_count() const noexcept {
+        return _species_count;
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
+    spawned() noexcept {
+        return _spawned;
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
+    spawned() const noexcept {
+        return _spawned;
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST DeviceBuffer<int>&
+    despawned() noexcept {
+        return _despawned;
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST const DeviceBuffer<int>&
+    despawned() const noexcept {
+        return _despawned;
+    }
+
     ATLAS_NODISCARD ATLAS_HOST std::size_t
     interval() const noexcept {
         return _interval;
@@ -53,6 +84,12 @@ private:
     std::size_t _interval = 0;
 
     std::filesystem::path _output_directory;
+
+    std::size_t _species_count = 0;
+
+    DeviceBuffer<int> _spawned;
+
+    DeviceBuffer<int> _despawned;
 };
 
 class Observer::Builder final {
