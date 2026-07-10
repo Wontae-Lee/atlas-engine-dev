@@ -4,14 +4,26 @@
 # Entered unconditionally from the top-level CMakeLists.txt; creates targets
 # only when ATLAS_BENCHMARKS is enabled.
 #
-# The benchmarks were removed with the engine restructuring: every case drove
-# the old MaterialProperties / SphSolver / measurer API, and the four external
-# reference projects (piclas, sparta, splishsplash, dumux) were wired through
-# ExternalProject_Add against directories that are not registered in
-# .gitmodules. Both will be written again against the current System.
+# The four external reference projects (piclas, sparta, splishsplash, dumux)
+# were wired through ExternalProject_Add against directories that are not
+# registered in .gitmodules. They were removed with the engine restructuring and
+# will be written again.
 # ============================================================
 if (NOT ATLAS_BENCHMARKS)
     return()
 endif ()
 
-message(STATUS "[ATLAS] Benchmarks: enabled, but no benchmark targets are defined yet.")
+# Google Benchmark backs the main.cpp cases. Atlas owns its benchmark targets, so
+# the upstream self-test targets stay off. The target check keeps this file safe
+# if another directory already provided benchmark::benchmark.
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable Google Benchmark self tests" FORCE)
+set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable Google Benchmark GoogleTest tests" FORCE)
+
+if (NOT TARGET benchmark::benchmark)
+    add_subdirectory(
+            "${PROJECT_SOURCE_DIR}/external/googlebenchmark"
+            "${PROJECT_BINARY_DIR}/external/googlebenchmark"
+    )
+endif ()
+
+add_subdirectory(atlas)
