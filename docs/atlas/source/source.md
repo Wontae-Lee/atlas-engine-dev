@@ -68,7 +68,7 @@ cache is in local space so it stays valid.
 
 ## Emission flow
 
-The orchestration loops over sources on the host; each `source.spawn(...)` and
+`System::emit()` loops over sources on the host; each `source.spawn(...)` and
 each generator (`generator.generate(...)`) launches its own device kernel. The
 host-side `HostVariant` dispatch is one `switch`/`visit` per source per step —
 negligible; all heavy work stays on the device.

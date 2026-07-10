@@ -2,7 +2,7 @@
 
 A codec decides, per cell, **which solver runs there**. It reads the universe's
 per-cell states and writes the decision into `UniverseAllocatedSolverState`,
-which the orchestrator then dispatches on.
+which `System::solve()` then dispatches on.
 
 `Codec` follows the same tagged-union leaf pattern as `Source` and `Generator`:
 because its leaf owns `DeviceBuffer` tables, the umbrella is a **`HostVariant`**

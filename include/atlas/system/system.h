@@ -9,10 +9,10 @@
 #include <atlas/generator/generator.h>
 #include <atlas/memory/memory.h>
 #include <atlas/observer/observer.h>
-#include <atlas/orchestrator/orchestrator.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/sink/sink.h>
+#include <atlas/solver/solver.h>
 #include <atlas/source/source.h>
 #include <atlas/universe/universe.h>
 
@@ -32,7 +32,7 @@ public:
     ATLAS_HOST
     System(FluidHostPtr fluid,
            UniverseHostPtr universe,
-           OrchestratorHostPtr orchestrator,
+           HostBuffer<SolverHostPtr> solvers,
            HostBuffer<SourceHostPtr> sources,
            HostBuffer<GeneratorHostPtr> generators,
            const HostBuffer<Collider>& colliders,
@@ -41,7 +41,7 @@ public:
            ObserverHostPtr observer,
            float dt);
 
-    System(const System&) = default;
+    System(const System&) = delete;
 
     System(System&&) noexcept = default;
 
@@ -49,13 +49,16 @@ public:
 
     System&
     operator=(const System&)
-        = default;
+        = delete;
 
     System&
     operator=(System&&) noexcept = default;
 
     ATLAS_NODISCARD ATLAS_HOST static Builder
     builder() noexcept;
+
+    ATLAS_HOST void
+    initialize_states();
 
     ATLAS_HOST void
     update();
@@ -70,7 +73,7 @@ public:
     allocate();
 
     ATLAS_HOST void
-    orchestrate();
+    solve();
 
     ATLAS_HOST void
     advect();
@@ -98,9 +101,9 @@ public:
         return _searcher;
     }
 
-    ATLAS_NODISCARD ATLAS_HOST const OrchestratorHostPtr&
-    orchestrator() const noexcept {
-        return _orchestrator;
+    ATLAS_NODISCARD ATLAS_HOST const HostBuffer<SolverHostPtr>&
+    solvers() const noexcept {
+        return _solvers;
     }
 
     ATLAS_NODISCARD ATLAS_HOST const CodecHostPtr&
@@ -130,6 +133,11 @@ public:
     }
 
     ATLAS_NODISCARD ATLAS_HOST std::size_t
+    solver_count() const noexcept {
+        return _solvers.size();
+    }
+
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
     collider_count() const noexcept {
         return _colliders.size();
     }
@@ -143,6 +151,10 @@ public:
     mark_survivors(int particle_count);
 
 private:
+    ATLAS_HOST void
+    initialize_dsmc_states();
+
+private:
     float _dt = 0.01f;
 
     FluidHostPtr _fluid {};
@@ -153,7 +165,7 @@ private:
 
     std::size_t _step = 0;
 
-    OrchestratorHostPtr _orchestrator {};
+    HostBuffer<SolverHostPtr> _solvers;
 
     CodecHostPtr _codec {};
 
@@ -179,7 +191,7 @@ public:
     with_universe(UniverseHostPtr universe) noexcept;
 
     ATLAS_HOST Builder&
-    with_orchestrator(OrchestratorHostPtr orchestrator) noexcept;
+    with_solver(SolverHostPtr solver);
 
     ATLAS_HOST Builder&
     with_emitter(SourceHostPtr source, GeneratorHostPtr generator);
@@ -200,10 +212,10 @@ public:
     with_dt(float dt) noexcept;
 
     ATLAS_NODISCARD ATLAS_HOST System
-    build() const;
+    build();
 
-    ATLAS_NODISCARD ATLAS_HOST atlas::host_shared_ptr<System>
-    make_host_shared() const;
+    ATLAS_NODISCARD ATLAS_HOST atlas::host_unique_ptr<System>
+    make_host_unique();
 
 private:
     ATLAS_HOST void
@@ -216,7 +228,7 @@ private:
 
     UniverseHostPtr _universe {};
 
-    OrchestratorHostPtr _orchestrator {};
+    HostBuffer<SolverHostPtr> _solvers;
 
     CodecHostPtr _codec {};
 
@@ -231,6 +243,6 @@ private:
     HostBuffer<Sink> _sinks;
 };
 
-using SystemHostPtr = atlas::host_shared_ptr<System>;
+using SystemHostPtr = atlas::host_unique_ptr<System>;
 
 }
