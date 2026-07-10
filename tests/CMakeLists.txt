@@ -5,12 +5,16 @@
 add_subdirectory("${CMAKE_SOURCE_DIR}/external/googletest" googletest)
 include(GoogleTest)
 
+# tests/atlas mirrors include/atlas and src/atlas. Target names are derived from
+# the path relative to it, so tests/atlas/sink stays atlas_tests_sink.
+set(ATLAS_TEST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/atlas")
+
 file(GLOB_RECURSE ATLAS_TEST_HEADERS CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+        "${ATLAS_TEST_ROOT}/*.h"
 )
 
 file(GLOB_RECURSE ATLAS_TEST_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+        "${ATLAS_TEST_ROOT}/*.cpp"
 )
 
 if (ATLAS_TEST_SOURCES STREQUAL "")
@@ -73,7 +77,7 @@ foreach (test_directory IN LISTS ATLAS_TEST_DIRECTORIES)
     endif ()
 
     file(RELATIVE_PATH ATLAS_DIRECTORY_TEST_NAME
-            "${CMAKE_CURRENT_SOURCE_DIR}"
+            "${ATLAS_TEST_ROOT}"
             "${test_directory}"
     )
 

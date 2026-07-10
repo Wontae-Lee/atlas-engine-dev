@@ -66,22 +66,24 @@ Constraints:
 - Tests use GoogleTest only. Include `<gtest/gtest.h>` directly.
 - Test sources are compiled by nvcc (marked as CUDA in CMake); they may
   exercise host/device-annotated APIs directly.
-- Place tests under `tests/<module>/` to match the public module or runtime
-  subsystem.
+- Place tests under `tests/atlas/<module>/`, mirroring `include/atlas/` and
+  `src/atlas/`.
 - Name C++ test files `<subject>_tests.cpp`.
-- Prefer self-contained tests that include only the headers under test
-  (see `tests/math/`); use `tests/utilities/test_utils.h` for helpers shared
-  across runtime-object tests. Keep local aliases, helper functions, and
-  fixtures in an anonymous namespace.
+- Prefer self-contained tests that include only the headers under test. Keep
+  local aliases, helper functions, and fixtures in an anonymous namespace.
 - Prefer focused `TEST(SuiteName, BehaviorName)` cases that describe observable
   behavior.
 - Do not add another test `main`; GoogleTest provides the entry point.
 
-Key test locations:
+CMake globs `tests/atlas/**/*.cpp`, so a new file needs no CMake edit. Every
+test lands in the aggregate `atlas_tests` target, and each directory also gets
+its own executable named after the path relative to `tests/atlas/` — so
+`tests/atlas/sink/` builds `atlas_tests_sink`.
 
-- `tests/system/system_tests.cpp`
-- `tests/source/`
-- `tests/sink/`
-- `tests/observer/`
-- `tests/material/`
-- `tests/solver/`
+Current test locations:
+
+- `tests/atlas/collider/`
+- `tests/atlas/generator/`
+- `tests/atlas/material/`
+- `tests/atlas/sink/`
+- `tests/atlas/source/`
