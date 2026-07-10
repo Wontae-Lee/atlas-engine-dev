@@ -108,8 +108,10 @@ Two overloads of `sample_hashed_unit_interval` with different quality. The
 where correlations are harmless (surface-scatter jitter in the isothermal
 collider). The `(int, seed)` overload runs `shuffle_key` and keeps the top 53 bits
 for a full-mantissa `[0,1)` draw; it feeds statistically critical tests, chiefly
-the DSMC collision-acceptance probability (`dsmc_solver.cu`) and scatter
-(`dsmc_scatter.h`). `sample_hashed_index` reduces `shuffle_key` modulo
+the DSMC collision-acceptance probability (`dsmc_solver.cu`). The DSMC scatter
+angle used to be hashed too, but its seed was the collision's own velocities —
+which fixed `cos(chi)` per pre-collision state — so `dsmc_scatter.h` now draws
+from a seeded `default_random_engine` instead. `sample_hashed_index` reduces `shuffle_key` modulo
 `upper_bound` to pick a DSMC collision partner within a cell (with the documented,
 negligible modulo bias); it returns `0` when `upper_bound <= 0`.
 

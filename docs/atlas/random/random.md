@@ -100,11 +100,17 @@ inverse CDF, box sampling): `sampling.h:59, 109, 233, 266, 412`.
 ## `seed.h` — stateless hashing constants
 
 Atlas prefers *stateless* device randomness: rather than thread an RNG object
-across kernels, most collision/scatter/spatial code derives a value straight from
-integer indices, cell ids, and a per-time-step "stream" through a hash. `seed.h`
-is where every otherwise-opaque magic number for those hashes lives, so a run
-(and a restart) reproduces. The values are pure named `constexpr`s — this file
+across kernels, most partner-selection and spatial code derives a value straight
+from integer indices, cell ids, and a per-time-step "stream" through a hash.
+`seed.h` is where every otherwise-opaque magic number for those hashes lives, so a
+run (and a restart) reproduces. The values are pure named `constexpr`s — this file
 declares no function — grouped into four families:
+
+The exception is a draw whose seed would be *physical state* rather than an index.
+The DSMC scatter angle is the one such case: hashing the pair's own velocities made
+`cos(chi)` a fixed function of the pre-collision state and inherited the sine hash's
+magnitude sensitivity. `dsmc_scatter` therefore seeds a `default_random_engine` from
+`DSMC_COLLISION_SCATTER_SALT` and draws from it.
 
 - **Sine-hash** (`RANDOM_HASH_PHASE_COEFF_{X,Y,Z}`, `RANDOM_HASH_VALUE_SCALE`,
   the `SALT_*` and `NORMAL_SCALE_FOR_MIX` decorrelators) — the GLSL
@@ -113,8 +119,9 @@ declares no function — grouped into four families:
 - **SplitMix64 finalizer** (`SHUFFLE_HASH_*`) — consumed by `shuffle_key` in
   `sampling.h`, which every generator calls to build its per-slot key.
 - **DSMC per-cell stream** (`DSMC_CELL_STREAM_MULTIPLIER`, the collision
-  `*_SALT`s) — consumed by the DSMC solver / scatter kernel so neighboring cells
-  draw uncorrelated partners.
+  `*_SALT`s) — consumed by the DSMC solver so neighboring cells draw uncorrelated
+  partners. `DSMC_COLLISION_SCATTER_SALT` is the odd one out: it seeds the
+  scatter's `default_random_engine` rather than feeding a hashed draw directly.
 - **Morton bit-spread** (`MORTON_EXPAND_BITS_*`) — consumed by the LBVH to
   interleave a 10-bit coordinate into a 30-bit Morton code.
 - **Defaults** — `DEFAULT_UNSIGNED_INT_SEED` (the fallback seed all four

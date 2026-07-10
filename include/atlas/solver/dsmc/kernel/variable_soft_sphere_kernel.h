@@ -46,15 +46,17 @@ public:
      * @param rhs_velocity Second partner's velocity (m/s); updated in place.
      * @param lhs          First partner's material, queried for its scattering parameter.
      * @param rhs          Second partner's material, queried for its scattering parameter.
+     * @param engine       Generator supplying the scatter variates; advanced twice.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     operator()(Float3& lhs_velocity,
                Float3& rhs_velocity,
                const Material& lhs,
-               const Material& rhs) const noexcept {
+               const Material& rhs,
+               default_random_engine& engine) const noexcept {
         const float scattering_parameter = (lhs.scattering_parameter() + rhs.scattering_parameter()) * 0.5f;
 
-        atlas::dsmc_scatter(lhs_velocity, rhs_velocity, lhs, rhs, scattering_parameter);
+        atlas::dsmc_scatter(lhs_velocity, rhs_velocity, lhs, rhs, scattering_parameter, engine);
     }
 };
 

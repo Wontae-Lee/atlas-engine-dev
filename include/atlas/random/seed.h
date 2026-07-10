@@ -9,10 +9,15 @@ namespace atlas {
  * @brief Named magic numbers for the engine's stateless hashing and mixing.
  *
  * Atlas prefers *stateless* pseudo-randomness on the device: rather than carrying
- * an RNG object across kernels, most collision, scatter, and spatial code derives
+ * an RNG object across kernels, most partner-selection and spatial code derives
  * a value directly from integer indices, cell ids, and time-step "streams" through
  * a hash. Centralizing every constant here keeps those hashes reproducible across
  * a run (and across restarts) and documents the otherwise opaque bit patterns.
+ *
+ * Where a hash of physical state would bias the result — notably the DSMC scatter
+ * angle, whose seed would otherwise be the collision's own velocities — the code
+ * instead seeds an @ref atlas::default_random_engine from one of the stream salts
+ * below and draws from it.
  *
  * The values fall into four families:
  *   - the sine-hash "phase"/"scale" constants (GLSL-style `fract(sin(dot)·k)`),
@@ -53,9 +58,8 @@ constexpr float RANDOM_HASH_VALUE_SCALE = 43758.5453f;
 /**
  * @brief Salt added to the sine-hash phase when drawing the first diffuse variate.
  *
- * Callers such as the isothermal collider and the DSMC scatter kernel need two
- * independent unit-interval values from one geometric seed; adding distinct salts
- * decorrelates them.
+ * The isothermal collider needs two independent unit-interval values from one
+ * geometric seed; adding distinct salts decorrelates them.
  */
 constexpr float RANDOM_HASH_SALT_DIFFUSE_U1 = 0.31f;
 
@@ -125,6 +129,17 @@ constexpr std::uint64_t DSMC_COLLISION_RHS_SALT = 0x85157af5ull;
  * @brief Salt for the NTC acceptance test of a candidate collision pair.
  */
 constexpr std::uint64_t DSMC_COLLISION_ACCEPT_SALT = 0xda942042e4dd58b5ull;
+
+/**
+ * @brief Salt seeding the per-collision scatter engine.
+ *
+ * @ref atlas::dsmc_scatter draws its deflection and azimuth from a
+ * @ref atlas::default_random_engine rather than from a hash of the pair's velocities.
+ * The solver seeds that engine by folding this salt into the collision's `(cell, stream)`
+ * pair through @ref atlas::shuffle_key, which keeps the scatter stream separate from the
+ * partner-selection and acceptance draws that share the same stream base.
+ */
+constexpr std::uint64_t DSMC_COLLISION_SCATTER_SALT = 0xc2b2ae3d27d4eb4full;
 
 /**
  * @brief First xor-shift amount of the SplitMix64 finalizer in @ref atlas::shuffle_key.
