@@ -12,6 +12,7 @@
 
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 namespace {
 
@@ -56,6 +57,36 @@ TEST(Molecule, DefaultConstructsZeroed) {
     EXPECT_NEAR(leaf.vibrational_energy(), 0.0f, tol);
     EXPECT_NEAR(leaf.reference_diameter(), 0.0f, tol);
     EXPECT_NEAR(leaf.reference_temperature(), 0.0f, tol);
+    EXPECT_NEAR(leaf.viscosity_index(), 0.5f, tol);
+    EXPECT_NEAR(leaf.scattering_parameter(), 1.0f, tol);
+}
+
+TEST(Atom, DefaultConstructsWithHardSphereDefaults) {
+    const Atom leaf {};
+
+    EXPECT_NEAR(leaf.mass(), 0.0f, tol);
+    EXPECT_NEAR(leaf.translational_energy(), 0.0f, tol);
+    EXPECT_NEAR(leaf.reference_diameter(), 0.0f, tol);
+    EXPECT_NEAR(leaf.viscosity_index(), 0.5f, tol);
+    EXPECT_NEAR(leaf.scattering_parameter(), 1.0f, tol);
+}
+
+TEST(Ion, DefaultConstructsWithHardSphereDefaults) {
+    const Ion leaf {};
+
+    EXPECT_NEAR(leaf.mass(), 0.0f, tol);
+    EXPECT_NEAR(leaf.rotational_energy(), 0.0f, tol);
+    EXPECT_NEAR(leaf.reference_temperature(), 0.0f, tol);
+    EXPECT_NEAR(leaf.viscosity_index(), 0.5f, tol);
+    EXPECT_NEAR(leaf.scattering_parameter(), 1.0f, tol);
+}
+
+TEST(Neutron, DefaultConstructsWithHardSphereDefaults) {
+    const Neutron leaf {};
+
+    EXPECT_NEAR(leaf.mass(), 0.0f, tol);
+    EXPECT_NEAR(leaf.vibrational_energy(), 0.0f, tol);
+    EXPECT_NEAR(leaf.reference_diameter(), 0.0f, tol);
     EXPECT_NEAR(leaf.viscosity_index(), 0.5f, tol);
     EXPECT_NEAR(leaf.scattering_parameter(), 1.0f, tol);
 }
@@ -187,4 +218,75 @@ TEST(Material, AssignmentReplacesActiveLeaf) {
     EXPECT_EQ(material.type, MaterialType::solid);
     EXPECT_NEAR(material.mass(), 7.0f, tol);
     EXPECT_NEAR(material.rotational_energy(), 1.0f, tol);
+}
+
+TEST(Material, AtomLeafForwardsEveryGetter) {
+    const Material material(Atom(4.0f, 1.0f, 2.0f, 3.0f, 5.0f, 6.0f, 0.75f, 1.25f));
+
+    EXPECT_EQ(material.type, MaterialType::atom);
+    EXPECT_NEAR(material.mass(), 4.0f, tol);
+    EXPECT_NEAR(material.translational_energy(), 1.0f, tol);
+    EXPECT_NEAR(material.rotational_energy(), 2.0f, tol);
+    EXPECT_NEAR(material.vibrational_energy(), 3.0f, tol);
+    EXPECT_NEAR(material.reference_diameter(), 5.0f, tol);
+    EXPECT_NEAR(material.reference_temperature(), 6.0f, tol);
+    EXPECT_NEAR(material.viscosity_index(), 0.75f, tol);
+    EXPECT_NEAR(material.scattering_parameter(), 1.25f, tol);
+}
+
+TEST(Material, IonLeafForwardsEveryGetter) {
+    const Material material(Ion(5.0f, 1.0f, 2.0f, 3.0f, 6.0f, 7.0f, 0.75f, 1.25f));
+
+    EXPECT_EQ(material.type, MaterialType::ion);
+    EXPECT_NEAR(material.mass(), 5.0f, tol);
+    EXPECT_NEAR(material.translational_energy(), 1.0f, tol);
+    EXPECT_NEAR(material.rotational_energy(), 2.0f, tol);
+    EXPECT_NEAR(material.vibrational_energy(), 3.0f, tol);
+    EXPECT_NEAR(material.reference_diameter(), 6.0f, tol);
+    EXPECT_NEAR(material.reference_temperature(), 7.0f, tol);
+    EXPECT_NEAR(material.viscosity_index(), 0.75f, tol);
+    EXPECT_NEAR(material.scattering_parameter(), 1.25f, tol);
+}
+
+TEST(Material, NeutronLeafForwardsEveryGetter) {
+    const Material material(Neutron(6.0f, 1.0f, 2.0f, 3.0f, 7.0f, 8.0f, 0.75f, 1.25f));
+
+    EXPECT_EQ(material.type, MaterialType::neutron);
+    EXPECT_NEAR(material.mass(), 6.0f, tol);
+    EXPECT_NEAR(material.translational_energy(), 1.0f, tol);
+    EXPECT_NEAR(material.rotational_energy(), 2.0f, tol);
+    EXPECT_NEAR(material.vibrational_energy(), 3.0f, tol);
+    EXPECT_NEAR(material.reference_diameter(), 7.0f, tol);
+    EXPECT_NEAR(material.reference_temperature(), 8.0f, tol);
+    EXPECT_NEAR(material.viscosity_index(), 0.75f, tol);
+    EXPECT_NEAR(material.scattering_parameter(), 1.25f, tol);
+}
+
+TEST(Material, WrapsDefaultConstructedAtomKeepsHardSphereDefaults) {
+    const Material material(Atom {});
+
+    EXPECT_EQ(material.type, MaterialType::atom);
+    EXPECT_NEAR(material.mass(), 0.0f, tol);
+    EXPECT_NEAR(material.viscosity_index(), 0.5f, tol);
+    EXPECT_NEAR(material.scattering_parameter(), 1.0f, tol);
+}
+
+TEST(Material, MoveConstructionPreservesActiveLeaf) {
+    Material source(Neutron(6.0f, 1.0f, 2.0f, 3.0f, 7.0f, 8.0f, 0.75f, 1.25f));
+    const Material moved = std::move(source);
+
+    EXPECT_EQ(moved.type, MaterialType::neutron);
+    EXPECT_NEAR(moved.mass(), 6.0f, tol);
+    EXPECT_NEAR(moved.reference_temperature(), 8.0f, tol);
+}
+
+TEST(Material, MoveAssignmentReplacesActiveLeaf) {
+    Material material(Molecule(2.0f, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f, 0.75f, 1.25f));
+    Material replacement(Ion(5.0f, 1.0f, 2.0f, 3.0f, 6.0f, 7.0f, 0.75f, 1.25f));
+
+    material = std::move(replacement);
+
+    EXPECT_EQ(material.type, MaterialType::ion);
+    EXPECT_NEAR(material.mass(), 5.0f, tol);
+    EXPECT_NEAR(material.vibrational_energy(), 3.0f, tol);
 }

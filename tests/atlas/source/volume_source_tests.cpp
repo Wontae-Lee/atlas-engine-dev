@@ -81,6 +81,12 @@ TEST(VolumeSource, BuilderRejectsNonPositiveSpacing) {
         std::runtime_error);
 }
 
+TEST(VolumeSource, BuilderRejectsNegativeTolerance) {
+    EXPECT_THROW(
+        static_cast<void>(VolumeSource::builder().with_unit(make_static_unit(Float3(0.0f, 0.0f, 0.0f))).with_tolerance(-1.0f).build()),
+        std::runtime_error);
+}
+
 TEST(VolumeSource, CachesInteriorSamples) {
     const auto source = make_source(make_static_unit(Float3(0.0f, 0.0f, 0.0f)));
 
@@ -116,4 +122,49 @@ TEST(VolumeSource, SpawnRejectsNullTargetAndOutOfRangeOffset) {
 
     EXPECT_EQ(source.spawn(nullptr, 0), 0);
     EXPECT_EQ(source.spawn(&positions, 100), 0);
+}
+
+TEST(VolumeSource, DenserSpacingYieldsMoreSamples) {
+    const auto coarse = VolumeSource::builder()
+                            .with_unit(make_static_unit(Float3(0.0f, 0.0f, 0.0f)))
+                            .with_tolerance(0.0f)
+                            .with_spacing(1.0f)
+                            .build();
+    const auto fine = VolumeSource::builder()
+                          .with_unit(make_static_unit(Float3(0.0f, 0.0f, 0.0f)))
+                          .with_tolerance(0.0f)
+                          .with_spacing(0.5f)
+                          .build();
+
+    EXPECT_GT(fine.cached_count(), coarse.cached_count());
+}
+
+TEST(VolumeSource, MakeHostSharedBuildsCachedSource) {
+    const auto source = VolumeSource::builder()
+                            .with_unit(make_static_unit(Float3(0.0f, 0.0f, 0.0f)))
+                            .with_tolerance(0.0f)
+                            .with_spacing(1.0f)
+                            .make_host_shared();
+
+    ASSERT_NE(source, nullptr);
+    EXPECT_GT(source->cached_count(), std::size_t { 0 });
+}
+
+TEST(VolumeSource, DefaultSourceCachesNothingAndSpawnsNothing) {
+    const VolumeSource source {};
+    EXPECT_EQ(source.cached_count(), std::size_t { 0 });
+
+    FluidPositionState positions(4);
+    EXPECT_EQ(source.spawn(&positions, 0), 0);
+}
+
+TEST(VolumeSource, SpawnTwiceAppendsAtSuccessiveOffsets) {
+    const auto        source = make_source(make_static_unit(Float3(0.0f, 0.0f, 0.0f)));
+    const std::size_t count  = source.cached_count();
+    ASSERT_GT(count, std::size_t { 0 });
+
+    FluidPositionState positions(2 * count);
+
+    EXPECT_EQ(static_cast<std::size_t>(source.spawn(&positions, 0)), count);
+    EXPECT_EQ(static_cast<std::size_t>(source.spawn(&positions, count)), count);
 }
