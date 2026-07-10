@@ -2,15 +2,13 @@
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/core/macros.h>
-#include <atlas/memory/memory.h>
 #include <atlas/fluid/fluid.h>
+#include <atlas/memory/memory.h>
 #include <atlas/universe/universe.h>
 
 #include <cstddef>
 #include <filesystem>
 #include <utility>
-
-
 
 namespace atlas {
 
