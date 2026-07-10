@@ -16,6 +16,16 @@ if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
     list(APPEND ATLAS_BACKEND_COMPILE_DEFINITIONS
             ATLAS_TASKING_CUDA
             THRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CUDA
+            # Thrust hides its symbols in an inline namespace whose name embeds
+            # __CUDA_ARCH_LIST__. That macro exists only under nvcc, so a host-compiled TU
+            # (atlas-serialization: protobuf's headers cannot go through nvcc) mangles
+            # thrust::device_vector into THRUST_..._SM___CUDA_ARCH_LIST___NS while the
+            # engine's nvcc TUs mangle it into THRUST_..._SM_890_NS, and the two never
+            # link. Turning the ABI namespace off makes every TU agree.
+            THRUST_DISABLE_ABI_NAMESPACE
+            THRUST_IGNORE_ABI_NAMESPACE_ERROR
+            CUB_DISABLE_NAMESPACE_MAGIC
+            CUB_IGNORE_NAMESPACE_MAGIC_ERROR
     )
 else ()
     message(STATUS "[ATLAS] Device system: TBB")
