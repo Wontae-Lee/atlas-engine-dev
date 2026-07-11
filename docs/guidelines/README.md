@@ -10,7 +10,7 @@ refactored modules; the guidelines here describe *how to work on it*.
 | [workflow.md](workflow.md) | Working agreement: response language, change discipline, when to ask, and git/commit rules. |
 | [coding-style.md](coding-style.md) | How to write code: scope, structure, naming, control flow, state, comments, and portability. |
 | [build-and-test.md](build-and-test.md) | Build/test policy, CMake presets and options, and test-authoring rules. |
-| [dependencies.md](dependencies.md) | External and in-tree dependencies, and the benchmark reference submodules. |
+| [dependencies.md](dependencies.md) | External and in-tree dependencies, the benchmark cases, and the C++ examples. |
 | [python.md](python.md) | The nanobind `atlas` module: building it, the factory-function API, and how the bindings are organized. |
 
 ## Relationship to the Module Docs

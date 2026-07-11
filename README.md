@@ -166,8 +166,8 @@ sudo apt-get install -y ninja-build libtbb-dev
 | Test | `ctest-tbb-debug` | `ctest-cuda-debug` |
 
 The debug presets turn **everything** on — logging, tests, the Python module,
-and the benchmark cases. The release presets turn all four off and build the
-engine alone.
+the examples, and the benchmark cases. The release presets turn all five off and
+build the engine alone.
 
 `tbb-nvcc-debug` builds the CPU backend *through nvcc*. It exists for CI: nvcc
 rejects constructs the host compiler accepts — notably an extended
@@ -183,43 +183,44 @@ host-compiler-only build would stop catching them.
 | `ATLAS_LOGGING` | `ON` | `OFF` | Build logging support (`atlas::warn`, …) |
 | `ATLAS_GOOGLE_TEST` | `ON` | `OFF` | Build GoogleTest-based C++ tests |
 | `ATLAS_PYTHON` | `ON` | `OFF` | Build the nanobind Python bindings |
-| `ATLAS_BENCHMARKS` | `ON` | `OFF` | Build the runnable simulation / benchmark cases |
+| `ATLAS_EXAMPLES` | `ON` | `OFF` | Build the C++ example programs (`examples/cpp/`) |
+| `ATLAS_BENCHMARKS` | `ON` | `OFF` | Build the Google Benchmark cases (`benchmarks/atlas/`) |
 
 TBB is required in every configuration. The CUDA toolkit is required only when
 nvcc compiles the sources.
 
 ## Running a Simulation
 
-The ready-to-run simulation programs are the cases under
-[`benchmarks/atlas/`](benchmarks/atlas/). Each case directory holds up to two
-entry points:
+The ready-to-run simulation programs are the C++ examples under
+[`examples/cpp/`](examples/cpp/). Each case is a `main.cu` — a standalone
+simulation driven straight through the Atlas API, with no framework, printing its
+own timings — built as `atlas_example_<case>` when `ATLAS_EXAMPLES` is on.
 
-| File | Target | What it is |
-|---|---|---|
-| `main.cu` | `atlas_benchmark_<case>` | a standalone simulation driven straight through the Atlas API — no benchmark framework, prints its own timings |
-| `main.cpp` | `atlas_benchmark_<case>_gbench` | the same case wrapped in Google Benchmark |
-
-Both are optional; CMake creates a target only for the file that exists.
-
-Benchmarks are on in the debug presets. Build a case and run it:
+Examples are on in the debug presets. Build a case and run it:
 
 ```bash
 cmake --preset tbb-debug
-cmake --build build/tbb-debug --target atlas_benchmark_cylinder -j$(nproc)
-./build/tbb-debug/benchmarks/atlas/atlas_benchmark_cylinder
+cmake --build build/tbb-debug --target atlas_example_cylinder -j$(nproc)
+./build/tbb-debug/examples/cpp/atlas_example_cylinder
 ```
 
 | Case | Source | Scenario |
 |---|---|---|
-| `cylinder` | [`cylinder/main.cu`](benchmarks/atlas/cylinder/main.cu) | rarefied N₂ crossflow over a cylinder mesh at Kn ≈ 0.05 |
+| `cylinder` | [`cylinder/main.cu`](examples/cpp/cylinder/main.cu) | rarefied N₂ crossflow over a cylinder mesh at Kn ≈ 0.05 |
 
-`atlas_benchmark_cylinder [steps] [assets_dir] [output_dir]` loads
+`atlas_example_cylinder [steps] [assets_dir] [output_dir]` loads
 `assets/cylinder.obj`, prints the freestream regime it resolved to, steps the
 `System`, and writes per-step CSV under `<output_dir>/data/`.
 
 To see how a simulation is wired up in code — builders, boundary units, the
 solver, and the observer — read
-[`cylinder/main.cu`](benchmarks/atlas/cylinder/main.cu).
+[`cylinder/main.cu`](examples/cpp/cylinder/main.cu).
+
+Google Benchmark cases live separately under
+[`benchmarks/atlas/`](benchmarks/atlas/) as `main.cpp` files built into
+`atlas_benchmark_<case>_gbench` when `ATLAS_BENCHMARKS` is on. Only a `smoke`
+case is wired for now — the representative benchmarks are to be rewritten on
+Google Benchmark.
 
 ## Python Bindings
 
