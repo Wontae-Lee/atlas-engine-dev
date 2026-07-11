@@ -4,14 +4,17 @@
 #include <atlas/geometry/geometry.h>
 #include <atlas/material/material_dictionary.h>
 #include <atlas/math/vector/float3.h>
+#include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/universe/universe.h>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
 
 #include <cstddef>
 #include <memory>
+#include <string>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -73,6 +76,20 @@ register_fluid_universe(nb::module_& m) {
         },
         "geometry"_a, "cell_size"_a,
         "A uniform grid whose domain is taken from a geometry's bounding box.");
+
+    // Reload a snapshot previously written by System.save(): restore_* wraps the
+    // binary loader plus the builder, returning a device-resident owner.
+    m.def(
+        "load_fluid",
+        [](const std::string& path) { return restore_fluid(path); },
+        "path"_a,
+        "Rebuild a Fluid from a binary snapshot file.");
+
+    m.def(
+        "load_universe",
+        [](const std::string& path) { return restore_universe(path); },
+        "path"_a,
+        "Rebuild a Universe from a binary snapshot file.");
 }
 
 }
