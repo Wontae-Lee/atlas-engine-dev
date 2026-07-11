@@ -51,7 +51,9 @@ int   solver_index(float kn) const;                 // buckets against _kn_split
 (`particle_count * representative_statistical_weight / representative_cell_volume`),
 derives the mean free path from the collision cross-section, and divides by the
 characteristic length. `solver_index` then buckets that number against the split
-table, yielding one of five solver indices.
+table, yielding one of five solver indices. It counts the thresholds the value
+meets or exceeds via a `!(kn < split)` test, so a NaN `kn` — for which every
+comparison is false — advances at every threshold and saturates to `split_count`.
 
 The split table is **fixed** at `{0.01, 0.1, 1.0, 10.0}` — `split_count` is a
 `static constexpr int` of 4 and there is no way to override it. It lives in a
