@@ -42,6 +42,7 @@ A few rules are easy to miss; everything else is in the linked docs.
 | Write code that fits the project (scope, structure, naming, state, comments) | [guidelines/coding-style.md](docs/guidelines/coding-style.md) |
 | Build, configure presets, or author tests | [guidelines/build-and-test.md](docs/guidelines/build-and-test.md) |
 | Check dependencies or benchmark reference submodules | [guidelines/dependencies.md](docs/guidelines/dependencies.md) |
+| Build or use the Python (`atlas`) bindings | [guidelines/python.md](docs/guidelines/python.md) |
 
 ### Understanding a module → `docs/atlas/`
 
