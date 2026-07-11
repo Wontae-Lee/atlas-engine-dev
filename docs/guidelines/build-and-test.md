@@ -54,8 +54,8 @@ docker run --rm -it -v "$PWD":/workspace atlas-dev
   `build-cuda-debug`, `build-cuda-release`
 - Test: `ctest-tbb-debug`, `ctest-tbb-nvcc-debug`, `ctest-cuda-debug`
 
-The debug presets turn logging, tests, the Python module, and the benchmarks on;
-the release presets turn all four off.
+The debug presets turn logging, tests, the Python module, the examples, and the
+benchmarks on; the release presets turn all five off.
 
 ---
 
@@ -65,7 +65,7 @@ Important options:
 
 - `ATLAS_DEVICE_SYSTEM` — `TBB` (CPU, default) or `CUDA` (GPU)
 - `ATLAS_LOGGING`, `ATLAS_PYTHON`
-- `ATLAS_GOOGLE_TEST`, `ATLAS_BENCHMARKS`
+- `ATLAS_GOOGLE_TEST`, `ATLAS_BENCHMARKS`, `ATLAS_EXAMPLES`
 
 Constraints:
 

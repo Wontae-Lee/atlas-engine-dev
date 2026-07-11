@@ -45,6 +45,7 @@ option(ATLAS_LOGGING      "Enable logging functionality" ON)
 option(ATLAS_GOOGLE_TEST  "Build GoogleTest-based unit tests" ON)
 option(ATLAS_PYTHON       "Build the nanobind-based Python bindings" OFF)
 option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" OFF)
+option(ATLAS_EXAMPLES     "Build the example programs" OFF)
 
 if (NOT ATLAS_DEVICE_SYSTEM MATCHES "^(TBB|CUDA)$")
     message(FATAL_ERROR
@@ -106,6 +107,7 @@ elseif (ATLAS_GOOGLE_TEST)
 endif ()
 
 add_subdirectory(benchmarks)
+add_subdirectory(examples)
 
 if (ATLAS_PYTHON)
     add_subdirectory(src/python/atlas)
@@ -120,6 +122,7 @@ message(STATUS "ATLAS_LOGGING       : ${ATLAS_LOGGING}")
 message(STATUS "ATLAS_GOOGLE_TEST   : ${ATLAS_GOOGLE_TEST}")
 message(STATUS "ATLAS_PYTHON        : ${ATLAS_PYTHON}")
 message(STATUS "ATLAS_BENCHMARKS    : ${ATLAS_BENCHMARKS}")
+message(STATUS "ATLAS_EXAMPLES      : ${ATLAS_EXAMPLES}")
 message(STATUS "CUDA Architectures  : ${CMAKE_CUDA_ARCHITECTURES}")
 message(STATUS "==========================================")
 message(STATUS "")
