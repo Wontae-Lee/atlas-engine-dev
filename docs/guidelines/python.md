@@ -23,11 +23,48 @@ The compiled artifact imports as `atlas`:
 PYTHONPATH=build/tbb/src/python/atlas python -c "import atlas"
 ```
 
-To build a wheel instead, use the scikit-build-core front end (see
-[`pyproject.toml`](../../pyproject.toml)); the CUDA backend is selected with
-`-C cmake.define.ATLAS_DEVICE_SYSTEM=CUDA`. Array read-back returns numpy arrays,
-so `numpy` is a runtime dependency of any script that calls `positions()`,
-`velocities()`, `species()`, or `fluid_from_arrays()`.
+Array read-back returns numpy arrays, so `numpy` is a declared runtime dependency
+(`pyproject.toml`) and is installed with the wheel; the extension still imports
+without it, but `positions()`, `velocities()`, `species()`, and
+`fluid_from_arrays()` need it.
+
+## Packaging a wheel and installing it later
+
+For a redistributable, self-contained wheel, build inside the `wheel` Docker stage
+(it pre-installs scikit-build-core, nanobind, build, auditwheel, and patchelf) and
+run [`scripts/build_wheels.sh`](../../scripts/build_wheels.sh). Initialise the
+submodules the build needs first — the script builds against the mounted sources:
+
+```bash
+git submodule update --init --recursive \
+    external/nanobind external/tinyobj external/protobuf
+
+docker build --target wheel -t atlas-wheel .
+
+# CPU-only wheel (no GPU or driver at run time); omit ATLAS_WHEEL_BACKENDS for both.
+docker run --rm -v "$PWD":/workspace -w /workspace \
+    -e ATLAS_WHEEL_BACKENDS=TBB \
+    atlas-wheel -c 'bash scripts/build_wheels.sh'
+```
+
+auditwheel repairs the wheel — bundling `libtbb`, `libstdc++`, and (for CUDA)
+`libcudart`, but never the `libcuda.so.1` driver — and writes it to `dist/tbb/`
+(and `dist/cuda/` when both backends are built). The module is compiled with
+nanobind's `STABLE_ABI`: on Python 3.12+ this yields one `abi3` wheel that serves
+later versions, but on earlier interpreters the wheel is version-specific (e.g.
+`cp311`), so build one per target Python. Install and use it:
+
+```bash
+pip install dist/tbb/atlas-0.1.0-*.whl
+python -c "import atlas; print(atlas.build_system)"
+```
+
+The TBB wheel carries its own TBB runtime, so no system `libtbb` is required. A
+CUDA wheel additionally needs a matching NVIDIA driver and a GPU at run time. To
+build a wheel without Docker, install the front-end tools
+(`pip install "scikit-build-core>=0.10" "nanobind>=2.0" build`) and run
+`python -m build --wheel -C cmake.define.ATLAS_DEVICE_SYSTEM=TBB`, but such a wheel
+is not auditwheel-repaired and depends on the host's `libtbb`.
 
 ## Quick start
 
