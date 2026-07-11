@@ -11,6 +11,10 @@ readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
 authors = [{ name = "Wontae Lee" }]
 
+# numpy is the array interchange for System.positions()/velocities()/species()
+# and fluid_from_arrays(). The extension imports without it, but those calls need it.
+dependencies = ["numpy>=1.21"]
+
 [tool.scikit-build]
 # Drive the repository's top-level CMakeLists.txt.
 cmake.version = ">=3.20"
