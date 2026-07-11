@@ -166,8 +166,8 @@ sudo apt-get install -y ninja-build libtbb-dev
 | Test | `ctest-tbb-debug` | `ctest-cuda-debug` |
 
 The debug presets turn **everything** on — logging, tests, the Python module,
-and the benchmark cases. The release presets turn all four off and build the
-engine alone.
+the examples, and the benchmark cases. The release presets turn all five off and
+build the engine alone.
 
 `tbb-nvcc-debug` builds the CPU backend *through nvcc*. It exists for CI: nvcc
 rejects constructs the host compiler accepts — notably an extended
@@ -183,43 +183,44 @@ host-compiler-only build would stop catching them.
 | `ATLAS_LOGGING` | `ON` | `OFF` | Build logging support (`atlas::warn`, …) |
 | `ATLAS_GOOGLE_TEST` | `ON` | `OFF` | Build GoogleTest-based C++ tests |
 | `ATLAS_PYTHON` | `ON` | `OFF` | Build the nanobind Python bindings |
-| `ATLAS_BENCHMARKS` | `ON` | `OFF` | Build the runnable simulation / benchmark cases |
+| `ATLAS_EXAMPLES` | `ON` | `OFF` | Build the C++ example programs (`examples/cpp/`) |
+| `ATLAS_BENCHMARKS` | `ON` | `OFF` | Build the Google Benchmark cases (`benchmarks/atlas/`) |
 
 TBB is required in every configuration. The CUDA toolkit is required only when
 nvcc compiles the sources.
 
 ## Running a Simulation
 
-The ready-to-run simulation programs are the cases under
-[`benchmarks/atlas/`](benchmarks/atlas/). Each case directory holds up to two
-entry points:
+The ready-to-run simulation programs are the C++ examples under
+[`examples/cpp/`](examples/cpp/). Each case is a `main.cu` — a standalone
+simulation driven straight through the Atlas API, with no framework, printing its
+own timings — built as `atlas_example_<case>` when `ATLAS_EXAMPLES` is on.
 
-| File | Target | What it is |
-|---|---|---|
-| `main.cu` | `atlas_benchmark_<case>` | a standalone simulation driven straight through the Atlas API — no benchmark framework, prints its own timings |
-| `main.cpp` | `atlas_benchmark_<case>_gbench` | the same case wrapped in Google Benchmark |
-
-Both are optional; CMake creates a target only for the file that exists.
-
-Benchmarks are on in the debug presets. Build a case and run it:
+Examples are on in the debug presets. Build a case and run it:
 
 ```bash
 cmake --preset tbb-debug
-cmake --build build/tbb-debug --target atlas_benchmark_cylinder -j$(nproc)
-./build/tbb-debug/benchmarks/atlas/atlas_benchmark_cylinder
+cmake --build build/tbb-debug --target atlas_example_cylinder -j$(nproc)
+./build/tbb-debug/examples/cpp/atlas_example_cylinder
 ```
 
 | Case | Source | Scenario |
 |---|---|---|
-| `cylinder` | [`cylinder/main.cu`](benchmarks/atlas/cylinder/main.cu) | rarefied N₂ crossflow over a cylinder mesh at Kn ≈ 0.05 |
+| `cylinder` | [`cylinder/main.cu`](examples/cpp/cylinder/main.cu) | rarefied N₂ crossflow over a cylinder mesh at Kn ≈ 0.05 |
 
-`atlas_benchmark_cylinder [steps] [assets_dir] [output_dir]` loads
+`atlas_example_cylinder [steps] [assets_dir] [output_dir]` loads
 `assets/cylinder.obj`, prints the freestream regime it resolved to, steps the
 `System`, and writes per-step CSV under `<output_dir>/data/`.
 
 To see how a simulation is wired up in code — builders, boundary units, the
 solver, and the observer — read
-[`cylinder/main.cu`](benchmarks/atlas/cylinder/main.cu).
+[`cylinder/main.cu`](examples/cpp/cylinder/main.cu).
+
+Google Benchmark cases live separately under
+[`benchmarks/atlas/`](benchmarks/atlas/) as `main.cpp` files built into
+`atlas_benchmark_<case>_gbench` when `ATLAS_BENCHMARKS` is on. Only a `smoke`
+case is wired for now — the representative benchmarks are to be rewritten on
+Google Benchmark.
 
 ## Python Bindings
 
@@ -230,19 +231,67 @@ cmake --preset tbb-debug
 cmake --build build/tbb-debug --target atlas_python -j$(nproc)
 ```
 
-The bindings are currently a stub: `atlas.System` with `update`, `save`, `step`,
-and `dt`, and nothing else. The old module bound types the engine restructuring
-removed; it is being grown back one type at a time.
+The module is a full assembly API that mirrors the C++ builders: every builder is
+exposed as a lower-case factory function returning a ready object, and
+`atlas.build_system(fluid, universe, dt, solver=, source=, generator=, colliders=,
+sinks=, codec=, observer=)` wires them into a runnable `System`. Initial particle
+state is seeded from numpy with `fluid_from_arrays(positions, velocities, ...)`, and
+`load_fluid` / `load_universe` reload snapshots. The `System` exposes
+`update()` and `save()`, the scalars `step`, `dt`, `particle_count`, and
+`cell_count`, and `positions()` / `velocities()` / `species()` returning numpy arrays.
+
+```python
+import atlas
+import numpy as np
+
+Vec = atlas.Float3
+
+materials = atlas.material_dictionary([
+    atlas.molecule(mass=4.65e-26, translational_energy=0.0, rotational_energy=0.0,
+                   vibrational_energy=0.0, reference_diameter=4.17e-10,
+                   reference_temperature=273.0, viscosity_index=0.74,
+                   scattering_parameter=1.0),
+])
+
+rng = np.random.default_rng(0)
+positions = rng.uniform(0.1, 0.9, size=(200, 3)).astype(np.float32)
+velocities = (rng.standard_normal((200, 3)) * 300.0).astype(np.float32)
+
+fluid = atlas.fluid_from_arrays(positions, velocities, statistical_weight=1e18, materials=materials)
+universe = atlas.universe(Vec(0, 0, 0), Vec(1, 1, 1), cell_size=1.0)
+solver = atlas.dsmc_solver(kernel_type=atlas.DsmcKernelType.variable_hard_sphere)
+
+system = atlas.build_system(fluid=fluid, universe=universe, dt=1e-4, solver=solver)
+for _ in range(20):
+    system.update()
+
+print(system.particle_count, np.linalg.norm(system.velocities(), axis=1).mean())
+```
+
+A runnable version is [`examples/python/dsmc_dense_cell.py`](examples/python/dsmc_dense_cell.py);
+the full API reference is [`docs/guidelines/python.md`](docs/guidelines/python.md).
 
 Self-contained, redistributable wheels (bundling libtbb / libcudart) are built
-inside the packaging image:
+inside the packaging image. Initialise the submodules the build needs first:
 
 ```bash
+git submodule update --init --recursive \
+    external/nanobind external/tinyobj external/protobuf
+
 docker build --target wheel -t atlas-wheel .
-docker run --rm -v "$PWD":/workspace -w /workspace atlas-wheel \
-    -c 'bash scripts/build_wheels.sh'
-# -> dist/tbb/*.whl and dist/cuda/*.whl
+
+# ATLAS_WHEEL_BACKENDS=TBB builds a CPU-only wheel (no GPU or driver at run time);
+# omit it to build both TBB and CUDA wheels.
+docker run --rm -v "$PWD":/workspace -w /workspace \
+    -e ATLAS_WHEEL_BACKENDS=TBB \
+    atlas-wheel -c 'bash scripts/build_wheels.sh'
+# -> dist/tbb/*.whl (and dist/cuda/*.whl when both backends are built)
+
+pip install dist/tbb/*.whl
 ```
+
+The full wheel flow — auditwheel repair, the `abi3` stable-ABI details, and building
+without Docker — is in [`docs/guidelines/python.md`](docs/guidelines/python.md).
 
 ## Tests
 
@@ -263,10 +312,11 @@ ctest --preset ctest-tbb-debug
 Deeper design and contributor material lives in the repository, not this file:
 
 - [`docs/atlas/`](docs/atlas/) — *per-module documentation*: the tagged-union
-  leaf pattern and how to extend each module. Covers codec, collider, material,
-  sink, and source.
+  leaf pattern and how to extend each module. There is a document for every
+  module under `include/atlas/`.
 - [`docs/guidelines/`](docs/guidelines/) — *how to work on it*: workflow, code
-  style, build/test, and dependencies. Start at
+  style, build/test, dependencies, and the
+  [Python bindings guide](docs/guidelines/python.md). Start at
   [`docs/guidelines/README.md`](docs/guidelines/README.md).
 - [`CLAUDE.md`](CLAUDE.md) is the entry map into both directories.
 - Every header and source under `include/atlas/` and `src/atlas/` carries Doxygen

@@ -128,3 +128,21 @@ TEST(SurfaceSink, AdvanceMovesUnit) {
 
     EXPECT_NEAR(sink.unit().sync().translation.z, 0.5f, tol);
 }
+
+TEST(SurfaceSink, DespawnFollowsMovedUnit) {
+    // The surface test runs in the unit's local frame, so advancing the boundary
+    // must move where the despawn band lies in world space.
+    auto sink = SurfaceSink::builder()
+                    .with_unit(make_dynamic_box_unit(Float3(1.0f, 0.0f, 0.0f)))
+                    .with_tolerance(0.01f)
+                    .build();
+
+    // Before moving, the +x face sits at world x = 1.
+    EXPECT_TRUE(sink.despawn(Float3(1.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+
+    sink.advance(1.0f); // translation.x -> 1, so the +x face is now at world x = 2.
+
+    EXPECT_TRUE(sink.despawn(Float3(2.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+    // The old surface point is now the box centre in local space: no longer on the surface.
+    EXPECT_FALSE(sink.despawn(Float3(1.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+}

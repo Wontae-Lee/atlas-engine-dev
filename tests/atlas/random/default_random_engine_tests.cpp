@@ -93,3 +93,20 @@ TEST(DefaultRandomEngine, MinMaxBracketTheModulus) {
     EXPECT_EQ(default_random_engine::min(), 1u);
     EXPECT_EQ(default_random_engine::max(), default_random_engine::modulus - 1u);
 }
+
+TEST(DefaultRandomEngine, RecurrenceConstantsAreTheMinimalStandard) {
+    // Park-Miller minimal standard: multiplier 48271, modulus 2^31 - 1.
+    EXPECT_EQ(default_random_engine::multiplier, 48271u);
+    EXPECT_EQ(default_random_engine::modulus, 2147483647u);
+}
+
+TEST(DefaultRandomEngine, FirstDrawsMatchTheHandComputedRecurrence) {
+    // From state 1: x1 = 48271 * 1 mod m = 48271; x2 = 48271 * 48271 mod m.
+    default_random_engine engine(1u);
+    EXPECT_EQ(engine(), 48271u);
+
+    const std::uint64_t m = default_random_engine::modulus;
+    const std::uint64_t expected_second
+        = (static_cast<std::uint64_t>(48271u) * static_cast<std::uint64_t>(48271u)) % m;
+    EXPECT_EQ(engine(), static_cast<result_type>(expected_second));
+}

@@ -53,10 +53,8 @@ TEST(Neutron, ExplicitConstructionExposesEveryProperty) {
 }
 
 TEST(Neutron, NuclearStateIsNotModelledSoBehavesLikeMolecule) {
-    /**
-     * A neutron stores no nuclear data; it is eight plain floats like a
-     * molecule, so identical inputs give identical getter outputs.
-     */
+    // A neutron stores no nuclear data; it is eight plain floats like a molecule, so identical
+    // inputs give identical getter outputs.
     const Neutron neutron(2.5f, 3.5f, 4.5f, 5.5f, 6.5f, 8.5f, 0.55f, 1.45f);
     const Molecule molecule(2.5f, 3.5f, 4.5f, 5.5f, 6.5f, 8.5f, 0.55f, 1.45f);
 

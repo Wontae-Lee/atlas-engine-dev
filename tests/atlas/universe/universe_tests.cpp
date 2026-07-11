@@ -1,16 +1,21 @@
 #include <atlas/universe/universe.h>
 
+#include <atlas/geometry/box.h>
+#include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 #include <atlas/universe/universe_state.h>
 
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <memory>
 #include <stdexcept>
 
 namespace {
 
+using atlas::Box;
 using atlas::Float3;
+using atlas::Geometry;
 using atlas::Int3;
 using atlas::tol;
 using atlas::Universe;
@@ -123,6 +128,41 @@ TEST(Universe, MakeHostUniqueMatchesBuiltGrid) {
 
     ASSERT_TRUE(static_cast<bool>(universe));
     EXPECT_EQ(universe->cell_count(), 27);
+}
+
+TEST(Universe, BuilderWithGeometryDerivesDomainFromBound) {
+    // with_geometry overwrites both corners from the geometry's axis-aligned bound;
+    // the cell size is left at its own setting.
+    const Geometry geometry = Geometry(Box::builder()
+                                           .with_lower_corner(Float3(-1.0f, -2.0f, -3.0f))
+                                           .with_upper_corner(Float3(2.0f, 3.0f, 4.0f))
+                                           .build());
+
+    const Universe universe = Universe::builder()
+                                  .with_geometry(geometry)
+                                  .with_cell_size(1.0f)
+                                  .build();
+
+    EXPECT_NEAR(universe.lower_corner().x, -1.0f, tol);
+    EXPECT_NEAR(universe.lower_corner().y, -2.0f, tol);
+    EXPECT_NEAR(universe.lower_corner().z, -3.0f, tol);
+    EXPECT_NEAR(universe.upper_corner().x, 2.0f, tol);
+    EXPECT_NEAR(universe.upper_corner().y, 3.0f, tol);
+    EXPECT_NEAR(universe.upper_corner().z, 4.0f, tol);
+    // extent (3, 5, 7) with h = 1 -> floor(extent) + 1 = (4, 6, 8).
+    EXPECT_EQ(universe.cell_count(), 4 * 6 * 8);
+}
+
+TEST(Universe, SetStateMovesInAPreBuiltState) {
+    Universe universe = make_universe(Float3(0.0f, 0.0f, 0.0f), Float3(2.0f, 2.0f, 2.0f), 1.0f);
+    const auto cells = static_cast<std::size_t>(universe.cell_count());
+
+    universe.set_state(std::make_unique<UniverseNumberParticleState>(cells));
+
+    ASSERT_TRUE(universe.has_state<UniverseNumberParticleState>());
+    ASSERT_NE(universe.state<UniverseNumberParticleState>(), nullptr);
+    EXPECT_EQ(universe.state<UniverseNumberParticleState>()->size(), cells);
+    EXPECT_EQ(universe.states().size(), std::size_t { 1 });
 }
 
 TEST(Universe, StateStoreEmplacePresenceAndRemoval) {

@@ -53,11 +53,8 @@ TEST(Ion, ExplicitConstructionExposesEveryProperty) {
 }
 
 TEST(Ion, ChargeIsNotModelledSoBehavesLikeMolecule) {
-    /**
-     * The charge itself is deliberately not stored (see ion.h / material.md):
-     * an Ion built from the same inputs as a Molecule is observationally
-     * identical across all eight getters.
-     */
+    // The charge itself is deliberately not stored (see ion.h / material.md): an Ion built from
+    // the same inputs as a Molecule is observationally identical across all eight getters.
     const Ion ion(2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 8.0f, 0.6f, 1.4f);
     const Molecule molecule(2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 8.0f, 0.6f, 1.4f);
 

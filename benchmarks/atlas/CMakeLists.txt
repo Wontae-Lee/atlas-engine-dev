@@ -1,17 +1,15 @@
 # ============================================================
 # Atlas-native benchmark cases
 #
-# Each case directory holds up to two entry points:
+# Each case directory holds a `main.cpp` — the case wrapped in Google Benchmark.
+# (Standalone, framework-free simulations live under examples/cpp/ instead.) It
+# follows the engine's toolchain, compiled as CUDA when nvcc builds the engine, so
+# the .cpp suffix names the entry point, not the compiler. The assets directory is
+# passed in as ATLAS_BENCHMARK_ASSETS_DIR so a case can load a mesh without
+# depending on the working directory it is run from.
 #
-#   main.cu  — a standalone simulation driven straight through the Atlas API.
-#              It links no benchmark framework and prints its own timings.
-#   main.cpp — the same case wrapped in Google Benchmark.
-#
-# Each is optional: a case may ship one, the other, or both. Both follow the engine's
-# toolchain -- compiled as CUDA when nvcc builds the engine, as plain C++ otherwise --
-# so the .cu / .cpp suffixes name the entry point, not the compiler. The assets directory
-# is passed in as ATLAS_BENCHMARK_ASSETS_DIR so a case can load a mesh without depending
-# on the working directory it is run from.
+# Only a smoke case is wired for now — the real benchmark cases are to be
+# (re)written on Google Benchmark. Add one with atlas_add_benchmark_case(<name> <dir>).
 # ============================================================
 
 set(ATLAS_BENCHMARK_ASSETS_DIR "${PROJECT_SOURCE_DIR}/assets")
@@ -19,26 +17,11 @@ set(ATLAS_BENCHMARK_ASSETS_DIR "${PROJECT_SOURCE_DIR}/assets")
 # ------------------------------------------------------------
 # atlas_add_benchmark_case(case_name relative_dir)
 #
-# Adds `atlas_benchmark_<case_name>` from relative_dir/main.cu when that file
-# exists, and `atlas_benchmark_<case_name>_gbench` from relative_dir/main.cpp
-# when that one does. Both are appended to the aggregate atlas_benchmarks target.
+# Adds `atlas_benchmark_<case_name>_gbench` from relative_dir/main.cpp and appends
+# it to the aggregate atlas_benchmarks target.
 # ------------------------------------------------------------
 function(atlas_add_benchmark_case case_name relative_dir)
-    set(standalone_source "${CMAKE_CURRENT_SOURCE_DIR}/${relative_dir}/main.cu")
     set(gbench_source "${CMAKE_CURRENT_SOURCE_DIR}/${relative_dir}/main.cpp")
-
-    if (EXISTS "${standalone_source}")
-        set(target "atlas_benchmark_${case_name}")
-
-        if (NOT ATLAS_USE_NVCC)
-            set_source_files_properties("${standalone_source}" PROPERTIES LANGUAGE CXX)
-        endif ()
-
-        add_executable(${target} "${standalone_source}")
-        atlas_configure_benchmark_target(${target})
-
-        add_dependencies(atlas_benchmarks ${target})
-    endif ()
 
     if (EXISTS "${gbench_source}")
         set(target "atlas_benchmark_${case_name}_gbench")
@@ -78,4 +61,4 @@ endfunction()
 # Aggregate convenience target so the whole set can be built at once.
 add_custom_target(atlas_benchmarks)
 
-atlas_add_benchmark_case(cylinder cylinder)
+atlas_add_benchmark_case(smoke smoke)

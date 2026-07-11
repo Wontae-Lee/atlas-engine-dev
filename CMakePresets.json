@@ -17,6 +17,7 @@
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_PYTHON": "OFF",
         "ATLAS_BENCHMARKS": "OFF",
+        "ATLAS_EXAMPLES": "OFF",
         "ATLAS_HOST_COMPILER": "native"
       }
     },
@@ -29,7 +30,8 @@
         "ATLAS_LOGGING": "ON",
         "ATLAS_GOOGLE_TEST": "ON",
         "ATLAS_PYTHON": "ON",
-        "ATLAS_BENCHMARKS": "ON"
+        "ATLAS_BENCHMARKS": "ON",
+        "ATLAS_EXAMPLES": "ON"
       }
     },
     {

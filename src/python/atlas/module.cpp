@@ -1,26 +1,24 @@
+#include "register.h"
+
 #include <nanobind/nanobind.h>
-#include <nanobind/stl/filesystem.h>
-#include <nanobind/stl/string.h>
-
-#include <atlas/system/system.h>
-
-#include <filesystem>
 
 namespace nb = nanobind;
 
-using namespace nb::literals;
-
-// The bindings were emptied when the engine was restructured: the old module
-// exposed types that no longer exist (MaterialProperties, the Searcher base,
-// SphSolver, the measurers). What remains is the smallest module that still
-// builds, so the bindings can be grown back one type at a time against the
-// current API.
+// The engine bindings are split across bindings_*.cpp, one register_* hook per
+// module group (see register.h). They run in dependency order: math and
+// geometry define the value types (Float3, Quaternion, Geometry) the later
+// groups take as arguments, and the system group ties everything into a runnable
+// System at the end.
 NB_MODULE(atlas, m) {
-    m.doc() = "Atlas Engine";
+    m.doc() = "Atlas Engine — GPU/CPU rarefied-gas (DSMC) particle simulation.";
 
-    nb::class_<atlas::System>(m, "System")
-        .def("update", &atlas::System::update)
-        .def("save", &atlas::System::save, "directory"_a)
-        .def_prop_ro("step", &atlas::System::step)
-        .def_prop_ro("dt", &atlas::System::dt);
+    atlas::python::register_math(m);
+    atlas::python::register_geometry(m);
+    atlas::python::register_transform(m);
+    atlas::python::register_material(m);
+    atlas::python::register_fluid_universe(m);
+    atlas::python::register_emitter(m);
+    atlas::python::register_solver(m);
+    atlas::python::register_boundary(m);
+    atlas::python::register_system(m);
 }

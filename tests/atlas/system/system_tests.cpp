@@ -7,8 +7,11 @@
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
+#include <atlas/generator/generator.h>
 #include <atlas/sink/sink.h>
 #include <atlas/sink/volume_sink.h>
+#include <atlas/solver/solver.h>
+#include <atlas/source/source.h>
 #include <atlas/sync/sync.h>
 #include <atlas/unit/unit.h>
 #include <atlas/universe/universe.h>
@@ -29,10 +32,13 @@ using atlas::FluidHostPtr;
 using atlas::FluidPositionState;
 using atlas::FluidVelocityState;
 using atlas::Float3;
+using atlas::GeneratorHostPtr;
 using atlas::Geometry;
 using atlas::HostBuffer;
 using atlas::Quaternion;
 using atlas::Sink;
+using atlas::SolverHostPtr;
+using atlas::SourceHostPtr;
 using atlas::Sync;
 using atlas::SyncHostPtr;
 using atlas::System;
@@ -285,4 +291,104 @@ TEST(System, RecordSpawnedIsANoOpWithoutAnObserver) {
     system.record_spawned(0, 0, 1);
 
     SUCCEED();
+}
+
+TEST(SystemBuilder, RejectsNullSolver) {
+    EXPECT_THROW(
+        static_cast<void>(System::builder()
+                              .with_fluid(make_fluid({ Float3(0.0f, 0.0f, 0.0f) }))
+                              .with_universe(make_universe_ptr())
+                              .with_solver(SolverHostPtr {})
+                              .with_dt(0.01f)
+                              .build()),
+        std::runtime_error);
+}
+
+TEST(SystemBuilder, RejectsNullEmitterEntries) {
+    // with_emitter keeps the source/generator lists aligned, but validate() rejects a
+    // null entry in either list at build time.
+    EXPECT_THROW(
+        static_cast<void>(System::builder()
+                              .with_fluid(make_fluid({ Float3(0.0f, 0.0f, 0.0f) }))
+                              .with_universe(make_universe_ptr())
+                              .with_emitter(SourceHostPtr {}, GeneratorHostPtr {})
+                              .with_dt(0.01f)
+                              .build()),
+        std::runtime_error);
+}
+
+TEST(SystemBuilder, BuildSucceedsWithTheDefaultTimestep) {
+    // With no with_dt() call the builder's positive default (0.01) passes validation.
+    const System system = System::builder()
+                              .with_fluid(make_fluid({ Float3(0.0f, 0.0f, 0.0f) }))
+                              .with_universe(make_universe_ptr())
+                              .build();
+
+    EXPECT_FLOAT_EQ(system.dt(), 0.01f);
+    EXPECT_EQ(system.step(), 0u);
+}
+
+TEST(System, EmitIsANoOpWithoutSources) {
+    System system = System::builder()
+                        .with_fluid(make_fluid({ Float3(0.0f, 0.0f, 0.0f), Float3(1.0f, 0.0f, 0.0f) }))
+                        .with_universe(make_universe_ptr())
+                        .with_dt(0.01f)
+                        .build();
+
+    ASSERT_EQ(system.source_count(), 0u);
+
+    // No sources means no spawns; the live particle count is unchanged.
+    system.emit();
+
+    EXPECT_EQ(system.fluid()->particle_count(), 2u);
+}
+
+TEST(System, AllocateIsANoOpWithoutCodec) {
+    System system = System::builder()
+                        .with_fluid(make_fluid({ Float3(0.0f, 0.0f, 0.0f) }))
+                        .with_universe(make_universe_ptr())
+                        .with_dt(0.01f)
+                        .build();
+
+    ASSERT_FALSE(static_cast<bool>(system.codec()));
+
+    // Without a codec the allocation phase returns immediately.
+    system.allocate();
+
+    SUCCEED();
+}
+
+TEST(System, SolveIsANoOpWithoutSolvers) {
+    System system = System::builder()
+                        .with_fluid(make_fluid({ Float3(0.0f, 0.0f, 0.0f) }))
+                        .with_universe(make_universe_ptr())
+                        .with_dt(0.01f)
+                        .build();
+
+    ASSERT_EQ(system.solver_count(), 0u);
+
+    // With no solvers the solve phase returns without touching the fluid.
+    system.solve();
+
+    EXPECT_EQ(system.fluid()->particle_count(), 1u);
+}
+
+TEST(System, RemoveIsANoOpWithoutSinks) {
+    System system = System::builder()
+                        .with_fluid(make_fluid({ Float3(0.0f, 0.0f, 0.0f), Float3(1.0f, 0.0f, 0.0f) }))
+                        .with_universe(make_universe_ptr())
+                        .with_dt(0.01f)
+                        .build();
+
+    ASSERT_EQ(system.sink_count(), 0u);
+
+    // No sinks means nothing is despawned and no compaction occurs.
+    system.remove();
+
+    EXPECT_EQ(system.fluid()->particle_count(), 2u);
+}
+
+TEST(System, SnapshotDirectoryNameFormatsTheStep) {
+    EXPECT_EQ(System::snapshot_directory_name(0), "time_step_0");
+    EXPECT_EQ(System::snapshot_directory_name(42), "time_step_42");
 }

@@ -2,14 +2,35 @@
 requires = ["scikit-build-core>=0.10", "nanobind>=2.0"]
 build-backend = "scikit_build_core.build"
 
+# The distribution name is `atlas-engine` (`atlas` is taken on PyPI); the imported
+# module stays `atlas` (set by NB_MODULE / OUTPUT_NAME), so `pip install atlas-engine`
+# then `import atlas`.
 [project]
-name = "atlas"
+name = "atlas-engine"
 version = "0.1.0"
-description = "Atlas Engine — GPU/CPU particle physics simulation (nanobind bindings)"
+description = "Atlas Engine — GPU/CPU rarefied-gas (DSMC) particle simulation (nanobind bindings)"
 requires-python = ">=3.8"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
 authors = [{ name = "Wontae Lee" }]
+keywords = ["dsmc", "rarefied-gas", "particle-simulation", "cfd", "cuda", "tbb", "nanobind"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+# numpy is the array interchange for System.positions()/velocities()/species()
+# and fluid_from_arrays(). The extension imports without it, but those calls need it.
+dependencies = ["numpy>=1.21"]
+
+[project.urls]
+Homepage = "https://github.com/wontae-lee/atlas-engine-dev"
+Repository = "https://github.com/wontae-lee/atlas-engine-dev"
 
 [tool.scikit-build]
 # Drive the repository's top-level CMakeLists.txt.
@@ -31,5 +52,35 @@ cmake.define.CMAKE_BUILD_TYPE = "Release"
 build.targets = ["atlas_python"]
 install.components = ["python"]
 
-# Keep build trees per-backend so TBB and CUDA wheels do not clobber each other.
-build-dir = "build/wheel"
+# Keep build trees separate per interpreter/ABI so cibuildwheel's back-to-back
+# Python versions never reuse a stale CMake cache. scripts/build_wheels.sh
+# overrides this per backend.
+build-dir = "build/wheel/{cache_tag}"
+
+# ============================================================
+# cibuildwheel: build redistributable manylinux wheels across CPython versions.
+#
+# Atlas needs oneTBB >= 2021, which the manylinux base images do not ship (EPEL's
+# tbb is far too old), so we build it from source once per image in before-all.
+# The wheel is the portable CPU (TBB) backend; the CUDA backend is not published
+# here (it needs the host NVIDIA driver at run time).
+# ============================================================
+[tool.cibuildwheel]
+build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
+skip = "*-musllinux_*"
+build-frontend = "build"
+# Fail fast if the extension does not even import.
+test-command = "python -c \"import atlas; assert hasattr(atlas, 'build_system')\""
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64"]
+manylinux-x86_64-image = "manylinux_2_28"
+# oneTBB 2021.x from source into /usr/local (libtbb.so.12 + TBBConfig.cmake), so
+# find_package(TBB) resolves it and auditwheel bundles it into the wheel.
+before-all = [
+    "dnf install -y git cmake gcc-c++ ninja-build",
+    "git clone --depth 1 --branch v2021.11.0 https://github.com/oneapi-src/oneTBB /tmp/onetbb",
+    "cmake -S /tmp/onetbb -B /tmp/onetbb/build -G Ninja -DTBB_TEST=OFF -DTBB_STRICT=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local",
+    "cmake --build /tmp/onetbb/build --target install",
+]
+environment = { CMAKE_PREFIX_PATH = "/usr/local", LD_LIBRARY_PATH = "/usr/local/lib64:/usr/local/lib" }

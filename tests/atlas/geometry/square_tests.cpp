@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 namespace {
 
@@ -190,4 +191,40 @@ TEST(Square, TraceMissesWhenPointingAway) {
     const Ray ray(Float3(0.0f, 0.0f, 3.0f), Float3(0.0f, 0.0f, 1.0f));
 
     EXPECT_FALSE(square.trace(ray).is_intersecting);
+}
+
+TEST(Square, BuilderBuildsValidatedSquare) {
+    const Square square = Square::builder()
+                              .with_center(Float3(1.0f, 2.0f, 3.0f))
+                              .with_normal(Float3(0.0f, 1.0f, 0.0f))
+                              .with_side_length(4.0f)
+                              .build();
+
+    expect_vec_near(square.center, Float3(1.0f, 2.0f, 3.0f));
+    expect_vec_near(square.normal, Float3(0.0f, 1.0f, 0.0f));
+    EXPECT_FLOAT_EQ(square.side_length, 4.0f);
+    EXPECT_TRUE(square.is_valid());
+}
+
+TEST(Square, BuilderRejectsNonPositiveSideLength) {
+    EXPECT_THROW(static_cast<void>(Square::builder().with_side_length(0.0f).build()),
+                 std::runtime_error);
+    EXPECT_THROW(static_cast<void>(Square::builder().with_side_length(-1.0f).build()),
+                 std::runtime_error);
+}
+
+TEST(Square, BuilderRejectsZeroNormal) {
+    EXPECT_THROW(static_cast<void>(Square::builder().with_normal(Float3(0.0f, 0.0f, 0.0f)).build()),
+                 std::runtime_error);
+}
+
+TEST(Square, BuilderMakeHostSharedBuildsSquare) {
+    const auto square = Square::builder()
+                            .with_center(Float3(0.0f, 0.0f, 5.0f))
+                            .with_side_length(2.0f)
+                            .make_host_shared();
+
+    ASSERT_TRUE(static_cast<bool>(square));
+    expect_vec_near(square->center, Float3(0.0f, 0.0f, 5.0f));
+    EXPECT_FLOAT_EQ(square->side_length, 2.0f);
 }

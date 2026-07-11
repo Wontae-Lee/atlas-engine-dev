@@ -1,0 +1,48 @@
+# Build redistributable manylinux wheels with cibuildwheel and publish them to
+# PyPI on a version tag, using Trusted Publishing (OIDC) — no API token stored.
+#
+# One-time setup on PyPI: create the project's Trusted Publisher pointing at this
+# repository, workflow `publish.yml`, and environment `pypi`
+# (https://docs.pypi.org/trusted-publishers/). Then push a tag like `v0.1.0`.
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+jobs:
+  build-wheels:
+    name: Build wheels (manylinux x86_64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # cibuildwheel builds oneTBB in-container (see [tool.cibuildwheel] in
+      # pyproject.toml), then a wheel per CPython version, and auditwheel-repairs each.
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.21
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels
+          path: wheelhouse/*.whl
+
+  publish:
+    name: Publish to PyPI
+    needs: [build-wheels]
+    runs-on: ubuntu-latest
+    # Only publish on an actual tag push, never on manual/dispatch dry runs.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    environment: pypi
+    permissions:
+      id-token: write # required for Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

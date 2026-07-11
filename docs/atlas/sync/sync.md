@@ -83,7 +83,7 @@ identity (`_translation = 0`, `_orientation = (1,0,0,0)`), so a Sync can be buil
 with no setter call. `validate()` throws `std::runtime_error` on a non-finite
 translation, a non-finite orientation, or the zero quaternion. `make_host_shared`
 returns a `SyncHostPtr`; every current caller (all tests and the cylinder
-benchmark) uses `make_host_shared` and hands the result to `Unit::Builder::with_sync`,
+example) uses `make_host_shared` and hands the result to `Unit::Builder::with_sync`,
 which dereferences it into a value copy (`unit.h:417`).
 
 ## Deliberately absent

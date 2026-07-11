@@ -151,3 +151,13 @@ TEST(Source, MoveAssignReplacesActiveLeaf) {
     FluidPositionState positions(count + 8);
     EXPECT_EQ(static_cast<std::size_t>(destination.spawn(&positions, 0)), count);
 }
+
+TEST(Source, DefaultSurfaceLeafSpawnsNothing) {
+    // A default umbrella holds an empty SurfaceSource, so dispatching spawn through
+    // it writes nothing rather than reaching for an unbuilt cache.
+    const Source       source {};
+    FluidPositionState positions(4);
+
+    ASSERT_EQ(source.type, SourceType::surface);
+    EXPECT_EQ(source.spawn(&positions, 0), 0);
+}

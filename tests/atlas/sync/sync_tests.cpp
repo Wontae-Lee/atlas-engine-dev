@@ -160,3 +160,32 @@ TEST(Sync, SetPoseUpdatesTranslationAndOrientation) {
 
     expect_vec_near(sync.sync_to_world(Float3(1.0f, 0.0f, 0.0f)), Float3(1.0f, 1.0f, 0.0f), 1e-5f);
 }
+
+TEST(Sync, ValueConstructorBuildsMatricesImmediately) {
+    // The two-argument value constructor must derive the cached rotation matrices
+    // eagerly, so a direction transform works without any further setup.
+    const Sync sync(Float3(1.0f, 2.0f, 3.0f), quarter_turn_z());
+
+    expect_vec_near(sync.translation, Float3(1.0f, 2.0f, 3.0f));
+    expect_vec_near(sync.sync_dir_to_world(Float3(1.0f, 0.0f, 0.0f)), Float3(0.0f, 1.0f, 0.0f), 1e-5f);
+}
+
+TEST(Sync, BuilderRejectsNonFiniteOrientation) {
+    const float inf = std::numeric_limits<float>::infinity();
+    EXPECT_THROW(
+        static_cast<void>(Sync::builder()
+                              .with_rigid_pose(Float3(0.0f, 0.0f, 0.0f), Quaternion(inf, 0.0f, 0.0f, 0.0f))
+                              .build()),
+        std::runtime_error);
+}
+
+TEST(Sync, RebuildMatricesReflectsADirectOrientationWrite) {
+    Sync sync {};
+
+    // A direct write to the public orientation field leaves the cached matrices
+    // stale until rebuild_matrices() is called to resynchronize them.
+    sync.orientation = quarter_turn_z();
+    sync.rebuild_matrices();
+
+    expect_vec_near(sync.sync_dir_to_world(Float3(1.0f, 0.0f, 0.0f)), Float3(0.0f, 1.0f, 0.0f), 1e-5f);
+}
