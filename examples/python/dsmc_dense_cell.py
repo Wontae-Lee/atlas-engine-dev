@@ -9,10 +9,12 @@ build output directory (or install the wheel), e.g.:
 
 The module mirrors the C++ builder API as factory functions: each `atlas.<thing>()`
 call returns a ready-to-use object, and `atlas.build_system(...)` wires them into a
-runnable System.
+runnable System. Initial particle state is seeded from numpy arrays and results
+are read back the same way.
 """
 
 import atlas
+import numpy as np
 
 Vec = atlas.Float3
 
@@ -32,28 +34,25 @@ def main() -> None:
         )]
     )
 
-    particle_count = 60
-    fluid = atlas.fluid(
-        buffer_size=particle_count,
-        particle_count=particle_count,
-        statistical_weight=1e18,
-        materials=materials,
-    )
+    # Seed a dense cell of fast molecules from numpy so collisions actually fire.
+    rng = np.random.default_rng(0)
+    particle_count = 200
+    positions = rng.uniform(0.1, 0.9, size=(particle_count, 3)).astype(np.float32)
+    velocities = (rng.standard_normal((particle_count, 3)) * 300.0).astype(np.float32)
+
+    fluid = atlas.fluid_from_arrays(positions, velocities, statistical_weight=1e18, materials=materials)
     universe = atlas.universe(Vec(0, 0, 0), Vec(1, 1, 1), cell_size=1.0)
     solver = atlas.dsmc_solver(kernel_type=atlas.DsmcKernelType.variable_hard_sphere)
 
     system = atlas.build_system(fluid=fluid, universe=universe, dt=1e-4, solver=solver)
 
-    print(f"assembled: cells={system.cell_count} particles={system.particle_count}")
-    for _ in range(10):
+    mean_speed_before = np.linalg.norm(system.velocities(), axis=1).mean()
+    for _ in range(20):
         system.update()
-    print(f"after {system.step} steps: particles={system.particle_count}")
+    mean_speed_after = np.linalg.norm(system.velocities(), axis=1).mean()
 
-    # Read the live particle state back as numpy arrays (no numpy dependency in the
-    # module itself — positions()/velocities() return (N, 3) float32 arrays).
-    positions = system.positions()
-    speeds = (system.velocities() ** 2).sum(axis=1) ** 0.5
-    print(f"positions shape={positions.shape} mean_speed={speeds.mean():.1f} m/s")
+    print(f"cells={system.cell_count} particles={system.particle_count}")
+    print(f"mean speed: {mean_speed_before:.1f} -> {mean_speed_after:.1f} m/s over {system.step} steps")
 
 
 if __name__ == "__main__":
