@@ -98,9 +98,9 @@ test lands in the aggregate `atlas_tests` target, and each directory also gets
 its own executable named after the path relative to `tests/atlas/` — so
 `tests/atlas/sink/` builds `atlas_tests_sink`.
 
-Tests mirror `include/atlas/`: nearly every module has a directory under
+Tests mirror `include/atlas/`: every module has a directory under
 `tests/atlas/`. The covered modules are `buffer`, `codec`, `collider`,
-`container`, `core`, `fluid`, `generator`, `geometry`, `material`, `math`,
-`memory`, `observer`, `parallel`, `random`, `sampling`, `scan`, `searcher`,
-`sink`, `solver`, `source`, `spatial`, `sync`, `system`, `unit`, and
-`universe`.
+`container`, `core`, `fluid`, `generator`, `geometry`, `logging`, `material`,
+`math`, `memory`, `observer`, `parallel`, `random`, `sampling`, `scan`,
+`searcher`, `serialization`, `sink`, `solver`, `source`, `spatial`, `sync`,
+`system`, `unit`, and `universe`.
