@@ -49,6 +49,12 @@ def main() -> None:
         system.update()
     print(f"after {system.step} steps: particles={system.particle_count}")
 
+    # Read the live particle state back as numpy arrays (no numpy dependency in the
+    # module itself — positions()/velocities() return (N, 3) float32 arrays).
+    positions = system.positions()
+    speeds = (system.velocities() ** 2).sum(axis=1) ** 0.5
+    print(f"positions shape={positions.shape} mean_speed={speeds.mean():.1f} m/s")
+
 
 if __name__ == "__main__":
     main()
