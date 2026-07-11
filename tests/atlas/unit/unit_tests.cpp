@@ -397,10 +397,13 @@ TEST(Unit, SetGeometryChangesTheWorldBound) {
     expect_vec_near(bound.upper_corner, Float3(2.0f, 2.0f, 2.0f));
 }
 
-TEST(Unit, WorldBoundOfEmptyGeometryIsInvalid) {
-    // A default-constructed Unit carries empty geometry with no valid local bound,
-    // so world_bound() returns a reset (invalid) AABB rather than a garbage box.
+TEST(Unit, WorldBoundOfDefaultGeometryEnclosesTheUnitSphere) {
+    // Geometry's default leaf is a unit Sphere, so a default-constructed Unit has a
+    // valid local bound and world_bound() reports a valid box that contains the
+    // origin (the sphere's center under the identity sync).
     const Unit unit {};
 
-    EXPECT_FALSE(unit.world_bound().is_valid());
+    const AABB bound = unit.world_bound();
+    ASSERT_TRUE(bound.is_valid());
+    EXPECT_TRUE(bound.contains(Float3(0.0f, 0.0f, 0.0f)));
 }

@@ -141,7 +141,8 @@ public:
      * value meets or exceeds: the result is in `[0, split_count]`, i.e. one of five
      * indices for the default four-entry table. A `kn` below the first split maps to
      * 0; a `kn` at or above the last split maps to `split_count`. The `!(kn < split)`
-     * test (rather than `kn >= split`) makes a NaN `kn` fall through to index 0.
+     * test (rather than `kn >= split`) is TRUE for a NaN `kn` (every NaN comparison
+     * is false), so a NaN advances at each threshold and saturates at `split_count`.
      * Callable on host and device.
      *
      * @param kn A Knudsen number, typically from `knudsen_number()`.

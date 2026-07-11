@@ -169,11 +169,12 @@ TEST(KnudsenCodecSolverIndex, LastThresholdSaturatesAtSplitCount) {
     EXPECT_EQ(codec.solver_index(100.0f), KnudsenCodec::split_count);
 }
 
-TEST(KnudsenCodecSolverIndex, NanBucketsToZero) {
+TEST(KnudsenCodecSolverIndex, NanSaturatesToSplitCount) {
     const KnudsenCodec codec {};
 
-    // The bucketing test is `!(kn < split)`, so a NaN kn (whose comparisons are all
-    // false) fails to advance and lands at index 0 rather than saturating.
+    // The bucketing test is `!(kn < split)`, which is TRUE for a NaN kn (every NaN
+    // comparison is false), so the loop advances at each threshold and saturates at
+    // split_count rather than stopping at 0.
     const float nan = std::numeric_limits<float>::quiet_NaN();
-    EXPECT_EQ(codec.solver_index(nan), 0);
+    EXPECT_EQ(codec.solver_index(nan), KnudsenCodec::split_count);
 }
