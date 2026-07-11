@@ -73,3 +73,13 @@ TEST(SolveQuadratic, ReturnsFalseAndLeavesRootsUntouchedForNegativeDiscriminant)
     EXPECT_FLOAT_EQ(t0, -11.0f);
     EXPECT_FLOAT_EQ(t1, -22.0f);
 }
+
+TEST(SolveQuadratic, DegenerateLeadingCoefficientReportsTheLinearRootAndInfinity) {
+    // With a == 0 the equation is linear (2t - 4 = 0, root t = 2); the missing second
+    // root is reported as +inf rather than dividing by the zero leading coefficient.
+    float t0 = 0.0f;
+    float t1 = 0.0f;
+    EXPECT_TRUE(atlas::solve_quadratic(0.0f, 2.0f, -4.0f, t0, t1));
+    EXPECT_NEAR(t0, 2.0f, 1.0e-6f);
+    EXPECT_EQ(t1, atlas::inf);
+}

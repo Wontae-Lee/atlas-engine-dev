@@ -140,3 +140,37 @@ TEST(Generator, GenerateWithZeroCountIsNoOp) {
 
     EXPECT_EQ(generator.generate(&velocities, &species, 0, 0), 0);
 }
+
+TEST(Generator, GenerateRejectsNullState) {
+    const Generator   generator(make_uniform());
+    FluidSpeciesState species(4);
+
+    EXPECT_EQ(generator.generate(nullptr, &species, 0, 4), 0);
+}
+
+TEST(Generator, SetBulkVelocityDispatchesToLeaf) {
+    // The umbrella must forward set_bulk_velocity to the active leaf. A zero-sigma
+    // Maxwell leaf collapses to pure drift, so the retargeted bulk shows up
+    // verbatim in the generated velocities.
+    Generator generator(MaxwellSigmaGenerator::builder()
+                            .with_species_ratios({ 1.0f })
+                            .with_species_numbers({ 9.0f })
+                            .with_sigma(0.0f)
+                            .with_seed(5u)
+                            .build());
+
+    generator.set_bulk_velocity(atlas::Float3(1.0f, 2.0f, 3.0f));
+
+    const std::size_t  count = 8;
+    FluidVelocityState velocities(count);
+    FluidSpeciesState  species(count);
+
+    ASSERT_EQ(generator.generate(&velocities, &species, 0, count), static_cast<int>(count));
+
+    for (std::size_t i = 0; i < count; ++i) {
+        const atlas::Float3 v = velocities.data()[i];
+        EXPECT_NEAR(v.x, 1.0f, tol);
+        EXPECT_NEAR(v.y, 2.0f, tol);
+        EXPECT_NEAR(v.z, 3.0f, tol);
+    }
+}

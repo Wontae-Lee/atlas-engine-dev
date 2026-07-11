@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <stdexcept>
 #include <utility>
 
@@ -128,4 +129,23 @@ TEST(TracingSink, AdvanceMovesUnit) {
     sink.advance(0.5f);
 
     EXPECT_NEAR(sink.unit().sync().translation.z, 0.5f, tol);
+}
+
+TEST(TracingSink, DespawnMissesWithNegativeTimeStep) {
+    const auto sink = TracingSink::builder()
+                          .with_unit(make_static_plane_unit())
+                          .build();
+
+    // A non-positive dt covers no distance; the guard skips the trace entirely.
+    EXPECT_FALSE(sink.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, -1.0f), -1.0f));
+}
+
+TEST(TracingSink, DespawnRejectsNaNVelocity) {
+    const auto  sink = TracingSink::builder()
+                          .with_unit(make_static_plane_unit())
+                          .build();
+    const float nan  = std::numeric_limits<float>::quiet_NaN();
+
+    // A NaN speed fails the !(speed > 0) guard, so the particle is kept (no trace).
+    EXPECT_FALSE(sink.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(nan, 0.0f, 0.0f), 2.0f));
 }

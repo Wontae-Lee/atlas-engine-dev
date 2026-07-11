@@ -96,3 +96,38 @@ TEST(MaxwellSigmaGenerator, ComponentsAreFiniteAndRoughlyZeroMean) {
     EXPECT_NEAR(sum_y / n, 0.0, 0.5);
     EXPECT_NEAR(sum_z / n, 0.0, 0.5);
 }
+
+TEST(MaxwellSigmaGenerator, ZeroSigmaProducesBulkDriftOnly) {
+    // With sigma == 0 the Gaussian collapses, so every particle receives exactly
+    // the bulk drift and nothing else.
+    const auto         generator = MaxwellSigmaGenerator::builder()
+                               .with_species_ratios({ 1.0f })
+                               .with_species_numbers({ 9.0f })
+                               .with_sigma(0.0f)
+                               .with_bulk_velocity(Float3(1.0f, 2.0f, 3.0f))
+                               .with_seed(5u)
+                               .build();
+    const std::size_t  count = 32;
+    FluidVelocityState velocities(count);
+    FluidSpeciesState  species(count);
+
+    ASSERT_EQ(generator.generate(&velocities, &species, 0, count), static_cast<int>(count));
+
+    for (std::size_t i = 0; i < count; ++i) {
+        const Float3 v = velocities.data()[i];
+        EXPECT_NEAR(v.x, 1.0f, tol);
+        EXPECT_NEAR(v.y, 2.0f, tol);
+        EXPECT_NEAR(v.z, 3.0f, tol);
+    }
+}
+
+TEST(MaxwellSigmaGenerator, SetBulkVelocityUpdatesGetter) {
+    auto generator = make_generator();
+
+    generator.set_bulk_velocity(Float3(-1.0f, 0.5f, 2.0f));
+
+    const Float3 bulk = generator.bulk_velocity();
+    EXPECT_NEAR(bulk.x, -1.0f, tol);
+    EXPECT_NEAR(bulk.y, 0.5f, tol);
+    EXPECT_NEAR(bulk.z, 2.0f, tol);
+}

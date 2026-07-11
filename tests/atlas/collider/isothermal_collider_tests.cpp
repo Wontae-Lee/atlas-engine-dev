@@ -211,6 +211,35 @@ TEST(IsothermalCollider, CollideIsNoOpWithoutHit) {
     expect_vec_near(velocity, Float3(0.0f, 0.0f, -1.0f));
 }
 
+TEST(IsothermalCollider, CollideAgainstMovingWallImpartsSurfaceVelocity) {
+    // collide reflects in the wall's moving frame: shift the incident by the surface velocity,
+    // reflect specularly, then shift back. A +z-translating wall must therefore add its own
+    // velocity to the reflected particle, so the outgoing speed differs from the static-wall case.
+    const auto collider = make_collider(make_dynamic_unit(Float3(0.0f, 0.0f, 0.5f)), 0.0f, 1.0f);
+
+    Float3           position(0.0f, 0.0f, 1.0f);
+    Float3           velocity(0.0f, 0.0f, -1.0f);
+    const HitSurface hit = collider.trace(position, velocity, 2.0f);
+    ASSERT_TRUE(hit.is_intersecting);
+
+    collider.collide(hit, position, velocity, 2.0f);
+
+    // relative_incident = (0,0,-1) - (0,0,0.5) = (0,0,-1.5); specular reflection about +z gives
+    // (0,0,1.5); adding the wall velocity (0,0,0.5) back yields (0,0,2.0).
+    expect_vec_near(velocity, Float3(0.0f, 0.0f, 2.0f));
+    expect_vec_near(position, Float3(0.0f, 0.0f, tol));
+}
+
+TEST(IsothermalCollider, ReflectDegenerateIncidentReturnsZero) {
+    // A near-zero incident (speed <= tol) has no well-defined mirror direction, so reflect
+    // collapses it to the zero vector rather than normalizing a degenerate direction.
+    const auto collider = make_collider(make_static_unit(), 0.0f, 1.0f);
+
+    const Float3 reflected = collider.reflect(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 1.0f));
+
+    expect_vec_near(reflected, Float3(0.0f, 0.0f, 0.0f));
+}
+
 TEST(IsothermalCollider, AdvanceMovesDynamicUnit) {
     auto collider = make_collider(make_dynamic_unit(Float3(0.0f, 0.0f, 1.0f)));
 

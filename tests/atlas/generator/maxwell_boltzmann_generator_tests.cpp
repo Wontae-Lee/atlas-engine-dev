@@ -141,3 +141,39 @@ TEST(MaxwellBoltzmannGenerator, SampledSpeedsMatchThermalSpeed) {
     EXPECT_GT(mean_speed, 0.5 * expected_mean);
     EXPECT_LT(mean_speed, 1.5 * expected_mean);
 }
+
+TEST(MaxwellBoltzmannGenerator, ZeroTemperatureProducesBulkDriftOnly) {
+    // A non-positive temperature yields a zero thermal sigma, so every particle is
+    // assigned exactly the bulk drift and no random spread.
+    const auto         generator = MaxwellBoltzmannGenerator::builder()
+                               .with_species_ratios({ 1.0f })
+                               .with_species_numbers({ 5.0f })
+                               .with_species_mass({ 2.0f })
+                               .with_temperature(0.0f)
+                               .with_bulk_velocity(Float3(1.0f, 2.0f, 3.0f))
+                               .with_seed(7u)
+                               .build();
+    const std::size_t  count = 32;
+    FluidVelocityState velocities(count);
+    FluidSpeciesState  species(count);
+
+    ASSERT_EQ(generator.generate(&velocities, &species, 0, count), static_cast<int>(count));
+
+    for (std::size_t i = 0; i < count; ++i) {
+        const Float3 v = velocities.data()[i];
+        EXPECT_NEAR(v.x, 1.0f, tol);
+        EXPECT_NEAR(v.y, 2.0f, tol);
+        EXPECT_NEAR(v.z, 3.0f, tol);
+    }
+}
+
+TEST(MaxwellBoltzmannGenerator, SetBulkVelocityUpdatesGetter) {
+    auto generator = make_generator_with_direct_mass();
+
+    generator.set_bulk_velocity(Float3(2.0f, -3.0f, 4.0f));
+
+    const Float3 bulk = generator.bulk_velocity();
+    EXPECT_NEAR(bulk.x, 2.0f, tol);
+    EXPECT_NEAR(bulk.y, -3.0f, tol);
+    EXPECT_NEAR(bulk.z, 4.0f, tol);
+}
