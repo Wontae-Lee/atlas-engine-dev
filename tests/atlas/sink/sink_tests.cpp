@@ -75,6 +75,8 @@ TEST(Sink, WrapsVolumeLeafAndDispatchesDespawn) {
     const Sink sink(VolumeSink::builder().with_unit(make_box_unit(Float3(0.0f, 0.0f, 0.0f), false)).build());
 
     EXPECT_EQ(sink.type, SinkType::volume);
+    // Inside then outside the box: the pair proves the umbrella actually consults the
+    // volume leaf's interior test rather than answering from its type tag alone.
     EXPECT_TRUE(sink.despawn(Float3(0.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
     EXPECT_FALSE(sink.despawn(Float3(5.0f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
 }
@@ -93,6 +95,8 @@ TEST(Sink, WrapsTracingLeafAndDispatchesDespawn) {
     const Sink sink(TracingSink::builder().with_unit(make_plane_unit()).build());
 
     EXPECT_EQ(sink.type, SinkType::tracing);
+    // Moving toward then away from the plane: the tracing leaf's despawn hinges on the
+    // velocity direction, so the pair confirms the umbrella forwards it faithfully.
     EXPECT_TRUE(sink.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, -1.0f), 2.0f));
     EXPECT_FALSE(sink.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, 1.0f), 2.0f));
 }
@@ -105,6 +109,8 @@ TEST(Sink, AdvanceDispatchesToLeaf) {
     EXPECT_NEAR(sink.volume.unit().sync().translation.z, 0.5f, tol);
 }
 
+// Sink is trivially copyable (a DeviceVariant value), so copy and move both reduce to
+// a bitwise copy; the following cases confirm the active leaf still dispatches afterward.
 TEST(Sink, CopyPreservesBehaviour) {
     const Sink sink(VolumeSink::builder().with_unit(make_box_unit(Float3(0.0f, 0.0f, 0.0f), false)).build());
     const Sink copy = sink;

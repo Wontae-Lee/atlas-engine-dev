@@ -85,6 +85,8 @@ TEST(Observer, MakeHostSharedProducesAConfiguredObserver) {
 TEST(Observer, ResizeCountersAllocatesRowMajorAndZeroFills) {
     Observer observer = Observer::builder().build();
 
+    // Arguments are (source count, sink count, species count); spawned is laid out
+    // row-major as sources x species, despawned as sinks x species.
     observer.resize_counters(2, 3, 4);
 
     EXPECT_EQ(observer.species_count(), 4u);

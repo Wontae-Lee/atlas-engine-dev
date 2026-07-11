@@ -109,6 +109,8 @@ TEST(TracingSink, DespawnMissesWithZeroTimeStep) {
                           .with_unit(make_static_plane_unit())
                           .build();
 
+    // dt == 0 is the boundary of the same dt > 0 guard: no sweep length, so the
+    // approaching particle is still kept.
     EXPECT_FALSE(sink.despawn(Float3(0.0f, 0.0f, 1.0f), Float3(0.0f, 0.0f, -1.0f), 0.0f));
 }
 

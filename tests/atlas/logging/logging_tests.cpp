@@ -112,6 +112,8 @@ TEST_F(LoggingConfig, ShouldLogRespectsThreshold) {
     EXPECT_FALSE(atlas::should_log(LoggingLevel::warn));
     EXPECT_TRUE(atlas::should_log(LoggingLevel::error));
 
+    // Muting overrides the level: even the most severe message is suppressed,
+    // independent of whatever threshold was last configured.
     atlas::Logging::mute();
     EXPECT_FALSE(atlas::should_log(LoggingLevel::error));
 }
@@ -141,6 +143,8 @@ TEST_F(LoggingConfig, EmptyLineIsNotEmitted) {
     std::ostringstream sink;
     atlas::Logging::set_all_stream(&sink);
 
+    // Suppression here comes from the empty body, not from muting: a factory
+    // with nothing streamed must flush nothing rather than a bare header/newline.
     atlas::warn();
 
     EXPECT_TRUE(sink.str().empty());

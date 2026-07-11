@@ -261,7 +261,9 @@ TEST(SystemIntegration, RepeatedStepsAccumulateDisplacement) {
 }
 
 TEST(SystemIntegration, SinkRemovesTheParticleInsideItsVolumeDuringUpdate) {
-    // Two stationary particles: one inside the sink box, one well outside it.
+    // Two stationary particles: one inside the sink box, one well outside. With zero
+    // velocity advect is a no-op, so update() here isolates the mark_survivors + compact
+    // removal stages.
     System system = System::builder()
                         .with_fluid(make_fluid(
                             { Float3(0.0f, 0.0f, 0.0f), Float3(10.0f, 0.0f, 0.0f) },

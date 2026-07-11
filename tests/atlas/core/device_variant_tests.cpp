@@ -14,8 +14,8 @@ using atlas::DeviceVariant;
 using atlas::DeviceVariantCase;
 using atlas::type_tag;
 
-/// Discriminant for the dummy umbrella. `unknown` is deliberately left out of the
-/// variant's case list so it exercises the normalize/fallback paths.
+// Discriminant for the dummy umbrella. `unknown` is deliberately left out of the
+// variant's case list so it exercises the normalize/fallback paths.
 enum class Kind { alpha, beta, gamma, unknown };
 
 // Trivially-copyable leaves: each carries a distinct payload and a compile-time id
@@ -41,29 +41,29 @@ struct Gamma final {
     ATLAS_ALL_DEVICE explicit Gamma(const int v = 0) noexcept : value(v) {}
 };
 
-/// Visitor returning the active leaf's compile-time id (proves which leaf was hit).
+// Visitor returning the active leaf's compile-time id (proves which leaf was hit).
 struct ReadId final {
     template <typename L>
     ATLAS_ALL_DEVICE int
     operator()(const L&) const noexcept { return L::id; }
 };
 
-/// Visitor returning the active leaf's stored value.
+// Visitor returning the active leaf's stored value.
 struct ReadValue final {
     template <typename L>
     ATLAS_ALL_DEVICE int
     operator()(const L& leaf) const noexcept { return leaf.value; }
 };
 
-/// Mutating visitor that bumps the active leaf's value in place.
+// Mutating visitor that bumps the active leaf's value in place.
 struct Bump final {
     template <typename L>
     ATLAS_ALL_DEVICE void
     operator()(L& leaf) const noexcept { leaf.value += 1; }
 };
 
-/// Const visitor copying the active leaf's value into a caller-owned slot. A functor
-/// rather than a lambda, since nvcc rejects extended lambdas passed to device code.
+// Const visitor copying the active leaf's value into a caller-owned slot. A functor
+// rather than a lambda, since nvcc rejects extended lambdas passed to device code.
 struct CaptureValue final {
     int* out;
 
@@ -72,14 +72,14 @@ struct CaptureValue final {
     operator()(const L& leaf) const noexcept { *out = leaf.value; }
 };
 
-/// Type-only visitor recovering the payload id from a `type_tag`.
+// Type-only visitor recovering the payload id from a `type_tag`.
 struct TypeId final {
     template <typename P>
     ATLAS_ALL_DEVICE int
     operator()(type_tag<P>) const noexcept { return P::id; }
 };
 
-/// Minimal umbrella mirroring the tagged-union leaf pattern of the real modules.
+// Minimal umbrella mirroring the tagged-union leaf pattern of the real modules.
 class Figure final {
 public:
     Kind type = Kind::alpha;

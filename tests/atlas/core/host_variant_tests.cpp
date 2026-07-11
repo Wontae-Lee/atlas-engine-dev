@@ -12,39 +12,32 @@ namespace {
 using atlas::HostVariant;
 using atlas::HostVariantCase;
 
-/// Discriminant for the dummy umbrella. `unknown` is deliberately left out of the
-/// variant's case list so it exercises the normalize/fallback paths.
+// Discriminant for the dummy umbrella. `unknown` is deliberately left out of the
+// variant's case list so it exercises the normalize/fallback paths.
 enum class Kind { alpha, beta, gamma, unknown };
 
-/**
- * @brief Process-wide tallies of leaf lifecycle events.
- *
- * The dummy leaves bump these on construction, move and destruction so the tests can
- * assert precisely how many moves and destructor calls a HostVariant operation performed
- * — the move-only resource safety that this variant exists to provide. Reset explicitly
- * at the start of any test that inspects a delta.
- */
+// Process-wide tallies of leaf lifecycle events. The dummy leaves bump these on
+// construction, move and destruction so the tests can assert precisely how many moves and
+// destructor calls a HostVariant operation performed — the move-only resource safety this
+// variant exists to provide. Reset explicitly at the start of any test that inspects a delta.
 struct LeafStats final {
-    int value_ctors = 0; ///< Value (heap-allocating) constructions.
-    int move_ctors  = 0; ///< Move constructions (must be used, never a copy).
-    int destructors = 0; ///< Destructor calls.
-    int live        = 0; ///< Currently-alive leaf objects (0 means no leak / no double free).
+    int value_ctors = 0; // Value (heap-allocating) constructions.
+    int move_ctors  = 0; // Move constructions (must be used, never a copy).
+    int destructors = 0; // Destructor calls.
+    int live        = 0; // Currently-alive leaf objects (0 means no leak / no double free).
 
     void reset() noexcept { *this = LeafStats {}; }
 };
 
 LeafStats stats;
 
-/**
- * @brief Shared machinery for the move-only dummy leaves.
- *
- * Owns a single heap @c int as a stand-in for the @c DeviceBuffer a real leaf would hold,
- * which makes the leaf genuinely move-only: the copy operations are deleted, so a copy is a
- * compile error rather than something a runtime counter has to catch. Every lifecycle event
- * updates @c stats so the tests can prove a move (not a copy) was used and that each active
- * leaf is destroyed exactly once. A moved-from leaf holds a null @c resource — the valid,
- * documented state that HostVariant leaves the source in.
- */
+// Shared machinery for the move-only dummy leaves. Owns a single heap `int` as a stand-in
+// for the `DeviceBuffer` a real leaf would hold, which makes the leaf genuinely move-only:
+// the copy operations are deleted, so a copy is a compile error rather than something a
+// runtime counter has to catch. Every lifecycle event updates `stats` so the tests can prove
+// a move (not a copy) was used and that each active leaf is destroyed exactly once. A
+// moved-from leaf holds a null `resource` — the valid, documented state HostVariant leaves
+// the source in.
 struct MoveOnlyLeaf {
     int* resource = nullptr;
 
@@ -59,7 +52,7 @@ struct MoveOnlyLeaf {
         ++stats.live;
     }
 
-    /** Copy is deleted: a DeviceBuffer-owning leaf cannot be copied. */
+    // Copy is deleted: a DeviceBuffer-owning leaf cannot be copied.
     MoveOnlyLeaf(const MoveOnlyLeaf&)            = delete;
     MoveOnlyLeaf& operator=(const MoveOnlyLeaf&) = delete;
 
@@ -69,66 +62,66 @@ struct MoveOnlyLeaf {
         --stats.live;
     }
 
-    /// Reads the owned payload; only valid while the leaf still holds its resource.
+    // Reads the owned payload; only valid while the leaf still holds its resource.
     int value() const noexcept { return *resource; }
 
-    /// True while this leaf still owns its resource (false once moved from).
+    // True while this leaf still owns its resource (false once moved from).
     bool has_resource() const noexcept { return resource != nullptr; }
 
-    /// Mutates the owned payload in place.
+    // Mutates the owned payload in place.
     void bump() noexcept { ++(*resource); }
 };
 
-/// Move-only leaf carrying compile-time id 1 (so a visitor can report which leaf it hit).
+// Move-only leaf carrying compile-time id 1 (so a visitor can report which leaf it hit).
 struct Alpha final : MoveOnlyLeaf {
     static constexpr int id = 1;
 
     explicit Alpha(const int v = 0) : MoveOnlyLeaf(v) {}
 };
 
-/// Move-only leaf carrying compile-time id 2.
+// Move-only leaf carrying compile-time id 2.
 struct Beta final : MoveOnlyLeaf {
     static constexpr int id = 2;
 
     explicit Beta(const int v = 0) : MoveOnlyLeaf(v) {}
 };
 
-/// Move-only leaf carrying compile-time id 3.
+// Move-only leaf carrying compile-time id 3.
 struct Gamma final : MoveOnlyLeaf {
     static constexpr int id = 3;
 
     explicit Gamma(const int v = 0) : MoveOnlyLeaf(v) {}
 };
 
-/// Visitor returning the active leaf's compile-time id (proves which leaf was hit).
+// Visitor returning the active leaf's compile-time id (proves which leaf was hit).
 struct ReadId final {
     template <typename L>
     int
     operator()(const L&) const noexcept { return L::id; }
 };
 
-/// Visitor returning the active leaf's stored value.
+// Visitor returning the active leaf's stored value.
 struct ReadValue final {
     template <typename L>
     int
     operator()(const L& leaf) const noexcept { return leaf.value(); }
 };
 
-/// Visitor reporting whether the active leaf still owns its resource.
+// Visitor reporting whether the active leaf still owns its resource.
 struct HasResource final {
     template <typename L>
     bool
     operator()(const L& leaf) const noexcept { return leaf.has_resource(); }
 };
 
-/// Mutating visitor that bumps the active leaf's value in place.
+// Mutating visitor that bumps the active leaf's value in place.
 struct Bump final {
     template <typename L>
     void
     operator()(L& leaf) const noexcept { leaf.bump(); }
 };
 
-/// Const visitor copying the active leaf's value into a caller-owned slot.
+// Const visitor copying the active leaf's value into a caller-owned slot.
 struct CaptureValue final {
     int* out;
 
@@ -137,14 +130,11 @@ struct CaptureValue final {
     operator()(const L& leaf) const noexcept { *out = leaf.value(); }
 };
 
-/**
- * @brief Minimal move-only umbrella mirroring the buffer-owning leaf pattern.
- *
- * Because the leaves own a heap resource the union's special members are deleted, so the
- * umbrella hands its whole lifecycle to HostVariant: default/payload construction,
- * move-construct, move-assign and destroy. Copy is deleted, matching a real Source-style
- * umbrella that owns a @c DeviceBuffer.
- */
+// Minimal move-only umbrella mirroring the buffer-owning leaf pattern. Because the leaves
+// own a heap resource the union's special members are deleted, so the umbrella hands its
+// whole lifecycle to HostVariant: default/payload construction, move-construct, move-assign
+// and destroy. Copy is deleted, matching a real Source-style umbrella that owns a
+// `DeviceBuffer`.
 class Shape final {
 public:
     Kind type = Kind::alpha;
@@ -157,7 +147,7 @@ public:
 
     Shape();
 
-    /** Move-only: buffer-owning leaves cannot be copied. */
+    // Move-only: buffer-owning leaves cannot be copied.
     Shape(const Shape&)            = delete;
     Shape& operator=(const Shape&) = delete;
 

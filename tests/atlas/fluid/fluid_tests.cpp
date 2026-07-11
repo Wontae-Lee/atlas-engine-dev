@@ -143,6 +143,7 @@ TEST(Fluid, RemoveAbsentStateReturnsNull) {
 
 TEST(Fluid, StatesStoreHoldsMandatoryColumns) {
     Fluid fluid(4);
+    // Construction registers exactly the three mandatory columns: position, velocity, species.
     EXPECT_EQ(fluid.states().size(), std::size_t { 3 });
 }
 

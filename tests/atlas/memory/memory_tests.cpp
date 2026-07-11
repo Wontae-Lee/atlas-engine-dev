@@ -12,8 +12,8 @@ using atlas::make_device_shared;
 using atlas::make_host_shared;
 using atlas::make_host_unique;
 
-/// A small payload whose two-argument constructor exercises perfect forwarding
-/// through the factory helpers.
+// A small payload whose two-argument constructor exercises perfect forwarding
+// through the factory helpers.
 struct Payload {
     Payload(const int a, const double b) : a(a), b(b) { }
     int a;
