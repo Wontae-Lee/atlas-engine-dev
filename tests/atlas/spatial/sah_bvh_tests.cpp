@@ -140,6 +140,7 @@ traverse(const HostBuffer<BVHNode>& nodes,
 
     const BVHNode& node = nodes[idx];
 
+    // Prune whole subtrees whose bounds the ray never enters.
     if (!node.bounds.intersects(ray)) {
         return;
     }

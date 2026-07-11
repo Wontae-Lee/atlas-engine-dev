@@ -111,6 +111,7 @@ TEST(VolumeSource, SpawnWritesCachedParticlesAtOffset) {
 
     EXPECT_EQ(static_cast<std::size_t>(spawned), count);
 
+    // The unit sync translates local interior samples (x in [-1, 1]) to world x in [4, 6].
     const Float3 first = positions.data()[0];
     EXPECT_GE(first.x, 4.0f - tol);
     EXPECT_LE(first.x, 6.0f + tol);

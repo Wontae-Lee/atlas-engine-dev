@@ -17,7 +17,7 @@ namespace {
 using atlas::DeviceBuffer;
 using atlas::ExecutionPolicy;
 
-/** Copy a device buffer back into a host vector for value comparison. */
+// Copy a device buffer back into a host vector for value comparison.
 template <typename T>
 std::vector<T>
 to_host(const DeviceBuffer<T>& buffer) {
@@ -28,12 +28,9 @@ to_host(const DeviceBuffer<T>& buffer) {
     return host;
 }
 
-/**
- * @brief Run an out-of-place exclusive scan on the device backend with an explicit init.
- *
- * Mirrors the raw-pointer driving used by the parallel_sort/parallel_fill tests: the
- * input is uploaded to a DeviceBuffer, scanned into a second buffer, and read back.
- */
+// Run an out-of-place exclusive scan on the device backend with an explicit init.
+// Mirrors the raw-pointer driving used by the parallel_sort/parallel_fill tests: the
+// input is uploaded to a DeviceBuffer, scanned into a second buffer, and read back.
 template <typename T>
 std::vector<T>
 device_scan(const std::vector<T>& input, const T init) {
@@ -48,7 +45,7 @@ device_scan(const std::vector<T>& input, const T init) {
     return to_host(out);
 }
 
-/** Serial reference exclusive scan computed entirely on the host. */
+// Serial reference exclusive scan computed entirely on the host.
 template <typename T>
 std::vector<T>
 serial_reference(const std::vector<T>& input, const T init) {
@@ -57,12 +54,8 @@ serial_reference(const std::vector<T>& input, const T init) {
     return reference;
 }
 
-/**
- * @brief A host+device associative "running maximum" combiner.
- *
- * Annotated so the CUDA device branch of exclusive_scan can instantiate it, unlike a
- * bare std::max functor.
- */
+// A host+device associative "running maximum" combiner. Annotated so the CUDA device
+// branch of exclusive_scan can instantiate it, unlike a bare std::max functor.
 struct MaxOp {
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE int
     operator()(const int a, const int b) const noexcept {

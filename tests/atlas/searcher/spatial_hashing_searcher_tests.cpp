@@ -120,7 +120,7 @@ query_neighbor_flags(const SpatialHashingSearcher& searcher,
                     for (int ix = low.x; ix <= high.x; ++ix) {
                         const std::uint32_t key = SpatialHashingSearcher::linear_key(ix, iy, iz, grid);
                         const int start         = view.cell_start[key];
-                        if (start < 0) continue;
+                        if (start < 0) continue; // -1 sentinel: no particle classified into this cell
                         const int end = view.cell_end[key];
                         for (int slot = start; slot < end; ++slot) {
                             const int particle = view.sorted_index[slot];

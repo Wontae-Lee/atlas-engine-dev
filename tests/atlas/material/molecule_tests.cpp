@@ -33,7 +33,7 @@ TEST(Molecule, DefaultConstructionMatchesDocumentedDefaults) {
     EXPECT_NEAR(leaf.vibrational_energy(), 0.0f, tol);
     EXPECT_NEAR(leaf.reference_diameter(), 0.0f, tol);
     EXPECT_NEAR(leaf.reference_temperature(), 0.0f, tol);
-    /** A default-constructed molecule is a hard sphere, not a degenerate one. */
+    // A default-constructed molecule is a hard sphere, not a degenerate one.
     EXPECT_NEAR(leaf.viscosity_index(), 0.5f, tol);
     EXPECT_NEAR(leaf.scattering_parameter(), 1.0f, tol);
 }
@@ -52,7 +52,7 @@ TEST(Molecule, ExplicitConstructionExposesEveryProperty) {
 }
 
 TEST(Molecule, StoresNonPhysicalValuesWithoutValidation) {
-    /** No is_valid() exists; degenerate inputs are echoed back unchanged. */
+    // No is_valid() exists; degenerate inputs are echoed back unchanged.
     const Molecule leaf(-1.0f, 0.0f, 0.0f, 0.0f, -2.0f, -3.0f, 0.5f, 1.0f);
 
     EXPECT_NEAR(leaf.mass(), -1.0f, tol);

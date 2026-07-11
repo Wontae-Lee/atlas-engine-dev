@@ -12,18 +12,18 @@ namespace {
 
 using atlas::TypeStore;
 
-/// Common base so several unrelated payloads can share one store.
+// Common base so several unrelated payloads can share one store.
 struct State {
     virtual ~State() = default;
 };
 
-/// A trivial host payload carrying an int tag.
+// A trivial host payload carrying an int tag.
 struct AlphaState final : State {
     explicit AlphaState(const int tag) : tag(tag) { }
     int tag;
 };
 
-/// A second, independent payload type keyed separately from AlphaState.
+// A second, independent payload type keyed separately from AlphaState.
 struct BetaState final : State {
     explicit BetaState(const double value) : value(value) { }
     double value;

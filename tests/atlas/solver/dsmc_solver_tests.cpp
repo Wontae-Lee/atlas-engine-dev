@@ -55,12 +55,16 @@ TEST(DsmcSolver, ExplicitConstructorStoresParameters) {
 }
 
 TEST(DsmcSolver, BuilderRejectsMajorantSamplePairsBelowOne) {
+    // Estimating a large cell's majorant (sigma*g)_max needs at least one sampled pair; zero
+    // samples would leave the NTC acceptance bound undefined.
     EXPECT_THROW(
         static_cast<void>(DsmcSolver::builder().with_majorant_sample_pairs(0).build()),
         std::runtime_error);
 }
 
 TEST(DsmcSolver, BuilderRejectsMajorantExhaustiveLimitBelowTwo) {
+    // Below this occupancy the majorant is scanned exactly, and a collision pair needs two
+    // particles, so a limit under two could never enclose one.
     EXPECT_THROW(
         static_cast<void>(DsmcSolver::builder().with_majorant_exhaustive_limit(1).build()),
         std::runtime_error);
