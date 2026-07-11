@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <stdexcept>
 
 namespace {
 
@@ -267,4 +268,48 @@ TEST(Cylinder, OpenTubeTraceHitsTheLateralWall) {
     EXPECT_NEAR(hit.distance, 4.0f, 1.0e-6f);
     expect_vec_near(hit.point, Float3(-1.0f, 0.0f, 0.0f));
     expect_vec_near(hit.normal, Float3(-1.0f, 0.0f, 0.0f));
+}
+
+TEST(Cylinder, BuilderBuildsValidatedCappedCylinder) {
+    const Cylinder cylinder = Cylinder::builder()
+                                  .with_center(Float3(1.0f, 2.0f, 3.0f))
+                                  .with_radius(2.0f)
+                                  .with_height(4.0f)
+                                  .build();
+
+    expect_vec_near(cylinder.center, Float3(1.0f, 2.0f, 3.0f));
+    EXPECT_FLOAT_EQ(cylinder.radius, 2.0f);
+    EXPECT_FLOAT_EQ(cylinder.height, 4.0f);
+    EXPECT_FALSE(cylinder.open); // capped by default
+    EXPECT_TRUE(cylinder.is_valid());
+}
+
+TEST(Cylinder, BuilderWithOpenProducesAnUncappedTube) {
+    // Unlike the three-argument constructor (which forces open = false), the builder's
+    // with_open(true) carries the flag through to the built cylinder.
+    const Cylinder tube = Cylinder::builder()
+                              .with_radius(1.0f)
+                              .with_height(2.0f)
+                              .with_open(true)
+                              .build();
+
+    EXPECT_TRUE(tube.open);
+}
+
+TEST(Cylinder, BuilderRejectsNonPositiveRadiusOrHeight) {
+    EXPECT_THROW(static_cast<void>(Cylinder::builder().with_radius(0.0f).build()),
+                 std::runtime_error);
+    EXPECT_THROW(static_cast<void>(Cylinder::builder().with_height(-1.0f).build()),
+                 std::runtime_error);
+}
+
+TEST(Cylinder, BuilderMakeHostSharedBuildsCylinder) {
+    const auto cylinder = Cylinder::builder()
+                              .with_radius(3.0f)
+                              .with_height(6.0f)
+                              .make_host_shared();
+
+    ASSERT_TRUE(static_cast<bool>(cylinder));
+    EXPECT_FLOAT_EQ(cylinder->radius, 3.0f);
+    EXPECT_FLOAT_EQ(cylinder->height, 6.0f);
 }

@@ -54,8 +54,8 @@ docker run --rm -it -v "$PWD":/workspace atlas-dev
   `build-cuda-debug`, `build-cuda-release`
 - Test: `ctest-tbb-debug`, `ctest-tbb-nvcc-debug`, `ctest-cuda-debug`
 
-The debug presets turn logging, tests, the Python module, and the benchmarks on;
-the release presets turn all four off.
+The debug presets turn logging, tests, the Python module, the examples, and the
+benchmarks on; the release presets turn all five off.
 
 ---
 
@@ -65,7 +65,7 @@ Important options:
 
 - `ATLAS_DEVICE_SYSTEM` — `TBB` (CPU, default) or `CUDA` (GPU)
 - `ATLAS_LOGGING`, `ATLAS_PYTHON`
-- `ATLAS_GOOGLE_TEST`, `ATLAS_BENCHMARKS`
+- `ATLAS_GOOGLE_TEST`, `ATLAS_BENCHMARKS`, `ATLAS_EXAMPLES`
 
 Constraints:
 
@@ -74,7 +74,8 @@ Constraints:
   sources (`ATLAS_DEVICE_SYSTEM=CUDA` or `ATLAS_HOST_COMPILER=nvcc`).
 - Benchmarks build under both backends; they are wired only when
   `ATLAS_BENCHMARKS` is on.
-- `ATLAS_PYTHON` requires a Python 3.8+ interpreter with development headers.
+- `ATLAS_PYTHON` requires a Python 3.8+ interpreter with development headers and
+  the nanobind submodule; see [python.md](python.md) for the module.
 
 ---
 
@@ -97,9 +98,9 @@ test lands in the aggregate `atlas_tests` target, and each directory also gets
 its own executable named after the path relative to `tests/atlas/` — so
 `tests/atlas/sink/` builds `atlas_tests_sink`.
 
-Tests mirror `include/atlas/`: nearly every module has a directory under
+Tests mirror `include/atlas/`: every module has a directory under
 `tests/atlas/`. The covered modules are `buffer`, `codec`, `collider`,
-`container`, `core`, `fluid`, `generator`, `geometry`, `material`, `math`,
-`memory`, `observer`, `parallel`, `random`, `sampling`, `scan`, `searcher`,
-`sink`, `solver`, `source`, `spatial`, `sync`, `system`, `unit`, and
-`universe`.
+`container`, `core`, `fluid`, `generator`, `geometry`, `logging`, `material`,
+`math`, `memory`, `observer`, `parallel`, `random`, `sampling`, `scan`,
+`searcher`, `serialization`, `sink`, `solver`, `source`, `spatial`, `sync`,
+`system`, `unit`, and `universe`.

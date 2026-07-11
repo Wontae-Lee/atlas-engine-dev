@@ -56,7 +56,7 @@ TEST(Solid, MassConstructorStoresMassWhileStubsStayOne) {
 }
 
 TEST(Solid, StubValuesAreIndependentOfMass) {
-    /** The 1.0f stubs are constants; changing the mass never changes them. */
+    // The 1.0f stubs are constants; changing the mass never changes them.
     const Solid light(0.001f);
     const Solid heavy(1000.0f);
 
@@ -72,7 +72,8 @@ TEST(Solid, RoundTripsThroughMaterialUmbrella) {
 
     EXPECT_EQ(material.type, MaterialType::solid);
     EXPECT_NEAR(material.mass(), leaf.mass(), tol);
-    /** Forwarded non-mass getters surface the leaf's 1.0f stubs. */
+    // Forwarded non-mass getters surface the leaf's 1.0f stubs, which keep the VHS/VSS
+    // divisions and powers finite when a wall species reaches a kernel.
     EXPECT_NEAR(material.reference_diameter(), 1.0f, tol);
     EXPECT_NEAR(material.translational_energy(), 1.0f, tol);
 }

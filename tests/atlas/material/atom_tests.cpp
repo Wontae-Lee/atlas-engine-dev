@@ -35,7 +35,7 @@ TEST(Atom, DefaultConstructionMatchesDocumentedDefaults) {
     EXPECT_NEAR(leaf.vibrational_energy(), 0.0f, tol);
     EXPECT_NEAR(leaf.reference_diameter(), 0.0f, tol);
     EXPECT_NEAR(leaf.reference_temperature(), 0.0f, tol);
-    /** The two VHS/VSS exponents keep their in-class defaults, not 0. */
+    // The two VHS/VSS exponents keep their in-class defaults, not 0.
     EXPECT_NEAR(leaf.viscosity_index(), 0.5f, tol);
     EXPECT_NEAR(leaf.scattering_parameter(), 1.0f, tol);
 }
@@ -54,11 +54,9 @@ TEST(Atom, ExplicitConstructionExposesEveryProperty) {
 }
 
 TEST(Atom, RotationalAndVibrationalFieldsArePresentButNotForcedToZero) {
-    /**
-     * A monatomic species physically carries no rotational or vibrational
-     * modes, yet the fields are still stored and echoed verbatim; the header
-     * documents them as "nominally 0" but performs no clamping.
-     */
+    // A monatomic species physically carries no rotational or vibrational modes, yet the fields
+    // are still stored and echoed verbatim; the header documents them as "nominally 0" but
+    // performs no clamping.
     const Atom leaf(1.0f, 0.0f, 4.0f, 5.0f, 1.0f, 1.0f, 0.5f, 1.0f);
 
     EXPECT_NEAR(leaf.rotational_energy(), 4.0f, tol);
@@ -66,10 +64,8 @@ TEST(Atom, RotationalAndVibrationalFieldsArePresentButNotForcedToZero) {
 }
 
 TEST(Atom, StoresNonPhysicalValuesWithoutValidation) {
-    /**
-     * There is no is_valid() and no clamping: degenerate inputs (non-positive
-     * mass/diameter/temperature) are stored and returned unchanged.
-     */
+    // There is no is_valid() and no clamping: degenerate inputs (non-positive
+    // mass/diameter/temperature) are stored and returned unchanged.
     const Atom leaf(-1.0f, 0.0f, 0.0f, 0.0f, -2.0f, -3.0f, 0.5f, 1.0f);
 
     EXPECT_NEAR(leaf.mass(), -1.0f, tol);

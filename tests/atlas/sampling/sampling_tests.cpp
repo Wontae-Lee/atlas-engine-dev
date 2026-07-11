@@ -19,13 +19,13 @@ using atlas::default_random_engine;
 using atlas::Float3;
 using atlas::uniform_real_distribution;
 
-/** A fixed seed so every statistical case is deterministic run to run. */
+// A fixed seed so every statistical case is deterministic run to run.
 constexpr default_random_engine::result_type sampling_seed = 1234567u;
 
-/** How many draws the statistical cases average over; large enough to be tight, fast enough not to drag. */
+// How many draws the statistical cases average over; large enough to be tight, fast enough not to drag.
 constexpr int statistical_sample_count = 100000;
 
-/** Assert a direction is unit length within a float-trig tolerance. */
+// Assert a direction is unit length within a float-trig tolerance.
 void
 expect_unit_length(const Float3& v) {
     EXPECT_NEAR(v.length(), 1.0f, 1e-4f);

@@ -85,6 +85,8 @@ TEST(Observer, MakeHostSharedProducesAConfiguredObserver) {
 TEST(Observer, ResizeCountersAllocatesRowMajorAndZeroFills) {
     Observer observer = Observer::builder().build();
 
+    // Arguments are (source count, sink count, species count); spawned is laid out
+    // row-major as sources x species, despawned as sinks x species.
     observer.resize_counters(2, 3, 4);
 
     EXPECT_EQ(observer.species_count(), 4u);
@@ -179,6 +181,63 @@ TEST(Observer, ObserveSerializesSpawnCountersToCsv) {
 
     // No sinks were configured, so no sink file is produced.
     EXPECT_FALSE(std::filesystem::exists(root / "data" / "sink_5.csv"));
+
+    std::filesystem::remove_all(root);
+}
+
+TEST(Observer, ObserveSerializesDespawnCountersToCsv) {
+    const std::filesystem::path root
+        = std::filesystem::temp_directory_path() / "atlas_observer_despawn_csv";
+    std::filesystem::remove_all(root);
+
+    Observer observer = Observer::builder()
+                            .with_interval(5)
+                            .with_output_directory(root)
+                            .build();
+
+    // Two sinks, three species, no sources: despawn matrix [sink][species].
+    observer.resize_counters(0, 2, 3);
+    const std::vector<int> values { 1, 2, 3, 4, 5, 6 };
+    const HostBuffer<int> despawn_values(values.begin(), values.end());
+    observer.despawned() = atlas::DeviceBuffer<int>(despawn_values.begin(), despawn_values.end());
+
+    observer.observe(make_empty_fluid(), make_universe(), 5);
+
+    const std::filesystem::path sink_csv = root / "data" / "sink_5.csv";
+    ASSERT_TRUE(std::filesystem::exists(sink_csv));
+
+    const std::string text = slurp(sink_csv);
+    EXPECT_NE(text.find("sink,species_0,species_1,species_2"), std::string::npos);
+    EXPECT_NE(text.find("0,1,2,3"), std::string::npos);
+    EXPECT_NE(text.find("1,4,5,6"), std::string::npos);
+
+    // No sources were configured, so no source file is produced.
+    EXPECT_FALSE(std::filesystem::exists(root / "data" / "source_5.csv"));
+
+    std::filesystem::remove_all(root);
+}
+
+TEST(Observer, ObserveWritesFluidCsvForLiveParticles) {
+    const std::filesystem::path root
+        = std::filesystem::temp_directory_path() / "atlas_observer_fluid_csv";
+    std::filesystem::remove_all(root);
+
+    const Observer observer = Observer::builder()
+                                  .with_interval(5)
+                                  .with_output_directory(root)
+                                  .build();
+
+    // A fluid with live particles yields one row per particle plus the mandatory columns.
+    const Fluid fluid = Fluid::builder().with_buffer_size(3).with_particle_count(3).build();
+
+    observer.observe(fluid, make_universe(), 5);
+
+    const std::filesystem::path fluid_csv = root / "data" / "fluid_5.csv";
+    ASSERT_TRUE(std::filesystem::exists(fluid_csv));
+
+    const std::string text = slurp(fluid_csv);
+    // The header names the particle index column and the expanded position columns.
+    EXPECT_NE(text.find("particle,position_x,position_y,position_z"), std::string::npos);
 
     std::filesystem::remove_all(root);
 }

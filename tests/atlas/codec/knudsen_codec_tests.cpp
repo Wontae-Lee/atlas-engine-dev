@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <stdexcept>
 #include <type_traits>
 
@@ -115,6 +116,15 @@ TEST(KnudsenCodecKnudsenNumber, NonPositiveCharacteristicLengthYieldsZero) {
     EXPECT_FLOAT_EQ(codec.knudsen_number(5.0f), 0.0f);
 }
 
+TEST(KnudsenCodecKnudsenNumber, NanParticleCountYieldsZero) {
+    const KnudsenCodec codec {};
+
+    // A NaN particle count makes the number density NaN; the `!(number_density > 0)`
+    // guard rejects it (a NaN comparison is false), so the fallback of exactly 0 wins.
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+    EXPECT_FLOAT_EQ(codec.knudsen_number(nan), 0.0f);
+}
+
 // Split table is fixed at {0.01, 0.1, 1.0, 10.0}; solver_index counts thresholds the
 // value meets or exceeds, so a value exactly at a threshold buckets into the higher index.
 
@@ -157,4 +167,14 @@ TEST(KnudsenCodecSolverIndex, LastThresholdSaturatesAtSplitCount) {
     EXPECT_EQ(codec.solver_index(9.99f), 3);
     EXPECT_EQ(codec.solver_index(10.0f), KnudsenCodec::split_count);
     EXPECT_EQ(codec.solver_index(100.0f), KnudsenCodec::split_count);
+}
+
+TEST(KnudsenCodecSolverIndex, NanSaturatesToSplitCount) {
+    const KnudsenCodec codec {};
+
+    // The bucketing test is `!(kn < split)`, which is TRUE for a NaN kn (every NaN
+    // comparison is false), so the loop advances at each threshold and saturates at
+    // split_count rather than stopping at 0.
+    const float nan = std::numeric_limits<float>::quiet_NaN();
+    EXPECT_EQ(codec.solver_index(nan), KnudsenCodec::split_count);
 }

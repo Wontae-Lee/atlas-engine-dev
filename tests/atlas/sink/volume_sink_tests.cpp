@@ -124,3 +124,19 @@ TEST(VolumeSink, AdvanceMovesUnit) {
 
     EXPECT_NEAR(sink.unit().sync().translation.z, 0.5f, tol);
 }
+
+TEST(VolumeSink, DespawnFollowsMovedUnit) {
+    // The interior test runs in the unit's local frame, so advancing the boundary
+    // must move where the absorbing volume lies in world space.
+    auto sink = VolumeSink::builder()
+                    .with_unit(make_dynamic_box_unit(Float3(1.0f, 0.0f, 0.0f)))
+                    .build();
+
+    // Before moving, world x = 1.5 is outside the box (spanning world x in [-1, 1]).
+    EXPECT_FALSE(sink.despawn(Float3(1.5f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+
+    sink.advance(1.0f); // translation.x -> 1, so the box now spans world x in [0, 2].
+
+    // World x = 1.5 maps to local (0.5, 0, 0), now inside the moved volume.
+    EXPECT_TRUE(sink.despawn(Float3(1.5f, 0.0f, 0.0f), Float3(0.0f, 0.0f, 0.0f), 0.0f));
+}

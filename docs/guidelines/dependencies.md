@@ -41,9 +41,12 @@ Do not introduce new dependencies unless explicitly requested.
 
 ## 2. Benchmark Reference Code
 
-`benchmarks/` currently holds only Atlas's own benchmark targets — the
-`benchmarks/atlas/` cases (for example `cylinder/`), built on Google Benchmark
-and wired only when `ATLAS_BENCHMARKS` is on.
+`benchmarks/` holds Atlas's own Google Benchmark cases under `benchmarks/atlas/`
+(each a `main.cpp` built into `atlas_benchmark_<case>_gbench`), wired only when
+`ATLAS_BENCHMARKS` is on. Only a `smoke` case exists for now; the representative
+cases are to be rewritten. Standalone, framework-free simulations live under
+[`examples/cpp/`](../../examples/cpp/) instead (for example `cylinder/`), built
+with `ATLAS_EXAMPLES`.
 
 The four external reference projects — `piclas`, `sparta`, `splishsplash`, and
 `dumux` — were once wired through `ExternalProject_Add`, but they were removed

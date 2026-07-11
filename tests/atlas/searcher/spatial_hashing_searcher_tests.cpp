@@ -7,6 +7,7 @@
 #include <atlas/memory/raw_pointer_cast.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/searcher/spatial_hashing_searcher_view.h>
+#include <atlas/universe/universe.h>
 #include <atlas/universe/universe_state.h>
 
 #include <gtest/gtest.h>
@@ -32,6 +33,7 @@ using atlas::Int3;
 using atlas::raw_pointer_cast;
 using atlas::SpatialHashingSearcher;
 using atlas::SpatialHashingSearcherView;
+using atlas::Universe;
 using atlas::UniverseNumberParticleState;
 
 /** The view is captured by value inside a device lambda, so it must stay trivially copyable. */
@@ -118,7 +120,7 @@ query_neighbor_flags(const SpatialHashingSearcher& searcher,
                     for (int ix = low.x; ix <= high.x; ++ix) {
                         const std::uint32_t key = SpatialHashingSearcher::linear_key(ix, iy, iz, grid);
                         const int start         = view.cell_start[key];
-                        if (start < 0) continue;
+                        if (start < 0) continue; // -1 sentinel: no particle classified into this cell
                         const int end = view.cell_end[key];
                         for (int slot = start; slot < end; ++slot) {
                             const int particle = view.sorted_index[slot];
@@ -627,5 +629,99 @@ TEST(SpatialHashingSearcher, ResetClearsClassificationButKeepsGeometry) {
     for (std::size_t cell = 0; cell < cells; ++cell) {
         EXPECT_EQ(start[cell], -1);
         EXPECT_EQ(end[cell], -1);
+    }
+}
+
+TEST(SpatialHashingSearcherBuilder, WithUniverseMirrorsTheUniverseGrid) {
+    // with_universe copies lower_corner, cell_size and grid_size from the universe so
+    // the two grids coincide; the searcher's cells then line up with the universe's.
+    const Universe universe(Float3(-1.0f, 0.0f, 2.0f), Float3(3.0f, 4.0f, 6.0f), 1.0f);
+
+    const SpatialHashingSearcher searcher = SpatialHashingSearcher::builder()
+                                                .with_universe(universe)
+                                                .build();
+
+    EXPECT_EQ(searcher.lower_corner(), universe.lower_corner());
+    EXPECT_FLOAT_EQ(searcher.cell_size(), universe.cell_size());
+    EXPECT_EQ(searcher.grid_size(), universe.grid_size());
+    EXPECT_EQ(searcher.cell_count(), universe.cell_count());
+}
+
+TEST(SpatialHashingSearcher, ClassifyRejectsNullPositionsAndResets) {
+    const Float3 lower(0.0f, 0.0f, 0.0f);
+    const Int3 grid(2, 2, 2);
+
+    const std::vector<Float3> points { Float3(0.5f, 0.5f, 0.5f), Float3(1.5f, 1.5f, 1.5f) };
+    FluidPositionState populated    = make_positions(points);
+    SpatialHashingSearcher searcher = make_searcher(lower, 1.0f, grid);
+    searcher.classify(&populated, nullptr, static_cast<int>(points.size()));
+
+    // A null position field is unusable input: the searcher falls back to the empty state.
+    searcher.classify(nullptr, nullptr, static_cast<int>(points.size()));
+
+    const auto cells             = static_cast<std::size_t>(searcher.cell_count());
+    const std::vector<int> start = to_host(searcher.cell_start(), cells);
+    const std::vector<int> end   = to_host(searcher.cell_end(), cells);
+    for (std::size_t cell = 0; cell < cells; ++cell) {
+        EXPECT_EQ(start[cell], -1);
+        EXPECT_EQ(end[cell], -1);
+    }
+}
+
+TEST(SpatialHashingSearcher, ClassifyRejectsCountLargerThanBufferAndResets) {
+    const Float3 lower(0.0f, 0.0f, 0.0f);
+    const Int3 grid(2, 2, 2);
+
+    const std::vector<Float3> points { Float3(0.5f, 0.5f, 0.5f), Float3(1.5f, 1.5f, 1.5f) };
+    FluidPositionState positions    = make_positions(points);
+    SpatialHashingSearcher searcher = make_searcher(lower, 1.0f, grid);
+    searcher.classify(&positions, nullptr, static_cast<int>(points.size()));
+
+    // A count exceeding the position buffer must be rejected rather than read out of bounds.
+    searcher.classify(&positions, nullptr, static_cast<int>(points.size()) + 100);
+
+    const auto cells             = static_cast<std::size_t>(searcher.cell_count());
+    const std::vector<int> start = to_host(searcher.cell_start(), cells);
+    const std::vector<int> end   = to_host(searcher.cell_end(), cells);
+    for (std::size_t cell = 0; cell < cells; ++cell) {
+        EXPECT_EQ(start[cell], -1);
+        EXPECT_EQ(end[cell], -1);
+    }
+}
+
+TEST(SpatialHashingSearcher, CopyConstructionPreservesGeometryAndClassification) {
+    const Float3 lower(0.0f, 0.0f, 0.0f);
+    const Int3 grid(2, 2, 2);
+
+    const std::vector<Float3> points {
+        Float3(0.5f, 0.5f, 0.5f), // key 0
+        Float3(0.2f, 0.2f, 0.2f), // key 0
+        Float3(1.5f, 1.5f, 1.5f), // key 7
+    };
+    const auto count = static_cast<int>(points.size());
+
+    FluidPositionState positions  = make_positions(points);
+    SpatialHashingSearcher source = make_searcher(lower, 1.0f, grid);
+    source.classify(&positions, nullptr, count);
+
+    // The searcher declares no special members and its DeviceBuffers are copyable, so it
+    // is copy-constructible (not move-only); the copy owns an independent classification.
+    const SpatialHashingSearcher copy(source);
+
+    EXPECT_EQ(copy.grid_size(), grid);
+    EXPECT_EQ(copy.cell_count(), 8);
+    EXPECT_FLOAT_EQ(copy.cell_size(), 1.0f);
+
+    const auto cells             = static_cast<std::size_t>(copy.cell_count());
+    const std::vector<int> hist  = reference_histogram(points, lower, copy.inverse_cell_size(), grid);
+    const std::vector<int> start = to_host(copy.cell_start(), cells);
+    const std::vector<int> end   = to_host(copy.cell_end(), cells);
+
+    for (std::size_t cell = 0; cell < cells; ++cell) {
+        if (hist[cell] == 0) {
+            EXPECT_EQ(start[cell], -1);
+        } else {
+            EXPECT_EQ(end[cell] - start[cell], hist[cell]);
+        }
     }
 }

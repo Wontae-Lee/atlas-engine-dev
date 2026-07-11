@@ -2,13 +2,12 @@
  * @file main.cu
  * @brief Rarefied crossflow over a cylinder, driven straight through the Atlas API.
  *
- * A standalone DSMC case: nitrogen streams along +z past the cylinder mesh in
- * `assets/cylinder.obj`, which lies along the x axis. No Google Benchmark, no
- * harness — it builds a System, steps it, and prints wall-clock timings. The
- * Google Benchmark variant of the same case lives in `main.cpp`.
+ * A standalone DSMC example: nitrogen streams along +z past the cylinder mesh in
+ * `assets/cylinder.obj`, which lies along the x axis. No harness — it builds a
+ * System, steps it, and prints wall-clock timings.
  *
  * Usage:
- *   atlas_benchmark_cylinder [steps] [assets_dir] [output_dir]
+ *   atlas_example_cylinder [steps] [assets_dir] [output_dir]
  */
 
 #include <atlas/atlas.h>
@@ -112,7 +111,7 @@ int
 main(int argc, char** argv) {
     const std::size_t steps = (argc > 1) ? std::strtoul(argv[1], nullptr, 10) : 200;
 
-    const std::filesystem::path assets = (argc > 2) ? argv[2] : ATLAS_BENCHMARK_ASSETS_DIR;
+    const std::filesystem::path assets = (argc > 2) ? argv[2] : ATLAS_EXAMPLE_ASSETS_DIR;
     const std::filesystem::path output = (argc > 3) ? argv[3] : "cylinder_out";
 
     const std::filesystem::path mesh_path = assets / "cylinder.obj";

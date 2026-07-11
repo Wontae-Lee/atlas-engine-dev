@@ -200,6 +200,58 @@ TEST(DsmcKernel, ScatterThroughUmbrellaConservesMomentum) {
     EXPECT_NEAR(momentum_post.z, momentum_pre.z, 1.0e-3f * std::abs(momentum_pre.z) + 1.0e-2f);
 }
 
+TEST(DsmcKernel, SigmaGEqualsCrossSectionTimesRelativeSpeed) {
+    // sigma_g takes the SQUARED relative speed and must internally take the square root once,
+    // returning cross_section(pair, g) * g. Feeding g*g here and comparing against an independent
+    // cross_section(..., g) * g nails that contract for every leaf.
+    const Material materials[2] = { nitrogen(), argon() };
+    const float    relative_speed = 1000.0f;
+
+    for (const DsmcKernelType type : { DsmcKernelType::hard_sphere,
+                                       DsmcKernelType::variable_hard_sphere,
+                                       DsmcKernelType::variable_soft_sphere }) {
+        const DsmcKernel kernel(type);
+
+        const float expected = kernel.cross_section(materials[0], materials[1], relative_speed) * relative_speed;
+        const float actual   = kernel.sigma_g(materials, 0, 1, relative_speed * relative_speed);
+
+        EXPECT_GT(expected, 0.0f) << "type = " << static_cast<int>(type);
+        EXPECT_NEAR(actual, expected, std::abs(expected) * 1.0e-4f)
+            << "type = " << static_cast<int>(type);
+    }
+}
+
+TEST(DsmcKernel, SigmaGIndexesMaterialsBySpecies) {
+    // sigma_g reads materials[lhs_species] and materials[rhs_species] without a bounds check, so
+    // it must actually honour the indices. Species 0 is a zero-diameter atom (hard-sphere cross
+    // section 0) and species 1 a real atom, which lets the selected entries drive the outcome.
+    const Material materials[2] = {
+        Material(Atom(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 273.0f, 0.5f, 1.0f)),
+        Material(Atom(1.0f, 0.0f, 0.0f, 0.0f, 3.0e-10f, 273.0f, 0.5f, 1.0f)),
+    };
+
+    const DsmcKernel kernel(DsmcKernelType::hard_sphere);
+    const float      relative_speed_squared = 500.0f * 500.0f;
+
+    // A pair of zero-diameter species carries no cross section; a pair of real ones does.
+    EXPECT_FLOAT_EQ(kernel.sigma_g(materials, 0, 0, relative_speed_squared), 0.0f);
+    EXPECT_GT(kernel.sigma_g(materials, 1, 1, relative_speed_squared), 0.0f);
+
+    // The cross section is symmetric in the pair, so swapping the indices must not change it.
+    EXPECT_FLOAT_EQ(kernel.sigma_g(materials, 0, 1, relative_speed_squared),
+                    kernel.sigma_g(materials, 1, 0, relative_speed_squared));
+}
+
+TEST(DsmcKernel, NormalizesOutOfRangeTypeToHardSphere) {
+    // The explicit constructor routes through DeviceVariant::normalize, so an out-of-range tag
+    // folds to the default hard-sphere arm rather than selecting a non-existent union member.
+    const DsmcKernel kernel(static_cast<DsmcKernelType>(999));
+
+    EXPECT_EQ(kernel.type, DsmcKernelType::hard_sphere);
+    EXPECT_FLOAT_EQ(kernel.cross_section(nitrogen(), argon(), 800.0f),
+                    HardSphereKernel::cross_section(nitrogen(), argon(), 800.0f));
+}
+
 TEST(DsmcKernel, ScatterForwardsEngineToActiveLeaf) {
     // The umbrella must draw from the same stream and produce the same post-collision state as
     // invoking the active leaf directly with an identically seeded engine.

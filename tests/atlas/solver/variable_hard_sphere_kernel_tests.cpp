@@ -2,6 +2,7 @@
 
 #include <atlas/material/atom.h>
 #include <atlas/material/material.h>
+#include <atlas/material/solid.h>
 #include <atlas/math/math.h>
 #include <atlas/random/default_random_engine.h>
 
@@ -17,6 +18,7 @@ namespace {
 using atlas::Atom;
 using atlas::Float3;
 using atlas::Material;
+using atlas::Solid;
 using atlas::VariableHardSphereKernel;
 
 /** The leaf is a stateless POD, so it must be copyable into the device union and default-usable. */
@@ -135,6 +137,25 @@ TEST(VariableHardSphereKernel, CrossSectionIsZeroForOutOfRangeViscosityIndex) {
     const Material material = species(6.63e-26f, 4.17e-10f, 273.0f, 3.0f);
 
     EXPECT_FLOAT_EQ(VariableHardSphereKernel::cross_section(material, material, 1000.0f), 0.0f);
+}
+
+TEST(VariableHardSphereKernel, SolidPartnerStaysFiniteViaUnitStubs) {
+    // Solid stubs every non-mass property to 1.0f precisely so the VHS math (which divides by and
+    // takes powers of reference diameter/temperature and the viscosity index) stays well-defined
+    // rather than producing NaN/Inf when a wall species is accidentally fed to the kernel. With
+    // mass > 0 and every stub positive, the cross section must be finite and positive.
+    const Material solid  = Material(Solid(5.0e-26f));
+    const Material normal = species(6.63e-26f, 4.17e-10f, 273.0f, 0.75f);
+
+    for (const float relative_speed : { 1.0f, 500.0f, 5000.0f }) {
+        const float solid_pair = VariableHardSphereKernel::cross_section(solid, solid, relative_speed);
+        const float mixed_pair = VariableHardSphereKernel::cross_section(solid, normal, relative_speed);
+
+        EXPECT_TRUE(std::isfinite(solid_pair)) << "relative_speed = " << relative_speed;
+        EXPECT_GT(solid_pair, 0.0f) << "relative_speed = " << relative_speed;
+        EXPECT_TRUE(std::isfinite(mixed_pair)) << "relative_speed = " << relative_speed;
+        EXPECT_GT(mixed_pair, 0.0f) << "relative_speed = " << relative_speed;
+    }
 }
 
 TEST(VariableHardSphereKernel, ConservesMomentumAndEnergyForEqualMasses) {
