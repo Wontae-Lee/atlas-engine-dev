@@ -76,6 +76,17 @@ TEST(Fluid, ConstructorWithMaterialsAttachesDictionary) {
     EXPECT_EQ(fluid.buffer_size(), std::size_t { 8 });
 }
 
+TEST(Fluid, ConstructorWithNullMaterialsLeavesMaterialsNull) {
+    // The two-argument constructor accepts a null dictionary: the mandatory columns
+    // are still allocated, but materials() stays null.
+    const Fluid fluid(8, MaterialDictionaryHostPtr {});
+    EXPECT_EQ(fluid.buffer_size(), std::size_t { 8 });
+    EXPECT_EQ(fluid.materials(), nullptr);
+    EXPECT_TRUE(fluid.has_state<FluidPositionState>());
+    EXPECT_TRUE(fluid.has_state<FluidVelocityState>());
+    EXPECT_TRUE(fluid.has_state<FluidSpeciesState>());
+}
+
 TEST(Fluid, SetParticleCountUpdatesLiveCount) {
     Fluid fluid(16);
     fluid.set_particle_count(10);

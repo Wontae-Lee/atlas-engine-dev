@@ -168,3 +168,16 @@ TEST(VolumeSource, SpawnTwiceAppendsAtSuccessiveOffsets) {
     EXPECT_EQ(static_cast<std::size_t>(source.spawn(&positions, 0)), count);
     EXPECT_EQ(static_cast<std::size_t>(source.spawn(&positions, count)), count);
 }
+
+TEST(VolumeSource, SpawnClampsToRemainingBuffer) {
+    // When fewer slots remain than the cache holds, spawn must clamp to the space
+    // left (buffer.size() - offset) and never overrun the target.
+    const auto        source = make_source(make_static_unit(Float3(0.0f, 0.0f, 0.0f)));
+    const std::size_t count  = source.cached_count();
+    ASSERT_GT(count, std::size_t { 3 });
+
+    FluidPositionState positions(count);
+    const int          spawned = source.spawn(&positions, count - 3);
+
+    EXPECT_EQ(spawned, 3);
+}

@@ -334,3 +334,73 @@ TEST(Unit, TraceMissesWhenRayPointsAway) {
 
     EXPECT_FALSE(unit.trace(ray).is_intersecting);
 }
+
+TEST(Unit, RotateAboutZTurnsPoseDirection) {
+    Unit unit = Unit::builder()
+                    .with_geometry(make_unit_box())
+                    .with_sync(make_sync(Float3(0.0f, 0.0f, 0.0f)))
+                    .build();
+
+    // A +90 deg rotation about world z maps a local +x direction to world +y.
+    unit.rotate(Float3(0.0f, 0.0f, 1.0f), pi * 0.5f);
+
+    expect_vec_near(unit.sync().sync_dir_to_world(Float3(1.0f, 0.0f, 0.0f)), Float3(0.0f, 1.0f, 0.0f), 1e-5f);
+}
+
+TEST(Unit, RotateIgnoresAZeroLengthAxis) {
+    Unit unit = Unit::builder()
+                    .with_geometry(make_unit_box())
+                    .with_sync(make_sync(Float3(0.0f, 0.0f, 0.0f)))
+                    .build();
+
+    // A degenerate axis is a guarded no-op: the identity orientation is preserved.
+    unit.rotate(Float3(0.0f, 0.0f, 0.0f), pi * 0.5f);
+
+    expect_vec_near(unit.sync().sync_dir_to_world(Float3(1.0f, 0.0f, 0.0f)), Float3(1.0f, 0.0f, 0.0f), 1e-5f);
+}
+
+TEST(Unit, UpdateRotatesPoseByAngularVelocity) {
+    Unit unit = Unit::builder()
+                    .with_geometry(make_unit_box())
+                    .with_sync(make_sync(Float3(0.0f, 0.0f, 0.0f)))
+                    .with_angular_velocity(Float3(0.0f, 0.0f, 1.0f))
+                    .build();
+
+    // omega magnitude 1 rad/s over dt = pi/2 is a quarter turn about z.
+    unit.update(pi * 0.5f);
+
+    expect_vec_near(unit.sync().sync_dir_to_world(Float3(1.0f, 0.0f, 0.0f)), Float3(0.0f, 1.0f, 0.0f), 1e-5f);
+}
+
+TEST(Unit, SetSyncReplacesThePose) {
+    Unit unit = Unit::builder()
+                    .with_geometry(make_unit_box())
+                    .with_sync(make_sync(Float3(0.0f, 0.0f, 0.0f)))
+                    .build();
+
+    unit.set_sync(Sync::builder().with_rigid_pose(Float3(9.0f, 8.0f, 7.0f), Quaternion(1.0f, 0.0f, 0.0f, 0.0f)).build());
+
+    expect_vec_near(unit.sync().translation, Float3(9.0f, 8.0f, 7.0f));
+}
+
+TEST(Unit, SetGeometryChangesTheWorldBound) {
+    Unit unit = Unit::builder()
+                    .with_geometry(make_unit_box())
+                    .with_sync(make_sync(Float3(0.0f, 0.0f, 0.0f)))
+                    .build();
+
+    unit.set_geometry(make_box(Float3(-2.0f, -2.0f, -2.0f), Float3(2.0f, 2.0f, 2.0f)));
+
+    const AABB bound = unit.world_bound();
+    ASSERT_TRUE(bound.is_valid());
+    expect_vec_near(bound.lower_corner, Float3(-2.0f, -2.0f, -2.0f));
+    expect_vec_near(bound.upper_corner, Float3(2.0f, 2.0f, 2.0f));
+}
+
+TEST(Unit, WorldBoundOfEmptyGeometryIsInvalid) {
+    // A default-constructed Unit carries empty geometry with no valid local bound,
+    // so world_bound() returns a reset (invalid) AABB rather than a garbage box.
+    const Unit unit {};
+
+    EXPECT_FALSE(unit.world_bound().is_valid());
+}

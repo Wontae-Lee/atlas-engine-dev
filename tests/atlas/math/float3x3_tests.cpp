@@ -210,3 +210,39 @@ TEST(Float3x3, RotateSubtractRemovesTheOffsetBeforeRotation) {
     atlas::rotate_subtract(id, input, offset, out);
     EXPECT_TRUE(out == input - offset);
 }
+
+TEST(Float3x3, SetIdentityOverwritesWithTheIdentityMatrix) {
+    Float3x3 m = invertible();
+    m.set_identity();
+    EXPECT_TRUE(m == atlas::identity3x3());
+}
+
+TEST(Float3x3, SetZeroClearsEveryElement) {
+    Float3x3 m = invertible();
+    m.set_zero();
+    EXPECT_TRUE(m == atlas::zero3x3());
+}
+
+TEST(Float3x3, IsInvertibleIsTrueForANonSingularMatrix) {
+    EXPECT_TRUE(invertible().is_invertible());
+}
+
+TEST(Float3x3, SolvedRecoversTheRightHandSide) {
+    // solved() is the unchecked value-returning solve; A * (A^-1 b) must recover b.
+    const Float3x3 a = invertible();
+    const Float3 b(1.0f, 2.0f, 3.0f);
+    const Float3 recovered = a * a.solved(b);
+    EXPECT_NEAR(recovered.x, b.x, 1.0e-4f);
+    EXPECT_NEAR(recovered.y, b.y, 1.0e-4f);
+    EXPECT_NEAR(recovered.z, b.z, 1.0e-4f);
+}
+
+TEST(Float3x3, FreeTwoArgumentSolveMatchesTheMemberSolved) {
+    const Float3x3 a = invertible();
+    const Float3 b(4.0f, -1.0f, 2.0f);
+    const Float3 via_free = atlas::solve(a, b);
+    const Float3 via_member = a.solved(b);
+    EXPECT_NEAR(via_free.x, via_member.x, 1.0e-5f);
+    EXPECT_NEAR(via_free.y, via_member.y, 1.0e-5f);
+    EXPECT_NEAR(via_free.z, via_member.z, 1.0e-5f);
+}

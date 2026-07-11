@@ -13,6 +13,7 @@ namespace {
 
 using atlas::Codec;
 using atlas::CodecType;
+using atlas::CodecVariant;
 using atlas::KnudsenCodec;
 using atlas::SQRT_TWO;
 
@@ -84,6 +85,19 @@ TEST(Codec, MoveAssignReplacesLeafState) {
 
     Codec source(make_weighted_leaf());
     codec = std::move(source);
+
+    EXPECT_EQ(codec.type, CodecType::knudsen);
+    EXPECT_FLOAT_EQ(codec.knudsen.knudsen_number(2.0f),
+                    reference_kn(2.0f, 1.0f, 1.0f, 4.0f, 1.0f));
+}
+
+TEST(Codec, SelfMoveAssignPreservesLeaf) {
+    Codec codec(make_weighted_leaf());
+
+    // Call the dispatcher directly to exercise the self-move guard without tripping the
+    // compiler's self-move-in-assignment diagnostic: nothing is destroyed or rebuilt,
+    // so the leaf's representative scalars stay intact.
+    CodecVariant::move_assign(codec, std::move(codec));
 
     EXPECT_EQ(codec.type, CodecType::knudsen);
     EXPECT_FLOAT_EQ(codec.knudsen.knudsen_number(2.0f),

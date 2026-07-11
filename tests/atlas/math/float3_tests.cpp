@@ -212,3 +212,122 @@ TEST(Float3, NormalizedOrReturnsFallbackForTheZeroVector) {
     EXPECT_TRUE(atlas::normalized_or(Float3(), fallback) == fallback);
     EXPECT_NEAR(atlas::normalized_or(Float3(0.0f, 3.0f, 0.0f), fallback).y, 1.0f, 1.0e-6f);
 }
+
+TEST(Float3, XyDotIgnoresTheZComponent) {
+    // xy_dot sums only the x and y products; the z terms must not contribute.
+    EXPECT_FLOAT_EQ(atlas::xy_dot(Float3(1.0f, 2.0f, 99.0f), Float3(3.0f, 4.0f, -99.0f)), 11.0f);
+}
+
+TEST(Float3, XyNormalizedOrProjectsAndNormalizesInThePlane) {
+    // The xy part (3, 4) has length 5, so the unit result is (0.6, 0.8, 0).
+    const Float3 fallback(1.0f, 0.0f, 0.0f);
+    const Float3 r = atlas::xy_normalized_or(Float3(3.0f, 4.0f, 9.0f), fallback);
+    EXPECT_NEAR(r.x, 0.6f, 1.0e-6f);
+    EXPECT_NEAR(r.y, 0.8f, 1.0e-6f);
+    EXPECT_FLOAT_EQ(r.z, 0.0f);
+}
+
+TEST(Float3, XyNormalizedOrReturnsFallbackWhenTheXyPartIsTooShort) {
+    // A purely vertical vector has a zero-length xy projection, so the fallback stands in.
+    const Float3 fallback(1.0f, 0.0f, 0.0f);
+    EXPECT_TRUE(atlas::xy_normalized_or(Float3(0.0f, 0.0f, 5.0f), fallback) == fallback);
+}
+
+TEST(Float3, TangentialReturnsAnOrthonormalPairSpanningThePlane) {
+    const Float3 n = Float3(1.0f, 2.0f, 3.0f).normalized();
+    const auto tangents = n.tangential();
+    const Float3 t1 = std::get<0>(tangents);
+    const Float3 t2 = std::get<1>(tangents);
+
+    EXPECT_NEAR(t1.length(), 1.0f, 1.0e-5f);
+    EXPECT_NEAR(t2.length(), 1.0f, 1.0e-5f);
+    EXPECT_NEAR(t1.dot(n), 0.0f, 1.0e-5f);
+    EXPECT_NEAR(t2.dot(n), 0.0f, 1.0e-5f);
+    EXPECT_NEAR(t1.dot(t2), 0.0f, 1.0e-5f);
+}
+
+TEST(Float3, FreeTangentialMatchesTheMember) {
+    const Float3 n(0.0f, 0.0f, 1.0f);
+    const auto member = n.tangential();
+    const auto free = atlas::tangential(n);
+    EXPECT_TRUE(std::get<0>(free) == std::get<0>(member));
+    EXPECT_TRUE(std::get<1>(free) == std::get<1>(member));
+}
+
+TEST(Float3, OrthonormalBasisBuildsARightHandedFrame) {
+    const Float3 normal(1.0f, 2.0f, 3.0f);
+    Float3 unit_normal;
+    Float3 tangent;
+    Float3 bitangent;
+    EXPECT_TRUE(atlas::orthonormal_basis(normal, unit_normal, tangent, bitangent));
+
+    EXPECT_NEAR(unit_normal.length(), 1.0f, 1.0e-5f);
+    EXPECT_NEAR(tangent.length(), 1.0f, 1.0e-5f);
+    EXPECT_NEAR(bitangent.length(), 1.0f, 1.0e-5f);
+    EXPECT_NEAR(unit_normal.dot(tangent), 0.0f, 1.0e-5f);
+    EXPECT_NEAR(unit_normal.dot(bitangent), 0.0f, 1.0e-5f);
+    EXPECT_NEAR(tangent.dot(bitangent), 0.0f, 1.0e-5f);
+    // Right-handed: unit_normal x tangent == bitangent.
+    const Float3 cross = unit_normal.cross(tangent);
+    EXPECT_NEAR(cross.x, bitangent.x, 1.0e-5f);
+    EXPECT_NEAR(cross.y, bitangent.y, 1.0e-5f);
+    EXPECT_NEAR(cross.z, bitangent.z, 1.0e-5f);
+}
+
+TEST(Float3, OrthonormalBasisFailsForADegenerateNormal) {
+    Float3 unit_normal;
+    Float3 tangent;
+    Float3 bitangent;
+    // A zero-length normal cannot be normalized, so the builder reports failure.
+    EXPECT_FALSE(atlas::orthonormal_basis(Float3(0.0f, 0.0f, 0.0f), unit_normal, tangent, bitangent));
+}
+
+TEST(Float3, OrthonormalBasisTwoOutputOverloadAlsoSucceeds) {
+    Float3 tangent;
+    Float3 bitangent;
+    EXPECT_TRUE(atlas::orthonormal_basis(Float3(0.0f, 0.0f, 5.0f), tangent, bitangent));
+    EXPECT_NEAR(tangent.length(), 1.0f, 1.0e-5f);
+    EXPECT_NEAR(bitangent.length(), 1.0f, 1.0e-5f);
+    EXPECT_NEAR(tangent.dot(bitangent), 0.0f, 1.0e-5f);
+}
+
+TEST(Float3, OrthogonalUnitVectorIsUnitAndPerpendicular) {
+    const Float3 normal(0.0f, 0.0f, 1.0f);
+    const Float3 seed(1.0f, 0.0f, 0.0f);
+    const Float3 t = atlas::orthogonal_unit_vector(normal, seed);
+    EXPECT_NEAR(t.length(), 1.0f, 1.0e-5f);
+    EXPECT_NEAR(t.dot(normal), 0.0f, 1.0e-5f);
+}
+
+TEST(Float3, OrthogonalUnitVectorFallsBackWhenSeedIsParallelToNormal) {
+    // Seed parallel to normal makes the cross product degenerate, so the arbitrary
+    // orthonormal-basis tangent is used; it must still be unit and perpendicular.
+    const Float3 normal(0.0f, 0.0f, 1.0f);
+    const Float3 t = atlas::orthogonal_unit_vector(normal, normal);
+    EXPECT_NEAR(t.length(), 1.0f, 1.0e-5f);
+    EXPECT_NEAR(t.dot(normal), 0.0f, 1.0e-5f);
+}
+
+TEST(Float3, OrthogonalUnitVectorReturnsWorldXForAFullyDegenerateInput) {
+    // A zero normal and zero seed exhaust every construction, leaving the (1,0,0) fallback.
+    EXPECT_TRUE(atlas::orthogonal_unit_vector(Float3(), Float3()) == Float3(1.0f, 0.0f, 0.0f));
+}
+
+TEST(Float3, SphericalDirectionAboutAnAxisRealizesTheGivenPolarCosine) {
+    const Float3 axis(0.0f, 0.0f, 1.0f);
+    for (const float cos_theta : { 0.3f, -0.5f, 1.0f }) {
+        const Float3 d = atlas::spherical_direction(axis, cos_theta, 0.7f);
+        EXPECT_NEAR(d.length(), 1.0f, 1.0e-4f);
+        EXPECT_NEAR(d.dot(axis), cos_theta, 1.0e-4f);
+    }
+}
+
+TEST(Float3, SphericalDirectionCanonicalFrameUsesZAsThePole) {
+    // With cos_theta = 0 and phi = 0 the direction lies on +x in the z-pole frame.
+    const Float3 d = atlas::spherical_direction(0.0f, 0.0f);
+    EXPECT_NEAR(d.x, 1.0f, 1.0e-6f);
+    EXPECT_NEAR(d.y, 0.0f, 1.0e-6f);
+    EXPECT_NEAR(d.z, 0.0f, 1.0e-6f);
+    // The z component always equals the supplied cosine.
+    EXPECT_NEAR(atlas::spherical_direction(0.42f, 1.3f).z, 0.42f, 1.0e-6f);
+}

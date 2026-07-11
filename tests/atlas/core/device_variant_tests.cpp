@@ -253,6 +253,43 @@ TEST(DeviceVariant, VisitTypeDispatchesByTagAlone) {
     EXPECT_EQ(FigureVariant::visit_type(Kind::unknown, TypeId {}, -1), -1);
 }
 
+TEST(DeviceVariant, CopyConstructInitializesTargetFromSource) {
+    // Exercise the static copy_construct directly (distinct from the `= default`
+    // copy constructor): it activates the source's leaf in an uninitialized target.
+    Figure       target {};
+    const Figure source(Gamma(9));
+
+    FigureVariant::copy_construct(target, source);
+
+    EXPECT_EQ(target.type, Kind::gamma);
+    EXPECT_EQ(FigureVariant::visit(target, ReadValue {}, -1), 9);
+}
+
+TEST(DeviceVariant, CopyConstructNormalizesUnknownSourceTag) {
+    // copy_construct normalizes the source's tag before dispatch — unlike the trivial
+    // `= default` memcpy copy, an out-of-range source tag folds back to DefaultTag while
+    // the still-live default-arm leaf is copied across.
+    Figure source(Alpha(3));
+    source.type = Kind::unknown; // corrupt the tag; the alpha member stays alive
+
+    Figure target {};
+    FigureVariant::copy_construct(target, source);
+
+    EXPECT_EQ(target.type, Kind::alpha);
+    EXPECT_EQ(FigureVariant::visit(target, ReadValue {}, -1), 3);
+}
+
+TEST(DeviceVariant, SelfAssignPreservesActiveLeaf) {
+    // The self-assignment guard returns before destroy/copy, so the active leaf and its
+    // value are left intact rather than destroyed and rebuilt from itself.
+    Figure figure(Beta(5));
+
+    FigureVariant::assign(figure, figure);
+
+    EXPECT_EQ(figure.type, Kind::beta);
+    EXPECT_EQ(FigureVariant::visit(figure, ReadValue {}, -1), 5);
+}
+
 TEST(DeviceTypeSwitch, HoldsReportsMembership) {
     EXPECT_TRUE(FigureSwitch::holds<Alpha>);
     EXPECT_TRUE(FigureSwitch::holds<Gamma>);

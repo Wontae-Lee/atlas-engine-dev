@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 namespace {
 
@@ -197,4 +198,44 @@ TEST(Box, TraceGrazingAlongAFaceStillIntersects) {
     ASSERT_TRUE(hit.is_intersecting);
     EXPECT_NEAR(hit.distance, 4.0f, 1.0e-6f);
     EXPECT_NEAR(hit.point.x, -1.0f, 1.0e-6f);
+}
+
+TEST(Box, BuilderBuildsValidatedBox) {
+    const Box box = Box::builder()
+                        .with_lower_corner(Float3(0.0f, 1.0f, 2.0f))
+                        .with_upper_corner(Float3(3.0f, 4.0f, 5.0f))
+                        .build();
+
+    expect_vec_near(box.lower_corner, Float3(0.0f, 1.0f, 2.0f));
+    expect_vec_near(box.upper_corner, Float3(3.0f, 4.0f, 5.0f));
+    EXPECT_TRUE(box.is_valid());
+}
+
+TEST(Box, BuilderRejectsInvertedCorners) {
+    // upper not strictly greater than lower on every axis is an invalid box.
+    EXPECT_THROW(static_cast<void>(Box::builder()
+                                       .with_lower_corner(Float3(1.0f, 1.0f, 1.0f))
+                                       .with_upper_corner(Float3(0.0f, 2.0f, 2.0f))
+                                       .build()),
+                 std::runtime_error);
+}
+
+TEST(Box, BuilderRejectsCollapsedBox) {
+    // A box flat on a single axis encloses no volume and is rejected.
+    EXPECT_THROW(static_cast<void>(Box::builder()
+                                       .with_lower_corner(Float3(0.0f, 0.0f, 0.0f))
+                                       .with_upper_corner(Float3(1.0f, 1.0f, 0.0f))
+                                       .build()),
+                 std::runtime_error);
+}
+
+TEST(Box, BuilderMakeHostSharedBuildsBox) {
+    const auto box = Box::builder()
+                         .with_lower_corner(Float3(-2.0f, -2.0f, -2.0f))
+                         .with_upper_corner(Float3(2.0f, 2.0f, 2.0f))
+                         .make_host_shared();
+
+    ASSERT_TRUE(static_cast<bool>(box));
+    expect_vec_near(box->lower_corner, Float3(-2.0f, -2.0f, -2.0f));
+    expect_vec_near(box->upper_corner, Float3(2.0f, 2.0f, 2.0f));
 }

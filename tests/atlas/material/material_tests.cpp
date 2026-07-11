@@ -271,6 +271,33 @@ TEST(Material, WrapsDefaultConstructedAtomKeepsHardSphereDefaults) {
     EXPECT_NEAR(material.scattering_parameter(), 1.0f, tol);
 }
 
+TEST(Material, IdenticalLeavesForwardIdenticallyForEqualInputs) {
+    // Molecule/Atom/Ion/Neutron are documented as byte-for-byte identical: same fields, same
+    // getters, differing only in the tag. Built from one shared parameter set, every non-type
+    // getter must agree across all four umbrellas — the invariant that keeps them interchangeable
+    // until per-species physics diverges.
+    const Material molecule(Molecule(2.0f, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f, 0.75f, 1.25f));
+    const Material atom(Atom(2.0f, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f, 0.75f, 1.25f));
+    const Material ion(Ion(2.0f, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f, 0.75f, 1.25f));
+    const Material neutron(Neutron(2.0f, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f, 0.75f, 1.25f));
+
+    EXPECT_EQ(molecule.type, MaterialType::molecule);
+    EXPECT_EQ(atom.type, MaterialType::atom);
+    EXPECT_EQ(ion.type, MaterialType::ion);
+    EXPECT_EQ(neutron.type, MaterialType::neutron);
+
+    for (const Material& other : { atom, ion, neutron }) {
+        EXPECT_NEAR(other.mass(), molecule.mass(), tol);
+        EXPECT_NEAR(other.translational_energy(), molecule.translational_energy(), tol);
+        EXPECT_NEAR(other.rotational_energy(), molecule.rotational_energy(), tol);
+        EXPECT_NEAR(other.vibrational_energy(), molecule.vibrational_energy(), tol);
+        EXPECT_NEAR(other.reference_diameter(), molecule.reference_diameter(), tol);
+        EXPECT_NEAR(other.reference_temperature(), molecule.reference_temperature(), tol);
+        EXPECT_NEAR(other.viscosity_index(), molecule.viscosity_index(), tol);
+        EXPECT_NEAR(other.scattering_parameter(), molecule.scattering_parameter(), tol);
+    }
+}
+
 TEST(Material, MoveConstructionPreservesActiveLeaf) {
     Material source(Neutron(6.0f, 1.0f, 2.0f, 3.0f, 7.0f, 8.0f, 0.75f, 1.25f));
     const Material moved = std::move(source);

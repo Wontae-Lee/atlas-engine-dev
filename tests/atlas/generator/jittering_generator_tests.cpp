@@ -107,3 +107,54 @@ TEST(JitteringGenerator, KeepsEverySampleInsideBounds) {
         EXPECT_LE(v.z, 5.0f + 0.5f + tol);
     }
 }
+
+TEST(JitteringGenerator, ZeroJitterProducesConstantVelocity) {
+    // With a zero jitter radius and no bulk drift, the perturbation vanishes and
+    // every component of every sample equals the base value exactly.
+    const auto         generator = JitteringGenerator::builder()
+                               .with_species_ratios({ 1.0f })
+                               .with_species_numbers({ 2.0f })
+                               .with_base_value(5.0f)
+                               .with_jitter_radius(0.0f)
+                               .with_seed(3u)
+                               .build();
+    const std::size_t  count = 64;
+    FluidVelocityState velocities(count);
+    FluidSpeciesState  species(count);
+
+    ASSERT_EQ(generator.generate(&velocities, &species, 0, count), static_cast<int>(count));
+
+    for (std::size_t i = 0; i < count; ++i) {
+        const Float3 v = velocities.data()[i];
+        EXPECT_NEAR(v.x, 5.0f, tol);
+        EXPECT_NEAR(v.y, 5.0f, tol);
+        EXPECT_NEAR(v.z, 5.0f, tol);
+    }
+}
+
+TEST(JitteringGenerator, SetBulkVelocityShiftsSampledVelocity) {
+    // Zero base and zero jitter isolate the bulk drift: after retargeting it, every
+    // sampled velocity must equal the new drift exactly.
+    auto generator = JitteringGenerator::builder()
+                         .with_species_ratios({ 1.0f })
+                         .with_species_numbers({ 2.0f })
+                         .with_base_value(0.0f)
+                         .with_jitter_radius(0.0f)
+                         .with_seed(3u)
+                         .build();
+
+    generator.set_bulk_velocity(Float3(1.0f, 2.0f, 3.0f));
+
+    const std::size_t  count = 16;
+    FluidVelocityState velocities(count);
+    FluidSpeciesState  species(count);
+
+    ASSERT_EQ(generator.generate(&velocities, &species, 0, count), static_cast<int>(count));
+
+    for (std::size_t i = 0; i < count; ++i) {
+        const Float3 v = velocities.data()[i];
+        EXPECT_NEAR(v.x, 1.0f, tol);
+        EXPECT_NEAR(v.y, 2.0f, tol);
+        EXPECT_NEAR(v.z, 3.0f, tol);
+    }
+}
