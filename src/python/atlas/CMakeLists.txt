@@ -21,6 +21,12 @@ find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
 # subdirectory exposes the nanobind_add_module() helper.
 add_subdirectory("${CMAKE_SOURCE_DIR}/external/nanobind" nanobind)
 
+# The bindings are split into module.cpp (NB_MODULE) plus one bindings_*.cpp per
+# engine module group. Glob them so a new group needs no edit here.
+file(GLOB ATLAS_PYTHON_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+)
+
 # Build the extension module.
 #   STABLE_ABI : build against the CPython stable ABI when available
 #                so a single wheel works across Python versions.
@@ -28,7 +34,7 @@ add_subdirectory("${CMAKE_SOURCE_DIR}/external/nanobind" nanobind)
 nanobind_add_module(atlas_python
         STABLE_ABI
         NB_STATIC
-        module.cpp
+        ${ATLAS_PYTHON_SOURCES}
 )
 
 # The importable module name is `atlas`, independent of the CMake
