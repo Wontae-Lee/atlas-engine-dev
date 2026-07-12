@@ -176,9 +176,15 @@ Parameter: `sigma`. Owns two device buffers.
 ## Species selection
 
 Species come from a weighted draw over the parallel `_species_ratios` (selection
-weights, expected normalized) and `_species_numbers` (the species-id values). The
-draw uses the [sampling](../sampling/sampling.md) helpers, and the leaves split
-into two conventions:
+weights) and `_species_numbers` (the species-id values). The draw needs the weights
+**normalized** to sum to 1: both `sample_weighted_choice` and `sample_weighted_index`
+walk a cumulative sum against `u ∈ [0, 1)`, so the first bucket whose cumulative
+weight reaches 1 wins every draw otherwise (weights `{70, 30}` — or even `{1, 1}` —
+always select index 0). `MaxwellBoltzmannGenerator::Builder::build()` rescales the
+staged weights for you, so a caller may pass raw population counts or percentages
+(e.g. `{70, 30}` builds as `{0.7, 0.3}`); the other leaves still expect weights that
+already sum to 1. The draw uses the [sampling](../sampling/sampling.md) helpers, and
+the leaves split into two conventions:
 
 | Leaf | species draw |
 |---|---|

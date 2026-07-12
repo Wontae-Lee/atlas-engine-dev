@@ -96,6 +96,43 @@ TEST(MaxwellBoltzmannGenerator, GenerateUsesDictionaryMass) {
     EXPECT_TRUE(atlas::isfinite(velocities.data()[0]));
 }
 
+TEST(MaxwellBoltzmannGenerator, BuilderNormalizesUnnormalizedRatios) {
+    // Unnormalized weights {70, 30} must be rescaled to {0.7, 0.3} at build() so
+    // both species are actually drawn. Without normalization sample_weighted_index
+    // returns index 0 for every draw (u in [0, 1) is always <= the cumulative 70),
+    // so species 1 would never appear.
+    const auto generator = MaxwellBoltzmannGenerator::builder()
+                               .with_species_ratios({ 70.0f, 30.0f })
+                               .with_species_numbers({ 0.0f, 1.0f })
+                               .with_species_mass({ 2.0f, 3.0f })
+                               .with_temperature(300.0f)
+                               .with_seed(11u)
+                               .build();
+
+    const std::size_t  count = 8192;
+    FluidVelocityState velocities(count);
+    FluidSpeciesState  species(count);
+    ASSERT_EQ(generator.generate(&velocities, &species, 0, count), static_cast<int>(count));
+
+    std::size_t species0 = 0;
+    std::size_t species1 = 0;
+    for (std::size_t i = 0; i < count; ++i) {
+        const std::size_t id = species.data()[i];
+        if (id == 0) {
+            ++species0;
+        } else if (id == 1) {
+            ++species1;
+        }
+    }
+
+    // Both species appear (the pre-fix bug left species1 == 0), near the 70/30 split.
+    EXPECT_GT(species0, std::size_t { 0 });
+    EXPECT_GT(species1, std::size_t { 0 });
+    const double fraction1 = static_cast<double>(species1) / static_cast<double>(count);
+    EXPECT_GT(fraction1, 0.2);
+    EXPECT_LT(fraction1, 0.4);
+}
+
 TEST(MaxwellBoltzmannGenerator, GenerateRejectsNullState) {
     const auto        generator = make_generator_with_direct_mass();
     FluidSpeciesState species(4);
