@@ -139,6 +139,11 @@ public:
 
     /**
      * @brief Sets the per-species selection weights (copied from host).
+     *
+     * The weights need not be normalized: @c build() rescales them to sum to 1, so
+     * raw population counts or percentages (e.g. @c {70, 30}) select each species
+     * with the intended probability.
+     *
      * @param species_ratios Weights; must be non-empty and match numbers in size.
      * @return @c *this for chaining.
      */
@@ -203,7 +208,12 @@ public:
     with_seed(unsigned int seed) noexcept;
 
     /**
-     * @brief Validates inputs, resolves masses, moves data to device, builds.
+     * @brief Validates inputs, resolves masses, normalizes ratios, builds.
+     *
+     * The staged selection weights are rescaled to sum to 1 before upload (see
+     * @c with_species_ratios), so @c sample_weighted_index draws each species with
+     * its intended probability regardless of the input scale.
+     *
      * @return A ready-to-run @c MaxwellBoltzmannGenerator.
      * @throws std::runtime_error if @c validate() fails or a species id is out of
      *         the dictionary's range during mass resolution.

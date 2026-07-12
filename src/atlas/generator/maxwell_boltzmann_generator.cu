@@ -178,9 +178,27 @@ MaxwellBoltzmannGenerator::Builder::build() {
     // Resolve masses (explicit or dictionary-derived) before moving to device.
     const HostBuffer<float> species_mass = resolve_species_mass();
 
+    // Normalize the selection weights so they sum to 1. The leaf picks a species
+    // with sample_weighted_index, an inverse-CDF draw over u in [0, 1): unless the
+    // weights are already probabilities, the first bucket whose cumulative weight
+    // reaches 1 would win every draw (e.g. weights {70, 30} always select index 0).
+    // Normalizing here lets callers pass raw population counts or percentages. A
+    // non-positive total is left as-is (validate() permits zero weights); the draw
+    // then falls through to the last species, matching the documented clamp.
+    HostBuffer<float> species_ratios = _species_ratios;
+    float total = 0.0f;
+    for (const float weight : species_ratios) {
+        total += weight > 0.0f ? weight : 0.0f;
+    }
+    if (total > 0.0f) {
+        for (float& weight : species_ratios) {
+            weight = (weight > 0.0f ? weight : 0.0f) / total;
+        }
+    }
+
     // Range constructors copy the staged host buffers onto the device.
     MaxwellBoltzmannGenerator generator(
-        DeviceBuffer<float>(_species_ratios.begin(), _species_ratios.end()),
+        DeviceBuffer<float>(species_ratios.begin(), species_ratios.end()),
         DeviceBuffer<float>(_species_numbers.begin(), _species_numbers.end()),
         DeviceBuffer<float>(species_mass.begin(), species_mass.end()),
         _temperature,
