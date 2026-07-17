@@ -13,7 +13,7 @@ namespace atlas {
  * is not one of the registered cases normalizes to it.
  *
  * @note The enumerators are not assigned explicit values; their integer values
- *       are the default 0..7 in declaration order and carry no external meaning.
+ *       follow declaration order and carry no external meaning.
  *       Dispatch is by tag equality, never by arithmetic on the value.
  */
 enum class GeometryType : int {
@@ -32,7 +32,9 @@ enum class GeometryType : int {
 
     triangle, ///< Single flat triangle leaf (`Triangle`).
 
-    triangle_mesh ///< Triangle-soup mesh leaf, stored as a `TriangleMeshView`.
+    triangle_mesh, ///< Triangle-soup mesh leaf, stored as a `TriangleMeshView`.
+
+    polygonal_prism ///< Closed regular polygonal prism leaf (`PolygonalPrism`).
 };
 
 }

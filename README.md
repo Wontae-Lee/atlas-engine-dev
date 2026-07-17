@@ -318,7 +318,8 @@ Deeper design and contributor material lives in the repository, not this file:
   style, build/test, dependencies, and the
   [Python bindings guide](docs/guidelines/python.md). Start at
   [`docs/guidelines/README.md`](docs/guidelines/README.md).
-- [`CLAUDE.md`](CLAUDE.md) is the entry map into both directories.
+- [`AGENTS.md`](AGENTS.md) is the entry map into both directories and the
+  repository-wide instruction file for AI coding agents.
 - Every header and source under `include/atlas/` and `src/atlas/` carries Doxygen
   comments; the convention is recorded in
   [`coding-style.md` §7](docs/guidelines/coding-style.md).

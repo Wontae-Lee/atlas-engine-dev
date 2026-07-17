@@ -6,6 +6,7 @@
 #include <atlas/geometry/cylinder.h>
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/geometry/plane.h>
+#include <atlas/geometry/polygonal_prism.h>
 #include <atlas/geometry/sphere.h>
 #include <atlas/geometry/square.h>
 #include <atlas/geometry/triangle.h>
@@ -64,6 +65,7 @@ static_assert(ConceptGeometry<Box>);
 static_assert(ConceptGeometry<Circle>);
 static_assert(ConceptGeometry<Cylinder>);
 static_assert(ConceptGeometry<Plane>);
+static_assert(ConceptGeometry<PolygonalPrism>);
 static_assert(ConceptGeometry<Sphere>);
 static_assert(ConceptGeometry<Square>);
 static_assert(ConceptGeometry<Triangle>);
@@ -109,6 +111,8 @@ struct Geometry {
         Cylinder cylinder; ///< Live when `type == GeometryType::cylinder`.
 
         Plane plane; ///< Live when `type == GeometryType::plane`.
+
+        PolygonalPrism polygonal_prism; ///< Live when `type == GeometryType::polygonal_prism`.
 
         Sphere sphere; ///< Live when `type == GeometryType::sphere` (default).
 
@@ -276,7 +280,7 @@ struct Geometry {
  * `copy_construct` and `visit` all route through this alias so the tag and the
  * live union member never disagree.
  *
- * @note Any tag not listed here normalizes to `GeometryType::sphere`; all eight
+ * @note Any tag not listed here normalizes to `GeometryType::sphere`; all nine
  *       tags are registered, so normalization only matters for corrupt tags.
  */
 using GeometryVariant = DeviceVariant<
@@ -287,6 +291,7 @@ using GeometryVariant = DeviceVariant<
     DeviceVariantCase<GeometryType::circle, &Geometry::circle>,
     DeviceVariantCase<GeometryType::cylinder, &Geometry::cylinder>,
     DeviceVariantCase<GeometryType::plane, &Geometry::plane>,
+    DeviceVariantCase<GeometryType::polygonal_prism, &Geometry::polygonal_prism>,
     DeviceVariantCase<GeometryType::sphere, &Geometry::sphere>,
     DeviceVariantCase<GeometryType::square, &Geometry::square>,
     DeviceVariantCase<GeometryType::triangle, &Geometry::triangle>,

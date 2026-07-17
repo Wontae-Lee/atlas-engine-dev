@@ -1,4 +1,4 @@
-# CLAUDE.md — Atlas Engine
+# AGENTS.md — Atlas Engine
 
 This file is a **map**. It does not hold the full instructions; it points to the
 documents that do. When contributing to Atlas Engine, read the relevant linked
