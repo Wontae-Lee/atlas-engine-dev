@@ -18,6 +18,7 @@ query to it.
 | `include/atlas/geometry/circle.h` | `Circle` leaf (flat disk) + `Builder` |
 | `include/atlas/geometry/cylinder.h` | `Cylinder` leaf (z-axis, cap/open) + `Builder` |
 | `include/atlas/geometry/plane.h` | `Plane` leaf (infinite half-space) + `Builder` |
+| `include/atlas/geometry/polygonal_prism.h` | `PolygonalPrism` leaf (regular n-gon extrusion) + `Builder` |
 | `include/atlas/geometry/sphere.h` | `Sphere` leaf + `Builder` |
 | `include/atlas/geometry/square.h` | `Square` leaf (flat patch) + `Builder` |
 | `include/atlas/geometry/triangle.h` | `Triangle` leaf (single face) + `Builder` |
@@ -25,7 +26,7 @@ query to it.
 | `src/atlas/geometry/*.cu` | out-of-line `Builder` implementations; `triangle_mesh.cu` also holds the mesh owner's copy/move, BVH/cache builders, OBJ loader, and view forwarders |
 
 The per-leaf `.cu` files (`box.cu`, `circle.cu`, `cylinder.cu`, `plane.cu`,
-`sphere.cu`, `square.cu`, `triangle.cu`) are small: they contain only the
+`polygonal_prism.cu`, `sphere.cu`, `square.cu`, `triangle.cu`) are small: they contain only the
 host-side `Builder` methods (`build`, `make_host_shared`, the `with_*` setters,
 `validate`). All query math is `ATLAS_ALL_DEVICE` and lives inline in the
 headers so it also compiles for the device.
@@ -46,7 +47,7 @@ disagree.
 struct Geometry {
     GeometryType type = GeometryType::sphere;   // default/fallback tag
     union { Box box; Circle circle; Cylinder cylinder; Plane plane;
-            Sphere sphere; Square square; Triangle triangle;
+            PolygonalPrism polygonal_prism; Sphere sphere; Square square; Triangle triangle;
             TriangleMeshView triangle_mesh; };
 
     Geometry();                                  // activates the unit sphere
@@ -64,10 +65,10 @@ struct Geometry {
 };
 ```
 
-`GeometryType` is a fixed-underlying-type `int` enum with eight enumerators in
-declaration order (`box`=0 … `triangle_mesh`=7). `sphere` is the default and the
-fallback: a default-constructed `Geometry` is the unit sphere, and any tag not
-one of the eight registered cases `normalize`s to `sphere`.
+`GeometryType` is a fixed-underlying-type `int` enum with nine enumerators in
+declaration order. `sphere` is the default and the fallback: a
+default-constructed `Geometry` is the unit sphere, and any tag not registered
+`normalize`s to `sphere`.
 
 ### Leaf contract — `ConceptGeometry`
 
@@ -104,7 +105,7 @@ concept ConceptGeometry = requires(const S s, const Float3 p, const Ray r, float
 - **`trace(ray)`** — nearest forward ray/shape hit, as a `HitSurface`
   (`is_intersecting == false` on a miss).
 
-Eight `static_assert(ConceptGeometry<Leaf>);` lines in `geometry.h` check every
+Nine `static_assert(ConceptGeometry<Leaf>);` lines in `geometry.h` check every
 leaf. Note the triangle-mesh case is asserted through **`TriangleMeshView`**, not
 the owning `TriangleMesh` — see below.
 
@@ -226,6 +227,21 @@ queries but is **not** renormalized by the builder. The half-space
   vs `Plane(const Float3& point, const Float3& normal)`. Passing the wrong second
   argument type silently selects the other meaning. The builder disambiguates
   with named setters (`with_normal_offset`, `with_point_normal`).
+
+### `PolygonalPrism` — regular n-gon extrusion
+
+`center`, integer `side_count`, circumradius `radius`, and total `height`. The
+closed prism is always aligned with the world z-axis and includes both caps.
+The first cross-section vertex points along `+x`, fixing the polygon's rotation.
+
+- **Validity:** finite center/radius/height, `side_count >= 3`, `radius > 0`,
+  and `height > 0`.
+- Surface queries scan the polygon edges, so their cost is linear in
+  `side_count`. The signed distance and closest point are exact for the regular
+  polygon extrusion; ray tracing clips against every side plane and both caps.
+- `is_inside` and `is_on_surface` apply tolerance independently along each face
+  normal. This preserves the polygonal corners instead of using the rounded
+  Euclidean offset implied by a signed-distance threshold.
 
 ### `Sphere` — solid ball
 

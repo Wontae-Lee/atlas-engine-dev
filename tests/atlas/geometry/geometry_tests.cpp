@@ -5,6 +5,7 @@
 #include <atlas/geometry/cylinder.h>
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/geometry/plane.h>
+#include <atlas/geometry/polygonal_prism.h>
 #include <atlas/geometry/sphere.h>
 #include <atlas/geometry/square.h>
 #include <atlas/geometry/triangle.h>
@@ -33,6 +34,7 @@ using atlas::GeometryType;
 using atlas::GeometryVariant;
 using atlas::HitSurface;
 using atlas::Plane;
+using atlas::PolygonalPrism;
 using atlas::Ray;
 using atlas::Sphere;
 using atlas::Square;
@@ -64,6 +66,7 @@ static_assert(ConceptGeometry<Box>);
 static_assert(ConceptGeometry<Circle>);
 static_assert(ConceptGeometry<Cylinder>);
 static_assert(ConceptGeometry<Plane>);
+static_assert(ConceptGeometry<PolygonalPrism>);
 static_assert(ConceptGeometry<Sphere>);
 static_assert(ConceptGeometry<Square>);
 static_assert(ConceptGeometry<Triangle>);
@@ -87,6 +90,7 @@ TEST(Geometry, ConstructFromEachLeafSetsMatchingTag) {
     EXPECT_EQ(Geometry(Circle()).type, GeometryType::circle);
     EXPECT_EQ(Geometry(Cylinder()).type, GeometryType::cylinder);
     EXPECT_EQ(Geometry(Plane()).type, GeometryType::plane);
+    EXPECT_EQ(Geometry(PolygonalPrism()).type, GeometryType::polygonal_prism);
     EXPECT_EQ(Geometry(Sphere()).type, GeometryType::sphere);
     EXPECT_EQ(Geometry(Square()).type, GeometryType::square);
     EXPECT_EQ(Geometry(Triangle()).type, GeometryType::triangle);

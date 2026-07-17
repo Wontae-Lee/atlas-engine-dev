@@ -11,7 +11,7 @@ namespace {
 using atlas::GeometryType;
 using atlas::GeometryVariant;
 
-/// A discriminant value that is not one of the eight registered enumerators, used
+/// A discriminant value that is not one of the nine registered enumerators, used
 /// to exercise the normalize/fallback path.
 constexpr GeometryType bogus_tag = static_cast<GeometryType>(999);
 
@@ -29,7 +29,7 @@ TEST(GeometryType, HasFixedIntUnderlyingType) {
 }
 
 /**
- * The enumerators carry the default 0..7 values in declaration order.
+ * The enumerators carry their default values in declaration order.
  */
 TEST(GeometryType, EnumeratorsAreDeclarationOrdered) {
     EXPECT_EQ(static_cast<int>(GeometryType::box), 0);
@@ -40,6 +40,7 @@ TEST(GeometryType, EnumeratorsAreDeclarationOrdered) {
     EXPECT_EQ(static_cast<int>(GeometryType::square), 5);
     EXPECT_EQ(static_cast<int>(GeometryType::triangle), 6);
     EXPECT_EQ(static_cast<int>(GeometryType::triangle_mesh), 7);
+    EXPECT_EQ(static_cast<int>(GeometryType::polygonal_prism), 8);
 }
 
 /**
@@ -50,6 +51,7 @@ TEST(GeometryType, RoundTripsThroughUnderlyingInt) {
         GeometryType::box,      GeometryType::circle,   GeometryType::cylinder,
         GeometryType::plane,    GeometryType::sphere,   GeometryType::square,
         GeometryType::triangle, GeometryType::triangle_mesh,
+        GeometryType::polygonal_prism,
     };
 
     for (const GeometryType tag : tags) {
@@ -66,6 +68,7 @@ TEST(GeometryType, VariantContainsEveryRegisteredTag) {
     EXPECT_TRUE(GeometryVariant::contains(GeometryType::circle));
     EXPECT_TRUE(GeometryVariant::contains(GeometryType::cylinder));
     EXPECT_TRUE(GeometryVariant::contains(GeometryType::plane));
+    EXPECT_TRUE(GeometryVariant::contains(GeometryType::polygonal_prism));
     EXPECT_TRUE(GeometryVariant::contains(GeometryType::sphere));
     EXPECT_TRUE(GeometryVariant::contains(GeometryType::square));
     EXPECT_TRUE(GeometryVariant::contains(GeometryType::triangle));

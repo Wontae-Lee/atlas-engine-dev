@@ -140,16 +140,47 @@ public:
         return outside + (inside_max < 0.0f ? inside_max : 0.0f);
     }
 
-    /** @brief Tests containment after signed dilation. @param p Query point. @param tolerance Dilation. @return Whether signed distance is within tolerance. */
+    /**
+     * @brief Tests containment against the polygon side planes and cap planes.
+     * @param p Query point.
+     * @param tolerance Signed offset applied independently to every face.
+     * @return True when the point satisfies every offset face half-space.
+     */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     is_inside(const Float3& p, float tolerance = 0.0f) const noexcept {
-        return signed_distance(p) <= tolerance;
+        if (!is_valid()) {
+            return false;
+        }
+
+        const float axial_limit = height * 0.5f + tolerance;
+        if (axial_limit < 0.0f || std::abs(p.z - center.z) > axial_limit) {
+            return false;
+        }
+
+        return maximum_side_distance(p) <= tolerance;
     }
 
-    /** @brief Tests a surface shell. @param p Query point. @param tolerance Non-negative shell half-width. @return Whether the point lies in the shell. */
+    /**
+     * @brief Tests the tolerance shell around the side faces and end caps.
+     * @param p Query point.
+     * @param tolerance Non-negative face-normal shell half-width.
+     * @return True when the point is close to a face and within the other
+     *         tolerance-expanded face bounds.
+     */
     ATLAS_NODISCARD ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE bool
     is_on_surface(const Float3& p, float tolerance = 0.0f) const noexcept {
-        return tolerance >= 0.0f && std::abs(signed_distance(p)) <= tolerance;
+        if (!is_valid() || tolerance < 0.0f) {
+            return false;
+        }
+
+        const float side_distance = maximum_side_distance(p);
+        const float axial_distance = std::abs(p.z - center.z) - height * 0.5f;
+        const bool near_side = std::abs(side_distance) <= tolerance
+            && axial_distance <= tolerance;
+        const bool near_cap = std::abs(axial_distance) <= tolerance
+            && side_distance <= tolerance;
+
+        return near_side || near_cap;
     }
 
     /** @brief Returns the geometric center. @return @ref center. */
@@ -217,6 +248,35 @@ public:
     }
 
 private:
+    /**
+     * @brief Returns the largest signed distance to a polygon side plane.
+     * @param p Query point.
+     * @return A non-positive value inside the cross-section and a positive
+     *         value beyond at least one side plane.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE float
+    maximum_side_distance(const Float3& p) const noexcept {
+        const float step = 2.0f * pi / static_cast<float>(side_count);
+        float maximum = -std::numeric_limits<float>::infinity();
+
+        for (int i = 0; i < side_count; ++i) {
+            const float a = step * static_cast<float>(i);
+            const float b = step * static_cast<float>(i + 1);
+            const float ax = center.x + radius * std::cos(a);
+            const float ay = center.y + radius * std::sin(a);
+            const float bx = center.x + radius * std::cos(b);
+            const float by = center.y + radius * std::sin(b);
+            const float ex = bx - ax;
+            const float ey = by - ay;
+            const float inv = 1.0f / std::sqrt(ex * ex + ey * ey);
+            const float distance = (p.x - ax) * (ey * inv)
+                + (p.y - ay) * (-ex * inv);
+            maximum = distance > maximum ? distance : maximum;
+        }
+
+        return maximum;
+    }
+
     /**
      * @brief Finds the closest cross-section edge and signed 2D distance.
      * @param p Query point.
