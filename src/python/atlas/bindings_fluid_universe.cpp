@@ -1,4 +1,5 @@
 #include "register.h"
+#include "binding_types.h"
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
@@ -119,9 +120,9 @@ register_fluid_universe(nb::module_& m) {
 
     m.def(
         "universe_from_geometry",
-        [](const Geometry& geometry, const float cell_size) {
+        [](const PyGeometry& geometry, const float cell_size) {
             return Universe::builder()
-                .with_geometry(geometry)
+                .with_geometry(geometry.value)
                 .with_cell_size(cell_size)
                 .make_host_unique();
         },

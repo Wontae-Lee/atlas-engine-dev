@@ -1,4 +1,5 @@
 #include "register.h"
+#include "binding_types.h"
 
 #include <atlas/collider/collider.h>
 #include <atlas/collider/diffuse_sampling.h>
@@ -32,22 +33,23 @@ register_boundary(nb::module_& m) {
         .value("uniform", DiffuseSampling::uniform);
 
     // Opaque umbrellas: constructed only through the factories below.
-    nb::class_<Collider>(m, "Collider");
-    nb::class_<Sink>(m, "Sink");
+    nb::class_<PyCollider>(m, "Collider");
+    nb::class_<PySink>(m, "Sink");
 
     m.def(
         "isothermal_collider",
-        [](Unit unit,
+        [](PyUnit unit,
            const float momentum_accommodation_coefficient,
            const float restitution,
            const DiffuseSampling diffuse_sampling) {
-            return Collider(IsothermalCollider::builder()
-                                .with_unit(std::move(unit))
+            Collider collider(IsothermalCollider::builder()
+                                .with_unit(std::move(unit.value))
                                 .with_momentum_accommodation_coefficient(
                                     momentum_accommodation_coefficient)
                                 .with_restitution(restitution)
                                 .with_diffuse_sampling(diffuse_sampling)
                                 .build());
+            return PyCollider { std::move(collider), std::move(unit.mesh_owners) };
         },
         "unit"_a,
         "momentum_accommodation_coefficient"_a = 1.0f,
@@ -57,30 +59,33 @@ register_boundary(nb::module_& m) {
 
     m.def(
         "volume_sink",
-        [](Unit unit, const float tolerance) {
-            return Sink(VolumeSink::builder()
-                            .with_unit(std::move(unit))
+        [](PyUnit unit, const float tolerance) {
+            Sink sink(VolumeSink::builder()
+                            .with_unit(std::move(unit.value))
                             .with_tolerance(tolerance)
                             .build());
+            return PySink { std::move(sink), std::move(unit.mesh_owners) };
         },
         "unit"_a, "tolerance"_a = 0.0f,
         "A sink that despawns particles inside the unit's volume, wrapped as a Sink.");
 
     m.def(
         "surface_sink",
-        [](Unit unit, const float tolerance) {
-            return Sink(SurfaceSink::builder()
-                            .with_unit(std::move(unit))
+        [](PyUnit unit, const float tolerance) {
+            Sink sink(SurfaceSink::builder()
+                            .with_unit(std::move(unit.value))
                             .with_tolerance(tolerance)
                             .build());
+            return PySink { std::move(sink), std::move(unit.mesh_owners) };
         },
         "unit"_a, "tolerance"_a = 0.0f,
         "A sink that despawns particles on the unit's surface, wrapped as a Sink.");
 
     m.def(
         "tracing_sink",
-        [](Unit unit) {
-            return Sink(TracingSink::builder().with_unit(std::move(unit)).build());
+        [](PyUnit unit) {
+            Sink sink(TracingSink::builder().with_unit(std::move(unit.value)).build());
+            return PySink { std::move(sink), std::move(unit.mesh_owners) };
         },
         "unit"_a,
         "A swept sink that despawns particles crossing the unit this step, wrapped as a Sink.");

@@ -114,6 +114,11 @@ factory.
 | `plane(normal, offset)` | `Geometry` |
 | `box(lower, upper)` | `Geometry` |
 | `cylinder(center, radius, height, open=False)` | `Geometry` |
+| `circle(center, normal, radius)` | `Geometry` |
+| `square(center, normal, side_length)` | `Geometry` |
+| `triangle(a, b, c, normal=None)` | `Geometry` |
+| `polygonal_prism(center, side_count, radius, height)` | `Geometry` |
+| `triangle_mesh(path)` | `Geometry` loaded from a Wavefront OBJ file |
 
 `Float3` supports `+`, `-`, `* float`, indexing, and `len`.
 
@@ -122,7 +127,7 @@ factory.
 | Call | Returns |
 |---|---|
 | `sync(translation, orientation=Quaternion())` | `Sync` (a rigid pose) |
-| `unit(geometry, sync=None, velocity=None, angular_velocity=None)` | `Unit` (a placed body) |
+| `unit(geometry, sync=None, velocity=None, angular_velocity=None, acceleration=None, angular_acceleration=None)` | `Unit` (a placed body) |
 | `molecule / atom / ion / neutron(mass, translational_energy, rotational_energy, vibrational_energy, reference_diameter, reference_temperature, viscosity_index, scattering_parameter)` | `Material` |
 | `solid(mass)` | `Material` |
 | `material_dictionary([Material, ...])` | `MaterialDictionary` |
@@ -140,6 +145,8 @@ factory.
 | `volume_source(unit, spacing, tolerance=0.0)` / `surface_source(...)` | `Source` |
 | `maxwell_boltzmann_generator(species_ratios, species_numbers, materials, temperature, bulk_velocity, seed)` | `Generator` |
 | `uniform_generator(species_ratios, species_numbers, temperature, min_value, max_value, bulk_velocity, seed)` | `Generator` |
+| `jittering_generator(species_ratios, species_numbers, temperature, base_value, jitter_radius, bulk_velocity, seed)` | `Generator` |
+| `maxwell_sigma_generator(species_ratios, species_numbers, temperature, sigma, bulk_velocity, seed)` | `Generator` |
 | `dsmc_solver(kernel_type=DsmcKernelType.variable_hard_sphere, majorant_sample_pairs=8, majorant_exhaustive_limit=5)` | `Solver` |
 | `knudsen_codec(...)` | `Codec` |
 | `isothermal_collider(unit, momentum_accommodation_coefficient=1.0, restitution=1.0, diffuse_sampling=DiffuseSampling.uniform)` | `Collider` |
@@ -186,6 +193,18 @@ geometry define the value types the later groups take as arguments, and the syst
 group ties everything together.
 
 To add a binding, follow the existing files. A few rules that are easy to miss:
+
+- **Core and Python API changes are one change.** Every new public Atlas Core
+  builder, leaf, or assembly option must receive the matching Python factory or
+  argument and be added to the API tables above in the same change. If the C++
+  ownership model cannot be represented safely in Python, document that blocker
+  here instead of exposing a borrowed object whose storage can expire.
+- **Python handles carry borrowed-view owners.** Atlas Core keeps
+  `TriangleMeshView` trivially copyable by borrowing buffers from a host-side
+  `TriangleMesh`. The Python `Geometry`, `Unit`, `Source`, `Collider`, `Sink`,
+  and `System` handles therefore propagate shared mesh owners alongside their
+  Core values. `triangle_mesh(path)` users never need to retain a separate mesh
+  object; the final `System` keeps every referenced mesh alive.
 
 - **Prefer factory functions over the fluent builders.** Returning a built object
   from a lambda avoids the builders' reference-return lifetimes and keeps the

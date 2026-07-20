@@ -1,8 +1,11 @@
 #include "register.h"
+#include "binding_types.h"
 
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/generator/generator.h>
+#include <atlas/generator/jittering_generator.h>
 #include <atlas/generator/maxwell_boltzmann_generator.h>
+#include <atlas/generator/maxwell_sigma_generator.h>
 #include <atlas/generator/uniform_generator.h>
 #include <atlas/material/material_dictionary.h>
 #include <atlas/math/vector/float3.h>
@@ -35,18 +38,19 @@ register_emitter(nb::module_& m) {
     // Opaque, shared_ptr-only handles: the umbrellas are non-copyable, so no
     // members are exposed — they are produced by the factories below and passed
     // straight back into the engine.
-    nb::class_<Source>(m, "Source");
+    nb::class_<PySource>(m, "Source");
     nb::class_<Generator>(m, "Generator");
 
     m.def(
         "volume_source",
-        [](Unit unit, const float spacing, const float tolerance) {
-            return atlas::make_host_shared<atlas::Source>(atlas::Source(
+        [](PyUnit unit, const float spacing, const float tolerance) {
+            auto source = atlas::make_host_shared<atlas::Source>(atlas::Source(
                 atlas::VolumeSource::builder()
-                    .with_unit(std::move(unit))
+                    .with_unit(std::move(unit.value))
                     .with_spacing(spacing)
                     .with_tolerance(tolerance)
                     .build()));
+            return PySource { std::move(source), std::move(unit.mesh_owners) };
         },
         "unit"_a, "spacing"_a, "tolerance"_a = 0.0f,
         "Emits particles from the interior volume of a Unit; grid-samples the "
@@ -54,13 +58,14 @@ register_emitter(nb::module_& m) {
 
     m.def(
         "surface_source",
-        [](Unit unit, const float spacing, const float tolerance) {
-            return atlas::make_host_shared<atlas::Source>(atlas::Source(
+        [](PyUnit unit, const float spacing, const float tolerance) {
+            auto source = atlas::make_host_shared<atlas::Source>(atlas::Source(
                 atlas::SurfaceSource::builder()
-                    .with_unit(std::move(unit))
+                    .with_unit(std::move(unit.value))
                     .with_spacing(spacing)
                     .with_tolerance(tolerance)
                     .build()));
+            return PySource { std::move(source), std::move(unit.mesh_owners) };
         },
         "unit"_a, "spacing"_a, "tolerance"_a = 0.0f,
         "Emits particles from the surface shell of a Unit; grid-samples the "
@@ -113,6 +118,52 @@ register_emitter(nb::module_& m) {
         "max_value"_a, "bulk_velocity"_a, "seed"_a,
         "Samples each velocity component uniformly over [min_value, max_value] "
         "plus a bulk drift; species chosen by weighted draw (temperature unused).");
+
+    m.def(
+        "jittering_generator",
+        [](std::vector<float> species_ratios,
+           std::vector<float> species_numbers,
+           const float temperature,
+           const float base_value,
+           const float jitter_radius,
+           const Float3& bulk_velocity,
+           const unsigned int seed) {
+            return atlas::make_host_shared<atlas::Generator>(atlas::Generator(
+                atlas::JitteringGenerator::builder()
+                    .with_species_ratios(atlas::HostBuffer<float>(species_ratios.begin(), species_ratios.end()))
+                    .with_species_numbers(atlas::HostBuffer<float>(species_numbers.begin(), species_numbers.end()))
+                    .with_temperature(temperature)
+                    .with_base_value(base_value)
+                    .with_jitter_radius(jitter_radius)
+                    .with_bulk_velocity(bulk_velocity)
+                    .with_seed(seed)
+                    .build()));
+        },
+        "species_ratios"_a, "species_numbers"_a, "temperature"_a, "base_value"_a,
+        "jitter_radius"_a, "bulk_velocity"_a, "seed"_a,
+        "Samples a constant base velocity with uniform per-component jitter and bulk drift.");
+
+    m.def(
+        "maxwell_sigma_generator",
+        [](std::vector<float> species_ratios,
+           std::vector<float> species_numbers,
+           const float temperature,
+           const float sigma,
+           const Float3& bulk_velocity,
+           const unsigned int seed) {
+            return atlas::make_host_shared<atlas::Generator>(atlas::Generator(
+                atlas::MaxwellSigmaGenerator::builder()
+                    .with_species_ratios(atlas::HostBuffer<float>(species_ratios.begin(), species_ratios.end()))
+                    .with_species_numbers(atlas::HostBuffer<float>(species_numbers.begin(), species_numbers.end()))
+                    .with_temperature(temperature)
+                    .with_sigma(sigma)
+                    .with_bulk_velocity(bulk_velocity)
+                    .with_seed(seed)
+                    .build()));
+        },
+        "species_ratios"_a, "species_numbers"_a, "temperature"_a, "sigma"_a,
+        "bulk_velocity"_a, "seed"_a,
+        "Samples an isotropic Gaussian velocity with caller-supplied sigma and bulk drift.");
 }
 
 }

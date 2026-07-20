@@ -1,4 +1,5 @@
 #include "register.h"
+#include "binding_types.h"
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
@@ -17,6 +18,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/filesystem.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
@@ -25,6 +27,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -35,9 +38,10 @@ namespace {
 // when the fluid or the requested column is absent.
 template <typename StateT>
 nanobind::ndarray<nanobind::numpy, float, nanobind::shape<-1, 3>>
-column_to_numpy(const atlas::System& system) {
+column_to_numpy(const atlas::python::PySystem& python_system) {
     namespace nb = nanobind;
 
+    const atlas::System& system = python_system.value;
     const atlas::Fluid* fluid = system.fluid().get();
     const auto* state         = fluid ? fluid->state<StateT>() : nullptr;
     const std::size_t n       = fluid ? fluid->particle_count() : 0;
@@ -68,25 +72,37 @@ namespace atlas::python {
 
 void
 register_system(nb::module_& m) {
-    nb::class_<System>(m, "System")
-        .def("update", &System::update, "Advance the simulation by one step.")
-        .def("save", &System::save, "directory"_a,
+    nb::class_<PySystem>(m, "System")
+        .def("update", [](PySystem& system) { system.value.update(); },
+             "Advance the simulation by one step.")
+        .def("save", [](const PySystem& system, const std::filesystem::path& directory) {
+                 system.value.save(directory);
+             }, "directory"_a,
              "Serialize a per-step snapshot under the given directory.")
-        .def_prop_ro("step", &System::step)
-        .def_prop_ro("dt", &System::dt)
+        .def_prop_ro("step", [](const PySystem& system) { return system.value.step(); })
+        .def_prop_ro("dt", [](const PySystem& system) { return system.value.dt(); })
         // Scalar read-backs onto the owned state. Returning the Fluid/Universe
         // objects themselves is unsafe here: they are the same C++ instances that
         // build_system consumed, which nanobind has marked relinquished. Reading
         // the counts through the System sidesteps that.
         .def_prop_ro(
             "particle_count",
-            [](const System& s) { return s.fluid() ? s.fluid()->particle_count() : std::size_t {0}; })
+            [](const PySystem& system) {
+                const System& s = system.value;
+                return s.fluid() ? s.fluid()->particle_count() : std::size_t {0};
+            })
         .def_prop_ro(
             "buffer_size",
-            [](const System& s) { return s.fluid() ? s.fluid()->buffer_size() : std::size_t {0}; })
+            [](const PySystem& system) {
+                const System& s = system.value;
+                return s.fluid() ? s.fluid()->buffer_size() : std::size_t {0};
+            })
         .def_prop_ro(
             "cell_count",
-            [](const System& s) { return s.universe() ? s.universe()->cell_count() : 0; })
+            [](const PySystem& system) {
+                const System& s = system.value;
+                return s.universe() ? s.universe()->cell_count() : 0;
+            })
         // Per-particle state as owned numpy arrays (a host copy of the live prefix).
         .def("positions", &column_to_numpy<FluidPositionState>,
              "Live particle positions as an (N, 3) float32 array.")
@@ -94,7 +110,8 @@ register_system(nb::module_& m) {
              "Live particle velocities as an (N, 3) float32 array.")
         .def(
             "species",
-            [](const System& s) {
+            [](const PySystem& system) {
+                const System& s = system.value;
                 const Fluid* fluid  = s.fluid().get();
                 const auto* state   = fluid ? fluid->state<FluidSpeciesState>() : nullptr;
                 const std::size_t n = fluid ? fluid->particle_count() : 0;
@@ -135,10 +152,10 @@ register_system(nb::module_& m) {
            std::unique_ptr<Universe> universe,
            const float dt,
            SolverHostPtr solver,
-           SourceHostPtr source,
+           std::optional<PySource> source,
            GeneratorHostPtr generator,
-           std::vector<Collider> colliders,
-           std::vector<Sink> sinks,
+           std::vector<PyCollider> colliders,
+           std::vector<PySink> sinks,
            CodecHostPtr codec,
            ObserverHostPtr observer) {
             System::Builder builder = System::builder();
@@ -150,14 +167,24 @@ register_system(nb::module_& m) {
                 builder.with_solver(std::move(solver));
             }
             // The emitter is a source/generator pair; wire it only when both are given.
-            if (source && generator) {
-                builder.with_emitter(std::move(source), std::move(generator));
+            MeshOwners mesh_owners;
+            if (source.has_value() && source->value && generator) {
+                builder.with_emitter(std::move(source->value), std::move(generator));
+                mesh_owners.insert(mesh_owners.end(),
+                                   source->mesh_owners.begin(),
+                                   source->mesh_owners.end());
             }
-            for (const Collider& collider : colliders) {
-                builder.with_collider(collider);
+            for (const PyCollider& collider : colliders) {
+                builder.with_collider(collider.value);
+                mesh_owners.insert(mesh_owners.end(),
+                                   collider.mesh_owners.begin(),
+                                   collider.mesh_owners.end());
             }
-            for (const Sink& sink : sinks) {
-                builder.with_sink(sink);
+            for (const PySink& sink : sinks) {
+                builder.with_sink(sink.value);
+                mesh_owners.insert(mesh_owners.end(),
+                                   sink.mesh_owners.begin(),
+                                   sink.mesh_owners.end());
             }
             if (codec) {
                 builder.with_codec(std::move(codec));
@@ -166,14 +193,14 @@ register_system(nb::module_& m) {
                 builder.with_observer(std::move(observer));
             }
 
-            return builder.build();
+            return PySystem(builder.build(), std::move(mesh_owners));
         },
         "fluid"_a, "universe"_a, "dt"_a,
         "solver"_a    = SolverHostPtr {},
-        "source"_a    = SourceHostPtr {},
+        "source"_a    = nb::none(),
         "generator"_a = GeneratorHostPtr {},
-        "colliders"_a = std::vector<Collider> {},
-        "sinks"_a     = std::vector<Sink> {},
+        "colliders"_a = std::vector<PyCollider> {},
+        "sinks"_a     = std::vector<PySink> {},
         "codec"_a     = CodecHostPtr {},
         "observer"_a  = ObserverHostPtr {},
         "Assemble a runnable System from its subsystems (fluid and universe are consumed).");
