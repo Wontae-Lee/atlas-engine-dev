@@ -22,11 +22,11 @@ namespace atlas {
  * @ref DsmcKernel. Only velocities change; positions are integrated elsewhere.
  *
  * @ref solve runs in two device passes. Pass 1 estimates a per-cell candidate count and
- * refreshes the majorant; pass 2 flattens those counts (@ref flatten_candidates) into a
- * one-work-item-per-candidate list so warps stay busy even when cell occupancy varies
- * wildly, then evaluates and applies each candidate. The scratch @c DeviceBuffer members
- * make this a @ref HostVariant-style owner (move/host only) rather than a device-capturable
- * leaf; the solver itself is host-owned and dispatched virtually by the System.
+ * refreshes the majorant; pass 2 processes each cell's candidates sequentially while
+ * independent cells run in parallel. This prevents overlapping pairs from overwriting
+ * each other's velocity updates and preserves momentum and kinetic energy. The scratch
+ * @c DeviceBuffer members support @ref flatten_candidates; the solver itself is host-owned
+ * and dispatched virtually by the System.
  *
  * Partner selection and the NTC acceptance test draw statelessly: each is a hash of the cell
  * id, a per-step @c _collision_seed, and a purpose salt. The scatter angle instead seeds a
@@ -147,9 +147,10 @@ public:
      * @param index         This solver's id, used to select the cells it owns.
      * @return The total number of scheduled candidate pairs (0 when there is no work).
      *
-     * @note Public despite being an internal step: it launches an extended
-     *       `__host__ __device__` lambda, which nvcc forbids inside a private/protected
-     *       member function.
+     * @note Retained for callers that need a flat work list; @ref solve does not use it
+     *       because candidate pairs in a cell can overlap. Public because it launches an
+     *       extended `__host__ __device__` lambda, which nvcc forbids inside a
+     *       private/protected member function.
      */
     ATLAS_NODISCARD ATLAS_HOST int
     flatten_candidates(const UniverseDsmcView& universe_view, int index);

@@ -384,22 +384,18 @@ DsmcSolver::solve(Fluid& fluid,
                 : 0;
         });
 
-    // Pass 2 — one work item per candidate, so cells of wildly different
-    // occupancy do not leave threads idle inside a warp.
-    const int candidate_count = flatten_candidates(universe_view, index);
-
-    if (candidate_count <= 0) {
-        return;
-    }
-
-    const auto* candidate_offsets = atlas::raw_pointer_cast(_candidate_offsets.data());
-    const auto* candidate_cells   = atlas::raw_pointer_cast(_candidate_cells.data());
-
+    /**
+     * Each cell owns its particles for this pass. Process its candidates in order so
+     * overlapping pairs observe completed velocity updates and share one majorant.
+     * Parallel candidate writes would lose collisions and violate conservation.
+     */
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
-        candidate_count,
-        [=] ATLAS_ALL_DEVICE(const int work_index) {
-            const int cell = candidate_cells[work_index];
+        universe_view.cell_count,
+        [=] ATLAS_ALL_DEVICE(const int cell) {
+            if (!owns_cell(universe_view.allocated_solver, cell, index)) {
+                return;
+            }
 
             const int begin = searcher_view.cell_start[cell];
             const int end   = searcher_view.cell_end[cell];
@@ -409,70 +405,70 @@ DsmcSolver::solve(Fluid& fluid,
                 return;
             }
 
-            // The candidate's position within its own cell, so the hashed
-            // stream matches what a per-cell loop would have drawn.
-            const int collision = work_index - candidate_offsets[cell];
+            const int candidate_count = universe_view.collision_count[cell];
 
-            const auto stream = collision_seed
-                + static_cast<std::uint64_t>(cell) * atlas::DSMC_CELL_STREAM_MULTIPLIER
-                + static_cast<std::uint64_t>(collision);
+            for (int collision = 0; collision < candidate_count; ++collision) {
+                const auto stream = collision_seed
+                    + static_cast<std::uint64_t>(cell) * atlas::DSMC_CELL_STREAM_MULTIPLIER
+                    + static_cast<std::uint64_t>(collision);
 
-            int lhs_local = 0;
-            int rhs_local = 0;
-            sample_distinct_pair(lhs_local, rhs_local, cell, count, stream);
+                int lhs_local = 0;
+                int rhs_local = 0;
+                sample_distinct_pair(lhs_local, rhs_local, cell, count, stream);
 
-            const int lhs = searcher_view.sorted_index[begin + lhs_local];
-            const int rhs = searcher_view.sorted_index[begin + rhs_local];
+                const int lhs = searcher_view.sorted_index[begin + lhs_local];
+                const int rhs = searcher_view.sorted_index[begin + rhs_local];
 
-            if (lhs < 0 || rhs < 0 || lhs == rhs) {
-                return;
+                if (lhs < 0 || rhs < 0 || lhs == rhs) {
+                    continue;
+                }
+
+                const std::size_t lhs_species = fluid_view.species[lhs];
+                const std::size_t rhs_species = fluid_view.species[rhs];
+
+                Float3 lhs_velocity = fluid_view.velocity[lhs];
+                Float3 rhs_velocity = fluid_view.velocity[rhs];
+
+                const float sigma_g = kernel.sigma_g(
+                    materials,
+                    lhs_species,
+                    rhs_species,
+                    (lhs_velocity - rhs_velocity).length_squared());
+
+                if (!(sigma_g > 0.0f)) {
+                    continue;
+                }
+
+                // The majorant is self-correcting: a candidate larger than the
+                // current bound raises it for the rest of this step and the next.
+                float max_sigma_g = universe_view.max_sigma_g[cell];
+
+                if (sigma_g > max_sigma_g) {
+                    max_sigma_g                     = sigma_g;
+                    universe_view.max_sigma_g[cell] = sigma_g;
+                }
+
+                const float accept_probability = (sigma_g < max_sigma_g)
+                    ? sigma_g / max_sigma_g
+                    : 1.0f;
+
+                const float accept_sample = atlas::sample_hashed_unit_interval(
+                    cell,
+                    stream + atlas::DSMC_COLLISION_ACCEPT_SALT);
+
+                if (accept_sample >= accept_probability) {
+                    continue;
+                }
+
+                // Seeded per collision, so a replay of the same step reproduces the same scatter
+                // while the angle stays independent of the pair's velocities.
+                auto engine = make_scatter_engine(cell, stream);
+
+                kernel(lhs_velocity, rhs_velocity, materials[lhs_species], materials[rhs_species], engine);
+
+                fluid_view.velocity[lhs] = lhs_velocity;
+                fluid_view.velocity[rhs] = rhs_velocity;
             }
-
-            const std::size_t lhs_species = fluid_view.species[lhs];
-            const std::size_t rhs_species = fluid_view.species[rhs];
-
-            Float3 lhs_velocity = fluid_view.velocity[lhs];
-            Float3 rhs_velocity = fluid_view.velocity[rhs];
-
-            const float sigma_g = kernel.sigma_g(
-                materials,
-                lhs_species,
-                rhs_species,
-                (lhs_velocity - rhs_velocity).length_squared());
-
-            if (!(sigma_g > 0.0f)) {
-                return;
-            }
-
-            // The majorant is self-correcting: a candidate larger than the
-            // current bound raises it for the rest of this step and the next.
-            float max_sigma_g = universe_view.max_sigma_g[cell];
-
-            if (sigma_g > max_sigma_g) {
-                max_sigma_g                     = sigma_g;
-                universe_view.max_sigma_g[cell] = sigma_g;
-            }
-
-            const float accept_probability = (sigma_g < max_sigma_g)
-                ? sigma_g / max_sigma_g
-                : 1.0f;
-
-            const float accept_sample = atlas::sample_hashed_unit_interval(
-                cell,
-                stream + atlas::DSMC_COLLISION_ACCEPT_SALT);
-
-            if (accept_sample >= accept_probability) {
-                return;
-            }
-
-            // Seeded per collision, so a replay of the same step reproduces the same scatter
-            // while the angle stays independent of the pair's velocities.
-            auto engine = make_scatter_engine(cell, stream);
-
-            kernel(lhs_velocity, rhs_velocity, materials[lhs_species], materials[rhs_species], engine);
-
-            fluid_view.velocity[lhs] = lhs_velocity;
-            fluid_view.velocity[rhs] = rhs_velocity;
         });
 }
 

@@ -78,7 +78,7 @@ and it carries just five configuration/state members:
 | `_majorant_exhaustive_limit` | `5` | Occupancy below which the majorant is scanned over all pairs (`>= 2`). |
 | `_kernel` | hard sphere | The active `DsmcKernel` (cross section + scatter). |
 | `_collision_seed` | `0` | Monotonic per-step stream base; incremented once per `solve`. |
-| `_candidate_offsets` / `_candidate_cells` / `_owned_candidate_counts` / `_candidate_total` | — | Device scratch reused across steps by `flatten_candidates`. |
+| `_candidate_offsets` / `_candidate_cells` / `_owned_candidate_counts` / `_candidate_total` | — | Device scratch reused by explicit calls to `flatten_candidates`; not used by `solve`. |
 
 Construct it directly (`DsmcSolver(kernel_type, sample_pairs, exhaustive_limit)`)
 or through the fluent `DsmcSolver::Builder`
@@ -132,11 +132,36 @@ One thread per cell. For each **owned** cell with `count >= 2` particles (the
   carried as per-cell state. Cells with `count < 2`, a non-positive majorant, or
   a non-positive cell volume get `collision_count = 0`.
 
-### Pass 2 — one work item per candidate
+### Pass 2 — sequential candidates within parallel cells
 
-Rather than launch one thread per cell (which would idle whole warps when cell
-occupancy varies wildly), the per-cell counts are **flattened** into a single
-candidate list by `flatten_candidates`, then one thread runs per candidate.
+One thread processes each owned cell, iterating `collision` from zero to
+`collision_count[cell] - 1`. Different cells contain disjoint particle indices
+and run in parallel. Within a cell, candidates may share either particle, so
+each accepted collision must finish both velocity writes before the next
+candidate reads them. The same ordering also makes the per-cell majorant update
+safe. Launching overlapping pairs concurrently loses velocity updates and breaks
+momentum and kinetic-energy conservation.
+
+The collision stream still uses the cell-local candidate index, preserving the
+partner, acceptance, and scatter seed formulas. Each candidate:
+
+- **picks its pair** with `sample_distinct_pair` (below),
+- **recomputes** `sigma * g` for that pair's actual relative velocity,
+- **self-corrects the majorant**: a candidate whose `sigma * g` exceeds the
+  current bound raises `max_sigma_g[cell]` for the rest of this step and the
+  next,
+- **accepts** with probability `sigma*g / (sigma*g)_max` (a candidate at or above
+  the bound is accepted with probability 1). The acceptance draw is
+  `sample_hashed_unit_interval(cell, stream + DSMC_COLLISION_ACCEPT_SALT)` — a
+  high-quality `shuffle_key` draw keyed on **indices**, not on physical state, so
+  it carries none of the bias described for the old scatter hash.
+- On acceptance it seeds a per-collision engine and calls the kernel's scatter,
+  then writes both velocities back.
+
+### Optional candidate flattening
+
+`solve` does not flatten candidates or allocate a candidate-sized work list.
+The existing helper remains available to C++ callers:
 
 **`flatten_candidates(universe_view, index)`** (public only because it launches
 an extended `__host__ __device__` lambda, which nvcc forbids inside a
@@ -153,25 +178,6 @@ private/protected member):
 4. Fill `_candidate_cells` so entry `w` names the cell owning the `w`-th
    candidate, found by a **binary search** (`upper_bound`-style) over the
    offsets. Every scratch buffer grows as needed and is reused across steps.
-
-The collision kernel then runs one thread per flat candidate. For candidate
-`work_index` in cell `cell`, its **position within the cell** is
-`collision = work_index - candidate_offsets[cell]`, so the hashed stream matches
-exactly what a per-cell loop would have drawn — this is why pass 1's sampling and
-pass 2 agree. Each candidate:
-
-- **picks its pair** with `sample_distinct_pair` (below),
-- **recomputes** `sigma * g` for that pair's actual relative velocity,
-- **self-corrects the majorant**: a candidate whose `sigma * g` exceeds the
-  current bound raises `max_sigma_g[cell]` for the rest of this step and the
-  next,
-- **accepts** with probability `sigma*g / (sigma*g)_max` (a candidate at or above
-  the bound is accepted with probability 1). The acceptance draw is
-  `sample_hashed_unit_interval(cell, stream + DSMC_COLLISION_ACCEPT_SALT)` — a
-  high-quality `shuffle_key` draw keyed on **indices**, not on physical state, so
-  it carries none of the bias described for the old scatter hash.
-- On acceptance it seeds a per-collision engine and calls the kernel's scatter,
-  then writes both velocities back.
 
 ### `sigma_g` takes the *squared* speed
 
