@@ -4,6 +4,8 @@
 
 # Atlas Engine Dev
 
+[![TBB CI](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb.yml/badge.svg?branch=main)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb.yml?query=branch%3Amain)
+
 Atlas is a C++20 particle simulation engine with a single `float` scalar type, a TBB (CPU) or CUDA (GPU) backend chosen at configure time, protobuf snapshot serialization, and optional nanobind-based Python bindings. The CPU build needs **neither nvcc nor the CUDA toolkit**.
 
 The engine targets **large domains, simply and fast**. Where physical fidelity
@@ -307,6 +309,60 @@ cmake --build build/tbb-debug -j$(nproc)
 ctest --preset ctest-tbb-debug
 ```
 
+### GitHub Actions: TBB on `main`
+
+The [TBB CI workflow](.github/workflows/tbb.yml) runs automatically on pushes to
+`main`. To run it manually, open **Actions → TBB CI → Run workflow** and select
+`main`. Other branches and pull requests do not run this workflow; a manual run
+on another branch skips its job.
+
+The Ubuntu 22.04 runner uses the native C++ compiler and TBB, with no CUDA toolkit
+or GPU. It builds and runs the aggregate GoogleTest suite, creates a Python source
+distribution, builds a wheel from that archive, checks package metadata, installs
+the wheel, and runs the Python DSMC example. Successful runs attach the
+`tbb-linux-cp311` artifact, containing the source archive and
+Python 3.11 wheel. This CI wheel requires the runner-compatible Linux/TBB runtime;
+use the manylinux release wheels below for redistribution.
+
+## Python Distribution
+
+The distribution name is **`atlas-engine`** and the import name is **`atlas`**.
+Packaging metadata and bundled source dependencies are configured in
+[`pyproject.toml`](pyproject.toml). Source archives include the required git
+submodule contents, so installing an archive does not require a git checkout.
+Building from source still requires a C++20 compiler, CMake, Ninja, TBB, and
+network access for build tools and Abseil.
+
+The [Publish Python workflow](.github/workflows/publish.yml) runs manually on
+`main` only. It builds a source archive and uses that archive to build and test
+TBB manylinux x86_64 wheels for CPython 3.9–3.13. CUDA wheels remain a separate
+local build through `scripts/build_wheels.sh`; they are not uploaded to PyPI.
+
+To prepare or publish a version:
+
+1. Update `project.version` in `pyproject.toml` and the matching version in
+   `CITATION.cff`, then push the changes to `main`. Packaged
+   `atlas.__version__` follows the Python distribution version automatically.
+2. Open **Actions → Publish Python → Run workflow**, selecting `main`.
+   Leave **Publish the validated distributions to PyPI** unchecked to download
+   the `python-sdist` and `python-wheels` artifacts without publishing.
+3. For actual publication, configure a PyPI Trusted Publisher for this repository,
+   workflow **`publish.yml`**, and GitHub environment **`pypi`**. Create the
+   matching GitHub environment, then run the workflow on `main` with the publish
+   checkbox enabled. Each uploaded version must be new on PyPI.
+
+Tag pushes and GitHub releases do not trigger Python publication. The Zenodo
+release/DOI workflow described below remains separate. Once a version has been
+published, install its CPU package with:
+
+```bash
+python -m pip install atlas-engine
+python -c "import atlas; print(atlas.__version__)"
+```
+
+See the official [GitHub branch-filter documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onpushbranchestagsbranches-ignoretags-ignore)
+and [PyPI Trusted Publishing guide](https://docs.pypi.org/trusted-publishers/using-a-publisher/).
+
 ## Documentation
 
 Deeper design and contributor material lives in the repository, not this file:
@@ -323,6 +379,32 @@ Deeper design and contributor material lives in the repository, not this file:
 - Every header and source under `include/atlas/` and `src/atlas/` carries Doxygen
   comments; the convention is recorded in
   [`coding-style.md` §7](docs/guidelines/coding-style.md).
+
+## Citation and Zenodo DOI
+
+Citation metadata is maintained in [`CITATION.cff`](CITATION.cff), which is
+supported by both GitHub and Zenodo. Its author, version, and license match
+the project metadata in [`pyproject.toml`](pyproject.toml).
+
+To publish a release with a public DOI:
+
+1. Sign in to [Zenodo](https://zenodo.org/) with GitHub and enable
+   `Wontae-Lee/atlas-engine-dev` in the GitHub integration settings.
+2. Review the authors in `CITATION.cff`, adding any coauthors and known ORCID
+   identifiers or affiliations. Update `version` to match the release and add
+   `date-released` in `YYYY-MM-DD` format when the release date is known.
+3. Commit and push the metadata, then publish a GitHub release whose tag
+   includes that commit. For the current version, the tag would be `v0.1.0`.
+4. Wait for Zenodo to process the release and check the published record's
+   metadata and DOI. Adding these files alone does not register a DOI.
+5. Add the issued release DOI to `CITATION.cff` as `doi` and link the Zenodo
+   record here. Keep the DOI, version, and release date referring to the same
+   release; do not carry a previous release's DOI into a new release.
+
+See Zenodo's [citation metadata guide](https://help.zenodo.org/docs/github/describe-software/citation-file/)
+and [GitHub release archiving guide](https://help.zenodo.org/docs/github/archive-software/github-upload/).
+`CITATION.cff` is sufficient for this workflow; if a `.zenodo.json` file is
+added later, Zenodo will use that file instead of `CITATION.cff`.
 
 ## License
 

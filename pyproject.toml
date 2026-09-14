@@ -11,7 +11,7 @@ version = "0.1.0"
 description = "Atlas Engine — GPU/CPU rarefied-gas (DSMC) particle simulation (nanobind bindings)"
 requires-python = ">=3.8"
 readme = "README.md"
-license = { text = "GPL-3.0-or-later" }
+license = { file = "LICENSE" }
 authors = [{ name = "Wontae Lee" }]
 keywords = ["dsmc", "rarefied-gas", "particle-simulation", "cfd", "cuda", "tbb", "nanobind"]
 classifiers = [
@@ -31,6 +31,8 @@ dependencies = ["numpy>=1.21"]
 [project.urls]
 Homepage = "https://github.com/wontae-lee/atlas-engine-dev"
 Repository = "https://github.com/wontae-lee/atlas-engine-dev"
+Documentation = "https://github.com/wontae-lee/atlas-engine-dev/blob/main/docs/guidelines/python.md"
+Issues = "https://github.com/wontae-lee/atlas-engine-dev/issues"
 
 [tool.scikit-build]
 # Drive the repository's top-level CMakeLists.txt.
@@ -44,6 +46,8 @@ ninja.version = ">=1.10"
 cmake.define.ATLAS_PYTHON = "ON"
 cmake.define.ATLAS_GOOGLE_TEST = "OFF"
 cmake.define.ATLAS_BENCHMARKS = "OFF"
+cmake.define.ATLAS_EXAMPLES = "OFF"
+cmake.define.ATLAS_HOST_COMPILER = "native"
 cmake.define.ATLAS_DEVICE_SYSTEM = "TBB"
 cmake.define.CMAKE_BUILD_TYPE = "Release"
 
@@ -51,6 +55,26 @@ cmake.define.CMAKE_BUILD_TYPE = "Release"
 # install() rule lives in src/python/atlas/CMakeLists.txt).
 build.targets = ["atlas_python"]
 install.components = ["python"]
+wheel.packages = []
+wheel.license-files = [
+    "LICENSE",
+    "external/nanobind/LICENSE",
+    "external/nanobind/ext/robin_map/LICENSE",
+    "external/tinyobj/LICENSE",
+    "external/protobuf/LICENSE",
+]
+sdist.include = [
+    "CMakeLists.txt", "CMakePresets.json", "cmake/**", "include/**", "src/**",
+    "external/nanobind/**", "external/tinyobj/**", "external/protobuf/**",
+    "external/googletest/**", "external/googlebenchmark/**",
+    "examples/**", "benchmarks/CMakeLists.txt", "tests/**", "scripts/**",
+    "LICENSE", "README.md", "CITATION.cff", "docs/guidelines/python.md",
+    "!**/.git", "!**/.git/**", "!**/__pycache__/**",
+]
+sdist.exclude = [
+    ".git/**", "**/.git", "**/.git/**", ".idea/**", ".github/**",
+    "build/**", "dist/**", "cmake-build-*/**", "**/__pycache__/**",
+]
 
 # Keep build trees separate per interpreter/ABI so cibuildwheel's back-to-back
 # Python versions never reuse a stale CMake cache. scripts/build_wheels.sh
@@ -69,8 +93,10 @@ build-dir = "build/wheel/{cache_tag}"
 build = "cp39-* cp310-* cp311-* cp312-* cp313-*"
 skip = "*-musllinux_*"
 build-frontend = "build"
-# Fail fast if the extension does not even import.
-test-command = "python -c \"import atlas; assert hasattr(atlas, 'build_system')\""
+test-command = [
+    "python -c \"import atlas; from importlib.metadata import version; assert atlas.__version__ == version('atlas-engine')\"",
+    "timeout 60s python {project}/examples/python/dsmc_dense_cell.py",
+]
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64"]
@@ -83,4 +109,4 @@ before-all = [
     "cmake -S /tmp/onetbb -B /tmp/onetbb/build -G Ninja -DTBB_TEST=OFF -DTBB_STRICT=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local",
     "cmake --build /tmp/onetbb/build --target install",
 ]
-environment = { CMAKE_PREFIX_PATH = "/usr/local", LD_LIBRARY_PATH = "/usr/local/lib64:/usr/local/lib" }
+environment = { CMAKE_PREFIX_PATH = "/usr/local", LD_LIBRARY_PATH = "/usr/local/lib64:/usr/local/lib", CMAKE_BUILD_PARALLEL_LEVEL = "2" }

@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use Atlas Engine in your research, please cite this software."
+type: software
+title: "Atlas Engine"
+version: "0.1.0"
+authors:
+  - family-names: "Lee"
+    given-names: "Wontae"
+repository-code: "https://github.com/Wontae-Lee/atlas-engine-dev"
+url: "https://github.com/Wontae-Lee/atlas-engine-dev"
+abstract: >-
+  Atlas Engine is a C++20 particle simulation engine for rarefied-gas
+  dynamics using direct simulation Monte Carlo (DSMC). It supports TBB
+  CPU and CUDA GPU backends, hard-sphere, VHS, and VSS collision kernels,
+  analytic and triangle-mesh geometry, CSV observation, protobuf snapshot
+  serialization, and optional Python bindings through nanobind.
+license: GPL-3.0-or-later
+keywords:
+  - DSMC
+  - rarefied gas
+  - particle simulation
+  - computational fluid dynamics
+  - C++
+  - CUDA
+  - TBB
+  - Python

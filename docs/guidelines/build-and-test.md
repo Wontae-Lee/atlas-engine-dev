@@ -104,3 +104,13 @@ Tests mirror `include/atlas/`: every module has a directory under
 `math`, `memory`, `observer`, `parallel`, `random`, `sampling`, `scan`,
 `searcher`, `serialization`, `sink`, `solver`, `source`, `spatial`, `sync`,
 `system`, `unit`, and `universe`.
+
+## 5. GitHub TBB CI
+
+`.github/workflows/tbb.yml` runs only for pushes to `main` or manual dispatches
+on `main`. It builds the aggregate `atlas_tests` target with the native compiler
+and TBB, then runs CTest with `-R '^atlas_tests\.'`. This filter selects the
+aggregate suite and avoids trying to execute the unbuilt per-module binaries.
+Python packaging checks build a wheel from the source archive, install it, and
+run the existing DSMC example. Release packaging and manual PyPI publication are
+described in [python.md](python.md#github-ci-and-publication).

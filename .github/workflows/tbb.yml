@@ -1,0 +1,74 @@
+name: TBB CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tbb-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libtbb-dev ninja-build
+          python -m pip install --upgrade pip build twine
+      - name: Configure TBB tests
+        run: >-
+          cmake -S . -B build/ci-tbb -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DATLAS_DEVICE_SYSTEM=TBB
+          -DATLAS_HOST_COMPILER=native
+          -DBUILD_TESTING=ON
+          -DATLAS_GOOGLE_TEST=ON
+          -DATLAS_PYTHON=OFF
+          -DATLAS_BENCHMARKS=OFF
+          -DATLAS_EXAMPLES=OFF
+      - name: Build C++ tests
+        run: cmake --build build/ci-tbb --target atlas_tests
+      - name: Run C++ tests
+        run: >-
+          ctest --test-dir build/ci-tbb --output-on-failure
+          --no-tests=error --parallel 2 -R '^atlas_tests\.'
+      - name: Build source distribution
+        run: python -m build --sdist --outdir dist/source
+      - name: Build wheel from source distribution
+        run: python -m pip wheel --no-deps dist/source/*.tar.gz --wheel-dir dist/wheels
+      - name: Check package metadata
+        run: python -m twine check --strict dist/source/*.tar.gz dist/wheels/*.whl
+      - name: Install and run Python package
+        run: |
+          python -m pip install dist/wheels/*.whl
+          python -m pip check
+          python -c "import atlas; from importlib.metadata import version; assert atlas.__version__ == version('atlas-engine')"
+          timeout 60s python examples/python/dsmc_dense_cell.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tbb-linux-cp311
+          path: |
+            dist/source/*.tar.gz
+            dist/wheels/*.whl
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: tbb-test-logs
+          path: build/ci-tbb/Testing/Temporary/
