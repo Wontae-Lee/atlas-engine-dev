@@ -3,6 +3,8 @@ message: "If you use Atlas Engine in your research, please cite this software."
 type: software
 title: "Atlas Engine"
 version: "0.1.0"
+doi: "10.5281/zenodo.22752179"
+date-released: "2026-09-14"
 authors:
   - family-names: "Lee"
     given-names: "Wontae"

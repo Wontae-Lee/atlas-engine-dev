@@ -4,6 +4,7 @@
 
 # Atlas Engine Dev
 
+[![DOI](https://zenodo.org/badge/1021472310.svg)](https://doi.org/10.5281/zenodo.22752178)
 [![TBB CI](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb.yml/badge.svg?branch=main)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb.yml?query=branch%3Amain)
 
 Atlas is a C++20 particle simulation engine with a single `float` scalar type, a TBB (CPU) or CUDA (GPU) backend chosen at configure time, protobuf snapshot serialization, and optional nanobind-based Python bindings. The CPU build needs **neither nvcc nor the CUDA toolkit**.
@@ -386,7 +387,14 @@ Citation metadata is maintained in [`CITATION.cff`](CITATION.cff), which is
 supported by both GitHub and Zenodo. Its author, version, and license match
 the project metadata in [`pyproject.toml`](pyproject.toml).
 
-To publish a release with a public DOI:
+Version **v0.1.0**, released on **2026-09-14**, is archived on Zenodo:
+
+- **Version DOI:** [10.5281/zenodo.22752179](https://doi.org/10.5281/zenodo.22752179).
+  Use this DOI when citing results produced with v0.1.0.
+- **Concept DOI (all versions):** [10.5281/zenodo.22752178](https://doi.org/10.5281/zenodo.22752178).
+  The README badge uses this DOI to link to the latest published version.
+
+For subsequent releases:
 
 1. Sign in to [Zenodo](https://zenodo.org/) with GitHub and enable
    `Wontae-Lee/atlas-engine-dev` in the GitHub integration settings.
@@ -394,7 +402,7 @@ To publish a release with a public DOI:
    identifiers or affiliations. Update `version` to match the release and add
    `date-released` in `YYYY-MM-DD` format when the release date is known.
 3. Commit and push the metadata, then publish a GitHub release whose tag
-   includes that commit. For the current version, the tag would be `v0.1.0`.
+   includes that commit. Use a new version tag for each release.
 4. Wait for Zenodo to process the release and check the published record's
    metadata and DOI. Adding these files alone does not register a DOI.
 5. Add the issued release DOI to `CITATION.cff` as `doi` and link the Zenodo
