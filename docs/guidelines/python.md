@@ -76,10 +76,10 @@ builds a source archive, builds and installs a wheel from that archive, checks
 metadata/version consistency, and executes `examples/python/dsmc_dense_cell.py`.
 The `tbb-linux-cp311` artifact is a CI build, not an auditwheel-repaired release.
 
-`.github/workflows/publish.yml` is manual and also restricted to `main`.
+`.github/workflows/publish-python.yml` is manual and also restricted to `main`.
 Its default is to build artifacts only. Selecting the `publish` input enables
 PyPI Trusted Publishing after source and wheel checks pass; register workflow
-`publish.yml` and environment `pypi` in PyPI and create that GitHub environment.
+`publish-python.yml` and environment `pypi` in PyPI and create that GitHub environment.
 Tag pushes no longer publish Python packages. GitHub releases used by Zenodo are
 independent of this workflow.
 

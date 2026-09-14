@@ -333,7 +333,7 @@ submodule contents, so installing an archive does not require a git checkout.
 Building from source still requires a C++20 compiler, CMake, Ninja, TBB, and
 network access for build tools and Abseil.
 
-The [Publish Python workflow](.github/workflows/publish.yml) runs manually on
+The [Publish Python workflow](.github/workflows/publish-python.yml) runs manually on
 `main` only. It builds a source archive and uses that archive to build and test
 TBB manylinux x86_64 wheels for CPython 3.9–3.13. CUDA wheels remain a separate
 local build through `scripts/build_wheels.sh`; they are not uploaded to PyPI.
@@ -347,7 +347,7 @@ To prepare or publish a version:
    Leave **Publish the validated distributions to PyPI** unchecked to download
    the `python-sdist` and `python-wheels` artifacts without publishing.
 3. For actual publication, configure a PyPI Trusted Publisher for this repository,
-   workflow **`publish.yml`**, and GitHub environment **`pypi`**. Create the
+   workflow **`publish-python.yml`**, and GitHub environment **`pypi`**. Create the
    matching GitHub environment, then run the workflow on `main` with the publish
    checkbox enabled. Each uploaded version must be new on PyPI.
 
