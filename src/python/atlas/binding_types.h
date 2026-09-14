@@ -8,6 +8,7 @@
 #include <atlas/system/system.h>
 #include <atlas/unit/unit.h>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -41,12 +42,14 @@ struct PySink final {
 };
 
 struct PySystem final {
-    PySystem(System system, MeshOwners owners)
+    PySystem(System system, MeshOwners owners, std::vector<std::shared_ptr<void>> policies)
         : mesh_owners(std::move(owners))
+        , policy_owners(std::move(policies))
         , value(std::move(system)) {
     }
 
     MeshOwners mesh_owners;
+    std::vector<std::shared_ptr<void>> policy_owners;
     System value;
 };
 

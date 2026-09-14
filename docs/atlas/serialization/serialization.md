@@ -15,7 +15,8 @@ blitted verbatim into a `RawBuffer` byte payload, so save/load is a plain
 | File | Role |
 |---|---|
 | `include/atlas/serialization/protobuf_snapshot.h` | Public API: the `FluidBinarySnapshot` / `UniverseBinarySnapshot` host structs and the six free functions (`save_*`, `load_*`, `restore_*`) |
-| `src/atlas/serialization/protobuf_snapshot.cpp` | The codec: the anonymous-namespace plumbing (pack/unpack, message I/O, material and state encoders) plus the six public entry points |
+| `src/atlas/serialization/protobuf_snapshot.cpp` | Protobuf parsing and encoding, material and state conversion, and the four `save_*` / `load_*` entry points |
+| `src/atlas/serialization/protobuf_restore.cu` | The two `restore_*` entry points: construct owners and upload decoded host buffers into device state |
 | `src/atlas/serialization/proto/atlas_snapshot.proto` | The proto3 wire schema, compiled by `protoc` into `atlas_snapshot.pb.{h,cc}` |
 
 ## The wire schema (`atlas_snapshot.proto`)
@@ -135,7 +136,12 @@ runtime and `protoc` from source, runs `protoc` on `atlas_snapshot.proto` into a
 generated `atlas_snapshot.pb.{h,cc}`, and links them into the `atlas-serialization`
 static library alongside `protobuf_snapshot.cpp`. That translation unit stays
 `.cpp` (never routed through `nvcc`): protobuf's `message_lite.h` uses a construct
-`nvcc`'s frontend rejects, and it holds no device code. `atlas-serialization`
+`nvcc`'s frontend rejects. Device-buffer construction and destruction in the
+restore path live in `protobuf_restore.cu`, compiled into the `atlas` engine
+library with nvcc for CUDA and the host compiler for TBB. That file consumes the
+decoded host structs and never includes generated protobuf headers, keeping both
+compiler requirements separate without changing the snapshot format.
+`atlas-serialization`
 links `protobuf::libprotobuf` and forms a deliberate two-way link cycle with the
 `atlas` engine library (the engine's save path calls into serialization, and
 serialization reads engine getters/state types back).

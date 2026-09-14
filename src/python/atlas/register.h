@@ -9,10 +9,14 @@
 namespace atlas::python {
 
 void register_math(nanobind::module_& m);
+void register_sampling(nanobind::module_& m);
 void register_geometry(nanobind::module_& m);
+void register_bvh(nanobind::module_& m);
 void register_material(nanobind::module_& m);
 void register_transform(nanobind::module_& m);
 void register_fluid_universe(nanobind::module_& m);
+void register_searcher(nanobind::module_& m);
+void register_serialization(nanobind::module_& m);
 void register_emitter(nanobind::module_& m);
 void register_solver(nanobind::module_& m);
 void register_boundary(nanobind::module_& m);

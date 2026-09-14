@@ -11,9 +11,12 @@ namespace nb = nanobind;
 // System at the end.
 NB_MODULE(atlas, m) {
     m.doc() = "Atlas Engine — GPU/CPU rarefied-gas (DSMC) particle simulation.";
+    m.attr("__version__") = ATLAS_VERSION_STRING;
 
     atlas::python::register_math(m);
+    atlas::python::register_sampling(m);
     atlas::python::register_geometry(m);
+    atlas::python::register_bvh(m);
     atlas::python::register_transform(m);
     atlas::python::register_material(m);
     atlas::python::register_fluid_universe(m);
@@ -21,4 +24,6 @@ NB_MODULE(atlas, m) {
     atlas::python::register_solver(m);
     atlas::python::register_boundary(m);
     atlas::python::register_system(m);
+    atlas::python::register_searcher(m);
+    atlas::python::register_serialization(m);
 }

@@ -50,15 +50,14 @@ if (TARGET atlas)
     target_link_libraries(atlas_python PRIVATE atlas)
 endif ()
 
-target_compile_definitions(atlas_python PRIVATE ATLAS_VERSION_STRING="0.1.0")
+if (DEFINED SKBUILD_PROJECT_VERSION)
+    target_compile_definitions(atlas_python PRIVATE ATLAS_VERSION_STRING="${SKBUILD_PROJECT_VERSION}")
+else ()
+    target_compile_definitions(atlas_python PRIVATE ATLAS_VERSION_STRING="0.1.0")
+endif ()
 
-# Under the CUDA backend, module.cpp pulls in header-inline device-dispatch code
-# (parallel_for<device> -> thrust::for_each(thrust::device = CUDA)) that only nvcc
-# can compile; the host compiler reports "unimplemented for this system". Compile
-# the binding TU with nvcc like the rest of the engine. (For the TBB backend the
-# device system is host-executable, so the default host-compiler path is fine.)
 if (ATLAS_USE_NVCC AND ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
-    set_source_files_properties(module.cpp PROPERTIES LANGUAGE CUDA)
+    set_source_files_properties(${ATLAS_PYTHON_SOURCES} PROPERTIES LANGUAGE CUDA)
 endif ()
 
 # When built through scikit-build-core (i.e. `pip wheel` / `python -m build`),

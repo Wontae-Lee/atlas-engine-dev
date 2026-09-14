@@ -1,5 +1,6 @@
 #include "register.h"
 #include "binding_types.h"
+#include "state_access.h"
 
 #include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
@@ -13,29 +14,42 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 
-// The two owner types that hold all simulation state: `Fluid` is the Lagrangian
-// particle population and `Universe` is the Eulerian background grid. Both are
-// move-only (they own device buffers) and are handed to Python through owning
-// `host_unique_ptr`s built by their fluent builders, so we expose read-only
-// accessors on the classes and free factory functions that run the builders.
 namespace atlas::python {
 
 void
 register_fluid_universe(nb::module_& m) {
     nb::class_<Fluid>(m, "Fluid")
-        .def_prop_ro("particle_count", &Fluid::particle_count)
-        .def_prop_ro("buffer_size", &Fluid::buffer_size);
+        .def_prop_rw("particle_count", &Fluid::particle_count, &Fluid::set_particle_count)
+        .def_prop_ro("buffer_size", &Fluid::buffer_size)
+        .def_prop_ro("statistical_weight", &Fluid::statistical_weight)
+        .def_prop_ro("materials", &Fluid::materials)
+        .def("set_particle_count", &Fluid::set_particle_count, "particle_count"_a)
+        .def("compact", &Fluid::compact)
+        .def("state", &read_state<Fluid>, "name"_a, "full"_a = false)
+        .def("set_state", &write_state<Fluid>, "name"_a, "values"_a, "offset"_a = 0)
+        .def("has_state", &has_state<Fluid>, "name"_a)
+        .def("remove_state", &remove_state<Fluid>, "name"_a)
+        .def("reset_state", &reset_state<Fluid>, "name"_a)
+        .def("positions", [](const Fluid& fluid) { return read_state(fluid, "position"); })
+        .def("velocities", [](const Fluid& fluid) { return read_state(fluid, "velocity"); })
+        .def("species", [](const Fluid& fluid) { return read_state(fluid, "species"); })
+        .def("active", [](const Fluid& fluid, const bool full) {
+            return numpy_copy(fluid.active(), full ? fluid.buffer_size() : fluid.particle_count());
+        }, "full"_a = false)
+        .def("set_active", &write_active, "values"_a, "offset"_a = 0);
 
     m.def(
         "fluid",
@@ -57,22 +71,22 @@ register_fluid_universe(nb::module_& m) {
         "A particle population of the given capacity, optionally attached to a "
         "material dictionary.");
 
-    // Seed a fluid's position and velocity columns directly from (N, 3) arrays,
-    // so custom initial conditions can be set up in Python (numpy, etc.). Species
-    // default to 0 (the first material). buffer_size defaults to the row count.
     m.def(
         "fluid_from_arrays",
         [](const nb::ndarray<const float, nb::shape<-1, 3>, nb::c_contig, nb::device::cpu>& positions,
            const nb::ndarray<const float, nb::shape<-1, 3>, nb::c_contig, nb::device::cpu>& velocities,
            const float statistical_weight,
-           std::shared_ptr<MaterialDictionary> materials) {
+           std::shared_ptr<MaterialDictionary> materials,
+           nb::object species,
+           const std::optional<std::size_t> buffer_size) {
             const std::size_t n = positions.shape(0);
             if (velocities.shape(0) != n) {
                 throw nb::value_error("positions and velocities must have the same length");
             }
 
+            const auto capacity = buffer_size.value_or(n == 0 ? 1 : n);
             auto builder = Fluid::builder()
-                               .with_buffer_size(n == 0 ? 1 : n)
+                               .with_buffer_size(capacity)
                                .with_particle_count(n)
                                .with_statistical_weight(statistical_weight);
             if (materials) {
@@ -89,22 +103,38 @@ register_fluid_universe(nb::module_& m) {
                 host_velocities[i] = Float3(v[3 * i + 0], v[3 * i + 1], v[3 * i + 2]);
             }
 
-            fluid->state<FluidPositionState>()->data()
-                = DeviceBuffer<Float3>(host_positions.begin(), host_positions.end());
-            fluid->state<FluidVelocityState>()->data()
-                = DeviceBuffer<Float3>(host_velocities.begin(), host_velocities.end());
-
-            const HostBuffer<std::size_t> host_species(n, 0);
-            fluid->state<FluidSpeciesState>()->data()
-                = DeviceBuffer<std::size_t>(host_species.begin(), host_species.end());
+            write_array(fluid->state<FluidPositionState>()->data(), host_positions, 0);
+            write_array(fluid->state<FluidVelocityState>()->data(), host_velocities, 0);
+            if (!species.is_none()) {
+                const auto host_species = numpy_to_host<std::size_t>(species);
+                if (host_species.size() != n) {
+                    throw nb::value_error("species must have the same length as positions");
+                }
+                write_state(*fluid, "species", species);
+            }
 
             return fluid;
         },
         "positions"_a, "velocities"_a, "statistical_weight"_a = 1.0f,
         "materials"_a = std::shared_ptr<MaterialDictionary>(),
-        "A fluid seeded from (N, 3) position and velocity arrays; species default to 0.");
+        nb::kw_only(), "species"_a = nb::none(), "buffer_size"_a = nb::none(),
+        "Seed a fluid from (N, 3) arrays, optional species ids, and optional spare capacity.");
 
-    nb::class_<Universe>(m, "Universe").def_prop_ro("cell_count", &Universe::cell_count);
+    nb::class_<Universe>(m, "Universe")
+        .def_prop_ro("cell_count", &Universe::cell_count)
+        .def_prop_ro("lower_corner", &Universe::lower_corner)
+        .def_prop_ro("upper_corner", &Universe::upper_corner)
+        .def_prop_ro("grid_size", &Universe::grid_size)
+        .def_prop_ro("cell_size", &Universe::cell_size)
+        .def_prop_ro("cell_volume", &Universe::cell_volume)
+        .def_prop_ro("inverse_cell_size", &Universe::inverse_cell_size)
+        .def("state", [](const Universe& universe, const std::string& name) {
+            return read_state(universe, name);
+        }, "name"_a)
+        .def("set_state", &write_state<Universe>, "name"_a, "values"_a, "offset"_a = 0)
+        .def("has_state", &has_state<Universe>, "name"_a)
+        .def("remove_state", &remove_state<Universe>, "name"_a)
+        .def("reset_state", &reset_state<Universe>, "name"_a);
 
     m.def(
         "universe",
