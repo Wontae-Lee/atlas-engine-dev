@@ -69,8 +69,8 @@ is not auditwheel-repaired and depends on the host's `libtbb`.
 
 ## GitHub CI and publication
 
-`.github/workflows/tbb.yml` runs on pushes to `main` and manual runs selecting
-`main`. Its job guard excludes every other branch, including manual dispatches;
+`.github/workflows/tbb.yml` runs only for manual runs selecting `main`.
+Its job guard excludes every other branch, including manual dispatches;
 there is no pull-request trigger. It runs the aggregate C++ GoogleTest suite,
 builds a source archive, builds and installs a wheel from that archive, checks
 metadata/version consistency, and executes `examples/python/dsmc_dense_cell.py`.
