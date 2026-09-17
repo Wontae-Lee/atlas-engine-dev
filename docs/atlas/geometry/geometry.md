@@ -300,6 +300,15 @@ closest-point distance with that winding sign. Public helpers `solid_angle` and
 - **Empty-view degradation:** `closest_point` returns `p`, `signed_distance`
   returns `+inf`, `centroid` the origin, `bound` a default AABB,
   `closest_normal` returns `+z`, and the classification queries return `false`.
+- **Bounds use the BVH root when accessible.** In particular, a CUDA collider's
+  device-side `advance()` refreshes its world bound from device BVH storage,
+  without dereferencing the mesh owner's host-only flat query cache. Host-side
+  CUDA queries retain the flat-soup scan and return the same enclosing box.
+- **Low-level device-query limitation:** `TriangleMeshView::centroid`,
+  `is_valid`, and exact `winding_number` still read the flat query cache. On a
+  CUDA mesh owned by `TriangleMesh`, that cache is host memory, so these methods
+  must not be invoked directly from a device kernel. Their Python bindings call
+  them on the host; the Python simulation's device paths use the BVH queries.
 - **`trace` needs a built BVH.** Unlike the other queries, `TriangleMeshView::trace`
   traverses the BVH on a CPU build; the brute-force flat-soup fallback is
   compiled in **only for the host side of a CUDA build**
