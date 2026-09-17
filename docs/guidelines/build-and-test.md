@@ -81,7 +81,7 @@ Constraints:
 
 ## 4. Test Authoring
 
-- Tests use GoogleTest only. Include `<gtest/gtest.h>` directly.
+- C++ tests use GoogleTest only. Include `<gtest/gtest.h>` directly.
 - Test sources are compiled by nvcc (marked as CUDA in CMake); they may
   exercise host/device-annotated APIs directly.
 - Place tests under `tests/atlas/<module>/`, mirroring `include/atlas/` and
@@ -97,6 +97,11 @@ CMake globs `tests/atlas/**/*.cpp`, so a new file needs no CMake edit. Every
 test lands in the aggregate `atlas_tests` target, and each directory also gets
 its own executable named after the path relative to `tests/atlas/` — so
 `tests/atlas/sink/` builds `atlas_tests_sink`.
+
+Python binding tests live under `tests/python/` and use the standard-library
+`unittest` runner against an installed wheel. See
+[`tests/python/README.md`](../../tests/python/README.md) for the command and
+coverage. These tests are separate from the C++ GoogleTest targets.
 
 Tests mirror `include/atlas/`: every module has a directory under
 `tests/atlas/`. The covered modules are `buffer`, `codec`, `collider`,
