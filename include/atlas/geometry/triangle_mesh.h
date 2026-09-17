@@ -690,15 +690,22 @@ public:
     /**
      * @brief Axis-aligned bounding box enclosing every referenced vertex.
      *
-     * Seeds min/max from the first indexed vertex, then folds in all three
-     * vertices of every triangle with @c cmin / @c cmax.
+     * Uses the BVH root's bound when the hierarchy is accessible to the caller.
+     * Otherwise seeds min/max from the first indexed vertex, then folds in all
+     * three vertices of every triangle with @c cmin / @c cmax.
      *
      * @return The enclosing AABB, or a default (empty) AABB for an empty mesh.
+     * @note The CUDA device path reads the device BVH rather than the owner's
+     *       host-only flat query cache, including when a collider advances.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE AABB
     bound() const noexcept {
         if (!vertices || !indices || triangle_count <= 0) {
             return AABB();
+        }
+
+        if (has_bvh()) {
+            return bvh_nodes[bvh_root].bounds;
         }
 
         const int i0 = indices[0];

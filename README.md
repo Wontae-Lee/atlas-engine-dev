@@ -255,52 +255,46 @@ Google Benchmark.
 
 ## Python Bindings
 
-Build the module in-tree (the debug presets already enable it):
+The Python package exposes math, geometry, spatial queries, simulation objects,
+sampling, and snapshot serialization through modules matching `include/atlas/`.
+Creation APIs are PascalCase classes, including `Sphere`, `Molecule`, `Fluid`,
+and `System`. They are available directly from `atlas` and through their matching
+Python modules. Computation and state remain in the C++ library.
 
-```bash
-cmake --preset tbb-debug
-cmake --build build/tbb-debug --target atlas_python -j$(nproc)
-```
-
-The module is a full assembly API that mirrors the C++ builders: every builder is
-exposed as a lower-case factory function returning a ready object, and
-`atlas.build_system(fluid, universe, dt, solver=, source=, generator=, colliders=,
-sinks=, codec=, observer=)` wires them into a runnable `System`. Initial particle
-state is seeded from numpy with `fluid_from_arrays(positions, velocities, ...)`, and
-`load_fluid` / `load_universe` reload snapshots. The `System` exposes
-`update()` and `save()`, the scalars `step`, `dt`, `particle_count`, and
-`cell_count`, and `positions()` / `velocities()` / `species()` returning numpy arrays.
+Choose a default engine before importing classes:
 
 ```python
 import atlas
-import numpy as np
-
-Vec = atlas.Float3
-
-materials = atlas.material_dictionary([
-    atlas.molecule(mass=4.65e-26, translational_energy=0.0, rotational_energy=0.0,
-                   vibrational_energy=0.0, reference_diameter=4.17e-10,
-                   reference_temperature=273.0, viscosity_index=0.74,
-                   scattering_parameter=1.0),
-])
-
-rng = np.random.default_rng(0)
-positions = rng.uniform(0.1, 0.9, size=(200, 3)).astype(np.float32)
-velocities = (rng.standard_normal((200, 3)) * 300.0).astype(np.float32)
-
-fluid = atlas.fluid_from_arrays(positions, velocities, statistical_weight=1e18, materials=materials)
-universe = atlas.universe(Vec(0, 0, 0), Vec(1, 1, 1), cell_size=1.0)
-solver = atlas.dsmc_solver(kernel_type=atlas.DsmcKernelType.variable_hard_sphere)
-
-system = atlas.build_system(fluid=fluid, universe=universe, dt=1e-4, solver=solver)
-for _ in range(20):
-    system.update()
-
-print(system.particle_count, np.linalg.norm(system.velocities(), axis=1).mean())
+atlas.set_default_engine("cuda")  # or "tbb"
+from atlas import Float3, Fluid, Sphere, System
 ```
 
-A runnable version is [`examples/python/dsmc_dense_cell.py`](examples/python/dsmc_dense_cell.py);
-the full API reference is [`docs/guidelines/python.md`](docs/guidelines/python.md).
+`atlas.available_engines()` lists installed engines. The combined CUDA wheel
+includes both; the TBB wheel includes only TBB. The first native class or
+submodule import fixes the engine for the process. The environment variable
+`ATLAS_DEFAULT_ENGINE` selects the initial default; otherwise TBB is preferred.
+
+For development from a checkout:
+
+```bash
+python -m pip install -e .
+```
+
+```python
+from atlas.math import Bool3, Float3, Quaternion, dot
+
+mask = Bool3(True, False, True)
+velocity = Float3(1.0, 2.0, 3.0)
+
+print(mask.any())
+print(dot(velocity, velocity))
+print(Quaternion().rotate(velocity))
+```
+
+`src/python/atlas/module.cpp` is the single extension translation unit.
+Registration headers mirror C++ header paths; the entry point creates native
+submodules and calls the registration functions. See
+[`docs/guidelines/python.md`](docs/guidelines/python.md) for the current API.
 
 Self-contained, redistributable wheels (bundling libtbb / libcudart) are built
 inside the packaging image. Initialise the submodules the build needs first:

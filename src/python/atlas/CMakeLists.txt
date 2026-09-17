@@ -1,15 +1,15 @@
 # ============================================================
 # Atlas Python bindings (nanobind)
 #
-# This directory (src/python/atlas) builds the `atlas` Python
-# extension module from the vendored nanobind submodule. It is
+# This directory builds a backend-specific Python extension module from the
+# binding sources under `src/python/atlas`. It is
 # configured only when ATLAS_PYTHON is enabled (guarded in the
 # top-level CMakeLists.txt).
 #
 # The module links against atlas::core so the bindings share the
 # exact same headers, backend-selection macros, and dependencies
-# as the C++ library. The compiled artifact is named `atlas` so it
-# can be imported directly with `import atlas`.
+# as the C++ library. The compiled artifact is installed inside the
+# pure-Python `atlas` package.
 # ============================================================
 
 # nanobind needs the Python interpreter and the Development.Module
@@ -21,11 +21,13 @@ find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
 # subdirectory exposes the nanobind_add_module() helper.
 add_subdirectory("${CMAKE_SOURCE_DIR}/external/nanobind" nanobind)
 
-# The bindings are split into module.cpp (NB_MODULE) plus one bindings_*.cpp per
-# engine module group. Glob them so a new group needs no edit here.
-file(GLOB ATLAS_PYTHON_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+set(ATLAS_PYTHON_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/module.cpp"
 )
+
+string(TOLOWER "${ATLAS_DEVICE_SYSTEM}" ATLAS_PYTHON_ENGINE)
+set(ATLAS_PYTHON_MODULE "_core_${ATLAS_PYTHON_ENGINE}")
+set(ATLAS_PYTHON_TBB_EXTENSION "" CACHE FILEPATH "TBB extension to include in a CUDA wheel")
 
 # Build the extension module.
 #   STABLE_ABI : build against the CPython stable ABI when available
@@ -34,16 +36,17 @@ file(GLOB ATLAS_PYTHON_SOURCES CONFIGURE_DEPENDS
 nanobind_add_module(atlas_python
         STABLE_ABI
         NB_STATIC
+        NB_DOMAIN "atlas_${ATLAS_PYTHON_ENGINE}"
         ${ATLAS_PYTHON_SOURCES}
 )
 
-# The importable module name is `atlas`, independent of the CMake
-# target name used above.
-set_target_properties(atlas_python PROPERTIES OUTPUT_NAME atlas)
+# The backend-specific module name is independent of the CMake target name.
+set_target_properties(atlas_python PROPERTIES OUTPUT_NAME "${ATLAS_PYTHON_MODULE}")
+target_compile_definitions(atlas_python PRIVATE ATLAS_PYTHON_MODULE=${ATLAS_PYTHON_MODULE})
 
 target_link_libraries(atlas_python PRIVATE atlas::core)
 
-# The runtime bindings (Universe, Fluid, searcher, DSMC/SPH solvers) call
+# The runtime bindings (Universe, Fluid, searcher, DSMC solver) call
 # host-only definitions compiled into the `atlas` static library, so link it
 # when it exists (built from src/atlas/**/*.cu).
 if (TARGET atlas)
@@ -61,8 +64,16 @@ if (ATLAS_USE_NVCC AND ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
 endif ()
 
 # When built through scikit-build-core (i.e. `pip wheel` / `python -m build`),
-# install the extension at the wheel root so it imports as `import atlas`.
+# install the extension inside the pure-Python `atlas` package.
 # Guarded by SKBUILD so an ordinary in-tree CMake build is unaffected.
 if (DEFINED SKBUILD)
-    install(TARGETS atlas_python LIBRARY DESTINATION . COMPONENT python)
+    install(TARGETS atlas_python
+            LIBRARY DESTINATION atlas COMPONENT python
+            RUNTIME DESTINATION atlas COMPONENT python)
+    if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA" AND ATLAS_PYTHON_TBB_EXTENSION)
+        if (NOT EXISTS "${ATLAS_PYTHON_TBB_EXTENSION}")
+            message(FATAL_ERROR "ATLAS_PYTHON_TBB_EXTENSION does not exist: ${ATLAS_PYTHON_TBB_EXTENSION}")
+        endif ()
+        install(FILES "${ATLAS_PYTHON_TBB_EXTENSION}" DESTINATION atlas COMPONENT python)
+    endif ()
 endif ()
