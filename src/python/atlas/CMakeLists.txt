@@ -1,15 +1,15 @@
 # ============================================================
 # Atlas Python bindings (nanobind)
 #
-# This directory (src/python/atlas) builds the `atlas` Python
-# extension module from the vendored nanobind submodule. It is
+# This directory builds the `atlas._core` Python extension module from the
+# binding sources under `src/python/atlas`. It is
 # configured only when ATLAS_PYTHON is enabled (guarded in the
 # top-level CMakeLists.txt).
 #
 # The module links against atlas::core so the bindings share the
 # exact same headers, backend-selection macros, and dependencies
-# as the C++ library. The compiled artifact is named `atlas` so it
-# can be imported directly with `import atlas`.
+# as the C++ library. The compiled artifact is installed inside the
+# pure-Python `atlas` package.
 # ============================================================
 
 # nanobind needs the Python interpreter and the Development.Module
@@ -21,10 +21,8 @@ find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
 # subdirectory exposes the nanobind_add_module() helper.
 add_subdirectory("${CMAKE_SOURCE_DIR}/external/nanobind" nanobind)
 
-# The bindings are split into module.cpp (NB_MODULE) plus one bindings_*.cpp per
-# engine module group. Glob them so a new group needs no edit here.
-file(GLOB ATLAS_PYTHON_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+set(ATLAS_PYTHON_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/module.cpp"
 )
 
 # Build the extension module.
@@ -37,9 +35,9 @@ nanobind_add_module(atlas_python
         ${ATLAS_PYTHON_SOURCES}
 )
 
-# The importable module name is `atlas`, independent of the CMake
+# The importable module name is `_core`, independent of the CMake
 # target name used above.
-set_target_properties(atlas_python PROPERTIES OUTPUT_NAME atlas)
+set_target_properties(atlas_python PROPERTIES OUTPUT_NAME _core)
 
 target_link_libraries(atlas_python PRIVATE atlas::core)
 
@@ -61,8 +59,10 @@ if (ATLAS_USE_NVCC AND ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
 endif ()
 
 # When built through scikit-build-core (i.e. `pip wheel` / `python -m build`),
-# install the extension at the wheel root so it imports as `import atlas`.
+# install the extension inside the pure-Python `atlas` package.
 # Guarded by SKBUILD so an ordinary in-tree CMake build is unaffected.
 if (DEFINED SKBUILD)
-    install(TARGETS atlas_python LIBRARY DESTINATION . COMPONENT python)
+    install(TARGETS atlas_python
+            LIBRARY DESTINATION atlas COMPONENT python
+            RUNTIME DESTINATION atlas COMPONENT python)
 endif ()

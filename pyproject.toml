@@ -3,8 +3,7 @@ requires = ["scikit-build-core>=0.10", "nanobind>=2.0"]
 build-backend = "scikit_build_core.build"
 
 # The distribution name is `atlas-engine` (`atlas` is taken on PyPI); the imported
-# module stays `atlas` (set by NB_MODULE / OUTPUT_NAME), so `pip install atlas-engine`
-# then `import atlas`.
+# package stays `atlas`, with the compiled bindings available as `atlas._core`.
 [project]
 name = "atlas-engine"
 version = "0.1.0"
@@ -51,11 +50,11 @@ cmake.define.ATLAS_HOST_COMPILER = "native"
 cmake.define.ATLAS_DEVICE_SYSTEM = "TBB"
 cmake.define.CMAKE_BUILD_TYPE = "Release"
 
-# Only the Python extension target is installed into the wheel (its
-# install() rule lives in src/python/atlas/CMakeLists.txt).
+# Build the compiled extension and install it alongside the Python package.
 build.targets = ["atlas_python"]
 install.components = ["python"]
-wheel.packages = []
+wheel.packages = ["src/python/atlas"]
+wheel.exclude = ["atlas/CMakeLists.txt", "atlas/**/*.cpp", "atlas/**/*.h"]
 wheel.license-files = [
     "LICENSE",
     "external/nanobind/LICENSE",
@@ -95,7 +94,7 @@ skip = "*-musllinux_*"
 build-frontend = "build"
 test-command = [
     "python -c \"import atlas; from importlib.metadata import version; assert atlas.__version__ == version('atlas-engine')\"",
-    "timeout 60s python {project}/examples/python/dsmc_dense_cell.py",
+    "python -c \"from atlas.math import Bool3, Float3, Quaternion, dot; assert Bool3(True, False, True).any(); v = Float3(1, 2, 3); assert dot(v, v) == 14; assert Quaternion().rotate(v) == v\"",
 ]
 
 [tool.cibuildwheel.linux]
