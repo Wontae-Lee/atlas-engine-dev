@@ -39,8 +39,8 @@ Issues = "https://github.com/wontae-lee/atlas-engine-dev/issues"
 cmake.version = ">=3.20"
 ninja.version = ">=1.10"
 
-# Wheel build config: bindings on, tests/benchmarks off. The Thrust device
-# system (TBB / CUDA) is chosen per build via
+# Wheel build config: bindings on, tests/benchmarks off. The parallel backend
+# (TBB / CUDA) is chosen per build via
 #   -C cmake.define.ATLAS_DEVICE_SYSTEM=CUDA
 # defaulting to the portable CPU (TBB) backend here.
 cmake.define.ATLAS_PYTHON = "ON"

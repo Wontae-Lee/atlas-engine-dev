@@ -20,6 +20,9 @@ A few rules are easy to miss; everything else is in the linked docs.
 - Respond in Korean unless the user asks for another language.
 - Do not run builds, tests, benchmarks, simulations, generators, or formatters
   unless the user explicitly asks.
+- Preserve both TBB builds with native C/C++ compilers (including `gcc`/`g++`)
+  and CUDA builds with nvcc. A native TBB build must not require the CUDA toolkit;
+  see [guidelines/build-and-test.md](docs/guidelines/build-and-test.md).
 - `include/atlas/` and `src/atlas/` are documented; new code there carries
   Doxygen too. Multi-line comments use `/** */`, and every comment is written in
   English. See [guidelines/coding-style.md §7](docs/guidelines/coding-style.md).

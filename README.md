@@ -92,14 +92,14 @@ The reference development environment is the Docker `dev` image (see
 |---|---|
 | TBB | Backs the host-side parallel algorithms in every configuration |
 | CMake 3.20+ | Presets are provided in [`CMakePresets.json`](CMakePresets.json) |
-| C++20 host compiler | GCC 11+ is a reasonable target |
+| C and C++20 host compilers | `gcc` / `g++` are selected by the `tbb-gcc-*` presets; GCC 11+ is a reasonable target |
 | Ninja | All presets use Ninja |
 
-### GPU builds only
+### Builds using nvcc
 
 | Dependency | Notes |
 |---|---|
-| CUDA Toolkit 12.x | nvcc compiles every translation unit and provides Thrust. Needed for `ATLAS_DEVICE_SYSTEM=CUDA`, or for `ATLAS_HOST_COMPILER=nvcc` |
+| CUDA Toolkit 12.x | Required for `ATLAS_DEVICE_SYSTEM=CUDA`, or for the optional `ATLAS_HOST_COMPILER=nvcc` TBB mode. Provides nvcc and the Thrust headers used by CUDA builds |
 | NVIDIA driver | Needed only to **run** `ATLAS_DEVICE_SYSTEM=CUDA` builds |
 
 ### Python Bindings
@@ -135,14 +135,33 @@ docker run --rm -it -v "$PWD":/workspace atlas-dev
 
 ### Build and test
 
-Inside the container, or on a bare-metal host. The CPU build needs only TBB and
-a C++20 compiler:
+Inside the container, or on a bare-metal host with the prerequisites below.
+Select GCC explicitly for the CPU build; this configuration does not enable
+CUDA or search for the CUDA toolkit:
 
 ```bash
-cmake --preset tbb-debug
-cmake --build build/tbb-debug -j$(nproc)
-ctest --preset ctest-tbb-debug
+cmake --preset tbb-gcc-debug
+cmake --build --preset build-tbb-gcc-debug
+ctest --preset ctest-tbb-gcc-debug
 ```
+
+`tbb-gcc-release` / `build-tbb-gcc-release` build the engine alone with GCC.
+The existing `tbb-debug` and `tbb-release` presets also use native compilers,
+but leave their selection to CMake instead of requiring `gcc` / `g++`.
+
+Without presets, choose the compilers directly:
+
+```bash
+cmake -S . -B build/tbb-gcc -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DATLAS_DEVICE_SYSTEM=TBB -DATLAS_HOST_COMPILER=native \
+    -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+cmake --build build/tbb-gcc -j$(nproc)
+```
+
+Use a fresh build directory when changing compilers or switching between native
+and nvcc modes. Each preset has a separate `build/<preset>` directory, so an
+existing nvcc build can be kept alongside the GCC build.
 
 GPU build — needs the CUDA toolkit; a GPU only to run the result:
 
@@ -155,18 +174,22 @@ cmake --build build/cuda-debug -j$(nproc)
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y ninja-build libtbb-dev
-# that is everything the tbb-* presets need.
-# the cuda-* presets additionally need the CUDA 12.x toolkit from NVIDIA's repositories.
+sudo apt-get install -y build-essential cmake ninja-build git libtbb-dev python3-dev
+git submodule update --init --recursive
 ```
+
+These packages cover the native TBB debug presets on Ubuntu 22.04 with GCC 11.
+`python3-dev` is required because debug presets enable Python bindings. The
+`cuda-*` and `tbb-nvcc-debug` presets additionally require the CUDA toolkit.
+Dependency configuration may need network access to fetch Abseil.
 
 ## Build Presets
 
-| Kind | TBB (host compiler) | CUDA (nvcc) |
-|---|---|---|
-| Configure | `tbb-debug`, `tbb-release` | `cuda-debug`, `cuda-release` |
-| Build | `build-tbb-debug`, `build-tbb-release` | `build-cuda-debug`, `build-cuda-release` |
-| Test | `ctest-tbb-debug` | `ctest-cuda-debug` |
+| Kind | TBB (selected host compiler) | TBB (gcc/g++) | CUDA (nvcc) |
+|---|---|---|---|
+| Configure | `tbb-debug`, `tbb-release` | `tbb-gcc-debug`, `tbb-gcc-release` | `cuda-debug`, `cuda-release` |
+| Build | `build-tbb-debug`, `build-tbb-release` | `build-tbb-gcc-debug`, `build-tbb-gcc-release` | `build-cuda-debug`, `build-cuda-release` |
+| Test | `ctest-tbb-debug` | `ctest-tbb-gcc-debug` | `ctest-cuda-debug` |
 
 The debug presets turn **everything** on — logging, tests, the Python module,
 the examples, and the benchmark cases. The release presets turn all five off and
@@ -182,7 +205,7 @@ host-compiler-only build would stop catching them.
 | Option | Debug presets | Release presets | Meaning |
 |---|---|---|---|
 | `ATLAS_DEVICE_SYSTEM` | — | — | Parallel backend: `TBB` (CPU, std + TBB) or `CUDA` (GPU, nvcc + Thrust) |
-| `ATLAS_HOST_COMPILER` | `native` | `native` | Compiler for a TBB build: `native` or `nvcc` |
+| `ATLAS_HOST_COMPILER` | `native` | `native` | TBB compiler mode: `native` uses the selected C/C++ compilers; `nvcc` enables the optional nvcc mode |
 | `ATLAS_LOGGING` | `ON` | `OFF` | Build logging support (`atlas::warn`, …) |
 | `ATLAS_GOOGLE_TEST` | `ON` | `OFF` | Build GoogleTest-based C++ tests |
 | `ATLAS_PYTHON` | `ON` | `OFF` | Build the nanobind Python bindings |
@@ -190,7 +213,12 @@ host-compiler-only build would stop catching them.
 | `ATLAS_BENCHMARKS` | `ON` | `OFF` | Build the Google Benchmark cases (`benchmarks/atlas/`) |
 
 TBB is required in every configuration. The CUDA toolkit is required only when
-nvcc compiles the sources.
+nvcc compiles the sources. In nvcc builds, the engine `.cu` sources and the
+enabled Atlas tests, examples, and benchmarks compile as CUDA. Python bindings
+use nvcc only for the CUDA backend. Host-only serialization, logging, and
+external dependencies still use the selected C/C++ compilers. GCC is selected
+with `CMAKE_C_COMPILER=gcc` and `CMAKE_CXX_COMPILER=g++`, as the `tbb-gcc-*`
+presets do.
 
 ## Running a Simulation
 

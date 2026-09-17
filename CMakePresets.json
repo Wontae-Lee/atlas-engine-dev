@@ -44,10 +44,19 @@
     },
     {
       "name": "tbb-debug",
-      "displayName": "Atlas TBB Debug (CPU, Thrust device = TBB)",
+      "displayName": "Atlas TBB Debug (CPU, native C++ compiler)",
       "inherits": "debug-base",
       "cacheVariables": {
         "ATLAS_DEVICE_SYSTEM": "TBB"
+      }
+    },
+    {
+      "name": "tbb-gcc-debug",
+      "displayName": "Atlas TBB Debug (CPU, GCC/G++, no CUDA toolkit)",
+      "inherits": "tbb-debug",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
       }
     },
     {
@@ -61,10 +70,19 @@
     },
     {
       "name": "tbb-release",
-      "displayName": "Atlas TBB Release (CPU, Thrust device = TBB)",
+      "displayName": "Atlas TBB Release (CPU, native C++ compiler)",
       "inherits": "release-base",
       "cacheVariables": {
         "ATLAS_DEVICE_SYSTEM": "TBB"
+      }
+    },
+    {
+      "name": "tbb-gcc-release",
+      "displayName": "Atlas TBB Release (CPU, GCC/G++, no CUDA toolkit)",
+      "inherits": "tbb-release",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
       }
     },
     {
@@ -98,6 +116,18 @@
       "jobs": 0
     },
     {
+      "name": "build-tbb-gcc-debug",
+      "displayName": "Build TBB Debug (GCC/G++)",
+      "configurePreset": "tbb-gcc-debug",
+      "jobs": 0
+    },
+    {
+      "name": "build-tbb-gcc-release",
+      "displayName": "Build TBB Release (GCC/G++)",
+      "configurePreset": "tbb-gcc-release",
+      "jobs": 0
+    },
+    {
       "name": "build-cuda-debug",
       "displayName": "Build CUDA Debug",
       "configurePreset": "cuda-debug",
@@ -121,6 +151,17 @@
       "name": "ctest-tbb-debug",
       "displayName": "CTest (TBB Debug)",
       "configurePreset": "tbb-debug",
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "ctest-tbb-gcc-debug",
+      "displayName": "CTest (TBB Debug, GCC/G++)",
+      "configurePreset": "tbb-gcc-debug",
       "execution": {
         "noTestsAction": "error"
       },

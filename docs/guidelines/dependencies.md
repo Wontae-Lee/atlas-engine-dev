@@ -9,11 +9,19 @@ The external and in-tree dependencies, and the benchmark reference submodules.
 **TBB** is required in every configuration; it backs the host-side parallel
 algorithms (`parallel_for`, `parallel_sort`, `parallel_fill`).
 
+Native TBB builds require a C compiler and a C++20 compiler, CMake 3.20+, and
+Ninja for the provided presets. `tbb-gcc-debug` and `tbb-gcc-release` select
+`gcc` and `g++` explicitly; `tbb-debug` and `tbb-release` use CMake's selected
+host toolchain. See [build-and-test.md](build-and-test.md) for the preset and
+direct configure commands.
+
 The **CUDA 12.x toolkit** is required only when nvcc compiles the sources —
 that is, `ATLAS_DEVICE_SYSTEM=CUDA`, or `ATLAS_HOST_COMPILER=nvcc`. A default
-`ATLAS_DEVICE_SYSTEM=TBB` build needs neither nvcc nor Thrust: the buffers are
-`std::vector` and the algorithms are TBB's. A GPU is needed only to *run*
-`ATLAS_DEVICE_SYSTEM=CUDA` builds.
+`ATLAS_DEVICE_SYSTEM=TBB` / `ATLAS_HOST_COMPILER=native` build needs neither nvcc
+nor Thrust: the buffers are `std::vector` and the algorithms are TBB's. CUDA is
+not enabled or searched for in this configuration. A GPU is needed only to
+*run* `ATLAS_DEVICE_SYSTEM=CUDA` builds. Even when nvcc is enabled, host-only
+serialization, logging, and external dependencies still use the C/C++ compilers.
 
 CMake defines exactly one of `ATLAS_BACKEND_CUDA` and `ATLAS_BACKEND_TBB`. Ten
 headers branch on it to pick the container and the algorithm — nine under

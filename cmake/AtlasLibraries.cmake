@@ -41,8 +41,8 @@ if (ATLAS_USE_NVCC)
 endif ()
 
 # atlas — compiled engine library from the .cu definitions under src/atlas
-# (mirrors include/atlas). nvcc compiles all of it; the Thrust device system
-# decides whether GPU code is generated.
+# (mirrors include/atlas). TBB uses the native C++ compiler by default; CUDA
+# and ATLAS_HOST_COMPILER=nvcc use nvcc.
 file(GLOB_RECURSE ATLAS_ENGINE_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/src/atlas/*.cu"
 )

@@ -1,12 +1,15 @@
 # ============================================================
 # Atlas Engine — Docker images
 #
-# Atlas is built with a single toolchain: nvcc. Every translation
-# unit is compiled as CUDA, and the Thrust device system selects
-# the execution backend at configure time:
+# Atlas selects its execution backend at configure time:
 #
-#   -DATLAS_DEVICE_SYSTEM=TBB   → CPU build (Thrust device = TBB)
-#   -DATLAS_DEVICE_SYSTEM=CUDA  → GPU build (Thrust device = CUDA)
+#   -DATLAS_DEVICE_SYSTEM=TBB   → CPU build (std::vector + TBB)
+#   -DATLAS_DEVICE_SYSTEM=CUDA  → GPU build (Thrust + CUDA)
+#
+# TBB uses native C/C++ compilers by default; tbb-gcc-* presets
+# select gcc/g++ explicitly, without requiring the CUDA toolkit.
+# ATLAS_HOST_COMPILER=nvcc also supports TBB builds through nvcc.
+# CUDA requires nvcc; host-only code keeps its C/C++ compilers.
 #
 # A GPU is NOT required to build either variant; it is required
 # only to run the CUDA variant.
@@ -42,7 +45,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Core toolchain and library dependencies:
 #   - build-essential / cmake / ninja-build : host compiler + build system
 #     (nvcc itself ships with the CUDA base image)
-#   - libtbb-dev  : Thrust host system and TBB device-system backend
+#   - libtbb-dev  : native TBB backend and Thrust host system for CUDA
 #   - python3-dev : required by the optional nanobind Python bindings
 #   - git / gdb / vim / pkg-config : everyday development utilities
 RUN apt-get update -yq && \
@@ -94,7 +97,8 @@ ENTRYPOINT ["bash"]
 FROM dev AS builder
 
 # Configure preset to build. One of:
-#   tbb-release / tbb-debug / cuda-release / cuda-debug
+#   tbb-release / tbb-debug / tbb-gcc-release / tbb-gcc-debug
+#   tbb-nvcc-debug / cuda-release / cuda-debug
 ARG ATLAS_PRESET=tbb-release
 
 WORKDIR /app

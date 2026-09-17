@@ -1,18 +1,17 @@
 # Top-level CMake for atlas-engine-dev.
 #
-# Single toolchain: nvcc compiles every Atlas TU. The execution backend is the
-# Thrust device system, chosen by ATLAS_DEVICE_SYSTEM:
-#   TBB  -> CPU build (THRUST_DEVICE_SYSTEM=TBB, no GPU code generated)
-#   CUDA -> GPU build (THRUST_DEVICE_SYSTEM=CUDA)
-# The Thrust host system is always TBB; a GPU is needed only to run the CUDA
-# variant, never to build it.
+# ATLAS_DEVICE_SYSTEM selects the execution backend:
+#   TBB  -> CPU build with the native C/C++ compilers (e.g. GCC/G++), no CUDA toolkit
+#   CUDA -> GPU build with nvcc and Thrust
+# ATLAS_HOST_COMPILER=nvcc also supports compiling the TBB backend with nvcc.
+# TBB is required in every configuration; a GPU is needed only to run CUDA code.
 #
 # This file wires options and orchestrates the build; the details live in
 # cmake/ modules and in the tests/, benchmarks/, and src/python subdirectories.
 
 cmake_minimum_required(VERSION 3.20)
 
-project(atlas-engine-dev LANGUAGES CXX)
+project(atlas-engine-dev LANGUAGES C CXX)
 
 include(CTest)
 
@@ -38,7 +37,7 @@ set_property(CACHE ATLAS_DEVICE_SYSTEM PROPERTY STRINGS TBB CUDA)
 # the old behavior: a CPU build compiled by nvcc. That is worth having in CI, because nvcc
 # rejects constructs the host compiler accepts -- notably an extended __host__ __device__
 # lambda inside a private member function -- and a TBB-only build would stop catching them.
-set(ATLAS_HOST_COMPILER "native" CACHE STRING "Compiler for a TBB build: native or nvcc")
+set(ATLAS_HOST_COMPILER "native" CACHE STRING "TBB toolchain: native (CMAKE_CXX_COMPILER, e.g. g++) or nvcc")
 set_property(CACHE ATLAS_HOST_COMPILER PROPERTY STRINGS native nvcc)
 
 option(ATLAS_LOGGING      "Enable logging functionality" ON)
@@ -93,7 +92,7 @@ endif ()
 if (ATLAS_USE_NVCC)
     include(CudaToolchain)
 else ()
-    message(STATUS "[ATLAS] Toolchain: host compiler only (no CUDA toolkit, no Thrust)")
+    message(STATUS "[ATLAS] Toolchain: ${CMAKE_CXX_COMPILER_ID} (${CMAKE_CXX_COMPILER}); no CUDA toolkit or Thrust")
 endif ()
 
 include(Dependencies)
@@ -117,12 +116,19 @@ endif ()
 message(STATUS "")
 message(STATUS "========== ATLAS CONFIG SUMMARY ==========")
 message(STATUS "C++ Standard        : ${CMAKE_CXX_STANDARD}")
+message(STATUS "C Compiler          : ${CMAKE_C_COMPILER}")
+message(STATUS "C++ Compiler        : ${CMAKE_CXX_COMPILER}")
 message(STATUS "ATLAS_DEVICE_SYSTEM : ${ATLAS_DEVICE_SYSTEM}")
+message(STATUS "ATLAS_HOST_COMPILER : ${ATLAS_HOST_COMPILER}")
+message(STATUS "ATLAS_USE_NVCC      : ${ATLAS_USE_NVCC}")
 message(STATUS "ATLAS_LOGGING       : ${ATLAS_LOGGING}")
 message(STATUS "ATLAS_GOOGLE_TEST   : ${ATLAS_GOOGLE_TEST}")
 message(STATUS "ATLAS_PYTHON        : ${ATLAS_PYTHON}")
 message(STATUS "ATLAS_BENCHMARKS    : ${ATLAS_BENCHMARKS}")
 message(STATUS "ATLAS_EXAMPLES      : ${ATLAS_EXAMPLES}")
-message(STATUS "CUDA Architectures  : ${CMAKE_CUDA_ARCHITECTURES}")
+if (ATLAS_USE_NVCC)
+    message(STATUS "CUDA Compiler       : ${CMAKE_CUDA_COMPILER}")
+    message(STATUS "CUDA Architectures  : ${CMAKE_CUDA_ARCHITECTURES}")
+endif ()
 message(STATUS "==========================================")
 message(STATUS "")

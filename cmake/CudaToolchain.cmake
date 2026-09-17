@@ -1,6 +1,6 @@
 # nvcc toolchain: compiler discovery, GPU/arch detection, C++20 + Thrust flags.
-# nvcc compiles every Atlas TU regardless of ATLAS_DEVICE_SYSTEM; the architecture
-# only matters for the CUDA variant.
+# Loaded only for CUDA or ATLAS_HOST_COMPILER=nvcc. Host-only translation units
+# and dependencies still use the native C/C++ compilers.
 
 find_program(ATLAS_NVIDIA_SMI_EXECUTABLE
         NAMES nvidia-smi
