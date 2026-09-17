@@ -20,42 +20,79 @@ build them, use `scripts/build_wheels.sh` (it installs its own toolchain via
 
 Two switches pick the toolchain.
 
-`ATLAS_DEVICE_SYSTEM` selects the parallel backend. `CUDA` compiles every
-translation unit with nvcc and uses Thrust's containers and algorithms. `TBB`
+`ATLAS_DEVICE_SYSTEM` selects the parallel backend. `CUDA` compiles the engine
+and Python extension with nvcc and uses Thrust's containers and algorithms.
+Host-only serialization, logging, and external dependencies use C/C++ compilers. `TBB`
 (the default) uses neither: buffers are `std::vector`, the algorithms are TBB's,
 and the host compiler builds the whole tree. The `.cu` suffix survives on the
 engine sources because they hold no CUDA-only syntax — every kernel is a
 `parallel_for` over an `ATLAS_ALL_DEVICE` lambda, and those annotations vanish
 outside `__CUDACC__`.
 
-`ATLAS_HOST_COMPILER` (`native` | `nvcc`) forces a TBB build through nvcc.
-Keep a CI job on `tbb-nvcc-debug`: **nvcc rejects constructs the host compiler
+`ATLAS_HOST_COMPILER=native` uses the selected host compiler for TBB;
+`ATLAS_HOST_COMPILER=nvcc` forces a TBB build through nvcc.
+The `tbb-nvcc-debug` preset catches constructs **nvcc rejects but the host compiler
 accepts** — notably an extended `__host__ __device__` lambda inside a private
 member function, which is the only reason `System::mark_survivors` and friends
-are public. A TBB-only build stops catching those.
+are public. Native TBB CI does not catch those; the current workflows do not
+run this optional nvcc preset.
 
 A CUDA toolkit is therefore needed only when nvcc is in play. A GPU is needed
 only to *run* the CUDA variant.
 
-The reference development environment is the Docker `dev` image
-(see `Dockerfile`):
+Docker provides separate development toolchains. Use `tbb-dev` for a native
+GCC/G++ build without CUDA, or `cuda-dev` when nvcc is needed:
 
 ```bash
-docker build --target dev -t atlas-dev .
-docker run --rm -it -v "$PWD":/workspace atlas-dev
+docker build --target tbb-dev -t atlas:tbb-dev .
+docker run --rm -it -v "$PWD":/workspace atlas:tbb-dev
+docker build --target cuda-dev -t atlas:cuda-dev .
+docker run --rm -it --gpus all -v "$PWD":/workspace atlas:cuda-dev
 ```
 
-`CMakePresets.json` requires CMake 3.20+ and Ninja. Important presets:
+The CUDA build itself does not need `--gpus all`; use it when running GPU code.
+The `dev` target remains an alias of `cuda-dev`. The `tbb` and `cuda` runtime
+targets have Python and Atlas installed and are intended to run user scripts.
+See [docker.md](docker.md) for Ubuntu versions, runtime usage, and build options.
+
+The project requires CMake 3.20+; the version-3 `CMakePresets.json` format
+requires CMake 3.21+. The presets use Ninja. Important presets:
 
 - Configure: `tbb-debug`, `tbb-release` (CPU; host compiler, no CUDA toolkit),
+  `tbb-gcc-debug`, `tbb-gcc-release` (explicit `gcc`/`g++`),
   `tbb-nvcc-debug` (CPU backend built by nvcc),
   `cuda-debug`, `cuda-release` (GPU; nvcc + Thrust)
 - Build: `build-tbb-debug`, `build-tbb-release`, `build-tbb-nvcc-debug`,
+  `build-tbb-gcc-debug`, `build-tbb-gcc-release`,
   `build-cuda-debug`, `build-cuda-release`
-- Test: `ctest-tbb-debug`, `ctest-tbb-nvcc-debug`, `ctest-cuda-debug`
+- Test: `ctest-tbb-debug`, `ctest-tbb-gcc-debug`, `ctest-tbb-nvcc-debug`, `ctest-cuda-debug`
 
 The debug presets turn logging, tests, the Python module, the examples, and the
 benchmarks on; the release presets turn all five off.
+
+When a build and test run is requested, the GCC debug path is:
+
+```bash
+cmake --preset tbb-gcc-debug
+cmake --build --preset build-tbb-gcc-debug
+ctest --preset ctest-tbb-gcc-debug
+```
+
+To configure the engine alone without presets:
+
+```bash
+cmake -S . -B build/tbb-gcc -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
+    -DATLAS_DEVICE_SYSTEM=TBB -DATLAS_HOST_COMPILER=native \
+    -DBUILD_TESTING=OFF -DATLAS_GOOGLE_TEST=OFF
+cmake --build build/tbb-gcc
+```
+
+Use a fresh build directory when switching compilers or backends. For a CUDA
+build, use the `cuda-*` presets. Set `CMAKE_CUDA_ARCHITECTURES` explicitly when
+building for another GPU; without it, configuration detects the local GPU or
+falls back to `89-real`. Docker runtime builds provide their own explicit list.
 
 ---
 
@@ -64,6 +101,7 @@ benchmarks on; the release presets turn all five off.
 Important options:
 
 - `ATLAS_DEVICE_SYSTEM` — `TBB` (CPU, default) or `CUDA` (GPU)
+- `ATLAS_HOST_COMPILER` — `native` (default) or `nvcc` for TBB
 - `ATLAS_LOGGING`, `ATLAS_PYTHON`
 - `ATLAS_GOOGLE_TEST`, `ATLAS_BENCHMARKS`, `ATLAS_EXAMPLES`
 
@@ -82,8 +120,8 @@ Constraints:
 ## 4. Test Authoring
 
 - C++ tests use GoogleTest only. Include `<gtest/gtest.h>` directly.
-- Test sources are compiled by nvcc (marked as CUDA in CMake); they may
-  exercise host/device-annotated APIs directly.
+- Test sources use the host compiler for native TBB and nvcc when
+  `ATLAS_USE_NVCC` is enabled; they may exercise host/device-annotated APIs directly.
 - Place tests under `tests/atlas/<module>/`, mirroring `include/atlas/` and
   `src/atlas/`.
 - Name C++ test files `<subject>_tests.cpp`.
@@ -110,12 +148,22 @@ Tests mirror `include/atlas/`: every module has a directory under
 `searcher`, `serialization`, `sink`, `solver`, `source`, `spatial`, `sync`,
 `system`, `unit`, and `universe`.
 
-## 5. GitHub TBB CI
+## 5. GitHub CI
 
 `.github/workflows/tbb.yml` runs only for manual dispatches on `main`.
-It builds the aggregate `atlas_tests` target with the native compiler
-and TBB, then runs CTest with `-R '^atlas_tests\.'`. This filter selects the
+It builds the aggregate `atlas_tests` target with GCC/G++ and TBB on Ubuntu
+22.04 and 24.04, then runs CTest with `-R '^atlas_tests\.'`. This filter selects the
 aggregate suite and avoids trying to execute the unbuilt per-module binaries.
-Python packaging checks build a wheel from the source archive, install it, and
-run the existing DSMC example. Release packaging and manual PyPI publication are
-described in [python.md](python.md#github-ci-and-publication).
+
+`.github/workflows/python.yml` is a separate manual workflow on `main`, using
+Ubuntu 22.04/Python 3.10 and Ubuntu 24.04/Python 3.12. It builds a TBB wheel
+from the source archive, installs it, checks metadata and engine selection,
+runs all `tests/python` tests, and executes the DSMC example.
+Neither workflow exercises the CUDA backend. Artifact details and manual
+PyPI publication are described in [releases.md](releases.md).
+
+`.github/workflows/publish-docker.yml` builds the TBB and CUDA runtime images
+for Ubuntu 22.04 and 24.04 on `linux/amd64`. Before optional GHCR publication,
+it checks installed Python dependencies, loads the selected native engine,
+checks basic math operations, and runs the DSMC example for TBB. The CUDA
+checks run without a GPU and do not validate GPU simulation.

@@ -13,6 +13,10 @@ The detailed material lives in two places:
   modules: their structure, the shared tagged-union leaf pattern, and how to
   extend each.
 
+The root [`README.md`](README.md) is for users: installation, engine selection,
+public API examples, running simulations, outputs, and citation. Keep internal
+architecture, CI operations, and release procedures in the linked guidelines.
+
 ## Always Applies
 
 A few rules are easy to miss; everything else is in the linked docs.
@@ -23,6 +27,12 @@ A few rules are easy to miss; everything else is in the linked docs.
 - Preserve both TBB builds with native C/C++ compilers (including `gcc`/`g++`)
   and CUDA builds with nvcc. A native TBB build must not require the CUDA toolkit;
   see [guidelines/build-and-test.md](docs/guidelines/build-and-test.md).
+- Preserve the Python PascalCase class API and engine selection before native
+  imports. Registration headers mirror `include/atlas/` under `src/python/atlas/`,
+  with one root `module.cpp`; see [guidelines/python.md](docs/guidelines/python.md).
+- Keep the `tbb` and `cuda` Docker runtime targets separate, with Python and
+  the selected Atlas engine installed. Development and wheel-packaging targets
+  serve different purposes; see [guidelines/docker.md](docs/guidelines/docker.md).
 - `include/atlas/` and `src/atlas/` are documented; new code there carries
   Doxygen too. Multi-line comments use `/** */`, and every comment is written in
   English. See [guidelines/coding-style.md §7](docs/guidelines/coding-style.md).
@@ -46,6 +56,28 @@ A few rules are easy to miss; everything else is in the linked docs.
 | Build, configure presets, or author tests | [guidelines/build-and-test.md](docs/guidelines/build-and-test.md) |
 | Check dependencies, benchmark cases, or C++ examples | [guidelines/dependencies.md](docs/guidelines/dependencies.md) |
 | Build or use the Python (`atlas`) bindings | [guidelines/python.md](docs/guidelines/python.md) |
+| Build or use the TBB/CUDA Docker runtime and development images | [guidelines/docker.md](docs/guidelines/docker.md) |
+| Prepare release artifacts, publish Python packages, or update citation metadata | [guidelines/releases.md](docs/guidelines/releases.md) |
+
+### Build and distribution configuration
+
+Use the files below to verify current behavior before updating documentation.
+Configured CI coverage is not evidence that a run passed.
+
+| Area | Source of truth |
+|---|---|
+| Backend options and compiler presets | `CMakeLists.txt`, `CMakePresets.json`, `cmake/` |
+| Python dependencies, versions, and wheel contents | `pyproject.toml`, `src/python/atlas/CMakeLists.txt`, `scripts/build_wheels.sh` |
+| Docker targets and Ubuntu/CUDA defaults | `Dockerfile`, `.dockerignore` |
+| C++ TBB CI: Ubuntu 22.04 and 24.04 | `.github/workflows/tbb.yml` |
+| Python TBB CI: 22.04/Python 3.10 and 24.04/Python 3.12 | `.github/workflows/python.yml` |
+| Python publication | `.github/workflows/publish-python.yml` |
+| TBB/CUDA Docker publication to GHCR | `.github/workflows/publish-docker.yml` |
+
+These workflows currently run through manual dispatch on `main`. The C++ and
+Python checks are separate; Python and Docker publication each require their
+explicit publish input. Docker checks load both engines and run the TBB example;
+CUDA GPU simulation is not exercised by the hosted workflows.
 
 ### Understanding a module → `docs/atlas/`
 

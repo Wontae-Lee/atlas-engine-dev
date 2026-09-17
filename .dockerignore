@@ -1,5 +1,7 @@
 .git
+**/.git
 build/
+cmake-build-*/
 dist/
 .venv/
 .idea/

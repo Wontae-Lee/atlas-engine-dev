@@ -45,6 +45,11 @@ Outside these cases, implement the requested behavior directly.
 
 ## 4. Keeping Docs and Code in Sync
 
+- Keep the root README focused on installation and public usage. Put internal
+  design, CI operation, and release procedures in the contributor guidelines.
+- Derive documented defaults and CI coverage from the current configuration.
+  Distinguish configured checks from checks that were actually executed.
+
 - The per-module docs under [`docs/atlas/`](../atlas/) are the source of truth
   for program structure — every module under `include/atlas/` has one. When you
   make an intentional change to a module, update its document in the same

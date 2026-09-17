@@ -1,129 +1,127 @@
-# ============================================================
-# Atlas Engine — Docker images
-#
-# Atlas selects its execution backend at configure time:
-#
-#   -DATLAS_DEVICE_SYSTEM=TBB   → CPU build (std::vector + TBB)
-#   -DATLAS_DEVICE_SYSTEM=CUDA  → GPU build (Thrust + CUDA)
-#
-# TBB uses native C/C++ compilers by default; tbb-gcc-* presets
-# select gcc/g++ explicitly, without requiring the CUDA toolkit.
-# ATLAS_HOST_COMPILER=nvcc also supports TBB builds through nvcc.
-# CUDA requires nvcc; host-only code keeps its C/C++ compilers.
-#
-# A GPU is NOT required to build either variant; it is required
-# only to run the CUDA variant.
-#
-# Stages:
-#
-#   dev      Development environment. Full toolchain, no sources.
-#            This is the image contributors work inside:
-#
-#              docker build --target dev -t atlas-dev .
-#              docker run --rm -it -v "$PWD":/workspace atlas-dev
-#              # inside the container:
-#              cmake --preset tbb-debug
-#              cmake --build build/tbb-debug -j$(nproc)
-#
-#   builder  Compiles the repository with a selected preset.
-#
-#              docker build --target builder \
-#                  --build-arg ATLAS_PRESET=cuda-release .
-#
-#   runtime  Thin image holding only built artifacts and
-#            runtime libraries. Default final stage.
-# ============================================================
+ARG UBUNTU_VERSION=22.04
+ARG CUDA_VERSION=12.9.2
 
-# ============================================================
-# dev — development environment
-# ============================================================
-FROM nvidia/cuda:12.4.1-devel-ubuntu22.04 AS dev
-LABEL authors="Wontae Lee"
+FROM ubuntu:${UBUNTU_VERSION} AS tbb-dev
 
-ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        build-essential ca-certificates cmake ninja-build git gdb vim pkg-config \
+        libtbb-dev python3-dev python3-venv && \
+    rm -rf /var/lib/apt/lists/*
 
-# Core toolchain and library dependencies:
-#   - build-essential / cmake / ninja-build : host compiler + build system
-#     (nvcc itself ships with the CUDA base image)
-#   - libtbb-dev  : native TBB backend and Thrust host system for CUDA
-#   - python3-dev : required by the optional nanobind Python bindings
-#   - git / gdb / vim / pkg-config : everyday development utilities
-RUN apt-get update -yq && \
-    apt-get install -yq --no-install-recommends \
-        build-essential \
-        cmake \
-        ninja-build \
-        git \
-        gdb \
-        vim \
-        pkg-config \
-        libtbb-dev \
-        python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}" \
+    CC=gcc \
+    CXX=g++
+
+RUN python3 -m venv "${VIRTUAL_ENV}" && \
+    python -m pip install --no-cache-dir --upgrade pip
 
 WORKDIR /workspace
-
 ENTRYPOINT ["bash"]
 
-# ============================================================
-# wheel — dev environment plus Python packaging tools, for
-#         building self-contained (auditwheel-repaired) wheels:
-#
-#   docker build --target wheel -t atlas-wheel .
-#   docker run --rm -v "$PWD":/workspace -w /workspace atlas-wheel \
-#       -c 'bash scripts/build_wheels.sh'
-#
-# Produces dist/tbb/*.whl and dist/cuda/*.whl, each bundling its
-# runtime libraries (libtbb, libcudart, libstdc++, ...).
-# ============================================================
-FROM dev AS wheel
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION} AS cuda-dev
 
-RUN apt-get update -yq && \
-    apt-get install -yq --no-install-recommends python3-pip \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        build-essential ca-certificates cmake ninja-build git gdb vim pkg-config \
+        libtbb-dev python3-dev python3-venv && \
+    rm -rf /var/lib/apt/lists/*
 
-# Bake the packaging toolchain into the image so build_wheels.sh needs no
-# network at run time (its pip install then becomes a no-op).
-RUN python3 -m pip install --no-cache-dir \
-        "scikit-build-core>=0.10" "nanobind>=2.0" build auditwheel patchelf
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}" \
+    CC=gcc \
+    CXX=g++
+
+RUN python3 -m venv "${VIRTUAL_ENV}" && \
+    python -m pip install --no-cache-dir --upgrade pip
 
 WORKDIR /workspace
-
 ENTRYPOINT ["bash"]
 
-# ============================================================
-# builder — compile the repository inside the dev environment
-# ============================================================
-FROM dev AS builder
+FROM cuda-dev AS dev
 
-# Configure preset to build. One of:
-#   tbb-release / tbb-debug / tbb-gcc-release / tbb-gcc-debug
-#   tbb-nvcc-debug / cuda-release / cuda-debug
-ARG ATLAS_PRESET=tbb-release
+FROM cuda-dev AS wheel
 
-WORKDIR /app
-ADD . /app
+RUN python -m pip install --no-cache-dir \
+    "scikit-build-core>=0.10" "nanobind>=2.0" build auditwheel patchelf
 
-RUN cmake --preset ${ATLAS_PRESET} && \
-    cmake --build build/${ATLAS_PRESET} -j"$(nproc)"
+FROM tbb-dev AS tbb-builder
 
-# ============================================================
-# runtime — thin image with runtime dependencies only
-# ============================================================
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS runtime
-LABEL authors="Wontae Lee"
+ARG BUILD_JOBS=2
+ENV CMAKE_BUILD_PARALLEL_LEVEL=${BUILD_JOBS}
 
-ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /src
+COPY . .
 
-RUN apt-get update -yq && \
-    apt-get install -yq --no-install-recommends \
-        libtbb2 \
-    && rm -rf /var/lib/apt/lists/*
+RUN python -m pip wheel --no-cache-dir --wheel-dir /wheels . \
+        -C cmake.define.ATLAS_DEVICE_SYSTEM=TBB \
+        -C cmake.define.ATLAS_HOST_COMPILER=native \
+        -C cmake.define.BUILD_TESTING=OFF \
+        -C cmake.define.BUILD_SHARED_LIBS=OFF && \
+    python -m pip install --no-cache-dir --no-index --find-links=/wheels atlas-engine && \
+    rm -rf /wheels
 
-# Build artifacts stay under /app/build in the builder stage;
-# copy them over for direct execution or packaging.
-COPY --from=builder /app/build /opt/atlas/build
+FROM cuda-dev AS cuda-builder
 
-WORKDIR /work
+ARG BUILD_JOBS=2
+ARG CMAKE_CUDA_ARCHITECTURES="75-real;80-real;86-real;89-real;90"
+ENV CMAKE_BUILD_PARALLEL_LEVEL=${BUILD_JOBS}
 
-ENTRYPOINT ["bash"]
+WORKDIR /src
+COPY . .
+
+RUN python -m pip wheel --no-cache-dir --wheel-dir /wheels . \
+        -C cmake.define.ATLAS_DEVICE_SYSTEM=CUDA \
+        -C cmake.define.ATLAS_HOST_COMPILER=native \
+        -C "cmake.define.CMAKE_CUDA_ARCHITECTURES=${CMAKE_CUDA_ARCHITECTURES}" \
+        -C cmake.define.BUILD_TESTING=OFF \
+        -C cmake.define.BUILD_SHARED_LIBS=OFF && \
+    python -m pip install --no-cache-dir --no-index --find-links=/wheels atlas-engine && \
+    rm -rf /wheels
+
+FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS cuda
+
+LABEL org.opencontainers.image.title="Atlas Engine (CUDA)" \
+    org.opencontainers.image.source="https://github.com/Wontae-Lee/atlas-engine-dev" \
+    org.opencontainers.image.licenses="GPL-3.0-or-later"
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates python3 libtbb12 libstdc++6 zlib1g && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=cuda-builder /opt/venv /opt/venv
+COPY examples/python /opt/atlas/examples/python
+COPY assets /opt/atlas/assets
+
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}" \
+    ATLAS_DEFAULT_ENGINE=cuda \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /workspace
+CMD ["python"]
+
+FROM ubuntu:${UBUNTU_VERSION} AS tbb
+
+LABEL org.opencontainers.image.title="Atlas Engine (TBB)" \
+    org.opencontainers.image.source="https://github.com/Wontae-Lee/atlas-engine-dev" \
+    org.opencontainers.image.licenses="GPL-3.0-or-later"
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates python3 libtbb12 libstdc++6 zlib1g && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=tbb-builder /opt/venv /opt/venv
+COPY examples/python /opt/atlas/examples/python
+COPY assets /opt/atlas/assets
+
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}" \
+    ATLAS_DEFAULT_ENGINE=tbb \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /workspace
+CMD ["python"]

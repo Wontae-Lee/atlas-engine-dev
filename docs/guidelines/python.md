@@ -44,6 +44,26 @@ Both engines expose the same PascalCase API and NumPy host-array interface.
 CUDA executes the engine's device kernels on the GPU; TBB executes the CPU
 implementation. Parallel floating-point results need not be bit-for-bit equal.
 
+## Docker runtime
+
+The `tbb` and `cuda` Docker targets install Python, NumPy, and the Atlas wheel
+in `/opt/venv`; `python` and `pip` use that environment automatically. Each
+runtime image includes only its selected native extension and sets
+`ATLAS_DEFAULT_ENGINE` accordingly. Unlike the combined CUDA wheel built by
+`scripts/build_wheels.sh`, the CUDA runtime image does not include a TBB engine.
+
+```bash
+git submodule update --init --recursive
+docker build --target tbb -t atlas:tbb .
+docker run --rm atlas:tbb python /opt/atlas/examples/python/dsmc_dense_cell.py
+docker run --rm -v "$PWD":/workspace atlas:tbb python simulation.py
+```
+
+For CUDA, build with `--target cuda`, use the resulting image, and add
+`--gpus all` to `docker run`. See [docker.md](docker.md) for host GPU setup,
+Ubuntu versions, and development targets. The `wheel` target below is a
+packaging toolchain and does not have Atlas preinstalled.
+
 ## Building the module
 
 The module is built when `ATLAS_PYTHON` is on. It needs the nanobind submodule
@@ -121,27 +141,15 @@ name. Install the combined CUDA wheel instead.
 
 ## GitHub CI and publication
 
-`.github/workflows/tbb.yml` runs only for manual runs selecting `main`.
-Its job guard excludes every other branch, including manual dispatches;
-there is no pull-request trigger. It runs the aggregate C++ GoogleTest suite,
-builds a source archive, builds and installs a wheel from that archive, checks
-metadata/version consistency, and executes `examples/python/dsmc_dense_cell.py`.
-The `tbb-linux-cp311` artifact is a CI build, not an auditwheel-repaired release.
+The separate `.github/workflows/python.yml` checks a TBB source distribution
+and installed wheel on Ubuntu 22.04/Python 3.10 and Ubuntu 24.04/Python 3.12.
+It checks metadata and engine selection, runs the full Python test suite,
+and executes the DSMC example. C++ tests run in `tbb.yml`.
 
-`.github/workflows/publish-python.yml` is manual and also restricted to `main`.
-Its default is to build artifacts only. Selecting the `publish` input enables
-PyPI Trusted Publishing after source and wheel checks pass; register workflow
-`publish-python.yml` and environment `pypi` in PyPI and create that GitHub environment.
-Tag pushes no longer publish Python packages. GitHub releases used by Zenodo are
-independent of this workflow.
-
-The release workflow builds TBB manylinux x86_64 wheels for CPython 3.9–3.13 from
-the source archive, so missing submodule files are caught before publication.
-`sdist.include` explicitly includes those dependencies; Git internals and local
-build outputs are excluded. Source builds need system TBB and network access for
-Abseil. The wheel includes the project and vendored dependency license files.
-`SKBUILD_PROJECT_VERSION` supplies the extension's version during packaging;
-update `project.version` and citation metadata together for each release.
+Both workflows are manual and restricted to `main`. The independent
+`publish-python.yml` builds manylinux TBB release wheels; PyPI upload requires
+the publish input. See [releases.md](releases.md) for artifacts, version
+metadata, publication, and citation maintenance.
 
 ## Quick start
 

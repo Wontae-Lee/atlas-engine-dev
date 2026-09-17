@@ -2,440 +2,443 @@
   <img src="docs/atlas-engine-logo.png" alt="Atlas Engine logo" width="1004">
 </p>
 
-# Atlas Engine Dev
+# Atlas Engine
 
 [![DOI](https://zenodo.org/badge/1021472310.svg)](https://doi.org/10.5281/zenodo.22752178)
-[![TBB CI](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb.yml/badge.svg?branch=main)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb.yml?query=branch%3Amain)
+[![TBB CI](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb.yml/badge.svg?branch=main)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/tbb.yml)
+[![Python CI](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/python.yml/badge.svg?branch=main)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/python.yml)
 
-Atlas is a C++20 particle simulation engine with a single `float` scalar type, a TBB (CPU) or CUDA (GPU) backend chosen at configure time, protobuf snapshot serialization, and optional nanobind-based Python bindings. The CPU build needs **neither nvcc nor the CUDA toolkit**.
+Atlas simulates rarefied gas flows using direct simulation Monte Carlo (DSMC).
+It provides a C++20 engine and a Python interface for defining particle
+populations, materials, geometry, and boundary conditions. Computation runs
+on a CPU through TBB or on an NVIDIA GPU through CUDA. Python applications
+use the same simulation classes with either engine.
 
-The engine targets **large domains, simply and fast**. Where physical fidelity
-trades against speed or simplicity, Atlas takes the simple option — and says so
-where it does.
+A simulation is assembled from the components needed for the case. Particle
+motion can be used on its own, or combined with gas collisions, emission,
+surface interactions, and particle removal. Results can be read into NumPy,
+recorded as CSV observations, or saved as binary state snapshots.
 
-The whole public API is aggregated through one umbrella header:
+- Hard-sphere, variable hard sphere (VHS), and variable soft sphere (VSS)
+  collision models.
+- Analytic shapes and OBJ triangle meshes for geometry.
+- Configurable particle sources, velocity distributions, boundaries, and sinks.
+- Particle positions, velocities, species, and grid state accessible from Python.
 
-```cpp
-#include <atlas/atlas.h>
-```
+## Choose how to run
 
-All public types live under a single `atlas::` namespace (e.g. `atlas::Fluid`,
-`atlas::Universe`, `atlas::Float3`, `atlas::Box`); enum values use `snake_case`
-(`atlas::SourceType::volume`, `atlas::MaterialType::molecule`).
-
-## Features
-
-- one source tree, two backends: a plain host-compiler build on `std::vector` + TBB, or an nvcc build on Thrust + CUDA
-- a GPU is needed only to **run** the CUDA build, never to build it
-- a six-stage step pipeline on one object: `System::update()` runs emit → search → allocate → solve → advect → remove
-- particle compaction in `Fluid`: sinks mark survivors, one scan rebuilds every particle array
-- material records (`Molecule`, `Atom`, `Ion`, `Neutron`, `Solid`) and four particle generators
-- analytic geometry: box, sphere, cylinder, plane, circle, square, triangle, and triangle mesh
-- spatial primitives and acceleration structures: rays, AABBs, spatial hashing, BVH, LBVH, and SAH BVH
-- DSMC solver with hard-sphere, VHS, and VSS collision kernels
-- source, sink, collider, codec, searcher, observer, and serialization runtime modules
-- CSV observation and protobuf snapshot save / restart
-- optional nanobind-based Python bindings, packaged as self-contained TBB and CUDA wheels (see [Python Bindings](#python-bindings))
-
-### The tagged-union leaf pattern
-
-Most runtime modules share one shape: a concrete umbrella type wraps one of
-several self-contained leaf types and dispatches to it. No virtual dispatch,
-because these types are captured by value into device lambdas.
-
-Which umbrella a module uses is decided by one question — **does the leaf own a
-`DeviceBuffer`?**
-
-| | Modules | Umbrella |
-|---|---|---|
-| Trivially copyable leaves | `Geometry`, `Material`, `Collider`, `Sink`, `DsmcKernel` | [`DeviceVariant`](include/atlas/core/device_variant.h) — host+device, copy-based |
-| Leaves owning a `DeviceBuffer` | `Source`, `Generator`, `Codec` | [`HostVariant`](include/atlas/core/host_variant.h) — host-only, move-based |
-
-`Solver` is the exception: an abstract base class, because a solver's `solve()`
-runs on the host and launches its own kernels.
-
-An object that owns `DeviceBuffer`s cannot itself enter a kernel, so each hands
-out a trivially-copyable **view** of raw pointers instead:
-`SpatialHashingSearcherView`, `FluidDsmcView`, `UniverseDsmcView`,
-`TriangleMeshView`, `BvhView`.
-
-### The backend split
-
-CMake defines exactly one of `ATLAS_BACKEND_CUDA` and `ATLAS_BACKEND_TBB`. Only
-ten headers — under [`buffer/`](include/atlas/buffer/),
-[`memory/`](include/atlas/memory/), [`parallel/`](include/atlas/parallel/), and
-[`scan/`](include/atlas/scan/) — branch on it. The other ~120 files name
-`DeviceBuffer` and `parallel_for` and never learn the difference.
-
-| | CUDA backend | Host backend |
-|---|---|---|
-| `HostBuffer<T>` / `DeviceBuffer<T>` | `thrust::host_vector` / `thrust::device_vector` | `std::vector` / `std::vector` |
-| `parallel_for`, `parallel_fill`, `parallel_sort` | Thrust | TBB |
-| `exclusive_scan` | `thrust::exclusive_scan` | `std::exclusive_scan` |
-| `default_random_engine`, `uniform_real_distribution` | one shared implementation | one shared implementation |
-
-The RNG is written out rather than aliased so both backends draw from the
-identical stream — a case reproduced on the CPU has to match the GPU run it
-checks. The engine holds no `__global__`, no `<<<>>>`, and no
-`cudaMalloc` outside `memory.h`; every kernel is a `parallel_for` over an
-`ATLAS_ALL_DEVICE` lambda, and those annotations vanish outside `__CUDACC__`.
-That is why the `.cu` sources compile as ordinary C++.
-
-## Requirements
-
-The reference development environment is the Docker `dev` image (see
-[Quick Start](#quick-start)); the requirements below apply to bare-metal setups.
-
-### Core (always required)
-
-| Dependency | Notes |
+| Your workflow | Start here |
 |---|---|
-| TBB | Backs the host-side parallel algorithms in every configuration |
-| CMake 3.20+ | Presets are provided in [`CMakePresets.json`](CMakePresets.json) |
-| C and C++20 host compilers | `gcc` / `g++` are selected by the `tbb-gcc-*` presets; GCC 11+ is a reasonable target |
-| Ninja | All presets use Ninja |
+| Run Python with Atlas and its dependencies in a container | [Docker](#start-with-docker) |
+| Use Atlas in your own Python environment | [Local Python installation](#install-python-locally) |
+| Build and run a C++ simulation | [C++ example](#run-the-c-example) |
 
-### Builds using nvcc
+The build examples below use the current source checkout and create local
+Docker tags. Published images can be used without building from source.
+The Docker route includes the Python environment and runtime
+libraries; local installation builds Atlas for an existing Python environment.
+The C++ example is a separate executable built from the same engine.
 
-| Dependency | Notes |
-|---|---|
-| CUDA Toolkit 12.x | Required for `ATLAS_DEVICE_SYSTEM=CUDA`, or for the optional `ATLAS_HOST_COMPILER=nvcc` TBB mode. Provides nvcc and the Thrust headers used by CUDA builds |
-| NVIDIA driver | Needed only to **run** `ATLAS_DEVICE_SYSTEM=CUDA` builds |
+## Prepare the source checkout
 
-### Python Bindings
-
-| Dependency | Notes |
-|---|---|
-| Python 3.8+ | Interpreter with development headers (`Development.Module`) |
-
-nanobind is vendored under `external/`, but it carries its own submodule, so a
-clone that skipped `--recursive` must run this before `ATLAS_PYTHON=ON` will
-configure:
+The commands in this document start from the repository root. With Git
+installed, clone the project and its dependency submodules:
 
 ```bash
-git submodule update --init --recursive external/nanobind
+git clone --recurse-submodules https://github.com/Wontae-Lee/atlas-engine-dev.git
+cd atlas-engine-dev
 ```
 
-Other in-tree dependencies (all vendored under [`external/`](external/)):
-`tinyobjloader` (OBJ mesh loading), `googletest`, `googlebenchmark`, and
-`protobuf` (binary snapshot serialization). protobuf pulls Abseil in at
-configure time.
+If you already have a checkout, run `git submodule update --init --recursive`.
+The submodules contain libraries needed during compilation, including the
+Python bindings and snapshot serialization dependencies.
 
-## Quick Start
+## Start with Docker
 
-### Docker (recommended)
+This route requires Docker on the host. Python, NumPy, and Atlas are installed
+inside the image, so a separate host Python environment is not needed.
+The initial image build downloads dependencies and compiles Atlas; subsequent
+container runs use the installed package.
 
-Build the development image and work inside it — the CUDA toolkit, TBB, CMake,
-and Ninja are preinstalled:
+### CPU
+
+Build the TBB image and run the included Python simulation:
 
 ```bash
-docker build --target dev -t atlas-dev .
-docker run --rm -it -v "$PWD":/workspace atlas-dev
+docker build --target tbb -t atlas:tbb .
+docker run --rm atlas:tbb python /opt/atlas/examples/python/dsmc_dense_cell.py
 ```
 
-### Build and test
+The `tbb` target creates a CPU runtime image. No NVIDIA GPU or CUDA toolkit is
+needed. The example initializes 200 particles and advances the simulation by
+20 steps. It prints the final cell and particle counts, together with the mean
+particle speed before and after the run. Its source is
+[`examples/python/dsmc_dense_cell.py`](examples/python/dsmc_dense_cell.py).
 
-Inside the container, or on a bare-metal host with the prerequisites below.
-Select GCC explicitly for the CPU build; this configuration does not enable
-CUDA or search for the CUDA toolkit:
+### NVIDIA GPU
+
+Build the CUDA image and run the same example:
 
 ```bash
-cmake --preset tbb-gcc-debug
-cmake --build --preset build-tbb-gcc-debug
-ctest --preset ctest-tbb-gcc-debug
+docker build --target cuda -t atlas:cuda .
+docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/dsmc_dense_cell.py
 ```
 
-`tbb-gcc-release` / `build-tbb-gcc-release` build the engine alone with GCC.
-The existing `tbb-debug` and `tbb-release` presets also use native compilers,
-but leave their selection to CMake instead of requiring `gcc` / `g++`.
+The host needs a compatible NVIDIA driver and
+[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+configured for Docker. The image supplies the CUDA runtime. A GPU is required
+to run the simulation, but not to build the image.
 
-Without presets, choose the compilers directly:
+Both images use Ubuntu 22.04 by default. Add
+`--build-arg UBUNTU_VERSION=24.04` to build with Ubuntu 24.04.
+For example:
 
 ```bash
-cmake -S . -B build/tbb-gcc -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DATLAS_DEVICE_SYSTEM=TBB -DATLAS_HOST_COMPILER=native \
-    -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
-cmake --build build/tbb-gcc -j$(nproc)
+docker build --target tbb --build-arg UBUNTU_VERSION=24.04 -t atlas:tbb-ubuntu24.04 .
 ```
 
-Use a fresh build directory when changing compilers or switching between native
-and nvcc modes. Each preset has a separate `build/<preset>` directory, so an
-existing nvcc build can be kept alongside the GCC build.
+Each image contains its selected Atlas engine and uses it automatically.
+Select the corresponding image when running a script.
 
-GPU build — needs the CUDA toolkit; a GPU only to run the result:
+### Run your own script
+
+Save your script as `simulation.py` in the current directory:
 
 ```bash
-cmake --preset cuda-debug
-cmake --build build/cuda-debug -j$(nproc)
+docker run --rm -v "$PWD":/workspace atlas:tbb python simulation.py
 ```
 
-### Bare-metal Linux prerequisites
+For CUDA, add `--gpus all` and change the image to `atlas:cuda`.
+The mount makes the current host directory available at `/workspace`, which
+is also the container's working directory. A relative path such as
+`results/positions.npy` therefore writes into the host's `results` directory.
+These files remain after the container exits. Files saved elsewhere in a
+container started with `--rm` are removed with that container.
+
+Changes to mounted scripts and input files are visible on the next run without
+rebuilding the image. Changes to Atlas itself require an image rebuild.
+The bundled examples are under `/opt/atlas/examples/python`, and mesh assets
+are under `/opt/atlas/assets`.
+
+For an interactive Python session:
+
+```bash
+docker run --rm -it atlas:tbb
+docker run --rm -it --gpus all atlas:cuda
+```
+
+See the [Docker guide](docs/guidelines/docker.md) for GPU architecture options,
+image contents, and development containers.
+
+### Using a published image
+
+After the images have been published to GitHub Container Registry, a
+`linux/amd64` host can run them without a source checkout:
+
+```bash
+docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/dsmc_dense_cell.py
+docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/dsmc_dense_cell.py
+```
+
+Each engine has Ubuntu 22.04 and 24.04 tags. The package must be public for
+anonymous access. Image tags and version selection are described in the
+[Docker guide](docs/guidelines/docker.md#published-images).
+
+## Install Python locally
+
+Local installation compiles the Python package from the checkout. The commands
+below use Ubuntu 22.04 or 24.04 and install the host compiler, TBB development
+libraries, Python headers, and build tools.
+
+### CPU installation
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential cmake ninja-build git libtbb-dev python3-dev
-git submodule update --init --recursive
+sudo apt-get install -y build-essential cmake ninja-build git libtbb-dev python3-dev python3-venv
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install . -C cmake.define.ATLAS_DEVICE_SYSTEM=TBB
 ```
 
-These packages cover the native TBB debug presets on Ubuntu 22.04 with GCC 11.
-`python3-dev` is required because debug presets enable Python bindings. The
-`cuda-*` and `tbb-nvcc-debug` presets additionally require the CUDA toolkit.
-Dependency configuration may need network access to fetch Abseil.
+This builds the CPU package from the checkout and installs NumPy with it.
+The distribution name is `atlas-engine`; Python imports it as `atlas`.
+Build dependencies are downloaded during installation. The source build uses
+the system TBB runtime installed with `libtbb-dev`.
 
-## Build Presets
+The virtual environment keeps the installation separate from system Python.
+In a new terminal, return to the checkout and run `source .venv/bin/activate`
+before using the package. In an IDE, select `.venv/bin/python` as the interpreter.
 
-| Kind | TBB (selected host compiler) | TBB (gcc/g++) | CUDA (nvcc) |
-|---|---|---|---|
-| Configure | `tbb-debug`, `tbb-release` | `tbb-gcc-debug`, `tbb-gcc-release` | `cuda-debug`, `cuda-release` |
-| Build | `build-tbb-debug`, `build-tbb-release` | `build-tbb-gcc-debug`, `build-tbb-gcc-release` | `build-cuda-debug`, `build-cuda-release` |
-| Test | `ctest-tbb-debug` | `ctest-tbb-gcc-debug` | `ctest-cuda-debug` |
-
-The debug presets turn **everything** on — logging, tests, the Python module,
-the examples, and the benchmark cases. The release presets turn all five off and
-build the engine alone.
-
-`tbb-nvcc-debug` builds the CPU backend *through nvcc*. It exists for CI: nvcc
-rejects constructs the host compiler accepts — notably an extended
-`__host__ __device__` lambda inside a private member function — and a
-host-compiler-only build would stop catching them.
-
-## Important CMake Options
-
-| Option | Debug presets | Release presets | Meaning |
-|---|---|---|---|
-| `ATLAS_DEVICE_SYSTEM` | — | — | Parallel backend: `TBB` (CPU, std + TBB) or `CUDA` (GPU, nvcc + Thrust) |
-| `ATLAS_HOST_COMPILER` | `native` | `native` | TBB compiler mode: `native` uses the selected C/C++ compilers; `nvcc` enables the optional nvcc mode |
-| `ATLAS_LOGGING` | `ON` | `OFF` | Build logging support (`atlas::warn`, …) |
-| `ATLAS_GOOGLE_TEST` | `ON` | `OFF` | Build GoogleTest-based C++ tests |
-| `ATLAS_PYTHON` | `ON` | `OFF` | Build the nanobind Python bindings |
-| `ATLAS_EXAMPLES` | `ON` | `OFF` | Build the C++ example programs (`examples/cpp/`) |
-| `ATLAS_BENCHMARKS` | `ON` | `OFF` | Build the Google Benchmark cases (`benchmarks/atlas/`) |
-
-TBB is required in every configuration. The CUDA toolkit is required only when
-nvcc compiles the sources. In nvcc builds, the engine `.cu` sources and the
-enabled Atlas tests, examples, and benchmarks compile as CUDA. Python bindings
-use nvcc only for the CUDA backend. Host-only serialization, logging, and
-external dependencies still use the selected C/C++ compilers. GCC is selected
-with `CMAKE_C_COMPILER=gcc` and `CMAKE_CXX_COMPILER=g++`, as the `tbb-gcc-*`
-presets do.
-
-## Running a Simulation
-
-The ready-to-run simulation programs are the C++ examples under
-[`examples/cpp/`](examples/cpp/). Each case is a `main.cu` — a standalone
-simulation driven straight through the Atlas API, with no framework, printing its
-own timings — built as `atlas_example_<case>` when `ATLAS_EXAMPLES` is on.
-
-Examples are on in the debug presets. Build a case and run it:
+Check that the installed classes can be imported, then run the DSMC example:
 
 ```bash
-cmake --preset tbb-debug
-cmake --build build/tbb-debug --target atlas_example_cylinder -j$(nproc)
-./build/tbb-debug/examples/cpp/atlas_example_cylinder
+python -c "import atlas; from atlas import Float3; print(atlas.__version__, atlas.get_default_engine(), Float3(1, 2, 3))"
+python examples/python/dsmc_dense_cell.py
 ```
 
-| Case | Source | Scenario |
-|---|---|---|
-| `cylinder` | [`cylinder/main.cu`](examples/cpp/cylinder/main.cu) | rarefied N₂ crossflow over a cylinder mesh at Kn ≈ 0.05 |
+### CUDA installation
 
-`atlas_example_cylinder [steps] [assets_dir] [output_dir]` loads
-`assets/cylinder.obj`, prints the freestream regime it resolved to, steps the
-`System`, and writes per-step CSV under `<output_dir>/data/`.
+CUDA installation uses the same host dependencies, plus a compatible CUDA
+12.x toolkit with `nvcc` available. Running the resulting package also needs a
+compatible NVIDIA driver and GPU. From an activated Python environment:
 
-To see how a simulation is wired up in code — builders, boundary units, the
-solver, and the observer — read
-[`cylinder/main.cu`](examples/cpp/cylinder/main.cu).
+```bash
+python -m pip install . -C cmake.define.ATLAS_DEVICE_SYSTEM=CUDA
+ATLAS_DEFAULT_ENGINE=cuda python examples/python/dsmc_dense_cell.py
+```
 
-Google Benchmark cases live separately under
-[`benchmarks/atlas/`](benchmarks/atlas/) as `main.cpp` files built into
-`atlas_benchmark_<case>_gbench` when `ATLAS_BENCHMARKS` is on. Only a `smoke`
-case is wired for now — the representative benchmarks are to be rewritten on
-Google Benchmark.
+Source installation builds the selected engine. When building for a different
+GPU, pass `-C cmake.define.CMAKE_CUDA_ARCHITECTURES=89`, replacing `89` with
+your target architecture. Without an explicit setting, the build detects the
+local GPU or defaults to `89-real` when no GPU is detected.
 
-## Python Bindings
+### Installing a wheel
 
-The Python package exposes math, geometry, spatial queries, simulation objects,
-sampling, and snapshot serialization through modules matching `include/atlas/`.
-Creation APIs are PascalCase classes, including `Sphere`, `Molecule`, `Fluid`,
-and `System`. They are available directly from `atlas` and through their matching
-Python modules. Computation and state remain in the C++ library.
+A wheel contains a compiled Python package. If you already have a wheel that
+matches your platform and Python version, install it in the active environment
+by passing its path:
 
-Choose a default engine before importing classes:
+```bash
+python -m pip install /path/to/atlas_engine-version-platform.whl
+```
+
+Replace the example path with the actual wheel filename. A wheel produced by
+the project's packaging script bundles runtime libraries; a wheel built
+directly from source can still depend on system libraries such as TBB.
+
+Wheel compatibility and combined TBB/CUDA packages are described in the
+[Python guide](docs/guidelines/python.md).
+
+## Choose the Python engine
+
+To choose explicitly, select an installed engine before importing Atlas classes:
 
 ```python
 import atlas
-atlas.set_default_engine("cuda")  # or "tbb"
-from atlas import Float3, Fluid, Sphere, System
+
+print(atlas.available_engines())
+atlas.set_default_engine("tbb")
+print(atlas.get_default_engine())
+
+from atlas import Float3, Fluid, System, Universe
 ```
 
-`atlas.available_engines()` lists installed engines. The combined CUDA wheel
-includes both; the TBB wheel includes only TBB. The first native class or
-submodule import fixes the engine for the process. The environment variable
-`ATLAS_DEFAULT_ENGINE` selects the initial default; otherwise TBB is preferred.
-
-For development from a checkout:
+Use `"cuda"` for a CUDA installation. You can also select the engine when
+starting a script:
 
 ```bash
-python -m pip install -e .
+ATLAS_DEFAULT_ENGINE=tbb python simulation.py
+ATLAS_DEFAULT_ENGINE=cuda python simulation.py
 ```
+
+`available_engines()` lists installed engines, not detected GPUs. With both
+engines installed, TBB is the default; a CUDA-only installation defaults to
+CUDA. An explicit selection must name an installed engine. The environment
+variable chooses the initial default, and `set_default_engine()` can change
+it before Atlas classes are imported.
+
+| Installation | Available engines |
+|---|---|
+| TBB Docker image or TBB source installation | `tbb` |
+| CUDA Docker image or CUDA source installation | `cuda` |
+| Combined CUDA wheel produced by the packaging script | `tbb`, `cuda` |
+
+The TBB and CUDA distributions share the package name `atlas-engine`.
+Installing two separate wheels does not combine their engines; use a combined
+wheel if both are needed in one Python environment.
+
+Once an Atlas class or computational submodule is imported, start a new
+process to change engines. In a notebook, this means restarting the kernel
+and selecting the engine before importing classes again. Already-created
+objects keep the engine with which they were constructed.
+
+## Your first Python simulation
+
+This example introduces particle creation, the spatial grid, and the time loop.
+It moves one particle at a constant velocity, with no gas collision solver or
+boundary interactions configured. Save it as `simulation.py` and run it with
+`python simulation.py` or the Docker command above:
 
 ```python
-from atlas.math import Bool3, Float3, Quaternion, dot
+import numpy as np
+from atlas import Float3, Fluid, System, Universe
 
-mask = Bool3(True, False, True)
-velocity = Float3(1.0, 2.0, 3.0)
+positions = np.array([[0.25, 0.5, 0.5]], dtype=np.float32)
+velocities = np.array([[1.0, 0.0, 0.0]], dtype=np.float32)
 
-print(mask.any())
-print(dot(velocity, velocity))
-print(Quaternion().rotate(velocity))
+simulation = System(
+    fluid=Fluid.from_arrays(positions, velocities),
+    universe=Universe(Float3(0), Float3(1), cell_size=0.5),
+    dt=0.01,
+)
+
+for _ in range(10):
+    simulation.update()
+
+print(simulation.step)
+print(simulation.positions())
 ```
 
-`src/python/atlas/module.cpp` is the single extension translation unit.
-Registration headers mirror C++ header paths; the entry point creates native
-submodules and calls the registration functions. See
-[`docs/guidelines/python.md`](docs/guidelines/python.md) for the current API.
+The objects in this example have separate roles:
 
-Self-contained, redistributable wheels (bundling libtbb / libcudart) are built
-inside the packaging image. Initialise the submodules the build needs first:
+| Object or argument | Role |
+|---|---|
+| `Float3` | A three-component value. `Float3(0)` sets all components to zero. |
+| `Fluid.from_arrays(...)` | Creates particles from matching position and velocity arrays. |
+| `Universe(...)` | Defines the grid bounds and cell size used for spatial indexing and per-cell state. |
+| `System(...)` | Holds the simulation state and the selected solver and boundary components. |
+| `dt` | The time increment applied by each `update()` call. |
+
+After ten steps, `simulation.step` is `10` and the particle's position is
+approximately `[0.35, 0.5, 0.5]`. The x displacement is the velocity `1.0`
+multiplied by ten time increments of `0.01`. Small differences in the printed
+decimal representation are expected from floating-point arithmetic.
+
+The `Universe` bounds define a grid; they do not create reflecting walls or
+automatically remove particles. A case that needs those behaviors supplies
+colliders or sinks when constructing the `System`.
+
+### Adding gas collisions
+
+The complete [DSMC example](examples/python/dsmc_dense_cell.py) adds molecular
+properties and a `DsmcSolver`. It can be run directly after installation:
 
 ```bash
-git submodule update --init --recursive \
-    external/nanobind external/tinyobj external/protobuf
-
-docker build --target wheel -t atlas-wheel .
-
-# ATLAS_WHEEL_BACKENDS=TBB builds a CPU-only wheel (no GPU or driver at run time);
-# omit it to build both TBB and CUDA wheels.
-docker run --rm -v "$PWD":/workspace -w /workspace \
-    -e ATLAS_WHEEL_BACKENDS=TBB \
-    atlas-wheel -c 'bash scripts/build_wheels.sh'
-# -> dist/tbb/*.whl (and dist/cuda/*.whl when both backends are built)
-
-pip install dist/tbb/*.whl
+python examples/python/dsmc_dense_cell.py
 ```
 
-The full wheel flow — auditwheel repair, the `abi3` stable-ABI details, and building
-without Docker — is in [`docs/guidelines/python.md`](docs/guidelines/python.md).
+The example defines a nitrogen material in a `MaterialDictionary`, initializes
+positions and velocities with NumPy, and attaches the materials to the fluid.
+It uses a statistical weight of `1e18`, which specifies the number of physical
+particles represented by each simulated particle. `DsmcSolver()` selects the
+VHS collision model by default.
 
-## Tests
+The source file keeps the particle count, initial distribution, material
+properties, grid size, and time increment together so they can be inspected
+and changed for a case. Its values illustrate package usage. CPU and GPU runs
+use the same API, but parallel floating-point calculations need not give
+identical numerical results.
 
-Tests live under [`tests/atlas/`](tests/atlas/), mirroring `include/atlas/` and
-`src/atlas/`, and use GoogleTest directly. Sources are globbed recursively into
-an aggregate `atlas_tests` binary plus one `atlas_tests_<module>` binary per
-directory, so a new test file needs no CMake edit. Run them from a `*-debug`
-preset:
+## Working with particle data
+
+Input positions and velocities are contiguous NumPy `float32` arrays with
+shape `(N, 3)`: each row is a particle and each column is an x, y, or z
+component. Both arrays must contain the same number of particles. Data read
+from another source can be prepared with `np.ascontiguousarray(values,
+dtype=np.float32)`.
+
+`Fluid.from_arrays()` allocates capacity for the initial particles by default.
+If the simulation will emit additional particles, provide a larger
+`buffer_size` when creating the fluid. `particle_count` is the number currently
+active; `buffer_size` is the capacity available to the simulation.
+
+Classes use PascalCase names, such as `Fluid`, `Sphere`, `Molecule`, and
+`System`. Their methods use names such as `from_arrays()` and `update()`.
+
+`System` takes ownership of its `Fluid` and `Universe`. Read and update their
+state through the system after construction rather than reusing the original
+objects. Read-back arrays are independent copies in host memory, including
+when the simulation runs on CUDA. To change live particle data, modify a copy
+and upload it explicitly:
+
+```python
+positions = simulation.positions()
+positions[:, 1] += 0.1
+simulation.set_fluid_state("position", positions)
+```
+
+`simulation.positions()` and `simulation.velocities()` return the active
+particles as `(N, 3)` arrays. `simulation.species()` returns the corresponding
+species indices. A read-back reflects the time of the call; it does not change
+as later simulation steps run.
+
+### Saving results
+
+NumPy output is useful for plotting or analysis in a separate script. The
+following code continues from the `simulation` created above:
+
+```python
+from pathlib import Path
+
+results = Path("results")
+results.mkdir(exist_ok=True)
+np.save(results / "positions.npy", simulation.positions())
+np.save(results / "velocities.npy", simulation.velocities())
+```
+
+For a binary snapshot of the fluid and grid state:
+
+```python
+simulation.save("snapshots")
+```
+
+At step 10, this creates `snapshots/time_step_10/fluid.bin` and
+`snapshots/time_step_10/universe.bin`. `Fluid.load(path)` and
+`Universe.load(path)` reconstruct the saved state. To run it again, assemble
+a new `System` with the desired time increment, solver, sources, and boundary
+conditions. These settings and the previous system's step counter are not
+restored by loading the state files.
+
+CSV observations are provided by an `Observer` attached to a simulation. The
+[C++ cylinder example](#run-the-c-example) demonstrates this output path.
+
+## Run the C++ example
+
+The C++ cylinder example sets up a nitrogen flow around an OBJ mesh, with
+particle emission, DSMC collisions, surface interactions, outflow removal,
+and CSV observations. It provides a larger example of assembling a simulation.
+
+Use the local build dependencies listed above. From the checkout, build it
+with GCC/G++:
 
 ```bash
-cmake --preset tbb-debug
-cmake --build build/tbb-debug -j$(nproc)
-ctest --preset ctest-tbb-debug
+cmake --preset tbb-gcc-release -DATLAS_EXAMPLES=ON
+cmake --build --preset build-tbb-gcc-release --target atlas_example_cylinder
+./build/tbb-gcc-release/examples/cpp/atlas_example_cylinder 200 assets cylinder_out
 ```
 
-### GitHub Actions: TBB on `main`
+The executable accepts three positional arguments:
 
-The [TBB CI workflow](.github/workflows/tbb.yml) runs automatically on pushes to
-`main`. To run it manually, open **Actions → TBB CI → Run workflow** and select
-`main`. Other branches and pull requests do not run this workflow; a manual run
-on another branch skips its job.
+| Argument | Value in the command | Meaning |
+|---|---|---|
+| Steps | `200` | Number of simulation updates to run. |
+| Assets directory | `assets` | Directory containing `cylinder.obj`. |
+| Output directory | `cylinder_out` | Destination for observation files. |
 
-The Ubuntu 22.04 runner uses the native C++ compiler and TBB, with no CUDA toolkit
-or GPU. It builds and runs the aggregate GoogleTest suite, creates a Python source
-distribution, builds a wheel from that archive, checks package metadata, installs
-the wheel, and runs the Python DSMC example. Successful runs attach the
-`tbb-linux-cp311` artifact, containing the source archive and
-Python 3.11 wheel. This CI wheel requires the runner-compatible Linux/TBB runtime;
-use the manylinux release wheels below for redistribution.
+Paths in this command are relative to the repository root. The example writes
+CSV observations every 50 steps under `cylinder_out/data/`; runs shorter than
+that interval do not reach the first scheduled observation.
 
-## Python Distribution
-
-The distribution name is **`atlas-engine`** and the import name is **`atlas`**.
-Packaging metadata and bundled source dependencies are configured in
-[`pyproject.toml`](pyproject.toml). Source archives include the required git
-submodule contents, so installing an archive does not require a git checkout.
-Building from source still requires a C++20 compiler, CMake, Ninja, TBB, and
-network access for build tools and Abseil.
-
-The [Publish Python workflow](.github/workflows/publish-python.yml) runs manually on
-`main` only. It builds a source archive and uses that archive to build and test
-TBB manylinux x86_64 wheels for CPython 3.9–3.13. CUDA wheels remain a separate
-local build through `scripts/build_wheels.sh`; they are not uploaded to PyPI.
-
-To prepare or publish a version:
-
-1. Update `project.version` in `pyproject.toml` and the matching version in
-   `CITATION.cff`, then push the changes to `main`. Packaged
-   `atlas.__version__` follows the Python distribution version automatically.
-2. Open **Actions → Publish Python → Run workflow**, selecting `main`.
-   Leave **Publish the validated distributions to PyPI** unchecked to download
-   the `python-sdist` and `python-wheels` artifacts without publishing.
-3. For actual publication, configure a PyPI Trusted Publisher for this repository,
-   workflow **`publish-python.yml`**, and GitHub environment **`pypi`**. Create the
-   matching GitHub environment, then run the workflow on `main` with the publish
-   checkbox enabled. Each uploaded version must be new on PyPI.
-
-Tag pushes and GitHub releases do not trigger Python publication. The Zenodo
-release/DOI workflow described below remains separate. Once a version has been
-published, install its CPU package with:
+For GPU execution:
 
 ```bash
-python -m pip install atlas-engine
-python -c "import atlas; print(atlas.__version__)"
+cmake --preset cuda-release -DATLAS_EXAMPLES=ON
+cmake --build --preset build-cuda-release --target atlas_example_cylinder
+./build/cuda-release/examples/cpp/atlas_example_cylinder 200 assets cylinder_out
 ```
 
-See the official [GitHub branch-filter documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onpushbranchestagsbranches-ignoretags-ignore)
-and [PyPI Trusted Publishing guide](https://docs.pypi.org/trusted-publishers/using-a-publisher/).
+Building requires the CUDA toolkit; running requires an NVIDIA GPU. The
+provided presets need CMake 3.21+ and Ninja. They keep CPU and GPU build
+directories separate, so both executables can be kept in the same checkout.
 
-## Documentation
+See the [example source](examples/cpp/cylinder/main.cu) to customize the flow,
+materials, and boundaries. C++ classes are in the `atlas::` namespace and can
+be included through `<atlas/atlas.h>`.
 
-Deeper design and contributor material lives in the repository, not this file:
+## Learn more
 
-- [`docs/atlas/`](docs/atlas/) — *per-module documentation*: the tagged-union
-  leaf pattern and how to extend each module. There is a document for every
-  module under `include/atlas/`.
-- [`docs/guidelines/`](docs/guidelines/) — *how to work on it*: workflow, code
-  style, build/test, dependencies, and the
-  [Python bindings guide](docs/guidelines/python.md). Start at
-  [`docs/guidelines/README.md`](docs/guidelines/README.md).
-- [`AGENTS.md`](AGENTS.md) is the entry map into both directories and the
-  repository-wide instruction file for AI coding agents.
-- Every header and source under `include/atlas/` and `src/atlas/` carries Doxygen
-  comments; the convention is recorded in
-  [`coding-style.md` §7](docs/guidelines/coding-style.md).
+- [Python API and state access](docs/guidelines/python.md)
+- [Docker images and GPU configuration](docs/guidelines/docker.md)
+- [Simulation modules](docs/atlas/)
+- [Contributor documentation](docs/guidelines/README.md)
+- [Report a problem](https://github.com/Wontae-Lee/atlas-engine-dev/issues)
 
-## Citation and Zenodo DOI
+## Citation and license
 
-Citation metadata is maintained in [`CITATION.cff`](CITATION.cff), which is
-supported by both GitHub and Zenodo. Its author, version, and license match
-the project metadata in [`pyproject.toml`](pyproject.toml).
+If you use Atlas in research, cite the version used for your results.
+[CITATION.cff](CITATION.cff) contains the citation metadata for version 0.1.0:
+[doi:10.5281/zenodo.22752179](https://doi.org/10.5281/zenodo.22752179).
+The [concept DOI](https://doi.org/10.5281/zenodo.22752178) covers all releases.
 
-Version **v0.1.0**, released on **2026-09-14**, is archived on Zenodo:
-
-- **Version DOI:** [10.5281/zenodo.22752179](https://doi.org/10.5281/zenodo.22752179).
-  Use this DOI when citing results produced with v0.1.0.
-- **Concept DOI (all versions):** [10.5281/zenodo.22752178](https://doi.org/10.5281/zenodo.22752178).
-  The README badge uses this DOI to link to the latest published version.
-
-For subsequent releases:
-
-1. Sign in to [Zenodo](https://zenodo.org/) with GitHub and enable
-   `Wontae-Lee/atlas-engine-dev` in the GitHub integration settings.
-2. Review the authors in `CITATION.cff`, adding any coauthors and known ORCID
-   identifiers or affiliations. Update `version` to match the release and add
-   `date-released` in `YYYY-MM-DD` format when the release date is known.
-3. Commit and push the metadata, then publish a GitHub release whose tag
-   includes that commit. Use a new version tag for each release.
-4. Wait for Zenodo to process the release and check the published record's
-   metadata and DOI. Adding these files alone does not register a DOI.
-5. Add the issued release DOI to `CITATION.cff` as `doi` and link the Zenodo
-   record here. Keep the DOI, version, and release date referring to the same
-   release; do not carry a previous release's DOI into a new release.
-
-See Zenodo's [citation metadata guide](https://help.zenodo.org/docs/github/describe-software/citation-file/)
-and [GitHub release archiving guide](https://help.zenodo.org/docs/github/archive-software/github-upload/).
-`CITATION.cff` is sufficient for this workflow; if a `.zenodo.json` file is
-added later, Zenodo will use that file instead of `CITATION.cff`.
-
-## License
-
-Licensed under the GNU General Public License v3.0 (GPLv3) or later. See [`LICENSE`](LICENSE) for the full text.
+Atlas is licensed under [GPL-3.0-or-later](LICENSE).

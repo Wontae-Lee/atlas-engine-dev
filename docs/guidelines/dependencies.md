@@ -10,7 +10,8 @@ The external and in-tree dependencies, and the benchmark reference submodules.
 algorithms (`parallel_for`, `parallel_sort`, `parallel_fill`).
 
 Native TBB builds require a C compiler and a C++20 compiler, CMake 3.20+, and
-Ninja for the provided presets. `tbb-gcc-debug` and `tbb-gcc-release` select
+Ninja for the provided presets (whose schema requires CMake 3.21+).
+`tbb-gcc-debug` and `tbb-gcc-release` select
 `gcc` and `g++` explicitly; `tbb-debug` and `tbb-release` use CMake's selected
 host toolchain. See [build-and-test.md](build-and-test.md) for the preset and
 direct configure commands.
@@ -29,9 +30,14 @@ headers branch on it to pick the container and the algorithm — nine under
 (where the host cannot dereference a device-resident BVH). A few other files
 mention Thrust only in documentation comments.
 
-The reference development environment is the Docker `dev` image defined in
-`Dockerfile`. Building the optional Python bindings additionally requires a
-Python 3.8+ interpreter with the development headers.
+The Docker `tbb-dev` image provides a native GCC/G++ toolchain without CUDA;
+`cuda-dev` adds nvcc, and `dev` remains its compatibility alias. Both include
+Python development headers and a virtual environment. The separate `tbb` and
+`cuda` runtime images include the installed Atlas Python package, NumPy, and
+their runtime libraries. Their default base is Ubuntu 22.04; Ubuntu 24.04 is
+selected with `--build-arg UBUNTU_VERSION=24.04`. See [docker.md](docker.md).
+Building the optional Python bindings outside these images requires a
+Python 3.8+ interpreter with development headers.
 
 Dependencies under `external/` are git submodules, not vendored copies; a fresh
 clone needs `git submodule update --init --recursive` to populate them:

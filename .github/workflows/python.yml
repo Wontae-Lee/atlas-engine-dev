@@ -1,0 +1,98 @@
+name: Python CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python ${{ matrix.python }} / ${{ matrix.os }} (TBB)
+    if: github.ref == 'refs/heads/main'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            python: '3.10'
+          - os: ubuntu-24.04
+            python: '3.12'
+    defaults:
+      run:
+        shell: bash
+    env:
+      CC: gcc
+      CXX: g++
+      CMAKE_BUILD_PARALLEL_LEVEL: 2
+      ATLAS_DEFAULT_ENGINE: tbb
+      PYTHONDONTWRITEBYTECODE: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install build dependencies
+        run: |
+          mkdir -p logs
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build libtbb-dev
+          python -m pip install --upgrade pip build twine
+      - name: Build source distribution
+        run: python -m build --sdist --outdir dist/source 2>&1 | tee logs/sdist.log
+      - name: Build TBB wheel from source distribution
+        run: |
+          python -m pip wheel --verbose --no-deps dist/source/*.tar.gz \
+            --wheel-dir dist/wheels \
+            -C cmake.define.ATLAS_DEVICE_SYSTEM=TBB \
+            -C cmake.define.ATLAS_HOST_COMPILER=native \
+            2>&1 | tee logs/wheel.log
+      - name: Check package metadata
+        run: >-
+          python -m twine check --strict dist/source/*.tar.gz dist/wheels/*.whl
+          2>&1 | tee logs/metadata.log
+      - name: Install Python package
+        run: |
+          python -m pip install dist/wheels/*.whl 2>&1 | tee logs/install.log
+          python -m pip check 2>&1 | tee logs/dependencies.log
+      - name: Check installed engine and version
+        run: |
+          python - <<'PY' 2>&1 | tee logs/import.log
+          from importlib.metadata import version
+          import atlas
+          from atlas import _core
+
+          assert atlas.__version__ == version("atlas-engine")
+          assert atlas.available_engines() == ("tbb",)
+          assert atlas.get_default_engine() == _core.engine == "tbb"
+          print(f"Atlas {atlas.__version__}: {_core.engine}")
+          PY
+      - name: Run Python binding tests
+        run: >-
+          timeout 300s python -X faulthandler -m unittest discover -s tests/python -v
+          2>&1 | tee logs/tests.log
+      - name: Run DSMC Python example
+        run: >-
+          timeout 60s python -X faulthandler examples/python/dsmc_dense_cell.py
+          2>&1 | tee logs/example.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-${{ matrix.os }}-py${{ matrix.python }}-tbb
+          path: |
+            dist/source/*.tar.gz
+            dist/wheels/*.whl
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-logs-${{ matrix.os }}-py${{ matrix.python }}-tbb
+          path: logs/
+          if-no-files-found: warn
