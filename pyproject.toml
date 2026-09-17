@@ -3,7 +3,7 @@ requires = ["scikit-build-core>=0.10", "nanobind>=2.0"]
 build-backend = "scikit_build_core.build"
 
 # The distribution name is `atlas-engine` (`atlas` is taken on PyPI); the imported
-# package stays `atlas`, with the compiled bindings available as `atlas._core`.
+# package stays `atlas`, with backend-specific extensions selected by atlas._core.
 [project]
 name = "atlas-engine"
 version = "0.1.0"

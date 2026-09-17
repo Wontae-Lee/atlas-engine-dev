@@ -72,8 +72,13 @@
 
 #include <nanobind/nanobind.h>
 
-NB_MODULE(_core, m) {
+NB_MODULE(ATLAS_PYTHON_MODULE, m) {
     m.attr("__version__") = ATLAS_VERSION_STRING;
+#if defined(ATLAS_BACKEND_CUDA)
+    m.attr("engine") = "cuda";
+#else
+    m.attr("engine") = "tbb";
+#endif
     auto math             = m.def_submodule("math");
     auto random           = m.def_submodule("random");
     auto spatial          = m.def_submodule("spatial");

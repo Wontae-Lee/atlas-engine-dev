@@ -1,7 +1,7 @@
 # ============================================================
 # Atlas Python bindings (nanobind)
 #
-# This directory builds the `atlas._core` Python extension module from the
+# This directory builds a backend-specific Python extension module from the
 # binding sources under `src/python/atlas`. It is
 # configured only when ATLAS_PYTHON is enabled (guarded in the
 # top-level CMakeLists.txt).
@@ -25,6 +25,10 @@ set(ATLAS_PYTHON_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/module.cpp"
 )
 
+string(TOLOWER "${ATLAS_DEVICE_SYSTEM}" ATLAS_PYTHON_ENGINE)
+set(ATLAS_PYTHON_MODULE "_core_${ATLAS_PYTHON_ENGINE}")
+set(ATLAS_PYTHON_TBB_EXTENSION "" CACHE FILEPATH "TBB extension to include in a CUDA wheel")
+
 # Build the extension module.
 #   STABLE_ABI : build against the CPython stable ABI when available
 #                so a single wheel works across Python versions.
@@ -32,16 +36,17 @@ set(ATLAS_PYTHON_SOURCES
 nanobind_add_module(atlas_python
         STABLE_ABI
         NB_STATIC
+        NB_DOMAIN "atlas_${ATLAS_PYTHON_ENGINE}"
         ${ATLAS_PYTHON_SOURCES}
 )
 
-# The importable module name is `_core`, independent of the CMake
-# target name used above.
-set_target_properties(atlas_python PROPERTIES OUTPUT_NAME _core)
+# The backend-specific module name is independent of the CMake target name.
+set_target_properties(atlas_python PROPERTIES OUTPUT_NAME "${ATLAS_PYTHON_MODULE}")
+target_compile_definitions(atlas_python PRIVATE ATLAS_PYTHON_MODULE=${ATLAS_PYTHON_MODULE})
 
 target_link_libraries(atlas_python PRIVATE atlas::core)
 
-# The runtime bindings (Universe, Fluid, searcher, DSMC/SPH solvers) call
+# The runtime bindings (Universe, Fluid, searcher, DSMC solver) call
 # host-only definitions compiled into the `atlas` static library, so link it
 # when it exists (built from src/atlas/**/*.cu).
 if (TARGET atlas)
@@ -65,4 +70,10 @@ if (DEFINED SKBUILD)
     install(TARGETS atlas_python
             LIBRARY DESTINATION atlas COMPONENT python
             RUNTIME DESTINATION atlas COMPONENT python)
+    if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA" AND ATLAS_PYTHON_TBB_EXTENSION)
+        if (NOT EXISTS "${ATLAS_PYTHON_TBB_EXTENSION}")
+            message(FATAL_ERROR "ATLAS_PYTHON_TBB_EXTENSION does not exist: ${ATLAS_PYTHON_TBB_EXTENSION}")
+        endif ()
+        install(FILES "${ATLAS_PYTHON_TBB_EXTENSION}" DESTINATION atlas COMPONENT python)
+    endif ()
 endif ()

@@ -9,8 +9,40 @@ sampling, and serialization operations remain snake_case functions.
 
 The root `src/python/atlas/module.cpp` is the single extension translation unit.
 Registration headers mirror the corresponding C++ header paths and define inline
-`register_<type>()` functions. The entry point owns `NB_MODULE(_core, m)`,
-creates submodules, and arranges registration in dependency order.
+`register_<type>()` functions. The entry point builds as `_core_tbb` or
+`_core_cuda`, creates submodules, and arranges registration in dependency order.
+The `_core.py` facade connects the public imports to the selected extension.
+
+## Default engine
+
+Select the engine before importing any Atlas classes or computational submodules:
+
+```python
+import atlas
+
+print(atlas.available_engines())
+atlas.set_default_engine("cuda")
+print(atlas.get_default_engine())
+
+from atlas import Float3, Fluid, System, Universe
+```
+
+The accepted names are `tbb` and `cuda`. `available_engines()` lists installed
+extensions, not GPU availability. With no explicit choice, TBB is preferred;
+a CUDA-only installation defaults to CUDA. A missing requested extension raises
+an error instead of selecting another engine.
+
+`ATLAS_DEFAULT_ENGINE=cuda` (or `tbb`) sets the initial default for a process.
+`set_default_engine()` can override it until the native extension is loaded.
+Importing `atlas` and querying the engine do not load either native extension.
+The first class or computational submodule import fixes the engine for that
+process. Re-selecting the same engine is allowed; selecting the other afterward
+raises `RuntimeError`. Start a new process to use another engine. Objects and
+class references already imported are never migrated to another backend.
+
+Both engines expose the same PascalCase API and NumPy host-array interface.
+CUDA executes the engine's device kernels on the GPU; TBB executes the CPU
+implementation. Parallel floating-point results need not be bit-for-bit equal.
 
 ## Building the module
 
@@ -23,7 +55,7 @@ cmake -S . -B build/tbb -DATLAS_DEVICE_SYSTEM=TBB -DATLAS_PYTHON=ON -DATLAS_BENC
 cmake --build build/tbb --target atlas_python
 ```
 
-The CMake target builds the private `_core` extension. A usable Python package
+The CMake target builds the private `_core_tbb` or `_core_cuda` extension. A usable Python package
 combines that extension with the modules under `src/python/atlas`; install the
 project (or a wheel as described below) before importing it:
 
@@ -58,7 +90,11 @@ docker run --rm -v "$PWD":/workspace -w /workspace \
 
 auditwheel repairs the wheel — bundling `libtbb`, `libstdc++`, and (for CUDA)
 `libcudart`, but never the `libcuda.so.1` driver — and writes it to `dist/tbb/`
-(and `dist/cuda/` when both backends are built). The module is compiled with
+(and `dist/cuda/` when CUDA is requested). The CUDA wheel includes both native
+extensions, so either engine can be selected after installing that one wheel.
+The TBB wheel contains only `_core_tbb` and has no CUDA runtime dependency.
+Both extensions in a CUDA wheel are built with the same Python interpreter.
+The module is compiled with
 nanobind's `STABLE_ABI`: on Python 3.12+ this yields one `abi3` wheel that serves
 later versions, but on earlier interpreters the wheel is version-specific (e.g.
 `cp311`), so build one per target Python. Install and use it:
@@ -68,12 +104,20 @@ pip install dist/tbb/atlas_engine-0.1.0-*.whl
 python -c "import atlas; print(atlas.math.Bool3)"
 ```
 
-The TBB wheel carries its own TBB runtime, so no system `libtbb` is required. A
-CUDA wheel additionally needs a matching NVIDIA driver and a GPU at run time. To
+The TBB wheel carries its own TBB runtime, so no system `libtbb` is required.
+Selecting CUDA additionally needs a matching NVIDIA driver and a GPU at run time;
+selecting TBB from the combined wheel does not load the CUDA extension. To
 build a wheel without Docker, install the front-end tools
 (`pip install "scikit-build-core>=0.10" "nanobind>=2.0" build`) and run
 `python -m build --wheel -C cmake.define.ATLAS_DEVICE_SYSTEM=TBB`, but such a wheel
 is not auditwheel-repaired and depends on the host's `libtbb`.
+
+`scripts/build_wheels.sh` builds TBB first even when only CUDA output is
+requested, then passes its raw extension to the CUDA build through
+`ATLAS_PYTHON_TBB_EXTENSION`. Direct CMake/scikit-build builds produce only the
+selected engine unless this path is supplied. Do not install separate TBB and
+CUDA wheels on top of each other to combine them: they share a distribution
+name. Install the combined CUDA wheel instead.
 
 ## GitHub CI and publication
 
@@ -149,7 +193,10 @@ The explicit export list lives in
 - [`math/__init__.py`](../../src/python/atlas/math/__init__.py): re-exports
   native types and functions under the public `atlas.math` path.
 - [`CMakeLists.txt`](../../src/python/atlas/CMakeLists.txt): builds `module.cpp`
-  into the private `_core` extension.
+  into the selected native extension and assigns an engine-specific nanobind
+  domain so native type registries cannot be confused.
+- [`_engine.py`](../../src/python/atlas/_engine.py): validates the selected engine
+  and loads it once. The root package lazily resolves PascalCase exports.
 
 There is no separate `bind/` tree, generic registration wrapper, or per-type
 registration class. Add registration headers under the matching C++ paths,
@@ -224,5 +271,7 @@ simulation = System(
 
 Run `python -X faulthandler -m unittest discover -s tests/python -v` against an
 installed wheel to check constructor identity, module exports, native ownership,
-math, array transfers, spatial queries, and a deterministic step. See
+math, array transfers, spatial queries, and a deterministic step. Set
+`ATLAS_DEFAULT_ENGINE=tbb` and `ATLAS_DEFAULT_ENGINE=cuda` in separate runs
+to check both backends from the combined wheel. See
 [`tests/python/README.md`](../../tests/python/README.md).

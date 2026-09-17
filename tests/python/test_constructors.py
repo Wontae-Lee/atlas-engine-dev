@@ -106,9 +106,13 @@ class ConstructorTests(unittest.TestCase):
         np.testing.assert_allclose(simulation.velocities()[:, 0], 0.1)
 
     def test_root_exports_are_classes(self):
+        functions = {"available_engines", "get_default_engine", "set_default_engine"}
         for name in atlas.__all__:
             if name == "__version__":
                 continue
             with self.subTest(name=name):
+                if name in functions:
+                    self.assertTrue(inspect.isfunction(getattr(atlas, name)))
+                    continue
                 self.assertTrue(inspect.isclass(getattr(atlas, name)))
                 self.assertTrue(name[0].isupper())

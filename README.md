@@ -233,6 +233,19 @@ Creation APIs are PascalCase classes, including `Sphere`, `Molecule`, `Fluid`,
 and `System`. They are available directly from `atlas` and through their matching
 Python modules. Computation and state remain in the C++ library.
 
+Choose a default engine before importing classes:
+
+```python
+import atlas
+atlas.set_default_engine("cuda")  # or "tbb"
+from atlas import Float3, Fluid, Sphere, System
+```
+
+`atlas.available_engines()` lists installed engines. The combined CUDA wheel
+includes both; the TBB wheel includes only TBB. The first native class or
+submodule import fixes the engine for the process. The environment variable
+`ATLAS_DEFAULT_ENGINE` selects the initial default; otherwise TBB is preferred.
+
 For development from a checkout:
 
 ```bash
