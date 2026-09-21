@@ -1,19 +1,36 @@
 #pragma once
 
-#include "../_detail/boundary.h"
+#include "../detail/ownership.h"
+
+#include <atlas/collider/collider.h>
+#include <atlas/math/vector/float3.h>
+
+#include <nanobind/nanobind.h>
+
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace atlas::python {
+
+namespace {
+
+    struct ColliderUnit final {
+        template <typename Boundary>
+        ATLAS_ALL_DEVICE Unit
+        operator()(const Boundary& boundary) const noexcept {
+            return boundary.unit();
+        }
+    };
+
+}
 
 inline void
 register_collider(nb::module_& m) {
     nb::class_<PyCollider>(m, "Collider")
         .def_prop_ro("type", [](const PyCollider& collider) { return collider.value.type; })
         .def_prop_ro("unit", [](const PyCollider& collider) {
-            const Unit unit = ColliderVariant::visit(collider.value, BoundaryUnit {}, Unit {});
+            const Unit unit = ColliderVariant::visit(collider.value, ColliderUnit {}, Unit {});
             return PyUnit { unit, collider.mesh_owners };
-        })
-        .def_prop_ro("momentum_accommodation_coefficient", [](const PyCollider& collider) {
-            return collider.value.isothermal.momentum_accommodation_coefficient();
         })
         .def("bound", [](const PyCollider& collider) { return collider.value.bound(); })
         .def(
@@ -38,14 +55,7 @@ register_collider(nb::module_& m) {
             "position"_a,
             "velocity"_a,
             "dt"_a,
-            "Returns the post-collision position and velocity without modifying the input values.")
-        .def(
-            "reflect",
-            [](const PyCollider& collider, const Float3& incident, const Float3& normal) {
-                return collider.value.isothermal.reflect(incident, normal);
-            },
-            "incident"_a,
-            "normal"_a);
+            "Returns the post-collision position and velocity without modifying the input values.");
 }
 
 }

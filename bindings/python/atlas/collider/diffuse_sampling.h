@@ -1,6 +1,8 @@
 #pragma once
 
-#include "../_detail/boundary.h"
+#include "collider.h"
+
+#include <atlas/collider/diffuse_sampling.h>
 
 namespace atlas::python {
 

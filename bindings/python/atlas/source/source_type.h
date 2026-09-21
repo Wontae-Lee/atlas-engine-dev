@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../_detail/handles.h"
+#include "../detail/ownership.h"
 
 #include <atlas/buffer/host_buffer.h>
 #include <atlas/fluid/fluid.h>

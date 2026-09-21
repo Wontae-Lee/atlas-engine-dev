@@ -1,8 +1,31 @@
 #pragma once
 
-#include "../_detail/serialization.h"
+#include "../detail/array.h"
+#include "../detail/ownership.h"
+
+#include <atlas/serialization/protobuf_snapshot.h>
+
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
+#include <nanobind/stl/unique_ptr.h>
+
+#include <filesystem>
+#include <optional>
+
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace atlas::python {
+
+namespace {
+
+    template <typename Buffer>
+    nb::object
+    snapshot_array(const std::optional<Buffer>& buffer) {
+        return buffer ? numpy_copy_host(*buffer, buffer->size()) : nb::none();
+    }
+
+}
 
 inline void
 register_protobuf_snapshot(nb::module_& m) {

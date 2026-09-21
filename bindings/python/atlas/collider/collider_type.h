@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../_detail/boundary.h"
+#include "collider.h"
 
 namespace atlas::python {
 

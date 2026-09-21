@@ -136,7 +136,12 @@ its own executable named after the path relative to `tests/atlas/` — so
 Python binding tests live under `tests/python/` and use the standard-library
 `unittest` runner against an installed wheel. See
 [`tests/python/README.md`](../../tests/python/README.md) for the command and
-coverage. These tests are separate from the C++ GoogleTest targets.
+coverage. They focus on the public object hierarchy, owned NumPy snapshots,
+state transfers, native ownership across garbage collection, serialization,
+controlled exceptions, and small deterministic simulation workflows. Backend
+selection and TBB/CUDA parity cases use separate Python processes because a
+loaded native engine cannot be replaced safely. These tests are separate from
+the C++ GoogleTest targets.
 
 Tests mirror `include/atlas/`: every module has a directory under
 `tests/atlas/`. The covered modules are `buffer`, `codec`, `collider`,

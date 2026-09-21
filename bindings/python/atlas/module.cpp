@@ -164,8 +164,8 @@ NB_MODULE(ATLAS_PYTHON_MODULE, m) {
     atlas::python::register_volume_sink(sink);
     atlas::python::register_surface_sink(sink);
     atlas::python::register_tracing_sink(sink);
-    atlas::python::register_system(system);
     atlas::python::register_spatial_hashing_searcher(searcher);
+    atlas::python::register_system(system);
     atlas::python::register_sampling(sampling);
     atlas::python::register_protobuf_snapshot(serialization);
 }

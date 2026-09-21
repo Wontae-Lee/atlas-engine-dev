@@ -9,6 +9,7 @@
 #include <atlas/universe/universe.h>
 #include <atlas/universe/universe_state.h>
 
+#include <cstddef>
 #include <cstdint>
 
 namespace atlas {
@@ -139,6 +140,15 @@ public:
     ATLAS_NODISCARD ATLAS_HOST int
     cell_count() const noexcept {
         return _cell_count;
+    }
+
+    /**
+     * @brief Return the number of particles represented by the current sorted arrays.
+     * @return The size of the per-particle key/index buffers; zero after @ref reset().
+     */
+    ATLAS_NODISCARD ATLAS_HOST std::size_t
+    particle_count() const noexcept {
+        return _indices.size();
     }
 
     /**

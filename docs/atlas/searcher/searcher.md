@@ -35,10 +35,11 @@ A searcher is a cubic uniform grid described by five host-side fields:
 | `inverse_cell_size` (`float`) | Cached `1 / cell_size`, so mapping a position to a cell avoids a per-particle divide |
 | `grid_size` (`Int3`) | Per-axis cell counts; each component must be `>= 1` |
 | `cell_count` (`int`) | Cached `grid_size.x * grid_size.y * grid_size.z`; the length of `cell_start`/`cell_end` |
+| `particle_count` (`size_t`) | Current key/index buffer length; zero after `reset()` |
 
 Both `inverse_cell_size` and `cell_count` are derived once in the constructor and
 cached; the accessors (`lower_corner()`, `cell_size()`, `inverse_cell_size()`,
-`grid_size()`, `cell_count()`) are `const noexcept` reads.
+`grid_size()`, `cell_count()`, `particle_count()`) are `const noexcept` reads.
 
 The normal way to build one is the fluent `Builder`, usually seeded straight from
 the universe so the two grids coincide:

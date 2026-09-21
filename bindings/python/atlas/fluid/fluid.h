@@ -1,26 +1,24 @@
 #pragma once
 
-#include "../_detail/handles.h"
-#include "../_detail/state.h"
+#include "../detail/ownership.h"
+#include "fluid_state.h"
 
-#include <atlas/buffer/device_buffer.h>
-#include <atlas/buffer/host_buffer.h>
 #include <atlas/fluid/fluid.h>
 #include <atlas/fluid/fluid_state.h>
-#include <atlas/geometry/geometry.h>
 #include <atlas/material/material_dictionary.h>
 #include <atlas/math/vector/float3.h>
 #include <atlas/serialization/protobuf_snapshot.h>
-#include <atlas/universe/universe.h>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
 
 #include <cstddef>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -39,18 +37,18 @@ register_fluid(nb::module_& m) {
         .def_prop_ro("materials", &Fluid::materials)
         .def("set_particle_count", &Fluid::set_particle_count, "particle_count"_a)
         .def("compact", &Fluid::compact)
-        .def("state", &read_state<Fluid>, "name"_a, "full"_a = false)
-        .def("set_state", &write_state<Fluid>, "name"_a, "values"_a, "offset"_a = 0)
-        .def("has_state", &has_state<Fluid>, "name"_a)
-        .def("remove_state", &remove_state<Fluid>, "name"_a)
-        .def("reset_state", &reset_state<Fluid>, "name"_a)
-        .def("positions", [](const Fluid& fluid) { return read_state(fluid, "position"); })
-        .def("velocities", [](const Fluid& fluid) { return read_state(fluid, "velocity"); })
-        .def("species", [](const Fluid& fluid) { return read_state(fluid, "species"); })
+        .def("state", &read_fluid_state, "name"_a, "full"_a = false)
+        .def("set_state", &write_fluid_state, "name"_a, "values"_a, "offset"_a = 0)
+        .def("has_state", &has_fluid_state, "name"_a)
+        .def("remove_state", &remove_fluid_state, "name"_a)
+        .def("reset_state", &reset_fluid_state, "name"_a)
+        .def("positions", [](const Fluid& fluid) { return read_fluid_state(fluid, "position"); })
+        .def("velocities", [](const Fluid& fluid) { return read_fluid_state(fluid, "velocity"); })
+        .def("species", [](const Fluid& fluid) { return read_fluid_state(fluid, "species"); })
         .def(
             "active",
             [](const Fluid& fluid, const bool full) {
-                return numpy_copy(fluid.active(), full ? fluid.buffer_size() : fluid.particle_count());
+                return numpy_copy_device(fluid.active(), full ? fluid.buffer_size() : fluid.particle_count());
             },
             "full"_a = false)
         .def("set_active", &write_active, "values"_a, "offset"_a = 0);
@@ -100,23 +98,13 @@ register_fluid(nb::module_& m) {
             }
             host_unique_ptr<Fluid> fluid = builder.make_host_unique();
 
-            const float* p = positions.data();
-            const float* v = velocities.data();
-            HostBuffer<Float3> host_positions(n);
-            HostBuffer<Float3> host_velocities(n);
-            for (std::size_t i = 0; i < n; ++i) {
-                host_positions[i]  = Float3(p[3 * i + 0], p[3 * i + 1], p[3 * i + 2]);
-                host_velocities[i] = Float3(v[3 * i + 0], v[3 * i + 1], v[3 * i + 2]);
-            }
-
-            write_array(fluid->state<FluidPositionState>()->data(), host_positions, 0);
-            write_array(fluid->state<FluidVelocityState>()->data(), host_velocities, 0);
+            write_float3_array(fluid->state<FluidPositionState>()->data(), positions.data(), n, 0);
+            write_float3_array(fluid->state<FluidVelocityState>()->data(), velocities.data(), n, 0);
             if (!species.is_none()) {
-                const auto host_species = numpy_to_host<std::size_t>(species);
-                if (host_species.size() != n) {
+                if (numpy_size<std::size_t>(species) != n) {
                     throw nb::value_error("species must have the same length as positions");
                 }
-                write_state(*fluid, "species", species);
+                write_fluid_state(*fluid, "species", species);
             }
 
             return fluid;
@@ -131,7 +119,7 @@ register_fluid(nb::module_& m) {
         "Seed a fluid from (N, 3) arrays, optional species ids, and optional spare capacity.");
 
     type.def_static("load",
-        [](const std::string& path) { return restore_fluid(path); },
+        [](const std::filesystem::path& path) { return restore_fluid(path.string()); },
         "path"_a,
         "Rebuild a Fluid from a binary snapshot file.");
 }

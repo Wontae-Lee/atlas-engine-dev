@@ -1,6 +1,11 @@
 #pragma once
 
-#include "../../_detail/bvh.h"
+#include <atlas/spatial/bounding_volume_hierarchy/bvh.h>
+
+#include <nanobind/nanobind.h>
+
+namespace nb = nanobind;
+using namespace nb::literals;
 
 namespace atlas::python {
 

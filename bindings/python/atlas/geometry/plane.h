@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../_detail/handles.h"
+#include "../detail/ownership.h"
 
 #include <atlas/geometry/box.h>
 #include <atlas/geometry/circle.h>

@@ -1,6 +1,9 @@
 #pragma once
 
-#include "../_detail/boundary.h"
+#include "collider.h"
+
+#include <atlas/collider/diffuse_sampling.h>
+#include <atlas/collider/isothermal_collider.h>
 
 namespace atlas::python {
 
@@ -12,6 +15,17 @@ register_isothermal_collider(nb::module_& m) {
         nb::module_::import_("builtins").attr("type")(
             "IsothermalCollider", nb::make_tuple(m.attr("Collider")), attributes));
     m.attr("IsothermalCollider") = type;
+
+    type.def_prop_ro("momentum_accommodation_coefficient", [](const PyCollider& collider) {
+            return collider.value.isothermal.momentum_accommodation_coefficient();
+        })
+        .def(
+            "reflect",
+            [](const PyCollider& collider, const Float3& incident, const Float3& normal) {
+                return collider.value.isothermal.reflect(incident, normal);
+            },
+            "incident"_a,
+            "normal"_a);
 
     type.def(nb::new_([](PyUnit unit,
            const float momentum_accommodation_coefficient,

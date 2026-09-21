@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../_detail/handles.h"
+#include "../detail/ownership.h"
 
 #include <atlas/codec/codec.h>
 #include <atlas/generator/generator.h>
@@ -68,6 +68,10 @@ register_system(nb::module_& m) {
         .def_prop_ro(
             "universe",
             [](PySystem& system) -> Universe& { return *system.value.universe(); },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro(
+            "searcher",
+            [](PySystem& system) -> SpatialHashingSearcher& { return *system.value.searcher(); },
             nb::rv_policy::reference_internal);
 
     type.def("__init__", [](PySystem* value, std::unique_ptr<Fluid> fluid,
@@ -90,6 +94,12 @@ register_system(nb::module_& m) {
             if (source.has_value() != static_cast<bool>(generator)) {
                 throw nb::value_error("source and generator must be provided together");
             }
+
+            auto owned_fluid = atlas::make_host_unique<Fluid>(std::move(*fluid));
+            auto owned_universe = atlas::make_host_unique<Universe>(std::move(*universe));
+            fluid.reset();
+            universe.reset();
+
             std::vector<std::shared_ptr<void>> policy_owners;
             if (solver) policy_owners.push_back(solver);
             for (const auto& entry : solvers) policy_owners.push_back(entry);
@@ -103,8 +113,8 @@ register_system(nb::module_& m) {
             }
 
             System::Builder builder = System::builder();
-            builder.with_fluid(std::move(fluid));
-            builder.with_universe(std::move(universe));
+            builder.with_fluid(std::move(owned_fluid));
+            builder.with_universe(std::move(owned_universe));
             builder.with_dt(dt);
 
             if (solver) builder.with_solver(std::move(solver));

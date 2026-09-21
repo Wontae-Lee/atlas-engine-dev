@@ -19,25 +19,34 @@ The tests use `unittest` and NumPy, a runtime dependency of the wheel. They
 import the installed `atlas` package without modifying `sys.path` or loading an
 extension from an old build directory.
 
-- `test_modules.py`: version, all 20 public modules, exported native objects,
-  PascalCase names of registered classes, and nested import identity.
-- `test_engine.py`: lazy native loading, installed engine discovery, TBB default
+- `test_imports.py`: version, all public modules, exported native objects,
+  PascalCase names, nested import identity, and the absence of low-level buffer exports.
+- `test_engine_selection.py`: lazy native loading, installed engine discovery, TBB default
   preference, API/environment selection, rejection of invalid or missing engines,
   and prevention of changing the engine after native types have been imported.
   Each selection scenario runs in a fresh Python process. Cases requiring both
   extensions or a missing extension are skipped when the installed package does
   not provide that scenario.
-- `test_constructors.py`: concrete PascalCase classes, exact constructor result
-  types, umbrella inheritance, all primitive/material/generator/policy classes,
-  mesh constructor overloads, and emitter ownership after Python handles expire.
+- `test_construction.py`: state-owner, concrete leaf, policy, generator, and System
+  construction through the public PascalCase API.
 - `test_math.py`: constructors, writable components, arithmetic, checked
   indexing, explicit boolean reductions, and singular matrix handling.
-- `test_runtime.py`: geometry/pose queries, mesh ownership, BVH construction,
-  array transfers, spatial hashing, sources/generators, material tables,
-  boundaries, seeded sampling, binary snapshots, and a deterministic System step.
-- `test_cuda_parity.py`: mesh collider steps, mesh sink removal and compaction,
-  device material-table writes, and momentum/energy conservation for all three
-  DSMC collision models. Run the same tests with each engine selected.
+- `test_fluid.py`, `test_universe.py`, and `test_numpy_transfer.py`: state
+  lifecycles, range checks, compaction, dtype/shape contracts, direct transfer
+  correctness, and owned snapshot lifetime.
+- `test_geometry.py`, `test_material.py`, `test_source_generator.py`,
+  `test_searcher.py`, `test_solver_codec.py`, and `test_boundaries.py`: focused
+  module behavior without duplicating the C++ physics unit suite.
+- `test_system.py`, `test_ownership.py`, and `test_integration.py`: core object
+  hierarchy, individual phases, deterministic updates, consumed-object lifetime,
+  mesh/policy retention, repeated collection, and the maintained Python example.
+- `test_serialization.py`: temporary-file Fluid, Universe, and System snapshot
+  round trips and snapshot independence.
+- `test_errors.py`: controlled Python exceptions for invalid states, arrays, and
+  configurations.
+- `test_backend_parity.py`: deterministic TBB/CUDA comparison in isolated
+  subprocesses. It skips when both extensions or a working CUDA runtime are not
+  available.
 
 Tests construct objects through public PascalCase classes, for example
 `Fluid(...)`, `Sphere(...)`, `Molecule(...)`, and `System(...)`. Array-backed

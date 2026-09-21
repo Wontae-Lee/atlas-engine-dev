@@ -1,6 +1,8 @@
 #pragma once
 
-#include "../../_detail/bvh.h"
+#include "bvh.h"
+
+#include <atlas/spatial/bounding_volume_hierarchy/sah_bvh.h>
 
 namespace atlas::python {
 

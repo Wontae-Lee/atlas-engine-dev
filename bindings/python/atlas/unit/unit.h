@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../_detail/handles.h"
+#include "../detail/ownership.h"
 
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/quaternion.h>

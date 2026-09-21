@@ -1,6 +1,8 @@
 #pragma once
 
-#include "../_detail/boundary.h"
+#include "sink.h"
+
+#include <atlas/sink/volume_sink.h>
 
 namespace atlas::python {
 

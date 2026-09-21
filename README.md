@@ -322,11 +322,12 @@ identical numerical results.
 
 ## Working with particle data
 
-Input positions and velocities are contiguous NumPy `float32` arrays with
-shape `(N, 3)`: each row is a particle and each column is an x, y, or z
-component. Both arrays must contain the same number of particles. Data read
-from another source can be prepared with `np.ascontiguousarray(values,
-dtype=np.float32)`.
+Input positions and velocities must be convertible to NumPy `float32` arrays
+with shape `(N, 3)`: each row is a particle and each column is an x, y, or z
+component. Both arrays must contain the same number of particles. The binding
+accepts strided and compatible numeric arrays and converts them at the language
+boundary. Use `np.ascontiguousarray(values, dtype=np.float32)` when preparing
+the storage explicitly is useful to the calling code.
 
 `Fluid.from_arrays()` allocates capacity for the initial particles by default.
 If the simulation will emit additional particles, provide a larger
@@ -351,8 +352,10 @@ simulation.fluid.set_state("position", positions)
 `simulation.fluid.positions()` and `simulation.fluid.velocities()` return the
 active particles as `(N, 3)` arrays. `simulation.fluid.species()` returns the
 corresponding species indices. Grid properties and state are available through
-`simulation.universe`. A read-back reflects the time of the call; it does not
-change as later simulation steps run.
+`simulation.universe`, and `simulation.searcher` refers to the spatial searcher
+owned by the system. Fluid properties are not duplicated on `System`, and
+Universe properties remain on `Universe`. A read-back reflects the time of the
+call; it does not change as later simulation steps run.
 
 ### Saving results
 
@@ -376,10 +379,10 @@ simulation.save("snapshots")
 
 At step 10, this creates `snapshots/time_step_10/fluid.bin` and
 `snapshots/time_step_10/universe.bin`. `Fluid.load(path)` and
-`Universe.load(path)` reconstruct the saved state. To run it again, assemble
-a new `System` with the desired time increment, solver, sources, and boundary
-conditions. These settings and the previous system's step counter are not
-restored by loading the state files.
+`Universe.load(path)` accept strings or `pathlib.Path` values and reconstruct
+the saved state. To run it again, assemble a new `System` with the desired time
+increment, solver, sources, and boundary conditions. These settings and the
+previous system's step counter are not restored by loading the state files.
 
 Applications choose when and how to analyze or export these arrays. Simulation
 steps do not write files automatically.

@@ -7,6 +7,12 @@ PascalCase classes: `Fluid(...)`, `Sphere(...)`, `Molecule(...)`, and
 `System(...)`. Classes are also exported directly from `atlas`. Free mathematical,
 sampling, and serialization operations remain snake_case functions.
 
+The Python API mirrors the user-facing Atlas core object model, ownership
+boundaries, and capabilities. It does not expose every low-level C++
+implementation type. Python-specific code is limited to type conversion, NumPy
+transfer, lifetime retention, and runtime forms of template APIs. It is not an
+application or interactive rendering layer.
+
 The root `bindings/python/atlas/module.cpp` is the single extension translation unit.
 Registration headers under `bindings/python/atlas/` mirror the corresponding C++
 header paths and define inline
@@ -88,7 +94,13 @@ python -c "import atlas; print(atlas.math.Bool3)"
 Array read-back returns NumPy arrays, so `numpy` is a declared runtime dependency
 (`pyproject.toml`) and is installed with the wheel. Fluid and Universe state arrays,
 searcher arrays, and decoded snapshot arrays are owned host copies. Updating one
-does not update the simulation; use the state setters to upload changes.
+does not update the simulation; use the state setters to upload changes. The binding
+copies directly between an engine buffer and NumPy-owned memory. Under CUDA, a NumPy
+request necessarily performs a device-to-host transfer because NumPy storage is CPU
+memory.
+
+The future interactive renderer consumes Atlas Core directly and does not route
+real-time state through Python or NumPy.
 
 ## Packaging a wheel and installing it later
 
@@ -251,11 +263,19 @@ requested Python subtype, so `type(Sphere(...)) is Sphere` and
 `isinstance(Sphere(...), Geometry)` both hold. Methods operate on the same native
 storage; there is no Python attribute-forwarding data wrapper.
 
-Shared native adapters live in `bindings/python/atlas/_detail/`: array/state
-conversion, BVH and search helpers, and handles that retain mesh and policy owners. These preserve
-the lifetime of C++ objects referenced by Geometry, Unit, Source, Collider,
-Sink, and System. `System(...)` consumes its Fluid and Universe arguments;
-read or modify their state through the resulting System afterward.
+Only shared language-boundary infrastructure lives in
+`bindings/python/atlas/detail/`: `array.h` owns NumPy transfers and
+`ownership.h` retains native resources referenced through Python objects.
+Fluid and Universe runtime state-name dispatch lives beside its owner in
+`fluid/fluid_state.h` and `universe/universe_state.h`. BVH, searcher,
+serialization, collider, and sink adaptations remain in their feature
+directories. The ownership wrappers preserve the lifetime of C++ objects
+referenced by Geometry, Unit, Source, Collider, Sink, and System.
+`System(...)` consumes its Fluid and Universe arguments; read or modify their
+state through the resulting System afterward. The `system.fluid` and
+`system.universe` references are available immediately even while the consumed
+Python input variables remain in scope; those relinquished input wrappers must
+not shadow the System-owned native objects.
 
 The binding follows the C++ ownership boundaries. `System` exposes the state
 owners it consumed, while properties and arrays remain on those owners:
@@ -265,17 +285,25 @@ simulation.update()
 print(simulation.fluid.particle_count)
 positions = simulation.fluid.positions()
 print(simulation.universe.cell_count)
+print(simulation.searcher.cell_count)
 ```
 
 `System` does not duplicate Fluid or Universe properties. Python applications
 decide when to read state and whether to analyze, plot, or save the returned
-NumPy copies.
+NumPy copies. `System.searcher` is a reference to the native searcher owned by
+the System. `SpatialHashingSearcher` classifies particles and exposes the
+resulting index; solver execution remains a System responsibility.
+
+Leaf-specific APIs remain on their leaf classes. For example,
+`IsothermalCollider.reflect()` and its accommodation coefficient are not
+members of the generic `Collider` umbrella.
 
 `System` uses an in-place `__init__` binding so move-only arguments are consumed
 once. Other owner constructors use `nb::new_` to retain their C++ builder's
 ownership semantics. Alternative state creation is available as
 `Fluid.from_arrays()`, `Fluid.load()`, `Universe.from_geometry()`, and
-`Universe.load()`. `TriangleMesh` overloads its constructor for an OBJ path,
+`Universe.load()`; the load methods accept strings and `pathlib.Path` values.
+`TriangleMesh` overloads its constructor for an OBJ path,
 triangle list, or vertex/index arrays; `Plane` accepts either normal/offset or
 point/normal arguments.
 
@@ -293,8 +321,10 @@ simulation = System(
 ```
 
 Run `python -X faulthandler -m unittest discover -s tests/python -v` against an
-installed wheel to check constructor identity, module exports, native ownership,
-math, array transfers, spatial queries, and a deterministic step. Set
-`ATLAS_DEFAULT_ENGINE=tbb` and `ATLAS_DEFAULT_ENGINE=cuda` in separate runs
-to check both backends from the combined wheel. See
+installed wheel to check constructor identity, module exports, state lifecycles,
+owned NumPy snapshots, native ownership after garbage collection, spatial
+queries, serialization, controlled errors, and deterministic simulation steps.
+Set `ATLAS_DEFAULT_ENGINE=tbb` and `ATLAS_DEFAULT_ENGINE=cuda` in separate runs
+to check both backends from the combined wheel. The parity test also launches
+each engine in its own subprocess. See
 [`tests/python/README.md`](../../tests/python/README.md).
