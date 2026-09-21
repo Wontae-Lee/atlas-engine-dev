@@ -102,50 +102,6 @@
       }
     }
   ],
-  "buildPresets": [
-    {
-      "name": "build-tbb-debug",
-      "displayName": "Build TBB Debug",
-      "configurePreset": "tbb-debug",
-      "jobs": 0
-    },
-    {
-      "name": "build-tbb-release",
-      "displayName": "Build TBB Release",
-      "configurePreset": "tbb-release",
-      "jobs": 0
-    },
-    {
-      "name": "build-tbb-gcc-debug",
-      "displayName": "Build TBB Debug (GCC/G++)",
-      "configurePreset": "tbb-gcc-debug",
-      "jobs": 0
-    },
-    {
-      "name": "build-tbb-gcc-release",
-      "displayName": "Build TBB Release (GCC/G++)",
-      "configurePreset": "tbb-gcc-release",
-      "jobs": 0
-    },
-    {
-      "name": "build-cuda-debug",
-      "displayName": "Build CUDA Debug",
-      "configurePreset": "cuda-debug",
-      "jobs": 0
-    },
-    {
-      "name": "build-cuda-release",
-      "displayName": "Build CUDA Release",
-      "configurePreset": "cuda-release",
-      "jobs": 0
-    },
-    {
-      "name": "build-tbb-nvcc-debug",
-      "displayName": "Build TBB Debug (nvcc)",
-      "configurePreset": "tbb-nvcc-debug",
-      "jobs": 0
-    }
-  ],
   "testPresets": [
     {
       "name": "ctest-tbb-debug",

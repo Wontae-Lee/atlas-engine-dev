@@ -62,9 +62,6 @@ requires CMake 3.21+. The presets use Ninja. Important presets:
   `tbb-gcc-debug`, `tbb-gcc-release` (explicit `gcc`/`g++`),
   `tbb-nvcc-debug` (CPU backend built by nvcc),
   `cuda-debug`, `cuda-release` (GPU; nvcc + Thrust)
-- Build: `build-tbb-debug`, `build-tbb-release`, `build-tbb-nvcc-debug`,
-  `build-tbb-gcc-debug`, `build-tbb-gcc-release`,
-  `build-cuda-debug`, `build-cuda-release`
 - Test: `ctest-tbb-debug`, `ctest-tbb-gcc-debug`, `ctest-tbb-nvcc-debug`, `ctest-cuda-debug`
 
 The debug presets turn logging, tests, the Python module, the examples, and the
@@ -74,7 +71,7 @@ When a build and test run is requested, the GCC debug path is:
 
 ```bash
 cmake --preset tbb-gcc-debug
-cmake --build --preset build-tbb-gcc-debug
+cmake --build build/tbb-gcc-debug
 ctest --preset ctest-tbb-gcc-debug
 ```
 

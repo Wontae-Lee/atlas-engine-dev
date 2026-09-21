@@ -394,7 +394,7 @@ with GCC/G++:
 
 ```bash
 cmake --preset tbb-gcc-release -DATLAS_EXAMPLES=ON
-cmake --build --preset build-tbb-gcc-release --target atlas_example_cylinder
+cmake --build build/tbb-gcc-release --target atlas_example_cylinder
 ./build/tbb-gcc-release/examples/cpp/atlas_example_cylinder 200 assets cylinder_out
 ```
 
@@ -414,7 +414,7 @@ For GPU execution:
 
 ```bash
 cmake --preset cuda-release -DATLAS_EXAMPLES=ON
-cmake --build --preset build-cuda-release --target atlas_example_cylinder
+cmake --build build/cuda-release --target atlas_example_cylinder
 ./build/cuda-release/examples/cpp/atlas_example_cylinder 200 assets cylinder_out
 ```
 
