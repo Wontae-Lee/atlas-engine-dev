@@ -263,7 +263,7 @@ print(dot(velocity, velocity))
 print(Quaternion().rotate(velocity))
 ```
 
-`src/python/atlas/module.cpp` is the single extension translation unit.
+`bindings/python/atlas/module.cpp` is the single extension translation unit.
 Registration headers mirror C++ header paths; the entry point creates native
 submodules and calls the registration functions. See
 [`docs/guidelines/python.md`](docs/guidelines/python.md) for the current API.

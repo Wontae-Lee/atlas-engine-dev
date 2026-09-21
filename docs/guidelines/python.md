@@ -7,7 +7,7 @@ PascalCase classes: `Fluid(...)`, `Sphere(...)`, `Molecule(...)`, and
 `System(...)`. Classes are also exported directly from `atlas`. Free mathematical,
 sampling, and serialization operations remain snake_case functions.
 
-The root `src/python/atlas/module.cpp` is the single extension translation unit.
+The root `bindings/python/atlas/module.cpp` is the single extension translation unit.
 Registration headers mirror the corresponding C++ header paths and define inline
 `register_<type>()` functions. The entry point builds as `_core_tbb` or
 `_core_cuda`, creates submodules, and arranges registration in dependency order.
@@ -56,7 +56,7 @@ cmake --build build/tbb --target atlas_python
 ```
 
 The CMake target builds the private `_core_tbb` or `_core_cuda` extension. A usable Python package
-combines that extension with the modules under `src/python/atlas`; install the
+combines that extension with the modules under `bindings/python/atlas`; install the
 project (or a wheel as described below) before importing it:
 
 ```bash
@@ -181,21 +181,21 @@ Free math helpers include `dot`, `cross`, `clamp`, `normalized_or`,
 `solve_quadratic`. Constants include `pi`, `SQRT_TWO`,
 `boltzmann_constant`, `gravity`, `eps`, `tol`, `far`, and `inf`.
 The explicit export list lives in
-[`math/__init__.py`](../../src/python/atlas/math/__init__.py).
+[`math/__init__.py`](../../bindings/python/atlas/math/__init__.py).
 
 ## Registration layout
 
-- [`module.cpp`](../../src/python/atlas/module.cpp): the extension entry point,
+- [`module.cpp`](../../bindings/python/atlas/module.cpp): the extension entry point,
   version, and native submodule registration order.
-- [`math/vector/bool3.h`](../../src/python/atlas/math/vector/bool3.h):
+- [`math/vector/bool3.h`](../../bindings/python/atlas/math/vector/bool3.h):
   `atlas::python::math::register_bool3` registers Bool3. The remaining math
   types and functions have their own matching registration headers.
-- [`math/__init__.py`](../../src/python/atlas/math/__init__.py): re-exports
+- [`math/__init__.py`](../../bindings/python/atlas/math/__init__.py): re-exports
   native types and functions under the public `atlas.math` path.
-- [`CMakeLists.txt`](../../src/python/atlas/CMakeLists.txt): builds `module.cpp`
+- [`CMakeLists.txt`](../../bindings/python/atlas/CMakeLists.txt): builds `module.cpp`
   into the selected native extension and assigns an engine-specific nanobind
   domain so native type registries cannot be confused.
-- [`_engine.py`](../../src/python/atlas/_engine.py): validates the selected engine
+- [`_engine.py`](../../bindings/python/atlas/_engine.py): validates the selected engine
   and loads it once. The root package lazily resolves PascalCase exports.
 
 There is no separate `bind/` tree, generic registration wrapper, or per-type
