@@ -66,14 +66,14 @@ Build the TBB image and run the included Python simulation:
 
 ```bash
 docker build --target tbb -t atlas:tbb .
-docker run --rm atlas:tbb python /opt/atlas/examples/python/dsmc_dense_cell.py
+docker run --rm atlas:tbb python /opt/atlas/examples/python/cylinder.py
 ```
 
 The `tbb` target creates a CPU runtime image. No NVIDIA GPU or CUDA toolkit is
-needed. The example initializes 200 particles and advances the simulation by
-20 steps. It prints the final cell and particle counts, together with the mean
-particle speed before and after the run. Its source is
-[`examples/python/dsmc_dense_cell.py`](examples/python/dsmc_dense_cell.py).
+needed. The example emits nitrogen into a domain, advances a DSMC flow around
+an analytic cylinder, removes particles at the outer boundaries, and reads the
+result through NumPy. Its source is
+[`examples/python/cylinder.py`](examples/python/cylinder.py).
 
 ### NVIDIA GPU
 
@@ -81,7 +81,7 @@ Build the CUDA image and run the same example:
 
 ```bash
 docker build --target cuda -t atlas:cuda .
-docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/dsmc_dense_cell.py
+docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/cylinder.py
 ```
 
 The host needs a compatible NVIDIA driver and
@@ -136,8 +136,8 @@ After the images have been published to GitHub Container Registry, a
 `linux/amd64` host can run them without a source checkout:
 
 ```bash
-docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/dsmc_dense_cell.py
-docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/dsmc_dense_cell.py
+docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/cylinder.py
+docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/cylinder.py
 ```
 
 Each engine has Ubuntu 22.04 and 24.04 tags. The package must be public for
@@ -174,7 +174,7 @@ Check that the installed classes can be imported, then run the DSMC example:
 
 ```bash
 python -c "import atlas; from atlas import Float3; print(atlas.__version__, atlas.get_default_engine(), Float3(1, 2, 3))"
-python examples/python/dsmc_dense_cell.py
+python examples/python/cylinder.py
 ```
 
 ### CUDA installation
@@ -185,7 +185,7 @@ compatible NVIDIA driver and GPU. From an activated Python environment:
 
 ```bash
 python -m pip install . -C cmake.define.ATLAS_DEVICE_SYSTEM=CUDA
-ATLAS_DEFAULT_ENGINE=cuda python examples/python/dsmc_dense_cell.py
+ATLAS_DEFAULT_ENGINE=cuda python examples/python/cylinder.py
 ```
 
 Source installation builds the selected engine. When building for a different
@@ -299,26 +299,26 @@ The `Universe` bounds define a grid; they do not create reflecting walls or
 automatically remove particles. A case that needs those behaviors supplies
 colliders or sinks when constructing the `System`.
 
-### Adding gas collisions
+### Cylinder flow with DSMC
 
-The complete [DSMC example](examples/python/dsmc_dense_cell.py) adds molecular
-properties and a `DsmcSolver`. It can be run directly after installation:
+The complete [cylinder-flow example](examples/python/cylinder.py) adds
+molecular properties, a `DsmcSolver`, inflow generation, an isothermal cylinder,
+and sinks at the outer boundaries. It can be run directly after installation:
 
 ```bash
-python examples/python/dsmc_dense_cell.py
+python examples/python/cylinder.py
 ```
 
-The example defines a nitrogen material in a `MaterialDictionary`, initializes
-positions and velocities with NumPy, and attaches the materials to the fluid.
-It uses a statistical weight of `1e18`, which specifies the number of physical
-particles represented by each simulated particle. `DsmcSolver()` selects the
-VHS collision model by default.
+The example defines nitrogen in a `MaterialDictionary`, emits a thermal
+freestream through a `VolumeSource`, and uses the analytic `Cylinder` geometry
+for wall collisions. It prints progress while stepping and uses NumPy snapshots
+to summarize the downstream population and mean streamwise velocity.
 
-The source file keeps the particle count, initial distribution, material
-properties, grid size, and time increment together so they can be inspected
-and changed for a case. Its values illustrate package usage. CPU and GPU runs
-use the same API, but parallel floating-point calculations need not give
-identical numerical results.
+The source file keeps the material properties, domain, cylinder size, grid
+size, and time increment together so they can be inspected and changed. Pass a
+step count as the first argument for a longer run. CPU and GPU runs use the same
+API, but parallel floating-point calculations need not give identical numerical
+results.
 
 ## Working with particle data
 

@@ -12,8 +12,8 @@ a source checkout or local compilation:
 
 ```bash
 docker pull ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04
-docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/dsmc_dense_cell.py
-docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/dsmc_dense_cell.py
+docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/cylinder.py
+docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/cylinder.py
 ```
 
 The engine tags are `tbb-ubuntu22.04`, `tbb-ubuntu24.04`, `cuda-ubuntu22.04`, and
@@ -53,8 +53,8 @@ the Atlas test suites or simulation examples.
 Run the included DSMC example:
 
 ```bash
-docker run --rm atlas:tbb python /opt/atlas/examples/python/dsmc_dense_cell.py
-docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/dsmc_dense_cell.py
+docker run --rm atlas:tbb python /opt/atlas/examples/python/cylinder.py
+docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/cylinder.py
 ```
 
 CUDA execution requires a compatible NVIDIA driver on the host and the

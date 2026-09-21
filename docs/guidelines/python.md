@@ -62,7 +62,7 @@ runtime image includes only its selected native extension and sets
 ```bash
 git submodule update --init --recursive
 docker build --target tbb -t atlas:tbb .
-docker run --rm atlas:tbb python /opt/atlas/examples/python/dsmc_dense_cell.py
+docker run --rm atlas:tbb python /opt/atlas/examples/python/cylinder.py
 docker run --rm -v "$PWD":/workspace atlas:tbb python simulation.py
 ```
 

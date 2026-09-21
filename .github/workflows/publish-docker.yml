@@ -119,7 +119,7 @@ jobs:
           TEST_IMAGE: ${{ steps.image.outputs.reference }}
         run: >-
           timeout 60s docker run --rm "$TEST_IMAGE"
-          python -X faulthandler /opt/atlas/examples/python/dsmc_dense_cell.py
+          python -X faulthandler /opt/atlas/examples/python/cylinder.py
       - name: Log in to GHCR
         if: inputs.publish
         uses: docker/login-action@v3

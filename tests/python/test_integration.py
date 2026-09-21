@@ -62,12 +62,12 @@ class IntegrationTests(unittest.TestCase):
         self.assertTrue(all(isinstance(value, np.ndarray) for value in outputs))
         np.testing.assert_allclose(outputs[-1], [[0.5, 0.5, 0.5]], atol=1e-6)
 
-    def test_maintained_dsmc_example_smoke(self):
-        example = Path(__file__).resolve().parents[2] / "examples/python/dsmc_dense_cell.py"
+    def test_maintained_cylinder_example_smoke(self):
+        example = Path(__file__).resolve().parents[2] / "examples/python/cylinder.py"
         result = run_python(f"""
             import runpy
             runpy.run_path({str(example)!r}, run_name="__main__")
         """, engine=get_default_engine(), timeout=120)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("particles=200", result.stdout)
-        self.assertIn("over 20 steps", result.stdout)
+        self.assertIn("cylinder flow:", result.stdout)
+        self.assertIn("completed: steps=40", result.stdout)
