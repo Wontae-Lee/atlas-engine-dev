@@ -8,7 +8,8 @@ PascalCase classes: `Fluid(...)`, `Sphere(...)`, `Molecule(...)`, and
 sampling, and serialization operations remain snake_case functions.
 
 The root `bindings/python/atlas/module.cpp` is the single extension translation unit.
-Registration headers mirror the corresponding C++ header paths and define inline
+Registration headers under `bindings/python/atlas/` mirror the corresponding C++
+header paths and define inline
 `register_<type>()` functions. The entry point builds as `_core_tbb` or
 `_core_cuda`, creates submodules, and arranges registration in dependency order.
 The `_core.py` facade connects the public imports to the selected extension.
@@ -85,7 +86,7 @@ python -c "import atlas; print(atlas.math.Bool3)"
 ```
 
 Array read-back returns NumPy arrays, so `numpy` is a declared runtime dependency
-(`pyproject.toml`) and is installed with the wheel. State arrays, observer counters,
+(`pyproject.toml`) and is installed with the wheel. Fluid and Universe state arrays,
 searcher arrays, and decoded snapshot arrays are owned host copies. Updating one
 does not update the simulation; use the state setters to upload changes.
 
@@ -229,7 +230,7 @@ example uses the PascalCase classes exported from `atlas`.
 | `source`, `generator` | Emission sources and velocity/species generators |
 | `solver`, `codec` | DSMC kernel/solver and Knudsen codec |
 | `collider`, `sink` | Isothermal reflection and volume/surface/tracing removal |
-| `observer`, `system` | Sampling counters, output, assembly, and stepping |
+| `system` | Simulation assembly, component access, persistence, and stepping |
 | `searcher` | Spatial hashing and host copies of search results |
 | `random`, `sampling` | Random engines, distributions, seeds, and sampling helpers |
 | `serialization` | Binary snapshot reading, writing, and state restoration |
@@ -250,11 +251,25 @@ requested Python subtype, so `type(Sphere(...)) is Sphere` and
 `isinstance(Sphere(...), Geometry)` both hold. Methods operate on the same native
 storage; there is no Python attribute-forwarding data wrapper.
 
-Shared native adapters live in `_detail/`: array/state conversion, BVH and
-search helpers, and handles that retain mesh and policy owners. These preserve
+Shared native adapters live in `bindings/python/atlas/_detail/`: array/state
+conversion, BVH and search helpers, and handles that retain mesh and policy owners. These preserve
 the lifetime of C++ objects referenced by Geometry, Unit, Source, Collider,
 Sink, and System. `System(...)` consumes its Fluid and Universe arguments;
 read or modify their state through the resulting System afterward.
+
+The binding follows the C++ ownership boundaries. `System` exposes the state
+owners it consumed, while properties and arrays remain on those owners:
+
+```python
+simulation.update()
+print(simulation.fluid.particle_count)
+positions = simulation.fluid.positions()
+print(simulation.universe.cell_count)
+```
+
+`System` does not duplicate Fluid or Universe properties. Python applications
+decide when to read state and whether to analyze, plot, or save the returned
+NumPy copies.
 
 `System` uses an in-place `__init__` binding so move-only arguments are consumed
 once. Other owner constructors use `nb::new_` to retain their C++ builder's

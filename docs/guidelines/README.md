@@ -29,6 +29,26 @@ stay consistent.
 
 ---
 
+## Consumer Boundaries
+
+`include/atlas/` and `src/atlas/` form the computational core. The core owns the
+simulation state and physics pipeline and has no dependency on a language binding
+or frontend. The Python package and the interactive application are separate
+consumers:
+
+```text
+bindings/python ───────→ Atlas Core ←────── src/interactive
+```
+
+Python-specific NumPy conversion stays under `bindings/python/`. Rendering,
+frontend communication, and real-time control stay under `src/interactive/`.
+Neither consumer is a dependency of the core, and Python does not route through
+the interactive layer. The root build currently wires the core and optional
+Python binding; interactive code remains outside that active build until it has
+a maintained application target.
+
+---
+
 ## How the Simulation Framework Fits Together
 
 Atlas is a DSMC (direct simulation Monte Carlo) engine for rarefied gas flow.
@@ -53,7 +73,7 @@ Both store their state objects in a type-keyed `TypeStore`, looked up as
 [atlas/universe](../atlas/universe/universe.md).
 
 **Policy.** Interchangeable strategy objects the driver calls into: `Source`,
-`Generator`, `Collider`, `Sink`, `Codec`, `Solver`, `Observer`. Nearly all of
+`Generator`, `Collider`, `Sink`, `Codec`, and `Solver`. Nearly all of
 them are **tagged-union leaf** types — a concrete umbrella wrapping one of
 several leaves and dispatching to it, so a `DeviceBuffer` of umbrellas can
 dispatch on the device with no virtual call. See [atlas/core](../atlas/core/core.md)
@@ -65,7 +85,7 @@ place the ordering below lives.
 ### The step pipeline
 
 `System::update()` runs six stages in a fixed order, then advances the step
-counter and notifies the observer.
+counter. It performs no reporting or filesystem output.
 
 ```
                      ┌───────────────── System::update() ─────────────────┐
@@ -87,9 +107,7 @@ counter and notifies the observer.
                      │       ▼                                            │
       Sink ─────────►│  6. remove    despawn, compact the buffer          │
                      │       │                                            │
-                     └───────┼────────────────────────────────────────────┘
-                             ▼
-                        Observer.observe(fluid, universe, step)
+                     └───────┴────────────────────────────────────────────┘
 ```
 
 Read down the table for what each stage touches. "Reads" and "writes" name the

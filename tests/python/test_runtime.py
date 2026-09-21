@@ -8,7 +8,7 @@ import numpy as np
 from atlas import (
     BVH, Codec, Collider, DefaultRandomEngine, DsmcSolver, Float3, Fluid,
     Geometry, Int3, IsothermalCollider, KnudsenCodec, LBVH, MaterialDictionary,
-    MaterialType, Molecule, Observer, Ray, SAHBVH, Solver, SpatialHashingSearcher,
+    MaterialType, Molecule, Ray, SAHBVH, Solver, SpatialHashingSearcher,
     Sphere, Sync, System, Triangle, TriangleMesh, UniformGenerator, Unit,
     Universe, VolumeSink, VolumeSource,
 )
@@ -136,12 +136,21 @@ class RuntimeTests(unittest.TestCase):
         population, domain = make_fluid(), make_universe()
         before = population.positions()
         velocities = population.velocities()
+        simulation = System(population, domain, dt=0.01)
+        del population, domain
+        gc.collect()
+        simulation.update()
+        self.assertEqual(simulation.step, 1)
+        self.assertIsInstance(simulation.fluid, Fluid)
+        self.assertIsInstance(simulation.universe, Universe)
+        self.assertEqual(simulation.fluid.particle_count, 2)
+        np.testing.assert_allclose(
+            simulation.fluid.positions(), before + velocities * 0.01, atol=1e-6)
+
+    def test_user_controls_state_output(self):
+        simulation = System(make_fluid(), make_universe(), dt=0.01)
+        simulation.update()
         with tempfile.TemporaryDirectory() as directory:
-            recorder = Observer(1, directory)
-            simulation = System(population, domain, dt=0.01, observer=recorder)
-            del population, domain, recorder
-            gc.collect()
-            simulation.update()
-            self.assertEqual(simulation.step, 1)
-            self.assertEqual(simulation.particle_count, 2)
-            np.testing.assert_allclose(simulation.positions(), before + velocities * 0.01, atol=1e-6)
+            path = Path(directory) / "positions.npy"
+            np.save(path, simulation.fluid.positions())
+            np.testing.assert_array_equal(np.load(path), simulation.fluid.positions())

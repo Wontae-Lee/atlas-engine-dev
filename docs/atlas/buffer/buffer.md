@@ -78,10 +78,9 @@ Built this way, `thrust::host_vector` recognizes the device iterators and issues
 one device-to-host `cudaMemcpy`. A `std::vector` constructed from the same
 `thrust::device_vector` iterators would instead dereference each element on its
 own — and under CUDA every such dereference is its own `cudaMemcpy`. That pattern
-is exactly how the observer and the serializer pull GPU state back to host memory
-for CSV rows and protobuf snapshots (`src/atlas/observer/observer.cu`,
-`src/atlas/serialization/protobuf_snapshot.cpp` — roughly two dozen call sites
-build a `HostBuffer` straight from a `DeviceBuffer`'s `begin()/end()`).
+is how the serializer and language bindings pull GPU state back to host memory
+for protobuf snapshots and NumPy copies (`src/atlas/serialization/protobuf_snapshot.cpp`
+and `bindings/python/atlas/_detail/array.h`).
 
 Because `HostBuffer` is a value container, its elements must be copyable. That is
 precisely why the move-only leaves — the ones that own a `DeviceBuffer` — cannot
@@ -92,7 +91,7 @@ directly only for copyable payloads: the trivially-copyable leaves that *do* liv
 in a `DeviceVariant` (`HostBuffer<Collider>`, `HostBuffer<Sink>` in
 `System::Builder`), scalar staging arrays (`HostBuffer<float>` species ratios in
 the generators), mesh triangles (`HostBuffer<TriangleContainer4>`), and the
-host-side landing buffers of the observer and serializer.
+host-side landing buffers of the serializer and language bindings.
 
 ## Host vs. device
 

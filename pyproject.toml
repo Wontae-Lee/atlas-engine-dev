@@ -23,8 +23,8 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 
-# numpy is the array interchange for System.positions()/velocities()/species()
-# and fluid_from_arrays(). The extension imports without it, but those calls need it.
+# numpy is the array interchange for Fluid.positions()/velocities()/species()
+# and Fluid.from_arrays(). The extension imports without it, but those calls need it.
 dependencies = ["numpy>=1.21"]
 
 [project.urls]

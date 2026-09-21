@@ -38,7 +38,6 @@
 #include "math/vector/bool3.h"
 #include "math/vector/float3.h"
 #include "math/vector/int3.h"
-#include "observer/observer.h"
 #include "random/default_random_engine.h"
 #include "random/seed.h"
 #include "random/uniform_real_distribution.h"
@@ -94,7 +93,6 @@ NB_MODULE(ATLAS_PYTHON_MODULE, m) {
     auto codec            = m.def_submodule("codec");
     auto collider         = m.def_submodule("collider");
     auto sink             = m.def_submodule("sink");
-    auto observer         = m.def_submodule("observer");
     auto system           = m.def_submodule("system");
     auto searcher         = m.def_submodule("searcher");
     auto sampling         = m.def_submodule("sampling");
@@ -166,7 +164,6 @@ NB_MODULE(ATLAS_PYTHON_MODULE, m) {
     atlas::python::register_volume_sink(sink);
     atlas::python::register_surface_sink(sink);
     atlas::python::register_tracing_sink(sink);
-    atlas::python::register_observer(observer);
     atlas::python::register_system(system);
     atlas::python::register_spatial_hashing_searcher(searcher);
     atlas::python::register_sampling(sampling);

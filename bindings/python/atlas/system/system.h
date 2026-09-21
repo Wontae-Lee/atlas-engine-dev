@@ -1,11 +1,9 @@
 #pragma once
 
 #include "../_detail/handles.h"
-#include "../_detail/state.h"
 
 #include <atlas/codec/codec.h>
 #include <atlas/generator/generator.h>
-#include <atlas/observer/observer.h>
 #include <atlas/solver/solver.h>
 
 #include <nanobind/nanobind.h>
@@ -63,108 +61,14 @@ register_system(nb::module_& m) {
             return std::vector<SolverHostPtr>(solvers.begin(), solvers.end());
         })
         .def_prop_ro("codec", [](const PySystem& system) { return system.value.codec(); })
-        .def_prop_ro("observer", [](const PySystem& system) { return system.value.observer(); })
-        .def_prop_rw(
-            "particle_count",
-            [](const PySystem& system) { return system.value.fluid()->particle_count(); },
-            [](PySystem& system, const std::size_t count) { system.value.fluid()->set_particle_count(count); })
-        .def_prop_ro("buffer_size", [](const PySystem& system) { return system.value.fluid()->buffer_size(); })
-        .def_prop_ro("statistical_weight", [](const PySystem& system) { return system.value.fluid()->statistical_weight(); })
-        .def_prop_ro("materials", [](const PySystem& system) { return system.value.fluid()->materials(); })
-        .def_prop_ro("cell_count", [](const PySystem& system) { return system.value.universe()->cell_count(); })
-        .def_prop_ro("lower_corner", [](const PySystem& system) { return system.value.universe()->lower_corner(); })
-        .def_prop_ro("upper_corner", [](const PySystem& system) { return system.value.universe()->upper_corner(); })
-        .def_prop_ro("grid_size", [](const PySystem& system) { return system.value.universe()->grid_size(); })
-        .def_prop_ro("cell_size", [](const PySystem& system) { return system.value.universe()->cell_size(); })
-        .def_prop_ro("cell_volume", [](const PySystem& system) { return system.value.universe()->cell_volume(); })
-        .def_prop_ro("inverse_cell_size", [](const PySystem& system) { return system.value.universe()->inverse_cell_size(); })
-        .def("positions", [](const PySystem& system) { return read_state(*system.value.fluid(), "position"); })
-        .def("velocities", [](const PySystem& system) { return read_state(*system.value.fluid(), "velocity"); })
-        .def("species", [](const PySystem& system) { return read_state(*system.value.fluid(), "species"); })
-        .def(
-            "fluid_state",
-            [](const PySystem& system, const std::string& name, const bool full) {
-                return read_state(*system.value.fluid(), name, full);
-            },
-            "name"_a,
-            "full"_a = false)
-        .def(
-            "set_fluid_state",
-            [](PySystem& system, const std::string& name, nb::handle values, const std::size_t offset) {
-                write_state(*system.value.fluid(), name, values, offset);
-            },
-            "name"_a,
-            "values"_a,
-            "offset"_a = 0)
-        .def(
-            "has_fluid_state",
-            [](const PySystem& system, const std::string& name) {
-                return has_state(*system.value.fluid(), name);
-            },
-            "name"_a)
-        .def(
-            "remove_fluid_state",
-            [](PySystem& system, const std::string& name) {
-                return remove_state(*system.value.fluid(), name);
-            },
-            "name"_a)
-        .def(
-            "reset_fluid_state",
-            [](PySystem& system, const std::string& name) {
-                reset_state(*system.value.fluid(), name);
-            },
-            "name"_a)
-        .def(
-            "universe_state",
-            [](const PySystem& system, const std::string& name) {
-                return read_state(*system.value.universe(), name);
-            },
-            "name"_a)
-        .def(
-            "set_universe_state",
-            [](PySystem& system, const std::string& name, nb::handle values, const std::size_t offset) {
-                write_state(*system.value.universe(), name, values, offset);
-            },
-            "name"_a,
-            "values"_a,
-            "offset"_a = 0)
-        .def(
-            "has_universe_state",
-            [](const PySystem& system, const std::string& name) {
-                return has_state(*system.value.universe(), name);
-            },
-            "name"_a)
-        .def(
-            "remove_universe_state",
-            [](PySystem& system, const std::string& name) {
-                return remove_state(*system.value.universe(), name);
-            },
-            "name"_a)
-        .def(
-            "reset_universe_state",
-            [](PySystem& system, const std::string& name) {
-                reset_state(*system.value.universe(), name);
-            },
-            "name"_a)
-        .def(
-            "active",
-            [](const PySystem& system, const bool full) {
-                const auto& fluid = *system.value.fluid();
-                return numpy_copy(fluid.active(), full ? fluid.buffer_size() : fluid.particle_count());
-            },
-            "full"_a = false)
-        .def(
-            "set_active",
-            [](PySystem& system, nb::handle values, const std::size_t offset) {
-                write_active(*system.value.fluid(), values, offset);
-            },
-            "values"_a,
-            "offset"_a = 0)
-        .def("compact", [](PySystem& system) { return system.value.fluid()->compact(); })
-        .def("observe", [](const PySystem& system) {
-            const auto& value = system.value;
-            if (value.observer()) value.observer()->observe(*value.fluid(), *value.universe(), value.step());
-        });
+        .def_prop_ro(
+            "fluid",
+            [](PySystem& system) -> Fluid& { return *system.value.fluid(); },
+            nb::rv_policy::reference_internal)
+        .def_prop_ro(
+            "universe",
+            [](PySystem& system) -> Universe& { return *system.value.universe(); },
+            nb::rv_policy::reference_internal);
 
     type.def("__init__", [](PySystem* value, std::unique_ptr<Fluid> fluid,
            std::unique_ptr<Universe>
@@ -179,7 +83,6 @@ register_system(nb::module_& m) {
            std::vector<PySink>
                sinks,
            CodecHostPtr codec,
-           ObserverHostPtr observer,
            std::vector<SolverHostPtr>
                solvers,
            std::vector<std::pair<PySource, GeneratorHostPtr>>
@@ -225,7 +128,6 @@ register_system(nb::module_& m) {
                 mesh_owners.insert(mesh_owners.end(), sink.mesh_owners.begin(), sink.mesh_owners.end());
             }
             if (codec) builder.with_codec(std::move(codec));
-            if (observer) builder.with_observer(std::move(observer));
 
             auto system = builder.build();
             new (value) PySystem(std::move(system), std::move(mesh_owners), std::move(policy_owners));
@@ -239,7 +141,6 @@ register_system(nb::module_& m) {
         "colliders"_a = std::vector<PyCollider> {},
         "sinks"_a     = std::vector<PySink> {},
         "codec"_a     = CodecHostPtr {},
-        "observer"_a  = ObserverHostPtr {},
         nb::kw_only(),
         "solvers"_a  = std::vector<SolverHostPtr> {},
         "emitters"_a = std::vector<std::pair<PySource,

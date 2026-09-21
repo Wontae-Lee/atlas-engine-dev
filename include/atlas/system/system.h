@@ -8,7 +8,6 @@
 #include <atlas/fluid/fluid.h>
 #include <atlas/generator/generator.h>
 #include <atlas/memory/memory.h>
-#include <atlas/observer/observer.h>
 #include <atlas/searcher/spatial_hashing_searcher.h>
 #include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/sink/sink.h>
@@ -28,9 +27,9 @@ namespace atlas {
  * A @c System aggregates the whole simulation: the particle @c Fluid, the spatial
  * @c Universe grid and its per-cell state, the emission @c Source / @c Generator pairs,
  * the physics @c Solver list, the @c Collider and @c Sink boundaries, the per-cell solver
- * @c Codec, and the diagnostic @c Observer. @c update() advances the world by one @c _dt
- * by running the fixed six-phase pipeline (emit → search → allocate → solve → advect →
- * remove), incrementing the step counter, and letting the observer sample the result.
+ * @c Codec. @c update() advances the world by one @c _dt by running the fixed six-phase
+ * pipeline (emit → search → allocate → solve → advect → remove) and incrementing the step
+ * counter.
  *
  * Ownership: every subsystem is held by a host smart pointer or a device buffer that the
  * @c System owns outright. The type is therefore move-only (copying would duplicate GPU
@@ -55,9 +54,8 @@ public:
      *
      * Moves the host pointers and copies the collider/sink buffers into device buffers,
      * then derives dependent state: if a universe is present it builds the spatial-hashing
-     * searcher over it, if an observer is present it sizes the per-source/per-sink/
-     * per-species counters, and finally it initializes the required universe state columns
-     * via @ref initialize_states().
+     * searcher over it, then initializes the required universe state columns via
+     * @ref initialize_states().
      *
      * @param fluid      Particle store; ownership transferred. Must be non-null in practice.
      * @param universe   Spatial grid and per-cell state; ownership transferred.
@@ -67,7 +65,6 @@ public:
      * @param colliders  Collision boundaries; copied host→device into @c _colliders.
      * @param sinks      Removal boundaries; copied host→device into @c _sinks.
      * @param codec      Per-cell solver selector; ownership transferred. May be null.
-     * @param observer   Diagnostic sampler; ownership transferred. May be null.
      * @param dt         Fixed timestep in seconds advanced by each @ref update().
      */
     ATLAS_HOST
@@ -79,7 +76,6 @@ public:
            const HostBuffer<Collider>& colliders,
            const HostBuffer<Sink>& sinks,
            CodecHostPtr codec,
-           ObserverHostPtr observer,
            float dt);
 
     /** @brief Non-copyable: the system owns unique device buffers and host pointers. */
@@ -122,8 +118,7 @@ public:
      * @brief Advances the whole simulation by one timestep.
      *
      * Runs the six pipeline phases in order (@ref emit, @ref search, @ref allocate,
-     * @ref solve, @ref advect, @ref remove), increments @c _step, and — if an observer is
-     * present — lets it sample the fluid and universe for the new step.
+     * @ref solve, @ref advect, @ref remove), then increments @c _step.
      */
     ATLAS_HOST void
     update();
@@ -133,8 +128,8 @@ public:
      *
      * For each source, in order, appends spawned positions past the current live count
      * (stopping when the fluid buffer is full), fills the new slots' velocities and species
-     * via the paired generator, records the spawn in the observer, and finally advances each
-     * source boundary by @c _dt. Updates the fluid's live particle count.
+     * via the paired generator, and finally advances each source boundary by @c _dt. Updates
+     * the fluid's live particle count.
      */
     ATLAS_HOST void
     emit();
@@ -245,15 +240,6 @@ public:
     }
 
     /**
-     * @brief Returns the diagnostic observer.
-     * @return Const reference to the observer host pointer; may be null.
-     */
-    ATLAS_NODISCARD ATLAS_HOST const ObserverHostPtr&
-    observer() const noexcept {
-        return _observer;
-    }
-
-    /**
      * @brief Writes a binary snapshot of the fluid and universe for the current step.
      *
      * Creates a per-step subdirectory (named by @ref snapshot_directory_name) under
@@ -322,9 +308,8 @@ public:
      * @brief Flags each live particle as surviving (1) or despawned (0) against the sinks.
      *
      * For every particle it tests each sink's despawn predicate; the first sink that claims
-     * the particle clears its active flag and, when an observer with a matching despawn
-     * counter is present, atomically bumps the per-sink, per-species despawn tally. The flags
-     * become the scan input that @c Fluid::compact() consumes in @ref remove().
+     * the particle clears its active flag. The flags become the scan input that
+     * @c Fluid::compact() consumes in @ref remove().
      *
      * @param particle_count Number of leading live particles to test.
      * @note Public only because its body launches an extended @c __host__ __device__ lambda,
@@ -333,23 +318,6 @@ public:
      */
     ATLAS_HOST void
     mark_survivors(int particle_count);
-
-    /**
-     * @brief Records a source's spawn into the observer's per-source, per-species counters.
-     *
-     * No-op without an observer, with a zero count, or when the species state or counter
-     * layout does not match. Otherwise atomically increments, for each newly spawned slot,
-     * the counter at (source, species) after a bounds check on the species id.
-     *
-     * @param source_index Index of the source that spawned the particles.
-     * @param offset       First fluid slot written by this spawn.
-     * @param count        Number of slots spawned.
-     * @note Public only because its body launches an extended @c __host__ __device__ lambda,
-     *       which nvcc forbids inside a private or protected member function; it is an
-     *       internal step of @ref emit() and not meant to be called directly.
-     */
-    ATLAS_HOST void
-    record_spawned(std::size_t source_index, std::size_t offset, std::size_t count);
 
 private:
     /**
@@ -376,8 +344,6 @@ private:
     HostBuffer<SolverHostPtr> _solvers; ///< Physics solvers, run in order each step.
 
     CodecHostPtr _codec {}; ///< Per-cell solver selector; may be null.
-
-    ObserverHostPtr _observer {}; ///< Diagnostic sampler and spawn/despawn counters; may be null.
 
     HostBuffer<SourceHostPtr> _sources; ///< Emission boundaries, index-paired with @c _generators.
 
@@ -465,14 +431,6 @@ public:
     with_codec(CodecHostPtr codec) noexcept;
 
     /**
-     * @brief Sets the diagnostic observer (optional).
-     * @param observer Observer; ownership transferred. May be left null.
-     * @return @c *this for chaining.
-     */
-    ATLAS_HOST Builder&
-    with_observer(ObserverHostPtr observer) noexcept;
-
-    /**
      * @brief Sets the fixed timestep in seconds (must be positive).
      * @param dt Timestep; validated to be strictly greater than zero at build time.
      * @return @c *this for chaining.
@@ -520,8 +478,6 @@ private:
     HostBuffer<SolverHostPtr> _solvers; ///< Solvers to install, in insertion order.
 
     CodecHostPtr _codec {}; ///< Codec to install; may be null.
-
-    ObserverHostPtr _observer {}; ///< Observer to install; may be null.
 
     HostBuffer<SourceHostPtr> _sources; ///< Sources to install, index-aligned with @c _generators.
 

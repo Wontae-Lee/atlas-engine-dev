@@ -7,7 +7,7 @@
  * System, steps it, and prints wall-clock timings.
  *
  * Usage:
- *   atlas_example_cylinder [steps] [assets_dir] [output_dir]
+ *   atlas_example_cylinder [steps] [assets_dir]
  */
 
 #include <atlas/atlas.h>
@@ -63,8 +63,7 @@ constexpr float SLAB_THICKNESS = 0.4f;
 /// 4 m of z at 1000 m/s is 4 ms; one step moves a thermal molecule ~4 mm.
 constexpr float DT = 1.0e-5f;
 
-constexpr std::size_t BUFFER_SIZE     = 2'000'000;
-constexpr std::size_t OBSERVE_INTERVAL = 50;
+constexpr std::size_t BUFFER_SIZE = 2'000'000;
 
 atlas::SyncHostPtr
 identity_sync() {
@@ -112,8 +111,6 @@ main(int argc, char** argv) {
     const std::size_t steps = (argc > 1) ? std::strtoul(argv[1], nullptr, 10) : 200;
 
     const std::filesystem::path assets = (argc > 2) ? argv[2] : ATLAS_EXAMPLE_ASSETS_DIR;
-    const std::filesystem::path output = (argc > 3) ? argv[3] : "cylinder_out";
-
     const std::filesystem::path mesh_path = assets / "cylinder.obj";
 
     if (!std::filesystem::exists(mesh_path)) {
@@ -184,11 +181,6 @@ main(int argc, char** argv) {
                       .with_kernel_type(atlas::DsmcKernelType::variable_hard_sphere)
                       .make_host_shared();
 
-    auto observer = atlas::Observer::builder()
-                        .with_interval(OBSERVE_INTERVAL)
-                        .with_output_directory(output)
-                        .make_host_shared();
-
     auto builder = atlas::System::builder();
 
     builder.with_fluid(std::move(fluid))
@@ -196,7 +188,6 @@ main(int argc, char** argv) {
         .with_solver(solver)
         .with_emitter(inflow, maxwellian)
         .with_collider(cylinder)
-        .with_observer(observer)
         .with_dt(DT);
 
     // Six slabs, one per face: anything that leaves the domain is despawned on the
@@ -268,7 +259,5 @@ main(int argc, char** argv) {
                 elapsed,
                 1000.0 * elapsed / static_cast<double>(steps),
                 system.fluid()->particle_count());
-    std::printf("csv written to %s/data\n", output.c_str());
-
     return 0;
 }

@@ -267,8 +267,7 @@ private:
  *
  * The mandatory material column: every fluid allocates it. The value indexes the fluid's
  * @c MaterialDictionary, selecting the particle's mass, collision cross-section, and
- * energy-mode properties. Read by the DSMC kernel and by the observer's per-species
- * despawn tallies.
+ * energy-mode properties. Read by the DSMC kernel.
  */
 class FluidSpeciesState final : public FluidState {
 public:

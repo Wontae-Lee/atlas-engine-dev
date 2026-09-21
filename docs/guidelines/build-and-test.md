@@ -141,7 +141,7 @@ coverage. These tests are separate from the C++ GoogleTest targets.
 Tests mirror `include/atlas/`: every module has a directory under
 `tests/atlas/`. The covered modules are `buffer`, `codec`, `collider`,
 `container`, `core`, `fluid`, `generator`, `geometry`, `logging`, `material`,
-`math`, `memory`, `observer`, `parallel`, `random`, `sampling`, `scan`,
+`math`, `memory`, `parallel`, `random`, `sampling`, `scan`,
 `searcher`, `serialization`, `sink`, `solver`, `source`, `spatial`, `sync`,
 `system`, `unit`, and `universe`.
 

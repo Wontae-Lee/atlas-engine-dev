@@ -18,7 +18,6 @@ _EXPORTS = {
     "JitteringGenerator": "generator",
     "MaxwellSigmaGenerator": "generator",
     "MaxwellBoltzmannGenerator": "generator",
-    "Observer": "observer",
     "DiffuseSampling": "collider",
     "ColliderType": "collider",
     "Collider": "collider",
@@ -81,7 +80,6 @@ _EXPORTS = {
 _MODULES = (
     "math",
     "generator",
-    "observer",
     "collider",
     "system",
     "geometry",

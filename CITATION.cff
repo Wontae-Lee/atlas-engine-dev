@@ -14,7 +14,7 @@ abstract: >-
   Atlas Engine is a C++20 particle simulation engine for rarefied-gas
   dynamics using direct simulation Monte Carlo (DSMC). It supports TBB
   CPU and CUDA GPU backends, hard-sphere, VHS, and VSS collision kernels,
-  analytic and triangle-mesh geometry, CSV observation, protobuf snapshot
+  analytic and triangle-mesh geometry, protobuf snapshot
   serialization, and optional Python bindings through nanobind.
 license: GPL-3.0-or-later
 keywords:

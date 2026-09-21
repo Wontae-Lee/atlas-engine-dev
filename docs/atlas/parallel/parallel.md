@@ -73,8 +73,7 @@ void parallel_fill(Iterator first, Iterator last, const T& value);
 ```
 
 `thrust::fill` under CUDA, a TBB `std::fill`-per-block otherwise. Empty range returns early
-to avoid a needless kernel launch. Used to zero observer counters and clear fluid/universe
-grid state.
+to avoid a needless kernel launch. Used to clear fluid and universe state.
 
 ## `parallel_sort` / `parallel_sort_by_key`
 
@@ -112,12 +111,10 @@ One portable fetch-and-add. In a `__CUDA_ARCH__` pass it forwards to CUDA `atomi
 (whose overloads decide which types the GPU supports); otherwise it uses
 `__atomic_fetch_add` with `__ATOMIC_RELAXED`. It returns the *prior* value, so a caller can
 use it as a unique reservation index. Relaxed ordering makes the RMW atomic but imposes no
-ordering on surrounding memory — fine for the counter use here, but the return value must
-not be relied on to synchronize other memory. It is not aggregated into `parallel.h` on
-purpose; a translation unit that needs it includes `atlas/parallel/atomic.h` directly. The
-only callers are `System::mark_survivors` / `System::record_spawned` in `system.cu`, both
-adding `1` to a per-species `int` counter after a bounds check on the species id (an
-out-of-range atomic *write* corrupts memory, so that guard is kept).
+ordering on surrounding memory, and the return value must not be relied on to synchronize
+other memory. It is not aggregated into `parallel.h`; a translation unit that needs it
+includes `atlas/parallel/atomic.h` directly. The primitive is currently exercised by its
+focused tests and remains available to backend-portable kernels.
 
 ## Deliberately absent
 
@@ -125,8 +122,7 @@ out-of-range atomic *write* corrupts memory, so that guard is kept).
   module (`include/atlas/scan/exclusive_scan.h`); this module is intentionally just
   for-each / fill / sort / atomic. A count-and-compact is expressed as a `scan` followed by
   a `parallel_for` scatter, not a fused primitive.
-- **No `atomic_min` / `atomic_max` / CAS.** Only fetch-and-add is provided, because that is
-  the only atomic the engine's kernels use (species counters, reservation indices).
+- **No `atomic_min` / `atomic_max` / CAS.** Only fetch-and-add is provided.
 - **No stable sort.** Both backends' sorts are unstable and the docs say so; the engine's
   sort keys (cell ids) do not need a tie-break.
 - **No grain-size / block-size control.** TBB picks the grain and Thrust picks the launch

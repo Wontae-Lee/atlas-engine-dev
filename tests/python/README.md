@@ -35,7 +35,7 @@ extension from an old build directory.
 - `test_runtime.py`: geometry/pose queries, mesh ownership, BVH construction,
   array transfers, spatial hashing, sources/generators, material tables,
   boundaries, seeded sampling, binary snapshots, and a deterministic System step.
-- `test_cuda_parity.py`: mesh collider steps, mesh sink/observer counters,
+- `test_cuda_parity.py`: mesh collider steps, mesh sink removal and compaction,
   device material-table writes, and momentum/energy conservation for all three
   DSMC collision models. Run the same tests with each engine selected.
 

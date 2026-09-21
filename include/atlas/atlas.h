@@ -29,6 +29,7 @@
 #include <atlas/geometry/geometry.h>
 #include <atlas/geometry/geometry_type.h>
 #include <atlas/geometry/plane.h>
+#include <atlas/geometry/polygonal_prism.h>
 #include <atlas/geometry/sphere.h>
 #include <atlas/geometry/square.h>
 #include <atlas/geometry/triangle.h>
@@ -51,7 +52,6 @@
 #include <atlas/memory/copy.h>
 #include <atlas/memory/memory.h>
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/observer/observer.h>
 #include <atlas/parallel/atomic.h>
 #include <atlas/parallel/parallel.h>
 #include <atlas/parallel/parallel_fill.h>

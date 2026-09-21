@@ -48,12 +48,12 @@ def main() -> None:
 
     system = System(fluid=fluid, universe=domain, dt=1e-4, solver=solver)
 
-    mean_speed_before = np.linalg.norm(system.velocities(), axis=1).mean()
+    mean_speed_before = np.linalg.norm(system.fluid.velocities(), axis=1).mean()
     for _ in range(20):
         system.update()
-    mean_speed_after = np.linalg.norm(system.velocities(), axis=1).mean()
+    mean_speed_after = np.linalg.norm(system.fluid.velocities(), axis=1).mean()
 
-    print(f"cells={system.cell_count} particles={system.particle_count}")
+    print(f"cells={system.universe.cell_count} particles={system.fluid.particle_count}")
     print(f"mean speed: {mean_speed_before:.1f} -> {mean_speed_after:.1f} m/s over {system.step} steps")
 
 

@@ -93,7 +93,6 @@ own all simulation state.
 | System — the step pipeline (`emit → search → allocate → solve → advect → remove`) | [atlas/system/system.md](docs/atlas/system/system.md) |
 | Fluid — per-particle columns (position, velocity, species) | [atlas/fluid/fluid.md](docs/atlas/fluid/fluid.md) |
 | Universe — per-cell grid fields | [atlas/universe/universe.md](docs/atlas/universe/universe.md) |
-| Observer — sampling and CSV output | [atlas/observer/observer.md](docs/atlas/observer/observer.md) |
 
 **The tagged-union leaf modules.** A concrete umbrella type wraps one of several
 self-contained leaf types and dispatches to it. Trivially copyable leaves use

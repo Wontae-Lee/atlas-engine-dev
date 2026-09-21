@@ -10,7 +10,7 @@ from atlas import _core
 MODULES = (
     "math", "random", "spatial", "sync", "geometry", "unit", "material",
     "fluid", "universe", "source", "generator", "solver", "codec",
-    "collider", "sink", "observer", "system", "searcher", "sampling",
+    "collider", "sink", "system", "searcher", "sampling",
     "serialization",
 )
 

@@ -17,7 +17,7 @@ use the same simulation classes with either engine.
 A simulation is assembled from the components needed for the case. Particle
 motion can be used on its own, or combined with gas collisions, emission,
 surface interactions, and particle removal. Results can be read into NumPy,
-recorded as CSV observations, or saved as binary state snapshots.
+processed or saved by the application, or stored as binary state snapshots.
 
 - Hard-sphere, variable hard sphere (VHS), and variable soft sphere (VSS)
   collision models.
@@ -277,7 +277,7 @@ for _ in range(10):
     simulation.update()
 
 print(simulation.step)
-print(simulation.positions())
+print(simulation.fluid.positions())
 ```
 
 The objects in this example have separate roles:
@@ -343,15 +343,16 @@ when the simulation runs on CUDA. To change live particle data, modify a copy
 and upload it explicitly:
 
 ```python
-positions = simulation.positions()
+positions = simulation.fluid.positions()
 positions[:, 1] += 0.1
-simulation.set_fluid_state("position", positions)
+simulation.fluid.set_state("position", positions)
 ```
 
-`simulation.positions()` and `simulation.velocities()` return the active
-particles as `(N, 3)` arrays. `simulation.species()` returns the corresponding
-species indices. A read-back reflects the time of the call; it does not change
-as later simulation steps run.
+`simulation.fluid.positions()` and `simulation.fluid.velocities()` return the
+active particles as `(N, 3)` arrays. `simulation.fluid.species()` returns the
+corresponding species indices. Grid properties and state are available through
+`simulation.universe`. A read-back reflects the time of the call; it does not
+change as later simulation steps run.
 
 ### Saving results
 
@@ -363,8 +364,8 @@ from pathlib import Path
 
 results = Path("results")
 results.mkdir(exist_ok=True)
-np.save(results / "positions.npy", simulation.positions())
-np.save(results / "velocities.npy", simulation.velocities())
+np.save(results / "positions.npy", simulation.fluid.positions())
+np.save(results / "velocities.npy", simulation.fluid.velocities())
 ```
 
 For a binary snapshot of the fluid and grid state:
@@ -380,14 +381,14 @@ a new `System` with the desired time increment, solver, sources, and boundary
 conditions. These settings and the previous system's step counter are not
 restored by loading the state files.
 
-CSV observations are provided by an `Observer` attached to a simulation. The
-[C++ cylinder example](#run-the-c-example) demonstrates this output path.
+Applications choose when and how to analyze or export these arrays. Simulation
+steps do not write files automatically.
 
 ## Run the C++ example
 
 The C++ cylinder example sets up a nitrogen flow around an OBJ mesh, with
 particle emission, DSMC collisions, surface interactions, outflow removal,
-and CSV observations. It provides a larger example of assembling a simulation.
+and timing output. It provides a larger example of assembling a simulation.
 
 Use the local build dependencies listed above. From the checkout, build it
 with GCC/G++:
@@ -395,27 +396,25 @@ with GCC/G++:
 ```bash
 cmake --preset tbb-gcc-release -DATLAS_EXAMPLES=ON
 cmake --build build/tbb-gcc-release --target atlas_example_cylinder
-./build/tbb-gcc-release/examples/cpp/atlas_example_cylinder 200 assets cylinder_out
+./build/tbb-gcc-release/examples/cpp/atlas_example_cylinder 200 assets
 ```
 
-The executable accepts three positional arguments:
+The executable accepts two positional arguments:
 
 | Argument | Value in the command | Meaning |
 |---|---|---|
 | Steps | `200` | Number of simulation updates to run. |
 | Assets directory | `assets` | Directory containing `cylinder.obj`. |
-| Output directory | `cylinder_out` | Destination for observation files. |
 
-Paths in this command are relative to the repository root. The example writes
-CSV observations every 50 steps under `cylinder_out/data/`; runs shorter than
-that interval do not reach the first scheduled observation.
+Paths in this command are relative to the repository root. The example prints
+the configured flow regime and wall-clock timings.
 
 For GPU execution:
 
 ```bash
 cmake --preset cuda-release -DATLAS_EXAMPLES=ON
 cmake --build build/cuda-release --target atlas_example_cylinder
-./build/cuda-release/examples/cpp/atlas_example_cylinder 200 assets cylinder_out
+./build/cuda-release/examples/cpp/atlas_example_cylinder 200 assets
 ```
 
 Building requires the CUDA toolkit; running requires an NVIDIA GPU. The

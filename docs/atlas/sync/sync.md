@@ -113,7 +113,7 @@ oversights — but nothing in the engine reaches them today.
 Note the out-parameter point overloads (`sync_to_world(Float3, Float3&)` etc.)
 and `sync_dir_to_world`'s out-parameter form are *not* in this list: they have no
 external call site, but the value-returning overloads that are called delegate to
-them, so they are reached indirectly. `Sync` has no serialization and no observer
+them, so they are reached indirectly. `Sync` has no serialization or reporting
 of its own — a pose is persisted and restored as part of its owning `Unit`, so
 there is no "no-producer serialized state" case here.
 

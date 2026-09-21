@@ -2,7 +2,6 @@
 
 #include <atlas/fluid/fluid_state.h>
 #include <atlas/memory/raw_pointer_cast.h>
-#include <atlas/parallel/atomic.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
@@ -55,14 +54,12 @@ System::System(FluidHostPtr fluid,
                const HostBuffer<Collider>& colliders,
                const HostBuffer<Sink>& sinks,
                CodecHostPtr codec,
-               ObserverHostPtr observer,
                const float dt)
     : _dt(dt)
     , _fluid(std::move(fluid))
     , _universe(std::move(universe))
     , _solvers(std::move(solvers))
     , _codec(std::move(codec))
-    , _observer(std::move(observer))
     , _sources(std::move(sources))
     , _generators(std::move(generators))
     , _colliders(colliders.begin(), colliders.end())
@@ -73,15 +70,6 @@ System::System(FluidHostPtr fluid,
         _searcher = SpatialHashingSearcher::builder()
                         .with_universe(*_universe)
                         .make_host_shared();
-    }
-
-    if (_observer) {
-        // Without a material dictionary there is a single implicit species; the counter
-        // layout must reserve at least one column so observer bookkeeping stays valid.
-        const std::size_t species_count
-            = (_fluid && _fluid->materials()) ? _fluid->materials()->size() : std::size_t { 1 };
-
-        _observer->resize_counters(_sources.size(), _sinks.size(), species_count);
     }
 
     initialize_states();
@@ -148,10 +136,6 @@ System::update() {
     remove();
 
     ++_step;
-
-    if (_observer) {
-        _observer->observe(*_fluid, *_universe, _step);
-    }
 }
 
 void
@@ -190,9 +174,6 @@ System::emit() {
             count,
             static_cast<std::size_t>(spawned)));
 
-        // Record the spawn against the range starting at the pre-increment offset.
-        record_spawned(i, count, static_cast<std::size_t>(spawned));
-
         count += static_cast<std::size_t>(spawned);
     }
 
@@ -202,43 +183,6 @@ System::emit() {
     for (const auto& source : _sources) {
         source->advance(_dt);
     }
-}
-
-void
-System::record_spawned(const std::size_t source_index, const std::size_t offset, const std::size_t count) {
-    if (!_observer || count == 0) {
-        return;
-    }
-
-    const auto* species_state       = _fluid->state<FluidSpeciesState>();
-    const std::size_t species_count = _observer->species_count();
-
-    // Bail unless the species column exists and the counter matrix has its expected
-    // (source_count x species_count) shape; a mismatch means the layout is stale.
-    if (species_state == nullptr || species_count == 0
-        || _observer->spawned().size() != _sources.size() * species_count) {
-        return;
-    }
-
-    const auto* species = atlas::raw_pointer_cast(species_state->data().data());
-    auto* spawned       = atlas::raw_pointer_cast(_observer->spawned().data());
-
-    // Row offset of this source's counters within the flattened matrix.
-    const auto base          = static_cast<int>(source_index * species_count);
-    const auto species_limit = static_cast<int>(species_count);
-    const auto first         = static_cast<int>(offset);
-
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        static_cast<int>(count),
-        [=] ATLAS_ALL_DEVICE(const int k) {
-            const auto id = static_cast<int>(species[first + k]);
-
-            // Guard the species id before indexing; unknown ids are simply not counted.
-            if (id >= 0 && id < species_limit) {
-                atlas::atomic_add(spawned + base + id, 1);
-            }
-        });
 }
 
 void
@@ -383,23 +327,6 @@ System::mark_survivors(const int particle_count) {
     const int sink_count = static_cast<int>(_sinks.size());
     const float dt       = _dt;
 
-    const auto* species_state = _fluid->state<FluidSpeciesState>();
-
-    // Despawn tallying is optional: these stay null unless an observer, a species column,
-    // and a correctly shaped (sink_count x species_count) counter matrix are all present,
-    // in which case the kernel below counts removals per sink and species.
-    int* despawned             = nullptr;
-    const std::size_t* species = nullptr;
-    int species_count          = 0;
-
-    if (_observer && species_state != nullptr
-        && _observer->despawned().size() == _sinks.size() * _observer->species_count()) {
-
-        despawned     = atlas::raw_pointer_cast(_observer->despawned().data());
-        species       = atlas::raw_pointer_cast(species_state->data().data());
-        species_count = static_cast<int>(_observer->species_count());
-    }
-
     atlas::parallel_for<ExecutionPolicy::device>(
         0,
         particle_count,
@@ -407,20 +334,10 @@ System::mark_survivors(const int particle_count) {
             const Float3 position = positions[i];
             const Float3 velocity = velocities[i];
 
-            // First sink to claim the particle wins: flag it dead, tally it, and stop.
+            // First sink to claim the particle wins: flag it dead and stop.
             for (int s = 0; s < sink_count; ++s) {
                 if (sinks[s].despawn(position, velocity, dt)) {
                     active[i] = 0;
-
-                    if (despawned != nullptr) {
-                        const auto id = static_cast<int>(species[i]);
-
-                        // Guard the species id before indexing the counter row for sink s.
-                        if (id >= 0 && id < species_count) {
-                            atlas::atomic_add(despawned + s * species_count + id, 1);
-                        }
-                    }
-
                     return;
                 }
             }
@@ -505,12 +422,6 @@ System::Builder::with_codec(CodecHostPtr codec) noexcept {
 }
 
 System::Builder&
-System::Builder::with_observer(ObserverHostPtr observer) noexcept {
-    _observer = std::move(observer);
-    return *this;
-}
-
-System::Builder&
 System::Builder::with_dt(const float dt) noexcept {
     _dt = dt;
     return *this;
@@ -559,7 +470,6 @@ System::Builder::build() {
                   _colliders,
                   _sinks,
                   _codec,
-                  _observer,
                   _dt);
 }
 

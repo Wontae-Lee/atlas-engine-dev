@@ -278,21 +278,6 @@ TEST(System, MarkSurvivorsAndCompactAreNoOpsOnAnEmptyParticleSet) {
     EXPECT_EQ(system.fluid()->particle_count(), 0u);
 }
 
-TEST(System, RecordSpawnedIsANoOpWithoutAnObserver) {
-    System system = System::builder()
-                        .with_fluid(make_fluid({ Float3(0.0f, 0.0f, 0.0f) }))
-                        .with_universe(make_universe_ptr())
-                        .with_dt(0.01f)
-                        .build();
-
-    ASSERT_FALSE(static_cast<bool>(system.observer()));
-
-    // Without an observer the counter path is skipped entirely; this must not crash.
-    system.record_spawned(0, 0, 1);
-
-    SUCCEED();
-}
-
 TEST(SystemBuilder, RejectsNullSolver) {
     EXPECT_THROW(
         static_cast<void>(System::builder()

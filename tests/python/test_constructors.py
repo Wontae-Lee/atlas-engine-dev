@@ -102,8 +102,8 @@ class ConstructorTests(unittest.TestCase):
         del emission, velocity, domain
         gc.collect()
         simulation.update()
-        self.assertGreater(simulation.particle_count, 0)
-        np.testing.assert_allclose(simulation.velocities()[:, 0], 0.1)
+        self.assertGreater(simulation.fluid.particle_count, 0)
+        np.testing.assert_allclose(simulation.fluid.velocities()[:, 0], 0.1)
 
     def test_root_exports_are_classes(self):
         functions = {"available_engines", "get_default_engine", "set_default_engine"}

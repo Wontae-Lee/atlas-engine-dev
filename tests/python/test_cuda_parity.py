@@ -1,12 +1,11 @@
 import gc
-import tempfile
 import unittest
 
 import numpy as np
 
 from atlas import (
     DsmcKernelType, DsmcSolver, Float3, Fluid, IsothermalCollider,
-    MaterialDictionary, MaterialType, Molecule, Observer, Solid,
+    MaterialDictionary, MaterialType, Molecule, Solid,
     SpatialHashingSearcher, System, Triangle, TriangleMesh, Unit,
     Universe, VolumeSink,
 )
@@ -35,12 +34,12 @@ class BackendParityTests(unittest.TestCase):
                 del wall, mesh, population
                 gc.collect()
                 simulation.update()
-                np.testing.assert_allclose(simulation.velocities(), [[0, 0, 1]], atol=1e-6)
-                np.testing.assert_allclose(simulation.positions(), [[0.25, 0.25, tol]], atol=1e-6)
+                np.testing.assert_allclose(simulation.fluid.velocities(), [[0, 0, 1]], atol=1e-6)
+                np.testing.assert_allclose(simulation.fluid.positions(), [[0.25, 0.25, tol]], atol=1e-6)
                 simulation.update()
-                np.testing.assert_allclose(simulation.positions(), [[0.25, 0.25, 0.25 + tol]], atol=1e-6)
+                np.testing.assert_allclose(simulation.fluid.positions(), [[0.25, 0.25, 0.25 + tol]], atol=1e-6)
 
-    def test_mesh_sink_updates_device_observer_counters(self):
+    def test_mesh_sink_removes_and_compacts_particles(self):
         vertices = np.array([
             [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1],
         ], dtype=np.float32)
@@ -52,23 +51,15 @@ class BackendParityTests(unittest.TestCase):
             np.array([[0.1, 0.1, 0.1], [0.8, 0.8, 0.8]], dtype=np.float32),
             np.zeros((2, 3), dtype=np.float32),
         )
-        with tempfile.TemporaryDirectory() as directory:
-            recorder = Observer(100, directory)
-            simulation = System(
-                population, Universe(Float3(0), Float3(1), 0.5),
-                dt=0.01, sinks=[boundary], observer=recorder,
-            )
-            del boundary, population
-            gc.collect()
-            simulation.update()
-            self.assertEqual(simulation.particle_count, 1)
-            np.testing.assert_allclose(simulation.positions(), [[0.8, 0.8, 0.8]], atol=1e-6)
-            np.testing.assert_array_equal(recorder.despawned(), [[1]])
-            copied = recorder.despawned()
-            copied[:] = 7
-            np.testing.assert_array_equal(recorder.despawned(), [[1]])
-            recorder.reset_counters()
-            np.testing.assert_array_equal(recorder.despawned(), [[0]])
+        simulation = System(
+            population, Universe(Float3(0), Float3(1), 0.5),
+            dt=0.01, sinks=[boundary],
+        )
+        del boundary, population
+        gc.collect()
+        simulation.update()
+        self.assertEqual(simulation.fluid.particle_count, 1)
+        np.testing.assert_allclose(simulation.fluid.positions(), [[0.8, 0.8, 0.8]], atol=1e-6)
 
     def test_material_dictionary_uploads_replacements(self):
         table = MaterialDictionary([Solid(1), Solid(2)])

@@ -239,7 +239,6 @@ if (spawned <= 0) continue;
 static_cast<void>(_generators[i]->generate(velocities, species, // fills the SAME range
                                            count,
                                            static_cast<std::size_t>(spawned)));
-record_spawned(i, count, static_cast<std::size_t>(spawned));
 count += static_cast<std::size_t>(spawned);
 ```
 
