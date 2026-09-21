@@ -2,7 +2,7 @@
 # Atlas Python bindings (nanobind)
 #
 # This directory builds a backend-specific Python extension module from the
-# binding sources under `src/python/atlas`. It is
+# binding sources under `bindings/python/atlas`. It is
 # configured only when ATLAS_PYTHON is enabled (guarded in the
 # top-level CMakeLists.txt).
 #

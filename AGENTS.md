@@ -28,7 +28,7 @@ A few rules are easy to miss; everything else is in the linked docs.
   and CUDA builds with nvcc. A native TBB build must not require the CUDA toolkit;
   see [guidelines/build-and-test.md](docs/guidelines/build-and-test.md).
 - Preserve the Python PascalCase class API and engine selection before native
-  imports. Registration headers mirror `include/atlas/` under `src/python/atlas/`,
+  imports. Registration headers mirror `include/atlas/` under `bindings/python/atlas/`,
   with one root `module.cpp`; see [guidelines/python.md](docs/guidelines/python.md).
 - Keep the `tbb` and `cuda` Docker runtime targets separate, with Python and
   the selected Atlas engine installed. Development and wheel-packaging targets
@@ -67,7 +67,7 @@ Configured CI coverage is not evidence that a run passed.
 | Area | Source of truth |
 |---|---|
 | Backend options and compiler presets | `CMakeLists.txt`, `CMakePresets.json`, `cmake/` |
-| Python dependencies, versions, and wheel contents | `pyproject.toml`, `src/python/atlas/CMakeLists.txt`, `scripts/build_wheels.sh` |
+| Python dependencies, versions, and wheel contents | `pyproject.toml`, `bindings/python/atlas/CMakeLists.txt`, `scripts/build_wheels.sh` |
 | Docker targets and Ubuntu/CUDA defaults | `Dockerfile`, `.dockerignore` |
 | C++ TBB CI: Ubuntu 22.04 and 24.04 | `.github/workflows/tbb.yml` |
 | Python TBB CI: 22.04/Python 3.10 and 24.04/Python 3.12 | `.github/workflows/python.yml` |

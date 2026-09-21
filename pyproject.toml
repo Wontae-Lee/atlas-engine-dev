@@ -53,7 +53,7 @@ cmake.define.CMAKE_BUILD_TYPE = "Release"
 # Build the compiled extension and install it alongside the Python package.
 build.targets = ["atlas_python"]
 install.components = ["python"]
-wheel.packages = ["src/python/atlas"]
+wheel.packages = ["bindings/python/atlas"]
 wheel.exclude = ["atlas/CMakeLists.txt", "atlas/**/*.cpp", "atlas/**/*.h"]
 wheel.license-files = [
     "LICENSE",
@@ -64,6 +64,7 @@ wheel.license-files = [
 ]
 sdist.include = [
     "CMakeLists.txt", "CMakePresets.json", "cmake/**", "include/**", "src/**",
+    "bindings/**",
     "external/nanobind/**", "external/tinyobj/**", "external/protobuf/**",
     "external/googletest/**", "external/googlebenchmark/**",
     "examples/**", "benchmarks/CMakeLists.txt", "tests/**", "scripts/**",

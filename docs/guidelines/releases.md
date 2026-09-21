@@ -90,7 +90,7 @@ source archive contents, wheel files, and cibuildwheel matrix.
 
 Wheel builds pass `SKBUILD_PROJECT_VERSION` to the native extension, so packaged
 `atlas.__version__` follows `project.version`. The fallback version in
-[src/python/atlas/CMakeLists.txt](../../src/python/atlas/CMakeLists.txt) applies
+[bindings/python/atlas/CMakeLists.txt](../../bindings/python/atlas/CMakeLists.txt) applies
 to ordinary CMake builds and should also match the release.
 
 Source distributions explicitly include the required submodule contents;

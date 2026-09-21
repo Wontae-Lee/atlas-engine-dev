@@ -7,7 +7,7 @@
 # TBB is required in every configuration; a GPU is needed only to run CUDA code.
 #
 # This file wires options and orchestrates the build; the details live in
-# cmake/ modules and in the tests/, benchmarks/, and src/python subdirectories.
+# cmake/ modules and in the tests/, benchmarks/, and bindings/python subdirectories.
 
 cmake_minimum_required(VERSION 3.20)
 
@@ -27,7 +27,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 #   ATLAS_HOST_COMPILER : which compiler builds a TBB configuration
 #   ATLAS_LOGGING       : compiled logging library + feature macros
 #   ATLAS_GOOGLE_TEST   : GoogleTest-based unit tests
-#   ATLAS_PYTHON        : nanobind Python bindings (src/python/atlas)
+#   ATLAS_PYTHON        : nanobind Python bindings (bindings/python/atlas)
 #   ATLAS_BENCHMARKS    : benchmark targets
 set(ATLAS_DEVICE_SYSTEM "TBB" CACHE STRING "Parallel backend: TBB (CPU) or CUDA (GPU)")
 set_property(CACHE ATLAS_DEVICE_SYSTEM PROPERTY STRINGS TBB CUDA)
@@ -109,7 +109,7 @@ add_subdirectory(benchmarks)
 add_subdirectory(examples)
 
 if (ATLAS_PYTHON)
-    add_subdirectory(src/python/atlas)
+    add_subdirectory(bindings/python/atlas)
 endif ()
 
 # Configuration summary.
