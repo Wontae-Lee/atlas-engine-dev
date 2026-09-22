@@ -58,7 +58,9 @@ analyze or export that state.
 Each source appends positions at the current live-particle count until the fixed
 fluid capacity is full. Its paired generator fills velocity and species for the
 same slots. The phase publishes the new particle count and advances every source
-boundary by `dt`.
+boundary by `dt`. `source_spawned_last_step()` exposes one raw count per source
+for the most recently completed `emit()` phase. The counts reset at the start of
+the next `emit()` call and do not apply any reporting policy.
 
 ### `search`
 
@@ -96,12 +98,21 @@ no particle is removed.
 `__host__ __device__` lambda, which nvcc rejects inside a private or protected
 member function. It remains an internal pipeline step in normal use.
 
+`sink_removed_last_step()` copies one raw count per sink from the most recently
+completed `remove()` phase. A particle claimed by overlapping sinks is counted
+only for the first sink that removes it, matching survivor selection. The
+counters reset at the start of the next `remove()` call. They are simulation
+events only; cumulative statistics, output intervals, and files remain consumer
+responsibilities.
+
 ## State access and persistence
 
 `fluid()` and `universe()` return the objects owned by the system. These are the
 canonical access paths for particle and cell state. `save(directory)` writes the
 current fluid and universe protobuf snapshots below `time_step_<step>/`; this is
 explicit core state persistence requested by the caller, not periodic reporting.
+The last-phase source and sink counter accessors allow consumers to build
+statistics without making `System::update()` perform reporting or I/O.
 
 ## Assembly
 

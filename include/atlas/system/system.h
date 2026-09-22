@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <string>
+#include <vector>
 
 namespace atlas {
 
@@ -305,6 +306,23 @@ public:
     }
 
     /**
+     * @brief Returns the particles emitted by each source during the latest emit phase.
+     * @return Host buffer indexed in the same order as the configured sources.
+     */
+    ATLAS_NODISCARD ATLAS_HOST const HostBuffer<int>&
+    source_spawned_last_step() const noexcept {
+        return _source_spawned_last_step;
+    }
+
+    /**
+     * @brief Copies the particles removed by each sink during the latest remove phase.
+     * @return Host vector indexed in the same order as the configured sinks.
+     * @note CUDA builds perform one device-to-host transfer for this small counter buffer.
+     */
+    ATLAS_NODISCARD ATLAS_HOST std::vector<int>
+    sink_removed_last_step() const;
+
+    /**
      * @brief Flags each live particle as surviving (1) or despawned (0) against the sinks.
      *
      * For every particle it tests each sink's despawn predicate; the first sink that claims
@@ -349,9 +367,13 @@ private:
 
     HostBuffer<GeneratorHostPtr> _generators; ///< Velocity/species generators, one per source.
 
+    HostBuffer<int> _source_spawned_last_step; ///< Per-source counts from the latest emit phase.
+
     DeviceBuffer<Collider> _colliders; ///< Collision boundaries, device-resident for @ref advect().
 
     DeviceBuffer<Sink> _sinks; ///< Removal boundaries, device-resident for @ref remove().
+
+    DeviceBuffer<int> _sink_removed_last_step; ///< Per-sink counts from the latest remove phase.
 };
 
 /**

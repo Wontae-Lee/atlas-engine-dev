@@ -1,13 +1,17 @@
 #include <atlas/system/system.h>
 
 #include <atlas/fluid/fluid_state.h>
+#include <atlas/memory/copy.h>
 #include <atlas/memory/raw_pointer_cast.h>
+#include <atlas/parallel/atomic.h>
+#include <atlas/parallel/parallel_fill.h>
 #include <atlas/parallel/parallel_for.h>
 #include <atlas/serialization/protobuf_snapshot.h>
 #include <atlas/spatial/axis_aligned_bounding_box.h>
 #include <atlas/spatial/ray.h>
 #include <atlas/universe/universe_state.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <filesystem>
 #include <stdexcept>
@@ -62,8 +66,10 @@ System::System(FluidHostPtr fluid,
     , _codec(std::move(codec))
     , _sources(std::move(sources))
     , _generators(std::move(generators))
+    , _source_spawned_last_step(_sources.size(), 0)
     , _colliders(colliders.begin(), colliders.end())
-    , _sinks(sinks.begin(), sinks.end()) {
+    , _sinks(sinks.begin(), sinks.end())
+    , _sink_removed_last_step(_sinks.size(), 0) {
 
     // The searcher indexes the universe grid, so it can only exist once a universe does.
     if (_universe) {
@@ -140,6 +146,8 @@ System::update() {
 
 void
 System::emit() {
+    std::fill(_source_spawned_last_step.begin(), _source_spawned_last_step.end(), 0);
+
     auto* positions = _fluid->state<FluidPositionState>();
 
     if (positions == nullptr) {
@@ -161,6 +169,7 @@ System::emit() {
         }
 
         const int spawned = _sources[i]->spawn(positions, count);
+        _source_spawned_last_step[i] = spawned > 0 ? spawned : 0;
 
         if (spawned <= 0) {
             continue;
@@ -324,6 +333,7 @@ System::mark_survivors(const int particle_count) {
     auto* active           = atlas::raw_pointer_cast(_fluid->active().data());
 
     const auto* sinks    = atlas::raw_pointer_cast(_sinks.data());
+    auto* removed        = atlas::raw_pointer_cast(_sink_removed_last_step.data());
     const int sink_count = static_cast<int>(_sinks.size());
     const float dt       = _dt;
 
@@ -337,6 +347,7 @@ System::mark_survivors(const int particle_count) {
             // First sink to claim the particle wins: flag it dead and stop.
             for (int s = 0; s < sink_count; ++s) {
                 if (sinks[s].despawn(position, velocity, dt)) {
+                    atlas::atomic_add(removed + s, 1);
                     active[i] = 0;
                     return;
                 }
@@ -351,6 +362,11 @@ void
 System::remove() {
     const int particle_count = static_cast<int>(_fluid->particle_count());
     const int sink_count     = static_cast<int>(_sinks.size());
+
+    atlas::parallel_fill<ExecutionPolicy::device>(
+        _sink_removed_last_step.begin(),
+        _sink_removed_last_step.end(),
+        0);
 
     if (sink_count > 0 && particle_count > 0
         && _fluid->state<FluidPositionState>() != nullptr
@@ -376,6 +392,13 @@ System::remove() {
                 sinks[s].advance(dt);
             });
     }
+}
+
+std::vector<int>
+System::sink_removed_last_step() const {
+    std::vector<int> counts(_sink_removed_last_step.size());
+    atlas::copy_device_to_host(_sink_removed_last_step, counts.data(), counts.size());
+    return counts;
 }
 
 System::Builder&
