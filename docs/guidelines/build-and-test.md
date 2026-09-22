@@ -61,13 +61,17 @@ requires CMake 3.21+. The presets use Ninja. Important presets:
 - Configure: `tbb-debug`, `tbb-release` (CPU; host compiler, no CUDA toolkit),
   `tbb-gcc-debug`, `tbb-gcc-release` (explicit `gcc`/`g++`),
   `tbb-nvcc-debug` (CPU backend built by nvcc),
-  `cuda-debug`, `cuda-release` (GPU; nvcc + Thrust)
+  `cuda-debug`, `cuda-release` (GPU; nvcc + Thrust),
+  `tbb-application-release`, `cuda-application-release` (native applications)
 - Test: `ctest-tbb-debug`, `ctest-tbb-gcc-debug`, `ctest-tbb-nvcc-debug`, `ctest-cuda-debug`
 
-The debug presets turn logging, tests, the Python module, the examples, and the
-benchmarks on; the release presets turn all five off.
+The debug presets enable logging and GoogleTest while keeping Python, examples,
+benchmarks, and interactive rendering off. Release presets produce the core
+only. The two `*-application-release` presets add the native execution/rendering
+targets and examples to their backend's release configuration. Python packaging
+uses `pyproject.toml` rather than a broad all-features preset.
 
-A direct configuration without a preset defaults all five project options to
+A direct configuration without a preset defaults the project feature options to
 `ON`. Disable targets explicitly when configuring a narrower build. Presets and
 CI commands keep their declared cache values and therefore override these
 defaults.
@@ -87,7 +91,9 @@ cmake -S . -B build/tbb-gcc -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
     -DATLAS_DEVICE_SYSTEM=TBB -DATLAS_HOST_COMPILER=native \
-    -DBUILD_TESTING=OFF -DATLAS_GOOGLE_TEST=OFF
+    -DBUILD_TESTING=OFF -DATLAS_GOOGLE_TEST=OFF \
+    -DATLAS_PYTHON=OFF -DATLAS_BENCHMARKS=OFF -DATLAS_EXAMPLES=OFF \
+    -DATLAS_INTERACTIVE=OFF -DATLAS_INTERACTIVE_RENDERING=OFF
 cmake --build build/tbb-gcc
 ```
 
@@ -106,6 +112,9 @@ Important options:
 - `ATLAS_HOST_COMPILER` — `native` (default) or `nvcc` for TBB
 - `ATLAS_LOGGING`, `ATLAS_PYTHON`
 - `ATLAS_GOOGLE_TEST`, `ATLAS_BENCHMARKS`, `ATLAS_EXAMPLES`
+- `ATLAS_INTERACTIVE` — native execution/control library
+- `ATLAS_INTERACTIVE_RENDERING` — OpenGL renderer and native executable when
+  `ATLAS_INTERACTIVE` is enabled
 
 Constraints:
 
@@ -116,6 +125,12 @@ Constraints:
   `ATLAS_BENCHMARKS` is on.
 - `ATLAS_PYTHON` requires a Python 3.8+ interpreter with development headers and
   the nanobind submodule; see [python.md](python.md) for the module.
+- `ATLAS_INTERACTIVE=ON` with `ATLAS_INTERACTIVE_RENDERING=OFF` requires no
+  OpenGL stack. Rendering requires OpenGL, GLEW, GLFW, and GLM. See
+  [interactive.md](interactive.md) for commands and target names.
+- `ATLAS_INTERACTIVE_RENDERING` is a dependent option. It resolves to `OFF`
+  whenever `ATLAS_INTERACTIVE` is disabled, avoiding a misleading graphics-on,
+  execution-off cache configuration.
 
 ---
 
@@ -147,6 +162,11 @@ controlled exceptions, and small deterministic simulation workflows. Backend
 selection and TBB/CUDA parity cases use separate Python processes because a
 loaded native engine cannot be replaced safely. These tests are separate from
 the C++ GoogleTest targets.
+
+Interactive C++ tests live under `tests/interactive/`. They link only the
+headless `atlas::interactive` execution/control target, so they run with
+`ATLAS_INTERACTIVE_RENDERING=OFF`. CMake registers their cases under the
+`atlas_tests_interactive.*` prefix.
 
 Tests mirror `include/atlas/`: every module has a directory under
 `tests/atlas/`. The covered modules are `buffer`, `codec`, `collider`,

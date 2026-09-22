@@ -13,11 +13,14 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "BUILD_TESTING": "OFF",
         "ATLAS_LOGGING": "OFF",
         "ATLAS_GOOGLE_TEST": "OFF",
         "ATLAS_PYTHON": "OFF",
         "ATLAS_BENCHMARKS": "OFF",
         "ATLAS_EXAMPLES": "OFF",
+        "ATLAS_INTERACTIVE": "OFF",
+        "ATLAS_INTERACTIVE_RENDERING": "OFF",
         "ATLAS_HOST_COMPILER": "native"
       }
     },
@@ -27,11 +30,9 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTING": "ON",
         "ATLAS_LOGGING": "ON",
-        "ATLAS_GOOGLE_TEST": "ON",
-        "ATLAS_PYTHON": "ON",
-        "ATLAS_BENCHMARKS": "ON",
-        "ATLAS_EXAMPLES": "ON"
+        "ATLAS_GOOGLE_TEST": "ON"
       }
     },
     {
@@ -99,6 +100,28 @@
       "inherits": "release-base",
       "cacheVariables": {
         "ATLAS_DEVICE_SYSTEM": "CUDA"
+      }
+    },
+    {
+      "name": "tbb-application-release",
+      "displayName": "Atlas TBB Native Applications",
+      "inherits": "tbb-release",
+      "cacheVariables": {
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_EXAMPLES": "ON",
+        "ATLAS_INTERACTIVE": "ON",
+        "ATLAS_INTERACTIVE_RENDERING": "ON"
+      }
+    },
+    {
+      "name": "cuda-application-release",
+      "displayName": "Atlas CUDA Native Applications",
+      "inherits": "cuda-release",
+      "cacheVariables": {
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_EXAMPLES": "ON",
+        "ATLAS_INTERACTIVE": "ON",
+        "ATLAS_INTERACTIVE_RENDERING": "ON"
       }
     }
   ],

@@ -1,9 +1,10 @@
 # Docker Images
 
-The root [`Dockerfile`](../../Dockerfile) provides separate CPU and GPU images
-with Python, NumPy, and the Atlas package installed. Images are built from the
-current checkout. Local build commands use `atlas:*` tags; the publication
-workflow uploads separate engine/Ubuntu tags to GHCR.
+The root [`Dockerfile`](../../Dockerfile) organizes images by execution backend:
+TBB or CUDA. Each complete runtime contains Python, NumPy, the selected Atlas
+engine, examples, assets, native executables, and their graphics runtime
+libraries. Images are built from the current checkout. Local build commands use
+`atlas:*` tags; the publication workflow uploads backend/Ubuntu tags to GHCR.
 
 ## Published images
 
@@ -22,16 +23,15 @@ The engine tags are `tbb-ubuntu22.04`, `tbb-ubuntu24.04`, `cuda-ubuntu22.04`, an
 use Ubuntu 22.04. A tag is available only after it has been published, and
 anonymous pulls require a public package.
 
-The same mounts and Python commands described below work with these image
-names. For workflow controls, permissions, and tag updates, see
+For workflow controls, permissions, and tag updates, see
 [releases.md](releases.md#build-or-publish-docker-images).
 
 ## Runtime images
 
 | Target | Base | Installed Atlas engine | Host GPU requirement |
 |---|---|---|---|
-| `tbb` | Ubuntu | `tbb`, selected by default | None |
-| `cuda` | NVIDIA CUDA runtime on Ubuntu | `cuda`, selected by default | Compatible NVIDIA GPU and driver, plus NVIDIA Container Toolkit |
+| `tbb` | Ubuntu | TBB Python runtime plus native executables | OpenGL-capable display only when opening a window |
+| `cuda` | NVIDIA CUDA runtime on Ubuntu | CUDA Python runtime plus native executables | NVIDIA GPU/driver and Container Toolkit; display access when opening a window |
 
 The default final target is `tbb`. Its build and runtime do not require the
 CUDA toolkit. The CUDA image uses a matching CUDA development image to build
@@ -90,6 +90,37 @@ environment variable cannot add the other engine: use the corresponding image
 to switch backends. See [python.md](python.md#default-engine) for the selection
 rules within a Python process.
 
+## Native executables
+
+Both runtime images provide `/opt/atlas/bin/atlas-interactive` and
+`atlas-interactive-example`. Their default command remains `python`; run a
+native executable explicitly when needed.
+
+A native window needs the host display socket and display environment. For a
+local X11 session, a typical TBB invocation is:
+
+```bash
+docker run --rm -it \
+    -e DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    atlas:tbb atlas-interactive
+```
+
+Host display authorization policies still apply. CUDA additionally requires
+GPU access and graphics/display driver capabilities:
+
+```bash
+docker run --rm -it --gpus all \
+    -e DISPLAY \
+    -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display \
+    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    atlas:cuda atlas-interactive
+```
+
+These images currently provide the native window path. They do not yet include
+a headless OpenGL context or network frame transport. See
+[interactive.md](interactive.md) for the C++ execution and rendering APIs.
+
 ## Build options
 
 | Build argument | Default | Purpose |
@@ -97,7 +128,7 @@ rules within a Python process.
 | `UBUNTU_VERSION` | `22.04` | Ubuntu base version; `24.04` is also configured |
 | `CUDA_VERSION` | `12.9.2` | CUDA version for the CUDA development and runtime bases |
 | `CMAKE_CUDA_ARCHITECTURES` | `75-real;80-real;86-real;89-real;90` | CUDA machine-code targets and compute 90 PTX |
-| `BUILD_JOBS` | `2` | Parallel compile jobs during wheel builds |
+| `BUILD_JOBS` | `2` | Parallel compile jobs during package and runtime builds |
 
 Ubuntu 24.04 images use the same targets:
 
