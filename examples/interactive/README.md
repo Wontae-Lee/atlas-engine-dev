@@ -6,7 +6,10 @@
 64-particle simulation, gives the `System` to `Session`, and composes
 `RawStateProvider`, `Renderer`, `ParticleLayer`, and `WindowTarget`. Each loop
 iteration advances exactly one simulation step and renders all live particles
-from that new raw state.
+from that new raw state. Drag with the left mouse button or use `W`, `A`, `S`,
+and `D` to orbit the camera. Drag with the right mouse button, use the scroll
+wheel, or press `Q` and `E` to zoom. Number keys `1` through `7` select the
+front, back, top, bottom, left, right, and perspective views.
 
 Configure and build the TBB example from the repository root:
 
@@ -30,7 +33,9 @@ Pass a positive step count to close automatically after a smoke run:
 
 The same source builds with `ATLAS_DEVICE_SYSTEM=CUDA`. Backend-specific memory
 transfer remains inside `StateBridge`; the example contains no CUDA or OpenGL
-resource-management code.
+resource-management code. CUDA builds use direct CUDA/OpenGL interop when both
+APIs use the same NVIDIA GPU and fall back to a host-staged upload when the
+window is rendered by another GPU.
 
 ## External client and offscreen architecture
 

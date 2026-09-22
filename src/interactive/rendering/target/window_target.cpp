@@ -1,5 +1,7 @@
 #include "rendering/target/window_target.h"
 
+#include "rendering/camera.h"
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -26,6 +28,8 @@ WindowTarget::WindowTarget(const int width, const int height, std::string title)
         throw std::runtime_error("GLFW window creation failed.");
     }
 
+    glfwSetWindowUserPointer(_window, this);
+    glfwSetScrollCallback(_window, &WindowTarget::scroll_callback);
     glfwMakeContextCurrent(_window);
     glfwSwapInterval(1);
     glewExperimental = GL_TRUE;
@@ -84,10 +88,24 @@ WindowTarget::should_close() const {
 
 void
 WindowTarget::poll_events() {
+    _scroll_offset = 0.0f;
     glfwPollEvents();
     if (glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(_window, GLFW_TRUE);
     }
+}
+
+void
+WindowTarget::poll_events(Camera& camera) {
+    poll_events();
+    camera.handle(_window, _scroll_offset);
+}
+
+void
+WindowTarget::scroll_callback(GLFWwindow* window, const double x_offset, const double y_offset) {
+    static_cast<void>(x_offset);
+    auto* target = static_cast<WindowTarget*>(glfwGetWindowUserPointer(window));
+    if (target != nullptr) target->_scroll_offset += static_cast<float>(y_offset);
 }
 
 }

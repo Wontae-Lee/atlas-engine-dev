@@ -36,6 +36,7 @@ make_system() {
                         .with_upper_corner(atlas::Float3(1.0f))
                         .with_cell_size(0.25f)
                         .make_host_unique();
+    universe->emplace_state<atlas::UniverseNumberParticleState>(universe->cell_count());
 
     return atlas::System::builder()
         .with_fluid(std::move(fluid))
@@ -62,7 +63,7 @@ main(int argc, char** argv) {
         session.start();
         while (!target.should_close()
                && (maximum_steps == 0 || session.system().step() < maximum_steps)) {
-            target.poll_events();
+            target.poll_events(renderer.camera());
             session.update();
             renderer.render(session.system(), target);
         }
