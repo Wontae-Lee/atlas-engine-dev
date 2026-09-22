@@ -1,7 +1,9 @@
-{"command":"initialize","step_count":1}
+{"command":"status","step_count":1}
 {"command":"start","step_count":1}
 {"command":"pause","step_count":1}
 {"command":"step","step_count":1}
+{"command":"save","step_count":1,"path":"snapshots"}
+{"command":"restart","step_count":1}
 {"command":"start","step_count":1}
 {"command":"close","step_count":1}
 {"command":"shutdown","step_count":1}

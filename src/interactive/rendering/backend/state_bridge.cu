@@ -48,9 +48,10 @@ StateBridge::release(opengl::Buffer& target) {
 }
 
 void
-StateBridge::upload_raw(const void* source,
-                        const std::size_t bytes,
-                        opengl::Buffer& target) {
+StateBridge::upload(const SimulationBufferView& source_view,
+                    opengl::Buffer& target) {
+    const void* source = source_view.data;
+    const std::size_t bytes = source_view.bytes;
     if (bytes == 0) {
         target.allocate(0);
         return;

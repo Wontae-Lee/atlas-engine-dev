@@ -1,0 +1,5 @@
+include(GoogleTest)
+
+add_executable(atlas_tests_interactive interactive_tests.cpp)
+atlas_configure_gtest_target(atlas_tests_interactive)
+target_link_libraries(atlas_tests_interactive PRIVATE atlas::interactive)

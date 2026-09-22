@@ -1,10 +1,34 @@
+set(ATLAS_INTERACTIVE_EXECUTION_SOURCES
+        session/session.cpp
+        server/server.cpp
+        statistics/simulation_statistics.cpp
+        output/csv_writer.cpp
+)
+
+add_library(atlas-interactive STATIC ${ATLAS_INTERACTIVE_EXECUTION_SOURCES})
+add_library(atlas::interactive ALIAS atlas-interactive)
+
+target_include_directories(atlas-interactive
+        PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+target_link_libraries(atlas-interactive PUBLIC atlas)
+
+if (ATLAS_ENABLE_TESTS)
+    add_subdirectory("${CMAKE_SOURCE_DIR}/tests/interactive" "${CMAKE_BINARY_DIR}/tests/interactive")
+endif ()
+
+if (NOT ATLAS_INTERACTIVE_RENDERING)
+    return()
+endif ()
+
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-set(ATLAS_INTERACTIVE_SOURCES
-        session/session.cpp
+set(ATLAS_INTERACTIVE_RENDERING_SOURCES
         rendering/camera.cpp
         rendering/renderer.cpp
         rendering/state/raw_state_provider.cpp
@@ -16,14 +40,13 @@ set(ATLAS_INTERACTIVE_SOURCES
         rendering/opengl/framebuffer.cpp
         rendering/target/window_target.cpp
         rendering/target/offscreen_target.cpp
-        transport/server.cpp
         transport/frame_stream.cpp
 )
 
 if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
-    list(APPEND ATLAS_INTERACTIVE_SOURCES rendering/backend/state_bridge.cu)
+    list(APPEND ATLAS_INTERACTIVE_RENDERING_SOURCES rendering/backend/state_bridge.cu)
 else ()
-    list(APPEND ATLAS_INTERACTIVE_SOURCES rendering/backend/state_bridge.cpp)
+    list(APPEND ATLAS_INTERACTIVE_RENDERING_SOURCES rendering/backend/state_bridge.cpp)
 endif ()
 
 if (TARGET OpenGL::OpenGL)
@@ -32,19 +55,19 @@ else ()
     set(ATLAS_INTERACTIVE_OPENGL_TARGET OpenGL::GL)
 endif ()
 
-add_library(atlas-interactive STATIC ${ATLAS_INTERACTIVE_SOURCES})
-add_library(atlas::interactive ALIAS atlas-interactive)
+add_library(atlas-interactive-rendering STATIC ${ATLAS_INTERACTIVE_RENDERING_SOURCES})
+add_library(atlas::interactive-rendering ALIAS atlas-interactive-rendering)
 
-target_include_directories(atlas-interactive
+target_include_directories(atlas-interactive-rendering
         PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-target_compile_definitions(atlas-interactive PRIVATE GLFW_INCLUDE_NONE)
+target_compile_definitions(atlas-interactive-rendering PRIVATE GLFW_INCLUDE_NONE)
 
-target_link_libraries(atlas-interactive
+target_link_libraries(atlas-interactive-rendering
         PUBLIC
-        atlas
+        atlas::interactive
         glm::glm
         PRIVATE
         ${ATLAS_INTERACTIVE_OPENGL_TARGET}
@@ -53,15 +76,15 @@ target_link_libraries(atlas-interactive
 )
 
 if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
-    set_target_properties(atlas-interactive PROPERTIES
+    set_target_properties(atlas-interactive-rendering PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON
     )
-    target_link_libraries(atlas-interactive PRIVATE CUDA::cudart)
+    target_link_libraries(atlas-interactive-rendering PRIVATE CUDA::cudart)
 endif ()
 
 add_executable(atlas-interactive-app main.cpp)
-target_link_libraries(atlas-interactive-app PRIVATE atlas::interactive)
+target_link_libraries(atlas-interactive-app PRIVATE atlas::interactive-rendering)
 set_target_properties(atlas-interactive-app PROPERTIES OUTPUT_NAME atlas-interactive)
 
 install(

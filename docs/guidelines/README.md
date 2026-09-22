@@ -12,7 +12,8 @@ refactored modules; the guidelines here describe *how to work on it*.
 | [build-and-test.md](build-and-test.md) | Build/test policy, CMake presets and options, and test-authoring rules. |
 | [dependencies.md](dependencies.md) | External and in-tree dependencies, the benchmark cases, and the C++ examples. |
 | [python.md](python.md) | The PascalCase Python API, TBB/CUDA engine selection, packaging, and binding registration. |
-| [docker.md](docker.md) | TBB/CUDA Python runtime images, development toolchains, Ubuntu versions, and Docker build options. |
+| [interactive.md](interactive.md) | Native session control, statistics, CSV, OpenGL rendering, and headless/graphics build boundaries. |
+| [docker.md](docker.md) | Complete TBB/CUDA runtimes, development toolchains, Ubuntu versions, and Docker build options. |
 | [releases.md](releases.md) | CI artifacts, Python and Docker publication, version metadata, and Zenodo archives. |
 
 ## Relationship to the Module Docs
@@ -43,9 +44,10 @@ bindings/python ───────→ Atlas Core ←────── src/in
 Python-specific NumPy conversion stays under `bindings/python/`. Rendering,
 frontend communication, and real-time control stay under `src/interactive/`.
 Neither consumer is a dependency of the core, and Python does not route through
-the interactive layer. The root build currently wires the core and optional
-Python binding; interactive code remains outside that active build until it has
-a maintained application target.
+the interactive layer. The root build wires both as independent options. The
+interactive execution/control target can be built without graphics; its OpenGL
+renderer and native application are a separate option. See
+[interactive.md](interactive.md) for their ownership and build boundaries.
 
 ---
 

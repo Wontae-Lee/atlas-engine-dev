@@ -1,13 +1,11 @@
 #pragma once
 
-#include "transport/protocol/request.h"
-#include "transport/protocol/response.h"
+#include "protocol/request.h"
+#include "protocol/response.h"
 
 namespace atlas::interactive {
-class Session;
-}
 
-namespace atlas::interactive::transport {
+class Session;
 
 class Server final {
 public:
@@ -18,7 +16,6 @@ public:
 
 private:
     Session* _session = nullptr;
-    bool _shutdown_requested = false;
 };
 
 }

@@ -8,7 +8,7 @@ namespace atlas::interactive {
 
 class RawStateProvider final : public StateProvider {
 public:
-    const RenderState& update(const System& system) override;
+    const RenderState& update(const SimulationRenderView& view) override;
 
 private:
     RenderState _state;

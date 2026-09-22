@@ -26,7 +26,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 #   ATLAS_PYTHON        : nanobind Python bindings (bindings/python/atlas)
 #   ATLAS_BENCHMARKS    : benchmark targets
 #   ATLAS_EXAMPLES      : standalone C++ example programs
-#   ATLAS_INTERACTIVE   : native interactive renderer
+#   ATLAS_INTERACTIVE   : interactive execution/control layer
+#   ATLAS_INTERACTIVE_RENDERING : OpenGL renderer and native application
 set(ATLAS_DEVICE_SYSTEM "TBB" CACHE STRING "Parallel backend: TBB (CPU) or CUDA (GPU)")
 set_property(CACHE ATLAS_DEVICE_SYSTEM PROPERTY STRINGS TBB CUDA)
 
@@ -43,7 +44,16 @@ option(ATLAS_GOOGLE_TEST  "Build GoogleTest-based unit tests" ON)
 option(ATLAS_PYTHON       "Build the nanobind-based Python bindings" ON)
 option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" ON)
 option(ATLAS_EXAMPLES     "Build the example programs" ON)
-option(ATLAS_INTERACTIVE  "Build Atlas native interactive renderer" ON)
+option(ATLAS_INTERACTIVE  "Build Atlas interactive execution and control layer" ON)
+
+include(CMakeDependentOption)
+cmake_dependent_option(
+        ATLAS_INTERACTIVE_RENDERING
+        "Build Atlas interactive OpenGL rendering"
+        ON
+        "ATLAS_INTERACTIVE"
+        OFF
+)
 
 include(CTest)
 
@@ -108,15 +118,20 @@ elseif (ATLAS_GOOGLE_TEST)
     message(STATUS "[ATLAS] Tests requested but BUILD_TESTING=OFF. Skipping test targets.")
 endif ()
 
-add_subdirectory(benchmarks)
-add_subdirectory(examples)
-
 if (ATLAS_PYTHON)
     add_subdirectory(bindings/python/atlas)
 endif ()
 
 if (ATLAS_INTERACTIVE)
     add_subdirectory(src/interactive)
+endif ()
+
+if (ATLAS_BENCHMARKS)
+    add_subdirectory(benchmarks)
+endif ()
+
+if (ATLAS_EXAMPLES)
+    add_subdirectory(examples)
 endif ()
 
 # Configuration summary.
@@ -134,6 +149,7 @@ message(STATUS "ATLAS_PYTHON        : ${ATLAS_PYTHON}")
 message(STATUS "ATLAS_BENCHMARKS    : ${ATLAS_BENCHMARKS}")
 message(STATUS "ATLAS_EXAMPLES      : ${ATLAS_EXAMPLES}")
 message(STATUS "ATLAS_INTERACTIVE   : ${ATLAS_INTERACTIVE}")
+message(STATUS "ATLAS_INTERACTIVE_RENDERING : ${ATLAS_INTERACTIVE_RENDERING}")
 if (ATLAS_USE_NVCC)
     message(STATUS "CUDA Compiler       : ${CMAKE_CUDA_COMPILER}")
     message(STATUS "CUDA Architectures  : ${CMAKE_CUDA_ARCHITECTURES}")
