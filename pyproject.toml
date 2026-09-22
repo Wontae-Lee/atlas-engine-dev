@@ -63,11 +63,13 @@ wheel.license-files = [
     "external/nanobind/ext/robin_map/LICENSE",
     "external/tinyobj/LICENSE",
     "external/protobuf/LICENSE",
+    "external/json/LICENSE.MIT",
 ]
 sdist.include = [
     "CMakeLists.txt", "CMakePresets.json", "cmake/**", "include/**", "src/**",
     "bindings/**",
     "external/nanobind/**", "external/tinyobj/**", "external/protobuf/**",
+    "external/json/**",
     "external/googletest/**", "external/googlebenchmark/**",
     "examples/**", "benchmarks/CMakeLists.txt", "tests/**", "scripts/**",
     "LICENSE", "README.md", "CITATION.cff", "docs/guidelines/python.md",

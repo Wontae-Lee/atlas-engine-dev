@@ -32,7 +32,7 @@ Renderer::add_layer(std::unique_ptr<Layer> layer) {
 }
 
 void
-Renderer::render(const SimulationRenderView& view, RenderTarget& target) {
+Renderer::render(const SimulationSceneView& view, RenderTarget& target) {
     if (!_initialized || !_provider) throw std::logic_error("Renderer is not initialized.");
     const RenderState& state = _provider->update(view);
     target.begin_frame();

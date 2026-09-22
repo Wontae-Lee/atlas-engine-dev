@@ -1,49 +1,32 @@
-#include "rendering/layer/particle_layer.h"
-#include "rendering/renderer.h"
-#include "rendering/state/raw_state_provider.h"
-#include "rendering/target/window_target.h"
+#include "protocol/command.h"
 #include "server/server.h"
-#include "session/session.h"
+#include "transport/json_codec.h"
+#include "transport/json_lines_transport.h"
 
-#include <atlas/atlas.h>
+#include <atlas/logging/logging.h>
 
-#include <cstddef>
 #include <cstdio>
-#include <cstdlib>
+#include <condition_variable>
+#include <deque>
 #include <exception>
-#include <memory>
-#include <utility>
+#include <fstream>
+#include <iostream>
+#include <mutex>
+#include <optional>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <thread>
 
 namespace {
 
-atlas::SystemHostPtr
-make_system() {
-    auto fluid = atlas::Fluid::builder()
-                     .with_buffer_size(1)
-                     .with_particle_count(1)
-                     .make_host_unique();
-
-    const atlas::Float3 position(-0.5f, 0.0f, 0.0f);
-    const atlas::Float3 velocity(0.1f, 0.0f, 0.0f);
-    atlas::copy_host_to_device(&position,
-                               fluid->state<atlas::FluidPositionState>()->data(),
-                               1);
-    atlas::copy_host_to_device(&velocity,
-                               fluid->state<atlas::FluidVelocityState>()->data(),
-                               1);
-
-    auto universe = atlas::Universe::builder()
-                        .with_lower_corner(atlas::Float3(-1.0f))
-                        .with_upper_corner(atlas::Float3(1.0f))
-                        .with_cell_size(0.25f)
-                        .make_host_unique();
-    universe->emplace_state<atlas::UniverseNumberParticleState>(universe->cell_count());
-
-    return atlas::System::builder()
-        .with_fluid(std::move(fluid))
-        .with_universe(std::move(universe))
-        .with_dt(0.01f)
-        .make_host_unique();
+std::string
+read_file(const std::string& path) {
+    std::ifstream input(path);
+    if (!input) throw std::runtime_error("Cannot open simulation config: " + path);
+    std::ostringstream content;
+    content << input.rdbuf();
+    return content.str();
 }
 
 }
@@ -51,27 +34,64 @@ make_system() {
 int
 main(int argc, char** argv) {
     try {
-        const std::size_t maximum_steps =
-            argc > 1 ? std::strtoul(argv[1], nullptr, 10) : 0;
+        atlas::Logging::set_all_stream(&std::cerr);
+        atlas::interactive::Server server;
+        atlas::interactive::JsonLinesTransport transport(std::cin, std::cout);
 
-        atlas::interactive::Session session(make_system);
-        atlas::interactive::Server server(session);
-        atlas::interactive::WindowTarget target(1280, 720, "Atlas");
-        atlas::interactive::Renderer renderer(
-            std::make_unique<atlas::interactive::RawStateProvider>());
-        renderer.add_layer(std::make_unique<atlas::interactive::ParticleLayer>(8.0f));
-        renderer.initialize(target);
-
-        server.handle({ atlas::interactive::Command::start });
-        while (!target.should_close()
-               && (maximum_steps == 0 || session.status().step < maximum_steps)) {
-            target.poll_events(renderer.camera());
-            session.update();
-            renderer.render(session.render_view(), target);
+        if (argc == 3 && std::string(argv[1]) == "--config") {
+            atlas::interactive::Request request;
+            request.request_id = "startup";
+            request.command = atlas::interactive::Command::create;
+            request.simulation = atlas::interactive::JsonCodec::decode_simulation(
+                read_file(argv[2]));
+            transport.send(server.handle(request));
+        } else if (argc != 1) {
+            throw std::invalid_argument("Usage: atlas-interactive [--config simulation.json]");
         }
 
-        renderer.shutdown();
-        server.handle({ atlas::interactive::Command::close });
+        std::deque<atlas::interactive::Request> requests;
+        std::mutex request_mutex;
+        std::condition_variable request_ready;
+        bool input_closed = false;
+
+        std::thread reader([&] {
+            atlas::interactive::Request request;
+            atlas::interactive::Response parse_error;
+            while (transport.receive(request, parse_error)) {
+                const bool shutdown = request.command == atlas::interactive::Command::shutdown;
+                {
+                    const std::lock_guard lock(request_mutex);
+                    requests.push_back(std::move(request));
+                }
+                request_ready.notify_one();
+                if (shutdown) break;
+            }
+            {
+                const std::lock_guard lock(request_mutex);
+                input_closed = true;
+            }
+            request_ready.notify_one();
+        });
+
+        while (!server.shutdown_requested()) {
+            std::optional<atlas::interactive::Request> request;
+            {
+                std::unique_lock lock(request_mutex);
+                if (requests.empty() && !input_closed && !server.has_running_sessions()) {
+                    request_ready.wait(lock, [&] { return !requests.empty() || input_closed; });
+                }
+                if (!requests.empty()) {
+                    request.emplace(std::move(requests.front()));
+                    requests.pop_front();
+                } else if (input_closed) {
+                    break;
+                }
+            }
+            if (request) transport.send(server.handle(*request));
+            if (server.shutdown_requested()) break;
+            server.update();
+        }
+        reader.join();
         return 0;
     } catch (const std::exception& error) {
         std::fprintf(stderr, "atlas interactive: %s\n", error.what());

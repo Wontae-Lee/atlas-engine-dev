@@ -1,17 +1,43 @@
 # Atlas Interactive Examples
 
+## JSON server
+
+`simulation.json` is a runnable configuration for the headless
+`atlas-interactive` process. Build and run the TBB server from the repository
+root:
+
+```bash
+cmake -S . -B build/interactive-headless-tbb -G Ninja \
+    -DATLAS_DEVICE_SYSTEM=TBB \
+    -DATLAS_INTERACTIVE=ON \
+    -DATLAS_INTERACTIVE_RENDERING=OFF \
+    -DATLAS_PYTHON=OFF \
+    -DATLAS_EXAMPLES=OFF
+cmake --build build/interactive-headless-tbb --target atlas-interactive-app
+./build/interactive-headless-tbb/src/interactive/atlas-interactive \
+    --config examples/interactive/simulation.json
+```
+
+The process emits a startup response containing session ID 1. Enter requests
+from `external_client/requests.jsonl` one line at a time, or pipe a command:
+
+```bash
+printf '%s\n' \
+    '{"request_id":"status-1","session_id":1,"command":"status"}' \
+    '{"request_id":"shutdown-1","command":"shutdown"}' |
+./build/interactive-headless-tbb/src/interactive/atlas-interactive \
+    --config examples/interactive/simulation.json
+```
+
+Stdout contains JSONL responses only. Native Atlas logs use stderr.
+
 ## Native window
 
-`native_window.cpp` is the working reference path. It creates a deterministic
-64-particle simulation, gives its `SystemFactory` to `Session`, and composes
-`RawStateProvider`, `Renderer`, `ParticleLayer`, and `WindowTarget`. Each loop
-iteration advances exactly one simulation step and renders all live particles
-from that new raw state. Drag with the left mouse button or use `W`, `A`, `S`,
-and `D` to orbit the camera. Drag with the right mouse button, use the scroll
-wheel, or press `Q` and `E` to zoom. Number keys `1` through `7` select the
-front, back, top, bottom, left, right, and perspective views.
-
-Configure and build the TBB example from the repository root:
+`native_window.cpp` is the local rendering reference. It constructs a
+`SimulationConfig`, owns the resulting simulation through `Session`, and
+composes `RawStateProvider`, `Renderer`, `ParticleLayer`,
+`GeometryLayer`, and `WindowTarget`. Each loop iteration advances exactly
+one step and renders the new raw particle and boundary state.
 
 ```bash
 cmake --preset tbb-application-release
@@ -19,34 +45,21 @@ cmake --build build/tbb-application-release --target atlas-interactive-example
 ./build/tbb-application-release/examples/interactive/atlas-interactive-example
 ```
 
-Pass a positive step count to close automatically after a smoke run:
+Pass a positive step count to close automatically:
 
 ```bash
 ./build/tbb-application-release/examples/interactive/atlas-interactive-example 10
 ```
 
-The same source builds with `ATLAS_DEVICE_SYSTEM=CUDA`. Backend-specific memory
-transfer remains inside `StateBridge`; the example contains no CUDA or OpenGL
-resource-management code. CUDA builds use direct CUDA/OpenGL interop when both
-APIs use the same NVIDIA GPU and fall back to a host-staged upload when the
-window is rendered by another GPU.
+Drag with the left mouse button or use `W`, `A`, `S`, and `D` to orbit.
+Drag with the right mouse button, use the scroll wheel, or press `Q` and `E`
+to zoom. Number keys 1 through 7 select the front, back, top, bottom, left,
+right, and perspective views.
 
-## External client and offscreen architecture
+The same source builds with `ATLAS_DEVICE_SYSTEM=CUDA`. Backend transfer stays
+inside `StateBridge`; the example contains no CUDA/OpenGL resource management.
+CUDA uses direct interop when OpenGL and CUDA use the same NVIDIA GPU, with a
+host-staged fallback for hybrid-GPU configurations.
 
-The generic control concepts (`Command`, `Request`, `Response`, and `Server`)
-exist. `Session` handles start, pause, step, status, save, restart, close, and
-shutdown requests, but no transport serialization or listener is implemented.
-`FrameStream` is an abstract interface. `OffscreenTarget` reserves the output
-boundary but does not yet own a headless OpenGL context, so it is not runnable.
-
-The planned path reuses the same `Session`, `RawStateProvider`, `Renderer`, and
-layers with `OffscreenTarget`. A future `FrameStream` implementation will send
-rendered frames to an arbitrary client. Particle arrays remain inside native
-Atlas and OpenGL memory; they are not sent through the control protocol.
-
-See `external_client/` for the proposed request sequence and responsibility
-flow. A VS Code extension can be one consumer, but no frontend-specific code is
-part of this repository.
-
-The complete execution/control and rendering guide is
-[`docs/guidelines/interactive.md`](../../docs/guidelines/interactive.md).
+See [the interactive guide](../../docs/guidelines/interactive.md) for the
+configuration schema, protocol, ownership, and backend transfer paths.

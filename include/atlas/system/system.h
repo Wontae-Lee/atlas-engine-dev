@@ -322,6 +322,18 @@ public:
     ATLAS_NODISCARD ATLAS_HOST std::vector<int>
     sink_removed_last_step() const;
 
+    /** @brief Returns current source poses in source insertion order. */
+    ATLAS_NODISCARD ATLAS_HOST std::vector<Sync>
+    source_syncs() const;
+
+    /** @brief Copies current collider poses to the host in collider insertion order. */
+    ATLAS_NODISCARD ATLAS_HOST std::vector<Sync>
+    collider_syncs() const;
+
+    /** @brief Copies current sink poses to the host in sink insertion order. */
+    ATLAS_NODISCARD ATLAS_HOST std::vector<Sync>
+    sink_syncs() const;
+
     /**
      * @brief Flags each live particle as surviving (1) or despawned (0) against the sinks.
      *

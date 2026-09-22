@@ -50,7 +50,8 @@ The interactive execution/control target adds no graphics dependency. With
 `ATLAS_INTERACTIVE_RENDERING=ON`, the native renderer additionally requires
 OpenGL, GLEW, GLFW, and GLM. CUDA interactive builds also use the CUDA/OpenGL
 interop API. See [interactive.md](interactive.md) for the headless and rendering
-configure commands.
+configure commands. The execution/control target uses the header-only
+**nlohmann/json** submodule for JSON configuration and JSONL protocol messages.
 
 Dependencies under `external/` are git submodules, not vendored copies; a fresh
 clone needs `git submodule update --init --recursive` to populate them:
@@ -59,6 +60,7 @@ clone needs `git submodule update --init --recursive` to populate them:
 - googletest
 - googlebenchmark
 - protobuf
+- nlohmann/json (interactive configuration and control protocol)
 - nanobind (Python bindings; carries nested submodules, so its init must be
   `--recursive`)
 

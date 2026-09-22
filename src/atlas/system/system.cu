@@ -401,6 +401,52 @@ System::sink_removed_last_step() const {
     return counts;
 }
 
+std::vector<Sync>
+System::source_syncs() const {
+    std::vector<Sync> result;
+    result.reserve(_sources.size());
+    for (const auto& source : _sources) {
+        if (source->type == SourceType::surface) {
+            result.push_back(source->surface.unit().sync());
+        } else {
+            result.push_back(source->volume.unit().sync());
+        }
+    }
+    return result;
+}
+
+std::vector<Sync>
+System::collider_syncs() const {
+    const HostBuffer<Collider> colliders(_colliders.begin(), _colliders.end());
+    std::vector<Sync> result;
+    result.reserve(colliders.size());
+    for (const Collider& collider : colliders) {
+        result.push_back(collider.isothermal.unit().sync());
+    }
+    return result;
+}
+
+std::vector<Sync>
+System::sink_syncs() const {
+    const HostBuffer<Sink> sinks(_sinks.begin(), _sinks.end());
+    std::vector<Sync> result;
+    result.reserve(sinks.size());
+    for (const Sink& sink : sinks) {
+        switch (sink.type) {
+        case SinkType::surface:
+            result.push_back(sink.surface.unit().sync());
+            break;
+        case SinkType::volume:
+            result.push_back(sink.volume.unit().sync());
+            break;
+        case SinkType::tracing:
+            result.push_back(sink.tracing.unit().sync());
+            break;
+        }
+    }
+    return result;
+}
+
 System::Builder&
 System::Builder::with_fluid(FluidHostPtr fluid) noexcept {
     _fluid = std::move(fluid);

@@ -94,32 +94,30 @@ rules within a Python process.
 
 Both runtime images provide `/opt/atlas/bin/atlas-interactive` and
 `atlas-interactive-example`. Their default command remains `python`; run a
-native executable explicitly when needed.
+native executable explicitly when needed. `atlas-interactive` is the headless
+JSONL simulation server and does not require a display:
 
-A native window needs the host display socket and display environment. For a
-local X11 session, a typical TBB invocation is:
+```bash
+docker run --rm -i atlas:tbb atlas-interactive \
+    --config /opt/atlas/examples/interactive/simulation.json
+```
+
+The `atlas-interactive-example` executable opens the native window. It needs the
+host display socket and display environment. For a local X11 session, a typical
+TBB invocation is:
 
 ```bash
 docker run --rm -it \
     -e DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
-    atlas:tbb atlas-interactive
+    atlas:tbb atlas-interactive-example
 ```
 
-Host display authorization policies still apply. CUDA additionally requires
-GPU access and graphics/display driver capabilities:
-
-```bash
-docker run --rm -it --gpus all \
-    -e DISPLAY \
-    -e NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display \
-    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
-    atlas:cuda atlas-interactive
-```
-
-These images currently provide the native window path. They do not yet include
-a headless OpenGL context or network frame transport. See
-[interactive.md](interactive.md) for the C++ execution and rendering APIs.
+Host display authorization policies still apply. The CUDA server needs
+`--gpus all`; the CUDA window additionally needs
+`NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display`. These images do
+not yet include a headless OpenGL context or network frame transport. See
+[interactive.md](interactive.md) for the JSON control and rendering APIs.
 
 ## Build options
 

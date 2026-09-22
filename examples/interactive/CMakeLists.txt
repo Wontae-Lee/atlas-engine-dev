@@ -6,3 +6,9 @@ install(
         RUNTIME DESTINATION bin
         COMPONENT interactive
 )
+
+install(
+        FILES simulation.json
+        DESTINATION examples/interactive
+        COMPONENT interactive
+)

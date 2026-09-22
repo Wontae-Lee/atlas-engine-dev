@@ -10,7 +10,7 @@ namespace atlas::interactive {
 class Layer;
 class RenderTarget;
 class StateProvider;
-struct SimulationRenderView;
+struct SimulationSceneView;
 
 class Renderer final {
 public:
@@ -19,7 +19,7 @@ public:
 
     void initialize(RenderTarget& target);
     void add_layer(std::unique_ptr<Layer> layer);
-    void render(const SimulationRenderView& view, RenderTarget& target);
+    void render(const SimulationSceneView& view, RenderTarget& target);
     void shutdown();
 
     Camera& camera() noexcept;

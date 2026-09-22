@@ -4,7 +4,7 @@ namespace atlas::interactive::opengl {
 class Framebuffer;
 }
 
-namespace atlas::interactive::transport {
+namespace atlas::interactive {
 
 class FrameStream {
 public:

@@ -1,0 +1,56 @@
+{
+  "dt": 0.01,
+  "fluid": {
+    "buffer_size": 64,
+    "particle_count": 3,
+    "statistical_weight": 1.0,
+    "materials": [
+      {
+        "type": "molecule",
+        "mass": 4.65e-26,
+        "reference_diameter": 3.7e-10,
+        "reference_temperature": 273.0,
+        "viscosity_index": 0.75,
+        "scattering_parameter": 1.0
+      }
+    ],
+    "position": [
+      [-0.75, -0.20, 0.0],
+      [-0.75, 0.00, 0.0],
+      [-0.75, 0.20, 0.0]
+    ],
+    "velocity": [
+      [0.5, 0.0, 0.0],
+      [0.5, 0.0, 0.0],
+      [0.5, 0.0, 0.0]
+    ],
+    "species": [0, 0, 0]
+  },
+  "universe": {
+    "lower_corner": [-1.0, -1.0, -1.0],
+    "upper_corner": [1.0, 1.0, 1.0],
+    "cell_size": 0.25
+  },
+  "solvers": [
+    {
+      "kernel": "hard_sphere",
+      "majorant_sample_pairs": 8,
+      "majorant_exhaustive_limit": 5
+    }
+  ],
+  "colliders": [
+    {
+      "unit": {
+        "geometry": {
+          "type": "cylinder",
+          "center": [0.0, 0.0, 0.0],
+          "radius": 0.25,
+          "height": 1.5
+        }
+      },
+      "momentum_accommodation_coefficient": 0.0,
+      "restitution": 1.0,
+      "diffuse_sampling": "uniform"
+    }
+  ]
+}

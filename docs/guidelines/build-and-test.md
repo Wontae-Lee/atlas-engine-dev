@@ -163,10 +163,12 @@ selection and TBB/CUDA parity cases use separate Python processes because a
 loaded native engine cannot be replaced safely. These tests are separate from
 the C++ GoogleTest targets.
 
-Interactive C++ tests live under `tests/interactive/`. They link only the
-headless `atlas::interactive` execution/control target, so they run with
-`ATLAS_INTERACTIVE_RENDERING=OFF`. CMake registers their cases under the
-`atlas_tests_interactive.*` prefix.
+Interactive C++ tests live under `tests/interactive/`. The execution, JSON,
+Session, and Server cases link the headless `atlas::interactive` target and run
+with `ATLAS_INTERACTIVE_RENDERING=OFF`. When rendering is enabled, a second
+`atlas_tests_interactive_rendering` target verifies geometry mesh dispatch
+without requiring a visible window. CMake registers the cases under the
+corresponding target-name prefix.
 
 Tests mirror `include/atlas/`: every module has a directory under
 `tests/atlas/`. The covered modules are `buffer`, `codec`, `collider`,

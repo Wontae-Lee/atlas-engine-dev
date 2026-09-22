@@ -36,60 +36,28 @@ optional_buffer(const Fluid& fluid, const std::size_t count) {
 
 }
 
-Session::Session(SystemFactory factory, SessionConfig config)
-    : _factory(std::move(factory))
-    , _config(std::move(config)) {
-    if (!_factory) throw std::invalid_argument("Session requires a SystemFactory.");
+Session::Session(SimulationConfig simulation, OutputConfig output)
+    : _factory(std::move(simulation))
+    , _output(std::move(output)) {
     initialize();
 }
 
 Session::~Session() = default;
-
-Response
-Session::handle(const Request& request) {
-    try {
-        switch (request.command) {
-        case Command::start:
-            start();
-            return { true, "started", status() };
-        case Command::pause:
-            pause();
-            return { true, "paused", status() };
-        case Command::step:
-            step(request.step_count);
-            return { true, "stepped", status() };
-        case Command::status:
-            return { true, "status", status() };
-        case Command::save:
-            save(request.path);
-            return { true, "saved", status() };
-        case Command::restart:
-            restart();
-            return { true, "restarted", status() };
-        case Command::close:
-            close();
-            return { true, "closed", status() };
-        case Command::shutdown:
-            _shutdown_requested = true;
-            return { true, "shutdown requested", status() };
-        }
-    } catch (const std::exception& error) {
-        return { false, error.what(), status() };
-    }
-    return { false, "unknown command", status() };
-}
 
 void
 Session::update() {
     if (_state == SessionState::running) advance_once();
 }
 
+bool
+Session::running() const noexcept {
+    return _state == SessionState::running;
+}
+
 SessionStatus
 Session::status() const {
     SessionStatus result;
     result.state = _state;
-    if (!_system) return result;
-
     result.step = _system->step();
     result.simulation_time = static_cast<double>(_system->step()) * _system->dt();
     result.particle_count = _system->fluid()->particle_count();
@@ -121,15 +89,44 @@ Session::render_view() const {
     };
 }
 
-bool
-Session::shutdown_requested() const noexcept {
-    return _shutdown_requested;
+SimulationSceneView
+Session::scene_view() const {
+    SimulationSceneView result;
+    result.particles = render_view();
+    result.lower_corner = _system->universe()->lower_corner();
+    result.upper_corner = _system->universe()->upper_corner();
+
+    const SimulationConfig& config = _factory.config();
+    const auto source_syncs = _system->source_syncs();
+    const auto collider_syncs = _system->collider_syncs();
+    const auto sink_syncs = _system->sink_syncs();
+    if (source_syncs.size() != config.emitters.size()
+        || collider_syncs.size() != config.colliders.size()
+        || sink_syncs.size() != config.sinks.size()) {
+        throw std::logic_error("Configured geometry count does not match the live System.");
+    }
+    result.geometries.reserve(source_syncs.size() + collider_syncs.size() + sink_syncs.size());
+    for (std::size_t index = 0; index < source_syncs.size(); ++index) {
+        result.geometries.push_back({ &config.emitters[index].source.unit.geometry,
+                                      source_syncs[index],
+                                      GeometryRenderView::Role::source });
+    }
+    for (std::size_t index = 0; index < collider_syncs.size(); ++index) {
+        result.geometries.push_back({ &config.colliders[index].unit.geometry,
+                                      collider_syncs[index],
+                                      GeometryRenderView::Role::collider });
+    }
+    for (std::size_t index = 0; index < sink_syncs.size(); ++index) {
+        result.geometries.push_back({ &config.sinks[index].unit.geometry,
+                                      sink_syncs[index],
+                                      GeometryRenderView::Role::sink });
+    }
+    return result;
 }
 
 void
 Session::initialize() {
-    _system = _factory();
-    if (!_system) throw std::runtime_error("SystemFactory returned a null System.");
+    _system = _factory.create();
     _statistics.reset();
     _state = SessionState::ready;
     configure_csv();
@@ -137,25 +134,21 @@ Session::initialize() {
 
 void
 Session::start() {
-    if (!_system) throw std::logic_error("Session must be initialized before it starts.");
     _state = SessionState::running;
 }
 
 void
 Session::pause() {
-    if (!_system) throw std::logic_error("Session must be initialized before it pauses.");
     _state = SessionState::paused;
 }
 
 void
 Session::step(const std::size_t count) {
-    if (!_system) throw std::logic_error("Session must be initialized before it steps.");
     for (std::size_t index = 0; index < count; ++index) advance_once();
 }
 
 void
 Session::advance_once() {
-    if (!_system) throw std::logic_error("Session must be initialized before it advances.");
     _system->update();
     const SimulationSample sample = collect_sample();
     _statistics.update(sample);
@@ -164,7 +157,6 @@ Session::advance_once() {
 
 void
 Session::save(const std::filesystem::path& path) {
-    if (!_system) throw std::logic_error("Session must be initialized before it saves.");
     if (path.empty()) throw std::invalid_argument("Save requires an output directory.");
     if (_csv_writer) _csv_writer->flush();
     _system->save(path);
@@ -174,28 +166,23 @@ void
 Session::restart() {
     _csv_writer.reset();
     _system.reset();
-    _state = SessionState::empty;
     initialize();
-}
-
-void
-Session::close() {
-    if (_csv_writer) _csv_writer->flush();
-    _csv_writer.reset();
-    _system.reset();
-    _statistics.reset();
-    _state = SessionState::empty;
 }
 
 void
 Session::configure_csv() {
     _csv_writer.reset();
-    if (!_config.csv_enabled) return;
-    if (_config.csv_filename.empty()) throw std::invalid_argument("CSV file name cannot be empty.");
+    if (!_output.csv_enabled) return;
+    if (_output.csv_filename.empty()) throw std::invalid_argument("CSV file name cannot be empty.");
     _csv_writer = std::make_unique<CsvWriter>(
-        _config.output_directory / _config.csv_filename,
+        _output.output_directory / _output.csv_filename,
         _system->source_count(),
         _system->sink_count());
+}
+
+const SimulationConfig&
+Session::simulation_config() const noexcept {
+    return _factory.config();
 }
 
 SimulationSample

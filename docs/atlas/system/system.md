@@ -113,6 +113,10 @@ current fluid and universe protobuf snapshots below `time_step_<step>/`; this is
 explicit core state persistence requested by the caller, not periodic reporting.
 The last-phase source and sink counter accessors allow consumers to build
 statistics without making `System::update()` perform reporting or I/O.
+The read-only `source_syncs()`, `collider_syncs()`, and `sink_syncs()` snapshots
+expose current boundary poses to native consumers. CUDA configurations copy only
+the small collider/sink metadata arrays to the host; particle state remains on
+the selected backend.
 
 ## Assembly
 

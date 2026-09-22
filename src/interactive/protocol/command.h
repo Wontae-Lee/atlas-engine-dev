@@ -3,6 +3,7 @@
 namespace atlas::interactive {
 
 enum class Command {
+    create,
     start,
     pause,
     step,

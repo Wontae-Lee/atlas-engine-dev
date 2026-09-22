@@ -3,12 +3,12 @@
 namespace atlas::interactive {
 
 struct RenderState;
-struct SimulationRenderView;
+struct SimulationSceneView;
 
 class StateProvider {
 public:
     virtual ~StateProvider() = default;
-    virtual const RenderState& update(const SimulationRenderView& view) = 0;
+    virtual const RenderState& update(const SimulationSceneView& view) = 0;
 };
 
 }

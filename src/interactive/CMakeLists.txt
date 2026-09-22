@@ -1,8 +1,19 @@
 set(ATLAS_INTERACTIVE_EXECUTION_SOURCES
+        config/system_factory.cpp
         session/session.cpp
         server/server.cpp
         statistics/simulation_statistics.cpp
         output/csv_writer.cpp
+        transport/json_codec.cpp
+        transport/json_lines_transport.cpp
+)
+
+set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+set(JSON_Install OFF CACHE BOOL "" FORCE)
+add_subdirectory(
+        "${CMAKE_SOURCE_DIR}/external/json"
+        "${CMAKE_BINARY_DIR}/external/json"
+        EXCLUDE_FROM_ALL
 )
 
 add_library(atlas-interactive STATIC ${ATLAS_INTERACTIVE_EXECUTION_SOURCES})
@@ -13,13 +24,22 @@ target_include_directories(atlas-interactive
         "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-target_link_libraries(atlas-interactive PUBLIC atlas)
+target_link_libraries(atlas-interactive PUBLIC atlas nlohmann_json::nlohmann_json)
 
-if (ATLAS_ENABLE_TESTS)
-    add_subdirectory("${CMAKE_SOURCE_DIR}/tests/interactive" "${CMAKE_BINARY_DIR}/tests/interactive")
-endif ()
+add_executable(atlas-interactive-app main.cpp)
+target_link_libraries(atlas-interactive-app PRIVATE atlas::interactive)
+set_target_properties(atlas-interactive-app PROPERTIES OUTPUT_NAME atlas-interactive)
+
+install(
+        TARGETS atlas-interactive-app
+        RUNTIME DESTINATION bin
+        COMPONENT interactive
+)
 
 if (NOT ATLAS_INTERACTIVE_RENDERING)
+    if (ATLAS_ENABLE_TESTS)
+        add_subdirectory("${CMAKE_SOURCE_DIR}/tests/interactive" "${CMAKE_BINARY_DIR}/tests/interactive")
+    endif ()
     return()
 endif ()
 
@@ -32,7 +52,6 @@ set(ATLAS_INTERACTIVE_RENDERING_SOURCES
         rendering/camera.cpp
         rendering/renderer.cpp
         rendering/state/raw_state_provider.cpp
-        rendering/state/interpolation_state_provider.cpp
         rendering/layer/particle_layer.cpp
         rendering/layer/geometry_layer.cpp
         rendering/opengl/buffer.cpp
@@ -40,7 +59,7 @@ set(ATLAS_INTERACTIVE_RENDERING_SOURCES
         rendering/opengl/framebuffer.cpp
         rendering/target/window_target.cpp
         rendering/target/offscreen_target.cpp
-        transport/frame_stream.cpp
+        rendering/stream/frame_stream.cpp
 )
 
 if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
@@ -83,12 +102,6 @@ if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
     target_link_libraries(atlas-interactive-rendering PRIVATE CUDA::cudart)
 endif ()
 
-add_executable(atlas-interactive-app main.cpp)
-target_link_libraries(atlas-interactive-app PRIVATE atlas::interactive-rendering)
-set_target_properties(atlas-interactive-app PROPERTIES OUTPUT_NAME atlas-interactive)
-
-install(
-        TARGETS atlas-interactive-app
-        RUNTIME DESTINATION bin
-        COMPONENT interactive
-)
+if (ATLAS_ENABLE_TESTS)
+    add_subdirectory("${CMAKE_SOURCE_DIR}/tests/interactive" "${CMAKE_BINARY_DIR}/tests/interactive")
+endif ()

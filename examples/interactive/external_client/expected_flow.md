@@ -1,17 +1,18 @@
 # Expected External Client Flow
 
-1. The client launches the native interactive executable.
-2. The client establishes a future generic control transport.
-3. The native process creates `Session` with its configured `SystemFactory`.
-4. `Session` owns the resulting `System`; the live object never crosses the protocol.
-5. The client sends `start`.
-6. `Session` advances one simulation step per render loop iteration.
-7. `RawStateProvider` reads the current live Fluid states.
-8. `StateBridge` transfers existing particle states into reusable OpenGL buffers.
-9. `ParticleLayer` draws every live particle through `Renderer` into a future `OffscreenTarget`.
-10. A concrete `FrameStream` sends the rendered frame to the client.
-11. The client displays the frame without receiving raw particle arrays.
-12. The client may send `pause`, `step`, `status`, `save`, `restart`, and future camera-control requests.
-13. The client sends `close` and `shutdown`.
+1. The client launches `atlas-interactive`, optionally with `--config`.
+2. The process emits a startup response if a config file created a Session.
+3. The client may create more sessions by sending configuration in a `create`
+   request.
+4. `Server` owns every live Session and routes commands by `session_id`.
+5. `start` makes the selected Session advance continuously in the server loop.
+6. `pause` stops automatic updates, while `step` advances an explicit count.
+7. `status`, `save`, and `restart` operate on the selected Session.
+8. `close` removes that Session; `shutdown` stops the process.
+9. Every response carries the request's `request_id` for correlation.
+10. A future rendering client obtains frames through
+    `Renderer -> OffscreenTarget -> FrameStream`, independently of JSON
+    control.
 
-A VS Code extension is one intended consumer of this frontend-neutral flow.
+The live core System never crosses the protocol boundary, and particle arrays
+are not serialized into JSON.

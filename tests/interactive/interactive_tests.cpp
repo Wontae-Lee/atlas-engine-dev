@@ -1,247 +1,438 @@
+#include "config/output_config.h"
+#include "config/simulation_config.h"
+#include "config/system_factory.h"
 #include "protocol/command.h"
+#include "protocol/request.h"
 #include "server/server.h"
 #include "session/session.h"
-#include "session/session_config.h"
 #include "session/session_state.h"
-
-#include <atlas/atlas.h>
+#include "transport/json_codec.h"
+#include "transport/json_lines_transport.h"
 
 #include <gtest/gtest.h>
 
 #include <filesystem>
-#include <fstream>
+#include <array>
+#include <cstdint>
+#include <sstream>
 #include <string>
 
 namespace {
 
-atlas::SystemHostPtr
-make_system() {
-    auto fluid = atlas::Fluid::builder()
-                     .with_buffer_size(1)
-                     .with_particle_count(1)
-                     .make_host_unique();
+using Config = atlas::interactive::SimulationConfig;
 
-    const atlas::Float3 position(0.0f, 0.0f, 0.0f);
-    const atlas::Float3 velocity(1.0f, 0.0f, 0.0f);
-    atlas::copy_host_to_device(
-        &position,
-        fluid->state<atlas::FluidPositionState>()->data(),
-        1);
-    atlas::copy_host_to_device(
-        &velocity,
-        fluid->state<atlas::FluidVelocityState>()->data(),
-        1);
-
-    auto universe = atlas::Universe::builder()
-                        .with_lower_corner(atlas::Float3(-2.0f))
-                        .with_upper_corner(atlas::Float3(2.0f))
-                        .with_cell_size(1.0f)
-                        .make_host_unique();
-    universe->emplace_state<atlas::UniverseNumberParticleState>(universe->cell_count());
-
-    return atlas::System::builder()
-        .with_fluid(std::move(fluid))
-        .with_universe(std::move(universe))
-        .with_dt(0.25f)
-        .make_host_unique();
+Config
+make_config() {
+    Config config;
+    config.dt = 0.25f;
+    config.fluid.buffer_size = 4;
+    config.fluid.particle_count = 1;
+    config.fluid.position = { Config::Vec3 { 0.0f, 0.0f, 0.0f } };
+    config.fluid.velocity = { Config::Vec3 { 1.0f, 0.0f, 0.0f } };
+    config.fluid.species = { 0 };
+    config.universe.lower_corner = { -2.0f, -2.0f, -2.0f };
+    config.universe.upper_corner = { 2.0f, 2.0f, 2.0f };
+    config.universe.cell_size = 1.0f;
+    return config;
 }
 
-atlas::SystemHostPtr
-make_observed_system() {
-    auto fluid = atlas::Fluid::builder()
-                     .with_buffer_size(64)
-                     .with_particle_count(0)
-                     .make_host_unique();
+Config
+make_observed_config() {
+    Config config = make_config();
+    config.dt = 0.01f;
+    config.fluid.buffer_size = 64;
+    config.fluid.particle_count = 0;
+    config.fluid.position.clear();
+    config.fluid.velocity.clear();
+    config.fluid.species.clear();
 
-    auto universe = atlas::Universe::builder()
-                        .with_lower_corner(atlas::Float3(-2.0f))
-                        .with_upper_corner(atlas::Float3(2.0f))
-                        .with_cell_size(1.0f)
-                        .make_host_unique();
-    universe->emplace_state<atlas::UniverseNumberParticleState>(universe->cell_count());
+    Config::Emitter emitter;
+    emitter.source.kind = Config::SourceKind::volume;
+    emitter.source.spacing = 0.5f;
+    emitter.source.unit.geometry.kind = Config::GeometryKind::box;
+    emitter.source.unit.geometry.lower_corner = { -0.5f, -0.5f, -0.5f };
+    emitter.source.unit.geometry.upper_corner = { 0.5f, 0.5f, 0.5f };
+    emitter.generator.kind = Config::GeneratorKind::uniform;
+    emitter.generator.min_value = 0.0f;
+    emitter.generator.max_value = 0.0f;
+    config.emitters.push_back(emitter);
 
-    const auto sync = atlas::Sync::builder()
-                          .with_rigid_pose(atlas::Float3(0.0f),
-                                           atlas::Quaternion(1.0f, 0.0f, 0.0f, 0.0f))
-                          .make_host_shared();
-    auto source_unit = atlas::Unit::builder()
-                           .with_geometry(atlas::Geometry(
-                               atlas::Box::builder()
-                                   .with_lower_corner(atlas::Float3(-0.5f))
-                                   .with_upper_corner(atlas::Float3(0.5f))
-                                   .build()))
-                           .with_sync(sync)
-                           .build();
-    auto sink_unit = atlas::Unit::builder()
-                         .with_geometry(atlas::Geometry(
-                             atlas::Box::builder()
-                                 .with_lower_corner(atlas::Float3(-1.0f))
-                                 .with_upper_corner(atlas::Float3(1.0f))
-                                 .build()))
-                         .with_sync(sync)
-                         .build();
+    Config::Sink sink;
+    sink.kind = Config::SinkKind::volume;
+    sink.unit.geometry.kind = Config::GeometryKind::box;
+    sink.unit.geometry.lower_corner = { -1.0f, -1.0f, -1.0f };
+    sink.unit.geometry.upper_corner = { 1.0f, 1.0f, 1.0f };
+    config.sinks.push_back(sink);
+    return config;
+}
 
-    auto source = atlas::make_host_shared<atlas::Source>(atlas::Source(
-        atlas::VolumeSource::builder()
-            .with_unit(std::move(source_unit))
-            .with_spacing(0.5f)
-            .build()));
-    auto generator = atlas::make_host_shared<atlas::Generator>(atlas::Generator(
-        atlas::UniformGenerator::builder()
-            .with_species_ratios({ 1.0f })
-            .with_species_numbers({ 0.0f })
-            .with_min_value(0.0f)
-            .with_max_value(0.0f)
-            .build()));
-    const atlas::Sink sink(atlas::VolumeSink::builder()
-                               .with_unit(std::move(sink_unit))
-                               .build());
-
-    return atlas::System::builder()
-        .with_fluid(std::move(fluid))
-        .with_universe(std::move(universe))
-        .with_emitter(std::move(source), std::move(generator))
-        .with_sink(sink)
-        .with_dt(0.01f)
-        .make_host_unique();
+atlas::interactive::Request
+request(const atlas::interactive::Command command, const std::uint64_t session_id) {
+    atlas::interactive::Request result;
+    result.command = command;
+    result.session_id = session_id;
+    return result;
 }
 
 }
 
-TEST(InteractiveSession, LifecycleUsesFactoryAndCentralizedStepping) {
-    std::size_t factory_calls = 0;
-    atlas::interactive::Session session([&factory_calls] {
-        ++factory_calls;
-        return make_system();
-    });
-    atlas::interactive::Server server(session);
-
-    EXPECT_EQ(factory_calls, 1u);
-    EXPECT_EQ(session.status().state, atlas::interactive::SessionState::ready);
-
-    EXPECT_TRUE(server.handle({ atlas::interactive::Command::start }).success);
-    session.update();
-    EXPECT_EQ(session.status().step, 1u);
-    EXPECT_EQ(session.statistics().sample_count(), 1u);
-
-    EXPECT_TRUE(server.handle({ atlas::interactive::Command::pause }).success);
-    session.update();
-    EXPECT_EQ(session.status().step, 1u);
-
-    atlas::interactive::Request step_request;
-    step_request.command = atlas::interactive::Command::step;
-    step_request.step_count = 10;
-    EXPECT_TRUE(server.handle(step_request).success);
-    EXPECT_EQ(session.status().step, 11u);
-    EXPECT_EQ(session.statistics().sample_count(), 11u);
-
-    EXPECT_TRUE(server.handle({ atlas::interactive::Command::restart }).success);
-    EXPECT_EQ(factory_calls, 2u);
-    EXPECT_EQ(session.status().state, atlas::interactive::SessionState::ready);
-    EXPECT_EQ(session.status().step, 0u);
-    EXPECT_EQ(session.statistics().sample_count(), 0u);
-
-    EXPECT_TRUE(server.handle({ atlas::interactive::Command::close }).success);
-    EXPECT_EQ(session.status().state, atlas::interactive::SessionState::empty);
+TEST(InteractiveConfig, JsonParsesSimulationAndRejectsMalformedInput) {
+    const std::string json = R"({
+        "dt": 0.25,
+        "fluid": {
+            "buffer_size": 4,
+            "particle_count": 1,
+            "position": [[0, 0, 0]],
+            "velocity": [[1, 0, 0]],
+            "species": [0],
+            "temperature": [300]
+        },
+        "universe": {
+            "lower_corner": [-2, -2, -2],
+            "upper_corner": [2, 2, 2],
+            "cell_size": 1
+        },
+        "solvers": [{"kernel": "variable_soft_sphere"}],
+        "colliders": [{
+            "unit": {"geometry": {"type": "sphere", "radius": 0.5}},
+            "diffuse_sampling": "cosine_weighted"
+        }],
+        "codec": {
+            "representative_characteristic_length": 1,
+            "representative_collision_cross_sectional_area": 1,
+            "representative_statistical_weight": 1,
+            "representative_cell_volume": 1
+        }
+    })";
+    const Config config = atlas::interactive::JsonCodec::decode_simulation(json);
+    EXPECT_FLOAT_EQ(config.dt, 0.25f);
+    EXPECT_EQ(config.fluid.position.size(), 1u);
+    ASSERT_EQ(config.solvers.size(), 1u);
+    EXPECT_EQ(config.solvers[0].kernel, Config::DsmcKernelKind::variable_soft_sphere);
+    ASSERT_EQ(config.colliders.size(), 1u);
+    EXPECT_EQ(config.colliders[0].unit.geometry.kind, Config::GeometryKind::sphere);
+    EXPECT_TRUE(config.codec.has_value());
+    EXPECT_THROW(atlas::interactive::JsonCodec::decode_simulation("{"), std::exception);
 }
 
-TEST(InteractiveServer, ForwardsStatusAndShutdownCommands) {
-    atlas::interactive::Session session(make_system);
-    atlas::interactive::Server server(session);
+TEST(InteractiveConfig, JsonCoversAllUserFacingConstructionBranches) {
+    const Config config = atlas::interactive::JsonCodec::decode_simulation(R"({
+        "dt": 0.01,
+        "fluid": {
+            "buffer_size": 8,
+            "particle_count": 1,
+            "statistical_weight": 2,
+            "materials": [
+                {"type":"molecule","mass":1,"reference_diameter":1,"reference_temperature":1},
+                {"type":"atom","mass":1,"reference_diameter":1,"reference_temperature":1},
+                {"type":"ion","mass":1,"reference_diameter":1,"reference_temperature":1},
+                {"type":"neutron","mass":1,"reference_diameter":1,"reference_temperature":1},
+                {"type":"solid","mass":1}
+            ],
+            "position": [[0,0,0]],
+            "velocity": [[1,2,3]],
+            "species": [0],
+            "temperature": [300],
+            "translational_energy": [1],
+            "rotational_energy": [2],
+            "vibrational_energy": [3]
+        },
+        "universe": {
+            "geometry": {"type":"box","lower_corner":[-1,-1,-1],"upper_corner":[1,1,1]},
+            "cell_size": 1,
+            "temperature": [300,300,300,300,300,300,300,300],
+            "bulk_velocity": [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
+            "field_force": [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
+            "gravity": [[0,0,-1],[0,0,-1],[0,0,-1],[0,0,-1],[0,0,-1],[0,0,-1],[0,0,-1],[0,0,-1]],
+            "thermal_energy": [1,1,1,1,1,1,1,1],
+            "knudsen_number": [1,1,1,1,1,1,1,1]
+        },
+        "solvers": [
+            {"kernel":"hard_sphere"},
+            {"kernel":"variable_hard_sphere"},
+            {"kernel":"variable_soft_sphere"}
+        ],
+        "emitters": [
+            {"source":{"type":"surface","unit":{"geometry":{"type":"circle"}}},"generator":{"type":"uniform"}},
+            {"source":{"type":"volume","unit":{"geometry":{"type":"sphere"}}},"generator":{"type":"jittering"}},
+            {"source":{"type":"volume","unit":{"geometry":{"type":"cylinder"}}},"generator":{"type":"maxwell_sigma"}},
+            {"source":{"type":"volume","unit":{"geometry":{"type":"box"}}},"generator":{"type":"maxwell_boltzmann","species_mass":[1]}}
+        ],
+        "colliders": [{
+            "unit": {
+                "geometry":{"type":"square"},
+                "translation":[1,2,3],
+                "orientation":[1,0,0,0],
+                "velocity":[1,0,0],
+                "acceleration":[0,1,0],
+                "angular_velocity":[0,0,1],
+                "angular_acceleration":[0,0,2]
+            },
+            "momentum_accommodation_coefficient":0.5,
+            "restitution":0.8,
+            "diffuse_sampling":"cosine_weighted"
+        }],
+        "sinks": [
+            {"type":"surface","unit":{"geometry":{"type":"plane"}}},
+            {"type":"volume","unit":{"geometry":{"type":"polygonal_prism"}}},
+            {"type":"tracing","unit":{"geometry":{"type":"triangle_mesh","triangles":[[[0,0,0],[1,0,0],[0,1,0]]]}}}
+        ],
+        "codec": {
+            "representative_characteristic_length":1,
+            "representative_collision_cross_sectional_area":1,
+            "representative_statistical_weight":1,
+            "representative_cell_volume":1
+        }
+    })");
 
-    const auto status = server.handle({ atlas::interactive::Command::status });
-    ASSERT_TRUE(status.success);
+    EXPECT_EQ(config.fluid.materials.size(), 5u);
+    EXPECT_TRUE(config.fluid.vibrational_energy.has_value());
+    EXPECT_TRUE(config.universe.geometry.has_value());
+    EXPECT_TRUE(config.universe.gravity.has_value());
+    EXPECT_EQ(config.solvers.size(), 3u);
+    ASSERT_EQ(config.emitters.size(), 4u);
+    EXPECT_EQ(config.emitters[0].source.kind, Config::SourceKind::surface);
+    EXPECT_EQ(config.emitters[3].generator.kind, Config::GeneratorKind::maxwell_boltzmann);
+    EXPECT_EQ(config.emitters[3].generator.species_mass.size(), 1u);
+    ASSERT_EQ(config.colliders.size(), 1u);
+    EXPECT_TRUE(config.colliders[0].unit.angular_acceleration.has_value());
+    ASSERT_EQ(config.sinks.size(), 3u);
+    EXPECT_EQ(config.sinks[2].kind, Config::SinkKind::tracing);
+    EXPECT_TRUE(config.codec.has_value());
+}
+
+TEST(InteractiveConfig, SystemFactoryBuildsAndRebuildsAValidSystem) {
+    atlas::interactive::SystemFactory factory(make_config());
+    auto first = factory.create();
+    ASSERT_NE(first, nullptr);
+    EXPECT_EQ(first->fluid()->particle_count(), 1u);
+    first->update();
+    EXPECT_EQ(first->step(), 1u);
+
+    auto second = factory.create();
+    ASSERT_NE(second, nullptr);
+    EXPECT_EQ(second->step(), 0u);
+    EXPECT_EQ(second->fluid()->particle_count(), 1u);
+}
+
+TEST(InteractiveConfig, ExplicitEmptyOptionalFluidStateRemainsAvailable) {
+    Config config = make_config();
+    config.fluid.particle_count = 0;
+    config.fluid.position.clear();
+    config.fluid.velocity.clear();
+    config.fluid.species.clear();
+    config.fluid.temperature = std::vector<float> {};
+
+    atlas::interactive::SystemFactory factory(config);
+    const auto system = factory.create();
+    EXPECT_NE(system->fluid()->state<atlas::FluidTemperatureState>(), nullptr);
+}
+
+TEST(InteractiveConfig, SystemFactoryKeepsTriangleMeshStorageAliveAcrossRebuilds) {
+    Config config = make_config();
+    Config::Collider collider;
+    collider.unit.geometry.kind = Config::GeometryKind::triangle_mesh;
+    collider.unit.geometry.triangles = {
+        std::array<Config::Vec3, 3> {
+            Config::Vec3 { 0.0f, 0.0f, 0.0f },
+            Config::Vec3 { 1.0f, 0.0f, 0.0f },
+            Config::Vec3 { 0.0f, 1.0f, 0.0f }
+        }
+    };
+    config.colliders.push_back(collider);
+
+    atlas::interactive::SystemFactory factory(config);
+    auto first = factory.create();
+    auto second = factory.create();
+    first->update();
+    second->update();
+    EXPECT_EQ(first->step(), 1u);
+    EXPECT_EQ(second->step(), 1u);
+}
+
+TEST(InteractiveServer, OwnsCreatesRoutesAndClosesSessions) {
+    atlas::interactive::Server server;
+    atlas::interactive::Request create;
+    create.request_id = "create-1";
+    create.command = atlas::interactive::Command::create;
+    create.simulation = make_config();
+    const auto created = server.handle(create);
+    ASSERT_TRUE(created.success) << created.error;
+    ASSERT_TRUE(created.session_id.has_value());
+    EXPECT_EQ(created.request_id, "create-1");
+    atlas::interactive::Request create_second = create;
+    create_second.request_id = "create-2";
+    const auto second = server.handle(create_second);
+    ASSERT_TRUE(second.success) << second.error;
+    ASSERT_TRUE(second.session_id.has_value());
+    EXPECT_NE(created.session_id, second.session_id);
+    EXPECT_EQ(server.session_count(), 2u);
+
+    const std::uint64_t id = *created.session_id;
+    EXPECT_TRUE(server.handle(request(atlas::interactive::Command::start, id)).success);
+    server.update();
+    const auto status = server.handle(request(atlas::interactive::Command::status, id));
     ASSERT_TRUE(status.status.has_value());
-    EXPECT_EQ(status.status->state, atlas::interactive::SessionState::ready);
+    EXPECT_EQ(status.status->step, 1u);
+    const auto second_status = server.handle(
+        request(atlas::interactive::Command::status, *second.session_id));
+    ASSERT_TRUE(second_status.status.has_value());
+    EXPECT_EQ(second_status.status->step, 0u);
 
-    EXPECT_TRUE(server.handle({ atlas::interactive::Command::shutdown }).success);
+    EXPECT_TRUE(server.handle(request(atlas::interactive::Command::close, id)).success);
+    EXPECT_EQ(server.session_count(), 1u);
+    EXPECT_FALSE(server.handle(request(atlas::interactive::Command::status, id)).success);
+    EXPECT_TRUE(server.handle(
+        request(atlas::interactive::Command::close, *second.session_id)).success);
+    EXPECT_EQ(server.session_count(), 0u);
+
+    atlas::interactive::Request shutdown;
+    shutdown.command = atlas::interactive::Command::shutdown;
+    EXPECT_TRUE(server.handle(shutdown).success);
     EXPECT_TRUE(server.shutdown_requested());
 }
 
-TEST(InteractiveSession, ExposesNonOwningNativeRenderBuffers) {
-    atlas::interactive::Session session(make_system);
+TEST(InteractiveServer, ReportsInvalidConfigurationAndSessionIds) {
+    atlas::interactive::Server server;
+    atlas::interactive::Request invalid_create;
+    invalid_create.command = atlas::interactive::Command::create;
+    invalid_create.simulation = make_config();
+    invalid_create.simulation->fluid.particle_count = 5;
+    EXPECT_FALSE(server.handle(invalid_create).success);
 
-    const auto view = session.render_view();
-    EXPECT_EQ(view.particle_count, 1u);
-    EXPECT_NE(view.position.data, nullptr);
-    EXPECT_EQ(view.position.bytes, sizeof(atlas::Float3));
-    EXPECT_NE(view.velocity.data, nullptr);
-    EXPECT_EQ(view.velocity.bytes, sizeof(atlas::Float3));
-    EXPECT_NE(view.species.data, nullptr);
-    EXPECT_EQ(view.species.bytes, sizeof(std::size_t));
+    const auto missing = server.handle(request(atlas::interactive::Command::status, 999));
+    EXPECT_FALSE(missing.success);
+    EXPECT_FALSE(missing.error.empty());
 }
 
-TEST(InteractiveSession, AccumulatesPerSourceAndPerSinkStatistics) {
-    atlas::interactive::Session session(make_observed_system);
-    ASSERT_TRUE(session.handle({ atlas::interactive::Command::step }).success);
+TEST(InteractiveTransport, MalformedJsonProducesAnErrorAndContinues) {
+    std::istringstream input("{\n{\"request_id\":\"ok\",\"command\":\"shutdown\"}\n");
+    std::ostringstream output;
+    atlas::interactive::JsonLinesTransport transport(input, output);
+    atlas::interactive::Request request;
+    atlas::interactive::Response error;
 
-    const auto& first = session.statistics();
-    ASSERT_EQ(first.current().source_spawned.size(), 1u);
-    ASSERT_EQ(first.current().sink_removed.size(), 1u);
-    EXPECT_GT(first.current().source_spawned[0], 0u);
-    EXPECT_EQ(first.current().sink_removed[0], first.current().source_spawned[0]);
-    EXPECT_EQ(first.total_source_spawned()[0], first.current().source_spawned[0]);
-    EXPECT_EQ(first.total_sink_removed()[0], first.current().sink_removed[0]);
-    EXPECT_EQ(session.status().particle_count, 0u);
-
-    ASSERT_TRUE(session.handle({ atlas::interactive::Command::step }).success);
-    const auto& second = session.statistics();
-    EXPECT_EQ(second.total_source_spawned()[0], 2u * second.current().source_spawned[0]);
-    EXPECT_EQ(second.total_sink_removed()[0], 2u * second.current().sink_removed[0]);
+    ASSERT_TRUE(transport.receive(request, error));
+    EXPECT_EQ(request.request_id, "ok");
+    EXPECT_EQ(request.command, atlas::interactive::Command::shutdown);
+    EXPECT_NE(output.str().find("\"success\":false"), std::string::npos);
 }
 
-TEST(InteractiveSession, StreamsCsvAndFlushesBeforeSnapshotSave) {
+TEST(InteractiveSession, LifecycleStatisticsSaveAndRestartUseStoredConfig) {
     const std::filesystem::path output =
-        std::filesystem::temp_directory_path() / "atlas_interactive_session_test";
+        std::filesystem::temp_directory_path() / "atlas_interactive_json_session_test";
     std::filesystem::remove_all(output);
 
-    atlas::interactive::SessionConfig config;
-    config.csv_enabled = true;
-    config.output_directory = output;
-    config.csv_filename = "run.csv";
+    atlas::interactive::OutputConfig output_config;
+    output_config.csv_enabled = true;
+    output_config.output_directory = output;
+    output_config.csv_filename = "statistics.csv";
+    atlas::interactive::Session session(make_observed_config(), output_config);
 
-    atlas::interactive::Session session(make_observed_system, config);
-    atlas::interactive::Request step_request;
-    step_request.command = atlas::interactive::Command::step;
-    step_request.step_count = 2;
-    ASSERT_TRUE(session.handle(step_request).success);
-
-    atlas::interactive::Request save_request;
-    save_request.command = atlas::interactive::Command::save;
-    save_request.path = output / "snapshots";
-    ASSERT_TRUE(session.handle(save_request).success);
-
-    std::ifstream csv(output / "run.csv");
-    ASSERT_TRUE(csv.good());
-    std::string header;
-    std::string first;
-    std::string second;
-    ASSERT_TRUE(static_cast<bool>(std::getline(csv, header)));
-    ASSERT_TRUE(static_cast<bool>(std::getline(csv, first)));
-    ASSERT_TRUE(static_cast<bool>(std::getline(csv, second)));
-    EXPECT_EQ(header,
-              "step,time,particle_count,source_0_spawned,sink_0_removed,source_0_total,sink_0_total");
-    EXPECT_FALSE(first.empty());
-    EXPECT_FALSE(second.empty());
-    EXPECT_TRUE(std::filesystem::exists(output / "snapshots" / "time_step_2" / "fluid.bin"));
-    EXPECT_TRUE(std::filesystem::exists(output / "snapshots" / "time_step_2" / "universe.bin"));
-
-    ASSERT_TRUE(session.handle({ atlas::interactive::Command::restart }).success);
-    ASSERT_TRUE(session.handle({ atlas::interactive::Command::step }).success);
-    ASSERT_TRUE(session.handle(save_request).success);
-
-    std::ifstream restarted_csv(output / "run.csv");
-    ASSERT_TRUE(restarted_csv.good());
-    std::string restarted_header;
-    std::string restarted_row;
-    std::string unexpected_row;
-    ASSERT_TRUE(static_cast<bool>(std::getline(restarted_csv, restarted_header)));
-    ASSERT_TRUE(static_cast<bool>(std::getline(restarted_csv, restarted_row)));
-    EXPECT_FALSE(static_cast<bool>(std::getline(restarted_csv, unexpected_row)));
-    EXPECT_EQ(restarted_header, header);
-    EXPECT_FALSE(restarted_row.empty());
+    EXPECT_EQ(session.status().state, atlas::interactive::SessionState::ready);
+    session.start();
+    session.update();
     EXPECT_EQ(session.status().step, 1u);
-    EXPECT_NEAR(session.status().simulation_time, 0.01, 1.0e-8);
+    EXPECT_EQ(session.statistics().sample_count(), 1u);
+    session.pause();
+    session.update();
+    EXPECT_EQ(session.status().step, 1u);
+    session.step(1);
+    EXPECT_EQ(session.status().step, 2u);
 
+    session.save(output / "snapshots");
+    EXPECT_TRUE(std::filesystem::exists(output / "snapshots" / "time_step_2" / "fluid.bin"));
+    session.restart();
+    EXPECT_EQ(session.status().step, 0u);
+    EXPECT_EQ(session.statistics().sample_count(), 0u);
+    EXPECT_EQ(session.simulation_config().emitters.size(), 1u);
     std::filesystem::remove_all(output);
+}
+
+TEST(InteractiveScene, CoversEveryGeometryTypeAndTracksMovingPoses) {
+    Config config = make_config();
+    const std::array<Config::GeometryKind, 9> kinds = {
+        Config::GeometryKind::box,
+        Config::GeometryKind::circle,
+        Config::GeometryKind::cylinder,
+        Config::GeometryKind::plane,
+        Config::GeometryKind::sphere,
+        Config::GeometryKind::square,
+        Config::GeometryKind::triangle,
+        Config::GeometryKind::triangle_mesh,
+        Config::GeometryKind::polygonal_prism
+    };
+    for (const Config::GeometryKind kind : kinds) {
+        Config::Collider collider;
+        collider.unit.geometry.kind = kind;
+        collider.unit.velocity = Config::Vec3 { 1.0f, 0.0f, 0.0f };
+        if (kind == Config::GeometryKind::triangle_mesh) {
+            collider.unit.geometry.triangles = {
+                std::array<Config::Vec3, 3> {
+                    Config::Vec3 { 0.0f, 0.0f, 0.0f },
+                    Config::Vec3 { 1.0f, 0.0f, 0.0f },
+                    Config::Vec3 { 0.0f, 1.0f, 0.0f }
+                }
+            };
+        }
+        config.colliders.push_back(collider);
+    }
+
+    atlas::interactive::Session session(config);
+    const auto before = session.scene_view();
+    ASSERT_EQ(before.geometries.size(), kinds.size());
+    for (std::size_t index = 0; index < kinds.size(); ++index) {
+        ASSERT_NE(before.geometries[index].geometry, nullptr);
+        EXPECT_EQ(before.geometries[index].geometry->kind, kinds[index]);
+    }
+    session.step();
+    const auto after = session.scene_view();
+    EXPECT_GT(after.geometries[0].sync.translation.x,
+              before.geometries[0].sync.translation.x);
+}
+
+TEST(InteractiveProtocol, JsonRequestAndResponsePreserveCorrelationFields) {
+    const auto request = atlas::interactive::JsonCodec::decode_request(
+        R"({"request_id":"step-7","session_id":3,"command":"step","payload":{"step_count":4}})");
+    EXPECT_EQ(request.request_id, "step-7");
+    EXPECT_EQ(request.session_id, 3u);
+    EXPECT_EQ(request.step_count, 4u);
+
+    atlas::interactive::Response response;
+    response.request_id = "step-7";
+    response.success = true;
+    response.session_id = 3;
+    response.status = atlas::interactive::SessionStatus {};
+    const std::string encoded = atlas::interactive::JsonCodec::encode_response(response);
+    EXPECT_NE(encoded.find("\"request_id\":\"step-7\""), std::string::npos);
+    EXPECT_NE(encoded.find("\"session_id\":3"), std::string::npos);
+}
+
+TEST(InteractiveProtocol, CreateRequestSeparatesSimulationAndOutputConfiguration) {
+    const auto request = atlas::interactive::JsonCodec::decode_request(R"({
+        "request_id":"create-8",
+        "command":"create",
+        "payload":{
+            "config":{
+                "dt":0.1,
+                "fluid":{"buffer_size":4},
+                "universe":{
+                    "lower_corner":[-1,-1,-1],
+                    "upper_corner":[1,1,1],
+                    "cell_size":1
+                }
+            },
+            "output":{
+                "csv_enabled":true,
+                "output_directory":"results",
+                "csv_filename":"run.csv"
+            }
+        }
+    })");
+
+    ASSERT_TRUE(request.simulation.has_value());
+    EXPECT_FLOAT_EQ(request.simulation->dt, 0.1f);
+    EXPECT_TRUE(request.output.csv_enabled);
+    EXPECT_EQ(request.output.output_directory, std::filesystem::path("results"));
+    EXPECT_EQ(request.output.csv_filename, "run.csv");
 }
