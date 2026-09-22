@@ -67,6 +67,11 @@ requires CMake 3.21+. The presets use Ninja. Important presets:
 The debug presets turn logging, tests, the Python module, the examples, and the
 benchmarks on; the release presets turn all five off.
 
+A direct configuration without a preset defaults all five project options to
+`ON`. Disable targets explicitly when configuring a narrower build. Presets and
+CI commands keep their declared cache values and therefore override these
+defaults.
+
 When a build and test run is requested, the GCC debug path is:
 
 ```bash

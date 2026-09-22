@@ -389,9 +389,9 @@ steps do not write files automatically.
 
 ## Run the C++ example
 
-The C++ cylinder example sets up a nitrogen flow around an OBJ mesh, with
-particle emission, DSMC collisions, surface interactions, outflow removal,
-and timing output. It provides a larger example of assembling a simulation.
+The C++ cylinder example mirrors the Python case with the analytic `Cylinder`
+geometry, nitrogen inflow, DSMC collisions, surface interactions, boundary
+removal, and host-side result inspection.
 
 Use the local build dependencies listed above. From the checkout, build it
 with GCC/G++:
@@ -399,25 +399,24 @@ with GCC/G++:
 ```bash
 cmake --preset tbb-gcc-release -DATLAS_EXAMPLES=ON
 cmake --build build/tbb-gcc-release --target atlas_example_cylinder
-./build/tbb-gcc-release/examples/cpp/atlas_example_cylinder 200 assets
+./build/tbb-gcc-release/examples/cpp/atlas_example_cylinder 40
 ```
 
-The executable accepts two positional arguments:
+The executable accepts one optional positional argument:
 
 | Argument | Value in the command | Meaning |
 |---|---|---|
-| Steps | `200` | Number of simulation updates to run. |
-| Assets directory | `assets` | Directory containing `cylinder.obj`. |
+| Steps | `40` | Number of simulation updates to run. |
 
 Paths in this command are relative to the repository root. The example prints
-the configured flow regime and wall-clock timings.
+stepwise particle counts and a final flow summary.
 
 For GPU execution:
 
 ```bash
 cmake --preset cuda-release -DATLAS_EXAMPLES=ON
 cmake --build build/cuda-release --target atlas_example_cylinder
-./build/cuda-release/examples/cpp/atlas_example_cylinder 200 assets
+./build/cuda-release/examples/cpp/atlas_example_cylinder 40
 ```
 
 Building requires the CUDA toolkit; running requires an NVIDIA GPU. The

@@ -10,3 +10,7 @@ if (NOT ATLAS_EXAMPLES)
 endif ()
 
 add_subdirectory(cpp)
+
+if (ATLAS_INTERACTIVE)
+    add_subdirectory(interactive)
+endif ()

@@ -29,6 +29,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 #   ATLAS_GOOGLE_TEST   : GoogleTest-based unit tests
 #   ATLAS_PYTHON        : nanobind Python bindings (bindings/python/atlas)
 #   ATLAS_BENCHMARKS    : benchmark targets
+#   ATLAS_EXAMPLES      : standalone C++ example programs
 set(ATLAS_DEVICE_SYSTEM "TBB" CACHE STRING "Parallel backend: TBB (CPU) or CUDA (GPU)")
 set_property(CACHE ATLAS_DEVICE_SYSTEM PROPERTY STRINGS TBB CUDA)
 
@@ -42,9 +43,10 @@ set_property(CACHE ATLAS_HOST_COMPILER PROPERTY STRINGS native nvcc)
 
 option(ATLAS_LOGGING      "Enable logging functionality" ON)
 option(ATLAS_GOOGLE_TEST  "Build GoogleTest-based unit tests" ON)
-option(ATLAS_PYTHON       "Build the nanobind-based Python bindings" OFF)
-option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" OFF)
-option(ATLAS_EXAMPLES     "Build the example programs" OFF)
+option(ATLAS_PYTHON       "Build the nanobind-based Python bindings" ON)
+option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" ON)
+option(ATLAS_EXAMPLES     "Build the example programs" ON)
+option(ATLAS_INTERACTIVE  "Build Atlas native interactive renderer" ON)
 
 if (NOT ATLAS_DEVICE_SYSTEM MATCHES "^(TBB|CUDA)$")
     message(FATAL_ERROR
@@ -112,6 +114,10 @@ if (ATLAS_PYTHON)
     add_subdirectory(bindings/python/atlas)
 endif ()
 
+if (ATLAS_INTERACTIVE)
+    add_subdirectory(src/interactive)
+endif ()
+
 # Configuration summary.
 message(STATUS "")
 message(STATUS "========== ATLAS CONFIG SUMMARY ==========")
@@ -126,6 +132,7 @@ message(STATUS "ATLAS_GOOGLE_TEST   : ${ATLAS_GOOGLE_TEST}")
 message(STATUS "ATLAS_PYTHON        : ${ATLAS_PYTHON}")
 message(STATUS "ATLAS_BENCHMARKS    : ${ATLAS_BENCHMARKS}")
 message(STATUS "ATLAS_EXAMPLES      : ${ATLAS_EXAMPLES}")
+message(STATUS "ATLAS_INTERACTIVE   : ${ATLAS_INTERACTIVE}")
 if (ATLAS_USE_NVCC)
     message(STATUS "CUDA Compiler       : ${CMAKE_CUDA_COMPILER}")
     message(STATUS "CUDA Architectures  : ${CMAKE_CUDA_ARCHITECTURES}")

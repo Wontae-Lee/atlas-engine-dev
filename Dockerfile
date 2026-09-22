@@ -80,6 +80,68 @@ RUN python -m pip wheel --no-cache-dir --wheel-dir /wheels . \
     python -m pip install --no-cache-dir --no-index --find-links=/wheels atlas-engine && \
     rm -rf /wheels
 
+# Interactive builder: TBB
+FROM tbb-dev AS tbb-interactive-builder
+
+ARG BUILD_JOBS=2
+ENV CMAKE_BUILD_PARALLEL_LEVEL=${BUILD_JOBS}
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        libgl1-mesa-dev libglew-dev libglfw3-dev libglm-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY . .
+
+RUN cmake -S . -B build/interactive-tbb -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DATLAS_DEVICE_SYSTEM=TBB \
+        -DATLAS_HOST_COMPILER=native \
+        -DATLAS_INTERACTIVE=ON \
+        -DATLAS_PYTHON=OFF \
+        -DATLAS_GOOGLE_TEST=OFF \
+        -DBUILD_TESTING=OFF \
+        -DATLAS_BENCHMARKS=OFF \
+        -DATLAS_EXAMPLES=ON && \
+    cmake --build build/interactive-tbb \
+        --target atlas-interactive-app atlas-interactive-example && \
+    cmake --install build/interactive-tbb \
+        --prefix /opt/atlas \
+        --component interactive
+
+# Interactive builder: CUDA
+FROM cuda-dev AS cuda-interactive-builder
+
+ARG BUILD_JOBS=2
+ARG CMAKE_CUDA_ARCHITECTURES="75-real;80-real;86-real;89-real;90"
+ENV CMAKE_BUILD_PARALLEL_LEVEL=${BUILD_JOBS}
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        libgl1-mesa-dev libglew-dev libglfw3-dev libglm-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY . .
+
+RUN cmake -S . -B build/interactive-cuda -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DATLAS_DEVICE_SYSTEM=CUDA \
+        -DATLAS_HOST_COMPILER=native \
+        -DATLAS_INTERACTIVE=ON \
+        -DATLAS_PYTHON=OFF \
+        -DATLAS_GOOGLE_TEST=OFF \
+        -DBUILD_TESTING=OFF \
+        -DATLAS_BENCHMARKS=OFF \
+        -DATLAS_EXAMPLES=ON \
+        -DCMAKE_CUDA_ARCHITECTURES="${CMAKE_CUDA_ARCHITECTURES}" && \
+    cmake --build build/interactive-cuda \
+        --target atlas-interactive-app atlas-interactive-example && \
+    cmake --install build/interactive-cuda \
+        --prefix /opt/atlas \
+        --component interactive
+
 FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS cuda
 
 LABEL org.opencontainers.image.title="Atlas Engine (CUDA)" \
@@ -125,3 +187,42 @@ ENV PATH="${VIRTUAL_ENV}/bin:${PATH}" \
 
 WORKDIR /workspace
 CMD ["python"]
+
+# Interactive runtime: TBB
+FROM ubuntu:${UBUNTU_VERSION} AS tbb-interactive
+
+LABEL org.opencontainers.image.title="Atlas Interactive (TBB)" \
+    org.opencontainers.image.source="https://github.com/Wontae-Lee/atlas-engine-dev" \
+    org.opencontainers.image.licenses="GPL-3.0-or-later"
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates libgl1 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=tbb-interactive-builder /opt/atlas /opt/atlas
+
+ENV PATH="/opt/atlas/bin:${PATH}"
+
+WORKDIR /workspace
+CMD ["atlas-interactive"]
+
+# Interactive runtime: CUDA
+FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION} AS cuda-interactive
+
+LABEL org.opencontainers.image.title="Atlas Interactive (CUDA)" \
+    org.opencontainers.image.source="https://github.com/Wontae-Lee/atlas-engine-dev" \
+    org.opencontainers.image.licenses="GPL-3.0-or-later"
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates libgl1 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=cuda-interactive-builder /opt/atlas /opt/atlas
+
+ENV PATH="/opt/atlas/bin:${PATH}" \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display
+
+WORKDIR /workspace
+CMD ["atlas-interactive"]

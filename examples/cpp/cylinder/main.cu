@@ -1,263 +1,161 @@
-/**
- * @file main.cu
- * @brief Rarefied crossflow over a cylinder, driven straight through the Atlas API.
- *
- * A standalone DSMC example: nitrogen streams along +z past the cylinder mesh in
- * `assets/cylinder.obj`, which lies along the x axis. No harness — it builds a
- * System, steps it, and prints wall-clock timings.
- *
- * Usage:
- *   atlas_example_cylinder [steps] [assets_dir]
- */
-
 #include <atlas/atlas.h>
 
-#include <chrono>
+#include <array>
+#include <cstddef>
 #include <cstdio>
-#include <cmath>
 #include <cstdlib>
-#include <filesystem>
-#include <string>
+#include <utility>
 
 namespace {
-
-using atlas::Float3;
-
-/// Nitrogen (N2) as a VHS/VSS species. Mass in kg, reference diameter in m.
-constexpr float N2_MASS                 = 4.65e-26f;
-constexpr float N2_REFERENCE_DIAMETER   = 4.17e-10f;
-constexpr float N2_REFERENCE_TEMPERATURE = 273.0f;
-constexpr float N2_VISCOSITY_INDEX      = 0.74f;
-constexpr float N2_SCATTERING_PARAMETER = 1.0f;
-
-/// Freestream: 1000 m/s along +z at 300 K.
-constexpr float FREESTREAM_SPEED = 1000.0f;
-constexpr float TEMPERATURE      = 300.0f;
-
-/**
- * Each simulated particle stands for this many real molecules.
- *
- * Chosen so the freestream lands at Kn = lambda / D ~ 0.05, the transitional
- * regime DSMC exists for. The lattice source emits one particle per cell face
- * per step and a particle crosses a cell in CELL_SIZE / FREESTREAM_SPEED
- * seconds, so the steady-state occupancy is (CELL_SIZE / FREESTREAM_SPEED) / DT
- * = 25 particles per cell. Number density is then 25 * W / cell_volume, and the
- * hard-sphere mean free path 1 / (sqrt(2) * pi * d^2 * n) gives W = 3.236e16.
- *
- * A weight that is too small pushes Kn into the hundreds: the flow goes free
- * molecular, no collision is ever accepted, and the case silently degenerates
- * into a pure advection benchmark.
- */
-constexpr float STATISTICAL_WEIGHT = 3.236e16f;
-
-/// The cylinder spans x in [0, 10] with radius 0.25, so the domain wraps it with
-/// margin only across the flow. Flow runs the full z extent.
-constexpr float CELL_SIZE = 0.25f;
-
-const Float3 DOMAIN_LOWER { -0.5f, -2.0f, -2.0f };
-const Float3 DOMAIN_UPPER { 10.5f, 2.0f, 2.0f };
-
-/// A slab thinner than one step's travel would let particles tunnel through it.
-constexpr float SLAB_THICKNESS = 0.4f;
-
-/// 4 m of z at 1000 m/s is 4 ms; one step moves a thermal molecule ~4 mm.
-constexpr float DT = 1.0e-5f;
-
-constexpr std::size_t BUFFER_SIZE = 2'000'000;
 
 atlas::SyncHostPtr
 identity_sync() {
     return atlas::Sync::builder()
-        .with_rigid_pose(Float3(0.0f, 0.0f, 0.0f), atlas::Quaternion(1.0f, 0.0f, 0.0f, 0.0f))
+        .with_rigid_pose(atlas::Float3(0.0f), atlas::Quaternion(1.0f, 0.0f, 0.0f, 0.0f))
         .make_host_shared();
 }
 
-atlas::Geometry
-box_geometry(const Float3& lower, const Float3& upper) {
-    return atlas::Geometry(atlas::Box::builder()
-                               .with_lower_corner(lower)
-                               .with_upper_corner(upper)
-                               .build());
-}
-
 atlas::Unit
-static_unit(const atlas::Geometry& geometry) {
+box_unit(const atlas::Float3& lower, const atlas::Float3& upper) {
+    const atlas::Geometry geometry(
+        atlas::Box::builder().with_lower_corner(lower).with_upper_corner(upper).build());
     return atlas::Unit::builder()
         .with_geometry(geometry)
         .with_sync(identity_sync())
         .build();
 }
 
-/// A thin box spanning the domain in x and y, placed at a given z slab.
-atlas::Unit
-z_slab(const float z_lower, const float z_upper) {
-    return static_unit(box_geometry(Float3(DOMAIN_LOWER.x, DOMAIN_LOWER.y, z_lower),
-                                    Float3(DOMAIN_UPPER.x, DOMAIN_UPPER.y, z_upper)));
-}
-
-/// The same slab inset by one slab thickness in x and y, so it does not overlap
-/// the four side sinks — a spawn inside a sink is despawned on the step it is born.
-atlas::Unit
-inset_z_slab(const float z_lower, const float z_upper) {
-    return static_unit(
-        box_geometry(Float3(DOMAIN_LOWER.x + SLAB_THICKNESS, DOMAIN_LOWER.y + SLAB_THICKNESS, z_lower),
-                     Float3(DOMAIN_UPPER.x - SLAB_THICKNESS, DOMAIN_UPPER.y - SLAB_THICKNESS, z_upper)));
-}
-
 }
 
 int
 main(int argc, char** argv) {
-    const std::size_t steps = (argc > 1) ? std::strtoul(argv[1], nullptr, 10) : 200;
-
-    const std::filesystem::path assets = (argc > 2) ? argv[2] : ATLAS_EXAMPLE_ASSETS_DIR;
-    const std::filesystem::path mesh_path = assets / "cylinder.obj";
-
-    if (!std::filesystem::exists(mesh_path)) {
-        std::fprintf(stderr, "cylinder benchmark: cannot find %s\n", mesh_path.c_str());
-        return 1;
-    }
-
-    // The mesh owns the device buffers that its Geometry view points into, so it
-    // must outlive the System that captures that view.
-    auto cylinder_mesh = atlas::TriangleMesh::builder()
-                             .load_from_obj(mesh_path.string())
-                             .make_host_shared();
+    const atlas::Float3 domain_lower(-1.0f, -0.75f, -0.5f);
+    const atlas::Float3 domain_upper(1.5f, 0.75f, 0.5f);
+    const float         cell_size        = 0.1f;
+    const float         dt               = 5.0e-5f;
+    const std::size_t   steps            = argc > 1 ? std::strtoul(argv[1], nullptr, 10) : 40;
+    const float         freestream_speed = 500.0f;
+    const float         temperature      = 300.0f;
+    const float         cylinder_radius  = 0.2f;
 
     auto materials = atlas::MaterialDictionary::builder()
-                         .with_material(atlas::Material(atlas::Molecule(N2_MASS,
+                         .with_material(atlas::Material(atlas::Molecule(4.65e-26f,
                                                                         0.0f,
                                                                         0.0f,
                                                                         0.0f,
-                                                                        N2_REFERENCE_DIAMETER,
-                                                                        N2_REFERENCE_TEMPERATURE,
-                                                                        N2_VISCOSITY_INDEX,
-                                                                        N2_SCATTERING_PARAMETER)))
+                                                                        4.17e-10f,
+                                                                        273.0f,
+                                                                        0.74f,
+                                                                        1.0f)))
                          .make_host_shared();
 
     auto fluid = atlas::Fluid::builder()
-                     .with_buffer_size(BUFFER_SIZE)
+                     .with_buffer_size(20'000)
                      .with_particle_count(0)
-                     .with_statistical_weight(STATISTICAL_WEIGHT)
+                     .with_statistical_weight(3.236e16f)
                      .with_materials(materials)
                      .make_host_unique();
 
     auto universe = atlas::Universe::builder()
-                        .with_lower_corner(DOMAIN_LOWER)
-                        .with_upper_corner(DOMAIN_UPPER)
-                        .with_cell_size(CELL_SIZE)
+                        .with_lower_corner(domain_lower)
+                        .with_upper_corner(domain_upper)
+                        .with_cell_size(cell_size)
                         .make_host_unique();
 
     const int cell_count = universe->cell_count();
 
-    // Inflow slab at the -z face; the generator gives every spawned molecule the
-    // freestream drift on top of its Maxwellian thermal velocity.
     auto inflow = atlas::make_host_shared<atlas::Source>(
         atlas::Source(atlas::VolumeSource::builder()
-                          .with_unit(inset_z_slab(DOMAIN_LOWER.z, DOMAIN_LOWER.z + SLAB_THICKNESS))
-                          .with_spacing(CELL_SIZE)
+                          .with_unit(box_unit(atlas::Float3(-0.8f, -0.5f, -0.35f),
+                                              atlas::Float3(-0.7f, 0.5f, 0.35f)))
+                          .with_spacing(cell_size)
                           .build()));
 
-    auto maxwellian = atlas::make_host_shared<atlas::Generator>(
+    auto freestream = atlas::make_host_shared<atlas::Generator>(
         atlas::Generator(atlas::MaxwellBoltzmannGenerator::builder()
                              .with_species_ratios({ 1.0f })
                              .with_species_numbers({ 0.0f })
                              .with_material_dictionary(*materials)
-                             .with_temperature(TEMPERATURE)
-                             .with_bulk_velocity(Float3(0.0f, 0.0f, FREESTREAM_SPEED))
-                             .with_seed(20260710u)
+                             .with_temperature(temperature)
+                             .with_bulk_velocity(atlas::Float3(freestream_speed, 0.0f, 0.0f))
+                             .with_seed(20260921u)
                              .build()));
 
-    // A fully diffuse, thermalizing wall.
-    const atlas::Collider cylinder(
-        atlas::IsothermalCollider::builder()
-            .with_unit(static_unit(cylinder_mesh->make_device_geometry_view()))
-            .with_momentum_accommodation_coefficient(1.0f)
-            .with_restitution(1.0f)
-            .with_diffuse_sampling(atlas::DiffuseSampling::cosine_weighted)
+    const atlas::Geometry cylinder_geometry(
+        atlas::Cylinder::builder()
+            .with_center(atlas::Float3(0.0f))
+            .with_radius(cylinder_radius)
+            .with_height(1.0f)
+            .with_open(true)
             .build());
 
-    auto solver = atlas::DsmcSolver::builder()
-                      .with_kernel_type(atlas::DsmcKernelType::variable_hard_sphere)
-                      .make_host_shared();
+    const atlas::Collider cylinder(
+        atlas::IsothermalCollider::builder()
+            .with_unit(atlas::Unit::builder()
+                           .with_geometry(cylinder_geometry)
+                           .with_sync(identity_sync())
+                           .build())
+            .with_momentum_accommodation_coefficient(1.0f)
+            .with_restitution(1.0f)
+            .build());
 
-    auto builder = atlas::System::builder();
-
-    builder.with_fluid(std::move(fluid))
-        .with_universe(std::move(universe))
-        .with_solver(solver)
-        .with_emitter(inflow, maxwellian)
-        .with_collider(cylinder)
-        .with_dt(DT);
-
-    // Six slabs, one per face: anything that leaves the domain is despawned on the
-    // step it crosses out. Without them particles stream away forever and every
-    // cell lookup outside the grid is wasted work.
-    builder.with_sink(atlas::Sink(atlas::VolumeSink::builder()
-                                      .with_unit(z_slab(DOMAIN_UPPER.z - SLAB_THICKNESS, DOMAIN_UPPER.z))
-                                      .build()));
-
-    const Float3 faces[4][2] = {
-        { Float3(DOMAIN_LOWER.x, DOMAIN_LOWER.y, DOMAIN_LOWER.z),
-          Float3(DOMAIN_LOWER.x + SLAB_THICKNESS, DOMAIN_UPPER.y, DOMAIN_UPPER.z) },
-        { Float3(DOMAIN_UPPER.x - SLAB_THICKNESS, DOMAIN_LOWER.y, DOMAIN_LOWER.z),
-          Float3(DOMAIN_UPPER.x, DOMAIN_UPPER.y, DOMAIN_UPPER.z) },
-        { Float3(DOMAIN_LOWER.x, DOMAIN_LOWER.y, DOMAIN_LOWER.z),
-          Float3(DOMAIN_UPPER.x, DOMAIN_LOWER.y + SLAB_THICKNESS, DOMAIN_UPPER.z) },
-        { Float3(DOMAIN_LOWER.x, DOMAIN_UPPER.y - SLAB_THICKNESS, DOMAIN_LOWER.z),
-          Float3(DOMAIN_UPPER.x, DOMAIN_UPPER.y, DOMAIN_UPPER.z) },
+    const std::array<std::pair<atlas::Float3, atlas::Float3>, 6> sink_bounds = {
+        std::pair { atlas::Float3(-1.0f, -0.75f, -0.5f), atlas::Float3(-0.9f, 0.75f, 0.5f) },
+        std::pair { atlas::Float3(1.35f, -0.75f, -0.5f), atlas::Float3(1.5f, 0.75f, 0.5f) },
+        std::pair { atlas::Float3(-1.0f, -0.75f, -0.5f), atlas::Float3(1.5f, -0.6f, 0.5f) },
+        std::pair { atlas::Float3(-1.0f, 0.6f, -0.5f), atlas::Float3(1.5f, 0.75f, 0.5f) },
+        std::pair { atlas::Float3(-1.0f, -0.75f, -0.5f), atlas::Float3(1.5f, 0.75f, -0.4f) },
+        std::pair { atlas::Float3(-1.0f, -0.75f, 0.4f), atlas::Float3(1.5f, 0.75f, 0.5f) },
     };
 
-    for (const auto& face : faces) {
+    auto builder = atlas::System::builder();
+    builder.with_fluid(std::move(fluid))
+        .with_universe(std::move(universe))
+        .with_dt(dt)
+        .with_solver(atlas::DsmcSolver::builder().make_host_shared())
+        .with_emitter(inflow, freestream)
+        .with_collider(cylinder);
+
+    for (const auto& [lower, upper] : sink_bounds) {
         builder.with_sink(atlas::Sink(
-            atlas::VolumeSink::builder().with_unit(static_unit(box_geometry(face[0], face[1]))).build()));
+            atlas::VolumeSink::builder().with_unit(box_unit(lower, upper)).build()));
     }
 
     auto system = builder.build();
 
-    // Report the regime the case actually lands in, so a change to the weight, the
-    // cell size, or dt cannot quietly turn this into a free-molecular run.
-    const double occupancy   = (CELL_SIZE / FREESTREAM_SPEED) / DT;
-    const double cell_volume = CELL_SIZE * CELL_SIZE * CELL_SIZE;
-    const double density     = occupancy * STATISTICAL_WEIGHT / cell_volume;
-    const double mean_free_path
-        = 1.0 / (std::sqrt(2.0) * atlas::pi * N2_REFERENCE_DIAMETER * N2_REFERENCE_DIAMETER * density);
-
-    std::printf("cylinder: %d cells, dt=%.1e s, %zu steps\n", cell_count, DT, steps);
-    std::printf("freestream: n=%.3e m^-3, lambda=%.4f m, Kn=%.3f (D=0.5 m), ~%.0f particles/cell\n",
-                density,
-                mean_free_path,
-                mean_free_path / 0.5,
-                occupancy);
-    std::printf("%6s %12s %14s %10s\n", "step", "particles", "step_ms", "total_s");
-
-    const auto start = std::chrono::steady_clock::now();
+    std::printf("cylinder flow: cells=%d dt=%.1es steps=%zu\n", cell_count, system.dt(), steps);
 
     for (std::size_t step = 0; step < steps; ++step) {
-        const auto step_start = std::chrono::steady_clock::now();
-
         system.update();
-
-        const auto now = std::chrono::steady_clock::now();
-
-        const double step_ms = std::chrono::duration<double, std::milli>(now - step_start).count();
-        const double total_s = std::chrono::duration<double>(now - start).count();
-
-        if (step % 10 == 0 || step + 1 == steps) {
-            std::printf("%6zu %12zu %14.3f %10.3f\n",
+        if (system.step() % 10 == 0 || system.step() == steps) {
+            std::printf("step=%3zu particles=%5zu\n",
                         system.step(),
-                        system.fluid()->particle_count(),
-                        step_ms,
-                        total_s);
+                        system.fluid()->particle_count());
         }
     }
 
-    const double elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    const std::size_t particle_count = system.fluid()->particle_count();
+    const auto& position_data = system.fluid()->state<atlas::FluidPositionState>()->data();
+    const auto& velocity_data = system.fluid()->state<atlas::FluidVelocityState>()->data();
+    const atlas::HostBuffer<atlas::Float3> positions(position_data.begin(),
+                                                      position_data.begin() + particle_count);
+    const atlas::HostBuffer<atlas::Float3> velocities(velocity_data.begin(),
+                                                       velocity_data.begin() + particle_count);
 
-    std::printf("\n%zu steps in %.3f s (%.3f ms/step), %zu particles alive\n",
-                steps,
-                elapsed,
-                1000.0 * elapsed / static_cast<double>(steps),
-                system.fluid()->particle_count());
+    std::size_t downstream = 0;
+    double      mean_streamwise_velocity = 0.0;
+    for (std::size_t index = 0; index < particle_count; ++index) {
+        if (positions[index].x > cylinder_radius) ++downstream;
+        mean_streamwise_velocity += velocities[index].x;
+    }
+    if (particle_count > 0) {
+        mean_streamwise_velocity /= static_cast<double>(particle_count);
+    }
+
+    std::printf("completed: steps=%zu particles=%zu downstream=%zu mean_u=%.1fm/s\n",
+                system.step(),
+                particle_count,
+                downstream,
+                mean_streamwise_velocity);
     return 0;
 }

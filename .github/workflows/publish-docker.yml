@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build:
-    name: ${{ matrix.engine }} / Ubuntu ${{ matrix.ubuntu }}
+    name: ${{ matrix.variant }} / ${{ matrix.engine }} / Ubuntu ${{ matrix.ubuntu }}
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 120
@@ -27,6 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        variant: [python, interactive]
         engine: [tbb, cuda]
         ubuntu: ['22.04', '24.04']
     defaults:
@@ -43,6 +44,7 @@ jobs:
         id: image
         env:
           ATLAS_ENGINE: ${{ matrix.engine }}
+          ATLAS_VARIANT: ${{ matrix.variant }}
           UBUNTU_VERSION: ${{ matrix.ubuntu }}
         run: |
           python - <<'PY'
@@ -54,17 +56,20 @@ jobs:
           version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
           image = "ghcr.io/" + os.environ["GITHUB_REPOSITORY"].lower()
           engine = os.environ["ATLAS_ENGINE"]
+          variant = os.environ["ATLAS_VARIANT"]
           ubuntu = os.environ["UBUNTU_VERSION"]
-          suffix = f"{engine}-ubuntu{ubuntu}"
+          target = engine if variant == "python" else f"{engine}-interactive"
+          suffix = f"{engine}-ubuntu{ubuntu}" if variant == "python" else f"interactive-{engine}-ubuntu{ubuntu}"
           commit_tag = f"{suffix}-sha-{os.environ['GITHUB_SHA']}"
           tags = [commit_tag, f"{version}-{suffix}", suffix]
           if ubuntu == "22.04":
-              tags.append(engine)
+              tags.append(engine if variant == "python" else f"interactive-{engine}")
           if not all(re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}", tag) for tag in tags):
               raise ValueError("The package version must produce valid Docker tags")
           references = [f"{image}:{tag}" for tag in tags]
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
               print(f"version={version}", file=output)
+              print(f"target={target}", file=output)
               print(f"reference={references[0]}", file=output)
               print("tags<<IMAGE_TAGS", *references, "IMAGE_TAGS", sep="\n", file=output)
           PY
@@ -74,7 +79,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          target: ${{ matrix.engine }}
+          target: ${{ steps.image.outputs.target }}
           platforms: linux/amd64
           load: true
           push: false
@@ -86,9 +91,10 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=${{ steps.image.outputs.version }}
-          cache-from: type=gha,scope=docker-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }}
-          cache-to: type=gha,mode=max,scope=docker-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }},ignore-error=true
+          cache-from: type=gha,scope=docker-${{ matrix.variant }}-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }}
+          cache-to: type=gha,mode=max,scope=docker-${{ matrix.variant }}-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }},ignore-error=true
       - name: Check installed Python runtime
+        if: matrix.variant == 'python'
         env:
           TEST_IMAGE: ${{ steps.image.outputs.reference }}
           EXPECTED_ENGINE: ${{ matrix.engine }}
@@ -114,12 +120,19 @@ jobs:
           print(f"Atlas {atlas.__version__}: {expected}; NumPy {np.__version__}")
           PY
       - name: Run TBB simulation example
-        if: matrix.engine == 'tbb'
+        if: matrix.variant == 'python' && matrix.engine == 'tbb'
         env:
           TEST_IMAGE: ${{ steps.image.outputs.reference }}
         run: >-
           timeout 60s docker run --rm "$TEST_IMAGE"
           python -X faulthandler /opt/atlas/examples/python/cylinder.py
+      - name: Check native interactive runtime
+        if: matrix.variant == 'interactive'
+        env:
+          TEST_IMAGE: ${{ steps.image.outputs.reference }}
+        run: |
+          docker run --rm "$TEST_IMAGE" sh -c \
+            'command -v atlas-interactive && command -v atlas-interactive-example && ! ldd "$(command -v atlas-interactive)" | grep "not found"'
       - name: Log in to GHCR
         if: inputs.publish
         uses: docker/login-action@v3

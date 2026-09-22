@@ -4,12 +4,8 @@
 # Each case directory holds a `main.cu` — a standalone simulation driven straight
 # through the Atlas API. It follows the engine's toolchain (compiled as CUDA when
 # nvcc builds the engine, as plain C++ otherwise), so the .cu suffix names the
-# entry point, not the compiler. The assets directory is passed in as
-# ATLAS_EXAMPLE_ASSETS_DIR so a case can load a mesh without depending on the
-# working directory it is run from.
+# entry point, not the compiler.
 # ============================================================
-
-set(ATLAS_EXAMPLE_ASSETS_DIR "${PROJECT_SOURCE_DIR}/assets")
 
 # ------------------------------------------------------------
 # atlas_add_example(case_name relative_dir)
@@ -38,11 +34,6 @@ function(atlas_add_example case_name relative_dir)
     if (TARGET atlas)
         target_link_libraries(${target} PRIVATE atlas)
     endif ()
-
-    target_compile_definitions(${target}
-            PRIVATE
-            ATLAS_EXAMPLE_ASSETS_DIR="${ATLAS_EXAMPLE_ASSETS_DIR}"
-    )
 
     add_dependencies(atlas_examples ${target})
 endfunction()
