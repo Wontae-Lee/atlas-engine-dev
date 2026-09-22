@@ -2,6 +2,7 @@
 #include "rendering/renderer.h"
 #include "rendering/state/raw_state_provider.h"
 #include "rendering/target/window_target.h"
+#include "server/server.h"
 #include "session/session.h"
 
 #include <atlas/atlas.h>
@@ -16,7 +17,7 @@
 
 namespace {
 
-atlas::System
+atlas::SystemHostPtr
 make_system() {
     constexpr std::size_t particle_count = 64;
     std::array<atlas::Float3, particle_count> positions;
@@ -51,7 +52,7 @@ make_system() {
         .with_fluid(std::move(fluid))
         .with_universe(std::move(universe))
         .with_dt(0.02f)
-        .build();
+        .make_host_unique();
 }
 
 }
@@ -62,7 +63,8 @@ main(int argc, char** argv) {
         const std::size_t maximum_steps =
             argc > 1 ? std::strtoul(argv[1], nullptr, 10) : 0;
 
-        atlas::interactive::Session session(make_system());
+        atlas::interactive::Session session(make_system);
+        atlas::interactive::Server server(session);
         atlas::interactive::WindowTarget target(1280, 720, "Atlas Interactive Example");
         atlas::interactive::Renderer renderer(
             std::make_unique<atlas::interactive::RawStateProvider>());
@@ -71,16 +73,16 @@ main(int argc, char** argv) {
         renderer.camera().set_target({ 0.0f, 0.0f, 0.0f });
         renderer.initialize(target);
 
-        session.start();
+        server.handle({ atlas::interactive::Command::start });
         while (!target.should_close()
-               && (maximum_steps == 0 || session.system().step() < maximum_steps)) {
+               && (maximum_steps == 0 || session.status().step < maximum_steps)) {
             target.poll_events(renderer.camera());
             session.update();
-            renderer.render(session.system(), target);
+            renderer.render(session.render_view(), target);
         }
 
         renderer.shutdown();
-        session.close();
+        server.handle({ atlas::interactive::Command::close });
         return 0;
     } catch (const std::exception& error) {
         std::fprintf(stderr, "interactive example: %s\n", error.what());

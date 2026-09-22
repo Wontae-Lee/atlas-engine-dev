@@ -78,7 +78,13 @@ and a Python 3.8+ interpreter with development headers:
 
 ```bash
 git submodule update --init --recursive external/nanobind
-cmake -S . -B build/tbb -DATLAS_DEVICE_SYSTEM=TBB -DATLAS_PYTHON=ON -DATLAS_BENCHMARKS=OFF
+cmake -S . -B build/tbb \
+    -DATLAS_DEVICE_SYSTEM=TBB \
+    -DATLAS_PYTHON=ON \
+    -DATLAS_BENCHMARKS=OFF \
+    -DATLAS_EXAMPLES=OFF \
+    -DATLAS_INTERACTIVE=OFF \
+    -DATLAS_INTERACTIVE_RENDERING=OFF
 cmake --build build/tbb --target atlas_python
 ```
 
@@ -99,8 +105,8 @@ copies directly between an engine buffer and NumPy-owned memory. Under CUDA, a N
 request necessarily performs a device-to-host transfer because NumPy storage is CPU
 memory.
 
-The future interactive renderer consumes Atlas Core directly and does not route
-real-time state through Python or NumPy.
+The native interactive renderer consumes Atlas Core directly and does not route
+real-time state through Python or NumPy. See [interactive.md](interactive.md).
 
 ## Packaging a wheel and installing it later
 

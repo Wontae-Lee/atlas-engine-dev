@@ -1,18 +1,13 @@
 # ============================================================
 # Benchmark configuration for atlas-engine-dev
 #
-# Entered unconditionally from the top-level CMakeLists.txt; creates targets
-# only when ATLAS_BENCHMARKS is enabled.
+# Entered from the top-level CMakeLists.txt when ATLAS_BENCHMARKS is enabled.
 #
 # The four external reference projects (piclas, sparta, splishsplash, dumux)
 # were wired through ExternalProject_Add against directories that are not
 # registered in .gitmodules. They were removed with the engine restructuring and
 # will be written again.
 # ============================================================
-if (NOT ATLAS_BENCHMARKS)
-    return()
-endif ()
-
 # Google Benchmark backs the main.cpp cases. Atlas owns its benchmark targets, so
 # the upstream self-test targets stay off. The target check keeps this file safe
 # if another directory already provided benchmark::benchmark.

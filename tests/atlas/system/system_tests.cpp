@@ -8,10 +8,12 @@
 #include <atlas/geometry/geometry.h>
 #include <atlas/math/math.h>
 #include <atlas/generator/generator.h>
+#include <atlas/generator/uniform_generator.h>
 #include <atlas/sink/sink.h>
 #include <atlas/sink/volume_sink.h>
 #include <atlas/solver/solver.h>
 #include <atlas/source/source.h>
+#include <atlas/source/volume_source.h>
 #include <atlas/sync/sync.h>
 #include <atlas/unit/unit.h>
 #include <atlas/universe/universe.h>
@@ -46,6 +48,8 @@ using atlas::Unit;
 using atlas::Universe;
 using atlas::UniverseHostPtr;
 using atlas::VolumeSink;
+using atlas::VolumeSource;
+using atlas::UniformGenerator;
 
 /** @brief A fresh unit-box universe handle for wiring into a system. */
 UniverseHostPtr
@@ -96,6 +100,37 @@ make_volume_sink(const Float3& lower, const Float3& upper) {
                     .build();
 
     return Sink(VolumeSink::builder().with_unit(std::move(unit)).build());
+}
+
+SourceHostPtr
+make_volume_source() {
+    const SyncHostPtr sync = Sync::builder()
+                                 .with_rigid_pose(Float3(0.0f),
+                                                  Quaternion(1.0f, 0.0f, 0.0f, 0.0f))
+                                 .make_host_shared();
+    Unit unit = Unit::builder()
+                    .with_geometry(Geometry(Box::builder()
+                                                .with_lower_corner(Float3(-0.5f))
+                                                .with_upper_corner(Float3(0.5f))
+                                                .build()))
+                    .with_sync(sync)
+                    .build();
+    return atlas::make_host_shared<atlas::Source>(
+        atlas::Source(VolumeSource::builder()
+                          .with_unit(std::move(unit))
+                          .with_spacing(0.5f)
+                          .build()));
+}
+
+GeneratorHostPtr
+make_uniform_generator() {
+    return atlas::make_host_shared<atlas::Generator>(
+        atlas::Generator(UniformGenerator::builder()
+                             .with_species_ratios({ 1.0f })
+                             .with_species_numbers({ 0.0f })
+                             .with_min_value(0.0f)
+                             .with_max_value(0.0f)
+                             .build()));
 }
 
 /** @brief Copies the leading @p count survivor flags to the host. */
@@ -371,6 +406,47 @@ TEST(System, RemoveIsANoOpWithoutSinks) {
     system.remove();
 
     EXPECT_EQ(system.fluid()->particle_count(), 2u);
+}
+
+TEST(System, SourceSpawnCountsDescribeOnlyTheLatestEmitPhase) {
+    System system = System::builder()
+                        .with_fluid(Fluid::builder()
+                                        .with_buffer_size(64)
+                                        .with_particle_count(0)
+                                        .make_host_unique())
+                        .with_universe(make_universe_ptr())
+                        .with_emitter(make_volume_source(), make_uniform_generator())
+                        .with_dt(0.01f)
+                        .build();
+
+    system.emit();
+    ASSERT_EQ(system.source_spawned_last_step().size(), 1u);
+    EXPECT_GT(system.source_spawned_last_step()[0], 0);
+
+    system.fluid()->set_particle_count(system.fluid()->buffer_size());
+    system.emit();
+    EXPECT_EQ(system.source_spawned_last_step()[0], 0);
+}
+
+TEST(System, SinkRemovalCountsTheFirstClaimingSinkAndResetsEachStep) {
+    System system = System::builder()
+                        .with_fluid(make_fluid({ Float3(0.0f) }))
+                        .with_universe(make_universe_ptr())
+                        .with_sink(make_volume_sink(Float3(-1.0f), Float3(1.0f)))
+                        .with_sink(make_volume_sink(Float3(-2.0f), Float3(2.0f)))
+                        .with_dt(0.01f)
+                        .build();
+
+    system.remove();
+    const auto first = system.sink_removed_last_step();
+    ASSERT_EQ(first.size(), 2u);
+    EXPECT_EQ(first[0], 1);
+    EXPECT_EQ(first[1], 0);
+
+    system.remove();
+    const auto second = system.sink_removed_last_step();
+    EXPECT_EQ(second[0], 0);
+    EXPECT_EQ(second[1], 0);
 }
 
 TEST(System, SnapshotDirectoryNameFormatsTheStep) {

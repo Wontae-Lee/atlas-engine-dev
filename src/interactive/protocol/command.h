@@ -1,12 +1,14 @@
 #pragma once
 
-namespace atlas::interactive::transport {
+namespace atlas::interactive {
 
 enum class Command {
-    initialize,
     start,
     pause,
     step,
+    status,
+    save,
+    restart,
     close,
     shutdown
 };

@@ -32,9 +32,9 @@ Renderer::add_layer(std::unique_ptr<Layer> layer) {
 }
 
 void
-Renderer::render(const System& system, RenderTarget& target) {
+Renderer::render(const SimulationRenderView& view, RenderTarget& target) {
     if (!_initialized || !_provider) throw std::logic_error("Renderer is not initialized.");
-    const RenderState& state = _provider->update(system);
+    const RenderState& state = _provider->update(view);
     target.begin_frame();
     const float aspect = static_cast<float>(target.width()) / static_cast<float>(target.height());
     for (auto& layer : _layers) layer->render(state, _camera, aspect);

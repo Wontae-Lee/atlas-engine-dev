@@ -32,6 +32,7 @@ processed or saved by the application, or stored as binary state snapshots.
 | Run Python with Atlas and its dependencies in a container | [Docker](#start-with-docker) |
 | Use Atlas in your own Python environment | [Local Python installation](#install-python-locally) |
 | Build and run a C++ simulation | [C++ example](#run-the-c-example) |
+| Run the native real-time particle window | [Interactive renderer](#run-the-interactive-renderer) |
 
 The build examples below use the current source checkout and create local
 Docker tags. Published images can be used without building from source.
@@ -427,9 +428,45 @@ See the [example source](examples/cpp/cylinder/main.cu) to customize the flow,
 materials, and boundaries. C++ classes are in the `atlas::` namespace and can
 be included through `<atlas/atlas.h>`.
 
+## Run the interactive renderer
+
+The native interactive application advances a C++ `System` and renders every
+live particle in an OpenGL window after each simulation step. It does not route
+particle data through Python, NumPy, JSON, or a frontend process.
+
+Install the graphics development packages in addition to the C++ dependencies,
+then configure a TBB build:
+
+```bash
+sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev libglm-dev
+cmake --preset tbb-application-release
+cmake --build build/tbb-application-release --target atlas-interactive-example
+./build/tbb-application-release/examples/interactive/atlas-interactive-example
+```
+
+Pass a positive integer to stop automatically after that many steps. Use
+the `cuda-application-release` preset for CUDA/OpenGL interop. The execution/control
+library can also be built without graphics dependencies by setting
+`ATLAS_INTERACTIVE_RENDERING=OFF`.
+
+See the [interactive guide](docs/guidelines/interactive.md) for the Session
+command API, statistics and CSV output, rendering ownership, tests, Docker
+images, and current offscreen/transport limits.
+
+The `tbb` and `cuda` containers include the Python runtime and native
+executables. The backend remains the image identity; native rendering is an
+available capability:
+
+```bash
+docker build --target tbb -t atlas:tbb .
+docker run --rm -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    atlas:tbb atlas-interactive
+```
+
 ## Learn more
 
 - [Python API and state access](docs/guidelines/python.md)
+- [Interactive execution and rendering](docs/guidelines/interactive.md)
 - [Docker images and GPU configuration](docs/guidelines/docker.md)
 - [Simulation modules](docs/atlas/)
 - [Contributor documentation](docs/guidelines/README.md)

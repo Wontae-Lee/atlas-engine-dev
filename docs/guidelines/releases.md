@@ -13,7 +13,7 @@ tags, and GitHub releases do not trigger them.
 | [TBB CI](../../.github/workflows/tbb.yml) | GCC/G++ C++ tests on Ubuntu 22.04 and 24.04 | CTest logs on failure |
 | [Python CI](../../.github/workflows/python.yml) | TBB package installation, engine/version checks, all Python tests, and DSMC example on 22.04/Python 3.10 and 24.04/Python 3.12 | Source archive, wheel, and logs for each combination |
 | [Publish Python](../../.github/workflows/publish-python.yml) | TBB manylinux x86_64 wheels for CPython 3.9–3.13 and configured import/math checks | `python-sdist` and `python-wheels`; optional PyPI upload |
-| [Publish Docker](../../.github/workflows/publish-docker.yml) | TBB/CUDA runtime images for Ubuntu 22.04 and 24.04, Python dependency/import/math checks, and the TBB example | Optional GHCR upload and image references in the job summary |
+| [Publish Docker](../../.github/workflows/publish-docker.yml) | Complete TBB/CUDA runtime images for Ubuntu 22.04 and 24.04, Python dependency/import/math checks, native executable checks, and the TBB example | Optional GHCR upload and image references in the job summary |
 
 Open **Actions → workflow name → Run workflow** and select `main`.
 The C++ workflow builds only the aggregate `atlas_tests` target and selects
@@ -37,16 +37,19 @@ build and check the images without uploading them. No image archive is retained
 in that mode; each job records the references it built in its summary.
 
 The workflow builds four independent `linux/amd64` images from the checked-out
-Dockerfile: `tbb` and `cuda`, each on Ubuntu 22.04 and 24.04. It uses recursive
-submodule checkout, separate build caches, and two compiler jobs per image.
-The Dockerfile supplies the CUDA version and GPU architecture list.
+Dockerfile: `tbb` and `cuda`, each on Ubuntu 22.04 and 24.04. Every image contains
+the Python package, selected engine, maintained examples, and native Atlas
+executables. It uses recursive submodule checkout, separate build caches, and
+two compiler jobs per image. The Dockerfile supplies the CUDA version and GPU
+architecture list.
 
-Each image is loaded locally and checked before publication. Both engines must
+Each image is loaded locally and checked before publication. Every image must
 pass Python dependency checks, version and default-engine checks, NumPy import,
-and basic vector operations. The TBB image also runs the bundled DSMC example.
-When publication is enabled, the workflow pushes that checked local image
-without rebuilding it. Matrix jobs publish independently; a failure in one
-combination does not roll back another combination that has already published.
+basic vector operations, and native executable linkage checks. The TBB image
+also runs the bundled DSMC example. When publication is enabled, the workflow
+pushes that checked local image without rebuilding it. Matrix jobs publish
+independently; a failure in one combination does not roll back another
+combination that has already published.
 
 The registry path is `ghcr.io/<owner>/<repository>` in lowercase. For this
 repository it is `ghcr.io/wontae-lee/atlas-engine-dev`. The workflow uses the

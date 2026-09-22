@@ -5,15 +5,12 @@
 #include <memory>
 #include <vector>
 
-namespace atlas {
-class System;
-}
-
 namespace atlas::interactive {
 
 class Layer;
 class RenderTarget;
 class StateProvider;
+struct SimulationRenderView;
 
 class Renderer final {
 public:
@@ -22,7 +19,7 @@ public:
 
     void initialize(RenderTarget& target);
     void add_layer(std::unique_ptr<Layer> layer);
-    void render(const System& system, RenderTarget& target);
+    void render(const SimulationRenderView& view, RenderTarget& target);
     void shutdown();
 
     Camera& camera() noexcept;

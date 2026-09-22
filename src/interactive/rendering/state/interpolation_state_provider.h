@@ -6,7 +6,7 @@ namespace atlas::interactive {
 
 class InterpolationStateProvider final : public StateProvider {
 public:
-    const RenderState& update(const System& system) override;
+    const RenderState& update(const SimulationRenderView& view) override;
 };
 
 }

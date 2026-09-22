@@ -56,6 +56,7 @@ A few rules are easy to miss; everything else is in the linked docs.
 | Build, configure presets, or author tests | [guidelines/build-and-test.md](docs/guidelines/build-and-test.md) |
 | Check dependencies, benchmark cases, or C++ examples | [guidelines/dependencies.md](docs/guidelines/dependencies.md) |
 | Build or use the Python (`atlas`) bindings | [guidelines/python.md](docs/guidelines/python.md) |
+| Build or use native interactive execution and rendering | [guidelines/interactive.md](docs/guidelines/interactive.md) |
 | Build or use the TBB/CUDA Docker runtime and development images | [guidelines/docker.md](docs/guidelines/docker.md) |
 | Prepare release artifacts, publish Python packages, or update citation metadata | [guidelines/releases.md](docs/guidelines/releases.md) |
 

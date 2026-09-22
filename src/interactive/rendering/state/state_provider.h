@@ -1,17 +1,14 @@
 #pragma once
 
-namespace atlas {
-class System;
-}
-
 namespace atlas::interactive {
 
 struct RenderState;
+struct SimulationRenderView;
 
 class StateProvider {
 public:
     virtual ~StateProvider() = default;
-    virtual const RenderState& update(const System& system) = 0;
+    virtual const RenderState& update(const SimulationRenderView& view) = 0;
 };
 
 }

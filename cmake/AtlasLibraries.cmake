@@ -18,9 +18,15 @@ target_include_directories(atlas-core
 )
 
 if (ATLAS_USE_NVCC)
-    # Thrust ships with the CUDA toolkit; exposing its include dirs lets host-compiled
-    # consumers (e.g. the Python bindings) see the same Thrust headers as nvcc TUs.
-    target_include_directories(atlas-core INTERFACE "${CUDAToolkit_INCLUDE_DIRS}")
+    # CUDA 13 packages CCCL (including Thrust) below include/cccl, while older toolkits
+    # place Thrust directly below include. Host-compiled consumers need both layouts.
+    set(ATLAS_CUDA_PUBLIC_INCLUDE_DIRS ${CUDAToolkit_INCLUDE_DIRS})
+    foreach (ATLAS_CUDA_INCLUDE_DIR IN LISTS CUDAToolkit_INCLUDE_DIRS)
+        if (EXISTS "${ATLAS_CUDA_INCLUDE_DIR}/cccl")
+            list(APPEND ATLAS_CUDA_PUBLIC_INCLUDE_DIRS "${ATLAS_CUDA_INCLUDE_DIR}/cccl")
+        endif ()
+    endforeach ()
+    target_include_directories(atlas-core INTERFACE ${ATLAS_CUDA_PUBLIC_INCLUDE_DIRS})
 endif ()
 
 target_compile_definitions(atlas-core

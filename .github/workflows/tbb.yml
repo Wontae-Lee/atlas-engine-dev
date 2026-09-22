@@ -45,6 +45,8 @@ jobs:
           -DATLAS_PYTHON=OFF
           -DATLAS_BENCHMARKS=OFF
           -DATLAS_EXAMPLES=OFF
+          -DATLAS_INTERACTIVE=OFF
+          -DATLAS_INTERACTIVE_RENDERING=OFF
       - name: Build C++ tests
         run: cmake --build build/ci-tbb --target atlas_tests
       - name: Run C++ tests

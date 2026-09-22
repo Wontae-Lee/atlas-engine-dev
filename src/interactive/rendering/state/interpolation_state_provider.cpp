@@ -5,7 +5,7 @@
 namespace atlas::interactive {
 
 const RenderState&
-InterpolationStateProvider::update(const System&) {
+InterpolationStateProvider::update(const SimulationRenderView&) {
     throw std::logic_error("Interpolation requires stable particle identity and is not implemented.");
 }
 

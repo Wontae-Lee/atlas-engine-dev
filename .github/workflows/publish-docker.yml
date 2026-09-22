@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build:
-    name: ${{ matrix.variant }} / ${{ matrix.engine }} / Ubuntu ${{ matrix.ubuntu }}
+    name: ${{ matrix.engine }} / Ubuntu ${{ matrix.ubuntu }}
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 120
@@ -27,7 +27,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [python, interactive]
         engine: [tbb, cuda]
         ubuntu: ['22.04', '24.04']
     defaults:
@@ -44,7 +43,6 @@ jobs:
         id: image
         env:
           ATLAS_ENGINE: ${{ matrix.engine }}
-          ATLAS_VARIANT: ${{ matrix.variant }}
           UBUNTU_VERSION: ${{ matrix.ubuntu }}
         run: |
           python - <<'PY'
@@ -56,14 +54,13 @@ jobs:
           version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
           image = "ghcr.io/" + os.environ["GITHUB_REPOSITORY"].lower()
           engine = os.environ["ATLAS_ENGINE"]
-          variant = os.environ["ATLAS_VARIANT"]
           ubuntu = os.environ["UBUNTU_VERSION"]
-          target = engine if variant == "python" else f"{engine}-interactive"
-          suffix = f"{engine}-ubuntu{ubuntu}" if variant == "python" else f"interactive-{engine}-ubuntu{ubuntu}"
+          target = engine
+          suffix = f"{engine}-ubuntu{ubuntu}"
           commit_tag = f"{suffix}-sha-{os.environ['GITHUB_SHA']}"
           tags = [commit_tag, f"{version}-{suffix}", suffix]
           if ubuntu == "22.04":
-              tags.append(engine if variant == "python" else f"interactive-{engine}")
+              tags.append(engine)
           if not all(re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}", tag) for tag in tags):
               raise ValueError("The package version must produce valid Docker tags")
           references = [f"{image}:{tag}" for tag in tags]
@@ -91,10 +88,9 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=${{ steps.image.outputs.version }}
-          cache-from: type=gha,scope=docker-${{ matrix.variant }}-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }}
-          cache-to: type=gha,mode=max,scope=docker-${{ matrix.variant }}-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }},ignore-error=true
-      - name: Check installed Python runtime
-        if: matrix.variant == 'python'
+          cache-from: type=gha,scope=docker-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }}
+          cache-to: type=gha,mode=max,scope=docker-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }},ignore-error=true
+      - name: Check installed Atlas runtime
         env:
           TEST_IMAGE: ${{ steps.image.outputs.reference }}
           EXPECTED_ENGINE: ${{ matrix.engine }}
@@ -120,19 +116,18 @@ jobs:
           print(f"Atlas {atlas.__version__}: {expected}; NumPy {np.__version__}")
           PY
       - name: Run TBB simulation example
-        if: matrix.variant == 'python' && matrix.engine == 'tbb'
+        if: matrix.engine == 'tbb'
         env:
           TEST_IMAGE: ${{ steps.image.outputs.reference }}
         run: >-
           timeout 60s docker run --rm "$TEST_IMAGE"
           python -X faulthandler /opt/atlas/examples/python/cylinder.py
-      - name: Check native interactive runtime
-        if: matrix.variant == 'interactive'
+      - name: Check native executables
         env:
           TEST_IMAGE: ${{ steps.image.outputs.reference }}
         run: |
           docker run --rm "$TEST_IMAGE" sh -c \
-            'command -v atlas-interactive && command -v atlas-interactive-example && ! ldd "$(command -v atlas-interactive)" | grep "not found"'
+            'for executable in atlas-interactive atlas-interactive-example; do path="$(command -v "$executable")" && ! ldd "$path" | grep "not found" || exit 1; done'
       - name: Log in to GHCR
         if: inputs.publish
         uses: docker/login-action@v3
