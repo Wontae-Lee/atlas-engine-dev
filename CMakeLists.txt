@@ -13,16 +13,12 @@ cmake_minimum_required(VERSION 3.20)
 
 project(atlas-engine-dev LANGUAGES C CXX)
 
-include(CTest)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
+# Build configuration.
 # C++20, no compiler-specific extensions (consistent host/device behavior).
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Build options.
 #   ATLAS_DEVICE_SYSTEM : parallel backend, TBB (CPU) or CUDA (GPU)
 #   ATLAS_HOST_COMPILER : which compiler builds a TBB configuration
 #   ATLAS_LOGGING       : compiled logging library + feature macros
@@ -30,6 +26,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 #   ATLAS_PYTHON        : nanobind Python bindings (bindings/python/atlas)
 #   ATLAS_BENCHMARKS    : benchmark targets
 #   ATLAS_EXAMPLES      : standalone C++ example programs
+#   ATLAS_INTERACTIVE   : native interactive renderer
 set(ATLAS_DEVICE_SYSTEM "TBB" CACHE STRING "Parallel backend: TBB (CPU) or CUDA (GPU)")
 set_property(CACHE ATLAS_DEVICE_SYSTEM PROPERTY STRINGS TBB CUDA)
 
@@ -47,6 +44,10 @@ option(ATLAS_PYTHON       "Build the nanobind-based Python bindings" ON)
 option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" ON)
 option(ATLAS_EXAMPLES     "Build the example programs" ON)
 option(ATLAS_INTERACTIVE  "Build Atlas native interactive renderer" ON)
+
+include(CTest)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 if (NOT ATLAS_DEVICE_SYSTEM MATCHES "^(TBB|CUDA)$")
     message(FATAL_ERROR
