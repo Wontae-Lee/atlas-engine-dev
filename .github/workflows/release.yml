@@ -1,36 +1,51 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version (X.Y.Z); the vX.Y.Z tag must already exist
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
   verify-version:
-    name: Verify release tag
+    name: Verify release version and tag
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Match tag and project metadata
+      - name: Match version, project metadata, and existing tag
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
           python - <<'PY'
           import os
+          import subprocess
           from scripts.bump_version import SEMANTIC_VERSION, read_versions
 
-          tag = os.environ["RELEASE_TAG"]
-          if not tag.startswith("v") or SEMANTIC_VERSION.fullmatch(tag[1:]) is None:
-              raise SystemExit(f"Release tag must be vX.Y.Z, got {tag!r}")
-          tag_version = tag[1:]
+          if os.environ["GITHUB_REF"] != "refs/heads/main":
+              raise SystemExit("Release must be dispatched from main")
+          version = os.environ["RELEASE_VERSION"]
+          if SEMANTIC_VERSION.fullmatch(version) is None:
+              raise SystemExit(f"Release version must be X.Y.Z, got {version!r}")
+          tag = f"v{version}"
           versions = read_versions()
-          versions["tag"] = tag_version
+          versions["release input"] = version
           if len(set(versions.values())) != 1:
               raise SystemExit(f"Release versions do not match: {versions}")
-          print(f"Validated Atlas {tag_version}")
+          subprocess.run(
+              ["git", "fetch", "--no-tags", "origin", f"refs/tags/{tag}:refs/tags/{tag}"],
+              check=True,
+          )
+          tag_commit = subprocess.check_output(
+              ["git", "rev-list", "-n", "1", tag], text=True
+          ).strip()
+          if tag_commit != os.environ["GITHUB_SHA"]:
+              raise SystemExit(f"{tag} does not point to the dispatched main commit")
+          print(f"Validated Atlas {version} at {tag_commit}")
           PY
 
   build-python:
@@ -74,9 +89,10 @@ jobs:
       - name: Create release for existing tag
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v${{ inputs.version }}
         run: >-
-          gh release create "${GITHUB_REF_NAME}"
+          gh release create "${RELEASE_TAG}"
           --repo "${GITHUB_REPOSITORY}"
           --verify-tag
           --generate-notes
-          --title "${GITHUB_REF_NAME}"
+          --title "${RELEASE_TAG}"

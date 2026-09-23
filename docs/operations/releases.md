@@ -2,8 +2,8 @@
 
 Atlas release preparation is explicit: update metadata, validate the intended
 commit, create the semantic-version tag locally, and push that existing tag.
-The automation publishes from the tagged commit and does not modify source or
-citation metadata.
+Then manually dispatch the release workflow from `main`. The automation
+publishes the verified commit and does not modify source or citation metadata.
 
 ## Prepare release metadata
 
@@ -39,7 +39,7 @@ Review the metadata diff and run the relevant validation before committing it.
 Do not restore an older release DOI while preparing a new version because the
 new archive DOI does not exist yet.
 
-## Create the release tag
+## Create the release tag and run the workflow
 
 After the release commit is on `main`, create and push the tag yourself:
 
@@ -48,10 +48,12 @@ git tag -a vX.Y.Z -m "Atlas X.Y.Z"
 git push origin vX.Y.Z
 ```
 
-[`release.yml`](../../.github/workflows/release.yml) listens for `v*.*.*` tag
-pushes. Its first job rejects anything other than strict `vX.Y.Z` or any tag
-whose version differs from CMake, Python, or citation metadata. The workflow
-uses the pushed tag commit throughout and never creates another tag.
+After pushing the tag, open **Actions → Release → Run workflow**, select
+`main`, enter `X.Y.Z` in the version field, and start the run. The first job
+requires a strict `X.Y.Z` version matching CMake, Python, citation, and README
+metadata. It also verifies that the existing remote `vX.Y.Z` tag points to the
+selected `main` commit. If `main` has advanced since the tag was created,
+the verification rejects the run. The workflow never creates or moves a tag.
 
 After verification it calls the reusable Python workflow to build
 distributions and the Docker workflow to build and publish images. A job in
@@ -70,7 +72,7 @@ to PyPI through trusted publishing when dispatched from `main`.
 
 Configure PyPI Trusted Publishers for both entry-point workflows:
 
-| Field | Manual publication | Tag release |
+| Field | Manual publication | Release workflow |
 |---|---|---|
 | Repository owner | `Wontae-Lee` | `Wontae-Lee` |
 | Repository | `atlas-engine-dev` | `atlas-engine-dev` |
@@ -87,8 +89,8 @@ construction is documented in the [Python guide](../frontends/python.md).
 
 For a dry run, open **Actions → Publish Python → Run workflow**, select a ref,
 and leave **Publish the validated distributions to PyPI** disabled. Manual
-publishing is accepted only from `main`; tag publication is handled by
-`release.yml` after its version check.
+publishing is accepted only from `main`; a full release runs through the
+manually dispatched `release.yml` after its version check.
 
 ## Docker publication
 
