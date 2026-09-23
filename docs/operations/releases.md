@@ -7,11 +7,13 @@ citation metadata.
 
 ## Prepare release metadata
 
-The release version has three authoritative representations:
+The release version has three authoritative representations and one matching
+README citation reference:
 
 - root `project(... VERSION ...)` in [`CMakeLists.txt`](../../CMakeLists.txt),
 - `[project].version` in [`pyproject.toml`](../../pyproject.toml),
-- `version` in [`CITATION.cff`](../../CITATION.cff).
+- `version` in [`CITATION.cff`](../../CITATION.cff),
+- the citation sentence in [`README.md`](../../README.md).
 
 Update them together with:
 
@@ -19,9 +21,10 @@ Update them together with:
 python scripts/bump_version.py X.Y.Z
 ```
 
-The script accepts only strict `X.Y.Z` versions. It updates those three files,
+The script accepts only strict `X.Y.Z` versions. It updates all four files,
 sets `date-released` to the current date, removes the previous release-specific
-`doi:` from `CITATION.cff`, and verifies that all versions match. Missing or
+`doi:` from `CITATION.cff` and its link from the README, and verifies that all
+versions match. The README's concept DOI remains unchanged. Missing or
 ambiguous fields cause a failure; a failed write or verification restores the
 original files. The script also rejects the already-current version so it
 cannot remove that release's DOI by mistake. It does not commit, tag, push,

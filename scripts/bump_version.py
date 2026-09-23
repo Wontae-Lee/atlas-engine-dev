@@ -11,8 +11,14 @@ ROOT = Path(__file__).resolve().parents[1]
 CMAKE_PATH = ROOT / "CMakeLists.txt"
 PYPROJECT_PATH = ROOT / "pyproject.toml"
 CITATION_PATH = ROOT / "CITATION.cff"
+README_PATH = ROOT / "README.md"
 SEMANTIC_VERSION = re.compile(
     r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+)
+README_VERSION_PATTERN = re.compile(
+    r"(?P<prefix>^\[CITATION\.cff\]\(CITATION\.cff\) contains the citation metadata for version )"
+    r"(?P<version>[0-9]+\.[0-9]+\.[0-9]+)[.:]",
+    re.MULTILINE,
 )
 
 
@@ -69,6 +75,17 @@ def update_citation(text: str, version: str, release_date: str) -> str:
     return doi_pattern.sub("", text, count=1)
 
 
+def update_readme(text: str, version: str) -> str:
+    current = require_single(README_VERSION_PATTERN, text, "README.md citation version")
+    remainder = text[current.end() :]
+    if remainder.startswith("\n[doi:"):
+        doi = re.match(r"\n\[doi:[^\]\n]+\]\(https://doi\.org/[^)\n]+\)\.", remainder)
+        if doi is None:
+            raise MetadataError("Invalid README.md release DOI link")
+        remainder = remainder[doi.end() :]
+    return text[: current.start()] + current.group("prefix") + version + "." + remainder
+
+
 def read_versions() -> dict[str, str]:
     cmake_text = CMAKE_PATH.read_text()
     cmake_project = require_single(
@@ -96,10 +113,16 @@ def read_versions() -> dict[str, str]:
         CITATION_PATH.read_text(),
         "CITATION.cff version",
     ).group(1)
+    readme_version = require_single(
+        README_VERSION_PATTERN,
+        README_PATH.read_text(),
+        "README.md citation version",
+    ).group("version")
     return {
         "CMakeLists.txt": cmake_version,
         "pyproject.toml": python_version,
         "CITATION.cff": citation_version,
+        "README.md": readme_version,
     }
 
 
@@ -123,6 +146,7 @@ def main() -> None:
         CMAKE_PATH: CMAKE_PATH.read_text(),
         PYPROJECT_PATH: PYPROJECT_PATH.read_text(),
         CITATION_PATH: CITATION_PATH.read_text(),
+        README_PATH: README_PATH.read_text(),
     }
     updated = {
         CMAKE_PATH: update_cmake(originals[CMAKE_PATH], args.version),
@@ -130,6 +154,7 @@ def main() -> None:
         CITATION_PATH: update_citation(
             originals[CITATION_PATH], args.version, date.today().isoformat()
         ),
+        README_PATH: update_readme(originals[README_PATH], args.version),
     }
 
     try:
