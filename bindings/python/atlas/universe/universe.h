@@ -9,18 +9,10 @@
 #include <atlas/universe/universe.h>
 
 #include <nanobind/nanobind.h>
-#include <nanobind/ndarray.h>
 #include <nanobind/stl/filesystem.h>
-#include <nanobind/stl/optional.h>
-#include <nanobind/stl/shared_ptr.h>
-#include <nanobind/stl/string.h>
 #include <nanobind/stl/unique_ptr.h>
 
-#include <cstddef>
 #include <filesystem>
-#include <memory>
-#include <optional>
-#include <string>
 
 namespace nb = nanobind;
 using namespace nb::literals;

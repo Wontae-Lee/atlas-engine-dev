@@ -2,8 +2,6 @@
 
 #include <atlas/math/vector/float3.h>
 #include <atlas/random/default_random_engine.h>
-#include <atlas/random/seed.h>
-#include <atlas/random/uniform_real_distribution.h>
 #include <atlas/sampling/sampling.h>
 
 #include <nanobind/nanobind.h>

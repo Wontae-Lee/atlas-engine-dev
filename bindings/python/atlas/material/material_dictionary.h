@@ -1,13 +1,9 @@
 #pragma once
 
+#include <atlas/buffer/device_buffer.h>
 #include <atlas/buffer/host_buffer.h>
-#include <atlas/material/atom.h>
-#include <atlas/material/ion.h>
 #include <atlas/material/material.h>
 #include <atlas/material/material_dictionary.h>
-#include <atlas/material/molecule.h>
-#include <atlas/material/neutron.h>
-#include <atlas/material/solid.h>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>

@@ -2,18 +2,17 @@
 
 #include "../detail/ownership.h"
 
-#include <atlas/geometry/geometry.h>
-#include <atlas/math/quaternion.h>
 #include <atlas/math/vector/float3.h>
+#include <atlas/spatial/ray.h>
 #include <atlas/sync/sync.h>
 #include <atlas/unit/unit.h>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
-#include <nanobind/stl/string.h>
 
 #include <optional>
+#include <utility>
 
 namespace nb = nanobind;
 using namespace nb::literals;

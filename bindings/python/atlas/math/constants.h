@@ -3,17 +3,10 @@
 #include <atlas/math/math.h>
 
 #include <nanobind/nanobind.h>
-#include <nanobind/operators.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/pair.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/tuple.h>
 
-#include <limits>
-#include <new>
 #include <optional>
-#include <string>
-#include <tuple>
 #include <utility>
 
 namespace nb = nanobind;
