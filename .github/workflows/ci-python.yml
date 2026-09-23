@@ -1,19 +1,22 @@
 name: Python CI
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: python-${{ github.ref }}
+  group: python-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   test:
     name: Python ${{ matrix.python }} / ${{ matrix.os }} (TBB)
-    if: github.ref == 'refs/heads/main'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     strategy:

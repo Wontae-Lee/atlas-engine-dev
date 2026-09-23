@@ -132,7 +132,7 @@ LABEL org.opencontainers.image.title="Atlas Engine (CUDA)" \
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates python3 libgl1 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g && \
+        ca-certificates python3 libgl1 libopengl0 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=cuda-builder /opt/venv /opt/venv
@@ -157,7 +157,7 @@ LABEL org.opencontainers.image.title="Atlas Engine (TBB)" \
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates python3 libgl1 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g && \
+        ca-certificates python3 libgl1 libopengl0 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=tbb-builder /opt/venv /opt/venv

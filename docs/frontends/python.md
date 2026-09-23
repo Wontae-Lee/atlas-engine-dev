@@ -119,7 +119,7 @@ later versions, but on earlier interpreters the wheel is version-specific (e.g.
 `cp311`), so build one per target Python. Install and use it:
 
 ```bash
-pip install dist/tbb/atlas_engine-0.1.0-*.whl
+pip install dist/tbb/atlas_engine-*.whl
 python -c "import atlas; print(atlas.math.Bool3)"
 ```
 
@@ -183,6 +183,8 @@ call them from `module.cpp`, and add public names to the module's `__init__.py`.
 Include the matching nanobind caster
 for every STL argument or return type. Native source/header files are excluded
 from wheels; they remain in source distributions.
+The source-distribution include patterns are anchored at the repository root
+so local CMake build trees cannot contribute files to a release archive.
 
 The wheel smoke command checks math imports and operations. The simulation
 example uses the PascalCase classes exported from `atlas`.

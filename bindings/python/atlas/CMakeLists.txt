@@ -56,7 +56,7 @@ endif ()
 if (DEFINED SKBUILD_PROJECT_VERSION)
     target_compile_definitions(atlas_python PRIVATE ATLAS_VERSION_STRING="${SKBUILD_PROJECT_VERSION}")
 else ()
-    target_compile_definitions(atlas_python PRIVATE ATLAS_VERSION_STRING="0.1.0")
+    target_compile_definitions(atlas_python PRIVATE ATLAS_VERSION_STRING="${PROJECT_VERSION}")
 endif ()
 
 if (ATLAS_USE_NVCC AND ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")

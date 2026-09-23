@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-version:
+    name: Verify release tag
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Match tag and project metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          from scripts.bump_version import SEMANTIC_VERSION, read_versions
+
+          tag = os.environ["RELEASE_TAG"]
+          if not tag.startswith("v") or SEMANTIC_VERSION.fullmatch(tag[1:]) is None:
+              raise SystemExit(f"Release tag must be vX.Y.Z, got {tag!r}")
+          tag_version = tag[1:]
+          versions = read_versions()
+          versions["tag"] = tag_version
+          if len(set(versions.values())) != 1:
+              raise SystemExit(f"Release versions do not match: {versions}")
+          print(f"Validated Atlas {tag_version}")
+          PY
+
+  build-python:
+    needs: verify-version
+    uses: ./.github/workflows/publish-python.yml
+    permissions:
+      contents: read
+
+  publish-pypi:
+    needs: build-python
+    runs-on: ubuntu-22.04
+    environment:
+      name: pypi
+      url: https://pypi.org/p/atlas-engine
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: python-*
+          merge-multiple: true
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-docker:
+    needs: verify-version
+    uses: ./.github/workflows/publish-docker.yml
+    with:
+      publish: true
+    permissions:
+      contents: read
+      packages: write
+
+  github-release:
+    name: Create GitHub Release
+    needs: [publish-pypi, publish-docker]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Create release for existing tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${GITHUB_REF_NAME}"
+          --repo "${GITHUB_REPOSITORY}"
+          --verify-tag
+          --generate-notes
+          --title "${GITHUB_REF_NAME}"

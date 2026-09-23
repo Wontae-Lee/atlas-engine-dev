@@ -11,7 +11,11 @@
 
 cmake_minimum_required(VERSION 3.20)
 
-project(atlas-engine-dev LANGUAGES C CXX)
+project(
+        atlas-engine-dev
+        VERSION 0.1.0
+        LANGUAGES C CXX
+)
 
 # Build configuration.
 # C++20, no compiler-specific extensions (consistent host/device behavior).

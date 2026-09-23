@@ -19,12 +19,12 @@ docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 
 
 The engine tags are `tbb-ubuntu22.04`, `tbb-ubuntu24.04`, `cuda-ubuntu22.04`, and
 `cuda-ubuntu24.04`. Tags prefixed with the package version, such as
-`0.1.0-tbb-ubuntu22.04`, are also produced. The short `tbb` and `cuda` aliases
+`<version>-tbb-ubuntu22.04`, are also produced. The short `tbb` and `cuda` aliases
 use Ubuntu 22.04. A tag is available only after it has been published, and
 anonymous pulls require a public package.
 
 For workflow controls, permissions, and tag updates, see
-[releases.md](releases.md#build-or-publish-docker-images).
+[releases.md](releases.md#docker-publication).
 
 ## Runtime images
 
@@ -59,7 +59,15 @@ docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/main.py
 
 CUDA execution requires a compatible NVIDIA driver on the host and the
 [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
-configured for Docker. The host does not need a separate CUDA toolkit.
+configured for Docker. The CUDA Toolkit (`nvcc`) is needed for local CUDA
+compilation, but Docker GPU access depends on the NVIDIA Container Toolkit,
+not on the host CUDA Toolkit.
+If `docker run --gpus all` reports `failed to discover GPU vendor from CDI`,
+check that `nvidia-ctk` is installed on the host. On Ubuntu, follow NVIDIA's
+installation guide to install `nvidia-container-toolkit`, then configure Docker
+with `sudo nvidia-ctk runtime configure --runtime=docker` and restart the Docker
+daemon with `sudo systemctl restart docker`. This changes host Docker settings;
+rebuilding the Atlas image does not resolve a missing host runtime.
 
 ## Python and files
 

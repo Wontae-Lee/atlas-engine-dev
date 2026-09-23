@@ -66,13 +66,13 @@ wheel.license-files = [
     "external/json/LICENSE.MIT",
 ]
 sdist.include = [
-    "CMakeLists.txt", "CMakePresets.json", "cmake/**", "include/**", "src/**",
-    "bindings/**",
-    "external/nanobind/**", "external/tinyobj/**", "external/protobuf/**",
-    "external/json/**",
-    "external/googletest/**", "external/googlebenchmark/**",
-    "examples/**", "benchmarks/CMakeLists.txt", "tests/**", "scripts/**",
-    "LICENSE", "README.md", "CITATION.cff", "docs/**",
+    "/CMakeLists.txt", "/CMakePresets.json", "/cmake/**", "/include/**", "/src/**",
+    "/bindings/**",
+    "/external/nanobind/**", "/external/tinyobj/**", "/external/protobuf/**",
+    "/external/json/**",
+    "/external/googletest/**", "/external/googlebenchmark/**",
+    "/examples/**", "/benchmarks/CMakeLists.txt", "/tests/**", "/scripts/**",
+    "/LICENSE", "/README.md", "/CITATION.cff", "/docs/**",
     "!**/.git", "!**/.git/**", "!**/__pycache__/**",
 ]
 sdist.exclude = [
