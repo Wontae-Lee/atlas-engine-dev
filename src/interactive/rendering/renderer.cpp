@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements rendering orchestration without advancing simulation state.
+ */
+
 #include "rendering/renderer.h"
 
 #include "rendering/layer/layer.h"
@@ -36,6 +41,7 @@ Renderer::render(const SimulationSceneView& view, RenderTarget& target) {
     if (!_initialized || !_provider) throw std::logic_error("Renderer is not initialized.");
     const RenderState& state = _provider->update(view);
     target.begin_frame();
+    // Targets clamp their dimensions, so the projection always receives a valid aspect ratio.
     const float aspect = static_cast<float>(target.width()) / static_cast<float>(target.height());
     for (auto& layer : _layers) layer->render(state, _camera, aspect);
     target.end_frame();
@@ -45,6 +51,7 @@ Renderer::render(const SimulationSceneView& view, RenderTarget& target) {
 void
 Renderer::shutdown() {
     if (!_initialized) return;
+    // Destroy layers in reverse draw/initialization order while the context is still owned.
     for (auto iterator = _layers.rbegin(); iterator != _layers.rend(); ++iterator) {
         (*iterator)->shutdown();
     }

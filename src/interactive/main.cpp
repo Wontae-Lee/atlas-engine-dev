@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Provides the native interactive executable entry point.
+ */
+
 #include "protocol/command.h"
 #include "server/server.h"
 #include "transport/json_codec.h"
@@ -20,6 +25,7 @@
 
 namespace {
 
+/// Reads an entire simulation configuration file as UTF-8 text.
 std::string
 read_file(const std::string& path) {
     std::ifstream input(path);
@@ -54,6 +60,7 @@ main(int argc, char** argv) {
         std::condition_variable request_ready;
         bool input_closed = false;
 
+        // Blocking input runs separately so running sessions can continue advancing.
         std::thread reader([&] {
             atlas::interactive::Request request;
             atlas::interactive::Response parse_error;
@@ -77,6 +84,7 @@ main(int argc, char** argv) {
             std::optional<atlas::interactive::Request> request;
             {
                 std::unique_lock lock(request_mutex);
+                // Sleep only when no simulation needs periodic advancement.
                 if (requests.empty() && !input_closed && !server.has_running_sessions()) {
                     request_ready.wait(lock, [&] { return !requests.empty() || input_closed; });
                 }

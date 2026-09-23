@@ -1,13 +1,5 @@
-"""Run a compact DSMC nitrogen flow over a cylinder.
+"""Run a small freestream-over-cylinder simulation through the Python binding."""
 
-Install Atlas from the checkout, then run:
-
-    python examples/python/cylinder.py
-
-Pass a step count as the first argument to run a longer case.
-"""
-
-import sys
 from typing import Tuple
 
 import numpy as np
@@ -34,15 +26,16 @@ def box_unit(
     lower: Tuple[float, float, float],
     upper: Tuple[float, float, float],
 ) -> Unit:
+    """Create a stationary box boundary from lower and upper corners."""
     return Unit(Box(Float3(*lower), Float3(*upper)))
 
 
-def main() -> None:
+def run(steps: int = 40) -> None:
+    """Build the cylinder-flow case, advance it, and print a compact summary."""
     domain_lower = (-1.0, -0.75, -0.5)
     domain_upper = (1.5, 0.75, 0.5)
     cell_size = 0.1
     dt = 5.0e-5
-    steps = int(sys.argv[1]) if len(sys.argv) > 1 else 40
     freestream_speed = 500.0
     temperature = 300.0
     cylinder_radius = 0.2
@@ -88,6 +81,7 @@ def main() -> None:
         restitution=1.0,
     )
 
+    # Thin sink volumes remove particles after they leave any domain face.
     sinks = [
         VolumeSink(box_unit((-1.0, -0.75, -0.5), (-0.9, 0.75, 0.5))),
         VolumeSink(box_unit((1.35, -0.75, -0.5), (1.5, 0.75, 0.5))),
@@ -117,6 +111,7 @@ def main() -> None:
         if system.step % 10 == 0 or system.step == steps:
             print(f"step={system.step:3d} particles={system.fluid.particle_count:5d}")
 
+    # NumPy reads are owned snapshots used only for application-side analysis.
     positions = system.fluid.positions()
     velocities = system.fluid.velocities()
     downstream = int(np.count_nonzero(positions[:, 0] > cylinder_radius))
@@ -126,7 +121,3 @@ def main() -> None:
         f"completed: steps={system.step} particles={system.fluid.particle_count} "
         f"downstream={downstream} mean_u={mean_streamwise_velocity:.1f}m/s"
     )
-
-
-if __name__ == "__main__":
-    main()

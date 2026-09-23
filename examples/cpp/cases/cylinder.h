@@ -1,21 +1,34 @@
+/**
+ * @file
+ * @brief Defines the native cylinder-flow example case.
+ */
+
+#pragma once
+
 #include <atlas/atlas.h>
 
 #include <array>
 #include <cstddef>
 #include <cstdio>
-#include <cstdlib>
 #include <utility>
 
-namespace {
+namespace atlas_examples::cylinder {
 
-atlas::SyncHostPtr
+/// Creates the stationary identity transform shared by example boundary units.
+inline atlas::SyncHostPtr
 identity_sync() {
     return atlas::Sync::builder()
         .with_rigid_pose(atlas::Float3(0.0f), atlas::Quaternion(1.0f, 0.0f, 0.0f, 0.0f))
         .make_host_shared();
 }
 
-atlas::Unit
+/**
+ * @brief Creates a stationary box boundary unit.
+ * @param lower Lower box corner in world coordinates.
+ * @param upper Upper box corner in world coordinates.
+ * @return Unit containing the box and an identity transform.
+ */
+inline atlas::Unit
 box_unit(const atlas::Float3& lower, const atlas::Float3& upper) {
     const atlas::Geometry geometry(
         atlas::Box::builder().with_lower_corner(lower).with_upper_corner(upper).build());
@@ -25,15 +38,17 @@ box_unit(const atlas::Float3& lower, const atlas::Float3& upper) {
         .build();
 }
 
-}
-
-int
-main(int argc, char** argv) {
+/**
+ * @brief Runs a small freestream-over-cylinder DSMC simulation.
+ * @param steps Number of complete System updates to execute.
+ * @return Zero after the simulation and summary reporting complete.
+ */
+inline int
+run(const std::size_t steps = 40) {
     const atlas::Float3 domain_lower(-1.0f, -0.75f, -0.5f);
     const atlas::Float3 domain_upper(1.5f, 0.75f, 0.5f);
     const float         cell_size        = 0.1f;
     const float         dt               = 5.0e-5f;
-    const std::size_t   steps            = argc > 1 ? std::strtoul(argv[1], nullptr, 10) : 40;
     const float         freestream_speed = 500.0f;
     const float         temperature      = 300.0f;
     const float         cylinder_radius  = 0.2f;
@@ -99,6 +114,7 @@ main(int argc, char** argv) {
             .with_restitution(1.0f)
             .build());
 
+    // Thin sink volumes surround the domain so particles leaving any face are compacted away.
     const std::array<std::pair<atlas::Float3, atlas::Float3>, 6> sink_bounds = {
         std::pair { atlas::Float3(-1.0f, -0.75f, -0.5f), atlas::Float3(-0.9f, 0.75f, 0.5f) },
         std::pair { atlas::Float3(1.35f, -0.75f, -0.5f), atlas::Float3(1.5f, 0.75f, 0.5f) },
@@ -134,6 +150,7 @@ main(int argc, char** argv) {
         }
     }
 
+    // Copy only the live prefix back to the host for final application-side analysis.
     const std::size_t particle_count = system.fluid()->particle_count();
     const auto& position_data = system.fluid()->state<atlas::FluidPositionState>()->data();
     const auto& velocity_data = system.fluid()->state<atlas::FluidVelocityState>()->data();
@@ -158,4 +175,6 @@ main(int argc, char** argv) {
                 downstream,
                 mean_streamwise_velocity);
     return 0;
+}
+
 }

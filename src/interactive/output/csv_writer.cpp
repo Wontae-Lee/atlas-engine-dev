@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements CSV output for interactive simulation statistics.
+ */
+
 #include "output/csv_writer.h"
 
 #include "statistics/simulation_sample.h"
@@ -19,6 +24,7 @@ CsvWriter::CsvWriter(const std::filesystem::path& path,
     _stream.open(path, std::ios::out | std::ios::trunc);
     if (!_stream) throw std::runtime_error("Failed to open interactive CSV output: " + path.string());
 
+    // Boundary counts fix the schema for the lifetime of this writer.
     _stream << "step,time,particle_count";
     for (std::size_t index = 0; index < source_count; ++index) {
         _stream << ",source_" << index << "_spawned";

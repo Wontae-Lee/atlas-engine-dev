@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements Atlas core system construction from interactive configuration.
+ */
+
 #include "config/system_factory.h"
 
 #include <atlas/atlas.h>
@@ -9,16 +14,19 @@ namespace atlas::interactive {
 
 namespace {
 
+/// Converts a configuration vector to the Atlas math representation.
 Float3
 vec3(const SimulationConfig::Vec3& value) {
     return Float3(value[0], value[1], value[2]);
 }
 
+/// Converts a scalar-first configuration quaternion to Atlas.
 Quaternion
 quat(const SimulationConfig::Quat& value) {
     return Quaternion(value[0], value[1], value[2], value[3]);
 }
 
+/// Initializes a mandatory particle state after validating its live length.
 template <typename State, typename Value>
 void
 set_fluid_state(Fluid& fluid,
@@ -33,6 +41,7 @@ set_fluid_state(Fluid& fluid,
     atlas::copy_host_to_device(values.data(), state->data(), values.size());
 }
 
+/// Creates and initializes an explicitly configured optional particle state.
 template <typename State, typename Value>
 void
 set_optional_fluid_state(Fluid& fluid,
@@ -48,6 +57,7 @@ set_optional_fluid_state(Fluid& fluid,
     }
 }
 
+/// Creates one optional cell state when it appears in configuration.
 template <typename State, typename Value>
 void
 set_universe_state(Universe& universe, const std::optional<std::vector<Value>>& values) {
@@ -59,6 +69,7 @@ set_universe_state(Universe& universe, const std::optional<std::vector<Value>>& 
     atlas::copy_host_to_device(values->data(), state.data(), values->size());
 }
 
+/// Converts one material configuration into its Atlas tagged union.
 Material
 make_material(const SimulationConfig::Material& config) {
     const auto arguments = [&config](auto constructor) {
@@ -86,6 +97,7 @@ make_material(const SimulationConfig::Material& config) {
     throw std::invalid_argument("Unknown material type.");
 }
 
+/// Converts configured geometry while preserving triangle-mesh ownership.
 Geometry
 make_geometry(const SimulationConfig::Geometry& config,
               std::vector<atlas::host_shared_ptr<TriangleMesh>>& mesh_owners,
@@ -129,6 +141,7 @@ make_geometry(const SimulationConfig::Geometry& config,
                             .with_vertices(vec3(config.a), vec3(config.b), vec3(config.c))
                             .build());
     case SimulationConfig::GeometryKind::triangle_mesh: {
+        // Geometry stores a device view, so the factory keeps each owning mesh alive.
         if (mesh_index == mesh_owners.size()) {
             HostBuffer<TriangleContainer4> triangles;
             triangles.reserve(config.triangles.size());
@@ -158,6 +171,7 @@ make_geometry(const SimulationConfig::Geometry& config,
     throw std::invalid_argument("Unknown geometry type.");
 }
 
+/// Builds one moving boundary unit from geometry and kinematics.
 Unit
 make_unit(const SimulationConfig::Unit& config,
           std::vector<atlas::host_shared_ptr<TriangleMesh>>& mesh_owners,
@@ -177,6 +191,7 @@ make_unit(const SimulationConfig::Unit& config,
     return builder.build();
 }
 
+/// Builds the configured surface or volume source.
 SourceHostPtr
 make_source(const SimulationConfig::Source& config,
             std::vector<atlas::host_shared_ptr<TriangleMesh>>& mesh_owners,
@@ -196,6 +211,7 @@ make_source(const SimulationConfig::Source& config,
                                                      .build()));
 }
 
+/// Builds a particle generator and connects material-dependent sampling.
 GeneratorHostPtr
 make_generator(const SimulationConfig::Generator& config,
                const MaterialDictionaryHostPtr& materials) {
@@ -264,6 +280,7 @@ atlas::SystemHostPtr
 SystemFactory::create() {
     std::size_t mesh_index = 0;
 
+    // Material ownership is shared by Fluid and generators that derive species masses.
     MaterialDictionaryHostPtr materials;
     if (!_config.fluid.materials.empty()) {
         auto builder = MaterialDictionary::builder();
@@ -287,6 +304,7 @@ SystemFactory::create() {
                      .with_materials(materials)
                      .make_host_unique();
 
+    // Convert transport-friendly arrays once before copying the live prefix to the backend.
     std::vector<Float3> positions;
     positions.reserve(_config.fluid.position.size());
     for (const auto& value : _config.fluid.position) positions.push_back(vec3(value));

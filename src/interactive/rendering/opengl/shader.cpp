@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements shader compilation, linking, and ownership.
+ */
+
 #include "rendering/opengl/shader.h"
 
 #include <GL/glew.h>
@@ -28,6 +33,7 @@ Shader::Shader(const std::string_view vertex_source, const std::string_view frag
             throw std::runtime_error("OpenGL program link failed: " + log);
         }
     } catch (...) {
+        // Construction must not leak the first shader when later compilation or linking fails.
         if (_id != 0) glDeleteProgram(_id);
         glDeleteShader(vertex);
         if (fragment != 0) glDeleteShader(fragment);

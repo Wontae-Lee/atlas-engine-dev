@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements geometry tessellation and line rendering.
+ */
+
 #include "rendering/layer/geometry_layer.h"
 
 #include "rendering/camera.h"
@@ -17,8 +22,8 @@ namespace atlas::interactive {
 
 namespace {
 
-constexpr int segments = 32;
-constexpr float pi = 3.14159265358979323846f;
+constexpr int segments = 32; ///< Fixed wireframe resolution for curved primitives.
+constexpr float pi = 3.14159265358979323846f; ///< Single-precision circle constant.
 
 constexpr const char* vertex_shader = R"(
 #version 330 core
@@ -38,17 +43,20 @@ void main() {
 }
 )";
 
+/// Converts transport-friendly vector storage to Atlas math storage.
 Float3
 point(const SimulationConfig::Vec3& value) {
     return Float3(value[0], value[1], value[2]);
 }
 
+/// Appends one line segment as two GL_LINES vertices.
 void
 line(std::vector<Float3>& vertices, const Float3& a, const Float3& b) {
     vertices.push_back(a);
     vertices.push_back(b);
 }
 
+/// Transforms and appends a local-space line segment.
 void
 world_line(std::vector<Float3>& vertices,
            const Sync& sync,
@@ -57,6 +65,7 @@ world_line(std::vector<Float3>& vertices,
     line(vertices, sync.sync_to_world(a), sync.sync_to_world(b));
 }
 
+/// Builds a stable tangent basis around a possibly degenerate normal.
 std::pair<Float3, Float3>
 basis(const Float3& normal) {
     const Float3 n = atlas::normalized_or(normal, Float3(0.0f, 0.0f, 1.0f));
@@ -68,6 +77,7 @@ basis(const Float3& normal) {
     return { u, atlas::cross(n, u) };
 }
 
+/// Appends a segmented local-space circle transformed into world space.
 void
 circle(std::vector<Float3>& vertices,
        const Sync& sync,
@@ -85,6 +95,7 @@ circle(std::vector<Float3>& vertices,
     }
 }
 
+/// Appends the twelve edges of an axis-aligned local-space box.
 void
 box(std::vector<Float3>& vertices,
     const Sync& sync,
@@ -104,6 +115,7 @@ box(std::vector<Float3>& vertices,
     for (const auto& edge : edges) world_line(vertices, sync, corners[edge[0]], corners[edge[1]]);
 }
 
+/// Appends wireframe vertices for the concrete configured geometry kind.
 void
 append_geometry_vertices(std::vector<Float3>& vertices,
                          const GeometryRenderView& view,
@@ -138,6 +150,7 @@ append_geometry_vertices(std::vector<Float3>& vertices,
     case SimulationConfig::GeometryKind::plane: {
         const Float3 normal = atlas::normalized_or(point(geometry.normal), Float3(0.0f, 0.0f, 1.0f));
         const auto [u, v] = basis(normal);
+        // Infinite planes use the domain span to choose a useful display extent.
         const float extent = std::max({ domain_upper.x - domain_lower.x,
                                         domain_upper.y - domain_lower.y,
                                         domain_upper.z - domain_lower.z, 1.0f });
@@ -219,6 +232,7 @@ GeometryLayer::make_line_vertices(const GeometryRenderView& view,
 
 void
 GeometryLayer::initialize() {
+    // The direct OpenGL upload relies on Float3 matching a tightly packed vec3.
     static_assert(std::is_trivially_copyable_v<Float3>);
     static_assert(sizeof(Float3) == 3 * sizeof(float));
     _shader = opengl::Shader(vertex_shader, fragment_shader);

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements newline-delimited JSON request and response transport.
+ */
+
 #include "transport/json_lines_transport.h"
 
 #include "transport/json_codec.h"
@@ -22,6 +27,7 @@ JsonLinesTransport::receive(Request& request, Response& error) {
             request = JsonCodec::decode_request(line);
             return true;
         } catch (const std::exception& exception) {
+            // A malformed line produces an error response without terminating the channel.
             error = {};
             error.error = exception.what();
             send(error);
@@ -32,6 +38,7 @@ JsonLinesTransport::receive(Request& request, Response& error) {
 
 void
 JsonLinesTransport::send(const Response& response) {
+    // Hold the lock through flush so concurrent responses cannot share one JSON line.
     const std::lock_guard lock(_output_mutex);
     *_output << JsonCodec::encode_response(response) << '\n';
     _output->flush();

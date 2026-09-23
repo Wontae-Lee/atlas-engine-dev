@@ -81,7 +81,7 @@ jobs:
           2>&1 | tee logs/tests.log
       - name: Run cylinder-flow Python example
         run: >-
-          timeout 60s python -X faulthandler examples/python/cylinder.py
+          timeout 60s python -X faulthandler examples/python/main.py
           2>&1 | tee logs/example.log
       - uses: actions/upload-artifact@v4
         with:

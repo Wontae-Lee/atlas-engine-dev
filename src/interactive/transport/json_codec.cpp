@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements strict JSON decoding and response encoding.
+ */
+
 #include "transport/json_codec.h"
 
 #include <nlohmann/json.hpp>
@@ -14,6 +19,7 @@ namespace {
 using Json = nlohmann::json;
 using Config = SimulationConfig;
 
+/// Maps a protocol spelling to an enum and rejects unknown values.
 template <typename Enum>
 Enum
 enum_value(const std::string& value,
@@ -25,6 +31,7 @@ enum_value(const std::string& value,
     throw std::invalid_argument(std::string("Invalid ") + field + ": " + value);
 }
 
+/// Decodes a strict three-component floating-point array.
 Config::Vec3
 vec3(const Json& value) {
     if (!value.is_array() || value.size() != 3) {
@@ -33,6 +40,7 @@ vec3(const Json& value) {
     return { value.at(0).get<float>(), value.at(1).get<float>(), value.at(2).get<float>() };
 }
 
+/// Decodes a strict scalar-first quaternion array.
 Config::Quat
 quat(const Json& value) {
     if (!value.is_array() || value.size() != 4) {
@@ -42,17 +50,20 @@ quat(const Json& value) {
              value.at(2).get<float>(), value.at(3).get<float>() };
 }
 
+/// Overwrites target only when an optional JSON member is present.
 template <typename T>
 void
 read(const Json& object, const char* name, T& target) {
     if (object.contains(name)) target = object.at(name).get<T>();
 }
 
+/// Reads an optional vector member with strict component validation.
 void
 read_vec3(const Json& object, const char* name, Config::Vec3& target) {
     if (object.contains(name)) target = vec3(object.at(name));
 }
 
+/// Decodes an optional scalar array while preserving absence.
 template <typename T>
 std::optional<std::vector<T>>
 optional_array(const Json& object, const char* name) {
@@ -60,6 +71,7 @@ optional_array(const Json& object, const char* name) {
     return object.at(name).get<std::vector<T>>();
 }
 
+/// Decodes an optional array of strict three-component vectors.
 std::optional<std::vector<Config::Vec3>>
 optional_vec3_array(const Json& object, const char* name) {
     if (!object.contains(name)) return std::nullopt;
@@ -68,6 +80,7 @@ optional_vec3_array(const Json& object, const char* name) {
     return result;
 }
 
+/// Decodes one material configuration object.
 Config::Material
 material(const Json& value) {
     Config::Material result;
@@ -90,6 +103,7 @@ material(const Json& value) {
     return result;
 }
 
+/// Decodes one geometry configuration object.
 Config::Geometry
 geometry(const Json& value) {
     Config::Geometry result;
@@ -130,6 +144,7 @@ geometry(const Json& value) {
     return result;
 }
 
+/// Decodes one geometry unit and its optional kinematics.
 Config::Unit
 unit(const Json& value) {
     Config::Unit result;
@@ -147,6 +162,7 @@ unit(const Json& value) {
     return result;
 }
 
+/// Decodes initial Fluid storage and state arrays.
 Config::Fluid
 fluid(const Json& value) {
     Config::Fluid result;
@@ -170,6 +186,7 @@ fluid(const Json& value) {
     return result;
 }
 
+/// Decodes the Universe domain and optional cell states.
 Config::Universe
 universe(const Json& value) {
     Config::Universe result;
@@ -186,6 +203,7 @@ universe(const Json& value) {
     return result;
 }
 
+/// Decodes one DSMC solver configuration.
 Config::Solver
 solver(const Json& value) {
     Config::Solver result;
@@ -200,6 +218,7 @@ solver(const Json& value) {
     return result;
 }
 
+/// Decodes one particle-source configuration.
 Config::Source
 source(const Json& value) {
     Config::Source result;
@@ -214,6 +233,7 @@ source(const Json& value) {
     return result;
 }
 
+/// Decodes one emitted-particle generator configuration.
 Config::Generator
 generator(const Json& value) {
     Config::Generator result;
@@ -238,6 +258,7 @@ generator(const Json& value) {
     return result;
 }
 
+/// Decodes one isothermal collider configuration.
 Config::Collider
 collider(const Json& value) {
     Config::Collider result;
@@ -253,6 +274,7 @@ collider(const Json& value) {
     return result;
 }
 
+/// Decodes one particle-sink configuration.
 Config::Sink
 sink(const Json& value) {
     Config::Sink result;
@@ -267,6 +289,7 @@ sink(const Json& value) {
     return result;
 }
 
+/// Decodes optional Knudsen codec parameters.
 Config::Codec
 codec(const Json& value) {
     Config::Codec result;
@@ -280,6 +303,7 @@ codec(const Json& value) {
     return result;
 }
 
+/// Decodes a complete simulation description from a JSON object.
 SimulationConfig
 simulation(const Json& value) {
     SimulationConfig result;
@@ -305,6 +329,7 @@ simulation(const Json& value) {
     return result;
 }
 
+/// Decodes application-owned output policy.
 OutputConfig
 output(const Json& value) {
     OutputConfig result;
@@ -316,6 +341,7 @@ output(const Json& value) {
     return result;
 }
 
+/// Maps a protocol command spelling to its enum value.
 Command
 command(const std::string& value) {
     return enum_value<Command>(
@@ -328,6 +354,7 @@ command(const std::string& value) {
         "command");
 }
 
+/// Returns the stable wire spelling for a session state.
 const char*
 state_name(const SessionState state) {
     switch (state) {
@@ -352,6 +379,7 @@ JsonCodec::decode_request(const std::string_view text) {
     result.request_id = value.value("request_id", "");
     result.command = command(value.at("command").get<std::string>());
     if (value.contains("session_id")) result.session_id = value.at("session_id").get<std::uint64_t>();
+    // Accept the flat form for local tools while preserving the protocol payload form.
     const Json& payload = value.contains("payload") ? value.at("payload") : value;
     if (payload.contains("step_count")) result.step_count = payload.at("step_count").get<std::size_t>();
     if (payload.contains("path")) result.path = payload.at("path").get<std::string>();

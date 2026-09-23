@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements simulation stepping, restart, persistence, and reporting.
+ */
+
 #include "session/session.h"
 
 #include "output/csv_writer.h"
@@ -15,6 +20,7 @@ namespace atlas::interactive {
 
 namespace {
 
+/// Creates a byte view over the live prefix of a mandatory Fluid state.
 template <typename State, typename Value>
 SimulationBufferView
 required_buffer(const Fluid& fluid, const std::size_t count) {
@@ -23,6 +29,7 @@ required_buffer(const Fluid& fluid, const std::size_t count) {
     return { atlas::raw_pointer_cast(state->data().data()), count * sizeof(Value) };
 }
 
+/// Creates a byte view only when an optional Fluid state exists.
 template <typename State, typename Value>
 std::optional<SimulationBufferView>
 optional_buffer(const Fluid& fluid, const std::size_t count) {
@@ -96,6 +103,7 @@ Session::scene_view() const {
     result.lower_corner = _system->universe()->lower_corner();
     result.upper_corner = _system->universe()->upper_corner();
 
+    // Configuration owns geometry descriptions; System exposes their current transforms.
     const SimulationConfig& config = _factory.config();
     const auto source_syncs = _system->source_syncs();
     const auto collider_syncs = _system->collider_syncs();
@@ -149,6 +157,7 @@ Session::step(const std::size_t count) {
 
 void
 Session::advance_once() {
+    // Statistics observe the completed core step and never participate in core execution.
     _system->update();
     const SimulationSample sample = collect_sample();
     _statistics.update(sample);
@@ -164,6 +173,7 @@ Session::save(const std::filesystem::path& path) {
 
 void
 Session::restart() {
+    // Destroy the old report stream before truncating the same destination on reconfigure.
     _csv_writer.reset();
     _system.reset();
     initialize();

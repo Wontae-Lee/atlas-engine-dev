@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements offscreen framebuffer allocation and binding.
+ */
+
 #include "rendering/opengl/framebuffer.h"
 
 #include <GL/glew.h>
@@ -27,6 +32,7 @@ Framebuffer::resize(const int width, const int height) {
     bind();
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _color_texture, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _depth_buffer);
+    // Validate attachment compatibility before exposing the resized framebuffer.
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         unbind();
         throw std::runtime_error("OpenGL framebuffer is incomplete.");

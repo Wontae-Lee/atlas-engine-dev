@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements accumulation of per-step simulation statistics.
+ */
+
 #include "statistics/simulation_statistics.h"
 
 #include <stdexcept>
@@ -7,6 +12,7 @@ namespace atlas::interactive {
 void
 SimulationStatistics::update(const SimulationSample& sample) {
     if (_sample_count == 0) {
+        // The first sample establishes the stable source/sink topology.
         _total_source_spawned.assign(sample.source_spawned.size(), 0);
         _total_sink_removed.assign(sample.sink_removed.size(), 0);
     }

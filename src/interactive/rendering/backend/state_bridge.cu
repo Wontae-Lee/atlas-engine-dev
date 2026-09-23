@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements CUDA/OpenGL simulation-buffer transfers.
+ */
+
 #include "rendering/backend/state_bridge.h"
 
 #include "rendering/opengl/buffer.h"
@@ -14,6 +19,7 @@ namespace atlas::interactive {
 
 namespace {
 
+/// Converts a CUDA status into an exception with operation context.
 void
 check_cuda(const cudaError_t result, const char* operation) {
     if (result == cudaSuccess) return;
@@ -22,10 +28,11 @@ check_cuda(const cudaError_t result, const char* operation) {
 
 }
 
+/// CUDA registrations and fallback storage owned by one bridge.
 struct StateBridge::Impl {
-    std::unordered_map<unsigned int, cudaGraphicsResource*> resources;
-    std::vector<std::byte> staging;
-    bool interop_available = true;
+    std::unordered_map<unsigned int, cudaGraphicsResource*> resources; ///< Persistent VBO registrations.
+    std::vector<std::byte> staging; ///< Host fallback when graphics interop is unavailable.
+    bool interop_available = true; ///< False after the first registration failure.
 };
 
 StateBridge::StateBridge()
@@ -59,6 +66,7 @@ StateBridge::upload(const SimulationBufferView& source_view,
 
     const bool grows = bytes > target.capacity();
     if (grows && target.id() != 0) {
+        // OpenGL may replace storage on growth, invalidating the CUDA registration.
         const auto found = _impl->resources.find(target.id());
         if (found != _impl->resources.end()) {
             check_cuda(cudaGraphicsUnregisterResource(found->second),
@@ -71,6 +79,7 @@ StateBridge::upload(const SimulationBufferView& source_view,
     opengl::Buffer::unbind();
 
     if (_impl->interop_available) {
+        // Keep registrations across frames so steady-state uploads only map, copy, and unmap.
         auto [entry, inserted] = _impl->resources.try_emplace(target.id(), nullptr);
         if (inserted) {
             const cudaError_t result = cudaGraphicsGLRegisterBuffer(
@@ -109,6 +118,7 @@ StateBridge::upload(const SimulationBufferView& source_view,
         }
     }
 
+    // A host staging path keeps rendering functional on systems without CUDA/GL interop.
     _impl->staging.resize(bytes);
     check_cuda(cudaMemcpy(_impl->staging.data(), source, bytes, cudaMemcpyDeviceToHost),
                "CUDA-to-host staging copy failed");

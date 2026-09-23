@@ -1,3 +1,4 @@
+# Execution and protocol support remain independent of graphics dependencies.
 set(ATLAS_INTERACTIVE_EXECUTION_SOURCES
         config/system_factory.cpp
         session/session.cpp
@@ -37,6 +38,7 @@ install(
 )
 
 if (NOT ATLAS_INTERACTIVE_RENDERING)
+    # Keep headless command/session tests available without OpenGL, GLFW, GLEW, or GLM.
     if (ATLAS_ENABLE_TESTS)
         add_subdirectory("${CMAKE_SOURCE_DIR}/tests/interactive" "${CMAKE_BINARY_DIR}/tests/interactive")
     endif ()
@@ -63,12 +65,14 @@ set(ATLAS_INTERACTIVE_RENDERING_SOURCES
 )
 
 if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
+    # Exactly one backend bridge implements the common StateBridge interface.
     list(APPEND ATLAS_INTERACTIVE_RENDERING_SOURCES rendering/backend/state_bridge.cu)
 else ()
     list(APPEND ATLAS_INTERACTIVE_RENDERING_SOURCES rendering/backend/state_bridge.cpp)
 endif ()
 
 if (TARGET OpenGL::OpenGL)
+    # Prefer the vendor-neutral GLVND target and retain compatibility with legacy FindOpenGL.
     set(ATLAS_INTERACTIVE_OPENGL_TARGET OpenGL::OpenGL)
 else ()
     set(ATLAS_INTERACTIVE_OPENGL_TARGET OpenGL::GL)

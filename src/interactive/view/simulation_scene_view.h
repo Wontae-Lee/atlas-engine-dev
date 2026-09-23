@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Defines the complete non-owning scene consumed by rendering.
+ */
+
 #pragma once
 
 #include "view/geometry_render_view.h"
@@ -9,11 +14,12 @@
 
 namespace atlas::interactive {
 
+/// Complete non-owning scene description consumed by StateProvider.
 struct SimulationSceneView {
-    SimulationRenderView particles;
-    std::vector<GeometryRenderView> geometries;
-    atlas::Float3 lower_corner;
-    atlas::Float3 upper_corner;
+    SimulationRenderView particles; ///< Live particle buffer views.
+    std::vector<GeometryRenderView> geometries; ///< Configured boundary views.
+    atlas::Float3 lower_corner; ///< Lower simulation-domain corner.
+    atlas::Float3 upper_corner; ///< Upper simulation-domain corner.
 };
 
 }

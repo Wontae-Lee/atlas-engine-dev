@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Declares direct conversion of current simulation state into render state.
+ */
+
 #pragma once
 
 #include "rendering/backend/state_bridge.h"
@@ -6,13 +11,15 @@
 
 namespace atlas::interactive {
 
+/// Uploads every current live particle state without interpolation.
 class RawStateProvider final : public StateProvider {
 public:
+    /// @copydoc StateProvider::update
     const RenderState& update(const SimulationSceneView& view) override;
 
 private:
-    RenderState _state;
-    StateBridge _bridge;
+    RenderState _state; ///< Persistent graphics resources reused across frames.
+    StateBridge _bridge; ///< Backend-specific simulation-to-OpenGL transfer.
 };
 
 }

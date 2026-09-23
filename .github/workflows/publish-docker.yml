@@ -121,7 +121,7 @@ jobs:
           TEST_IMAGE: ${{ steps.image.outputs.reference }}
         run: >-
           timeout 60s docker run --rm "$TEST_IMAGE"
-          python -X faulthandler /opt/atlas/examples/python/cylinder.py
+          python -X faulthandler /opt/atlas/examples/python/main.py
       - name: Check native executables
         env:
           TEST_IMAGE: ${{ steps.image.outputs.reference }}

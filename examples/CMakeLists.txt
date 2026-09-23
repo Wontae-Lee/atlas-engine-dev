@@ -7,6 +7,7 @@
 # ============================================================
 add_subdirectory(cpp)
 
+# Interactive examples are meaningful only when both execution and rendering are enabled.
 if (ATLAS_INTERACTIVE AND ATLAS_INTERACTIVE_RENDERING)
     add_subdirectory(interactive)
 endif ()

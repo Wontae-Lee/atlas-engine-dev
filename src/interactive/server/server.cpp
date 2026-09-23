@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements command dispatch and session lifecycle management.
+ */
+
 #include "server/server.h"
 
 #include "session/session.h"
@@ -14,6 +19,7 @@ Server::handle(const Request& request) {
     Response response;
     response.request_id = request.request_id;
     try {
+        // Creation and shutdown are server-scoped and therefore need no session id.
         if (request.command == Command::create) {
             if (!request.simulation) {
                 throw std::invalid_argument("create requires a simulation configuration");
@@ -43,6 +49,7 @@ Server::handle(const Request& request) {
             return response;
         }
 
+        // All remaining commands operate on one already-owned session.
         Session& target = session(id);
         switch (request.command) {
         case Command::start:

@@ -63,9 +63,12 @@ class IntegrationTests(unittest.TestCase):
         np.testing.assert_allclose(outputs[-1], [[0.5, 0.5, 0.5]], atol=1e-6)
 
     def test_maintained_cylinder_example_smoke(self):
-        example = Path(__file__).resolve().parents[2] / "examples/python/cylinder.py"
+        example = Path(__file__).resolve().parents[2] / "examples/python/main.py"
         result = run_python(f"""
             import runpy
+            import sys
+            sys.argv = [{str(example)!r}]
+            sys.path.insert(0, {str(example.parent)!r})
             runpy.run_path({str(example)!r}, run_name="__main__")
         """, engine=get_default_engine(), timeout=120)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

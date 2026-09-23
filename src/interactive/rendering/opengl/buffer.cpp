@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements OpenGL buffer ownership and data upload.
+ */
+
 #include "rendering/opengl/buffer.h"
 
 #include <GL/glew.h>
@@ -44,6 +49,7 @@ Buffer::allocate(const std::size_t bytes) {
     create();
     bind();
     if (bytes > _capacity) {
+        // Capacity only grows, preserving storage and CUDA registration in steady state.
         glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(bytes), nullptr, GL_DYNAMIC_DRAW);
         _capacity = bytes;
     }

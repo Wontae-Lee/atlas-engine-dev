@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements native-window and OpenGL-context ownership.
+ */
+
 #include "rendering/target/window_target.h"
 
 #include "rendering/camera.h"
@@ -32,6 +37,7 @@ WindowTarget::WindowTarget(const int width, const int height, std::string title)
     glfwSetScrollCallback(_window, &WindowTarget::scroll_callback);
     glfwMakeContextCurrent(_window);
     glfwSwapInterval(1);
+    // GLEW must be initialized after a context is current.
     glewExperimental = GL_TRUE;
     const GLenum result = glewInit();
     if (result != GLEW_OK) {
@@ -40,6 +46,7 @@ WindowTarget::WindowTarget(const int width, const int height, std::string title)
         glfwTerminate();
         throw std::runtime_error("GLEW initialization failed.");
     }
+    // GLEW may emit a benign GL_INVALID_ENUM while probing a core-profile context.
     static_cast<void>(glGetError());
 }
 

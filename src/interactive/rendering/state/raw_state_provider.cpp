@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements raw simulation-state uploads for rendering.
+ */
+
 #include "rendering/state/raw_state_provider.h"
 
 #include "view/simulation_scene_view.h"
@@ -9,6 +14,7 @@ namespace atlas::interactive {
 
 namespace {
 
+/// Validates and uploads one mandatory simulation state.
 void
 upload_required(const SimulationBufferView& source,
                 StateBridge& bridge,
@@ -19,11 +25,13 @@ upload_required(const SimulationBufferView& source,
     bridge.upload(source, target);
 }
 
+/// Mirrors the presence and contents of one optional simulation state.
 void
 upload_optional(const std::optional<SimulationBufferView>& source,
                 StateBridge& bridge,
                 std::optional<opengl::Buffer>& target) {
     if (!source) {
+        // Drop both the OpenGL buffer and any backend registration when core state disappears.
         if (target) bridge.release(*target);
         target.reset();
         return;
@@ -39,6 +47,7 @@ upload_optional(const std::optional<SimulationBufferView>& source,
 
 const RenderState&
 RawStateProvider::update(const SimulationSceneView& view) {
+    // Every upload is limited to the live prefix prepared by Session::render_view().
     _state.particle_count = view.particles.particle_count;
     upload_required(view.particles.position, _bridge, _state.position);
     upload_required(view.particles.velocity, _bridge, _state.velocity);

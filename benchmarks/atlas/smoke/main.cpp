@@ -1,90 +1,98 @@
-/**
- * @file main.cpp
- * @brief Google Benchmark smoke test for the Atlas benchmark harness.
- *
- * A placeholder case that keeps the benchmark wiring alive until the real cases
- * are (re)written. It confirms that a Google Benchmark target links against the
- * engine and can drive a `System::update()` loop — it is not a representative
- * workload. A tiny fluid of a few moving particles is advected in a unit-box
- * universe with no solver, sink, or source.
- */
-
 #include <atlas/atlas.h>
 
 #include <benchmark/benchmark.h>
 
+#include <array>
 #include <cstddef>
 #include <utility>
-#include <vector>
 
 namespace {
 
-using atlas::DeviceBuffer;
-using atlas::Fluid;
-using atlas::FluidHostPtr;
-using atlas::FluidPositionState;
-using atlas::FluidVelocityState;
-using atlas::Float3;
-using atlas::HostBuffer;
-using atlas::System;
-using atlas::Universe;
-
-/** @brief A minimal System: eight drifting particles in a unit-box universe. */
-System
+atlas::System
 make_smoke_system() {
-    constexpr std::size_t count = 8;
+    constexpr std::size_t particle_count = 8;
+    const std::array<atlas::Float3, particle_count> positions = {
+        atlas::Float3(-0.45f, -0.30f, 0.0f),
+        atlas::Float3(-0.45f, -0.20f, 0.0f),
+        atlas::Float3(-0.45f, -0.10f, 0.0f),
+        atlas::Float3(-0.45f, 0.00f, 0.0f),
+        atlas::Float3(-0.45f, 0.10f, 0.0f),
+        atlas::Float3(-0.45f, 0.20f, 0.0f),
+        atlas::Float3(-0.45f, 0.30f, 0.0f),
+        atlas::Float3(-0.45f, 0.40f, 0.0f),
+    };
+    const std::array<atlas::Float3, particle_count> velocities = {
+        atlas::Float3(100.0f, 0.0f, 0.0f), atlas::Float3(100.0f, 0.0f, 0.0f),
+        atlas::Float3(100.0f, 0.0f, 0.0f), atlas::Float3(100.0f, 0.0f, 0.0f),
+        atlas::Float3(100.0f, 0.0f, 0.0f), atlas::Float3(100.0f, 0.0f, 0.0f),
+        atlas::Float3(100.0f, 0.0f, 0.0f), atlas::Float3(100.0f, 0.0f, 0.0f),
+    };
 
-    std::vector<Float3> positions;
-    std::vector<Float3> velocities;
-    positions.reserve(count);
-    velocities.reserve(count);
-    for (std::size_t i = 0; i < count; ++i) {
-        const float f = static_cast<float>(i);
-        positions.push_back(Float3(0.1f * f, 0.1f * f, 0.1f * f));
-        velocities.push_back(Float3(1.0f, -1.0f, 0.5f));
-    }
+    auto materials = atlas::MaterialDictionary::builder()
+        .with_material(atlas::Material(atlas::Molecule(
+            4.65e-26f, 0.0f, 0.0f, 0.0f, 4.17e-10f, 273.0f, 0.74f, 1.0f)))
+        .make_host_shared();
+    auto fluid = atlas::Fluid::builder()
+        .with_buffer_size(particle_count)
+        .with_particle_count(particle_count)
+        .with_statistical_weight(1.0f)
+        .with_materials(materials)
+        .make_host_unique();
+    const atlas::HostBuffer<atlas::Float3> host_positions(positions.begin(), positions.end());
+    const atlas::HostBuffer<atlas::Float3> host_velocities(velocities.begin(), velocities.end());
+    fluid->state<atlas::FluidPositionState>()->data() =
+        atlas::DeviceBuffer<atlas::Float3>(host_positions.begin(), host_positions.end());
+    fluid->state<atlas::FluidVelocityState>()->data() =
+        atlas::DeviceBuffer<atlas::Float3>(host_velocities.begin(), host_velocities.end());
 
-    FluidHostPtr fluid = Fluid::builder()
-                             .with_buffer_size(count)
-                             .with_particle_count(count)
-                             .make_host_unique();
+    auto universe = atlas::Universe::builder()
+        .with_lower_corner(atlas::Float3(-1.0f, -0.75f, -0.5f))
+        .with_upper_corner(atlas::Float3(1.5f, 0.75f, 0.5f))
+        .with_cell_size(0.25f)
+        .make_host_unique();
+    const atlas::Geometry cylinder(atlas::Cylinder::builder()
+        .with_center(atlas::Float3(0.0f))
+        .with_radius(0.2f)
+        .with_height(1.0f)
+        .with_open(true)
+        .build());
+    const atlas::Collider collider(atlas::IsothermalCollider::builder()
+        .with_unit(atlas::Unit::builder()
+            .with_geometry(cylinder)
+            .with_sync(atlas::Sync::builder().make_host_shared())
+            .build())
+        .with_momentum_accommodation_coefficient(1.0f)
+        .with_restitution(1.0f)
+        .build());
 
-    const HostBuffer<Float3> host_positions(positions.begin(), positions.end());
-    fluid->state<FluidPositionState>()->data()
-        = DeviceBuffer<Float3>(host_positions.begin(), host_positions.end());
-
-    const HostBuffer<Float3> host_velocities(velocities.begin(), velocities.end());
-    fluid->state<FluidVelocityState>()->data()
-        = DeviceBuffer<Float3>(host_velocities.begin(), host_velocities.end());
-
-    Universe::Builder universe = Universe::builder();
-    universe.with_lower_corner(Float3(0.0f, 0.0f, 0.0f))
-        .with_upper_corner(Float3(1.0f, 1.0f, 1.0f))
-        .with_cell_size(1.0f);
-
-    return System::builder()
+    return atlas::System::builder()
         .with_fluid(std::move(fluid))
-        .with_universe(universe.make_host_unique())
-        .with_dt(1.0e-3f)
+        .with_universe(std::move(universe))
+        .with_dt(1.0e-4f)
+        .with_solver(atlas::DsmcSolver::builder()
+            .with_kernel_type(atlas::DsmcKernelType::variable_hard_sphere)
+            .with_majorant_sample_pairs(8)
+            .with_majorant_exhaustive_limit(5)
+            .make_host_shared())
+        .with_collider(collider)
         .build();
 }
 
-/** @brief Steps the smoke system so the harness exercises the update pipeline. */
 void
-BM_SystemUpdate(benchmark::State& state) {
-    // Silence the per-step "no UniverseNumberParticleState" notice: this smoke
-    // system runs no solver, so the searcher has nothing to record counts into.
+BM_CylinderDsmcUpdate(benchmark::State& state) {
     atlas::Logging::mute();
-
-    System system = make_smoke_system();
-
     for (auto _ : state) {
+        state.PauseTiming();
+        atlas::System system = make_smoke_system();
+        state.ResumeTiming();
         system.update();
         benchmark::DoNotOptimize(system.step());
+        benchmark::DoNotOptimize(system.fluid()->particle_count());
+        benchmark::ClobberMemory();
     }
 }
 
-BENCHMARK(BM_SystemUpdate);
+BENCHMARK(BM_CylinderDsmcUpdate);
 
 }
 

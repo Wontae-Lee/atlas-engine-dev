@@ -1,0 +1,99 @@
+{
+  "dt": 0.00005,
+  "fluid": {
+    "buffer_size": 20000,
+    "particle_count": 0,
+    "statistical_weight": 32360000000000000.0,
+    "materials": [
+      {
+        "type": "molecule",
+        "mass": 4.65e-26,
+        "translational_energy": 0.0,
+        "rotational_energy": 0.0,
+        "vibrational_energy": 0.0,
+        "reference_diameter": 4.17e-10,
+        "reference_temperature": 273.0,
+        "viscosity_index": 0.74,
+        "scattering_parameter": 1.0
+      }
+    ]
+  },
+  "universe": {
+    "lower_corner": [-1.0, -0.75, -0.5],
+    "upper_corner": [1.5, 0.75, 0.5],
+    "cell_size": 0.1
+  },
+  "solvers": [
+    {
+      "kernel": "variable_hard_sphere",
+      "majorant_sample_pairs": 8,
+      "majorant_exhaustive_limit": 5
+    }
+  ],
+  "emitters": [
+    {
+      "source": {
+        "type": "volume",
+        "unit": {
+          "geometry": {
+            "type": "box",
+            "lower_corner": [-0.8, -0.5, -0.35],
+            "upper_corner": [-0.7, 0.5, 0.35]
+          }
+        },
+        "spacing": 0.1,
+        "tolerance": 0.0
+      },
+      "generator": {
+        "type": "maxwell_boltzmann",
+        "species_ratios": [1.0],
+        "species_numbers": [0.0],
+        "temperature": 300.0,
+        "bulk_velocity": [500.0, 0.0, 0.0],
+        "seed": 20260921
+      }
+    }
+  ],
+  "colliders": [
+    {
+      "unit": {
+        "geometry": {
+          "type": "cylinder",
+          "center": [0.0, 0.0, 0.0],
+          "radius": 0.2,
+          "height": 1.0,
+          "open": true
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0,
+      "diffuse_sampling": "uniform"
+    }
+  ],
+  "sinks": [
+    {
+      "type": "volume",
+      "unit": {"geometry": {"type": "box", "lower_corner": [-1.0, -0.75, -0.5], "upper_corner": [-0.9, 0.75, 0.5]}}
+    },
+    {
+      "type": "volume",
+      "unit": {"geometry": {"type": "box", "lower_corner": [1.35, -0.75, -0.5], "upper_corner": [1.5, 0.75, 0.5]}}
+    },
+    {
+      "type": "volume",
+      "unit": {"geometry": {"type": "box", "lower_corner": [-1.0, -0.75, -0.5], "upper_corner": [1.5, -0.6, 0.5]}}
+    },
+    {
+      "type": "volume",
+      "unit": {"geometry": {"type": "box", "lower_corner": [-1.0, 0.6, -0.5], "upper_corner": [1.5, 0.75, 0.5]}}
+    },
+    {
+      "type": "volume",
+      "unit": {"geometry": {"type": "box", "lower_corner": [-1.0, -0.75, -0.5], "upper_corner": [1.5, 0.75, -0.4]}}
+    },
+    {
+      "type": "volume",
+      "unit": {"geometry": {"type": "box", "lower_corner": [-1.0, -0.75, 0.4], "upper_corner": [1.5, 0.75, 0.5]}}
+    }
+  ]
+}

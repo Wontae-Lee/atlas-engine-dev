@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements framebuffer-backed offscreen rendering.
+ */
+
 #include "rendering/target/offscreen_target.h"
 
 #include <stdexcept>
@@ -12,6 +17,7 @@ OffscreenTarget::OffscreenTarget(const int width, const int height)
 
 void
 OffscreenTarget::begin_frame() {
+    // Framebuffer allocation requires a context, which the future headless target must own.
     throw std::logic_error("OffscreenTarget does not yet own a headless OpenGL context.");
 }
 

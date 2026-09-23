@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Implements camera transforms and native-window input handling.
+ */
+
 #include "rendering/camera.h"
 
 #include <GLFW/glfw3.h>
@@ -120,6 +125,7 @@ Camera::orbit(const float yaw, const float pitch) {
     const glm::vec3 pitch_axis = glm::normalize(glm::cross(up, direction));
     const glm::vec3 pitched = glm::vec3(
         glm::rotate(glm::mat4(1.0f), pitch, pitch_axis) * glm::vec4(offset, 0.0f));
+    // Reject pitches at the pole to keep the view basis well-defined.
     if (std::abs(glm::dot(glm::normalize(-pitched), up)) < 0.9999f) offset = pitched;
 
     _position = _target + offset;
@@ -184,6 +190,7 @@ Camera::handle_view_shortcuts(GLFWwindow* window) {
     };
     for (int index = 0; index < 7; ++index) {
         const bool pressed = glfwGetKey(window, keys[index]) == GLFW_PRESS;
+        // Edge detection prevents a held key from resetting the camera every frame.
         if (pressed && !_view_key_down[index]) set_axis_view(index);
         _view_key_down[index] = pressed;
     }
