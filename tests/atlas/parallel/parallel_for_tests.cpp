@@ -14,6 +14,22 @@ namespace {
 using atlas::DeviceBuffer;
 using atlas::ExecutionPolicy;
 
+void
+write_index_plus_one(int* data, const int count) {
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        count,
+        [=] ATLAS_ALL_DEVICE(const int i) { data[i] = i + 1; });
+}
+
+void
+write_constant(int* data, const int start, const int end, const int value) {
+    atlas::parallel_for<ExecutionPolicy::device>(
+        start,
+        end,
+        [=] ATLAS_ALL_DEVICE(const int i) { data[i] = value; });
+}
+
 // Copies a whole DeviceBuffer back to host storage so the elements can be read on
 // the host under either backend; a device element must never be dereferenced directly.
 std::vector<int>
@@ -31,10 +47,7 @@ TEST(ParallelFor, VisitsEveryIndexExactlyOnce) {
     int* data = atlas::raw_pointer_cast(buffer.data());
 
     // Each index owns its own slot and stamps a unique, non-zero value there.
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        count,
-        [=] ATLAS_ALL_DEVICE(const int i) { data[i] = i + 1; });
+    write_index_plus_one(data, count);
 
     const std::vector<int> host = to_host(buffer);
     for (int i = 0; i < count; ++i) {
@@ -48,10 +61,7 @@ TEST(ParallelFor, ZeroCountIsNoOp) {
     int* data = atlas::raw_pointer_cast(buffer.data());
 
     // An empty [start, end) range must not invoke the body at all.
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        0,
-        [=] ATLAS_ALL_DEVICE(const int i) { data[i] = 999; });
+    write_constant(data, 0, 0, 999);
 
     const std::vector<int> host = to_host(buffer);
     for (int i = 0; i < count; ++i) {
@@ -64,10 +74,7 @@ TEST(ParallelFor, EqualBoundsIsNoOp) {
     DeviceBuffer<int> buffer(count, 5);
     int* data = atlas::raw_pointer_cast(buffer.data());
 
-    atlas::parallel_for<ExecutionPolicy::device>(
-        4,
-        4,
-        [=] ATLAS_ALL_DEVICE(const int i) { data[i] = 0; });
+    write_constant(data, 4, 4, 0);
 
     const std::vector<int> host = to_host(buffer);
     for (int i = 0; i < count; ++i) {

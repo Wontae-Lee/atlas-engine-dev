@@ -18,6 +18,9 @@ build them, use `scripts/build_wheels.sh` (it installs its own toolchain via
 - C++ tests use GoogleTest only. Include `<gtest/gtest.h>` directly.
 - Test sources use the host compiler for native TBB and nvcc when
   `ATLAS_USE_NVCC` is enabled; they may exercise host/device-annotated APIs directly.
+- Define extended host/device lambdas in namespace-scope helpers when nvcc builds
+  a GoogleTest case: the generated `TEST` body is a private member function,
+  which nvcc does not allow to enclose such a lambda.
 - Place tests under `tests/atlas/<module>/`, mirroring `include/atlas/` and
   `src/atlas/`.
 - Name C++ test files `<subject>_tests.cpp`.

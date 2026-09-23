@@ -11,6 +11,14 @@ namespace {
 using atlas::DeviceBuffer;
 using atlas::ExecutionPolicy;
 
+void
+add_concurrently(int* address, const int count) {
+    atlas::parallel_for<ExecutionPolicy::device>(
+        0,
+        count,
+        [=] ATLAS_ALL_DEVICE(const int) { atlas::atomic_add(address, 1); });
+}
+
 }
 
 TEST(Atomic, AddReturnsPriorValue) {
@@ -38,10 +46,7 @@ TEST(Atomic, ConcurrentAddsCountEveryIteration) {
     int* address = atlas::raw_pointer_cast(counter.data());
 
     // Every iteration contributes one increment; the final total is order-independent.
-    atlas::parallel_for<ExecutionPolicy::device>(
-        0,
-        count,
-        [=] ATLAS_ALL_DEVICE(const int) { atlas::atomic_add(address, 1); });
+    add_concurrently(address, count);
 
     int total = 0;
     atlas::copy_device_to_host(counter, &total, 1);

@@ -371,15 +371,18 @@ TEST(TriangleMeshView, WindingNumberInsideVsOutside) {
     EXPECT_NEAR(view.winding_number(Float3(5.0f, 5.0f, 5.0f)), 0.0f, 1e-2f);
 }
 
-TEST(TriangleMeshView, TraceWithoutABuiltBvhReportsNoHit) {
-    // A hand-built view carries the flat vertex/index arrays but no BVH. Unlike the other
-    // queries, trace() traverses the hierarchy on a CPU build (the flat-soup fallback is
-    // compiled in only for the host side of a CUDA build), so it finds nothing here.
+TEST(TriangleMeshView, TraceWithoutABuiltBvhFollowsHostBackend) {
     const TriangleMeshView view = cube_view();
 
     const Ray ray(Float3(0.5f, 0.4f, -1.0f), Float3(0.0f, 0.0f, 1.0f));
 
+#if defined(ATLAS_BACKEND_CUDA)
+    const HitSurface hit = view.trace(ray);
+    ASSERT_TRUE(hit.is_intersecting);
+    EXPECT_NEAR(hit.distance, 1.0f, kTol);
+#else
     EXPECT_FALSE(view.trace(ray).is_intersecting);
+#endif
 }
 
 TEST(TriangleMeshView, TraceHitsAndMissesOnAMeshBuiltView) {

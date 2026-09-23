@@ -314,8 +314,9 @@ closest-point distance with that winding sign. Public helpers `solid_angle` and
   compiled in **only for the host side of a CUDA build**
   (`#if defined(ATLAS_BACKEND_CUDA) && !defined(__CUDA_ARCH__)`). Consequently a
   hand-built view that carries only the flat vertex/index arrays and *no* BVH
-  reports **no hit** on a CPU build (`triangle_mesh_tests.cpp:
-  TraceWithoutABuiltBvhReportsNoHit`); a view obtained from a real
+  reports **no hit** on a TBB build, while a CUDA build's host-side query scans
+  those arrays and finds the hit (`triangle_mesh_tests.cpp:
+  TraceWithoutABuiltBvhFollowsHostBackend`). A view obtained from a real
   `TriangleMesh` (which builds the BVH) traces correctly. The internal
   `has_bvh()` similarly reports "no BVH" on the host side of a CUDA build so
   host-side non-trace queries fall back to the flat soup while the device sees
