@@ -54,7 +54,7 @@ Outside these cases, implement the requested behavior directly.
   for program structure — every module under `include/atlas/` has one. When you
   make an intentional change to a module, update its document in the same
   change; if the change alters the step pipeline or the framework's shape,
-  update the framework overview in [`README.md`](README.md) too.
+  update the framework overview in [architecture overview](../architecture/overview.md) too.
 - When you change a guideline that the code depends on, update the matching
   guideline document here too.
 

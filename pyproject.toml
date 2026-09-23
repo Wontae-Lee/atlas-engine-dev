@@ -30,7 +30,7 @@ dependencies = ["numpy>=1.21"]
 [project.urls]
 Homepage = "https://github.com/wontae-lee/atlas-engine-dev"
 Repository = "https://github.com/wontae-lee/atlas-engine-dev"
-Documentation = "https://github.com/wontae-lee/atlas-engine-dev/blob/main/docs/guidelines/python.md"
+Documentation = "https://github.com/wontae-lee/atlas-engine-dev/blob/main/docs/README.md"
 Issues = "https://github.com/wontae-lee/atlas-engine-dev/issues"
 
 [tool.scikit-build]
@@ -72,7 +72,7 @@ sdist.include = [
     "external/json/**",
     "external/googletest/**", "external/googlebenchmark/**",
     "examples/**", "benchmarks/CMakeLists.txt", "tests/**", "scripts/**",
-    "LICENSE", "README.md", "CITATION.cff", "docs/guidelines/python.md",
+    "LICENSE", "README.md", "CITATION.cff", "docs/**",
     "!**/.git", "!**/.git/**", "!**/__pycache__/**",
 ]
 sdist.exclude = [

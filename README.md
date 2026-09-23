@@ -67,14 +67,14 @@ Build the TBB image and run the included Python simulation:
 
 ```bash
 docker build --target tbb -t atlas:tbb .
-docker run --rm atlas:tbb python /opt/atlas/examples/python/cylinder.py
+docker run --rm atlas:tbb python /opt/atlas/examples/python/main.py
 ```
 
 The `tbb` target creates a CPU runtime image. No NVIDIA GPU or CUDA toolkit is
 needed. The example emits nitrogen into a domain, advances a DSMC flow around
 an analytic cylinder, removes particles at the outer boundaries, and reads the
 result through NumPy. Its source is
-[`examples/python/cylinder.py`](examples/python/cylinder.py).
+[`examples/python/main.py`](examples/python/main.py).
 
 ### NVIDIA GPU
 
@@ -82,7 +82,7 @@ Build the CUDA image and run the same example:
 
 ```bash
 docker build --target cuda -t atlas:cuda .
-docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/cylinder.py
+docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/main.py
 ```
 
 The host needs a compatible NVIDIA driver and
@@ -128,7 +128,7 @@ docker run --rm -it atlas:tbb
 docker run --rm -it --gpus all atlas:cuda
 ```
 
-See the [Docker guide](docs/guidelines/docker.md) for GPU architecture options,
+See the [Docker guide](docs/operations/docker.md) for GPU architecture options,
 image contents, and development containers.
 
 ### Using a published image
@@ -137,13 +137,13 @@ After the images have been published to GitHub Container Registry, a
 `linux/amd64` host can run them without a source checkout:
 
 ```bash
-docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/cylinder.py
-docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/cylinder.py
+docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/main.py
+docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/main.py
 ```
 
 Each engine has Ubuntu 22.04 and 24.04 tags. The package must be public for
 anonymous access. Image tags and version selection are described in the
-[Docker guide](docs/guidelines/docker.md#published-images).
+[Docker guide](docs/operations/docker.md#published-images).
 
 ## Install Python locally
 
@@ -175,7 +175,7 @@ Check that the installed classes can be imported, then run the DSMC example:
 
 ```bash
 python -c "import atlas; from atlas import Float3; print(atlas.__version__, atlas.get_default_engine(), Float3(1, 2, 3))"
-python examples/python/cylinder.py
+python examples/python/main.py
 ```
 
 ### CUDA installation
@@ -186,7 +186,7 @@ compatible NVIDIA driver and GPU. From an activated Python environment:
 
 ```bash
 python -m pip install . -C cmake.define.ATLAS_DEVICE_SYSTEM=CUDA
-ATLAS_DEFAULT_ENGINE=cuda python examples/python/cylinder.py
+ATLAS_DEFAULT_ENGINE=cuda python examples/python/main.py
 ```
 
 Source installation builds the selected engine. When building for a different
@@ -209,7 +209,7 @@ the project's packaging script bundles runtime libraries; a wheel built
 directly from source can still depend on system libraries such as TBB.
 
 Wheel compatibility and combined TBB/CUDA packages are described in the
-[Python guide](docs/guidelines/python.md).
+[Python guide](docs/frontends/python.md).
 
 ## Choose the Python engine
 
@@ -302,12 +302,12 @@ colliders or sinks when constructing the `System`.
 
 ### Cylinder flow with DSMC
 
-The complete [cylinder-flow example](examples/python/cylinder.py) adds
+The complete [cylinder-flow example](examples/python/main.py) adds
 molecular properties, a `DsmcSolver`, inflow generation, an isothermal cylinder,
 and sinks at the outer boundaries. It can be run directly after installation:
 
 ```bash
-python examples/python/cylinder.py
+python examples/python/main.py
 ```
 
 The example defines nitrogen in a `MaterialDictionary`, emits a thermal
@@ -399,15 +399,16 @@ with GCC/G++:
 
 ```bash
 cmake --preset tbb-gcc-release -DATLAS_EXAMPLES=ON
-cmake --build build/tbb-gcc-release --target atlas_example_cylinder
-./build/tbb-gcc-release/examples/cpp/atlas_example_cylinder 40
+cmake --build build/tbb-gcc-release --target atlas_example
+./build/tbb-gcc-release/examples/cpp/atlas_example cylinder 40
 ```
 
-The executable accepts one optional positional argument:
+The executable accepts a case name followed by an optional step count:
 
 | Argument | Value in the command | Meaning |
 |---|---|---|
-| Steps | `40` | Number of simulation updates to run. |
+| Case | `cylinder` | Runnable case selected from `examples/cpp/cases/`. |
+| Steps | `40` | Number of simulation updates to run; defaults to 40. |
 
 Paths in this command are relative to the repository root. The example prints
 stepwise particle counts and a final flow summary.
@@ -416,17 +417,18 @@ For GPU execution:
 
 ```bash
 cmake --preset cuda-release -DATLAS_EXAMPLES=ON
-cmake --build build/cuda-release --target atlas_example_cylinder
-./build/cuda-release/examples/cpp/atlas_example_cylinder 40
+cmake --build build/cuda-release --target atlas_example
+./build/cuda-release/examples/cpp/atlas_example cylinder 40
 ```
 
 Building requires the CUDA toolkit; running requires an NVIDIA GPU. The
 provided presets need CMake 3.21+ and Ninja. They keep CPU and GPU build
 directories separate, so both executables can be kept in the same checkout.
 
-See the [example source](examples/cpp/cylinder/main.cu) to customize the flow,
-materials, and boundaries. C++ classes are in the `atlas::` namespace and can
-be included through `<atlas/atlas.h>`.
+See the [case source](examples/cpp/cases/cylinder.h) to customize the flow,
+materials, and boundaries, and the [examples tutorial](examples/README.md) to
+add another case. C++ classes are in the `atlas::` namespace and can be included
+through `<atlas/atlas.h>`.
 
 ## Run interactive simulations
 
@@ -445,7 +447,7 @@ cmake -S . -B build/interactive-headless-tbb -G Ninja \
     -DATLAS_PYTHON=OFF
 cmake --build build/interactive-headless-tbb --target atlas-interactive-app
 ./build/interactive-headless-tbb/src/interactive/atlas-interactive \
-    --config examples/interactive/simulation.json
+    --config examples/interactive/cases/cylinder.json
 ```
 
 For the native window, install the graphics development packages and build the
@@ -458,10 +460,11 @@ cmake --build build/tbb-application-release --target atlas-interactive-example
 ./build/tbb-application-release/examples/interactive/atlas-interactive-example
 ```
 
-Pass a positive integer to stop automatically after that many frames. Use the
+Pass a case name and a positive step count to stop automatically after that
+many frames, for example `atlas-interactive-example cylinder 10`. Use the
 `cuda-application-release` preset for CUDA/OpenGL interop.
 
-See the [interactive guide](docs/guidelines/interactive.md) for the JSON schema,
+See the [interactive guide](docs/frontends/interactive.md) for the JSON schema,
 command protocol, statistics and CSV output, rendering ownership, tests, Docker
 images, and current offscreen limits.
 
@@ -472,16 +475,16 @@ available capability:
 ```bash
 docker build --target tbb -t atlas:tbb .
 docker run --rm -i atlas:tbb atlas-interactive \
-    --config /opt/atlas/examples/interactive/simulation.json
+    --config /opt/atlas/examples/interactive/cases/cylinder.json
 ```
 
 ## Learn more
 
-- [Python API and state access](docs/guidelines/python.md)
-- [Interactive execution and rendering](docs/guidelines/interactive.md)
-- [Docker images and GPU configuration](docs/guidelines/docker.md)
+- [Python API and state access](docs/frontends/python.md)
+- [Interactive execution and rendering](docs/frontends/interactive.md)
+- [Docker images and GPU configuration](docs/operations/docker.md)
 - [Simulation modules](docs/atlas/)
-- [Contributor documentation](docs/guidelines/README.md)
+- [Contributor documentation](docs/README.md)
 - [Report a problem](https://github.com/Wontae-Lee/atlas-engine-dev/issues)
 
 ## Citation and license

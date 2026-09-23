@@ -48,41 +48,9 @@ transport layer, while core construction stays in `SystemFactory`.
 
 ## Building
 
-The headless JSON server needs no OpenGL dependency:
-
-```bash
-cmake -S . -B build/interactive-headless-tbb -G Ninja \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DATLAS_DEVICE_SYSTEM=TBB \
-    -DATLAS_INTERACTIVE=ON \
-    -DATLAS_INTERACTIVE_RENDERING=OFF \
-    -DATLAS_GOOGLE_TEST=ON \
-    -DBUILD_TESTING=ON \
-    -DATLAS_PYTHON=OFF \
-    -DATLAS_EXAMPLES=OFF \
-    -DATLAS_BENCHMARKS=OFF
-cmake --build build/interactive-headless-tbb \
-    --target atlas-interactive-app atlas_tests_interactive
-ctest --test-dir build/interactive-headless-tbb \
-    -R '^atlas_tests_interactive\.' --output-on-failure
-```
-
-Build the TBB renderer and native example with the application preset:
-
-```bash
-cmake --preset tbb-application-release
-cmake --build build/tbb-application-release \
-    --target atlas-interactive-app atlas-interactive-example
-```
-
-The CMake libraries are `atlas::interactive` for execution and JSON control,
-and `atlas::interactive-rendering` for OpenGL. The installed executable is
-`atlas-interactive`; the source-tree window example is
-`examples/interactive/atlas-interactive-example`.
-
-Use `cuda-application-release` for the CUDA variant. Configuring that preset
-requires nvcc and the CUDA toolkit. Running a CUDA simulation requires a
-compatible NVIDIA driver and GPU.
+CMake options, target names, and backend constraints are maintained in the
+[build guide](../contributing/build.md). `atlas::interactive` is the headless
+execution library; `atlas::interactive-rendering` adds OpenGL dependencies.
 
 ## Starting the JSON server
 
@@ -90,7 +58,7 @@ Start with a simulation file:
 
 ```bash
 ./build/interactive-headless-tbb/src/interactive/atlas-interactive \
-    --config examples/interactive/simulation.json
+    --config examples/interactive/cases/cylinder.json
 ```
 
 The first stdout line is a `create` response with `request_id` set to
@@ -147,7 +115,7 @@ material dictionary or from explicit `species_mass`.
 Material `type` accepts `molecule`, `atom`, `ion`, `neutron`, and `solid`.
 Gas-like materials accept mass, energy, reference diameter/temperature,
 viscosity index, and scattering parameter. A solid currently uses mass only.
-See [`examples/interactive/simulation.json`](../../examples/interactive/simulation.json)
+See [`examples/interactive/cases/cylinder.json`](../../examples/interactive/cases/cylinder.json)
 for a runnable document.
 
 ## JSONL commands
@@ -270,7 +238,7 @@ Run the example, optionally closing after a fixed number of frames:
 
 ```bash
 ./build/tbb-application-release/examples/interactive/atlas-interactive-example
-./build/tbb-application-release/examples/interactive/atlas-interactive-example 10
+./build/tbb-application-release/examples/interactive/atlas-interactive-example cylinder 10
 ```
 
 For TBB, `StateBridge` uploads directly from the core CPU buffer into OpenGL.

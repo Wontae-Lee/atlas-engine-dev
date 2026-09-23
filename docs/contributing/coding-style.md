@@ -4,7 +4,7 @@ How to write code in Atlas Engine. These guidelines describe the writing
 discipline; the structural conventions that tie code to the architecture
 (the tagged-union leaf pattern, builders, backend portability, solver rules)
 live in the per-module docs under [`docs/atlas/`](../atlas/) — start with the
-framework overview in [`README.md`](README.md) and the pattern itself in
+framework overview in [architecture overview](../architecture/overview.md) and the pattern itself in
 [`atlas/core`](../atlas/core/core.md). Read both before changing core code.
 
 The guiding principle: write code that an experienced C++ programmer would
@@ -180,6 +180,6 @@ write, since an out-of-range write corrupts memory rather than just reading junk
   backend-specific code. Keep backend paths behind `ATLAS_BACKEND_CUDA` /
   `ATLAS_BACKEND_TBB` (defined by CMake; exactly one is present), and give
   device-reachable code the right attributes from `core/macros.h`.
-- The full backend model is in the framework overview
-  ([`README.md`](README.md), "Where the parallelism is") and the toolchain
-  switches in [`build-and-test.md`](build-and-test.md).
+- The core ownership model is in the
+  [architecture overview](../architecture/overview.md); backend and toolchain
+  switches are in [`build.md`](build.md).

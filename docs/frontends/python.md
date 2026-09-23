@@ -51,26 +51,6 @@ Both engines expose the same PascalCase API and NumPy host-array interface.
 CUDA executes the engine's device kernels on the GPU; TBB executes the CPU
 implementation. Parallel floating-point results need not be bit-for-bit equal.
 
-## Docker runtime
-
-The `tbb` and `cuda` Docker targets install Python, NumPy, and the Atlas wheel
-in `/opt/venv`; `python` and `pip` use that environment automatically. Each
-runtime image includes only its selected native extension and sets
-`ATLAS_DEFAULT_ENGINE` accordingly. Unlike the combined CUDA wheel built by
-`scripts/build_wheels.sh`, the CUDA runtime image does not include a TBB engine.
-
-```bash
-git submodule update --init --recursive
-docker build --target tbb -t atlas:tbb .
-docker run --rm atlas:tbb python /opt/atlas/examples/python/cylinder.py
-docker run --rm -v "$PWD":/workspace atlas:tbb python simulation.py
-```
-
-For CUDA, build with `--target cuda`, use the resulting image, and add
-`--gpus all` to `docker run`. See [docker.md](docker.md) for host GPU setup,
-Ubuntu versions, and development targets. The `wheel` target below is a
-packaging toolchain and does not have Atlas preinstalled.
-
 ## Building the module
 
 The module is built when `ATLAS_PYTHON` is on. It needs the nanobind submodule
@@ -106,7 +86,7 @@ request necessarily performs a device-to-host transfer because NumPy storage is 
 memory.
 
 The native interactive renderer consumes Atlas Core directly and does not route
-real-time state through Python or NumPy. See [interactive.md](interactive.md).
+real-time state through Python or NumPy. See [Interactive](interactive.md).
 
 ## Packaging a wheel and installing it later
 
@@ -157,34 +137,6 @@ requested, then passes its raw extension to the CUDA build through
 selected engine unless this path is supplied. Do not install separate TBB and
 CUDA wheels on top of each other to combine them: they share a distribution
 name. Install the combined CUDA wheel instead.
-
-## GitHub CI and publication
-
-The separate `.github/workflows/python.yml` checks a TBB source distribution
-and installed wheel on Ubuntu 22.04/Python 3.10 and Ubuntu 24.04/Python 3.12.
-It checks metadata and engine selection, runs the full Python test suite,
-and executes the DSMC example. C++ tests run in `tbb.yml`.
-
-Both workflows are manual and restricted to `main`. The independent
-`publish-python.yml` builds manylinux TBB release wheels; PyPI upload requires
-the publish input. See [releases.md](releases.md) for artifacts, version
-metadata, publication, and citation maintenance.
-
-## Quick start
-
-```python
-from atlas.math import Bool3, Float3, Float3x3, Int3, Quaternion, dot
-
-mask = Bool3(True, False, True)
-assert mask.any()
-assert not mask.all()
-
-velocity = Float3(1.0, 2.0, 3.0)
-assert dot(velocity, velocity) == 14.0
-assert Int3(1, 2, 3).z == 3
-assert Float3x3(1.0) * velocity == velocity
-assert Quaternion().rotate(velocity) == velocity
-```
 
 ## Math API
 

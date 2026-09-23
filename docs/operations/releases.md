@@ -3,31 +3,7 @@
 Maintainer procedures live here; installation and simulation usage belong in
 the root [README.md](../../README.md).
 
-## CI and artifacts
-
-All four workflows use manual dispatch on `main`. Pushes, pull requests,
-tags, and GitHub releases do not trigger them.
-
-| Workflow | Coverage | Artifacts |
-|---|---|---|
-| [TBB CI](../../.github/workflows/tbb.yml) | GCC/G++ C++ tests on Ubuntu 22.04 and 24.04 | CTest logs on failure |
-| [Python CI](../../.github/workflows/python.yml) | TBB package installation, engine/version checks, all Python tests, and DSMC example on 22.04/Python 3.10 and 24.04/Python 3.12 | Source archive, wheel, and logs for each combination |
-| [Publish Python](../../.github/workflows/publish-python.yml) | TBB manylinux x86_64 wheels for CPython 3.9–3.13 and configured import/math checks | `python-sdist` and `python-wheels`; optional PyPI upload |
-| [Publish Docker](../../.github/workflows/publish-docker.yml) | Complete TBB/CUDA runtime images for Ubuntu 22.04 and 24.04, Python dependency/import/math checks, native executable checks, and the TBB example | Optional GHCR upload and image references in the job summary |
-
-Open **Actions → workflow name → Run workflow** and select `main`.
-The C++ workflow builds only the aggregate `atlas_tests` target and selects
-its discovered tests with `-R '^atlas_tests\.'`.
-
-Python CI attaches `python-<os>-py<version>-tbb` distributions and
-`python-logs-<os>-py<version>-tbb` logs. Its wheels depend on compatible
-system TBB libraries; use the publication workflow or
-[local wheel script](python.md#packaging-a-wheel-and-installing-it-later)
-for repaired redistributable wheels.
-
-CUDA GPU simulation checks are not configured. The Docker workflow checks
-native CUDA module loading and host math operations on a runner without a GPU.
-These descriptions record configured coverage, not successful execution.
+CI coverage and artifacts are documented in [ci.md](ci.md).
 
 ## Build or publish Docker images
 
@@ -129,7 +105,7 @@ upload job runs after both artifact jobs succeed. See the
 
 CUDA wheels are built locally through `scripts/build_wheels.sh`; the current
 publication workflow does not upload them. Packaging details, including the
-combined wheel and native extension selection, are in [python.md](python.md).
+combined wheel and native extension selection, are in [Python frontend](../frontends/python.md).
 
 ## Archive on Zenodo
 

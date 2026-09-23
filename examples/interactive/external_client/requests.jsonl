@@ -1,8 +1,0 @@
-{"request_id":"status-1","session_id":1,"command":"status"}
-{"request_id":"start-1","session_id":1,"command":"start"}
-{"request_id":"pause-1","session_id":1,"command":"pause"}
-{"request_id":"step-1","session_id":1,"command":"step","payload":{"step_count":3}}
-{"request_id":"save-1","session_id":1,"command":"save","payload":{"path":"snapshots"}}
-{"request_id":"restart-1","session_id":1,"command":"restart"}
-{"request_id":"close-1","session_id":1,"command":"close"}
-{"request_id":"shutdown-1","command":"shutdown"}

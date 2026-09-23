@@ -131,7 +131,7 @@ So a save of `directory` at step 42 produces
 ## Protobuf dependency and schema evolution
 
 Protobuf is a vendored in-tree dependency (`external/protobuf`; see
-[dependencies.md](../../guidelines/dependencies.md)). The build compiles both the
+[dependencies.md](../../contributing/dependencies.md)). The build compiles both the
 runtime and `protoc` from source, runs `protoc` on `atlas_snapshot.proto` into a
 generated `atlas_snapshot.pb.{h,cc}`, and links them into the `atlas-serialization`
 static library alongside `protobuf_snapshot.cpp`. That translation unit stays

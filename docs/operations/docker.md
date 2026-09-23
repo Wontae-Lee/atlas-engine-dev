@@ -13,8 +13,8 @@ a source checkout or local compilation:
 
 ```bash
 docker pull ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04
-docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/cylinder.py
-docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/cylinder.py
+docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/main.py
+docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/main.py
 ```
 
 The engine tags are `tbb-ubuntu22.04`, `tbb-ubuntu24.04`, `cuda-ubuntu22.04`, and
@@ -53,8 +53,8 @@ the Atlas test suites or simulation examples.
 Run the included DSMC example:
 
 ```bash
-docker run --rm atlas:tbb python /opt/atlas/examples/python/cylinder.py
-docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/cylinder.py
+docker run --rm atlas:tbb python /opt/atlas/examples/python/main.py
+docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/main.py
 ```
 
 CUDA execution requires a compatible NVIDIA driver on the host and the
@@ -87,7 +87,7 @@ with `docker run --rm -it atlas:tbb bash`.
 
 Each image sets `ATLAS_DEFAULT_ENGINE` to its installed engine. Changing that
 environment variable cannot add the other engine: use the corresponding image
-to switch backends. See [python.md](python.md#default-engine) for the selection
+to switch backends. See [Python frontend](../frontends/python.md#default-engine) for the selection
 rules within a Python process.
 
 ## Native executables
@@ -99,7 +99,7 @@ JSONL simulation server and does not require a display:
 
 ```bash
 docker run --rm -i atlas:tbb atlas-interactive \
-    --config /opt/atlas/examples/interactive/simulation.json
+    --config /opt/atlas/examples/interactive/cases/cylinder.json
 ```
 
 The `atlas-interactive-example` executable opens the native window. It needs the
@@ -117,7 +117,7 @@ Host display authorization policies still apply. The CUDA server needs
 `--gpus all`; the CUDA window additionally needs
 `NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics,display`. These images do
 not yet include a headless OpenGL context or network frame transport. See
-[interactive.md](interactive.md) for the JSON control and rendering APIs.
+[Interactive frontend](../frontends/interactive.md) for the JSON control and rendering APIs.
 
 ## Build options
 
@@ -170,5 +170,5 @@ docker run --rm -it --gpus all -v "$PWD":/workspace atlas:cuda-dev
 ```
 
 Add GPU access only when running CUDA code. For CMake commands, see
-[build-and-test.md](build-and-test.md); for producing redistributable wheels,
-see [python.md](python.md#packaging-a-wheel-and-installing-it-later).
+[build guide](../contributing/build.md); for producing redistributable wheels,
+see [Python packaging](../frontends/python.md#packaging-a-wheel-and-installing-it-later).

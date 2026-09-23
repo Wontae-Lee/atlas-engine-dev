@@ -1,10 +1,6 @@
-# Dependencies and Reference Code
+# Dependencies
 
-The external and in-tree dependencies, and the benchmark reference submodules.
-
----
-
-## 1. Dependencies
+External and in-tree dependencies used by Atlas builds.
 
 **TBB** is required in every configuration; it backs the host-side parallel
 algorithms (`parallel_for`, `parallel_sort`, `parallel_fill`).
@@ -13,7 +9,7 @@ Native TBB builds require a C compiler and a C++20 compiler, CMake 3.20+, and
 Ninja for the provided presets (whose schema requires CMake 3.21+).
 `tbb-gcc-debug` and `tbb-gcc-release` select
 `gcc` and `g++` explicitly; `tbb-debug` and `tbb-release` use CMake's selected
-host toolchain. See [build-and-test.md](build-and-test.md) for the preset and
+host toolchain. See [build.md](build.md) for the preset and
 direct configure commands.
 
 The **CUDA toolkit** is required only when nvcc compiles the sources —
@@ -39,7 +35,7 @@ The Docker `tbb-dev` image provides a native GCC/G++ toolchain without CUDA;
 Python development headers and a virtual environment. The separate `tbb` and
 `cuda` runtime images include the installed Atlas Python package, NumPy, and
 their runtime libraries. Their default base is Ubuntu 22.04; Ubuntu 24.04 is
-selected with `--build-arg UBUNTU_VERSION=24.04`. See [docker.md](docker.md).
+selected with `--build-arg UBUNTU_VERSION=24.04`. See [Docker operations](../operations/docker.md).
 The same `tbb` and `cuda` images include OpenGL runtime libraries and the native
 Atlas executables. Python remains the default command; native applications are
 invoked explicitly.
@@ -49,7 +45,7 @@ Python 3.8+ interpreter with development headers.
 The interactive execution/control target adds no graphics dependency. With
 `ATLAS_INTERACTIVE_RENDERING=ON`, the native renderer additionally requires
 OpenGL, GLEW, GLFW, and GLM. CUDA interactive builds also use the CUDA/OpenGL
-interop API. See [interactive.md](interactive.md) for the headless and rendering
+interop API. See [Interactive frontend](../frontends/interactive.md) for the headless and rendering
 configure commands. The execution/control target uses the header-only
 **nlohmann/json** submodule for JSON configuration and JSONL protocol messages.
 
@@ -65,22 +61,3 @@ clone needs `git submodule update --init --recursive` to populate them:
   `--recursive`)
 
 Do not introduce new dependencies unless explicitly requested.
-
----
-
-## 2. Benchmark Reference Code
-
-`benchmarks/` holds Atlas's own Google Benchmark cases under `benchmarks/atlas/`
-(each a `main.cpp` built into `atlas_benchmark_<case>_gbench`), wired only when
-`ATLAS_BENCHMARKS` is on. Only a `smoke` case exists for now; the representative
-cases are to be rewritten. Standalone, framework-free simulations live under
-[`examples/cpp/`](../../examples/cpp/) instead (for example `cylinder/`), built
-with `ATLAS_EXAMPLES`.
-
-The four external reference projects — `piclas`, `sparta`, `splishsplash`, and
-`dumux` — were once wired through `ExternalProject_Add`, but they were removed
-with the engine restructuring and were never registered in `.gitmodules`; see
-the note in [`benchmarks/CMakeLists.txt`](../../benchmarks/CMakeLists.txt). They
-are expected to be reinstated later. When the user mentions one of these names in
-a benchmark or reference-code context, treat it as one of those reference
-projects rather than a directory that currently exists in the tree.
