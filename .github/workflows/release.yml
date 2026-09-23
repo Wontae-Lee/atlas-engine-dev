@@ -4,20 +4,24 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Release version (X.Y.Z); the vX.Y.Z tag must already exist
+        description: New release version (X.Y.Z)
         required: true
         type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: atlas-release
+  cancel-in-progress: false
+
 jobs:
-  verify-version:
-    name: Verify release version and tag
+  verify-request:
+    name: Verify release request
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Match version, project metadata, and existing tag
+      - name: Check version and selected main commit
         env:
           RELEASE_VERSION: ${{ inputs.version }}
         run: |
@@ -31,26 +35,69 @@ jobs:
           version = os.environ["RELEASE_VERSION"]
           if SEMANTIC_VERSION.fullmatch(version) is None:
               raise SystemExit(f"Release version must be X.Y.Z, got {version!r}")
-          tag = f"v{version}"
           versions = read_versions()
-          versions["release input"] = version
           if len(set(versions.values())) != 1:
               raise SystemExit(f"Release versions do not match: {versions}")
-          subprocess.run(
-              ["git", "fetch", "--no-tags", "origin", f"refs/tags/{tag}:refs/tags/{tag}"],
-              check=True,
+          current = next(iter(versions.values()))
+          if tuple(map(int, version.split("."))) <= tuple(map(int, current.split("."))):
+              raise SystemExit(f"Release version {version} must be newer than {current}")
+          main = subprocess.check_output(
+              ["git", "ls-remote", "origin", "refs/heads/main"], text=True
+          ).split()[0]
+          if main != os.environ["GITHUB_SHA"]:
+              raise SystemExit("Selected main commit is no longer the remote main tip")
+          tag = subprocess.check_output(
+              ["git", "ls-remote", "--refs", "origin", f"refs/tags/v{version}"],
+              text=True,
           )
-          tag_commit = subprocess.check_output(
-              ["git", "rev-list", "-n", "1", tag], text=True
-          ).strip()
-          if tag_commit != os.environ["GITHUB_SHA"]:
-              raise SystemExit(f"{tag} does not point to the dispatched main commit")
-          print(f"Validated Atlas {version} at {tag_commit}")
+          if tag:
+              raise SystemExit(f"Tag v{version} already exists")
+          print(f"Validated Atlas {current} -> {version} at {main}")
           PY
 
+  core-ci:
+    needs: verify-request
+    uses: ./.github/workflows/ci-core.yml
+    permissions:
+      contents: read
+
+  python-ci:
+    needs: verify-request
+    uses: ./.github/workflows/ci-python.yml
+    permissions:
+      contents: read
+
+  bump-and-tag:
+    name: Bump version and create tag
+    needs: [core-ci, python-ci]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.release.outputs.sha }}
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump, commit, and push release tag
+        id: release
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          python scripts/bump_version.py "$RELEASE_VERSION"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add CMakeLists.txt pyproject.toml CITATION.cff README.md
+          git commit -m "Release v${RELEASE_VERSION}"
+          git tag "v${RELEASE_VERSION}"
+          git push --atomic origin HEAD:refs/heads/main "refs/tags/v${RELEASE_VERSION}"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "tag=v${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+
   build-python:
-    needs: verify-version
+    needs: bump-and-tag
     uses: ./.github/workflows/publish-python.yml
+    with:
+      source_ref: ${{ needs.bump-and-tag.outputs.sha }}
     permissions:
       contents: read
 
@@ -65,23 +112,27 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: python-*
-          merge-multiple: true
+          name: python-sdist
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-wheels
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
 
   publish-docker:
-    needs: verify-version
+    needs: bump-and-tag
     uses: ./.github/workflows/publish-docker.yml
     with:
       publish: true
+      source_ref: ${{ needs.bump-and-tag.outputs.sha }}
     permissions:
       contents: read
       packages: write
 
   github-release:
     name: Create GitHub Release
-    needs: [publish-pypi, publish-docker]
+    needs: [bump-and-tag, publish-pypi, publish-docker]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -89,7 +140,7 @@ jobs:
       - name: Create release for existing tag
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: v${{ inputs.version }}
+          RELEASE_TAG: ${{ needs.bump-and-tag.outputs.tag }}
         run: >-
           gh release create "${RELEASE_TAG}"
           --repo "${GITHUB_REPOSITORY}"

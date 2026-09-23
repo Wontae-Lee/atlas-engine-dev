@@ -1,11 +1,11 @@
 # Releases and Publication
 
-Atlas release preparation is explicit: update metadata, validate the intended
-commit, create the semantic-version tag locally, and push that existing tag.
-Then manually dispatch the release workflow from `main`. The automation
-publishes the verified commit and does not modify source or citation metadata.
+Start a release from **Actions → Release → Run workflow** on `main` and enter
+the new `X.Y.Z` version. The workflow validates the request, runs Core and
+Python CI, bumps and commits release metadata, creates the `vX.Y.Z` tag, and
+publishes Python packages, Docker images, and the GitHub Release.
 
-## Prepare release metadata
+## Release version and metadata
 
 The release version has three authoritative representations and one matching
 README citation reference:
@@ -15,7 +15,7 @@ README citation reference:
 - `version` in [`CITATION.cff`](../../CITATION.cff),
 - the citation sentence in [`README.md`](../../README.md).
 
-Update them together with:
+The release workflow runs this command only after both CI workflows pass:
 
 ```bash
 python scripts/bump_version.py X.Y.Z
@@ -27,40 +27,38 @@ sets `date-released` to the current date, removes the previous release-specific
 versions match. The README's concept DOI remains unchanged. Missing or
 ambiguous fields cause a failure; a failed write or verification restores the
 original files. The script also rejects the already-current version so it
-cannot remove that release's DOI by mistake. It does not commit, tag, push,
-dispatch a workflow, or publish an artifact.
+cannot remove that release's DOI by mistake. The workflow commits the result;
+the script itself does not commit, tag, push, or publish an artifact.
 
 The CMake Python binding uses `SKBUILD_PROJECT_VERSION` during package builds
 and otherwise inherits the root `PROJECT_VERSION`; it has no independent Atlas
 version literal. Wheel builds therefore report the package version, while
 ordinary CMake builds report the root project version.
 
-Review the metadata diff and run the relevant validation before committing it.
+The release request must name a version newer than the current metadata. It
+must start from the latest `main` commit, and `vX.Y.Z` must not already exist.
 Do not restore an older release DOI while preparing a new version because the
 new archive DOI does not exist yet.
 
-## Create the release tag and run the workflow
+## Run the release
 
-After the release commit is on `main`, create and push the tag yourself:
+Select `main`, enter `X.Y.Z`, and start the workflow. Its Core and Python CI
+jobs run against the selected commit before any version change. When they pass,
+the workflow runs `bump_version.py`, commits the four metadata files, and pushes
+the new commit and lightweight `vX.Y.Z` tag together. If `main` moves during
+the run, the push fails instead of publishing an older commit. Repository
+branch rules must allow the Actions token to push this release commit.
 
-```bash
-git tag -a vX.Y.Z -m "Atlas X.Y.Z"
-git push origin vX.Y.Z
-```
+The Python distribution and Docker image jobs then check out the new release
+commit, rather than the commit that started the workflow. The workflow uploads
+the Python artifacts to PyPI and publishes the checked Docker images to GHCR.
+When both finish successfully, it creates a GitHub Release with generated
+release notes. Those notes can be edited on GitHub after publication. The
+workflow does not contact Zenodo or write a release DOI.
 
-After pushing the tag, open **Actions → Release → Run workflow**, select
-`main`, enter `X.Y.Z` in the version field, and start the run. The first job
-requires a strict `X.Y.Z` version matching CMake, Python, citation, and README
-metadata. It also verifies that the existing remote `vX.Y.Z` tag points to the
-selected `main` commit. If `main` has advanced since the tag was created,
-the verification rejects the run. The workflow never creates or moves a tag.
-
-After verification it calls the reusable Python workflow to build
-distributions and the Docker workflow to build and publish images. A job in
-`release.yml` uploads the Python artifacts to PyPI. When both publication paths
-finish successfully, it creates a GitHub Release for the existing tag with
-generated release notes. It does not edit `CITATION.cff`, contact Zenodo, or
-commit generated metadata.
+If publication fails after the commit and tag have been pushed, those Git refs
+remain. Resolve the failed publisher and complete the remaining publication
+manually; do not try to bump the same version again.
 
 ## Python publication
 

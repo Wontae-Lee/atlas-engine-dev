@@ -3,6 +3,10 @@ name: Publish Docker
 on:
   workflow_call:
     inputs:
+      source_ref:
+        description: Commit to build for a release
+        required: false
+        type: string
       publish:
         description: Publish the checked images to GHCR
         required: false
@@ -41,6 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.source_ref || github.sha }}
           submodules: recursive
       - uses: actions/setup-python@v5
         with:
@@ -50,6 +55,7 @@ jobs:
         env:
           ATLAS_ENGINE: ${{ matrix.engine }}
           UBUNTU_VERSION: ${{ matrix.ubuntu }}
+          SOURCE_SHA: ${{ inputs.source_ref || github.sha }}
         run: |
           python - <<'PY'
           import os
@@ -63,7 +69,7 @@ jobs:
           ubuntu = os.environ["UBUNTU_VERSION"]
           target = engine
           suffix = f"{engine}-ubuntu{ubuntu}"
-          commit_tag = f"{suffix}-sha-{os.environ['GITHUB_SHA']}"
+          commit_tag = f"{suffix}-sha-{os.environ['SOURCE_SHA']}"
           tags = [commit_tag, f"{version}-{suffix}", suffix]
           if ubuntu == "22.04":
               tags.append(engine)
@@ -92,7 +98,7 @@ jobs:
           tags: ${{ steps.image.outputs.tags }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ inputs.source_ref || github.sha }}
             org.opencontainers.image.version=${{ steps.image.outputs.version }}
           cache-from: type=gha,scope=docker-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }}
           cache-to: type=gha,mode=max,scope=docker-${{ matrix.engine }}-ubuntu${{ matrix.ubuntu }},ignore-error=true
