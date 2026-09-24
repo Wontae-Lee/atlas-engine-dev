@@ -1,3 +1,5 @@
+# Native simulation example ----------------------------------------------------
+
 set(ATLAS_CPP_EXAMPLE_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/main.cu")
 
 # The shared .cu entry point is ordinary C++ when nvcc is not the selected compiler.
@@ -13,4 +15,5 @@ if (TARGET atlas)
     target_link_libraries(atlas_example PRIVATE atlas)
 endif ()
 
+# Convenience target for the native example.
 add_custom_target(atlas_examples DEPENDS atlas_example)

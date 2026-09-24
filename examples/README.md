@@ -33,6 +33,15 @@ freestream, advances it around an open cylinder, and removes particles that
 leave the domain. The numerical setup is intentionally small enough for a smoke
 run and is not a validated engineering benchmark.
 
+## Development environment
+
+Build the standard image with `python3 scripts/dev.py build tbb`, then enter
+`python3 scripts/dev.py tbb`. The commands below run inside that shell with
+preinstalled dependencies. Use the `cuda` image for GPU execution. To open an
+Interactive window, enter with `ATLAS_DOCKER_DISPLAY=1 python3 scripts/dev.py tbb`
+(or `cuda`) so the host X11 display is available. See
+[Docker development](../docs/operations/docker.md#standard-development-environment).
+
 ## Native C++
 
 Enable examples in a TBB build and run the shared example executable:

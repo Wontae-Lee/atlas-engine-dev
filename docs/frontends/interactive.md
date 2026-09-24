@@ -204,3 +204,13 @@ direct Core value types: their construction does not currently reject every
 nonphysical scalar property. The material dictionary builder checks that a
 supplied dictionary is nonempty; `validate material` is not a complete physical
 material audit.
+
+## Standard development environment
+
+Run this guide's native configure/build commands inside
+`python3 scripts/dev.py tbb` or `python3 scripts/dev.py cuda`, after building the
+corresponding development image. JSON and rendering development packages are
+preinstalled. A headless build still searches for no graphics packages. Window
+execution uses `ATLAS_DOCKER_DISPLAY=1` to forward the host X11 display; CUDA
+execution additionally uses the host GPU exposed by the launcher. See
+[Docker operations](../operations/docker.md#standard-development-environment).

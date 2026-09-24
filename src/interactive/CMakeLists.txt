@@ -1,4 +1,6 @@
-# Execution and protocol support remain independent of graphics dependencies.
+# Execution and protocol library -----------------------------------------------
+
+# Execution sources have no graphics dependency.
 set(ATLAS_INTERACTIVE_EXECUTION_SOURCES
         application/interactive_application.cpp
         config/system_factory.cpp
@@ -10,13 +12,7 @@ set(ATLAS_INTERACTIVE_EXECUTION_SOURCES
         transport/json_lines_transport.cpp
 )
 
-set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
-set(JSON_Install OFF CACHE BOOL "" FORCE)
-add_subdirectory(
-        "${CMAKE_SOURCE_DIR}/external/json"
-        "${CMAKE_BINARY_DIR}/external/json"
-        EXCLUDE_FROM_ALL
-)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 add_library(atlas-interactive STATIC ${ATLAS_INTERACTIVE_EXECUTION_SOURCES})
 add_library(atlas::interactive ALIAS atlas-interactive)
@@ -28,6 +24,8 @@ target_include_directories(atlas-interactive
 
 target_link_libraries(atlas-interactive PUBLIC atlas nlohmann_json::nlohmann_json)
 
+# JSONL application ------------------------------------------------------------
+
 add_executable(atlas-interactive-app main.cpp)
 target_link_libraries(atlas-interactive-app PRIVATE atlas::interactive)
 set_target_properties(atlas-interactive-app PROPERTIES OUTPUT_NAME atlas-interactive)
@@ -38,13 +36,15 @@ install(
         COMPONENT interactive
 )
 
+# Headless builds register execution tests and stop before graphics discovery.
 if (NOT ATLAS_INTERACTIVE_RENDERING)
-    # Keep headless command/session tests available without OpenGL, GLFW, GLEW, or GLM.
     if (ATLAS_ENABLE_TESTS)
         add_subdirectory("${CMAKE_SOURCE_DIR}/tests/interactive" "${CMAKE_BINARY_DIR}/tests/interactive")
     endif ()
     return()
 endif ()
+
+# Optional rendering library ---------------------------------------------------
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
@@ -83,9 +83,6 @@ endif ()
 add_library(atlas-interactive-rendering STATIC ${ATLAS_INTERACTIVE_RENDERING_SOURCES})
 add_library(atlas::interactive-rendering ALIAS atlas-interactive-rendering)
 
-target_link_libraries(atlas-interactive-app PRIVATE atlas::interactive-rendering)
-target_compile_definitions(atlas-interactive-app PRIVATE ATLAS_INTERACTIVE_RENDERING_ENABLED=1)
-
 target_include_directories(atlas-interactive-rendering
         PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -110,6 +107,10 @@ if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
     )
     target_link_libraries(atlas-interactive-rendering PRIVATE CUDA::cudart)
 endif ()
+
+# Connect rendering to the application before registering Interactive tests.
+target_link_libraries(atlas-interactive-app PRIVATE atlas::interactive-rendering)
+target_compile_definitions(atlas-interactive-app PRIVATE ATLAS_INTERACTIVE_RENDERING_ENABLED=1)
 
 if (ATLAS_ENABLE_TESTS)
     add_subdirectory("${CMAKE_SOURCE_DIR}/tests/interactive" "${CMAKE_BINARY_DIR}/tests/interactive")

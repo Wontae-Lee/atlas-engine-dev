@@ -1,25 +1,23 @@
-# ============================================================
-# Atlas-native benchmark cases
-#
-# Each case directory holds a `main.cpp` — the case wrapped in Google Benchmark.
-# (Standalone, framework-free simulations live under examples/cpp/ instead.) It
-# follows the engine's toolchain, compiled as CUDA when nvcc builds the engine, so
-# the .cpp suffix names the entry point, not the compiler. The assets directory is
-# passed in as ATLAS_BENCHMARK_ASSETS_DIR so a case can load a mesh without
-# depending on the working directory it is run from.
-#
-# Only a smoke case is wired for now — the real benchmark cases are to be
-# (re)written on Google Benchmark. Add one with atlas_add_benchmark_case(<name> <dir>).
-# ============================================================
+# Benchmark cases use the engine toolchain and resolve assets independently of
+# the working directory. Standalone simulations live in examples/cpp/.
 
 set(ATLAS_BENCHMARK_ASSETS_DIR "${PROJECT_SOURCE_DIR}/assets")
 
-# ------------------------------------------------------------
-# atlas_add_benchmark_case(case_name relative_dir)
-#
-# Adds `atlas_benchmark_<case_name>_gbench` from relative_dir/main.cpp and appends
-# it to the aggregate atlas_benchmarks target.
-# ------------------------------------------------------------
+# Shared engine linkage and asset location for every benchmark.
+function(atlas_configure_benchmark_target target)
+    target_link_libraries(${target} PRIVATE atlas::core)
+
+    if (TARGET atlas)
+        target_link_libraries(${target} PRIVATE atlas)
+    endif ()
+
+    target_compile_definitions(${target}
+            PRIVATE
+            ATLAS_BENCHMARK_ASSETS_DIR="${ATLAS_BENCHMARK_ASSETS_DIR}"
+    )
+endfunction()
+
+# Register a case and attach it to the aggregate build target.
 function(atlas_add_benchmark_case case_name relative_dir)
     set(gbench_source "${CMAKE_CURRENT_SOURCE_DIR}/${relative_dir}/main.cpp")
 
@@ -42,23 +40,7 @@ function(atlas_add_benchmark_case case_name relative_dir)
     endif ()
 endfunction()
 
-# ------------------------------------------------------------
-# Shared wiring for every benchmark executable.
-# ------------------------------------------------------------
-function(atlas_configure_benchmark_target target)
-    target_link_libraries(${target} PRIVATE atlas::core)
-
-    if (TARGET atlas)
-        target_link_libraries(${target} PRIVATE atlas)
-    endif ()
-
-    target_compile_definitions(${target}
-            PRIVATE
-            ATLAS_BENCHMARK_ASSETS_DIR="${ATLAS_BENCHMARK_ASSETS_DIR}"
-    )
-endfunction()
-
-# Aggregate convenience target so the whole set can be built at once.
+# Case registration -----------------------------------------------------------
 add_custom_target(atlas_benchmarks)
 
 atlas_add_benchmark_case(smoke smoke)

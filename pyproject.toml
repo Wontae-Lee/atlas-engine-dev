@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core>=0.10", "nanobind>=2.0"]
+requires = ["scikit-build-core==0.11.6", "nanobind==2.13.0"]
 build-backend = "scikit_build_core.build"
 
 # The distribution name is `atlas-engine` (`atlas` is taken on PyPI); the imported
@@ -57,31 +57,21 @@ build.targets = ["atlas_python"]
 install.components = ["python"]
 wheel.packages = ["bindings/python/atlas"]
 wheel.exclude = ["atlas/CMakeLists.txt", "atlas/**/*.cpp", "atlas/**/*.h"]
-wheel.license-files = [
-    "LICENSE",
-    "external/nanobind/LICENSE",
-    "external/nanobind/ext/robin_map/LICENSE",
-    "external/tinyobj/LICENSE",
-    "external/protobuf/LICENSE",
-    "external/json/LICENSE.MIT",
-]
+wheel.license-files = ["LICENSE", "licenses/third-party/*.txt"]
 sdist.include = [
     "/CMakeLists.txt", "/CMakePresets.json", "/cmake/**", "/include/**", "/src/**",
-    "/bindings/**",
-    "/external/nanobind/**", "/external/tinyobj/**", "/external/protobuf/**",
-    "/external/json/**",
-    "/external/googletest/**", "/external/googlebenchmark/**",
-    "/examples/**", "/benchmarks/CMakeLists.txt", "/tests/**", "/scripts/**",
+    "/bindings/**", "/licenses/**", "/docker/**", "/Dockerfile", "/.dockerignore",
+    "/examples/**", "/benchmarks/**", "/tests/**", "/scripts/**",
     "/LICENSE", "/README.md", "/CITATION.cff", "/docs/**",
     "!**/.git", "!**/.git/**", "!**/__pycache__/**",
 ]
 sdist.exclude = [
     ".git/**", "**/.git", "**/.git/**", ".idea/**", ".github/**",
-    "build/**", "dist/**", "cmake-build-*/**", "**/__pycache__/**",
+    "external/**", "build/**", "dist/**", "cmake-build-*/**", "**/__pycache__/**",
 ]
 
 # Keep build trees separate per interpreter/ABI so cibuildwheel's back-to-back
-# Python versions never reuse a stale CMake cache. scripts/build_wheels.sh
+# Python versions never reuse a stale CMake cache. scripts/build_wheels.py
 # overrides this per backend.
 build-dir = "build/wheel/{cache_tag}"
 
@@ -105,12 +95,8 @@ test-command = [
 [tool.cibuildwheel.linux]
 archs = ["x86_64"]
 manylinux-x86_64-image = "manylinux_2_28"
-# oneTBB 2021.x from source into /usr/local (libtbb.so.12 + TBBConfig.cmake), so
-# find_package(TBB) resolves it and auditwheel bundles it into the wheel.
 before-all = [
     "dnf install -y git cmake gcc-c++ ninja-build",
-    "git clone --depth 1 --branch v2021.11.0 https://github.com/oneapi-src/oneTBB /tmp/onetbb",
-    "cmake -S /tmp/onetbb -B /tmp/onetbb/build -G Ninja -DTBB_TEST=OFF -DTBB_STRICT=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local",
-    "cmake --build /tmp/onetbb/build --target install",
+    "ATLAS_DEPS_PREFIX=/usr/local ATLAS_DEPS_BUILD_DIR=/tmp/atlas-dependencies python3 {project}/scripts/install_dependencies.py -DATLAS_DEPS_WITH_TBB=ON -DATLAS_DEPS_DEVELOPMENT=OFF",
 ]
 environment = { CMAKE_PREFIX_PATH = "/usr/local", LD_LIBRARY_PATH = "/usr/local/lib64:/usr/local/lib", CMAKE_BUILD_PARALLEL_LEVEL = "2" }

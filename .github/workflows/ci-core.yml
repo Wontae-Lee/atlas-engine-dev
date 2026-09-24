@@ -17,48 +17,46 @@ concurrency:
 
 jobs:
   test:
-    name: C++ / ${{ matrix.os }} / TBB
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    name: Core / Ubuntu ${{ matrix.ubuntu }} / TBB Docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+        ubuntu: ['22.04', '24.04']
     env:
-      CC: gcc
-      CXX: g++
+      UBUNTU_VERSION: ${{ matrix.ubuntu }}
+      ATLAS_DEV_IMAGE: atlas:ci-tbb
       CMAKE_BUILD_PARALLEL_LEVEL: 2
     steps:
       - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build standard development image
+        uses: docker/build-push-action@v6
         with:
-          submodules: recursive
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake libtbb-dev ninja-build
-      - name: Configure TBB tests
-        run: >-
-          cmake -S . -B build/ci-tbb -G Ninja
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_C_COMPILER=gcc
-          -DCMAKE_CXX_COMPILER=g++
-          -DATLAS_DEVICE_SYSTEM=TBB
-          -DATLAS_HOST_COMPILER=native
-          -DBUILD_TESTING=ON
-          -DATLAS_GOOGLE_TEST=ON
-          -DATLAS_PYTHON=OFF
-          -DATLAS_BENCHMARKS=OFF
-          -DATLAS_EXAMPLES=OFF
-          -DATLAS_INTERACTIVE=OFF
-          -DATLAS_INTERACTIVE_RENDERING=OFF
-      - name: Build C++ tests
-        run: cmake --build build/ci-tbb --target atlas_tests
-      - name: Run C++ tests
-        run: >-
-          ctest --test-dir build/ci-tbb --output-on-failure
-          --no-tests=error --parallel 2 -R '^atlas_tests\.'
+          context: .
+          target: tbb-dev
+          load: true
+          tags: atlas:ci-tbb
+          build-args: |
+            UBUNTU_VERSION=${{ matrix.ubuntu }}
+            BUILD_JOBS=2
+          cache-from: type=gha,scope=dev-tbb-${{ matrix.ubuntu }}
+          cache-to: type=gha,mode=max,scope=dev-tbb-${{ matrix.ubuntu }},ignore-error=true
+      - uses: actions/cache@v4
+        with:
+          path: build/docker-tbb-ubuntu${{ matrix.ubuntu }}/ccache
+          key: core-ccache-${{ matrix.ubuntu }}-${{ hashFiles('Dockerfile', 'docker/**', 'cmake/dependencies/**') }}-${{ github.sha }}
+          restore-keys: |
+            core-ccache-${{ matrix.ubuntu }}-${{ hashFiles('Dockerfile', 'docker/**', 'cmake/dependencies/**') }}-
+      - name: Configure all native test suites
+        run: python3 scripts/dev.py tbb cmake --preset tbb-test
+      - name: Build tests and native applications
+        run: python3 scripts/dev.py tbb cmake --build --preset tbb-test
+      - name: Run Core and Interactive tests
+        run: python3 scripts/dev.py tbb ctest --preset tbb-test
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: core-test-logs-${{ matrix.os }}
-          path: build/ci-tbb/Testing/Temporary/
+          name: core-test-logs-ubuntu${{ matrix.ubuntu }}
+          path: build/docker-tbb-ubuntu${{ matrix.ubuntu }}/build/tbb-test/Testing/Temporary/

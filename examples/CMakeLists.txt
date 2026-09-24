@@ -1,13 +1,9 @@
-# ============================================================
-# Atlas examples
-#
-# Entered from the top-level CMakeLists.txt when ATLAS_EXAMPLES is enabled. The
-# Python examples under examples/python/ need no build step (they import the
-# `atlas` extension).
-# ============================================================
+# Native examples are enabled by ATLAS_EXAMPLES.
+# Python examples import the installed package and need no CMake target.
+
 add_subdirectory(cpp)
 
-# Interactive examples are meaningful only when both execution and rendering are enabled.
+# The windowed example requires both Interactive execution and rendering.
 if (ATLAS_INTERACTIVE AND ATLAS_INTERACTIVE_RENDERING)
     add_subdirectory(interactive)
 endif ()

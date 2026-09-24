@@ -10,6 +10,6 @@ The root [README](../README.md) introduces Atlas and its quick starts. The guide
 | Python | [Python frontend](frontends/python.md) | Engine selection, bindings, and NumPy ownership |
 | Interactive | [Interactive guide](frontends/interactive.md) | JSON configuration, commands, sessions, and native rendering |
 | Frontend design | [Frontend boundaries](architecture/frontends.md) | How Python and Interactive consume Core independently |
-| Build from source | [Build guide](contributing/build.md) and [dependencies](contributing/dependencies.md) | TBB, CUDA, headless, rendering, presets, and toolchains |
+| Build from source | [Build guide](contributing/build.md) and [dependencies](contributing/dependencies.md) | Standard Docker development, TBB/CUDA, headless/rendering, presets, and toolchains |
 | Contribute | [Workflow](contributing/workflow.md), [coding style](contributing/coding-style.md), and [testing](contributing/testing.md) | Changes, documentation, conventions, and test suites |
 | Operate and release | [Docker](operations/docker.md), [CI](operations/ci.md), and [releases](operations/releases.md) | Images, automation, publication, and versioning |

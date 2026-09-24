@@ -4,6 +4,10 @@ Atlas has three maintained consumption paths: native C++, Python, and native
 Interactive. A change should include the related API, documentation, and
 example updates so readers see one coherent behavior across those paths.
 
+Build the standard Docker development image and use its mounted checkout for
+builds and tests. The same image definition supplies Core and Python CI.
+See [build](build.md) and [Docker operations](../operations/docker.md).
+
 ## Preparing a change
 
 Start with the relevant [architecture](../architecture/overview.md) and

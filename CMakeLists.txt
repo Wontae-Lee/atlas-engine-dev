@@ -1,13 +1,8 @@
-# Top-level CMake for atlas-engine-dev.
-#
-# ATLAS_DEVICE_SYSTEM selects the execution backend:
-#   TBB  -> CPU build with the native C/C++ compilers (e.g. GCC/G++), no CUDA toolkit
-#   CUDA -> GPU build with nvcc and Thrust
-# ATLAS_HOST_COMPILER=nvcc also supports compiling the TBB backend with nvcc.
-# TBB is required in every configuration; a GPU is needed only to run CUDA code.
-#
-# This file wires options and orchestrates the build; the details live in
-# cmake/ modules and in the tests/, benchmarks/, and bindings/python subdirectories.
+# Atlas build entry point. Detailed target configuration lives in cmake/.
+# Native TBB requires no CUDA toolkit; CUDA and TBB-through-nvcc use nvcc.
+# TBB is required for both backends. A GPU is needed only to run CUDA code.
+
+# Project and language defaults -------------------------------------------------
 
 cmake_minimum_required(VERSION 3.20)
 
@@ -17,37 +12,24 @@ project(
         LANGUAGES C CXX
 )
 
-# Build configuration.
-# C++20, no compiler-specific extensions (consistent host/device behavior).
+# Keep host and device code on C++20 without compiler-specific extensions.
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-#   ATLAS_DEVICE_SYSTEM : parallel backend, TBB (CPU) or CUDA (GPU)
-#   ATLAS_HOST_COMPILER : which compiler builds a TBB configuration
-#   ATLAS_LOGGING       : compiled logging library + feature macros
-#   ATLAS_GOOGLE_TEST   : GoogleTest-based unit tests
-#   ATLAS_PYTHON        : nanobind Python bindings (bindings/python/atlas)
-#   ATLAS_BENCHMARKS    : benchmark targets
-#   ATLAS_EXAMPLES      : standalone C++ example programs
-#   ATLAS_INTERACTIVE   : interactive execution/control layer
-#   ATLAS_INTERACTIVE_RENDERING : OpenGL renderer and native application
+# Backend and feature options --------------------------------------------------
+
 set(ATLAS_DEVICE_SYSTEM "TBB" CACHE STRING "Parallel backend: TBB (CPU) or CUDA (GPU)")
 set_property(CACHE ATLAS_DEVICE_SYSTEM PROPERTY STRINGS TBB CUDA)
 
-# A TBB configuration needs neither nvcc nor Thrust, so by default it is built by the host
-# compiler alone and the CUDA toolkit is not even looked for. Setting this to `nvcc` keeps
-# the old behavior: a CPU build compiled by nvcc. That is worth having in CI, because nvcc
-# rejects constructs the host compiler accepts -- notably an extended __host__ __device__
-# lambda inside a private member function -- and a TBB-only build would stop catching them.
+# Native TBB uses the host compiler. The optional nvcc path also checks
+# host/device constructs that a native compiler would accept without validation.
 set(ATLAS_HOST_COMPILER "native" CACHE STRING "TBB toolchain: native (CMAKE_CXX_COMPILER, e.g. g++) or nvcc")
 set_property(CACHE ATLAS_HOST_COMPILER PROPERTY STRINGS native nvcc)
 
 option(ATLAS_LOGGING      "Enable logging functionality" ON)
 option(ATLAS_GOOGLE_TEST  "Build GoogleTest-based unit tests" ON)
 option(ATLAS_PYTHON       "Build the nanobind-based Python bindings" ON)
-option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" ON)
-option(ATLAS_EXAMPLES     "Build the example programs" ON)
 option(ATLAS_INTERACTIVE  "Build Atlas interactive execution and control layer" ON)
 
 include(CMakeDependentOption)
@@ -58,6 +40,11 @@ cmake_dependent_option(
         "ATLAS_INTERACTIVE"
         OFF
 )
+
+option(ATLAS_BENCHMARKS   "Build and enable benchmark targets" ON)
+option(ATLAS_EXAMPLES     "Build the example programs" ON)
+
+# Configuration validation and derived flags -----------------------------------
 
 include(CTest)
 
@@ -73,13 +60,8 @@ if (NOT ATLAS_HOST_COMPILER MATCHES "^(native|nvcc)$")
             "[ATLAS] Invalid ATLAS_HOST_COMPILER='${ATLAS_HOST_COMPILER}'. Expected native or nvcc.")
 endif ()
 
-# Two independent switches fall out of the pair above.
-#
-#   ATLAS_USE_NVCC    : the .cu sources are compiled by nvcc, so the CUDA toolkit is needed
-#                       to build (not necessarily to run).
-#   ATLAS_USE_THRUST  : the buffers and parallel algorithms are Thrust's. Only the CUDA
-#                       device system defines ATLAS_BACKEND_CUDA; a TBB build defines
-#                       ATLAS_BACKEND_TBB instead.
+# nvcc selects the compiler; Thrust selects CUDA buffers and algorithms.
+# A TBB build through nvcc still uses the TBB backend.
 if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA" OR ATLAS_HOST_COMPILER STREQUAL "nvcc")
     set(ATLAS_USE_NVCC ON)
 else ()
@@ -98,14 +80,14 @@ if (BUILD_TESTING AND ATLAS_GOOGLE_TEST)
     set(ATLAS_ENABLE_TESTS ON)
 endif ()
 
-# The nanobind Python bindings are a shared object; every static dependency
-# linked into it (atlas, protobuf, absl, ...) must be position-independent.
-# Set this before the dependency/library targets are defined so they inherit it.
+# Toolchain, dependencies, and Core --------------------------------------------
+
+# Python extensions need position-independent static libraries. Set this before
+# creating targets so they inherit it.
 if (ATLAS_PYTHON)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif ()
 
-# Toolchain, dependencies, and library targets (cmake/ modules).
 if (ATLAS_USE_NVCC)
     include(CudaToolchain)
 else ()
@@ -115,7 +97,10 @@ endif ()
 include(Dependencies)
 include(AtlasLibraries)
 
-# Tests, benchmarks, and Python bindings own their own configuration.
+# Optional targets ------------------------------------------------------------
+
+# Tests define the shared GoogleTest helper before Interactive registers tests.
+# Interactive targets must exist before their examples are added.
 if (ATLAS_ENABLE_TESTS)
     add_subdirectory(tests)
 elseif (ATLAS_GOOGLE_TEST)
@@ -138,7 +123,7 @@ if (ATLAS_EXAMPLES)
     add_subdirectory(examples)
 endif ()
 
-# Configuration summary.
+# Configuration summary -------------------------------------------------------
 message(STATUS "")
 message(STATUS "========== ATLAS CONFIG SUMMARY ==========")
 message(STATUS "C++ Standard        : ${CMAKE_CXX_STANDARD}")

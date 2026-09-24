@@ -14,7 +14,6 @@ add_library(atlas::core ALIAS atlas-core)
 target_include_directories(atlas-core
         INTERFACE
         "${ATLAS_CORE_INCLUDE_DIR}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobj"
 )
 
 if (ATLAS_USE_NVCC)
@@ -37,7 +36,7 @@ target_compile_definitions(atlas-core
 # tinyobj is referenced by public atlas-core headers, so propagate it.
 target_link_libraries(atlas-core
         INTERFACE
-        tinyobjloader
+        tinyobjloader::tinyobjloader
         atlas::serialization
         TBB::tbb
 )

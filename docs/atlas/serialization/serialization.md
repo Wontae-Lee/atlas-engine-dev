@@ -130,9 +130,9 @@ So a save of `directory` at step 42 produces
 
 ## Protobuf dependency and schema evolution
 
-Protobuf is a vendored in-tree dependency (`external/protobuf`; see
-[dependencies.md](../../contributing/dependencies.md)). The build compiles both the
-runtime and `protoc` from source, runs `protoc` on `atlas_snapshot.proto` into a
+Protobuf is installed from a pinned release by the dependency image (see
+[dependencies.md](../../contributing/dependencies.md)). CMake finds the installed
+runtime and matching `protoc`, runs `protoc` on `atlas_snapshot.proto` into a
 generated `atlas_snapshot.pb.{h,cc}`, and links them into the `atlas-serialization`
 static library alongside `protobuf_snapshot.cpp`. That translation unit stays
 `.cpp` (never routed through `nvcc`): protobuf's `message_lite.h` uses a construct

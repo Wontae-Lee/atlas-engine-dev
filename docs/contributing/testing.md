@@ -4,9 +4,46 @@ Test policy, suite layout, and change-specific validation.
 
 ## Packaging and local runs
 
-The Python bindings are packaged with scikit-build-core. `scripts/build_wheels.sh`
-builds wheels and installs its packaging toolchain through `pip`. The repository
-does not provision a `.venv` automatically.
+The Python bindings are packaged with scikit-build-core. `scripts/build_wheels.py`
+builds and repairs wheels using the packaging toolchain preinstalled in the
+standard development image. The container provides `/opt/venv`.
+
+## Complete validation in Docker
+
+From the host, build an image and run its native suites:
+
+```bash
+python3 scripts/dev.py build tbb
+python3 scripts/dev.py tbb cmake --preset tbb-test
+python3 scripts/dev.py tbb cmake --build --preset tbb-test
+python3 scripts/dev.py tbb ctest --preset tbb-test
+python3 scripts/dev.py tbb python scripts/check_python_package.py
+```
+
+The native build includes all Core cases, Interactive execution and rendering
+geometry tests, native examples, and the benchmark smoke target. CTest filters
+out duplicate per-directory Core executables. Rendering geometry tests need no
+visible window. To also validate the graphics-independent configuration,
+configure a separate directory with `ATLAS_INTERACTIVE_RENDERING=OFF`.
+
+For GPU validation, use the `cuda` launcher and `cuda-test` presets; the launcher
+passes `--gpus all`. The CUDA toolchain detects the host GPU architecture, or it
+can be supplied with `-DCMAKE_CUDA_ARCHITECTURES=89-real` at configure time.
+Run CUDA CTest serially to avoid competing GPU allocations.
+
+For Python TBB/CUDA parity, enter one CUDA development shell and run:
+
+```bash
+python scripts/build_wheels.py
+python -m pip install --force-reinstall --no-deps dist/cuda/atlas_engine-*.whl
+ATLAS_DEFAULT_ENGINE=tbb python -X faulthandler -m unittest discover -s tests/python -v
+ATLAS_DEFAULT_ENGINE=cuda python -X faulthandler -m unittest discover -s tests/python -v
+```
+
+The combined wheel provides both extensions, allowing the parity tests to run.
+The package validation script separately builds a TBB wheel from the source
+distribution, checks metadata and dependencies, runs all Python tests, and runs
+the maintained example. It keeps artifacts under `dist/python-validation/`.
 
 ---
 

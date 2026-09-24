@@ -1,3 +1,5 @@
+# Windowed simulation example --------------------------------------------------
+
 add_executable(atlas-interactive-example main.cpp)
 target_link_libraries(atlas-interactive-example PRIVATE atlas::interactive-rendering)
 
@@ -10,6 +12,7 @@ target_compile_definitions(atlas-interactive-example
 # Copy cases beside the build-tree executable for direct local invocation.
 file(COPY cases DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
+# Install the executable and its bundled case files together.
 install(
         TARGETS atlas-interactive-example
         RUNTIME DESTINATION bin

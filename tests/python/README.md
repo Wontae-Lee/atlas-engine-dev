@@ -1,10 +1,11 @@
 # Python binding tests
 
 Build the TBB wheel, install it into the test environment, and run from the
-repository root:
+repository root inside `python3 scripts/dev.py tbb` (use the CUDA shell for
+the combined wheel):
 
 ```bash
-ATLAS_WHEEL_BACKENDS=TBB bash scripts/build_wheels.sh
+ATLAS_WHEEL_BACKENDS=TBB python scripts/build_wheels.py
 python -m pip install --force-reinstall dist/tbb/atlas_engine-*.whl
 ATLAS_DEFAULT_ENGINE=tbb PYTHONDONTWRITEBYTECODE=1 python -X faulthandler -m unittest discover -s tests/python -v
 ```

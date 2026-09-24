@@ -1,9 +1,9 @@
-# GoogleTest-based unit tests. Entered from the top level only when
-# ATLAS_ENABLE_TESTS is set (BUILD_TESTING AND ATLAS_GOOGLE_TEST). When nvcc builds the
-# engine, every test TU is compiled as CUDA too, so the headers' host/device annotations
-# behave exactly as they do there.
+# Core tests are enabled by BUILD_TESTING and ATLAS_GOOGLE_TEST.
+# Test sources use the same native or nvcc compiler path as the engine.
 
-add_subdirectory("${CMAKE_SOURCE_DIR}/external/googletest" googletest)
+# Dependencies and source discovery --------------------------------------------
+
+find_package(GTest CONFIG REQUIRED)
 include(GoogleTest)
 
 # tests/atlas mirrors include/atlas and src/atlas. Target names are derived from
@@ -27,8 +27,9 @@ if (ATLAS_USE_NVCC)
     set_source_files_properties(${ATLAS_TEST_SOURCES} PROPERTIES LANGUAGE CUDA)
 endif ()
 
-# Shared configuration for every GoogleTest executable: link the engine and
-# GoogleTest, pthreads on Linux, and register via gtest_discover_tests.
+# Shared target configuration --------------------------------------------------
+
+# Interactive tests also use this helper for linkage and CTest discovery.
 function(atlas_configure_gtest_target target_name)
     target_link_libraries(${target_name} PRIVATE atlas::core)
 
@@ -56,7 +57,9 @@ function(atlas_configure_gtest_target target_name)
     )
 endfunction()
 
-# Aggregate executable containing every discovered test.
+# Test executables ------------------------------------------------------------
+
+# The aggregate executable contains every discovered Core test.
 add_executable(atlas_tests ${ATLAS_TEST_HEADERS} ${ATLAS_TEST_SOURCES})
 atlas_configure_gtest_target(atlas_tests)
 

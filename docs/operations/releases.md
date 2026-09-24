@@ -64,7 +64,10 @@ manually; do not try to bump the same version again.
 
 [`publish-python.yml`](../../.github/workflows/publish-python.yml) first builds
 and validates a source distribution. It then builds TBB manylinux x86_64 wheels
-for the configured CPython versions with cibuildwheel, checks their metadata,
+for the configured CPython versions with cibuildwheel. Its manylinux container
+installs the pinned native dependencies through `scripts/install_dependencies.py`
+before building. Source distributions include that installer, manifest, and
+third-party notices without Git submodules. The workflow checks metadata,
 and uploads both artifact groups. Its manual `publish` input can publish them
 to PyPI through trusted publishing when dispatched from `main`.
 

@@ -43,25 +43,8 @@ else ()
     )
 endif ()
 
-# Vendored tinyobj (referenced by public atlas-core headers).
-add_subdirectory(external/tinyobj)
-
-# Vendored protobuf: build both the C++ runtime and protoc from source, then
-# generate the snapshot bindings and compile the serialization library.
-unset(WITH_PROTOC CACHE)
-set(protobuf_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(protobuf_BUILD_CONFORMANCE OFF CACHE BOOL "" FORCE)
-set(protobuf_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(protobuf_BUILD_PROTOC_BINARIES ON CACHE BOOL "" FORCE)
-set(protobuf_BUILD_LIBPROTOC ON CACHE BOOL "" FORCE)
-set(protobuf_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-set(protobuf_INSTALL OFF CACHE BOOL "" FORCE)
-set(protobuf_USE_UNITY_BUILD OFF CACHE BOOL "" FORCE)
-set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
-
-set(ATLAS_PROTOBUF_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/protobuf")
-set(ATLAS_PROTOBUF_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/protobuf")
-add_subdirectory("${ATLAS_PROTOBUF_SOURCE_DIR}" "${ATLAS_PROTOBUF_BINARY_DIR}" EXCLUDE_FROM_ALL)
+find_package(tinyobjloader CONFIG REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
 
 set(ATLAS_PROTO_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/atlas/serialization/proto")
 set(ATLAS_PROTO_SCHEMA "${ATLAS_PROTO_SCHEMA_DIR}/atlas_snapshot.proto")
@@ -99,7 +82,6 @@ target_include_directories(atlas-serialization
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         PRIVATE
         "${ATLAS_PROTO_OUTPUT_DIR}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/external/tinyobj"
 )
 
 target_compile_definitions(atlas-serialization
@@ -112,6 +94,7 @@ target_link_libraries(atlas-serialization
         protobuf::libprotobuf
         PRIVATE
         TBB::tbb
+        tinyobjloader::tinyobjloader
 )
 
 if (ATLAS_USE_NVCC)

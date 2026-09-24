@@ -26,21 +26,35 @@ run this optional nvcc preset.
 A CUDA toolkit is therefore needed only when nvcc is in play. A GPU is needed
 only to *run* the CUDA variant.
 
-Docker provides separate development toolchains. Use `tbb-dev` for a native
-GCC/G++ build without CUDA, or `cuda-dev` when nvcc is needed:
+## Standard Docker development
+
+Build the development image once, then mount the checkout through the Python
+launcher. Commands later in this guide run inside that development shell:
 
 ```bash
-docker build --target tbb-dev -t atlas:tbb-dev .
-docker run --rm -it -v "$PWD":/workspace atlas:tbb-dev
-docker build --target cuda-dev -t atlas:cuda-dev .
-docker run --rm -it --gpus all -v "$PWD":/workspace atlas:cuda-dev
+python3 scripts/dev.py build tbb
+python3 scripts/dev.py tbb
 ```
 
-The CUDA build itself does not need `--gpus all`; use it when running GPU code.
-The `dev` target remains an alias of `cuda-dev`. The `tbb` and `cuda` runtime
-targets have Python and Atlas installed and are intended to run user scripts.
-See [Docker operations](../operations/docker.md) for Ubuntu versions, runtime
-usage, and build options.
+For nvcc and host GPU access:
+
+```bash
+python3 scripts/dev.py build cuda
+python3 scripts/dev.py cuda
+```
+
+The launcher also accepts one command, for example
+`python3 scripts/dev.py tbb cmake --preset tbb-gcc-debug`. It preserves build
+outputs and caches separately for each backend and Ubuntu version. Use fresh
+build directories when changing compilers or toolchain images. CLion can use the
+same image as a Docker toolchain with `/workspace` as the source path; select a
+matching CMake preset. Host-only workflows can install the dependencies with
+[the dependency installer](dependencies.md#installation-outside-docker).
+
+`ATLAS_DOCKER_GPU=0` allows a CUDA compilation container on a host without GPU
+access. Running CUDA tests still requires a GPU. TBB images contain no CUDA
+toolkit. See [Docker operations](../operations/docker.md) for image versions,
+cache paths, display forwarding, and runtime images.
 
 The project requires CMake 3.20+; the version-3 `CMakePresets.json` format
 requires CMake 3.21+. The presets use Ninja. Important presets:
@@ -50,6 +64,9 @@ requires CMake 3.21+. The presets use Ninja. Important presets:
   `tbb-nvcc-debug` (CPU backend built by nvcc),
   `cuda-debug`, `cuda-release` (GPU; nvcc + Thrust),
   `tbb-application-release`, `cuda-application-release` (native applications)
+- Complete native validation: configure/build/test presets `tbb-test` and
+  `cuda-test` enable Core and Interactive tests, rendering, examples, and benchmarks.
+  Their CTest filters run the aggregate Core suite once and both Interactive suites.
 - Test: `ctest-tbb-debug`, `ctest-tbb-gcc-debug`, `ctest-tbb-nvcc-debug`, `ctest-cuda-debug`
 
 The debug presets enable logging and GoogleTest while keeping Python, examples,
@@ -112,7 +129,7 @@ Constraints:
 - Benchmarks build under both backends; they are wired only when
   `ATLAS_BENCHMARKS` is on.
 - `ATLAS_PYTHON` requires a Python 3.8+ interpreter with development headers and
-  the nanobind submodule; see the [Python frontend](../frontends/python.md).
+  the pinned nanobind Python package; see the [Python frontend](../frontends/python.md).
 - `ATLAS_INTERACTIVE=ON` with `ATLAS_INTERACTIVE_RENDERING=OFF` requires no
   OpenGL stack. Rendering requires OpenGL, GLEW, GLFW, and GLM. See
   [Interactive frontend](../frontends/interactive.md) for commands and target

@@ -1,25 +1,19 @@
-# ============================================================
-# Atlas Python bindings (nanobind)
-#
-# This directory builds a backend-specific Python extension module from the
-# binding sources colocated with the `atlas` Python package. It is
-# configured only when ATLAS_PYTHON is enabled (guarded in the
-# top-level CMakeLists.txt).
-#
-# The module links against atlas::core so the bindings share the
-# exact same headers, backend-selection macros, and dependencies
-# as the C++ library. The compiled artifact is installed inside the
-# pure-Python `atlas` package.
-# ============================================================
+# Backend-specific Python extension, installed inside the atlas package.
 
-# nanobind needs the Python interpreter and the Development.Module
-# component (the limited set of headers required to build extension
-# modules, without a full Python library dependency).
+# Python and nanobind dependencies ---------------------------------------------
+
+# Development.Module provides extension headers without requiring libpython.
 find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
 
-# Pull in the vendored nanobind sources. Adding the submodule as a
-# subdirectory exposes the nanobind_add_module() helper.
-add_subdirectory("${CMAKE_SOURCE_DIR}/external/nanobind" nanobind)
+execute_process(
+        COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+        OUTPUT_VARIABLE nanobind_ROOT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL ANY
+)
+find_package(nanobind 2.13.0 EXACT CONFIG REQUIRED)
+
+# Module identity and sources --------------------------------------------------
 
 set(ATLAS_PYTHON_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/module.cpp"
@@ -29,10 +23,9 @@ string(TOLOWER "${ATLAS_DEVICE_SYSTEM}" ATLAS_PYTHON_ENGINE)
 set(ATLAS_PYTHON_MODULE "_core_${ATLAS_PYTHON_ENGINE}")
 set(ATLAS_PYTHON_TBB_EXTENSION "" CACHE FILEPATH "TBB extension to include in a CUDA wheel")
 
-# Build the extension module.
-#   STABLE_ABI : build against the CPython stable ABI when available
-#                so a single wheel works across Python versions.
-#   NB_STATIC  : link the nanobind runtime statically into the module.
+# Extension target ------------------------------------------------------------
+
+# Request the stable CPython ABI where supported and a static nanobind runtime.
 nanobind_add_module(atlas_python
         STABLE_ABI
         NB_STATIC
@@ -46,9 +39,7 @@ target_compile_definitions(atlas_python PRIVATE ATLAS_PYTHON_MODULE=${ATLAS_PYTH
 
 target_link_libraries(atlas_python PRIVATE atlas::core)
 
-# The runtime bindings (Universe, Fluid, searcher, DSMC solver) call
-# host-only definitions compiled into the `atlas` static library, so link it
-# when it exists (built from src/atlas/**/*.cu).
+# Runtime bindings also need the compiled Core definitions when available.
 if (TARGET atlas)
     target_link_libraries(atlas_python PRIVATE atlas)
 endif ()
@@ -59,13 +50,15 @@ else ()
     target_compile_definitions(atlas_python PRIVATE ATLAS_VERSION_STRING="${PROJECT_VERSION}")
 endif ()
 
+# Match the source language to the selected CUDA backend.
 if (ATLAS_USE_NVCC AND ATLAS_DEVICE_SYSTEM STREQUAL "CUDA")
     set_source_files_properties(${ATLAS_PYTHON_SOURCES} PROPERTIES LANGUAGE CUDA)
 endif ()
 
-# When built through scikit-build-core (i.e. `pip wheel` / `python -m build`),
-# install the extension inside the pure-Python `atlas` package.
-# Guarded by SKBUILD so an ordinary in-tree CMake build is unaffected.
+# Wheel installation ----------------------------------------------------------
+
+# Only scikit-build-core installs extensions into the Python package. CUDA wheels
+# can optionally include a separately built TBB extension.
 if (DEFINED SKBUILD)
     install(TARGETS atlas_python
             LIBRARY DESTINATION atlas COMPONENT python

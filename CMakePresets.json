@@ -123,6 +123,30 @@
         "ATLAS_INTERACTIVE": "ON",
         "ATLAS_INTERACTIVE_RENDERING": "ON"
       }
+    },
+    {
+      "name": "tbb-test",
+      "displayName": "Atlas TBB complete native tests",
+      "inherits": "tbb-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ATLAS_INTERACTIVE": "ON",
+        "ATLAS_INTERACTIVE_RENDERING": "ON",
+        "ATLAS_EXAMPLES": "ON",
+        "ATLAS_BENCHMARKS": "ON"
+      }
+    },
+    {
+      "name": "cuda-test",
+      "displayName": "Atlas CUDA complete native tests",
+      "inherits": "cuda-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ATLAS_INTERACTIVE": "ON",
+        "ATLAS_INTERACTIVE_RENDERING": "ON",
+        "ATLAS_EXAMPLES": "ON",
+        "ATLAS_BENCHMARKS": "ON"
+      }
     }
   ],
   "testPresets": [
@@ -169,6 +193,66 @@
       "output": {
         "outputOnFailure": true
       }
+    },
+    {
+      "name": "tbb-test",
+      "configurePreset": "tbb-test",
+      "filter": {
+        "include": {
+          "name": "^(atlas_tests|atlas_tests_interactive|atlas_tests_interactive_rendering)\\."
+        }
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "jobs": 2
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "cuda-test",
+      "configurePreset": "cuda-test",
+      "filter": {
+        "include": {
+          "name": "^(atlas_tests|atlas_tests_interactive|atlas_tests_interactive_rendering)\\."
+        }
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "jobs": 1
+      },
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "tbb-test",
+      "configurePreset": "tbb-test",
+      "targets": [
+        "atlas_tests",
+        "atlas_tests_interactive",
+        "atlas_tests_interactive_rendering",
+        "atlas-interactive-app",
+        "atlas-interactive-example",
+        "atlas_benchmarks",
+        "atlas_examples"
+      ]
+    },
+    {
+      "name": "cuda-test",
+      "configurePreset": "cuda-test",
+      "targets": [
+        "atlas_tests",
+        "atlas_tests_interactive",
+        "atlas_tests_interactive_rendering",
+        "atlas-interactive-app",
+        "atlas-interactive-example",
+        "atlas_benchmarks",
+        "atlas_examples"
+      ]
     }
   ]
 }
