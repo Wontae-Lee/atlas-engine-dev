@@ -359,6 +359,10 @@ See [Python packaging](../frontends/python.md#packaging-a-wheel-and-installing-i
 | A viewer cannot open a display | Check `DISPLAY`, the X11 socket, and Xauthority access. Wayland sessions need XWayland. |
 | CUDA cannot see a GPU | Check the host NVIDIA driver and Container Toolkit configuration; use `--gpus all` for runtime images. |
 
+Docker package installation retries after refreshing Ubuntu package indexes when
+an archive temporarily disappears from a mirror. If it still fails, inspect the
+specific `apt-get` error above Buildx's final exit code.
+
 If Docker reports `failed to discover GPU vendor from CDI`, check that
 `nvidia-ctk` is installed on the host. Follow NVIDIA's installation guide, then
 configure Docker with `sudo nvidia-ctk runtime configure --runtime=docker` and

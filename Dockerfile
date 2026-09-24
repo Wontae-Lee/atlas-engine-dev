@@ -5,8 +5,15 @@ ARG CUDA_VERSION=12.9.2
 FROM ubuntu:${UBUNTU_VERSION} AS host-dependencies
 ARG UBUNTU_VERSION
 COPY docker/packages.txt /tmp/atlas-packages.txt
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive xargs apt-get install -y --no-install-recommends < /tmp/atlas-packages.txt && \
+RUN for attempt in 1 2 3; do \
+        if apt-get -o Acquire::Retries=3 update && \
+           DEBIAN_FRONTEND=noninteractive xargs apt-get -o Acquire::Retries=3 install -y --no-install-recommends < /tmp/atlas-packages.txt; then \
+            break; \
+        fi; \
+        if [ "$attempt" -eq 3 ]; then exit 1; fi; \
+        rm -rf /var/lib/apt/lists/*; \
+        sleep 5; \
+    done && \
     rm -rf /var/lib/apt/lists/*
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}" \
@@ -39,8 +46,15 @@ ENTRYPOINT ["bash"]
 FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION} AS cuda-dev
 ARG UBUNTU_VERSION
 COPY docker/packages.txt /tmp/atlas-packages.txt
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive xargs apt-get install -y --no-install-recommends < /tmp/atlas-packages.txt && \
+RUN for attempt in 1 2 3; do \
+        if apt-get -o Acquire::Retries=3 update && \
+           DEBIAN_FRONTEND=noninteractive xargs apt-get -o Acquire::Retries=3 install -y --no-install-recommends < /tmp/atlas-packages.txt; then \
+            break; \
+        fi; \
+        if [ "$attempt" -eq 3 ]; then exit 1; fi; \
+        rm -rf /var/lib/apt/lists/*; \
+        sleep 5; \
+    done && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=host-dependencies /opt/atlas-deps /opt/atlas-deps
 COPY --from=host-dependencies /opt/venv /opt/venv
@@ -134,9 +148,16 @@ LABEL org.opencontainers.image.title="Atlas Engine (CUDA)" \
     org.opencontainers.image.source="https://github.com/Wontae-Lee/atlas-engine-dev" \
     org.opencontainers.image.licenses="GPL-3.0-or-later"
 
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates python3 libgl1 libopengl0 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g && \
+RUN for attempt in 1 2 3; do \
+        if apt-get -o Acquire::Retries=3 update && \
+           DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+               ca-certificates python3 libgl1 libopengl0 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g; then \
+            break; \
+        fi; \
+        if [ "$attempt" -eq 3 ]; then exit 1; fi; \
+        rm -rf /var/lib/apt/lists/*; \
+        sleep 5; \
+    done && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=cuda-builder /opt/venv /opt/venv
@@ -160,9 +181,16 @@ LABEL org.opencontainers.image.title="Atlas Engine (TBB)" \
     org.opencontainers.image.source="https://github.com/Wontae-Lee/atlas-engine-dev" \
     org.opencontainers.image.licenses="GPL-3.0-or-later"
 
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ca-certificates python3 libgl1 libopengl0 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g && \
+RUN for attempt in 1 2 3; do \
+        if apt-get -o Acquire::Retries=3 update && \
+           DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 install -y --no-install-recommends \
+               ca-certificates python3 libgl1 libopengl0 libglew2.2 libglfw3 libtbb12 libstdc++6 zlib1g; then \
+            break; \
+        fi; \
+        if [ "$attempt" -eq 3 ]; then exit 1; fi; \
+        rm -rf /var/lib/apt/lists/*; \
+        sleep 5; \
+    done && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=tbb-builder /opt/venv /opt/venv
