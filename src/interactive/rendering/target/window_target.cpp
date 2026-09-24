@@ -36,7 +36,7 @@ WindowTarget::WindowTarget(const int width, const int height, std::string title)
     glfwSetWindowUserPointer(_window, this);
     glfwSetScrollCallback(_window, &WindowTarget::scroll_callback);
     glfwMakeContextCurrent(_window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
     // GLEW must be initialized after a context is current.
     glewExperimental = GL_TRUE;
     const GLenum result = glewInit();

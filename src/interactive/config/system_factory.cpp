@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief Implements Atlas core system construction from interactive configuration.
+ * @brief Implements Atlas core object construction from interactive configuration.
  */
 
 #include "config/system_factory.h"
@@ -24,49 +24,6 @@ vec3(const SimulationConfig::Vec3& value) {
 Quaternion
 quat(const SimulationConfig::Quat& value) {
     return Quaternion(value[0], value[1], value[2], value[3]);
-}
-
-/// Initializes a mandatory particle state after validating its live length.
-template <typename State, typename Value>
-void
-set_fluid_state(Fluid& fluid,
-                const std::vector<Value>& values,
-                const std::size_t particle_count) {
-    if (values.empty()) return;
-    if (values.size() != particle_count) {
-        throw std::invalid_argument("Fluid initial state length must equal particle_count.");
-    }
-    State* state = fluid.state<State>();
-    if (state == nullptr) state = &fluid.emplace_state<State>(fluid.buffer_size());
-    atlas::copy_host_to_device(values.data(), state->data(), values.size());
-}
-
-/// Creates and initializes an explicitly configured optional particle state.
-template <typename State, typename Value>
-void
-set_optional_fluid_state(Fluid& fluid,
-                         const std::vector<Value>& values,
-                         const std::size_t particle_count) {
-    if (values.size() != particle_count) {
-        throw std::invalid_argument("Fluid initial state length must equal particle_count.");
-    }
-    State* state = fluid.state<State>();
-    if (state == nullptr) state = &fluid.emplace_state<State>(fluid.buffer_size());
-    if (!values.empty()) {
-        atlas::copy_host_to_device(values.data(), state->data(), values.size());
-    }
-}
-
-/// Creates one optional cell state when it appears in configuration.
-template <typename State, typename Value>
-void
-set_universe_state(Universe& universe, const std::optional<std::vector<Value>>& values) {
-    if (!values) return;
-    if (values->size() != static_cast<std::size_t>(universe.cell_count())) {
-        throw std::invalid_argument("Universe initial state length must equal cell_count.");
-    }
-    State& state = universe.emplace_state<State>(values->size());
-    atlas::copy_host_to_device(values->data(), state.data(), values->size());
 }
 
 /// Converts one material configuration into its Atlas tagged union.
@@ -171,46 +128,6 @@ make_geometry(const SimulationConfig::Geometry& config,
     throw std::invalid_argument("Unknown geometry type.");
 }
 
-/// Builds one moving boundary unit from geometry and kinematics.
-Unit
-make_unit(const SimulationConfig::Unit& config,
-          std::vector<atlas::host_shared_ptr<TriangleMesh>>& mesh_owners,
-          std::size_t& mesh_index) {
-    const SyncHostPtr sync = Sync::builder()
-                                 .with_rigid_pose(vec3(config.translation),
-                                                  quat(config.orientation))
-                                 .make_host_shared();
-    auto builder = Unit::builder();
-    builder.with_geometry(make_geometry(config.geometry, mesh_owners, mesh_index)).with_sync(sync);
-    if (config.velocity) builder.with_velocity(vec3(*config.velocity));
-    if (config.acceleration) builder.with_acceleration(vec3(*config.acceleration));
-    if (config.angular_velocity) builder.with_angular_velocity(vec3(*config.angular_velocity));
-    if (config.angular_acceleration) {
-        builder.with_angular_acceleration(vec3(*config.angular_acceleration));
-    }
-    return builder.build();
-}
-
-/// Builds the configured surface or volume source.
-SourceHostPtr
-make_source(const SimulationConfig::Source& config,
-            std::vector<atlas::host_shared_ptr<TriangleMesh>>& mesh_owners,
-            std::size_t& mesh_index) {
-    Unit unit = make_unit(config.unit, mesh_owners, mesh_index);
-    if (config.kind == SimulationConfig::SourceKind::surface) {
-        return atlas::make_host_shared<Source>(Source(SurfaceSource::builder()
-                                                         .with_unit(std::move(unit))
-                                                         .with_tolerance(config.tolerance)
-                                                         .with_spacing(config.spacing)
-                                                         .build()));
-    }
-    return atlas::make_host_shared<Source>(Source(VolumeSource::builder()
-                                                     .with_unit(std::move(unit))
-                                                     .with_tolerance(config.tolerance)
-                                                     .with_spacing(config.spacing)
-                                                     .build()));
-}
-
 /// Builds a particle generator and connects material-dependent sampling.
 GeneratorHostPtr
 make_generator(const SimulationConfig::Generator& config,
@@ -261,9 +178,6 @@ make_generator(const SimulationConfig::Generator& config,
                 HostBuffer<float>(config.species_mass.begin(), config.species_mass.end()));
         } else if (materials) {
             builder.with_material_dictionary(*materials);
-        } else {
-            throw std::invalid_argument(
-                "Maxwell-Boltzmann generator requires materials or species_mass.");
         }
         return atlas::make_host_shared<Generator>(Generator(builder.build()));
     }
@@ -273,169 +187,217 @@ make_generator(const SimulationConfig::Generator& config,
 
 }
 
-SystemFactory::SystemFactory(SimulationConfig config)
+CoreFactory::CoreFactory(SimulationConfig config)
     : _config(std::move(config)) {}
 
-atlas::SystemHostPtr
-SystemFactory::create() {
-    std::size_t mesh_index = 0;
+Material
+CoreFactory::build(const SimulationConfig::Material& config) {
+    return make_material(config);
+}
 
-    // Material ownership is shared by Fluid and generators that derive species masses.
-    MaterialDictionaryHostPtr materials;
-    if (!_config.fluid.materials.empty()) {
-        auto builder = MaterialDictionary::builder();
-        for (const auto& material : _config.fluid.materials) {
-            builder.with_material(make_material(material));
-        }
-        materials = builder.make_host_shared();
-    }
-    if (materials) {
-        for (const std::size_t species : _config.fluid.species) {
-            if (species >= _config.fluid.materials.size()) {
-                throw std::invalid_argument("Fluid species id is outside the material dictionary.");
-            }
-        }
-    }
+Geometry
+CoreFactory::build(const SimulationConfig::Geometry& config) {
+    return make_geometry(config, _mesh_owners, _mesh_index);
+}
 
-    auto fluid = Fluid::builder()
-                     .with_buffer_size(_config.fluid.buffer_size)
-                     .with_particle_count(_config.fluid.particle_count)
-                     .with_statistical_weight(_config.fluid.statistical_weight)
-                     .with_materials(materials)
-                     .make_host_unique();
+Unit
+CoreFactory::build(const SimulationConfig::Unit& config) {
+    const SyncHostPtr sync = Sync::builder()
+                                 .with_rigid_pose(vec3(config.translation), quat(config.orientation))
+                                 .make_host_shared();
+    auto builder = Unit::builder();
+    builder.with_geometry(build(config.geometry)).with_sync(sync);
+    if (config.velocity) builder.with_velocity(vec3(*config.velocity));
+    if (config.acceleration) builder.with_acceleration(vec3(*config.acceleration));
+    if (config.angular_velocity) builder.with_angular_velocity(vec3(*config.angular_velocity));
+    if (config.angular_acceleration) {
+        builder.with_angular_acceleration(vec3(*config.angular_acceleration));
+    }
+    return builder.build();
+}
 
-    // Convert transport-friendly arrays once before copying the live prefix to the backend.
-    std::vector<Float3> positions;
-    positions.reserve(_config.fluid.position.size());
-    for (const auto& value : _config.fluid.position) positions.push_back(vec3(value));
-    std::vector<Float3> velocities;
-    velocities.reserve(_config.fluid.velocity.size());
-    for (const auto& value : _config.fluid.velocity) velocities.push_back(vec3(value));
-    set_fluid_state<FluidPositionState>(*fluid, positions, _config.fluid.particle_count);
-    set_fluid_state<FluidVelocityState>(*fluid, velocities, _config.fluid.particle_count);
-    set_fluid_state<FluidSpeciesState>(*fluid,
-                                       _config.fluid.species,
-                                       _config.fluid.particle_count);
-    if (_config.fluid.temperature) {
-        set_optional_fluid_state<FluidTemperatureState>(*fluid,
-                                                        *_config.fluid.temperature,
-                                                        _config.fluid.particle_count);
-    }
-    if (_config.fluid.translational_energy) {
-        set_optional_fluid_state<FluidTranslationalEnergyState>(
-            *fluid, *_config.fluid.translational_energy, _config.fluid.particle_count);
-    }
-    if (_config.fluid.rotational_energy) {
-        set_optional_fluid_state<FluidRotationalEnergyState>(
-            *fluid, *_config.fluid.rotational_energy, _config.fluid.particle_count);
-    }
-    if (_config.fluid.vibrational_energy) {
-        set_optional_fluid_state<FluidVibrationalEnergyState>(
-            *fluid, *_config.fluid.vibrational_energy, _config.fluid.particle_count);
-    }
+MaterialDictionaryHostPtr
+CoreFactory::build_materials(const std::vector<SimulationConfig::Material>& configs) {
+    if (configs.empty()) return {};
+    auto builder = MaterialDictionary::builder();
+    for (const auto& config : configs) builder.with_material(build(config));
+    return builder.make_host_shared();
+}
 
-    auto universe_builder = Universe::builder();
-    universe_builder.with_cell_size(_config.universe.cell_size);
-    if (_config.universe.geometry) {
-        universe_builder.with_geometry(
-            make_geometry(*_config.universe.geometry, _mesh_owners, mesh_index));
-    } else {
-        universe_builder.with_lower_corner(vec3(_config.universe.lower_corner))
-            .with_upper_corner(vec3(_config.universe.upper_corner));
-    }
-    auto universe = universe_builder.make_host_unique();
+FluidHostPtr
+CoreFactory::build(const SimulationConfig::Fluid& config) {
+    return build_fluid(config, build_materials(config.materials));
+}
 
-    set_universe_state<UniverseTemperatureState>(*universe, _config.universe.temperature);
-    auto convert_vectors = [](const std::optional<std::vector<SimulationConfig::Vec3>>& values) {
-        std::optional<std::vector<Float3>> converted;
-        if (values) {
-            converted.emplace();
-            converted->reserve(values->size());
-            for (const auto& value : *values) converted->push_back(vec3(value));
-        }
-        return converted;
-    };
-    set_universe_state<UniverseBulkVelocityState>(*universe,
-                                                   convert_vectors(_config.universe.bulk_velocity));
-    set_universe_state<UniverseFieldForceState>(*universe,
-                                                 convert_vectors(_config.universe.field_force));
-    set_universe_state<UniverseGravityState>(*universe,
-                                              convert_vectors(_config.universe.gravity));
-    set_universe_state<UniverseThermalEnergyState>(*universe,
-                                                    _config.universe.thermal_energy);
-    set_universe_state<UniverseKnudsenNumberState>(*universe,
-                                                    _config.universe.knudsen_number);
-
-    auto builder = System::builder();
-    builder.with_fluid(std::move(fluid))
-        .with_universe(std::move(universe))
-        .with_dt(_config.dt);
-
-    for (const auto& solver : _config.solvers) {
-        DsmcKernelType kernel = DsmcKernelType::hard_sphere;
-        if (solver.kernel == SimulationConfig::DsmcKernelKind::variable_hard_sphere) {
-            kernel = DsmcKernelType::variable_hard_sphere;
-        } else if (solver.kernel == SimulationConfig::DsmcKernelKind::variable_soft_sphere) {
-            kernel = DsmcKernelType::variable_soft_sphere;
-        }
-        builder.with_solver(DsmcSolver::builder()
-                                .with_kernel_type(kernel)
-                                .with_majorant_sample_pairs(solver.majorant_sample_pairs)
-                                .with_majorant_exhaustive_limit(solver.majorant_exhaustive_limit)
-                                .make_host_shared());
+FluidHostPtr
+CoreFactory::build_fluid(const SimulationConfig::Fluid& config,
+                         const MaterialDictionaryHostPtr& materials) {
+    auto builder = Fluid::builder()
+                       .with_buffer_size(config.buffer_size)
+                       .with_particle_count(config.particle_count)
+                       .with_statistical_weight(config.statistical_weight)
+                       .with_materials(materials);
+    if (config.position_provided || !config.position.empty()) {
+        HostBuffer<Float3> values;
+        for (const auto& value : config.position) values.push_back(vec3(value));
+        builder.with_position(std::move(values));
     }
-    for (const auto& emitter : _config.emitters) {
-        builder.with_emitter(make_source(emitter.source, _mesh_owners, mesh_index),
-                             make_generator(emitter.generator, materials));
+    if (config.velocity_provided || !config.velocity.empty()) {
+        HostBuffer<Float3> values;
+        for (const auto& value : config.velocity) values.push_back(vec3(value));
+        builder.with_velocity(std::move(values));
     }
-    for (const auto& collider : _config.colliders) {
-        const DiffuseSampling sampling =
-            collider.diffuse_sampling == SimulationConfig::DiffuseSamplingKind::cosine_weighted
-                ? DiffuseSampling::cosine_weighted
-                : DiffuseSampling::uniform;
-        builder.with_collider(Collider(IsothermalCollider::builder()
-                                           .with_unit(make_unit(collider.unit,
-                                                                _mesh_owners,
-                                                                mesh_index))
-                                           .with_momentum_accommodation_coefficient(
-                                               collider.momentum_accommodation_coefficient)
-                                           .with_restitution(collider.restitution)
-                                           .with_diffuse_sampling(sampling)
-                                           .build()));
+    if (config.species_provided || !config.species.empty()) {
+        builder.with_species(HostBuffer<std::size_t>(config.species.begin(),
+                                                      config.species.end()));
     }
-    for (const auto& sink : _config.sinks) {
-        Unit unit = make_unit(sink.unit, _mesh_owners, mesh_index);
-        if (sink.kind == SimulationConfig::SinkKind::surface) {
-            builder.with_sink(Sink(SurfaceSink::builder()
-                                       .with_unit(std::move(unit))
-                                       .with_tolerance(sink.tolerance)
-                                       .build()));
-        } else if (sink.kind == SimulationConfig::SinkKind::volume) {
-            builder.with_sink(Sink(VolumeSink::builder()
-                                       .with_unit(std::move(unit))
-                                       .with_tolerance(sink.tolerance)
-                                       .build()));
-        } else {
-            builder.with_sink(Sink(TracingSink::builder().with_unit(std::move(unit)).build()));
-        }
+    if (config.temperature) {
+        builder.with_temperature(HostBuffer<float>(config.temperature->begin(),
+                                                    config.temperature->end()));
     }
-    if (_config.codec) {
-        const auto& codec = *_config.codec;
-        builder.with_codec(make_host_shared<Codec>(Codec(
-            KnudsenCodec::builder()
-                .with_representative_characteristic_length(
-                    codec.representative_characteristic_length)
-                .with_representative_collision_cross_sectional_area(
-                    codec.representative_collision_cross_sectional_area)
-                .with_representative_statistical_weight(codec.representative_statistical_weight)
-                .with_representative_cell_volume(codec.representative_cell_volume)
-                .build())));
+    if (config.translational_energy) {
+        builder.with_translational_energy(HostBuffer<float>(
+            config.translational_energy->begin(), config.translational_energy->end()));
+    }
+    if (config.rotational_energy) {
+        builder.with_rotational_energy(HostBuffer<float>(config.rotational_energy->begin(),
+                                                          config.rotational_energy->end()));
+    }
+    if (config.vibrational_energy) {
+        builder.with_vibrational_energy(HostBuffer<float>(config.vibrational_energy->begin(),
+                                                           config.vibrational_energy->end()));
     }
     return builder.make_host_unique();
 }
 
+UniverseHostPtr
+CoreFactory::build(const SimulationConfig::Universe& config) {
+    auto builder = Universe::builder();
+    builder.with_cell_size(config.cell_size);
+    if (config.geometry) {
+        builder.with_geometry(build(*config.geometry));
+    } else {
+        builder.with_lower_corner(vec3(config.lower_corner))
+            .with_upper_corner(vec3(config.upper_corner));
+    }
+    if (config.temperature) {
+        builder.with_temperature(HostBuffer<float>(config.temperature->begin(),
+                                                    config.temperature->end()));
+    }
+    const auto vectors = [](const std::vector<SimulationConfig::Vec3>& source) {
+        HostBuffer<Float3> values;
+        for (const auto& value : source) values.push_back(vec3(value));
+        return values;
+    };
+    if (config.bulk_velocity) builder.with_bulk_velocity(vectors(*config.bulk_velocity));
+    if (config.field_force) builder.with_field_force(vectors(*config.field_force));
+    if (config.gravity) builder.with_gravity(vectors(*config.gravity));
+    if (config.thermal_energy) {
+        builder.with_thermal_energy(HostBuffer<float>(config.thermal_energy->begin(),
+                                                       config.thermal_energy->end()));
+    }
+    if (config.knudsen_number) {
+        builder.with_knudsen_number(HostBuffer<float>(config.knudsen_number->begin(),
+                                                       config.knudsen_number->end()));
+    }
+    return builder.make_host_unique();
+}
+
+SolverHostPtr
+CoreFactory::build(const SimulationConfig::Solver& config) {
+    DsmcKernelType kernel = DsmcKernelType::hard_sphere;
+    if (config.kernel == SimulationConfig::DsmcKernelKind::variable_hard_sphere) {
+        kernel = DsmcKernelType::variable_hard_sphere;
+    } else if (config.kernel == SimulationConfig::DsmcKernelKind::variable_soft_sphere) {
+        kernel = DsmcKernelType::variable_soft_sphere;
+    }
+    return DsmcSolver::builder()
+        .with_kernel_type(kernel)
+        .with_majorant_sample_pairs(config.majorant_sample_pairs)
+        .with_majorant_exhaustive_limit(config.majorant_exhaustive_limit)
+        .make_host_shared();
+}
+
+SourceHostPtr
+CoreFactory::build(const SimulationConfig::Source& config) {
+    Unit unit = build(config.unit);
+    if (config.kind == SimulationConfig::SourceKind::surface) {
+        return make_host_shared<Source>(Source(SurfaceSource::builder()
+            .with_unit(std::move(unit)).with_tolerance(config.tolerance)
+            .with_spacing(config.spacing).build()));
+    }
+    return make_host_shared<Source>(Source(VolumeSource::builder()
+        .with_unit(std::move(unit)).with_tolerance(config.tolerance)
+        .with_spacing(config.spacing).build()));
+}
+
+GeneratorHostPtr
+CoreFactory::build(const SimulationConfig::Generator& config,
+                   const MaterialDictionaryHostPtr& materials) {
+    return make_generator(config, materials);
+}
+
+Collider
+CoreFactory::build(const SimulationConfig::Collider& config) {
+    const DiffuseSampling sampling =
+        config.diffuse_sampling == SimulationConfig::DiffuseSamplingKind::cosine_weighted
+            ? DiffuseSampling::cosine_weighted
+            : DiffuseSampling::uniform;
+    return Collider(IsothermalCollider::builder()
+        .with_unit(build(config.unit))
+        .with_momentum_accommodation_coefficient(config.momentum_accommodation_coefficient)
+        .with_restitution(config.restitution)
+        .with_diffuse_sampling(sampling).build());
+}
+
+Sink
+CoreFactory::build(const SimulationConfig::Sink& config) {
+    Unit unit = build(config.unit);
+    if (config.kind == SimulationConfig::SinkKind::surface) {
+        return Sink(SurfaceSink::builder().with_unit(std::move(unit))
+            .with_tolerance(config.tolerance).build());
+    }
+    if (config.kind == SimulationConfig::SinkKind::volume) {
+        return Sink(VolumeSink::builder().with_unit(std::move(unit))
+            .with_tolerance(config.tolerance).build());
+    }
+    return Sink(TracingSink::builder().with_unit(std::move(unit)).build());
+}
+
+CodecHostPtr
+CoreFactory::build(const SimulationConfig::Codec& config) {
+    return make_host_shared<Codec>(Codec(KnudsenCodec::builder()
+        .with_representative_characteristic_length(config.representative_characteristic_length)
+        .with_representative_collision_cross_sectional_area(config.representative_collision_cross_sectional_area)
+        .with_representative_statistical_weight(config.representative_statistical_weight)
+        .with_representative_cell_volume(config.representative_cell_volume).build()));
+}
+
+atlas::SystemHostPtr
+CoreFactory::build(const SimulationConfig& config) {
+    _mesh_index = 0;
+    const MaterialDictionaryHostPtr materials = build_materials(config.fluid.materials);
+    auto fluid = build_fluid(config.fluid, materials);
+    auto universe = build(config.universe);
+    auto builder = System::builder();
+    builder.with_fluid(std::move(fluid)).with_universe(std::move(universe)).with_dt(config.dt);
+    for (const auto& solver : config.solvers) builder.with_solver(build(solver));
+    for (const auto& emitter : config.emitters) {
+        builder.with_emitter(build(emitter.source), build(emitter.generator, materials));
+    }
+    for (const auto& collider : config.colliders) builder.with_collider(build(collider));
+    for (const auto& sink : config.sinks) builder.with_sink(build(sink));
+    if (config.codec) builder.with_codec(build(*config.codec));
+    return builder.make_host_unique();
+}
+
+atlas::SystemHostPtr
+CoreFactory::create() {
+    return build(_config);
+}
+
 const SimulationConfig&
-SystemFactory::config() const noexcept {
+CoreFactory::config() const noexcept {
     return _config;
 }
 

@@ -68,6 +68,10 @@ momentum accommodation coefficient. Surface velocity is taken from the unit via
 Constructed through `IsothermalCollider::Builder`
 (`with_unit`, `with_momentum_accommodation_coefficient`, `with_restitution`,
 `with_diffuse_sampling`), then wrapped: `Collider c(isothermal);`.
+`Builder::validate()` requires a Unit, finite accommodation in `[0, 1]`, and
+finite non-negative restitution. `build()` moves the Unit into the collider and
+resets staged values. The collider owns that Unit by value; `System` stores
+colliders in a backend buffer and exposes read-only pose snapshots to consumers.
 
 ## Adding a leaf
 

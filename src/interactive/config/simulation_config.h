@@ -17,7 +17,7 @@ namespace atlas::interactive {
 /**
  * @brief Complete application-side description of an Atlas simulation.
  *
- * This plain data model is suitable for transport decoding. SystemFactory
+ * This plain data model is suitable for transport decoding. CoreFactory
  * translates it into the corresponding Atlas core objects.
  */
 struct SimulationConfig {
@@ -126,8 +126,11 @@ struct SimulationConfig {
         float statistical_weight = 1.0f; ///< Real particles represented by one simulated particle.
         std::vector<Material> materials; ///< Species material dictionary.
         std::vector<Vec3> position; ///< Initial live positions.
+        bool position_provided = false; ///< JSON explicitly supplied the position column.
         std::vector<Vec3> velocity; ///< Initial live velocities.
+        bool velocity_provided = false; ///< JSON explicitly supplied the velocity column.
         std::vector<std::size_t> species; ///< Initial live species indices.
+        bool species_provided = false; ///< JSON explicitly supplied the species column.
         std::optional<std::vector<float>> temperature; ///< Optional initial particle temperature.
         std::optional<std::vector<float>> translational_energy; ///< Optional initial translational energy.
         std::optional<std::vector<float>> rotational_energy; ///< Optional initial rotational energy.

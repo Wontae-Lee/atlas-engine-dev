@@ -53,6 +53,12 @@ unit's local frame via `_unit.sync().sync_to_local(...)`:
 `parallel_for` and the removal/compaction of despawned particles happen
 **outside** the sink (compaction is a caller concern).
 
+Each leaf builder requires a `Unit`. Surface and volume builders additionally
+validate finite, non-negative `tolerance`; tracing has no tolerance setting.
+`build()` moves the Unit into the sink and clears the builder's staged Unit.
+The resulting `Sink` owns that Unit by value and can be copied into a backend
+buffer; its geometry queries use the current pose.
+
 ## Adding a leaf
 
 Same recipe as the collider: a trivially-copyable leaf satisfying `ConceptSink`,

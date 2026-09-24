@@ -25,7 +25,7 @@ several self-contained leaf types and dispatches to it.
 Every generator leaf **owns one or more `DeviceBuffer<float>` members** — the
 species selection weights (`_species_ratios`), the parallel species-id table
 (`_species_numbers`), and, for `MaxwellBoltzmannGenerator`, the per-species
-masses (`_species_mass`). A `DeviceBuffer` is a `thrust::device_vector`, whose
+masses (`_species_mass`). A CUDA `DeviceBuffer` is a `thrust::device_vector`, whose
 copy/move/destructor are **host-only**, so the leaf is move-only and cannot live
 in a device-side union.
 
@@ -108,6 +108,12 @@ All four leaves share the same shape: two (or three) device buffers, a stored
 `unsigned int _seed`. They differ only in the **velocity distribution** they draw
 and how they resolve species. In every leaf the sampled velocity has the bulk
 drift added on top.
+
+Each leaf builder validates its species tables, temperature, and distribution
+parameters before copying staged host tables into backend buffers. `build()`
+resets those staged values for reuse. The resulting generator owns its backend
+tables through a host-side `HostVariant`; device kernels receive borrowed
+pointers only for the duration of generation.
 
 ### `UniformGenerator`
 

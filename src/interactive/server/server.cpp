@@ -5,9 +5,12 @@
 
 #include "server/server.h"
 
+#include "config/system_factory.h"
 #include "session/session.h"
 
 #include <stdexcept>
+#include <type_traits>
+#include <variant>
 
 namespace atlas::interactive {
 
@@ -33,11 +36,37 @@ Server::handle(const Request& request) {
             response.status = _sessions.at(id)->status();
             return response;
         }
+        if (request.command == Command::validate) {
+            if (!request.validation) {
+                throw std::invalid_argument("validate requires a target configuration");
+            }
+            CoreFactory factory;
+            std::visit([&factory](const auto& config) {
+                using Config = std::decay_t<decltype(config)>;
+                if constexpr (std::is_same_v<Config, GeneratorValidation>) {
+                    const auto materials = factory.build_materials(config.materials);
+                    static_cast<void>(factory.build(config.generator, materials));
+                } else if constexpr (std::is_same_v<Config, EmitterValidation>) {
+                    const auto materials = factory.build_materials(config.materials);
+                    static_cast<void>(factory.build(config.emitter.source));
+                    static_cast<void>(factory.build(config.emitter.generator, materials));
+                } else {
+                    static_cast<void>(factory.build(config));
+                }
+            }, request.validation->config);
+            response.success = true;
+            response.message = "valid";
+            return response;
+        }
         if (request.command == Command::shutdown) {
             _shutdown_requested = true;
             response.success = true;
             response.message = "shutdown requested";
             return response;
+        }
+        if (request.command == Command::render_open ||
+            request.command == Command::render_close) {
+            throw std::invalid_argument("render commands require InteractiveApplication");
         }
         if (!request.session_id) throw std::invalid_argument("command requires session_id");
         const std::uint64_t id = *request.session_id;
@@ -76,7 +105,10 @@ Server::handle(const Request& request) {
             response.message = "restarted";
             break;
         case Command::create:
+        case Command::validate:
         case Command::close:
+        case Command::render_open:
+        case Command::render_close:
         case Command::shutdown:
             break;
         }

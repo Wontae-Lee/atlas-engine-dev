@@ -202,7 +202,8 @@ picking a front/back side rather than enclosing a volume.
 ### `Cylinder` — right circular cylinder, z-axis locked
 
 `center` (axis midpoint), `radius`, `height` (total z-extent), `open`. It is
-**always aligned to the world z-axis** — no arbitrary orientation. It spans
+**aligned to its local z-axis**; a containing `Unit` may rotate it in world
+space. In local coordinates it spans
 `z ∈ [center.z − height/2, center.z + height/2]`.
 
 - **Validity:** `radius > 0` **and** `height > 0`.

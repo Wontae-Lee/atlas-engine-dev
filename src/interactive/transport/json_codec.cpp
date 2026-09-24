@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 
 #include <array>
+#include <initializer_list>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -18,6 +19,15 @@ namespace {
 
 using Json = nlohmann::json;
 using Config = SimulationConfig;
+
+const Json&
+array_member(const Json& object, const char* name) {
+    const Json& value = object.at(name);
+    if (!value.is_array()) {
+        throw std::invalid_argument(std::string("Expected array: ") + name);
+    }
+    return value;
+}
 
 /// Maps a protocol spelling to an enum and rejects unknown values.
 template <typename Enum>
@@ -76,7 +86,7 @@ std::optional<std::vector<Config::Vec3>>
 optional_vec3_array(const Json& object, const char* name) {
     if (!object.contains(name)) return std::nullopt;
     std::vector<Config::Vec3> result;
-    for (const auto& value : object.at(name)) result.push_back(vec3(value));
+    for (const auto& value : array_member(object, name)) result.push_back(vec3(value));
     return result;
 }
 
@@ -133,7 +143,7 @@ geometry(const Json& value) {
     read(value, "side_count", result.side_count);
     read(value, "open", result.open);
     if (value.contains("triangles")) {
-        for (const auto& triangle : value.at("triangles")) {
+        for (const auto& triangle : array_member(value, "triangles")) {
             if (!triangle.is_array() || triangle.size() != 3) {
                 throw std::invalid_argument("Triangle mesh faces require three vertices.");
             }
@@ -170,15 +180,20 @@ fluid(const Json& value) {
     read(value, "particle_count", result.particle_count);
     read(value, "statistical_weight", result.statistical_weight);
     if (value.contains("materials")) {
-        for (const auto& entry : value.at("materials")) result.materials.push_back(material(entry));
+        for (const auto& entry : array_member(value, "materials")) result.materials.push_back(material(entry));
     }
     if (value.contains("position")) {
-        for (const auto& entry : value.at("position")) result.position.push_back(vec3(entry));
+        result.position_provided = true;
+        for (const auto& entry : array_member(value, "position")) result.position.push_back(vec3(entry));
     }
     if (value.contains("velocity")) {
-        for (const auto& entry : value.at("velocity")) result.velocity.push_back(vec3(entry));
+        result.velocity_provided = true;
+        for (const auto& entry : array_member(value, "velocity")) result.velocity.push_back(vec3(entry));
     }
-    if (value.contains("species")) result.species = value.at("species").get<std::vector<std::size_t>>();
+    if (value.contains("species")) {
+        result.species_provided = true;
+        result.species = array_member(value, "species").get<std::vector<std::size_t>>();
+    }
     result.temperature = optional_array<float>(value, "temperature");
     result.translational_energy = optional_array<float>(value, "translational_energy");
     result.rotational_energy = optional_array<float>(value, "rotational_energy");
@@ -311,22 +326,166 @@ simulation(const Json& value) {
     result.fluid = fluid(value.at("fluid"));
     result.universe = universe(value.at("universe"));
     if (value.contains("solvers")) {
-        for (const auto& entry : value.at("solvers")) result.solvers.push_back(solver(entry));
+        for (const auto& entry : array_member(value, "solvers")) result.solvers.push_back(solver(entry));
     }
     if (value.contains("emitters")) {
-        for (const auto& entry : value.at("emitters")) {
+        for (const auto& entry : array_member(value, "emitters")) {
             result.emitters.push_back({ source(entry.at("source")),
                                         generator(entry.at("generator")) });
         }
     }
     if (value.contains("colliders")) {
-        for (const auto& entry : value.at("colliders")) result.colliders.push_back(collider(entry));
+        for (const auto& entry : array_member(value, "colliders")) result.colliders.push_back(collider(entry));
     }
     if (value.contains("sinks")) {
-        for (const auto& entry : value.at("sinks")) result.sinks.push_back(sink(entry));
+        for (const auto& entry : array_member(value, "sinks")) result.sinks.push_back(sink(entry));
     }
     if (value.contains("codec")) result.codec = codec(value.at("codec"));
     return result;
+}
+
+void
+require_fields(const Json& value, std::initializer_list<const char*> names) {
+    if (!value.is_object()) throw std::invalid_argument("Expected a configuration object.");
+    for (const char* name : names) {
+        if (!value.contains(name)) {
+            throw std::invalid_argument(std::string("Missing required field: ") + name);
+        }
+    }
+}
+
+void
+require_geometry(const Json& value) {
+    require_fields(value, { "type" });
+    const std::string type = value.at("type").get<std::string>();
+    if (type == "box") require_fields(value, { "lower_corner", "upper_corner" });
+    else if (type == "circle") require_fields(value, { "center", "normal", "radius" });
+    else if (type == "cylinder") require_fields(value, { "center", "radius", "height" });
+    else if (type == "plane") require_fields(value, { "normal", "offset" });
+    else if (type == "sphere") require_fields(value, { "center", "radius" });
+    else if (type == "square") require_fields(value, { "center", "normal", "side_length" });
+    else if (type == "triangle") require_fields(value, { "a", "b", "c" });
+    else if (type == "triangle_mesh") require_fields(value, { "triangles" });
+    else if (type == "polygonal_prism") require_fields(value, { "center", "side_count", "radius", "height" });
+}
+
+void
+require_unit(const Json& value) {
+    require_fields(value, { "geometry" });
+    require_geometry(value.at("geometry"));
+}
+
+void
+require_material(const Json& value) {
+    require_fields(value, { "type", "mass" });
+    if (value.at("type") != "solid") {
+        require_fields(value, { "reference_diameter", "reference_temperature",
+                                "viscosity_index", "scattering_parameter" });
+    }
+}
+
+void
+require_source(const Json& value) {
+    require_fields(value, { "type", "unit", "tolerance", "spacing" });
+    require_unit(value.at("unit"));
+}
+
+void
+require_generator(const Json& value) {
+    require_fields(value, { "type", "species_ratios", "species_numbers", "temperature" });
+    const std::string type = value.at("type").get<std::string>();
+    if (type == "uniform") require_fields(value, { "min_value", "max_value" });
+    else if (type == "jittering") require_fields(value, { "base_value", "jitter_radius" });
+    else if (type == "maxwell_sigma") require_fields(value, { "sigma" });
+}
+
+void
+require_sink(const Json& value) {
+    require_fields(value, { "type", "unit" });
+    require_unit(value.at("unit"));
+    if (value.at("type") != "tracing") require_fields(value, { "tolerance" });
+}
+
+ValidationRequest
+validation(const Json& payload) {
+    require_fields(payload, { "target", "config" });
+    const std::string target = payload.at("target").get<std::string>();
+    const Json& config = payload.at("config");
+    if (target == "material") {
+        require_material(config);
+        return { material(config) };
+    }
+    if (target == "geometry") {
+        require_geometry(config);
+        return { geometry(config) };
+    }
+    if (target == "unit") {
+        require_unit(config);
+        return { unit(config) };
+    }
+    if (target == "fluid") {
+        require_fields(config, { "buffer_size" });
+        if (config.contains("materials")) {
+            for (const auto& value : array_member(config, "materials")) require_material(value);
+        }
+        return { fluid(config) };
+    }
+    if (target == "universe") {
+        require_fields(config, { "cell_size" });
+        if (config.contains("geometry")) require_geometry(config.at("geometry"));
+        else require_fields(config, { "lower_corner", "upper_corner" });
+        return { universe(config) };
+    }
+    if (target == "solver") {
+        require_fields(config, { "kernel", "majorant_sample_pairs", "majorant_exhaustive_limit" });
+        return { solver(config) };
+    }
+    if (target == "source") {
+        require_source(config);
+        return { source(config) };
+    }
+    if (target == "generator") {
+        require_fields(config, { "generator" });
+        require_generator(config.at("generator"));
+        GeneratorValidation result { generator(config.at("generator")), {} };
+        if (config.contains("materials")) {
+            for (const auto& value : array_member(config, "materials")) {
+                require_material(value);
+                result.materials.push_back(material(value));
+            }
+        }
+        return { std::move(result) };
+    }
+    if (target == "emitter") {
+        require_fields(config, { "source", "generator" });
+        require_source(config.at("source"));
+        require_generator(config.at("generator"));
+        EmitterValidation result { { source(config.at("source")), generator(config.at("generator")) }, {} };
+        if (config.contains("materials")) {
+            for (const auto& value : array_member(config, "materials")) {
+                require_material(value);
+                result.materials.push_back(material(value));
+            }
+        }
+        return { std::move(result) };
+    }
+    if (target == "collider") {
+        require_fields(config, { "unit", "momentum_accommodation_coefficient", "restitution" });
+        require_unit(config.at("unit"));
+        return { collider(config) };
+    }
+    if (target == "sink") {
+        require_sink(config);
+        return { sink(config) };
+    }
+    if (target == "codec") {
+        require_fields(config, { "representative_characteristic_length",
+                                 "representative_collision_cross_sectional_area",
+                                 "representative_statistical_weight", "representative_cell_volume" });
+        return { codec(config) };
+    }
+    if (target == "simulation") return { simulation(config) };
+    throw std::invalid_argument("Invalid validation target: " + target);
 }
 
 /// Decodes application-owned output policy.
@@ -346,10 +505,13 @@ Command
 command(const std::string& value) {
     return enum_value<Command>(
         value,
-        { { "create", Command::create }, { "start", Command::start },
+        { { "create", Command::create }, { "validate", Command::validate },
+          { "start", Command::start },
           { "pause", Command::pause }, { "step", Command::step },
           { "status", Command::status }, { "save", Command::save },
           { "restart", Command::restart }, { "close", Command::close },
+          { "render_open", Command::render_open },
+          { "render_close", Command::render_close },
           { "shutdown", Command::shutdown } },
         "command");
 }
@@ -373,18 +535,25 @@ JsonCodec::decode_simulation(const std::string_view text) {
 }
 
 Request
-JsonCodec::decode_request(const std::string_view text) {
+JsonCodec::decode_request(const std::string_view text, std::string* request_id) {
     const Json value = Json::parse(text);
     Request result;
     result.request_id = value.value("request_id", "");
+    if (request_id != nullptr) *request_id = result.request_id;
     result.command = command(value.at("command").get<std::string>());
     if (value.contains("session_id")) result.session_id = value.at("session_id").get<std::uint64_t>();
     // Accept the flat form for local tools while preserving the protocol payload form.
     const Json& payload = value.contains("payload") ? value.at("payload") : value;
-    if (payload.contains("step_count")) result.step_count = payload.at("step_count").get<std::size_t>();
-    if (payload.contains("path")) result.path = payload.at("path").get<std::string>();
-    if (payload.contains("config")) result.simulation = simulation(payload.at("config"));
-    if (payload.contains("output")) result.output = output(payload.at("output"));
+    if (result.command == Command::step && payload.contains("step_count")) {
+        result.step_count = payload.at("step_count").get<std::size_t>();
+    } else if (result.command == Command::save && payload.contains("path")) {
+        result.path = payload.at("path").get<std::string>();
+    } else if (result.command == Command::create) {
+        if (payload.contains("config")) result.simulation = simulation(payload.at("config"));
+        if (payload.contains("output")) result.output = output(payload.at("output"));
+    } else if (result.command == Command::validate) {
+        result.validation = validation(payload);
+    }
     return result;
 }
 

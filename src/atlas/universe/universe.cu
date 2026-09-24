@@ -2,12 +2,46 @@
 
 #include <atlas/geometry/geometry.h>
 #include <atlas/logging/logging.h>
+#include <atlas/memory/copy.h>
 
+#include <cmath>
+#include <initializer_list>
 #include <limits>
 #include <stdexcept>
 #include <utility>
 
 namespace atlas {
+
+namespace {
+
+/**
+ * @brief Install a supplied cell column after the builder validates its length.
+ * @tparam State Concrete cell-state column.
+ * @tparam Value Element stored by the column.
+ * @param universe Grid receiving the staged column.
+ * @param values Optional host-side values.
+ */
+template <typename State, typename Value>
+void initialize_state(Universe& universe, const std::optional<HostBuffer<Value>>& values) {
+    if (!values) return;
+    State& state = universe.emplace_state<State>(values->size());
+    if (!values->empty()) atlas::copy_host_to_device(&values->front(), state.data(), values->size());
+}
+
+/**
+ * @brief Require an explicitly supplied cell column to cover the whole grid.
+ * @tparam Value Element stored by the column.
+ * @param values Optional staged values.
+ * @param cell_count Required grid length.
+ */
+template <typename Value>
+void validate_state(const std::optional<HostBuffer<Value>>& values, std::size_t cell_count) {
+    if (values && values->size() != cell_count) {
+        throw std::invalid_argument("Universe::Builder: initial state length must equal cell_count.");
+    }
+}
+
+}
 
 Universe::Universe(const Float3& lower_corner,
                    const Float3& upper_corner,
@@ -111,11 +145,54 @@ Universe::Builder::with_cell_size(const float h) noexcept {
     return *this;
 }
 
+Universe::Builder&
+Universe::Builder::with_temperature(HostBuffer<float> values) {
+    _temperature = std::move(values);
+    return *this;
+}
+
+Universe::Builder&
+Universe::Builder::with_bulk_velocity(HostBuffer<Float3> values) {
+    _bulk_velocity = std::move(values);
+    return *this;
+}
+
+Universe::Builder&
+Universe::Builder::with_field_force(HostBuffer<Float3> values) {
+    _field_force = std::move(values);
+    return *this;
+}
+
+Universe::Builder&
+Universe::Builder::with_gravity(HostBuffer<Float3> values) {
+    _gravity = std::move(values);
+    return *this;
+}
+
+Universe::Builder&
+Universe::Builder::with_thermal_energy(HostBuffer<float> values) {
+    _thermal_energy = std::move(values);
+    return *this;
+}
+
+Universe::Builder&
+Universe::Builder::with_knudsen_number(HostBuffer<float> values) {
+    _knudsen_number = std::move(values);
+    return *this;
+}
+
 Universe
 Universe::Builder::build() const {
     validate();
 
-    return Universe(_lower_corner, _upper_corner, _cell_size);
+    Universe universe(_lower_corner, _upper_corner, _cell_size);
+    initialize_state<UniverseTemperatureState>(universe, _temperature);
+    initialize_state<UniverseBulkVelocityState>(universe, _bulk_velocity);
+    initialize_state<UniverseFieldForceState>(universe, _field_force);
+    initialize_state<UniverseGravityState>(universe, _gravity);
+    initialize_state<UniverseThermalEnergyState>(universe, _thermal_energy);
+    initialize_state<UniverseKnudsenNumberState>(universe, _knudsen_number);
+    return universe;
 }
 
 atlas::host_unique_ptr<Universe>
@@ -125,17 +202,31 @@ Universe::Builder::make_host_unique() const {
 
 void
 Universe::Builder::validate() const {
-    atlas::check<std::invalid_argument>(_cell_size > 0.0f)
-        << "Universe::Builder validation failed: cell_size must be > 0. "
+    atlas::check<std::invalid_argument>(std::isfinite(_cell_size) && _cell_size > 0.0f)
+        << "Universe::Builder validation failed: cell_size must be finite and > 0. "
         << "cell_size=" << _cell_size;
 
     atlas::check<std::invalid_argument>(
+        std::isfinite(_lower_corner.x) && std::isfinite(_lower_corner.y) &&
+        std::isfinite(_lower_corner.z) && std::isfinite(_upper_corner.x) &&
+        std::isfinite(_upper_corner.y) && std::isfinite(_upper_corner.z) &&
         atlas::all(_upper_corner > _lower_corner))
         << "Universe::Builder validation failed: upper_corner must be greater than lower_corner on all axes. "
         << "lower=(" << _lower_corner.x << "," << _lower_corner.y << "," << _lower_corner.z << "), "
         << "upper=(" << _upper_corner.x << "," << _upper_corner.y << "," << _upper_corner.z << ")";
 
     const float inv_h = 1.0f / _cell_size;
+    atlas::check<std::invalid_argument>(std::isfinite(inv_h))
+        << "Universe::Builder validation failed: inverse cell_size is not finite.";
+    for (const double span : {
+             static_cast<double>(_upper_corner.x) - _lower_corner.x,
+             static_cast<double>(_upper_corner.y) - _lower_corner.y,
+             static_cast<double>(_upper_corner.z) - _lower_corner.z }) {
+        atlas::check<std::invalid_argument>(
+            std::isfinite(span) && span <= std::numeric_limits<float>::max() &&
+            span / _cell_size < std::numeric_limits<int>::max() - 2)
+            << "Universe::Builder validation failed: computed grid_size exceeds int range.";
+    }
 
     // Reproduce the constructor's grid so the cell count can be bounds-checked
     // here, before the (noexcept) constructor commits to it.
@@ -155,6 +246,9 @@ Universe::Builder::validate() const {
         << "Universe::Builder validation failed: grid_size components must be positive. "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
 
+    atlas::check<std::invalid_argument>(nx <= std::numeric_limits<int>::max() / ny &&
+                                        nx * ny <= std::numeric_limits<int>::max() / nz)
+        << "Universe::Builder validation failed: cell_count overflow/invalid.";
     const long long cells64 = nx * ny * nz;
 
     // Reject a cell count that would not fit the int the Universe stores it in.
@@ -163,6 +257,13 @@ Universe::Builder::validate() const {
         << "Universe::Builder validation failed: cell_count overflow/invalid. "
         << "cell_count=" << cells64 << ", "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
+    const auto cell_count = static_cast<std::size_t>(cells64);
+    validate_state(_temperature, cell_count);
+    validate_state(_bulk_velocity, cell_count);
+    validate_state(_field_force, cell_count);
+    validate_state(_gravity, cell_count);
+    validate_state(_thermal_energy, cell_count);
+    validate_state(_knudsen_number, cell_count);
 }
 
 }

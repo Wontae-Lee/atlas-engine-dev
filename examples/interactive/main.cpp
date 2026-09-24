@@ -1,14 +1,10 @@
 /**
  * @file
- * @brief Runs a configured Atlas simulation in the native interactive renderer.
+ * @brief Exercises the Interactive application and its native rendering controls.
  */
 
-#include "rendering/layer/geometry_layer.h"
-#include "rendering/layer/particle_layer.h"
-#include "rendering/renderer.h"
-#include "rendering/state/raw_state_provider.h"
-#include "rendering/target/window_target.h"
-#include "session/session.h"
+#include "application/interactive_application.h"
+#include "application/render_manager.h"
 #include "transport/json_codec.h"
 
 #include <cstddef>
@@ -54,7 +50,6 @@ case_path(const std::string& selection, const char* executable) {
     throw std::invalid_argument("Unknown interactive example case: " + selection);
 }
 
-/// Reads an entire interactive case file for JsonCodec.
 std::string
 read_file(const std::filesystem::path& path) {
     std::ifstream input(path);
@@ -64,38 +59,62 @@ read_file(const std::filesystem::path& path) {
     return content.str();
 }
 
+atlas::interactive::Response
+handle(atlas::interactive::InteractiveApplication& app,
+       const atlas::interactive::Request& request) {
+    auto response = app.handle(request);
+    if (!response.success) throw std::runtime_error(response.error);
+    return response;
 }
 
-/// Builds the raw every-step rendering pipeline and owns its native event loop.
+}
+
 int
 main(int argc, char** argv) {
     try {
         const std::string selection = argc > 1 ? argv[1] : "cylinder";
         const std::size_t maximum_steps =
             argc > 2 ? std::strtoul(argv[2], nullptr, 10) : 0;
-        const auto simulation = atlas::interactive::JsonCodec::decode_simulation(
+        auto simulation = atlas::interactive::JsonCodec::decode_simulation(
             read_file(case_path(selection, argv[0])));
 
-        atlas::interactive::Session session(simulation);
-        atlas::interactive::WindowTarget target(1280, 720, "Atlas Interactive Example");
-        atlas::interactive::Renderer renderer(
-            std::make_unique<atlas::interactive::RawStateProvider>());
-        renderer.add_layer(std::make_unique<atlas::interactive::GeometryLayer>());
-        renderer.add_layer(std::make_unique<atlas::interactive::ParticleLayer>(6.0f));
-        renderer.camera().set_position({ 0.0f, 0.0f, 3.0f });
-        renderer.camera().set_target({ 0.0f, 0.0f, 0.0f });
-        renderer.initialize(target);
+        atlas::interactive::InteractiveApplication app(
+            std::make_unique<atlas::interactive::RenderManager>());
+        atlas::interactive::Request create;
+        create.command = atlas::interactive::Command::create;
+        create.simulation = std::move(simulation);
+        const auto created = handle(app, create);
+        if (!created.session_id) throw std::logic_error("create returned no session_id");
 
-        session.start();
-        // Raw mode intentionally advances exactly once before every rendered frame.
-        while (!target.should_close()
-               && (maximum_steps == 0 || session.status().step < maximum_steps)) {
-            target.poll_events(renderer.camera());
-            session.update();
-            renderer.render(session.scene_view(), target);
+        atlas::interactive::Request command;
+        command.session_id = *created.session_id;
+        command.command = atlas::interactive::Command::render_open;
+        handle(app, command);
+        command.command = atlas::interactive::Command::start;
+        handle(app, command);
+
+        while (app.rendering_active()) {
+            app.update();
+            if (maximum_steps > 0) {
+                command.command = atlas::interactive::Command::status;
+                const auto status = handle(app, command);
+                if (status.status && status.status->step >= maximum_steps) break;
+            }
         }
 
-        renderer.shutdown();
+        command.command = atlas::interactive::Command::pause;
+        handle(app, command);
+        command.command = atlas::interactive::Command::render_close;
+        handle(app, command);
+        command.command = atlas::interactive::Command::step;
+        command.step_count = 1;
+        handle(app, command);
+        command.command = atlas::interactive::Command::close;
+        handle(app, command);
+
+        atlas::interactive::Request shutdown;
+        shutdown.command = atlas::interactive::Command::shutdown;
+        handle(app, shutdown);
         return 0;
     } catch (const std::exception& error) {
         std::fprintf(stderr, "interactive example: %s\n", error.what());

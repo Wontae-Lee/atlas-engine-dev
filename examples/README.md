@@ -1,7 +1,7 @@
 # Atlas Examples
 
 The examples present the same Atlas simulation through three consumers of the
-core: native C++, Python, and the native Interactive renderer. Each frontend has
+core: native C++, Python, and the native Interactive application. Each frontend has
 one entry point, a reusable reference template, and focused runnable cases.
 
 ```text
@@ -54,8 +54,11 @@ variant. A GPU is required when the executable runs.
 ## Native Interactive window
 
 Interactive execution and rendering must both be enabled. The example loads a
-JSON case, advances one simulation step per frame, and draws live particles and
-configured source, collider, and sink geometry.
+JSON case, creates a session through `InteractiveApplication`, opens rendering
+with `render_open`, and starts the session through the same command path as the
+JSONL server. Application updates advance running sessions; `RenderManager`
+draws frames independently. It displays live particles and configured source,
+collider, and sink geometry at their current poses.
 
 ```bash
 cmake -S . -B build/interactive-tbb -G Ninja \
@@ -70,7 +73,10 @@ cmake --build build/interactive-tbb --target atlas-interactive-example
 ```
 
 The first argument may also be an explicit JSON file. Omitting the second
-argument runs until the window closes. Mouse drag or `W/A/S/D` orbits the
+argument runs until the window closes. The optional number limits simulation
+steps, rather than frames. After the window closes, the example pauses,
+closes rendering, steps the still-live session once, and then closes it. Mouse
+drag or `W/A/S/D` orbits the
 camera, right drag or the scroll wheel zooms, keys `1` through `7` select fixed
 views, and Escape closes the window.
 

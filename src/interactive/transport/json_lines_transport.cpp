@@ -23,12 +23,14 @@ JsonLinesTransport::receive(Request& request, Response& error) {
     std::string line;
     while (std::getline(*_input, line)) {
         if (line.empty()) continue;
+        std::string request_id;
         try {
-            request = JsonCodec::decode_request(line);
+            request = JsonCodec::decode_request(line, &request_id);
             return true;
         } catch (const std::exception& exception) {
             // A malformed line produces an error response without terminating the channel.
             error = {};
+            error.request_id = request_id;
             error.error = exception.what();
             send(error);
         }

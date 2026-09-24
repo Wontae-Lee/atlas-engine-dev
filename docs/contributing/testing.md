@@ -2,14 +2,11 @@
 
 Test policy, suite layout, and change-specific validation.
 
-## Run policy
+## Packaging and local runs
 
-Do not run builds, tests, benchmarks, simulations, generators, or formatters
-unless the user explicitly asks.
-
-The Python bindings are packaged with scikit-build-core; when the user asks to
-build them, use `scripts/build_wheels.sh` (it installs its own toolchain via
-`pip`). The repo provisions no `.venv`.
+The Python bindings are packaged with scikit-build-core. `scripts/build_wheels.sh`
+builds wheels and installs its packaging toolchain through `pip`. The repository
+does not provision a `.venv` automatically.
 
 ---
 
@@ -68,4 +65,5 @@ Tests mirror `include/atlas/`: every module has a directory under
 - Example changes: build the corresponding executable or install the Python package, then run the maintained cylinder smoke case.
 - Benchmark harness changes: build and run the small benchmark smoke configuration; performance claims require a separate deliberate benchmark run.
 
-Configured CI coverage is not evidence that a particular local or hosted run passed. Report only commands that actually completed.
+The [CI guide](../operations/ci.md) lists configured checks. Check a particular
+workflow run before interpreting its results as a passing validation.

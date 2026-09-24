@@ -37,9 +37,18 @@ and derives the rest once:
 
 Prefer the fluent `Universe::Builder` (`with_lower_corner`, `with_upper_corner`,
 `with_cell_size`, or `with_geometry` to fit a geometry's bounding box). Its
-`build()` / `make_host_unique()` validate the configuration — `cell_size > 0`,
-`upper_corner` strictly greater than `lower_corner` on every axis, and a positive
+`build()` / `make_host_unique()` validate the configuration — finite `cell_size > 0`,
+finite `upper_corner` strictly greater than `lower_corner` on every axis, and a positive
 cell count that fits `int` — throwing `std::invalid_argument` otherwise.
+The builder accepts initial `temperature`, `bulk_velocity`, `field_force`,
+`gravity`, `thermal_energy`, and `knudsen_number` columns. Each supplied column
+must contain exactly the computed `cell_count` values. The builder checks this
+after deriving the grid and copies valid columns into the backend buffers.
+
+`Builder::validate()` performs these checks without creating a Universe.
+`build() const` runs validation, constructs the grid, and installs only supplied
+initial fields. It retains its staged host values for another build. The
+returned `UniverseHostPtr` owns state buffers; `UniverseDsmcView` borrows them.
 
 ```cpp
 UniverseHostPtr universe = Universe::builder()
@@ -68,8 +77,9 @@ bool has = universe.has_state<UniverseNumberParticleState>();
 auto owned = universe.remove_state<UniverseNumberParticleState>();  // detach
 ```
 
-Unlike a `Fluid`, a `Universe` seeds **no** fields at construction. `System`
-provisions exactly the columns its configured solvers need, idempotently:
+Unlike a `Fluid`, the direct `Universe` constructor seeds **no** fields. Its
+builder installs only supplied initial columns. `System` provisions the columns
+its configured solvers need, idempotently:
 `System::initialize_states` always ensures `UniverseAllocatedSolverState`, and any
 DSMC solver additionally pulls in the four DSMC fields
 (`src/atlas/system/system.cu`, via `ensure_universe_state`).
@@ -87,18 +97,18 @@ are the ones the collision view gathers.
 | `UniverseMaxRelativeSpeedState` (`max_relative_speed`) | `float` | the DSMC **solve** pass each step (diagnostic: largest sampled pair relative speed) | observation |
 | `UniverseMaxSigmaGState` (`max_sigma_g`) | `float` | the DSMC **solve** pass — read, then **raised in place** when a larger `sigma*g` is sampled | the DSMC **solve** pass, as the NTC majorant `(sigma*g)_max` bounding candidates and the accept probability |
 | `UniverseAllocatedSolverState` (`allocated_solver`) | `int` | the codec **allocate** pass (per-cell owning-solver index) | the DSMC **solve** pass (a solver processes a cell only when this equals its own index; a null buffer means "every solver owns every cell") |
-| `UniverseTemperatureState` (`temperature`) | `float` (K) | populated externally / by diagnostics | the codec **allocate** pass |
+| `UniverseTemperatureState` (`temperature`) | `float` (K) | initial builder value or external update | the codec **allocate** pass |
 | `UniverseBulkVelocityState` (`bulk_velocity`) | `Float3` (m/s) | *reserved* | mean-flow diagnostic |
 | `UniverseFieldForceState` (`field_force`) | `Float3` | *reserved* | external body-force field |
 | `UniverseGravityState` (`gravity`) | `Float3` | *reserved* | gravity, kept separate from `field_force` |
 | `UniverseThermalEnergyState` (`thermal_energy`) | `float` (J) | *reserved* | per-cell internal energy |
 | `UniverseKnudsenNumberState` (`knudsen_number`) | `float` | *reserved* | rarefaction diagnostic for continuum-vs-DSMC selection |
 
-The five fields marked *reserved* are defined and zero-initialized, but no pass in
-the current step pipeline writes or reads them. They are placeholders for planned
-work — body forces, gravity, and a Knudsen-driven continuum-vs-DSMC selection —
-not dead code. Treat them as the intended extension points they are: a new pass
-that produces one of them needs no change to `Universe` itself.
+The five fields marked *reserved* can be initialized through the builder, but
+no pass in the current step pipeline writes or reads them. A newly registered
+field begins zero-filled unless its initial values were supplied. Body forces,
+gravity, and Knudsen diagnostics therefore remain data fields rather than
+active physics passes.
 
 ### The DSMC majorant persists across steps
 

@@ -1,69 +1,28 @@
-# Workflow
+# Contributing workflow
 
-The working agreement for contributing to Atlas Engine: how to communicate,
-how to scope a change, when to pause and ask, and how to commit.
+Atlas has three maintained consumption paths: native C++, Python, and native
+Interactive. A change should include the related API, documentation, and
+example updates so readers see one coherent behavior across those paths.
 
----
+## Preparing a change
 
-## 1. Communication
+Start with the relevant [architecture](../architecture/overview.md) and
+[module](../atlas/) documentation, then compare it with the implementation.
+Preserve the dependency direction from frontends to Core and the TBB/CUDA
+backend contract. Keep the change focused; when a public API or ownership
+contract changes, describe its migration impact in the change summary.
 
-- Respond in Korean unless the user asks for another language.
-- When a request depends on missing context or an unclear invariant, explain
-  the gap instead of guessing or adding unrelated safeguards.
+## Documentation and review
 
----
+Each module under `include/atlas/` has a matching `docs/atlas/<module>/`
+document. Update it with intentional behavior or ownership changes. Update the
+[simulation pipeline](../architecture/simulation-pipeline.md) when phase order
+changes, and [frontend boundaries](../architecture/frontends.md) when ownership
+moves between components. The root README serves users; detailed design,
+toolchain, CI, and release information belongs in these guides.
 
-## 2. Change Discipline
-
-- Make changes bold enough to fully satisfy the requested behavior. Do not
-  preserve broken structure just to keep a diff small.
-- Keep edits focused on the requested behavior, but do not treat minimal line
-  count as a goal.
-- Preserve existing style, naming, include order, file layout, and backend
-  portability. Follow the structure recorded in the per-module docs under
-  [`docs/atlas/`](../atlas/).
-- Do not introduce broad refactors, public API changes, new dependencies,
-  build-system changes, or formatting-only churn unless explicitly requested.
-- Avoid changes that predictably break builds or leave declarations and
-  definitions inconsistent. If the correct fix requires touching related files,
-  update them together.
-- Prefer project abstractions and existing invariants over ad-hoc workarounds.
-
----
-
-## 3. When to Be Cautious
-
-Be cautious (prefer a conservative change and confirm intent) only when:
-
-- the user asks for a conservative change,
-- public APIs or cross-module contracts would change, or
-- the invariant needed for a larger fix is unclear.
-
-Outside these cases, implement the requested behavior directly.
-
----
-
-## 4. Keeping Docs and Code in Sync
-
-- Keep the root README focused on installation and public usage. Put internal
-  design, CI operation, and release procedures in the contributor guidelines.
-- Derive documented defaults and CI coverage from the current configuration.
-  Distinguish configured checks from checks that were actually executed.
-
-- The per-module docs under [`docs/atlas/`](../atlas/) are the source of truth
-  for program structure — every module under `include/atlas/` has one. When you
-  make an intentional change to a module, update its document in the same
-  change; if the change alters the step pipeline or the framework's shape,
-  update the framework overview in [architecture overview](../architecture/overview.md) too.
-- When you change a guideline that the code depends on, update the matching
-  guideline document here too.
-
----
-
-## 5. Git and Commits
-
-- When the user asks for `git commit`, group the staged changes by related
-  purpose, then create commits that match those groups.
-- `.idea/workspace.xml` is gitignored (see `.gitignore`), so it never enters a
-  commit; other tracked `.idea/` files (for example `editor.xml`, `codeStyles/`)
-  are committed like any other source.
+Use the [coding style](coding-style.md) for source conventions, the
+[build guide](build.md) for supported configurations, and the
+[testing guide](testing.md) for suite layout and relevant validation. A review
+should distinguish checks configured in CI from checks actually completed for
+the change. Keep commits grouped by a coherent purpose when preparing a patch.

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/container/type_store.h>
 #include <atlas/core/macros.h>
 #include <atlas/geometry/geometry.h>
@@ -7,7 +8,9 @@
 #include <atlas/memory/memory.h>
 #include <atlas/universe/universe_state.h>
 
+#include <cstddef>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace atlas {
@@ -294,7 +297,8 @@ private:
  * @brief Fluent builder for `Universe`.
  *
  * Collects the domain corners and cell size — either set directly or derived
- * from a `Geometry`'s bounding box — validates them, and constructs the grid.
+ * from a `Geometry`'s bounding box — plus optional initial cell fields,
+ * validates them, and constructs the grid.
  * Defaults describe the unit box `[(0,0,0), (1,1,1)]` with a unit cell size.
  */
 class Universe::Builder final {
@@ -338,12 +342,25 @@ public:
     ATLAS_HOST Builder&
     with_cell_size(float h) noexcept;
 
+    /** @brief Stage one temperature value per computed grid cell. */
+    ATLAS_HOST Builder& with_temperature(HostBuffer<float> values);
+    /** @brief Stage one bulk velocity per computed grid cell. */
+    ATLAS_HOST Builder& with_bulk_velocity(HostBuffer<Float3> values);
+    /** @brief Stage one field force per computed grid cell. */
+    ATLAS_HOST Builder& with_field_force(HostBuffer<Float3> values);
+    /** @brief Stage one gravity value per computed grid cell. */
+    ATLAS_HOST Builder& with_gravity(HostBuffer<Float3> values);
+    /** @brief Stage one thermal energy per computed grid cell. */
+    ATLAS_HOST Builder& with_thermal_energy(HostBuffer<float> values);
+    /** @brief Stage one Knudsen number per computed grid cell. */
+    ATLAS_HOST Builder& with_knudsen_number(HostBuffer<float> values);
+
     /**
      * @brief Validate the configuration and construct the grid by value.
      * @return A fully-initialized `Universe`.
-     * @throws std::invalid_argument if `cell_size <= 0`, if `upper_corner` is
-     *         not strictly greater than `lower_corner` on every axis, or if the
-     *         resulting cell count is non-positive or overflows `int`.
+     * @throws std::invalid_argument if the cell size or domain is invalid, the
+     *         resulting cell count overflows `int`, or a supplied cell field has
+     *         a length different from the resulting cell count.
      */
     ATLAS_NODISCARD ATLAS_HOST Universe
     build() const;
@@ -360,9 +377,8 @@ private:
     /**
      * @brief Check the pending configuration, throwing on any invalid field.
      *
-     * Verifies `cell_size > 0`, `upper_corner > lower_corner` on all axes, and
-     * that the grid `compute_grid_size` would produce is at least one cell per
-     * axis and whose total cell count is positive and fits in `int`.
+     * Verifies finite positive cell size, finite ordered corners, a grid that
+     * fits in `int`, and supplied cell fields whose lengths match its cell count.
      *
      * @throws std::invalid_argument describing the first failed constraint.
      */
@@ -375,6 +391,13 @@ private:
     Float3 _upper_corner = Float3(1.0f, 1.0f, 1.0f); ///< Pending upper corner.
 
     float _cell_size = 1.0f; ///< Pending cubic cell edge length.
+
+    std::optional<HostBuffer<float>> _temperature; ///< Supplied cell temperatures.
+    std::optional<HostBuffer<Float3>> _bulk_velocity; ///< Supplied cell bulk velocities.
+    std::optional<HostBuffer<Float3>> _field_force; ///< Supplied cell forces.
+    std::optional<HostBuffer<Float3>> _gravity; ///< Supplied cell gravity values.
+    std::optional<HostBuffer<float>> _thermal_energy; ///< Supplied cell thermal energies.
+    std::optional<HostBuffer<float>> _knudsen_number; ///< Supplied cell Knudsen numbers.
 };
 
 /// Owning host-side handle to a `Universe`, as produced by the builder.

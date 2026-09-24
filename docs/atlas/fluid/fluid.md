@@ -153,7 +153,18 @@ previously gathered view, so re-gather it afterwards.
 Use the fluent `Fluid::Builder` (`with_buffer_size`, `with_particle_count`,
 `with_statistical_weight`, `with_materials`), whose `build()` / `make_host_unique()`
 validate the parameters (positive weight, initial count within capacity) and then
-let the `Fluid` constructor create the three mandatory columns.
+let the `Fluid` constructor create the three mandatory columns. The builder also
+accepts initial live prefixes through `with_position`, `with_velocity`,
+`with_species`, `with_temperature`, and the three energy setters. Each supplied
+prefix must contain exactly `particle_count` values. Species IDs must index the
+attached material dictionary when one is present. The builder validates these
+relationships before copying the prefixes into the backend buffers.
+
+`Builder::validate()` checks staged values without allocating a Fluid.
+`build() const` invokes it, constructs mandatory columns, installs only supplied
+optional columns, and copies live prefixes to backend storage. The builder
+retains its staged host values, so it can build again. The returned
+`FluidHostPtr` owns the Fluid; device views only borrow its buffers.
 
 ```cpp
 FluidHostPtr fluid = Fluid::builder()

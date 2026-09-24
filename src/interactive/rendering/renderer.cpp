@@ -10,6 +10,7 @@
 #include "rendering/state/state_provider.h"
 #include "rendering/target/render_target.h"
 
+#include <cstddef>
 #include <stdexcept>
 #include <utility>
 
@@ -25,7 +26,16 @@ Renderer::~Renderer() = default;
 void
 Renderer::initialize(RenderTarget&) {
     if (_initialized) return;
-    for (auto& layer : _layers) layer->initialize();
+    std::size_t initialized = 0;
+    try {
+        for (auto& layer : _layers) {
+            layer->initialize();
+            ++initialized;
+        }
+    } catch (...) {
+        while (initialized > 0) _layers[--initialized]->shutdown();
+        throw;
+    }
     _initialized = true;
 }
 
@@ -40,12 +50,18 @@ void
 Renderer::render(const SimulationSceneView& view, RenderTarget& target) {
     if (!_initialized || !_provider) throw std::logic_error("Renderer is not initialized.");
     const RenderState& state = _provider->update(view);
-    target.begin_frame();
-    // Targets clamp their dimensions, so the projection always receives a valid aspect ratio.
-    const float aspect = static_cast<float>(target.width()) / static_cast<float>(target.height());
-    for (auto& layer : _layers) layer->render(state, _camera, aspect);
-    target.end_frame();
-    target.present();
+    try {
+        target.begin_frame();
+        // Targets clamp their dimensions, so the projection always receives a valid aspect ratio.
+        const float aspect = static_cast<float>(target.width()) / static_cast<float>(target.height());
+        for (auto& layer : _layers) layer->render(state, _camera, aspect);
+        target.end_frame();
+        target.present();
+    } catch (...) {
+        _provider->finish_frame();
+        throw;
+    }
+    _provider->finish_frame();
 }
 
 void

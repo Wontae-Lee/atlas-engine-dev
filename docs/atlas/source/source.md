@@ -17,7 +17,7 @@ to world space, into a fluid position buffer.
 ## Why `HostVariant`, not `DeviceVariant`
 
 Each source leaf **owns a `DeviceBuffer<Float3>` cache** of accepted local sample
-points (a `thrust::device_vector`). `DeviceBuffer`'s copy/move/destructor are
+points (`std::vector` on TBB, `thrust::device_vector` on CUDA). Its copy/move/destructor are
 **host-only**, and `DeviceVariant`'s union machinery is `__host__ __device__`. If
 a `DeviceVariant` wrapped such a leaf, nvcc would instantiate the union
 construct/copy/destroy for the **device** and try to call `device_vector`'s
@@ -65,6 +65,12 @@ keep the points passing the leaf's predicate:
 point it writes `unit.sync().sync_to_world(point)` into `positions->data()` at
 `offset + i` and returns the number written. `advance(dt)` advances the unit; the
 cache is in local space so it stays valid.
+
+Both leaf builders take a `Unit`, `tolerance`, and `spacing`.
+`Builder::validate()` requires a Unit, finite non-negative tolerance, and finite
+positive spacing. `build()` moves the Unit into the source, creates its sample
+cache, and resets the builder. The resulting `Source` owns its cache; the
+spawn kernel borrows its buffer during the call.
 
 ## Emission flow
 

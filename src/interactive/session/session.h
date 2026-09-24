@@ -69,7 +69,7 @@ private:
     void configure_csv();
     SimulationSample collect_sample() const;
 
-    SystemFactory _factory; ///< Reusable source for initial and restarted systems.
+    CoreFactory _factory; ///< Reusable source for initial and restarted systems.
     OutputConfig _output; ///< Application reporting policy.
     atlas::SystemHostPtr _system; ///< Owned core simulation.
     SessionState _state = SessionState::ready; ///< Interactive lifecycle state.

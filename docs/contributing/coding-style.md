@@ -5,7 +5,7 @@ discipline; the structural conventions that tie code to the architecture
 (the tagged-union leaf pattern, builders, backend portability, solver rules)
 live in the per-module docs under [`docs/atlas/`](../atlas/) — start with the
 framework overview in [architecture overview](../architecture/overview.md) and the pattern itself in
-[`atlas/core`](../atlas/core/core.md). Read both before changing core code.
+[`atlas/core`](../atlas/core/core.md).
 
 The guiding principle: write code that an experienced C++ programmer would
 immediately recognize, and that makes the algorithmic flow understandable at the
@@ -15,8 +15,7 @@ call site.
 
 ## 1. Scope of an Implementation
 
-- Implement only the requested algorithm or behavior. Do not add capability
-  that was not asked for.
+- Keep each implementation focused on the behavior it is meant to provide.
 - Do not split work into many tiny helpers just to shorten individual
   functions. A readable implementation makes the flow understandable at the call
   site, not hidden behind indirection.
@@ -63,8 +62,8 @@ call site.
   expanding it: `BVH`/`LBVH`/`SAHBVH`, `AABB`. An all-caps acronym type is
   preferred over a long expanded spelling (`BoundingVolumeHierarchy`) when the
   acronym is what the code, files, and call sites already use everywhere else.
-- A public rename is a breaking change. Do not rename public spellings (types,
-  methods, headers) unless a rename is explicitly requested.
+- A public rename of a type, method, or header is a breaking change and needs a
+  migration plan.
 
 ---
 
@@ -80,31 +79,28 @@ call site.
 
 ## 5. Control Flow and Robustness
 
-- Do not add defensive checks, fallback paths, ownership guards, recovery
-  branches, diagnostic-only state, or debug scaffolding unless requested or
-  necessary to preserve an existing local contract.
-- Do not silently repair invalid states by resetting, zeroing, clamping,
-  skipping required work, or mutating unrelated data — unless that repair is
-  part of the requested algorithm.
+- Add guards and fallback paths where the public contract or algorithm requires
+  them. Keep diagnostic-only state and debug scaffolding out of production code.
+- Invalid states should fail at their owning boundary. If an algorithm repairs
+  state by resetting, zeroing, or clamping, make that behavior explicit.
 
 ---
 
 ## 6. State Mutation
 
 - A guard branch updates only the state owned by its own algorithmic step.
-- Do not mutate shared solver, universe, fluid, or searcher state from guard
-  branches. Update only the state owned by the requested step.
-- Solver code is performance-sensitive: avoid behavior, memory-layout, or
-  ownership changes unless requested. See
+- Guard branches should not mutate shared solver, universe, fluid, or searcher
+  state owned by another step.
+- Solver code is performance-sensitive; changes to behavior, memory layout, or
+  ownership need focused review. See
   [`atlas/solver`](../atlas/solver/solver.md).
 
 ---
 
 ## 7. Comments
 
-Everything under `include/atlas/` and `src/atlas/` is documented. New code there
-carries documentation too — this is the one place the "don't write comments
-unless asked" default does not apply. Comments are written in **English**.
+Everything under `include/atlas/` and `src/atlas/` is documented. New code
+there carries English documentation too.
 
 ### Form
 
@@ -168,8 +164,8 @@ write, since an out-of-range write corrupts memory rather than just reading junk
 
 ## 8. Instrumentation
 
-- Keep temporary logging, counters, assertions, probes, timing code, and
-  instrumentation-only fields out of production code unless requested.
+- Remove temporary logging, counters, assertions, probes, timing code, and
+  instrumentation-only fields before merging production code.
 
 ---
 

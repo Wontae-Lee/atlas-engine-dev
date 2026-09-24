@@ -1,5 +1,6 @@
 # Execution and protocol support remain independent of graphics dependencies.
 set(ATLAS_INTERACTIVE_EXECUTION_SOURCES
+        application/interactive_application.cpp
         config/system_factory.cpp
         session/session.cpp
         server/server.cpp
@@ -51,6 +52,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
 set(ATLAS_INTERACTIVE_RENDERING_SOURCES
+        application/render_manager.cpp
         rendering/camera.cpp
         rendering/renderer.cpp
         rendering/state/raw_state_provider.cpp
@@ -80,6 +82,9 @@ endif ()
 
 add_library(atlas-interactive-rendering STATIC ${ATLAS_INTERACTIVE_RENDERING_SOURCES})
 add_library(atlas::interactive-rendering ALIAS atlas-interactive-rendering)
+
+target_link_libraries(atlas-interactive-app PRIVATE atlas::interactive-rendering)
+target_compile_definitions(atlas-interactive-app PRIVATE ATLAS_INTERACTIVE_RENDERING_ENABLED=1)
 
 target_include_directories(atlas-interactive-rendering
         PUBLIC

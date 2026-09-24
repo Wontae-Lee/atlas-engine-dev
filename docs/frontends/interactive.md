@@ -1,258 +1,206 @@
-# Interactive Execution and Rendering
+# Interactive execution and rendering
 
-`src/interactive/` is the native C++ execution, control, and rendering layer for
-Atlas. It consumes the core without changing the core dependency direction:
+`src/interactive/` provides a native C++ application around
+[Atlas Core](../architecture/overview.md). It accepts JSON configuration and
+newline-delimited JSON (JSONL) commands, owns multiple simulation sessions,
+records statistics and optional CSV, and can present one session in a native
+OpenGL window. It does not use Python or send per-particle state through JSON.
 
-```text
-Python binding ───────→ Atlas Core ←────── Interactive
-```
-
-The installed `atlas-interactive` executable is a newline-delimited JSON
-(JSONL) simulation server. The optional OpenGL renderer is a separate library,
-and the native window is an example under `examples/interactive/`. Neither path
-uses Python, NumPy, or per-particle JSON transfer.
-
-## Architecture
+## Components and ownership
 
 ```text
-JSON config / JSON command
-        ↓
-Transport
-        ↓
-Server
-        ↓
-Session
-        ↓
-SystemFactory
-        ↓
-Atlas Core
+stdin JSONL → JsonLinesTransport → JsonCodec → InteractiveApplication
+                                         ├─ Server → Session → CoreFactory → Core builders → System
+                                         └─ RenderManager → Renderer → WindowTarget
+                                                              ↑
+                selected Session::scene_view() → RawStateProvider → StateBridge
+                                                   └─ ParticleLayer + GeometryLayer
 ```
 
-| Component | Responsibility |
-|---|---|
-| `JsonCodec` | Convert JSON documents to configuration and protocol values, and responses back to JSON. |
-| `JsonLinesTransport` | Read one request per stdin line and write one response per stdout line. |
-| `Server` | Own sessions, allocate session IDs, route commands, remove sessions, and coordinate process shutdown. |
-| `Session` | Own one live `System`, step it, collect statistics, save snapshots, restart, and expose read-only render views. |
-| `SystemFactory` | Convert an immutable `SimulationConfig` into Atlas builders and native objects. |
-| `OutputConfig` | Configure optional CSV output independently of simulation physics. |
-| `StateProvider` | Convert a read-only scene view into graphics-side `RenderState`. |
-| `StateBridge` | Transfer selected core memory into reusable OpenGL buffers. |
-| `Renderer` | Orchestrate the provider, camera, layers, and target without stepping a simulation. |
-| `GeometryLayer` | Build and draw current source, collider, and sink geometry at each Unit's current pose. |
-| `RenderTarget` | Own where OpenGL output is presented. |
+`SimulationConfig` is the typed, transport-independent simulation description.
+`JsonCodec` decodes it and converts protocol requests and responses.
+`JsonLinesTransport` reads one request per line and writes one response per line.
+`InteractiveApplication` sends simulation commands to `Server` and rendering
+commands to an optional `RenderManager`. `Server` allocates IDs and owns
+`Session` objects. Each Session owns one live Core `System`, its original
+configuration, run state, statistics, and optional `CsvWriter`. `CoreFactory`
+(the compatibility alias is `SystemFactory`) translates configuration to Core
+builder calls, including mesh ownership. It does not keep a second set of
+physical validation rules.
 
-`Session` is the only interactive class that accesses its live `atlas::System`.
-It does not expose a public mutable system reference. JSON parsing stays in the
-transport layer, while core construction stays in `SystemFactory`.
+`RenderManager` selects one Server-owned session and owns `WindowTarget` and
+`Renderer`. The renderer owns a `RawStateProvider`, camera, `GeometryLayer`, and
+`ParticleLayer`. It receives short-lived read-only scene views, never a mutable
+`System`. The session owns no OpenGL resources, and `Renderer` never advances
+simulation. `InteractiveApplication::update()` advances running sessions through
+Server and then asks the manager to draw when a frame is due. The two lifetimes
+are independent.
 
-## Building
+## Building and starting
 
-CMake options, target names, and backend constraints are maintained in the
-[build guide](../contributing/build.md). `atlas::interactive` is the headless
-execution library; `atlas::interactive-rendering` adds OpenGL dependencies.
+The [build guide](../contributing/build.md) covers TBB, CUDA, presets, and
+graphics dependencies. `atlas::interactive` is the graphics-free execution
+library. `ATLAS_INTERACTIVE_RENDERING=ON` adds `atlas::interactive-rendering` and
+links it into the `atlas-interactive` executable; `OFF` leaves the executable
+headless. The maintained [Interactive example](../../examples/README.md#native-interactive-window)
+uses the same application and renderer composition.
 
-## Starting the JSON server
-
-Start with a simulation file:
+Start the JSONL server with a case:
 
 ```bash
 ./build/interactive-headless-tbb/src/interactive/atlas-interactive \
     --config examples/interactive/cases/cylinder.json
 ```
 
-The first stdout line is a `create` response with `request_id` set to
-`"startup"` and the allocated `session_id`. Commands then arrive on stdin as
-one JSON object per line. Responses are emitted on stdout in the same format.
-Atlas log messages are directed to stderr so stdout remains a valid JSONL
-stream.
+This emits a `create` response with `request_id: "startup"` and a `session_id`.
+Starting without `--config` lets clients create sessions by command. Commands
+arrive on stdin; responses use stdout. Core logs go to stderr. A rendering-enabled
+executable can also accept `render_open` and `render_close`; the window requires
+a graphics display. The JSONL transport itself remains stdin/stdout.
 
-A process may also start without `--config`. Create each session explicitly:
+## Simulation JSON
 
-```json
-{"request_id":"create-1","command":"create","payload":{"config":{"dt":0.01,"fluid":{"buffer_size":64},"universe":{"lower_corner":[-1,-1,-1],"upper_corner":[1,1,1],"cell_size":0.25}},"output":{"csv_enabled":false}}}
-```
+A complete simulation object requires `dt`, `fluid`, and `universe`. Arrays of
+`solvers`, `emitters`, `colliders`, and `sinks`, plus `codec`, are optional. JSON
+uses numeric scalars, three-component vectors, and scalar-first quaternions
+`[w,x,y,z]`. The [cylinder case](../../examples/interactive/cases/cylinder.json)
+is runnable strict JSON; the [template](../../examples/interactive/template.jsonc)
+shows the broader field set with comments and is not directly parseable JSON.
 
-`Server` owns every successfully created session until `close` removes it or
-the process exits. Invalid configuration returns `success: false` and an error;
-it does not install a partial session.
+| Object | Fields | Meaning |
+|---|---|---|
+| `fluid` | `buffer_size` (required), `particle_count`, `statistical_weight`, `materials`, `position`, `velocity`, `species`, `temperature`, `translational_energy`, `rotational_energy`, `vibrational_energy` | Fixed particle capacity, live prefix, species table, and optional initial columns. Each supplied initial column has one value per live particle. |
+| `materials[]` | `type`, `mass`, `translational_energy`, `rotational_energy`, `vibrational_energy`, `reference_diameter`, `reference_temperature`, `viscosity_index`, `scattering_parameter` | Material types: `molecule`, `atom`, `ion`, `neutron`, `solid`. Solid construction uses its mass. Array order determines species indices. |
+| `universe` | `cell_size` (required), `lower_corner` and `upper_corner`, or `geometry`; optional `temperature`, `bulk_velocity`, `field_force`, `gravity`, `thermal_energy`, `knudsen_number` | Domain and fixed grid. A geometry derives the bounds when supplied. Each supplied cell column must match the derived cell count. |
+| `solvers[]` | `kernel`, `majorant_sample_pairs`, `majorant_exhaustive_limit` | DSMC kernel: `hard_sphere`, `variable_hard_sphere`, or `variable_soft_sphere`. Solvers run in array order. |
+| `emitters[]` | `source`, `generator` | The source places particles and its paired generator initializes their state. |
+| `source` | `type`, `unit`, `tolerance`, `spacing` | `surface` or `volume` emission boundary. |
+| `generator` | `type`, `species_ratios`, `species_numbers`, `temperature`, `bulk_velocity`, `seed`; distribution fields | `uniform` uses `min_value`/`max_value`; `jittering` uses `base_value`/`jitter_radius`; `maxwell_sigma` uses `sigma`; `maxwell_boltzmann` can use `species_mass` or the Fluid material dictionary. |
+| `colliders[]` | `unit`, `momentum_accommodation_coefficient`, `restitution`, `diffuse_sampling` | Isothermal wall; diffuse sampling is `uniform` or `cosine_weighted`. |
+| `sinks[]` | `type`, `unit`, `tolerance` | `surface`, `volume`, or `tracing` removal boundary. |
+| `codec` | `representative_characteristic_length`, `representative_collision_cross_sectional_area`, `representative_statistical_weight`, `representative_cell_volume` | Optional Knudsen-based per-cell solver selector. |
 
-## Simulation configuration
+A `unit` contains a required `geometry` and optional `translation`,
+`orientation`, `velocity`, `acceleration`, `angular_velocity`, and
+`angular_acceleration`. It combines local geometry with a world pose and
+optional motion. Geometry types and their principal fields are:
 
-The top-level simulation object has these fields:
-
-| Field | Content |
+| `type` | Fields |
 |---|---|
-| `dt` | Positive core timestep. |
-| `fluid` | Capacity, live count, statistical weight, materials, and optional initial particle states. |
-| `universe` | Bounds or a geometry, cell size, and optional user-facing cell states. |
-| `solvers` | DSMC kernel and majorant settings. |
-| `emitters` | Source and generator pairs. |
-| `colliders` | Isothermal collider Units and wall parameters. |
-| `sinks` | Surface, volume, or tracing sink Units. |
-| `codec` | Optional Knudsen codec representative values. |
+| `box` | `lower_corner`, `upper_corner` |
+| `circle` | `center`, `normal`, `radius` |
+| `cylinder` | `center`, `radius`, `height`, optional `open` |
+| `plane` | `normal`, `offset` |
+| `sphere` | `center`, `radius` |
+| `square` | `center`, `normal`, `side_length` |
+| `triangle` | `a`, `b`, `c` |
+| `triangle_mesh` | `triangles`, each a three-vertex array |
+| `polygonal_prism` | `center`, `side_count`, `radius`, `height` |
 
-Fluid state arrays use `position`, `velocity`, `species`, `temperature`,
-`translational_energy`, `rotational_energy`, and `vibrational_energy`. Initial
-particle arrays, when provided, must match `particle_count`. Universe arrays
-must match the calculated cell count. Solver-owned fields such as collision counters,
-`max_sigma_g`, and allocated-solver state are intentionally absent from normal
-configuration.
-
-Geometry `type` accepts `box`, `circle`, `cylinder`, `plane`, `sphere`,
-`square`, `triangle`, `triangle_mesh`, and `polygonal_prism`. A Unit combines a
-geometry with optional `translation`, quaternion `orientation` in `[w,x,y,z]`
-order, `velocity`, `acceleration`, `angular_velocity`, and
-`angular_acceleration`.
-
-Generator `type` accepts `uniform`, `jittering`, `maxwell_sigma`, and
-`maxwell_boltzmann`. Shared generator fields are `species_ratios`,
-`species_numbers`, `temperature`, `bulk_velocity`, and `seed`. Generator-specific
-fields are `min_value`, `max_value`, `base_value`, `jitter_radius`, `sigma`, and
-`species_mass`. A Maxwell-Boltzmann generator may resolve masses from the Fluid
-material dictionary or from explicit `species_mass`.
-
-Material `type` accepts `molecule`, `atom`, `ion`, `neutron`, and `solid`.
-Gas-like materials accept mass, energy, reference diameter/temperature,
-viscosity index, and scattering parameter. A solid currently uses mass only.
-See [`examples/interactive/cases/cylinder.json`](../../examples/interactive/cases/cylinder.json)
-for a runnable document.
+`JsonCodec` checks JSON syntax, types, vector dimensions, enum spellings, and
+required fields for partial `validate` targets. Core builders perform Atlas
+semantic and numerical checks, including particle and cell column lengths and
+geometry or policy constraints. The same Core construction path is used for a
+complete `validate` and `create`. A decoding or builder exception becomes a
+failed response with `success: false` and an `error` string; no partial session
+is installed.
 
 ## JSONL commands
 
-Every request may carry a caller-selected `request_id`. Commands other than
-`create` and `shutdown` require `session_id`.
+Requests have `command`, optional caller supplied `request_id`, and a `payload`
+object when arguments are needed. The decoder also accepts arguments at the top
+level for local tools. `create`, `validate`, and `shutdown` are process scoped;
+every other command requires `session_id`. Responses echo `request_id` and
+include `success`, plus `message`, `error`, `session_id`, or `status` when relevant.
 
-| Command | Payload | Behavior |
+| Command | Payload | Effect |
 |---|---|---|
-| `create` | `config`, optional `output` | Validate configuration, build a Session, and return its ID. |
-| `start` | none | Enter `running`; the server loop advances the session continuously. |
-| `pause` | none | Enter `paused`; automatic updates stop. |
-| `step` | optional `step_count` | Run the requested number of steps immediately; default is one. |
-| `status` | none | Return state, step, simulation time, particle count, source count, and sink count. |
-| `save` | `path` | Flush CSV and write the core snapshot under the requested directory. |
-| `restart` | none | Rebuild from the stored original `SimulationConfig`, reset statistics, and enter `ready`. |
-| `close` | none | Remove and destroy the selected Session. |
-| `shutdown` | none | Stop the server process. |
+| `create` | `config`, optional `output` | Build a Session and return its new ID and ready status. |
+| `validate` | `target`, `config` | Build a Core object and discard it; no session created. |
+| `start` | none | Set a session to running; the application loop advances it. |
+| `pause` | none | Stop automatic updates. |
+| `step` | optional `step_count` (default 1) | Advance the selected session immediately. |
+| `status` | none | Return state, step, simulation time, particle count, source count, sink count. |
+| `save` | `path` | Flush CSV and save a Core snapshot below the requested directory. |
+| `restart` | none | Rebuild from the original config, reset statistics, and enter ready state. |
+| `close` | none | Remove a session; close its window first if selected. |
+| `render_open` | none | Open a window for this live session in a rendering build. |
+| `render_close` | none | Close the selected session's window, leaving the session alive. |
+| `shutdown` | none | Close rendering and request process shutdown. |
 
-Examples:
-
-```json
-{"request_id":"start-1","session_id":1,"command":"start"}
-{"request_id":"pause-1","session_id":1,"command":"pause"}
-{"request_id":"step-1","session_id":1,"command":"step","payload":{"step_count":3}}
-{"request_id":"status-1","session_id":1,"command":"status"}
-{"request_id":"save-1","session_id":1,"command":"save","payload":{"path":"snapshots"}}
-{"request_id":"restart-1","session_id":1,"command":"restart"}
-{"request_id":"close-1","session_id":1,"command":"close"}
-{"request_id":"shutdown-1","command":"shutdown"}
-```
-
-A successful status response looks like:
+`validate` targets are `material`, `geometry`, `unit`, `fluid`, `universe`,
+`solver`, `source`, `generator`, `emitter`, `collider`, `sink`, `codec`, and
+`simulation`. For `generator`, `config` wraps `generator` and optional
+`materials`; `emitter` wraps `source`, `generator`, and optional `materials`. A
+complete `simulation` target takes the ordinary simulation object.
 
 ```json
-{"request_id":"status-1","session_id":1,"success":true,"message":"status","status":{"state":"paused","step":12,"simulation_time":0.12,"particle_count":3,"source_count":0,"sink_count":0}}
+{"request_id":"check","command":"validate","payload":{"target":"universe","config":{"lower_corner":[-1,-1,-1],"upper_corner":[1,1,1],"cell_size":0.25}}}
+{"request_id":"new","command":"create","payload":{"config":{"dt":0.01,"fluid":{"buffer_size":64},"universe":{"lower_corner":[-1,-1,-1],"upper_corner":[1,1,1],"cell_size":0.25}}}}
+{"request_id":"run","session_id":1,"command":"start"}
+{"request_id":"view","session_id":1,"command":"render_open"}
+{"request_id":"inspect","session_id":1,"command":"status"}
+{"request_id":"hide","session_id":1,"command":"render_close"}
+{"request_id":"pause","session_id":1,"command":"pause"}
+{"request_id":"save","session_id":1,"command":"save","payload":{"path":"snapshots"}}
+{"request_id":"reset","session_id":1,"command":"restart"}
+{"request_id":"step","session_id":1,"command":"step","payload":{"step_count":3}}
+{"request_id":"close","session_id":1,"command":"close"}
+{"request_id":"stop","command":"shutdown"}
 ```
 
-Malformed JSON produces a failed response and the transport continues reading
-later lines. Application errors likewise produce `success: false` with an
-`error` string. Clients should correlate responses through `request_id` rather
-than relying only on ordering.
+A successful validation response is
+`{"request_id":"check","success":true,"message":"valid"}`. A status response
+includes a `status` object such as
+`{"state":"paused","step":12,"simulation_time":0.12,"particle_count":3,"source_count":0,"sink_count":0}`.
+Malformed input returns a failed response and the transport continues reading.
+Correlate replies by `request_id`.
 
-## Output, statistics, and snapshots
-
-The `output` object accepted by `create` is independent of the physical
-configuration:
+The `create` payload may include an output policy:
 
 ```json
-{
-  "csv_enabled": true,
-  "output_directory": "results",
-  "csv_filename": "statistics.csv"
-}
+{"csv_enabled":true,"output_directory":"results","csv_filename":"statistics.csv"}
 ```
 
-`Session` converts the core's last-step source and sink counters into a
-`SimulationSample`. `SimulationStatistics` keeps the current and cumulative
-values for the active run. If CSV is enabled, `CsvWriter` appends a row after
-each completed step without retaining all rows in memory.
+CSV rows are appended after completed steps. Session statistics keep current
+and cumulative source and sink counts. `restart` starts a fresh CSV run. `save`
+flushes CSV and writes `time_step_<step>/fluid.bin` and `universe.bin` through
+Core serialization.
 
-`restart` resets statistics and reopens the configured CSV as a fresh run.
-`save` flushes the CSV before `System::save()` writes
-`time_step_<step>/fluid.bin` and `universe.bin`.
+## Rendering and lifetime
 
-The corresponding native C++ construction is:
+`RenderManager` selects one session by ID. Opening the same session again is
+idempotent; opening another while a window is active fails until the first is
+closed. Each frame obtains a fresh `Session::scene_view()`: live particle buffer
+views, current boundary poses and geometry descriptions, and Universe bounds.
+These views are borrowed from the live System and stored configuration. They
+must not survive a resize, restart, or session destruction. `RawStateProvider`
+uploads particle columns to reusable OpenGL buffers, passes geometry poses to
+`GeometryLayer`, and clears borrowed geometry references after the frame.
+`ParticleLayer` draws particles. Infinite planes are displayed as bounded
+patches based on the Universe.
 
-```cpp
-atlas::interactive::SimulationConfig simulation;
-simulation.dt = 1.0e-5f;
-simulation.fluid.buffer_size = 1024;
-simulation.universe.lower_corner = { -1.0f, -1.0f, -1.0f };
-simulation.universe.upper_corner = { 1.0f, 1.0f, 1.0f };
-simulation.universe.cell_size = 0.1f;
+For TBB, `StateBridge` uploads host-accessible Core storage to OpenGL. For CUDA
+it normally keeps OpenGL buffers registered with CUDA and copies device to
+device. Buffer growth recreates a registration; if registration is unavailable,
+it copies through host staging. No JSON or NumPy array is involved.
 
-atlas::interactive::OutputConfig output;
-output.csv_enabled = true;
-output.output_directory = "results";
+Rendering never advances the simulation. Closing the native window stops
+rendering only; its Server-owned session remains alive and may continue running
+or be stepped without a window. `render_close` has the same separation. `close`
+and `shutdown` release graphics resources before destroying the selected
+session or server state.
 
-atlas::interactive::Session session(std::move(simulation), std::move(output));
-session.start();
-session.update();
-session.pause();
-```
+A headless build (`ATLAS_INTERACTIVE_RENDERING=OFF`) still accepts all simulation
+and validation commands. `render_open` and `render_close` produce a failed
+response with `Rendering is unavailable in this build.` Direct calls to
+`Server` also reject rendering commands; use `InteractiveApplication` to
+coordinate them.
 
-## Native rendering
-
-The local window example composes rendering independently from JSON control:
-
-```text
-Session::update()
-    ↓
-Session::scene_view()
-    ↓
-RawStateProvider
-    ↓
-StateBridge
-    ↓
-RenderState
-    ↓
-ParticleLayer + GeometryLayer
-    ↓
-Renderer
-    ↓
-WindowTarget
-```
-
-`SimulationSceneView` contains a short-lived particle-buffer view, the current
-source/collider/sink geometry poses, and the simulation domain. Rendering never
-receives `System`. Obtain a new scene view after each simulation step and do not
-retain it across operations that may resize, compact, restart, or destroy the
-simulation.
-
-`GeometryLayer` explicitly dispatches all nine geometry types. Infinite planes
-are shown as finite patches derived from the Universe bounds. Unit motion is
-read from the current core pose snapshot, so rendering does not integrate or
-duplicate motion.
-
-Run the example, optionally closing after a fixed number of frames:
-
-```bash
-./build/tbb-application-release/examples/interactive/atlas-interactive-example
-./build/tbb-application-release/examples/interactive/atlas-interactive-example cylinder 10
-```
-
-For TBB, `StateBridge` uploads directly from the core CPU buffer into OpenGL.
-For CUDA, it persistently registers reusable OpenGL buffers and normally copies
-device to device through CUDA/OpenGL interop. Registration is recreated only
-when a graphics buffer grows. A host-staged fallback is used only when the
-active OpenGL device cannot interoperate with the CUDA device.
-
-## Current limits
-
-`OffscreenTarget` and `FrameStream` remain future boundaries. There is no
-headless OpenGL context, frame encoder, TCP/WebSocket transport, or camera wire
-protocol yet. The implemented control transport is JSONL over stdin/stdout.
-
-Future external clients will receive rendered frames through `FrameStream`.
-They will not receive raw Fluid arrays through Python lists, NumPy, JSON, or a
-frontend-owned upload path.
+The current transport is JSONL on stdin/stdout. `OffscreenTarget` has no headless
+OpenGL context and `FrameStream` has no concrete encoder or network transport,
+so the implemented presentation path is the native window. Material leaves are
+direct Core value types: their construction does not currently reject every
+nonphysical scalar property. The material dictionary builder checks that a
+supplied dictionary is nonempty; `validate material` is not a complete physical
+material audit.

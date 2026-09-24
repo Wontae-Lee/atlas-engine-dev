@@ -24,7 +24,8 @@ GitHub Release is created only after PyPI and Docker publication succeed.
 Python and C++ validation remain separate. Docker CUDA checks run on a hosted
 runner without GPU access: they validate image construction, package loading,
 host-side API behavior, and native linkage, not CUDA simulation. Hosted CI also
-does not open the native OpenGL window.
+does not open the native OpenGL window. The current Core workflow configures
+Interactive off, so it does not run the Interactive command or rendering tests.
 
 Publication credentials, version preparation, tags, and release ordering are
 covered by the [release guide](releases.md).

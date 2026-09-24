@@ -11,6 +11,38 @@
 
 namespace atlas {
 
+namespace {
+
+/**
+ * @brief Copy an explicitly supplied live prefix into a fluid column.
+ * @tparam State Concrete particle-state column.
+ * @tparam Value Element stored by the column.
+ * @param fluid Fluid receiving the staged prefix.
+ * @param values Optional host-side values; absence leaves the column at its default.
+ */
+template <typename State, typename Value>
+void initialize_state(Fluid& fluid, const std::optional<HostBuffer<Value>>& values) {
+    if (!values) return;
+    State* state = fluid.state<State>();
+    if (state == nullptr) state = &fluid.emplace_state<State>(fluid.buffer_size());
+    if (!values->empty()) atlas::copy_host_to_device(&values->front(), state->data(), values->size());
+}
+
+/**
+ * @brief Reject a supplied column whose live prefix has the wrong length.
+ * @tparam Value Element stored by the column.
+ * @param values Optional staged values.
+ * @param particle_count Required live prefix length.
+ */
+template <typename Value>
+void validate_state(const std::optional<HostBuffer<Value>>& values, std::size_t particle_count) {
+    if (values && values->size() != particle_count) {
+        throw std::runtime_error("Fluid::Builder: initial state length must equal particle_count.");
+    }
+}
+
+}
+
 Fluid::Fluid(const std::size_t buffer_size)
     : _buffer_size(buffer_size)
     , _active(buffer_size) {
@@ -190,6 +222,48 @@ Fluid::Builder::with_materials(MaterialDictionaryHostPtr materials) noexcept {
     return *this;
 }
 
+Fluid::Builder&
+Fluid::Builder::with_position(HostBuffer<Float3> values) {
+    _position = std::move(values);
+    return *this;
+}
+
+Fluid::Builder&
+Fluid::Builder::with_velocity(HostBuffer<Float3> values) {
+    _velocity = std::move(values);
+    return *this;
+}
+
+Fluid::Builder&
+Fluid::Builder::with_species(HostBuffer<std::size_t> values) {
+    _species = std::move(values);
+    return *this;
+}
+
+Fluid::Builder&
+Fluid::Builder::with_temperature(HostBuffer<float> values) {
+    _temperature = std::move(values);
+    return *this;
+}
+
+Fluid::Builder&
+Fluid::Builder::with_translational_energy(HostBuffer<float> values) {
+    _translational_energy = std::move(values);
+    return *this;
+}
+
+Fluid::Builder&
+Fluid::Builder::with_rotational_energy(HostBuffer<float> values) {
+    _rotational_energy = std::move(values);
+    return *this;
+}
+
+Fluid::Builder&
+Fluid::Builder::with_vibrational_energy(HostBuffer<float> values) {
+    _vibrational_energy = std::move(values);
+    return *this;
+}
+
 void
 Fluid::Builder::validate() const {
     if (!(_statistical_weight > 0.0f)) {
@@ -200,6 +274,20 @@ Fluid::Builder::validate() const {
         throw std::runtime_error(
             "Fluid::Builder: particle_count exceeds buffer_size.");
     }
+    validate_state(_position, _particle_count);
+    validate_state(_velocity, _particle_count);
+    validate_state(_species, _particle_count);
+    validate_state(_temperature, _particle_count);
+    validate_state(_translational_energy, _particle_count);
+    validate_state(_rotational_energy, _particle_count);
+    validate_state(_vibrational_energy, _particle_count);
+    if (_materials && _species) {
+        for (const std::size_t species : *_species) {
+            if (species >= _materials->materials().size()) {
+                throw std::runtime_error("Fluid::Builder: species id is outside the material dictionary.");
+            }
+        }
+    }
 }
 
 Fluid
@@ -209,6 +297,14 @@ Fluid::Builder::build() const {
     Fluid fluid(_buffer_size, _materials);
     fluid._statistical_weight = _statistical_weight;
     fluid.set_particle_count(_particle_count);
+
+    initialize_state<FluidPositionState>(fluid, _position);
+    initialize_state<FluidVelocityState>(fluid, _velocity);
+    initialize_state<FluidSpeciesState>(fluid, _species);
+    initialize_state<FluidTemperatureState>(fluid, _temperature);
+    initialize_state<FluidTranslationalEnergyState>(fluid, _translational_energy);
+    initialize_state<FluidRotationalEnergyState>(fluid, _rotational_energy);
+    initialize_state<FluidVibrationalEnergyState>(fluid, _vibrational_energy);
 
     return fluid;
 }

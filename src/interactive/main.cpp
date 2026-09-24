@@ -3,19 +3,24 @@
  * @brief Provides the native interactive executable entry point.
  */
 
+#include "application/interactive_application.h"
+#if defined(ATLAS_INTERACTIVE_RENDERING_ENABLED)
+#include "application/render_manager.h"
+#endif
 #include "protocol/command.h"
-#include "server/server.h"
 #include "transport/json_codec.h"
 #include "transport/json_lines_transport.h"
 
 #include <atlas/logging/logging.h>
 
-#include <cstdio>
+#include <chrono>
 #include <condition_variable>
+#include <cstdio>
 #include <deque>
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <sstream>
@@ -41,7 +46,12 @@ int
 main(int argc, char** argv) {
     try {
         atlas::Logging::set_all_stream(&std::cerr);
-        atlas::interactive::Server server;
+#if defined(ATLAS_INTERACTIVE_RENDERING_ENABLED)
+        atlas::interactive::InteractiveApplication app(
+            std::make_unique<atlas::interactive::RenderManager>());
+#else
+        atlas::interactive::InteractiveApplication app;
+#endif
         atlas::interactive::JsonLinesTransport transport(std::cin, std::cout);
 
         if (argc == 3 && std::string(argv[1]) == "--config") {
@@ -50,7 +60,7 @@ main(int argc, char** argv) {
             request.command = atlas::interactive::Command::create;
             request.simulation = atlas::interactive::JsonCodec::decode_simulation(
                 read_file(argv[2]));
-            transport.send(server.handle(request));
+            transport.send(app.handle(request));
         } else if (argc != 1) {
             throw std::invalid_argument("Usage: atlas-interactive [--config simulation.json]");
         }
@@ -80,13 +90,18 @@ main(int argc, char** argv) {
             request_ready.notify_one();
         });
 
-        while (!server.shutdown_requested()) {
+        while (!app.shutdown_requested()) {
             std::optional<atlas::interactive::Request> request;
             {
                 std::unique_lock lock(request_mutex);
-                // Sleep only when no simulation needs periodic advancement.
-                if (requests.empty() && !input_closed && !server.has_running_sessions()) {
-                    request_ready.wait(lock, [&] { return !requests.empty() || input_closed; });
+                if (requests.empty() && !input_closed) {
+                    if (!app.has_running_sessions() && !app.rendering_active()) {
+                        request_ready.wait(lock, [&] { return !requests.empty() || input_closed; });
+                    } else if (!app.has_running_sessions()) {
+                        request_ready.wait_for(lock, std::chrono::milliseconds(16), [&] {
+                            return !requests.empty() || input_closed;
+                        });
+                    }
                 }
                 if (!requests.empty()) {
                     request.emplace(std::move(requests.front()));
@@ -95,9 +110,9 @@ main(int argc, char** argv) {
                     break;
                 }
             }
-            if (request) transport.send(server.handle(*request));
-            if (server.shutdown_requested()) break;
-            server.update();
+            if (request) transport.send(app.handle(*request));
+            if (app.shutdown_requested()) break;
+            app.update();
         }
         reader.join();
         return 0;

@@ -60,4 +60,5 @@ clone needs `git submodule update --init --recursive` to populate them:
 - nanobind (Python bindings; carries nested submodules, so its init must be
   `--recursive`)
 
-Do not introduce new dependencies unless explicitly requested.
+Additional dependencies affect both native backends, Python packaging, and
+Docker images; their impact should be reviewed across those build paths.

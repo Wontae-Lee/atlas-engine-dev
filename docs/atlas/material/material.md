@@ -153,23 +153,20 @@ refuses to solve (`DsmcSolver::solve` logs and returns).
 - **No `std::optional` properties.** Every field is an always-present `float`
   supplied at construction, so leaves stay trivially copyable for the device.
 
-## Not implemented
+## Current limits and unused declarations
 
-Three items exist as declarations but are never produced or consumed by engine
-code. Evidence gathered by grepping `src`, `include`, `benchmarks`, and `tests`,
-excluding each type's own header and the serialization round-trip.
+The following surfaces are available in the API but have narrower behavior
+than their names might suggest. They are not separate physics implementations.
 
 | What | Where | Evidence | Verdict |
 |---|---|---|---|
 | The three internal-energy fields `translational_energy` / `rotational_energy` / `vibrational_energy` on **every** leaf | `molecule.h:150-154` etc.; accessors `material.h:145-160` | Stored, exposed, and round-tripped through `protobuf_snapshot.cpp:210-238`, but **no DSMC kernel or solver ever reads them** — the only `.*_energy()` reads in the whole tree are the serialization getters. | Accepted but ignored — reserved for future collision-energy physics; carried and serialized, never consumed. |
-| `Ion` and `Neutron` leaves | `ion.h`, `neutron.h`; union members `material.h:79,81` | Constructed **only** by deserialization (`protobuf_snapshot.cpp:247,249`) and unit tests. No engine algorithm, benchmark, or example produces one; behaviour is identical to `Molecule` (no divergent physics yet). | Deliberate extension point / union-completeness case — a user *can* supply one via the builder and it will round-trip, but nothing in the shipped engine writes one. |
+| `Ion` and `Neutron` leaves | `ion.h`, `neutron.h`; union members `material.h:79,81` | Available through Core construction and Interactive material configuration as well as deserialization. Their current collision behavior follows the common material property interface. | These types can be stored and round-tripped; they do not add a separate charged-particle or neutron solver. |
 | `MaterialDictionaryDevicePtr` alias | `material_dictionary.h:186` | Zero references anywhere outside its own declaration; only `MaterialDictionaryHostPtr` is used (by `Fluid` and serialization). | Dead / provided for symmetry with the host handle. |
 
-Note for contrast: `Atom` is also constructed only in tests and serialization
-within this repo, but it is a realistic monatomic species used by the DSMC
-kernel tests, so it is not listed as dead. The `with_materials` batch appender
-and `make_host_shared` *are* exercised (serialization restore and generator
-tests respectively).
+`Atom` is also available to Core and Interactive callers and is used in DSMC
+kernel tests. The `with_materials` batch appender and `make_host_shared` are
+exercised by serialization restore and generator tests respectively.
 
 ## Extending
 

@@ -63,7 +63,8 @@
           "radius": 0.2,
           "height": 1.0,
           "open": true
-        }
+        },
+        "velocity": [0.0, 0.02, 0.0]
       },
       "momentum_accommodation_coefficient": 1.0,
       "restitution": 1.0,

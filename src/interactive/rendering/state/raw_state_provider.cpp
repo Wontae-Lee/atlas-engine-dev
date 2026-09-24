@@ -62,4 +62,9 @@ RawStateProvider::update(const SimulationSceneView& view) {
     return _state;
 }
 
+void
+RawStateProvider::finish_frame() {
+    _state.geometries.clear();
+}
+
 }

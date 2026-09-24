@@ -1,19 +1,15 @@
-# Atlas Developer Documentation
+# Atlas documentation
 
-- **Contributing:** [workflow](contributing/workflow.md),
-  [coding style](contributing/coding-style.md), [builds](contributing/build.md),
-  [testing](contributing/testing.md), and
-  [dependencies](contributing/dependencies.md).
-- **Architecture:** [core overview](architecture/overview.md),
-  [simulation pipeline](architecture/simulation-pipeline.md), and
-  [frontend boundaries](architecture/frontends.md).
-- **Core modules:** [per-module documentation](atlas/) for structure and
-  extension guidance.
-- **Frontends:** [Python](frontends/python.md) and
-  [Interactive](frontends/interactive.md).
-- **Operations:** [Docker](operations/docker.md),
-  [continuous integration](operations/ci.md), and
-  [releases](operations/releases.md).
+The root [README](../README.md) introduces Atlas and its quick starts. The guides below explain the APIs, implementation, and maintenance workflows in more detail.
 
-User installation and API usage remain in the root [README](../README.md). The
-runnable cross-frontend tutorial is in [examples](../examples/README.md).
+| Topic | Start here | What it covers |
+|---|---|---|
+| Use Atlas | [Examples](../examples/README.md) | The maintained cylinder case in C++, Python, and Interactive |
+| Core architecture | [Overview](architecture/overview.md) and [simulation pipeline](architecture/simulation-pipeline.md) | State ownership, builders, and step ordering |
+| Core C++ API | [Core modules](atlas/) and [System](atlas/system/system.md) | Object construction, policies, backend views, and persistence |
+| Python | [Python frontend](frontends/python.md) | Engine selection, bindings, and NumPy ownership |
+| Interactive | [Interactive guide](frontends/interactive.md) | JSON configuration, commands, sessions, and native rendering |
+| Frontend design | [Frontend boundaries](architecture/frontends.md) | How Python and Interactive consume Core independently |
+| Build from source | [Build guide](contributing/build.md) and [dependencies](contributing/dependencies.md) | TBB, CUDA, headless, rendering, presets, and toolchains |
+| Contribute | [Workflow](contributing/workflow.md), [coding style](contributing/coding-style.md), and [testing](contributing/testing.md) | Changes, documentation, conventions, and test suites |
+| Operate and release | [Docker](operations/docker.md), [CI](operations/ci.md), and [releases](operations/releases.md) | Images, automation, publication, and versioning |

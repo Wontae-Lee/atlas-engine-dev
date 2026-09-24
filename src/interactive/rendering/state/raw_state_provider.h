@@ -16,6 +16,7 @@ class RawStateProvider final : public StateProvider {
 public:
     /// @copydoc StateProvider::update
     const RenderState& update(const SimulationSceneView& view) override;
+    void finish_frame() override;
 
 private:
     RenderState _state; ///< Persistent graphics resources reused across frames.

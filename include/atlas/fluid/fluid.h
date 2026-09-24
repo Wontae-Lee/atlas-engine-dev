@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atlas/buffer/device_buffer.h>
+#include <atlas/buffer/host_buffer.h>
 #include <atlas/container/type_store.h>
 #include <atlas/core/macros.h>
 #include <atlas/fluid/fluid_state.h>
@@ -9,6 +10,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace atlas {
@@ -273,9 +275,10 @@ private:
  * @brief Fluent builder that collects a fluid's parameters and constructs a validated
  *        @c Fluid.
  *
- * Setters accumulate the capacity, initial live count, statistical weight, and material
- * dictionary; @c build() validates them and produces the fluid. The mandatory attribute
- * columns are created by the @c Fluid constructor, not the builder.
+ * Setters accumulate the capacity, initial live count, statistical weight, material
+ * dictionary, and optional initial state prefixes. @c build() validates their
+ * relationships and produces the fluid. The mandatory attribute columns are
+ * created by the @c Fluid constructor, then initialized by the builder.
  */
 class Fluid::Builder final {
 public:
@@ -314,11 +317,26 @@ public:
     ATLAS_HOST Builder&
     with_materials(MaterialDictionaryHostPtr materials) noexcept;
 
+    /** @brief Stage live positions; when supplied, the length must equal particle_count. */
+    ATLAS_HOST Builder& with_position(HostBuffer<Float3> values);
+    /** @brief Stage live velocities; when supplied, the length must equal particle_count. */
+    ATLAS_HOST Builder& with_velocity(HostBuffer<Float3> values);
+    /** @brief Stage live species IDs; IDs must index the attached dictionary when present. */
+    ATLAS_HOST Builder& with_species(HostBuffer<std::size_t> values);
+    /** @brief Stage an optional temperature column for every live particle. */
+    ATLAS_HOST Builder& with_temperature(HostBuffer<float> values);
+    /** @brief Stage an optional translational-energy column for every live particle. */
+    ATLAS_HOST Builder& with_translational_energy(HostBuffer<float> values);
+    /** @brief Stage an optional rotational-energy column for every live particle. */
+    ATLAS_HOST Builder& with_rotational_energy(HostBuffer<float> values);
+    /** @brief Stage an optional vibrational-energy column for every live particle. */
+    ATLAS_HOST Builder& with_vibrational_energy(HostBuffer<float> values);
+
     /**
      * @brief Validates the parameters and constructs the fluid by value.
      * @return The constructed @c Fluid.
-     * @throws std::runtime_error if the statistical weight is not positive or the initial
-     *         particle count exceeds the buffer size.
+     * @throws std::runtime_error if the statistical weight, live count, state lengths,
+     *         or material indices are invalid.
      */
     ATLAS_NODISCARD ATLAS_HOST Fluid
     build() const;
@@ -334,8 +352,8 @@ public:
 private:
     /**
      * @brief Throws if the accumulated parameters are inconsistent.
-     * @throws std::runtime_error if the statistical weight is not positive or the
-     *         particle count exceeds the buffer size.
+     * @throws std::runtime_error if a fluid parameter, state length, or species ID
+     *         is inconsistent.
      */
     ATLAS_HOST void
     validate() const;
@@ -348,6 +366,14 @@ private:
     float _statistical_weight = 1.0f; ///< Requested statistical weight; must be positive.
 
     MaterialDictionaryHostPtr _materials {}; ///< Material dictionary to attach; may be null.
+
+    std::optional<HostBuffer<Float3>> _position; ///< Supplied live positions.
+    std::optional<HostBuffer<Float3>> _velocity; ///< Supplied live velocities.
+    std::optional<HostBuffer<std::size_t>> _species; ///< Supplied live material IDs.
+    std::optional<HostBuffer<float>> _temperature; ///< Supplied live temperatures.
+    std::optional<HostBuffer<float>> _translational_energy; ///< Supplied live translational energies.
+    std::optional<HostBuffer<float>> _rotational_energy; ///< Supplied live rotational energies.
+    std::optional<HostBuffer<float>> _vibrational_energy; ///< Supplied live vibrational energies.
 };
 
 /** @brief Host-owning pointer to a @c Fluid, the standard way to pass the move-only type. */

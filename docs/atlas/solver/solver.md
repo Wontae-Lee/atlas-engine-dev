@@ -94,8 +94,10 @@ constructor trusts its inputs and does not validate.
 the searcher has not classified the particles, or the fluid carries no material
 dictionary. It then **returns silently** when `dt <= 0`, the fluid is empty, the
 material table is empty, or no candidate pairs were scheduled. Species indices
-are read unchecked — `System::Builder` has already clamped every generator's
-species id to the dictionary length.
+are read unchecked in the collision kernel. `Fluid::Builder` checks staged
+initial species IDs against an attached dictionary; generator builders apply
+their own species configuration checks. Callers that mutate the species column
+directly must keep its indices valid.
 
 ## The NTC scheme
 

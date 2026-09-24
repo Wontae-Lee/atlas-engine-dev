@@ -35,6 +35,13 @@ solvers, and missing or null entries in source/generator pairs. Construction
 builds the searcher over the universe and provisions the universe state columns
 required by the configured solvers.
 
+`Builder::validate()` checks this assembly without advancing or saving state.
+`build()` moves the Fluid, Universe, and source/generator pointers into the
+new System; a builder whose required pointers have moved needs reconfiguration
+before another build. Policy arrays retain their declared order. Core owns
+these checks for both native callers and Interactive: an Interactive `Session`
+owns a System through `CoreFactory`, but System has no Session dependency.
+
 ## Step pipeline
 
 ```cpp

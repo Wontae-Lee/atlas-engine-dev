@@ -63,7 +63,7 @@ A direct configuration without a preset defaults the project feature options to
 CI commands keep their declared cache values and therefore override these
 defaults.
 
-When a build and test run is requested, the GCC debug path is:
+A typical GCC debug configuration and test run is:
 
 ```bash
 cmake --preset tbb-gcc-debug
@@ -100,8 +100,9 @@ Important options:
 - `ATLAS_LOGGING`, `ATLAS_PYTHON`
 - `ATLAS_GOOGLE_TEST`, `ATLAS_BENCHMARKS`, `ATLAS_EXAMPLES`
 - `ATLAS_INTERACTIVE` — native execution/control library
-- `ATLAS_INTERACTIVE_RENDERING` — OpenGL renderer and native executable when
-  `ATLAS_INTERACTIVE` is enabled
+- `ATLAS_INTERACTIVE_RENDERING` — OpenGL renderer linked into the native
+  executable when `ATLAS_INTERACTIVE` is enabled; the executable also exists in
+  headless builds
 
 Constraints:
 

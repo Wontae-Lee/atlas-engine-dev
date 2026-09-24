@@ -158,9 +158,10 @@ cmake --build build/tbb-application-release --target atlas-interactive-example
 ./build/tbb-application-release/examples/interactive/atlas-interactive-example cylinder 40
 ```
 
-The [Interactive guide](docs/frontends/interactive.md) documents configuration,
-commands, sessions, output policy, rendering ownership, and backend state
-transfer.
+With rendering enabled, `atlas-interactive` accepts `render_open` and
+`render_close` JSONL commands for an existing session. Closing the window leaves
+that session alive. The [Interactive guide](docs/frontends/interactive.md)
+documents configuration, commands, rendering, and backend state transfer.
 
 ## Documentation
 

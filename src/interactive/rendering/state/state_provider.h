@@ -19,6 +19,7 @@ public:
      * @return Provider-owned state valid until the next update or destruction.
      */
     virtual const RenderState& update(const SimulationSceneView& view) = 0;
+    virtual void finish_frame() = 0;
 };
 
 }

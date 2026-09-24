@@ -102,8 +102,9 @@ rules within a Python process.
 
 Both runtime images provide `/opt/atlas/bin/atlas-interactive` and
 `atlas-interactive-example`. Their default command remains `python`; run a
-native executable explicitly when needed. `atlas-interactive` is the headless
-JSONL simulation server and does not require a display:
+native executable explicitly when needed. `atlas-interactive` accepts JSONL
+without opening a display, although the runtime images also include its
+rendering support. A display is needed only for `render_open` or the example:
 
 ```bash
 docker run --rm -i atlas:tbb atlas-interactive \
