@@ -54,7 +54,7 @@ implementation. Parallel floating-point results need not be bit-for-bit equal.
 ## Building the module
 
 The module is built when `ATLAS_PYTHON` is on. It needs the nanobind submodule
-and a Python 3.8+ interpreter with development headers:
+and a Python 3.9+ interpreter with development headers:
 
 ```bash
 git submodule update --init --recursive external/nanobind

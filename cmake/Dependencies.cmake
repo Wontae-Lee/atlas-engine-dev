@@ -7,6 +7,15 @@ find_package(TBB REQUIRED)
 
 if (ATLAS_USE_NVCC)
     find_package(CUDAToolkit REQUIRED)
+    if (CMAKE_CUDA_COMPILER_VERSION AND CUDAToolkit_VERSION)
+        string(REGEX MATCH "^[0-9]+\\.[0-9]+" ATLAS_NVCC_MAJOR_MINOR "${CMAKE_CUDA_COMPILER_VERSION}")
+        string(REGEX MATCH "^[0-9]+\\.[0-9]+" ATLAS_TOOLKIT_MAJOR_MINOR "${CUDAToolkit_VERSION}")
+        if (NOT ATLAS_NVCC_MAJOR_MINOR STREQUAL ATLAS_TOOLKIT_MAJOR_MINOR)
+            message(FATAL_ERROR
+                    "[ATLAS] nvcc ${CMAKE_CUDA_COMPILER_VERSION} and CUDA toolkit ${CUDAToolkit_VERSION} "
+                    "must have the same major.minor version.")
+        endif ()
+    endif ()
 endif ()
 
 # Backend compile definitions applied to every Atlas target so all TUs agree on the

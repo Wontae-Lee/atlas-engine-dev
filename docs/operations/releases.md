@@ -7,13 +7,11 @@ publishes Python packages, Docker images, and the GitHub Release.
 
 ## Release version and metadata
 
-The release version has three authoritative representations and one matching
-README citation reference:
+The release version has three authoritative representations:
 
 - root `project(... VERSION ...)` in [`CMakeLists.txt`](../../CMakeLists.txt),
 - `[project].version` in [`pyproject.toml`](../../pyproject.toml),
-- `version` in [`CITATION.cff`](../../CITATION.cff),
-- the citation sentence in [`README.md`](../../README.md).
+- `version` in [`CITATION.cff`](../../CITATION.cff).
 
 The release workflow runs this command only after both CI workflows pass:
 
@@ -21,14 +19,15 @@ The release workflow runs this command only after both CI workflows pass:
 python scripts/bump_version.py X.Y.Z
 ```
 
-The script accepts only strict `X.Y.Z` versions. It updates all four files,
+The script accepts only strict `X.Y.Z` versions. It updates these three files,
 sets `date-released` to the current date, removes the previous release-specific
-`doi:` from `CITATION.cff` and its link from the README, and verifies that all
-versions match. The README's concept DOI remains unchanged. Missing or
-ambiguous fields cause a failure; a failed write or verification restores the
-original files. The script also rejects the already-current version so it
-cannot remove that release's DOI by mistake. The workflow commits the result;
-the script itself does not commit, tag, push, or publish an artifact.
+`doi:` from `CITATION.cff`, and verifies that all versions match. The README
+links to `CITATION.cff` without embedding a release version or release DOI; its
+concept DOI remains unchanged. Missing or ambiguous fields cause a failure; a
+failed write or verification restores the original files. The script also
+rejects the already-current version so it cannot remove that release's DOI by
+mistake. The workflow commits the result; the script itself does not commit,
+tag, push, or publish an artifact.
 
 The CMake Python binding uses `SKBUILD_PROJECT_VERSION` during package builds
 and otherwise inherits the root `PROJECT_VERSION`; it has no independent Atlas
@@ -44,7 +43,7 @@ new archive DOI does not exist yet.
 
 Select `main`, enter `X.Y.Z`, and start the workflow. Its Core and Python CI
 jobs run against the selected commit before any version change. When they pass,
-the workflow runs `bump_version.py`, commits the four metadata files, and pushes
+the workflow runs `bump_version.py`, commits the three metadata files, and pushes
 the new commit and lightweight `vX.Y.Z` tag together. If `main` moves during
 the run, the push fails instead of publishing an older commit. Repository
 branch rules must allow the Actions token to push this release commit.
@@ -132,8 +131,8 @@ release-specific DOI is issued only after Zenodo archives the GitHub Release.
 The release workflow intentionally does not wait for that DOI or rewrite the
 existing tag.
 
-After Zenodo creates the archive, record the DOI in the project metadata on
-`main` as a separate documentation change when appropriate. The next invocation
-of `bump_version.py` removes that release-specific DOI while preparing the next
-version. Keep the concept DOI in the README badge and keep version-specific
-citation text aligned with `CITATION.cff`.
+After Zenodo creates the archive, record the DOI in `CITATION.cff` on `main` as a
+separate metadata change when appropriate. The next invocation of
+`bump_version.py` removes that release-specific DOI while preparing the next
+version. Keep the concept DOI in the README badge and the release-specific DOI
+in `CITATION.cff`.

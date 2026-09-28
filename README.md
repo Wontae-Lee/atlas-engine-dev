@@ -178,8 +178,8 @@ documents configuration, commands, rendering, and backend state transfer.
 ## Citation and license
 
 If you use Atlas in research, cite the version used for your results.
-[CITATION.cff](CITATION.cff) contains the citation metadata for version 0.1.0:
-[doi:10.5281/zenodo.22752179](https://doi.org/10.5281/zenodo.22752179).
+[CITATION.cff](CITATION.cff) contains the citation metadata for the current
+release.
 The [concept DOI](https://doi.org/10.5281/zenodo.22752178) covers all releases.
 
 Atlas is licensed under [GPL-3.0-or-later](LICENSE).

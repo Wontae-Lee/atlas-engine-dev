@@ -34,8 +34,8 @@ function(atlas_query_nvidia_smi out_var query_name)
     set(${out_var} "${atlas_query_first_line}" PARENT_SCOPE)
 endfunction()
 
-# CUDA runtime version reported by the driver (from nvidia-smi text), or "".
-function(atlas_detect_cuda_driver_runtime_version out_var)
+# Maximum CUDA version reported by the driver (from nvidia-smi text), or "".
+function(atlas_detect_cuda_driver_supported_version out_var)
     if (NOT ATLAS_NVIDIA_SMI_EXECUTABLE)
         set(${out_var} "" PARENT_SCOPE)
         return()
@@ -85,15 +85,15 @@ if (NOT CMAKE_CUDA_COMPILER AND NOT DEFINED ENV{CUDACXX})
 endif ()
 
 atlas_query_nvidia_smi(ATLAS_CUDA_DRIVER_VERSION "driver_version")
-atlas_detect_cuda_driver_runtime_version(ATLAS_CUDA_DRIVER_RUNTIME_VERSION)
+atlas_detect_cuda_driver_supported_version(ATLAS_CUDA_DRIVER_SUPPORTED_VERSION)
 atlas_detect_cuda_architectures(ATLAS_DETECTED_CUDA_ARCHITECTURES)
 
 if (ATLAS_CUDA_DRIVER_VERSION)
     message(STATUS "[ATLAS] NVIDIA driver version: ${ATLAS_CUDA_DRIVER_VERSION}")
 endif ()
 
-if (ATLAS_CUDA_DRIVER_RUNTIME_VERSION)
-    message(STATUS "[ATLAS] NVIDIA driver CUDA runtime: ${ATLAS_CUDA_DRIVER_RUNTIME_VERSION}")
+if (ATLAS_CUDA_DRIVER_SUPPORTED_VERSION)
+    message(STATUS "[ATLAS] NVIDIA driver-supported CUDA version: ${ATLAS_CUDA_DRIVER_SUPPORTED_VERSION}")
 endif ()
 
 # Pick an architecture automatically when the user gave none (or the legacy "52"
@@ -133,15 +133,16 @@ foreach (atlas_cuda_flag IN ITEMS --expt-relaxed-constexpr --extended-lambda)
     endif ()
 endforeach ()
 
-# Non-fatal warning: a toolkit newer than the driver's CUDA runtime can build
-# native SASS fine but may fail PTX JIT at runtime.
+# Non-fatal warning: a toolkit newer than the driver's supported CUDA version
+# can build native SASS fine but may fail PTX JIT at runtime.
+string(REGEX MATCH "^[0-9]+\\.[0-9]+" ATLAS_CUDA_COMPILER_MAJOR_MINOR "${CMAKE_CUDA_COMPILER_VERSION}")
 if (ATLAS_DEVICE_SYSTEM STREQUAL "CUDA"
-        AND CMAKE_CUDA_COMPILER_VERSION
-        AND ATLAS_CUDA_DRIVER_RUNTIME_VERSION
-        AND CMAKE_CUDA_COMPILER_VERSION VERSION_GREATER ATLAS_CUDA_DRIVER_RUNTIME_VERSION)
+        AND ATLAS_CUDA_COMPILER_MAJOR_MINOR
+        AND ATLAS_CUDA_DRIVER_SUPPORTED_VERSION
+        AND ATLAS_CUDA_COMPILER_MAJOR_MINOR VERSION_GREATER ATLAS_CUDA_DRIVER_SUPPORTED_VERSION)
     message(WARNING
             "[ATLAS] CUDA toolkit ${CMAKE_CUDA_COMPILER_VERSION} is newer than "
-            "driver CUDA runtime ${ATLAS_CUDA_DRIVER_RUNTIME_VERSION}. "
+            "the driver-supported CUDA version ${ATLAS_CUDA_DRIVER_SUPPORTED_VERSION}. "
             "Native SASS builds may work, but PTX JIT can fail at runtime."
     )
 endif ()

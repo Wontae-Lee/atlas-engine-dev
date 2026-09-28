@@ -15,7 +15,7 @@
 # nanobind needs the Python interpreter and the Development.Module
 # component (the limited set of headers required to build extension
 # modules, without a full Python library dependency).
-find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development.Module)
 
 # Pull in the vendored nanobind sources. Adding the submodule as a
 # subdirectory exposes the nanobind_add_module() helper.

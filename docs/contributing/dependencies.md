@@ -19,6 +19,9 @@ nor Thrust: the buffers are `std::vector` and the algorithms are TBB's. CUDA is
 not enabled or searched for in this configuration. A GPU is needed only to
 *run* `ATLAS_DEVICE_SYSTEM=CUDA` builds. Even when nvcc is enabled, host-only
 serialization, logging, and external dependencies still use the C/C++ compilers.
+When nvcc is selected, CMake requires the compiler and discovered CUDA toolkit
+to have the same major and minor version; the Docker CUDA images use toolkit
+13.4.1 by default.
 CUDA 13 moves CCCL, including Thrust, below the toolkit's `include/cccl`
 directory. CMake propagates that directory when present so host-compiled Atlas
 translation units see the same headers as nvcc; CUDA 12's direct include layout
@@ -40,7 +43,7 @@ The same `tbb` and `cuda` images include OpenGL runtime libraries and the native
 Atlas executables. Python remains the default command; native applications are
 invoked explicitly.
 Building the optional Python bindings outside these images requires a
-Python 3.8+ interpreter with development headers.
+Python 3.9+ interpreter with development headers.
 
 The interactive execution/control target adds no graphics dependency. With
 `ATLAS_INTERACTIVE_RENDERING=ON`, the native renderer additionally requires
@@ -52,13 +55,17 @@ configure commands. The execution/control target uses the header-only
 Dependencies under `external/` are git submodules, not vendored copies; a fresh
 clone needs `git submodule update --init --recursive` to populate them:
 
-- tinyobj (tinyobjloader)
-- googletest
-- googlebenchmark
-- protobuf
-- nlohmann/json (interactive configuration and control protocol)
-- nanobind (Python bindings; carries nested submodules, so its init must be
-  `--recursive`)
+- tinyobj (tinyobjloader) `v2.0.0rc13`
+- googletest `v1.18.0`
+- googlebenchmark `v1.9.5`
+- protobuf `v36.2`
+- nlohmann/json `v3.12.0` (interactive configuration and control protocol)
+- nanobind `v2.15.0` (Python bindings; carries nested submodules, so its init
+  must be `--recursive`)
+
+These are pinned to release tags. Tinyobjloader's v2 series is still a release
+candidate; Atlas uses its `ObjReader` API, which is absent from v1. Nanobind
+remains on v2 because v3 requires Python 3.10+.
 
 Additional dependencies affect both native backends, Python packaging, and
 Docker images; their impact should be reviewed across those build paths.

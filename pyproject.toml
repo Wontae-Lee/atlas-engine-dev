@@ -8,7 +8,7 @@ build-backend = "scikit_build_core.build"
 name = "atlas-engine"
 version = "0.1.0"
 description = "Atlas Engine — GPU/CPU rarefied-gas (DSMC) particle simulation (nanobind bindings)"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Wontae Lee" }]

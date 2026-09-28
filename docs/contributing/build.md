@@ -111,7 +111,7 @@ Constraints:
   sources (`ATLAS_DEVICE_SYSTEM=CUDA` or `ATLAS_HOST_COMPILER=nvcc`).
 - Benchmarks build under both backends; they are wired only when
   `ATLAS_BENCHMARKS` is on.
-- `ATLAS_PYTHON` requires a Python 3.8+ interpreter with development headers and
+- `ATLAS_PYTHON` requires a Python 3.9+ interpreter with development headers and
   the nanobind submodule; see the [Python frontend](../frontends/python.md).
 - `ATLAS_INTERACTIVE=ON` with `ATLAS_INTERACTIVE_RENDERING=OFF` requires no
   OpenGL stack. Rendering requires OpenGL, GLEW, GLFW, and GLM. See

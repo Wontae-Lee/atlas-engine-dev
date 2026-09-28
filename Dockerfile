@@ -1,5 +1,6 @@
 ARG UBUNTU_VERSION=22.04
-ARG CUDA_VERSION=12.9.2
+ARG CUDA_VERSION=13.4.1
+ARG CMAKE_CUDA_ARCHITECTURES="75-real;80-real;86-real;89-real;90"
 
 FROM ubuntu:${UBUNTU_VERSION} AS tbb-dev
 
@@ -65,7 +66,7 @@ RUN python -m pip wheel --no-cache-dir --wheel-dir /wheels . \
 FROM cuda-dev AS cuda-builder
 
 ARG BUILD_JOBS=2
-ARG CMAKE_CUDA_ARCHITECTURES="75-real;80-real;86-real;89-real;90"
+ARG CMAKE_CUDA_ARCHITECTURES
 ENV CMAKE_BUILD_PARALLEL_LEVEL=${BUILD_JOBS}
 
 WORKDIR /src
@@ -105,7 +106,7 @@ RUN cmake --preset tbb-application-release && \
 FROM cuda-dev AS cuda-application-builder
 
 ARG BUILD_JOBS=2
-ARG CMAKE_CUDA_ARCHITECTURES="75-real;80-real;86-real;89-real;90"
+ARG CMAKE_CUDA_ARCHITECTURES
 ENV CMAKE_BUILD_PARALLEL_LEVEL=${BUILD_JOBS}
 
 RUN apt-get update && \

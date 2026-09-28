@@ -62,6 +62,9 @@ CUDA execution requires a compatible NVIDIA driver on the host and the
 configured for Docker. The CUDA Toolkit (`nvcc`) is needed for local CUDA
 compilation, but Docker GPU access depends on the NVIDIA Container Toolkit,
 not on the host CUDA Toolkit.
+The CUDA 13.4 image needs a driver compatible with CUDA 13.x; NVIDIA specifies
+an R615 or newer driver for new 13.4 features in its
+[release notes](https://docs.nvidia.com/cuda/archive/13.4.1/cuda-toolkit-release-notes/index.html).
 If `docker run --gpus all` reports `failed to discover GPU vendor from CDI`,
 check that `nvidia-ctk` is installed on the host. On Ubuntu, follow NVIDIA's
 installation guide to install `nvidia-container-toolkit`, then configure Docker
@@ -133,7 +136,7 @@ not yet include a headless OpenGL context or network frame transport. See
 | Build argument | Default | Purpose |
 |---|---|---|
 | `UBUNTU_VERSION` | `22.04` | Ubuntu base version; `24.04` is also configured |
-| `CUDA_VERSION` | `12.9.2` | CUDA version for the CUDA development and runtime bases |
+| `CUDA_VERSION` | `13.4.1` | CUDA version for the CUDA development and runtime bases |
 | `CMAKE_CUDA_ARCHITECTURES` | `75-real;80-real;86-real;89-real;90` | CUDA machine-code targets and compute 90 PTX |
 | `BUILD_JOBS` | `2` | Parallel compile jobs during package and runtime builds |
 
