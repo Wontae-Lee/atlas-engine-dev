@@ -100,6 +100,7 @@ jobs:
       source_ref: ${{ needs.bump-and-tag.outputs.sha }}
     permissions:
       contents: read
+      id-token: write
 
   publish-pypi:
     needs: build-python

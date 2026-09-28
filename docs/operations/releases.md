@@ -80,7 +80,10 @@ PyPI [does not currently accept a reusable workflow as a Trusted
 Publisher](https://docs.pypi.org/trusted-publishers/troubleshooting/#reusable-workflows-on-github).
 The release therefore reuses the build jobs, downloads their artifacts within
 the same workflow run, and performs the small upload job directly in
-`release.yml` with `id-token: write`.
+`release.yml` with `id-token: write`. Its reusable Python build call also grants
+`id-token: write` because the called workflow defines a separate manual publish
+job with that permission; GitHub validates the whole called workflow before
+evaluating that job's condition.
 CUDA wheels are not published by this workflow; local combined TBB/CUDA wheel
 construction is documented in the [Python guide](../frontends/python.md).
 
