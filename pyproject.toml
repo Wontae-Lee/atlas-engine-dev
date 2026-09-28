@@ -6,7 +6,7 @@ build-backend = "scikit_build_core.build"
 # package stays `atlas`, with backend-specific extensions selected by atlas._core.
 [project]
 name = "atlas-engine"
-version = "0.1.0"
+version = "0.2.0"
 description = "Atlas Engine — GPU/CPU rarefied-gas (DSMC) particle simulation (nanobind bindings)"
 requires-python = ">=3.9"
 readme = "README.md"
