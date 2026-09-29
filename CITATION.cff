@@ -4,6 +4,7 @@ type: software
 title: "Atlas Engine"
 version: "0.2.0"
 date-released: "2026-09-28"
+doi: 10.5281/zenodo.23034355
 authors:
   - family-names: "Lee"
     given-names: "Wontae"
