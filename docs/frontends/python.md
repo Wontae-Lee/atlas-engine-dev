@@ -51,6 +51,13 @@ Both engines expose the same PascalCase API and NumPy host-array interface.
 CUDA executes the engine's device kernels on the GPU; TBB executes the CPU
 implementation. Parallel floating-point results need not be bit-for-bit equal.
 
+## Installing from PyPI
+
+The published `atlas-engine` package provides TBB wheels for supported Linux
+x86_64 Python interpreters. Install it with `python -m pip install atlas-engine`,
+then import it as `atlas`. On other platforms, pip may build from the source
+distribution, which requires the native build dependencies described below.
+
 ## Building the module
 
 The module is built when `ATLAS_PYTHON` is on. It needs the nanobind submodule

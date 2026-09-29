@@ -68,9 +68,16 @@ covered by the [Docker guide](docs/operations/docker.md).
 
 ## Python
 
-Atlas is distributed as `atlas-engine` and imported as `atlas`. A local TBB
-source installation on Ubuntu needs a C++ toolchain, CMake, Ninja, TBB, and
-Python development headers:
+Atlas is published on [PyPI](https://pypi.org/project/atlas-engine/) as
+`atlas-engine` and imported as `atlas`. Install the latest published release
+with:
+
+```bash
+python -m pip install atlas-engine
+```
+
+For a local TBB source installation on Ubuntu, install a C++ toolchain, CMake,
+Ninja, TBB, and Python development headers:
 
 ```bash
 sudo apt-get update
