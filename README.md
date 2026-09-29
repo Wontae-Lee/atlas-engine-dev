@@ -7,7 +7,7 @@
 [![DOI](https://zenodo.org/badge/1021472310.svg)](https://doi.org/10.5281/zenodo.22752178)
 [![Core CI](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/ci-core.yml/badge.svg?branch=main)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/ci-core.yml)
 [![Python CI](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/ci-python.yml/badge.svg?branch=main)](https://github.com/Wontae-Lee/atlas-engine-dev/actions/workflows/ci-python.yml)
-[![PyPI](https://img.shields.io/pypi/v/atlas-engine.svg)](https://pypi.org/project/atlas-engine/)
+[![PyPI](https://img.shields.io/pypi/v/atlas-engine.svg?color=blue)](https://pypi.org/project/atlas-engine/)
 
 Atlas is a C++20 particle simulation engine for rarefied-gas flows using direct
 simulation Monte Carlo (DSMC). It runs on CPUs through TBB or NVIDIA GPUs
