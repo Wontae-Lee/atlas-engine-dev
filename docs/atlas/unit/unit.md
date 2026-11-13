@@ -31,10 +31,15 @@ A `Unit` owns its geometry, pose, and motion state by value:
   `_angular_acceleration` (axis scaled by rad/s²). An empty optional means "this
   channel is absent"; a body with no velocity is *static* and `update` is a no-op
   for it. `dynamic()` reports whether any linear or angular velocity is present.
-- **Optional angular oscillation** — a normalized world-space axis, signed
-  amplitude, positive period, bounded double-precision elapsed phase, current
-  prescribed angle. Its analytic derivatives populate the ordinary
-  angular velocity and acceleration fields.
+- **Angular oscillation members** — normalized world-space axis, signed
+  amplitude, positive period, smoothing flag, bounded double-precision elapsed
+  time, and the previous prescribed angle are each stored directly on Unit as
+  a `std::optional`. All are absent when oscillation is disabled. The builder
+  stages the same six optionals. `with_angular_oscillation()` engages them
+  together, initializing elapsed time and the previous angle to zero. A
+  successful build transfers all six into Unit before evaluating the initial
+  derivatives into the ordinary angular kinematic fields, then resets every
+  staged optional.
 
 The four kinematic fields are kept in a canonical pairing by
 `canonicalize_kinematics`: if an acceleration is present without its matching
@@ -79,12 +84,17 @@ Two lower-level mutators back `update` and are also public:
 
 ## Prescribed angular oscillation
 
-Use `Unit::Builder::with_angular_oscillation(axis, amplitude, period)` for a
-smooth closing/opening cycle. The axis is expressed in world space and passes
-through the Unit's translation; the geometry must be centered on that pivot in
-its local coordinates. The amplitude is the signed angle in radians reached at
-half a cycle, and the period is the duration of a complete cycle in seconds.
-The initial pose is the open/rest pose:
+Use `Unit::Builder::with_angular_oscillation(axis, amplitude, period, smooth)`
+for a repeated closing/opening cycle. The fourth parameter defaults to `true`,
+so existing three-argument calls retain smooth harmonic motion. This is the
+setter's argument default: an unconfigured Unit or builder has no smoothing
+value because all its oscillation optionals are empty. The axis is expressed
+in world space and passes through the Unit's translation; the
+geometry must be centered on that pivot in its local coordinates. Amplitude is
+the signed angle in radians reached at half a cycle, and period is the duration
+of a complete cycle in seconds.
+
+With `smooth = true`, the initial pose is the open/rest pose:
 
 ```text
 theta(t) = amplitude / 2 * (1 - cos(2*pi*t/period))
@@ -92,10 +102,29 @@ omega(t) = amplitude * pi / period * sin(2*pi*t/period)
 alpha(t) = 2 * amplitude * pi^2 / period^2 * cos(2*pi*t/period)
 ```
 
-The motion starts at zero angular velocity, reaches the specified amplitude at
-half a period with zero angular velocity again, and returns to its initial pose
-at a full period. A negative amplitude reverses the closing direction. Linear
-translation/acceleration may be combined with it, so the pivot can also move.
+Smooth motion starts at zero angular velocity, reaches the specified amplitude
+at half a period with zero angular velocity again, and returns to its initial
+pose at rest at a full period.
+
+With `smooth = false`, the angle follows a triangular profile. For normalized
+phase `p = (t modulo period) / period`:
+
+```text
+0 <= p < 0.5:  theta = 2 * amplitude * p,       omega =  2 * amplitude / period
+0.5 <= p < 1:  theta = 2 * amplitude * (1 - p), omega = -2 * amplitude / period
+```
+
+This mode starts moving immediately at constant speed and reverses direction
+instantaneously at each endpoint. At exactly half a period the reported
+velocity is the opening velocity; at exactly a whole period it is the closing
+velocity. Acceleration is reported as zero for each segment, including the
+sampled endpoints; an instantaneous reversal is not represented as a finite
+acceleration or impulse. Choose smooth motion when gradual acceleration and
+stopping are required.
+
+For either mode, a negative amplitude reverses the closing direction. Linear
+translation/acceleration may be combined with oscillation, so the pivot can also
+move.
 
 `update()` evaluates the prescribed angle, subtracts its previous value, and
 passes that increment to the existing `Unit::rotate()`. It reduces double-precision
@@ -115,6 +144,12 @@ Unit wing = Unit::builder()
     .with_sync(hinge_pose)
     .with_angular_oscillation(Float3(1.0f, 0.0f, 0.0f), 0.35f, 4.0f)
     .build();
+
+Unit constant_speed_wing = Unit::builder()
+    .with_geometry(hinge_centered_geometry)
+    .with_sync(hinge_pose)
+    .with_angular_oscillation(Float3(1.0f, 0.0f, 0.0f), 0.35f, 4.0f, false)
+    .build();
 ```
 
 The Core builder rejects a non-finite or zero axis, non-finite amplitude,
@@ -122,13 +157,20 @@ non-finite/non-positive period, angular derivatives outside the finite float
 range, and combinations with explicit angular velocity or acceleration. Axis
 normalization scales by the largest absolute component before calling the
 existing `normalized_or()` helper, avoiding squared-length overflow or underflow
-for very large or small finite axes. Zero amplitude is accepted.
+for very large or small finite axes. Zero amplitude is accepted. Derivative
+range checks use the selected profile: smooth motion checks its maximum speed
+and acceleration, while constant-speed motion checks `2 * abs(amplitude) /
+period` and has zero segment acceleration.
 
 `set_sync()` and `rotate()` retain their ordinary pose-editing behavior. They
 leave the oscillation phase, axis, and derivatives unchanged; the next update
 applies only the next angular increment to the edited pose. `move()` translates
-the pivot normally. Rebuilding the Unit starts a new cycle at rest. The motion
-remains a trivially copyable value inside Unit and works through the same
+the pivot normally. Rebuilding the Unit starts a new cycle at phase zero, with
+zero initial velocity in smooth mode or the closing velocity in constant-speed
+mode. A successful build resets every staged oscillation optional to empty.
+On reuse, calling `with_angular_oscillation()` without a `smooth` argument sets
+that optional to `true`; omitting the setter leaves oscillation disabled. The
+direct optional motion members remain trivially copyable and use the same
 TBB/CUDA update path.
 
 ## Surface velocity — `surface_velocity(point)`
@@ -177,9 +219,9 @@ holds nothing derived that could go stale.)
 ## Trivial copyability
 
 `Unit` is trivially copyable: `Geometry` is a `DeviceVariant` (trivially
-copyable), `Sync` is a plain value type, and the four `std::optional<Float3>`
-members and the optional angular-oscillation state contain trivially copyable
-types. This is a hard requirement,
+copyable), `Sync` is a plain value type, and the kinematic and direct
+angular-oscillation optionals contain trivially copyable types. This is a hard
+requirement,
 not an accident — `Collider` leaves must be trivially copyable to live in a
 `DeviceVariant` union and be captured into device kernels, and each leaf owns a
 `Unit` by value. The class-level Doxygen phrases this as "trivially movable"; the

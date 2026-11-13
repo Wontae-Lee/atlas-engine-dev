@@ -78,6 +78,7 @@ Edit `config.json`, then rebuild before running:
 |---|---|---|
 | `motion.closing_angle_degrees` | `20` | Maximum inward angle relative to the original assembly |
 | `motion.period_seconds` | `0.02` | Physical simulation time for close + reopen |
+| `motion.smooth` | `true` | Smooth acceleration and deceleration; `false` moves at constant angular speed between the endpoints |
 | `motion.display_seconds_per_cycle` | `5` | Wall-clock pacing target; does not change physics |
 | `motion.hinge_radius`, `hinge_height` | `0.25`, `0.05` | Modeled hinge location in meters |
 | `simulation.dt` | `0.00005` | 400 updates per cycle |
@@ -86,7 +87,7 @@ Edit `config.json`, then rebuild before running:
 | `simulation.emitters[0].source.spacing` | `0.25` | Inflow seed spacing in meters |
 | `simulation.universe.cell_size` | `0.15` | Spatial grid size in meters |
 
-The prescribed angle is:
+With `motion.smooth: true` (also the default when omitted), the prescribed angle is:
 
 ```text
 theta(t) = A/2 * (1 - cos(2*pi*t/T))
@@ -97,6 +98,15 @@ to the original pose at step 400, then repeats. Rotation slows smoothly to zero
 at both ends. Console reports print half-cycle angles and particle counts.
 Floating-point rounding can affect the final digits; stochastic flow counts
 are not exact reference values.
+
+Set `motion.smooth` to `false` for constant-speed closing and opening. With
+`phase = (t mod T) / T`, its angle is `2*A*phase` during the first half-cycle
+and `2*A*(1-phase)` during the second. It reaches the same endpoints at steps
+200 and 400, but reverses direction immediately without slowing down. Angular
+velocity is `+2*A/T` while closing and `-2*A/T` while opening; the reversal uses
+the velocity of the new half-cycle. The reported angular acceleration is zero
+between reversals; the idealized instantaneous reversal has no finite
+acceleration value. The console angle follows the selected motion mode.
 
 Core `Unit` owns the angular trajectory and its instantaneous angular velocity.
 Moving-wall reflection therefore uses the same motion as the displayed mesh.

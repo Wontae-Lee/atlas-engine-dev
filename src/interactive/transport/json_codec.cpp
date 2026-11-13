@@ -171,10 +171,14 @@ unit(const Json& value) {
     }
     if (value.contains("angular_oscillation")) {
         const auto& motion = value.at("angular_oscillation");
+        if (motion.contains("smooth") && !motion.at("smooth").is_boolean()) {
+            throw std::invalid_argument("Expected boolean: angular_oscillation.smooth");
+        }
         result.angular_oscillation = Config::AngularOscillation {
             vec3(motion.at("axis")),
             motion.at("amplitude").get<float>(),
-            motion.at("period").get<float>()
+            motion.at("period").get<float>(),
+            motion.value("smooth", true)
         };
     }
     return result;

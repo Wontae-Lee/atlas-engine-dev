@@ -13,6 +13,7 @@
 
 #include <filesystem>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <sstream>
 #include <string>
@@ -235,6 +236,7 @@ TEST(InteractiveConfig, AngularOscillationRequiresItsWireFields) {
     EXPECT_FLOAT_EQ(motion.axis[2], 1.0f);
     EXPECT_NEAR(motion.amplitude, 1.57079632679f, 1e-6f);
     EXPECT_FLOAT_EQ(motion.period, 2.0f);
+    EXPECT_TRUE(motion.smooth);
 
     for (const std::string malformed : {
              R"({"amplitude":1,"period":2})",
@@ -243,9 +245,34 @@ TEST(InteractiveConfig, AngularOscillationRequiresItsWireFields) {
              R"({"axis":[0,1],"amplitude":1,"period":2})",
              R"({"axis":[0,0,1],"amplitude":"wide","period":2})",
              R"({"axis":[0,0,1],"amplitude":1,"period":null})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"smooth":0})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"smooth":"false"})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"smooth":null})",
              "[]", "null" }) {
         SCOPED_TRACE(malformed);
         EXPECT_THROW(decode_oscillating_config(malformed), std::exception);
+    }
+}
+
+TEST(InteractiveConfig, AngularOscillationSmoothOptionReachesCore) {
+    for (const std::string option : { "", ",\"smooth\":true", ",\"smooth\":false" }) {
+        SCOPED_TRACE(option);
+        const Config config = decode_oscillating_config(
+            R"({"axis":[0,0,1],"amplitude":1,"period":2)" + option + "}");
+        const bool smooth = option != ",\"smooth\":false";
+        const auto& configured_unit = config.colliders[0].unit;
+        ASSERT_TRUE(configured_unit.angular_oscillation.has_value());
+        EXPECT_EQ(configured_unit.angular_oscillation->smooth, smooth);
+
+        atlas::interactive::CoreFactory factory;
+        auto unit = factory.build(configured_unit);
+        ASSERT_TRUE(unit.angular_velocity().has_value());
+        EXPECT_FLOAT_EQ(unit.angular_velocity()->z, smooth ? 0.0f : 1.0f);
+        unit.update(0.25f);
+        const float expected_angle = smooth ? 0.1464466094f : 0.25f;
+        const auto direction = unit.sync().sync_dir_to_world(atlas::Float3(1.0f, 0.0f, 0.0f));
+        EXPECT_NEAR(direction.x, std::cos(expected_angle), 1e-6f);
+        EXPECT_NEAR(direction.y, std::sin(expected_angle), 1e-6f);
     }
 }
 

@@ -156,7 +156,7 @@ public:
             move((*_velocity) * dt);
         }
 
-        if (_angular_oscillation.has_value()) {
+        if (_angular_oscillation_axis.has_value()) {
             advance_angular_oscillation(dt);
         } else if (_angular_velocity.has_value()) {
 
@@ -365,35 +365,46 @@ public:
     }
 
 private:
-    /** @brief Device-copyable parameters and bounded phase of prescribed rotation. */
-    struct AngularOscillation {
-        Float3 axis; ///< Unit world-space axis through the Unit translation.
-        float amplitude; ///< Signed angle reached halfway through a cycle, in radians.
-        float period; ///< Positive cycle duration in seconds.
-        double elapsed = 0.0; ///< Time reduced modulo period to avoid long-run growth.
-        float angle = 0.0f; ///< Last evaluated prescribed angle, used to compute the next increment.
-    };
-
     /**
-     * @brief Applies the prescribed angular increment through rotate() and updates wall velocity.
-     * @param dt Nonnegative finite elapsed time in seconds; zero initializes derivatives.
+     * @brief Applies the configured periodic angular increment and its wall-motion derivatives.
+     *
+     * Smooth motion uses a cosine profile; otherwise each half-cycle has a
+     * constant signed speed and reverses instantly at its endpoint.
+     * @param dt Nonnegative finite elapsed seconds; zero initializes derivatives.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     advance_angular_oscillation(const float dt) noexcept {
-        auto& motion = *_angular_oscillation;
-        motion.elapsed = std::fmod(motion.elapsed + static_cast<double>(dt),
-                                   static_cast<double>(motion.period));
+        _angular_oscillation_elapsed = std::fmod(
+            *_angular_oscillation_elapsed + static_cast<double>(dt),
+            static_cast<double>(*_angular_oscillation_period));
 
-        const double frequency      = 2.0 * atlas::pi_double / static_cast<double>(motion.period);
-        const double phase          = frequency * motion.elapsed;
-        const double half_amplitude = 0.5 * static_cast<double>(motion.amplitude);
-        const float angle           = static_cast<float>(half_amplitude * (1.0 - std::cos(phase)));
+        const double phase = *_angular_oscillation_elapsed / static_cast<double>(*_angular_oscillation_period);
+        double angle;
+        double speed;
+        double acceleration;
 
-        rotate(motion.axis, angle - motion.angle);
-        motion.angle = angle;
+        if (*_angular_oscillation_smooth) {
+            const double frequency      = 2.0 * atlas::pi_double / static_cast<double>(*_angular_oscillation_period);
+            const double radians        = frequency * *_angular_oscillation_elapsed;
+            const double half_amplitude = 0.5 * static_cast<double>(*_angular_oscillation_amplitude);
+            angle        = half_amplitude * (1.0 - std::cos(radians));
+            speed        = half_amplitude * frequency * std::sin(radians);
+            acceleration = half_amplitude * frequency * frequency * std::cos(radians);
+        } else {
+            const bool closing = phase < 0.5;
+            angle = 2.0 * static_cast<double>(*_angular_oscillation_amplitude) * (closing ? phase : 1.0 - phase);
+            speed = 2.0 * static_cast<double>(*_angular_oscillation_amplitude)
+                    / static_cast<double>(*_angular_oscillation_period) * (closing ? 1.0 : -1.0);
+            acceleration = 0.0;
+        }
 
-        _angular_velocity     = motion.axis * static_cast<float>(half_amplitude * frequency * std::sin(phase));
-        _angular_acceleration = motion.axis * static_cast<float>(half_amplitude * frequency * frequency * std::cos(phase));
+        const float next_angle = static_cast<float>(angle);
+        const Float3& axis = *_angular_oscillation_axis;
+        rotate(axis, next_angle - *_angular_oscillation_angle);
+        _angular_oscillation_angle = next_angle;
+
+        _angular_velocity     = axis * static_cast<float>(speed);
+        _angular_acceleration = axis * static_cast<float>(acceleration);
     }
 
     /**
@@ -449,7 +460,17 @@ private:
 
     std::optional<Float3> _angular_acceleration; ///< Angular acceleration (axis * rad/s^2), or empty.
 
-    std::optional<AngularOscillation> _angular_oscillation; ///< Prescribed rotation, or Euler motion when empty.
+    std::optional<Float3> _angular_oscillation_axis; ///< Normalized world-space axis; empty selects ordinary angular motion.
+
+    std::optional<float> _angular_oscillation_amplitude; ///< Signed maximum displacement in radians, or absent.
+
+    std::optional<float> _angular_oscillation_period; ///< Positive full cycle duration in seconds, or absent.
+
+    std::optional<bool> _angular_oscillation_smooth; ///< Cosine easing when true; constant-speed half-cycles when false; absent when disabled.
+
+    std::optional<double> _angular_oscillation_elapsed; ///< Time reduced modulo the period, or absent when oscillation is disabled.
+
+    std::optional<float> _angular_oscillation_angle; ///< Last evaluated angle for the next increment, or absent when disabled.
 };
 
 /**
@@ -524,20 +545,22 @@ public:
     with_angular_acceleration(const Float3& alpha) noexcept;
 
     /**
-     * @brief Prescribes a smooth repeated rotation from the initial pose and back.
+     * @brief Prescribes repeated rotation with configurable endpoint smoothing.
      *
-     * The angle is amplitude/2 * (1 - cos(2*pi*t/period)); rotation is about a
-     * fixed world-space axis through the Unit translation. The motion starts
-     * at rest and may coexist with linear velocity or acceleration. Explicit
-     * angular velocity or acceleration cannot be combined with this policy.
+     * Rotation is about a fixed world-space axis through the Unit translation.
+     * Smooth motion uses amplitude/2 * (1 - cos(2*pi*t/period)) and starts at
+     * rest. With smoothing disabled, each half-cycle has constant angular speed
+     * and reverses instantly at its endpoint; acceleration is zero between turns.
+     * Linear motion may coexist; explicit angular kinematics may not.
      *
      * @param axis Finite nonzero world-space axis, normalized by build().
      * @param amplitude Finite signed maximum angle from the initial pose, in radians.
      * @param period Finite positive full cycle duration in seconds.
-     * @return `*this`, for chaining; build() validates all inputs and derivatives.
+     * @param smooth Enables cosine easing; false selects constant-speed half-cycles.
+     * @return `*this`, for chaining; build() validates all inputs and finite derivatives.
      */
     ATLAS_HOST Builder&
-    with_angular_oscillation(const Float3& axis, float amplitude, float period) noexcept;
+    with_angular_oscillation(const Float3& axis, float amplitude, float period, bool smooth = true) noexcept;
 
     /**
      * @brief Validates the staged fields, canonicalizes kinematics, and builds the Unit.
@@ -588,7 +611,17 @@ private:
 
     std::optional<Float3> _angular_acceleration; ///< Staged angular acceleration, or unset.
 
-    std::optional<Unit::AngularOscillation> _angular_oscillation; ///< Staged prescribed rotation.
+    std::optional<Float3> _angular_oscillation_axis; ///< Staged axis; presence enables periodic angular motion.
+
+    std::optional<float> _angular_oscillation_amplitude; ///< Staged signed amplitude in radians, or unset.
+
+    std::optional<float> _angular_oscillation_period; ///< Staged full cycle duration in seconds, or unset.
+
+    std::optional<bool> _angular_oscillation_smooth; ///< Staged cosine-easing choice, or unset when oscillation is absent.
+
+    std::optional<double> _angular_oscillation_elapsed; ///< Staged elapsed time, initialized to zero when oscillation is configured.
+
+    std::optional<float> _angular_oscillation_angle; ///< Staged angle, initialized to zero when oscillation is configured.
 };
 
 }

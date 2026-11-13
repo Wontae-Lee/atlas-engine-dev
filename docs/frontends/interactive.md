@@ -90,18 +90,27 @@ A `unit` contains a required `geometry` and optional `translation`,
 `angular_oscillation` instead of `angular_velocity` / `angular_acceleration`:
 
 ```json
-"angular_oscillation": {"axis": [1, 0, 0], "amplitude": 0.34906585, "period": 4.0}
+"angular_oscillation": {"axis": [1, 0, 0], "amplitude": 0.34906585, "period": 4.0, "smooth": true}
 ```
 
-All three fields are required. `axis` is a nonzero world-space rotation axis,
+`axis`, `amplitude`, and `period` are required. `axis` is a nonzero world-space rotation axis,
 `amplitude` is the signed maximum angular displacement in radians, and `period`
 is a positive number of simulation seconds for a complete close/open cycle.
-Core builders validate finite values and reject conflicting angular kinematics.
-The angle relative to the initial orientation is
+`smooth` is an optional boolean that defaults to `true`; other JSON types are
+rejected. Core builders validate finite values and reject conflicting angular
+kinematics. With `smooth: true`, the angle relative to the initial orientation is
 `amplitude * (1 - cos(2*pi*time/period)) / 2`: it starts at rest at the initial
 pose, reaches `amplitude` halfway through the period, and returns to the initial
-pose at rest. Motion advances only with simulation steps; pause freezes it and
-restart resets it. Rotation is about the Unit's translation, so express mesh
+pose at rest. With `smooth: false`, the angle follows a triangular wave:
+`2*amplitude*phase` for `phase < 0.5`, and `2*amplitude*(1-phase)` otherwise,
+where `phase = (time mod period) / period`. Angular speed stays constant within
+each half-cycle and reverses immediately at the endpoints. At each reversal,
+the angular velocity belongs to the new half-cycle: `+2*amplitude/period` at
+phase zero and `-2*amplitude/period` at phase one-half. The ordinary acceleration
+field is zero; the instantaneous reversal has no finite acceleration value.
+
+Motion advances only with simulation steps; pause freezes it and restart resets
+it. Rotation is about the Unit's translation, so express mesh
 vertices relative to a hinge and place that hinge with `translation`.
 The live Core collider uses the same pose and angular surface velocity that the
 renderer observes; no separate visual animation is needed. Linear translation

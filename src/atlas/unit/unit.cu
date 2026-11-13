@@ -58,8 +58,13 @@ Unit::Builder::with_angular_acceleration(const Float3& alpha) noexcept {
 
 /** @brief Stages a bounded periodic angular-motion policy for builder validation. */
 Unit::Builder&
-Unit::Builder::with_angular_oscillation(const Float3& axis, const float amplitude, const float period) noexcept {
-    _angular_oscillation = Unit::AngularOscillation { axis, amplitude, period };
+Unit::Builder::with_angular_oscillation(const Float3& axis, const float amplitude, const float period, const bool smooth) noexcept {
+    _angular_oscillation_axis      = axis;
+    _angular_oscillation_amplitude = amplitude;
+    _angular_oscillation_period    = period;
+    _angular_oscillation_smooth    = smooth;
+    _angular_oscillation_elapsed   = 0.0;
+    _angular_oscillation_angle     = 0.0f;
     return *this;
 }
 
@@ -90,11 +95,15 @@ Unit::Builder::build() {
     u._acceleration         = std::move(acceleration);
     u._angular_velocity     = std::move(angular_velocity);
     u._angular_acceleration = std::move(angular_acceleration);
-    if (_angular_oscillation.has_value()) {
-        u._angular_oscillation = *_angular_oscillation;
-        auto& motion = *u._angular_oscillation;
-        const float scale = atlas::abs(motion.axis).max();
-        motion.axis = atlas::normalized_or(motion.axis / Float3(scale), Float3(0.0f));
+    if (_angular_oscillation_axis.has_value()) {
+        const Float3& axis = *_angular_oscillation_axis;
+        const float scale = atlas::abs(axis).max();
+        u._angular_oscillation_axis      = atlas::normalized_or(axis / Float3(scale), Float3(0.0f));
+        u._angular_oscillation_amplitude = _angular_oscillation_amplitude;
+        u._angular_oscillation_period    = _angular_oscillation_period;
+        u._angular_oscillation_smooth    = _angular_oscillation_smooth;
+        u._angular_oscillation_elapsed   = _angular_oscillation_elapsed;
+        u._angular_oscillation_angle     = _angular_oscillation_angle;
         u.advance_angular_oscillation(0.0f);
     }
 
@@ -106,7 +115,12 @@ Unit::Builder::build() {
     _acceleration.reset();
     _angular_velocity.reset();
     _angular_acceleration.reset();
-    _angular_oscillation.reset();
+    _angular_oscillation_axis.reset();
+    _angular_oscillation_amplitude.reset();
+    _angular_oscillation_period.reset();
+    _angular_oscillation_smooth.reset();
+    _angular_oscillation_elapsed.reset();
+    _angular_oscillation_angle.reset();
 
     return u;
 }
@@ -127,20 +141,29 @@ Unit::Builder::validate() const {
         throw std::runtime_error("Unit::Builder: sync is not initialized.");
     }
 
-    if (_angular_oscillation.has_value()) {
-        const auto& motion = *_angular_oscillation;
-        if (!atlas::isfinite(motion.axis)
-            || (motion.axis.x == 0.0f && motion.axis.y == 0.0f && motion.axis.z == 0.0f)
-            || !atlas::isfinite(motion.amplitude)
-            || !atlas::isfinite(motion.period) || !(motion.period > 0.0f)) {
+    if (_angular_oscillation_axis.has_value()) {
+        if (!_angular_oscillation_amplitude.has_value()
+            || !_angular_oscillation_period.has_value()
+            || !_angular_oscillation_smooth.has_value()
+            || !_angular_oscillation_elapsed.has_value()
+            || !_angular_oscillation_angle.has_value()) {
+            throw std::runtime_error("Unit::Builder: angular oscillation parameters are incomplete.");
+        }
+        const Float3& axis = *_angular_oscillation_axis;
+        if (!atlas::isfinite(axis)
+            || (axis.x == 0.0f && axis.y == 0.0f && axis.z == 0.0f)
+            || !atlas::isfinite(*_angular_oscillation_amplitude)
+            || !atlas::isfinite(*_angular_oscillation_period) || !(*_angular_oscillation_period > 0.0f)) {
             throw std::runtime_error("Unit::Builder: angular oscillation requires a finite nonzero axis, finite amplitude, and finite positive period.");
         }
         if (_angular_velocity.has_value() || _angular_acceleration.has_value()) {
             throw std::runtime_error("Unit::Builder: angular oscillation cannot be combined with angular velocity or acceleration.");
         }
-        const double frequency = 2.0 * atlas::pi_double / static_cast<double>(motion.period);
-        const double maximum_speed = 0.5 * std::abs(static_cast<double>(motion.amplitude)) * frequency;
-        const double maximum_acceleration = maximum_speed * frequency;
+        const double amplitude = std::abs(static_cast<double>(*_angular_oscillation_amplitude));
+        const double period = static_cast<double>(*_angular_oscillation_period);
+        const double frequency = 2.0 * atlas::pi_double / period;
+        const double maximum_speed = *_angular_oscillation_smooth ? 0.5 * amplitude * frequency : 2.0 * amplitude / period;
+        const double maximum_acceleration = *_angular_oscillation_smooth ? maximum_speed * frequency : 0.0;
         if (maximum_speed > std::numeric_limits<float>::max()
             || maximum_acceleration > std::numeric_limits<float>::max()) {
             throw std::runtime_error("Unit::Builder: angular oscillation derivatives must fit the finite float range.");

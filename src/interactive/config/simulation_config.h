@@ -112,6 +112,7 @@ struct SimulationConfig {
         Vec3 axis { 0.0f, 0.0f, 1.0f };
         float amplitude = 0.0f;
         float period = 1.0f;
+        bool smooth = true;
     };
 
     /// Geometry with rigid-body pose and optional kinematics.

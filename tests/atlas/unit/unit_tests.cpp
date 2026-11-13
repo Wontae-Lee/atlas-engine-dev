@@ -584,3 +584,114 @@ TEST(Unit, AngularOscillationContinuesFromAnEditedPoseAtTheNextPhase) {
     const auto increment = Quaternion::from_axis_angle(Float3(0.0f, 0.0f, 1.0f), 0.5f);
     expect_vec_near(unit.sync().sync_dir_to_world(direction), increment.rotate(edited), 1e-5f);
 }
+
+TEST(Unit, ConstantSpeedAngularOscillationClosesAndOpensWithSharpTurns) {
+    Unit unit = Unit::builder()
+                    .with_geometry(make_unit_box())
+                    .with_sync(make_sync(Float3(0.0f)))
+                    .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), pi, 4.0f, false)
+                    .build();
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    const Float3 diagonal(1.0f / atlas::SQRT_TWO, 1.0f / atlas::SQRT_TWO, 0.0f);
+    expect_vec_near(*unit.angular_velocity(), Float3(0.0f, 0.0f, pi * 0.5f));
+    expect_vec_near(*unit.angular_acceleration(), Float3(0.0f));
+
+    unit.update(0.5f);
+    expect_vec_near(unit.sync().sync_dir_to_world(direction), diagonal);
+    unit.update(1.5f);
+    expect_vec_near(unit.sync().sync_dir_to_world(direction), Float3(-1.0f, 0.0f, 0.0f));
+    expect_vec_near(*unit.angular_velocity(), Float3(0.0f, 0.0f, -pi * 0.5f));
+    expect_vec_near(*unit.angular_acceleration(), Float3(0.0f));
+
+    unit.update(1.5f);
+    expect_vec_near(unit.sync().sync_dir_to_world(direction), diagonal);
+    unit.update(0.5f);
+    expect_vec_near(unit.sync().sync_dir_to_world(direction), direction);
+    expect_vec_near(*unit.angular_velocity(), Float3(0.0f, 0.0f, pi * 0.5f));
+}
+
+TEST(Unit, ConstantSpeedAngularOscillationSurfaceVelocityKeepsSignedAmplitude) {
+    Unit unit = Unit::builder()
+                    .with_geometry(make_unit_box())
+                    .with_sync(make_sync(Float3(2.0f, 0.0f, 0.0f)))
+                    .with_velocity(Float3(1.0f, 0.0f, 0.0f))
+                    .with_angular_oscillation(Float3(0.0f, 0.0f, 3.0f), -0.4f, 2.0f, false)
+                    .build();
+    expect_vec_near(unit.surface_velocity(unit.sync().translation + Float3(2.0f, 0.0f, 0.0f)),
+                    Float3(1.0f, -0.8f, 0.0f));
+    unit.update(0.25f);
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    const auto expected = Quaternion::from_axis_angle(Float3(0.0f, 0.0f, 1.0f), -0.1f);
+    expect_vec_near(unit.sync().sync_dir_to_world(direction), expected.rotate(direction));
+    expect_vec_near(*unit.angular_velocity(), Float3(0.0f, 0.0f, -0.4f));
+    expect_vec_near(*unit.angular_acceleration(), Float3(0.0f));
+    expect_vec_near(unit.sync().translation, Float3(2.25f, 0.0f, 0.0f));
+
+    unit.update(1.0f);
+    expect_vec_near(*unit.angular_velocity(), Float3(0.0f, 0.0f, 0.4f));
+    expect_vec_near(unit.surface_velocity(unit.sync().translation + Float3(2.0f, 0.0f, 0.0f)),
+                    Float3(1.0f, 0.8f, 0.0f));
+}
+
+TEST(Unit, AngularOscillationBuilderReuseResetsConfigurationAndDefaultsToSmooth) {
+    auto builder = Unit::builder();
+    Unit constant_speed = builder.with_geometry(make_unit_box())
+                              .with_sync(make_sync(Float3(0.0f)))
+                              .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 1.0f, 1.0f, false)
+                              .build();
+    constant_speed.update(0.125f);
+    const auto constant_rotation = Quaternion::from_axis_angle(Float3(0.0f, 0.0f, 1.0f), 0.25f);
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    expect_vec_near(constant_speed.sync().sync_dir_to_world(direction), constant_rotation.rotate(direction));
+
+    Unit stationary = builder.with_geometry(make_unit_box())
+                          .with_sync(make_sync(Float3(0.0f)))
+                          .build();
+    EXPECT_FALSE(stationary.dynamic());
+    EXPECT_FALSE(stationary.angular_velocity().has_value());
+    stationary.update(0.125f);
+    expect_vec_near(stationary.sync().sync_dir_to_world(direction), direction);
+
+    Unit smooth = builder.with_geometry(make_unit_box())
+                      .with_sync(make_sync(Float3(0.0f)))
+                      .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 1.0f, 1.0f)
+                      .build();
+    expect_vec_near(*smooth.angular_velocity(), Float3(0.0f));
+    smooth.update(0.125f);
+    const float angle = 0.5f * (1.0f - 1.0f / atlas::SQRT_TWO);
+    const auto smooth_rotation = Quaternion::from_axis_angle(Float3(0.0f, 0.0f, 1.0f), angle);
+    expect_vec_near(smooth.sync().sync_dir_to_world(direction), smooth_rotation.rotate(direction));
+}
+
+TEST(Unit, ConstantSpeedAngularOscillationValidatesItsOwnDerivativeRange) {
+    const auto build = [](const float period, const bool smooth) {
+        return Unit::builder()
+            .with_geometry(make_unit_box())
+            .with_sync(make_sync(Float3(0.0f)))
+            .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 1.0f, period, smooth)
+            .build();
+    };
+    EXPECT_THROW(static_cast<void>(build(1e-20f, true)), std::runtime_error);
+    const Unit unit = build(1e-20f, false);
+    ASSERT_TRUE(unit.angular_velocity().has_value());
+    EXPECT_TRUE(atlas::isfinite(*unit.angular_velocity()));
+    expect_vec_near(*unit.angular_acceleration(), Float3(0.0f));
+    EXPECT_THROW(static_cast<void>(build(std::numeric_limits<float>::denorm_min(), false)), std::runtime_error);
+}
+
+TEST(Unit, ConstantSpeedAngularOscillationRunsOnConfiguredBackend) {
+    const auto initial = Unit::builder()
+                             .with_geometry(make_unit_box())
+                             .with_sync(make_sync(Float3(1.0f, 2.0f, 3.0f)))
+                             .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), pi, 4.0f, false)
+                             .build();
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    const Float3 diagonal(1.0f / atlas::SQRT_TWO, 1.0f / atlas::SQRT_TWO, 0.0f);
+    const auto closing = advance_oscillation_on_backend(initial, 0.5f);
+    expect_vec_near(closing.sync().sync_dir_to_world(direction), diagonal);
+    expect_vec_near(*closing.angular_velocity(), Float3(0.0f, 0.0f, pi * 0.5f));
+    const auto opening = advance_oscillation_on_backend(closing, 3.0f);
+    expect_vec_near(opening.sync().sync_dir_to_world(direction), diagonal);
+    expect_vec_near(*opening.angular_velocity(), Float3(0.0f, 0.0f, -pi * 0.5f));
+    expect_vec_near(*opening.angular_acceleration(), Float3(0.0f));
+}

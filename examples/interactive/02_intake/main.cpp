@@ -115,6 +115,7 @@ simulation(const Json& config, const std::filesystem::path& directory) {
     const auto& motion = config.at("motion");
     const double amplitude = motion.at("closing_angle_degrees").get<double>() * atlas::pi_double / 180.0;
     const double period = motion.at("period_seconds").get<double>();
+    const Json smooth = motion.value("smooth", Json(true));
     auto& colliders = scene["colliders"] = Json::array();
     colliders.push_back({ { "unit", { { "geometry", mesh_geometry(directory / "assets" / "support.obj", { 0, 0, 0 }) } } } });
     const float hinge_radius = motion.at("hinge_radius").get<float>();
@@ -133,7 +134,8 @@ simulation(const Json& config, const std::filesystem::path& directory) {
             { "angular_oscillation", {
                 { "axis", Vec3 { -cosine, 0.0f, sine } },
                 { "amplitude", amplitude },
-                { "period", period }
+                { "period", period },
+                { "smooth", smooth }
             } }
         };
         colliders.push_back({ { "unit", std::move(unit) },
@@ -172,6 +174,7 @@ main(int argc, char** argv) {
         const double dt = scene.dt;
         const double period = config.at("motion").at("period_seconds").get<double>();
         const double amplitude = config.at("motion").at("closing_angle_degrees").get<double>();
+        const bool smooth = config.at("motion").value("smooth", true);
 
         std::unique_ptr<atlas::interactive::RenderControl> rendering;
         if (!run.headless) {
@@ -201,7 +204,8 @@ main(int argc, char** argv) {
         }
         command.command = atlas::interactive::Command::start;
         handle(app, command);
-        std::printf("02_intake: 12 wings + support, close=%.1fdeg period=%.6fs dt=%.1es\n", amplitude, period, dt);
+        std::printf("02_intake: 12 wings + support, close=%.1fdeg period=%.6fs smooth=%s dt=%.1es\n",
+                    amplitude, period, smooth ? "true" : "false", dt);
         double next_report_time = period * 0.5;
         std::size_t completed = 0;
         while ((run.headless || app.rendering_active()) && (run.steps == 0 || completed < run.steps)) {
@@ -214,8 +218,11 @@ main(int argc, char** argv) {
                 const auto status = handle(app, command);
                 if (status.status) {
                     const double phase = std::fmod(status.status->simulation_time, period) / period;
+                    const double angle = smooth
+                                             ? amplitude * 0.5 * (1.0 - std::cos(2.0 * atlas::pi_double * phase))
+                                             : 2.0 * amplitude * (phase < 0.5 ? phase : 1.0 - phase);
                     std::printf("step=%zu angle=%.2fdeg particles=%zu\n", status.status->step,
-                                amplitude * 0.5 * (1.0 - std::cos(2.0 * atlas::pi_double * phase)), status.status->particle_count);
+                                angle, status.status->particle_count);
                 }
             }
             if (!run.headless && run.paced) std::this_thread::sleep_until(next_update);
