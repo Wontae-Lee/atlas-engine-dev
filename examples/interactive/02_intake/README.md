@@ -3,7 +3,7 @@
 This example loads `assets/intake/wing1.obj` through `wing12.obj` and
 `support.obj` and repeatedly folds all twelve wings inward and opens them.
 Case 1 preserves the original synchronized motion. Case 2 uses the same period
-and amplitude with slightly staggered phases around the ring. The support stays
+and amplitude with a continuous traveling wave around the ring. The support stays
 fixed. A molecular inflow enters from +Y toward -Y, interacting with the moving
 mesh colliders; six outer sinks remove outgoing particles.
 
@@ -37,7 +37,7 @@ intake; edit the Camera setup in `main.cpp` to choose another initial view.
 # Case 1: the original synchronized motion (also the default).
 ./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake 800 --case 1 --headless
 
-# Case 2: staggered wing phases with the same period, paced for viewing.
+# Case 2: a traveling wave with the same period, paced for viewing.
 ./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake --case 2
 
 # Two case-2 cycles without display or wall-clock pacing.
@@ -52,7 +52,7 @@ on shutdown in this example. Omission or `0` means unlimited windowed execution.
 `--headless` requires a positive step count and never opens a window. It still
 uses this example's rendering-enabled build target; the underlying simulation
 and motion have no graphics dependency. `--case 1` is the default; `--case 2`
-selects staggered phases. The case option can appear before or after the step
+selects the traveling wave. The case option can appear before or after the step
 count and accepts only 1 or 2. `--help` prints argument syntax.
 
 ## Two simulation cases
@@ -61,18 +61,19 @@ Both cases use identical geometry, flow, amplitude, smoothing, and period.
 
 - **Case 1 — synchronized:** all twelve wings start at phase zero and close and
   open together, matching the original example.
-- **Case 2 — staggered:** wing 1 starts at phase zero; wings 2 through 12 start
-  progressively farther into the same cycle. `staggered_phase_span` in `main.cpp` sets the
-  phase difference from wing 1 to wing 12 as a fraction of one cycle. The default
-  `0.25` spreads them over one quarter-cycle, with neighboring wings separated
-  by `0.25 / 11` cycles. Every wing still completes a cycle in `period_seconds`.
+- **Case 2 — traveling wave:** the twelve wings sample one complete wave around
+  the ring. Each neighbor is separated by `1 / 12` of a cycle, including the
+  wrap from wing 12 back to wing 1. Every wing keeps the same period and
+  amplitude; the crest moves around the circumference without a phase seam.
 
 For case 2, wing `i` has initial elapsed time
-`period_seconds * (staggered_phase_span * (i - 1) / 11)`. These are initial phase offsets,
-so the first frame already shows different wing poses; they are not delayed
-starts. With the defaults, wing 1 starts at 0 degrees and wing 12 at 10 degrees.
-The configured phase difference repeats each cycle and is restored on restart.
-Console reports label `wing1` and `wing12` separately for case 2.
+`period_seconds * (i - 1) / 12`. These are initial phase offsets, so the first
+frame already shows a wave. With the defaults, wing 1 starts at 0 degrees,
+wing 7 at 20 degrees, and wing 12 at approximately 1.34 degrees. Restart restores
+this wave. Console reports label `wing1` and `wing12` separately.
+
+This makes the angular motion continuous around the ring. The OBJ wings remain
+independent rigid meshes; this does not weld their edges or deform the meshes.
 
 ## Initial geometry and hinges
 
@@ -107,7 +108,6 @@ Edit engine settings in `config.json` and example motion/display settings in
 |---|---|---|
 | `closing_angle_degrees (main.cpp)` | `20` | Maximum inward angle relative to the original assembly |
 | `period_seconds (main.cpp)` | `0.02` | Physical simulation time for close + reopen, shared by every wing in both cases |
-| `staggered_phase_span` in `main.cpp` | `0.25` | Case-2 phase difference from wing 1 to wing 12, in cycles; case 1 uses zero |
 | `smooth_motion` in `main.cpp` | `true` | Smooth acceleration and deceleration; `false` moves at constant angular speed between the endpoints |
 | `display_seconds_per_cycle (main.cpp)` | `5` | Wall-clock pacing target; does not change physics |
 | `hinge_radius (main.cpp)`, `hinge_height (main.cpp)` | `0.25`, `0.05` | Modeled hinge location in meters |

@@ -34,7 +34,7 @@ constexpr bool smooth_motion = true;
 constexpr float display_seconds_per_cycle = 5.0f;
 constexpr float hinge_radius = 0.25f;
 constexpr float hinge_height = 0.05f;
-constexpr float staggered_phase_span = 0.25f;
+constexpr int wing_count = 12;
 
 struct Options {
     std::size_t steps = 0;
@@ -46,7 +46,7 @@ struct Options {
 void
 usage(const char* executable) {
     std::printf("Usage: %s [steps] [--case 1|2] [--headless] [--unpaced]\n"
-                "Case 1 (default): synchronized wings; case 2: staggered phases, same period.\n"
+                "Case 1 (default): synchronized wings; case 2: traveling wave around the ring, same period.\n"
                 "Default: repeat until the window closes; 0 means unlimited.\n"
                 "--headless requires a positive step count.\n", executable);
 }
@@ -127,15 +127,20 @@ mesh_geometry(const std::filesystem::path& path, const Vec3& pivot) {
     return { { "type", "triangle_mesh" }, { "triangles", std::move(triangles) } };
 }
 
+float
+wing_phase(const int wing, const bool traveling_wave) {
+    return traveling_wave ? (wing - 1) * (1.0f / wing_count) : 0.0f;
+}
+
 atlas::interactive::SimulationConfig
-simulation(const Json& config, const std::filesystem::path& directory, const float phase_spread) {
+simulation(const Json& config, const std::filesystem::path& directory, const bool traveling_wave) {
     Json scene = config;
     const float amplitude = closing_angle_degrees * atlas::pi / 180.0f;
     const float period = period_seconds;
     const bool smooth = smooth_motion;
     auto& colliders = scene["colliders"] = Json::array();
     colliders.push_back({ { "unit", { { "geometry", mesh_geometry(directory / "assets" / "support.obj", { 0, 0, 0 }) } } } });
-    for (int wing = 1; wing <= 12; ++wing) {
+    for (int wing = 1; wing <= wing_count; ++wing) {
         const float azimuth = (wing - 1) * atlas::pi / 6.0f;
         const float sine = std::sin(azimuth);
         const float cosine = std::cos(azimuth);
@@ -148,7 +153,7 @@ simulation(const Json& config, const std::filesystem::path& directory, const flo
                 { "amplitude", amplitude },
                 { "period", period },
                 { "smooth", smooth },
-                { "elapsed", period * (phase_spread * (wing - 1) / 11.0f) }
+                { "elapsed", period * wing_phase(wing, traveling_wave) }
             } }
         };
         colliders.push_back({ { "unit", std::move(unit) },
@@ -186,8 +191,8 @@ main(int argc, char** argv) {
         if (!input) throw std::runtime_error("Cannot read intake config.json");
         const Json config = Json::parse(input);
         const float display_period = display_seconds_per_cycle;
-        const float phase_spread = run.simulation_case == 2 ? staggered_phase_span : 0.0f;
-        auto scene = simulation(config, directory, phase_spread);
+        const bool traveling_wave = run.simulation_case == 2;
+        auto scene = simulation(config, directory, traveling_wave);
         const float dt = scene.dt;
         const float period = period_seconds;
         const float amplitude = closing_angle_degrees;
@@ -221,9 +226,9 @@ main(int argc, char** argv) {
         }
         command.command = atlas::interactive::Command::start;
         handle(app, command);
-        std::printf("02_intake: case=%d (%s), 12 wings + support, close=%.1fdeg period=%.6fs smooth=%s phase_spread=%.3fcycles dt=%.1es\n",
-                    run.simulation_case, run.simulation_case == 1 ? "synchronized" : "staggered",
-                    amplitude, period, smooth ? "true" : "false", phase_spread, dt);
+        std::printf("02_intake: case=%d (%s), 12 wings + support, close=%.1fdeg period=%.6fs smooth=%s neighbor_phase=%.3fcycles dt=%.1es\n",
+                    run.simulation_case, run.simulation_case == 1 ? "synchronized" : "traveling wave",
+                    amplitude, period, smooth ? "true" : "false", wing_phase(2, traveling_wave), dt);
         float next_report_time = period * 0.5f;
         std::size_t completed = 0;
         while ((run.headless || app.rendering_active()) && (run.steps == 0 || completed < run.steps)) {
@@ -242,7 +247,7 @@ main(int argc, char** argv) {
                         std::printf("step=%zu angle=%.2fdeg particles=%zu\n", status.status->step,
                                     first_angle, status.status->particle_count);
                     } else {
-                        const float last_phase = std::fmod(phase + phase_spread, 1.0f);
+                        const float last_phase = std::fmod(phase + wing_phase(wing_count, traveling_wave), 1.0f);
                         std::printf("step=%zu wing1=%.2fdeg wing12=%.2fdeg particles=%zu\n", status.status->step,
                                     first_angle, motion_angle(amplitude, smooth, last_phase), status.status->particle_count);
                     }

@@ -107,8 +107,8 @@ wings and support from `assets/intake`. The wings repeatedly close inward by
 20 degrees and return to their original assembly, with moving-wall particle
 collisions. Build `atlas_example_interactive_02_intake` and run it without
 arguments for the synchronized case-1 window, or with `800 --headless` for two
-complete cycles. Pass `--case 2` for the same period with slightly staggered wing
-phases; the case setup in `main.cpp` controls the phase difference around the ring.
+complete cycles. Pass `--case 2` for a traveling wave with the same period:
+neighboring wings differ by 1/12 cycle, including the last-to-first seam.
 Its guide explains both cases, the inferred hinges, motion/flow settings, and
 asset install.
 This example is currently implemented only for Interactive.
