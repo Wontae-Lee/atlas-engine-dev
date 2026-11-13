@@ -213,6 +213,10 @@ CoreFactory::build(const SimulationConfig::Unit& config) {
     if (config.angular_acceleration) {
         builder.with_angular_acceleration(vec3(*config.angular_acceleration));
     }
+    if (config.angular_oscillation) {
+        const auto& motion = *config.angular_oscillation;
+        builder.with_angular_oscillation(vec3(motion.axis), motion.amplitude, motion.period);
+    }
     return builder.build();
 }
 

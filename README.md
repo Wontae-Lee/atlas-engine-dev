@@ -33,6 +33,7 @@ Atlas includes:
 | Build a native C++ simulation | [C++](#c) |
 | Run JSONL control or the OpenGL window | [Interactive](#interactive) |
 | Compare the maintained cylinder case across all frontends | [Examples](examples/README.md) |
+| Run intake wings repeatedly closing and opening | [Dynamic intake](examples/interactive/02_intake/README.md) |
 
 Clone the repository with its build dependencies:
 

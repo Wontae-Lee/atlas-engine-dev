@@ -169,6 +169,14 @@ unit(const Json& value) {
     if (value.contains("angular_acceleration")) {
         result.angular_acceleration = vec3(value.at("angular_acceleration"));
     }
+    if (value.contains("angular_oscillation")) {
+        const auto& motion = value.at("angular_oscillation");
+        result.angular_oscillation = Config::AngularOscillation {
+            vec3(motion.at("axis")),
+            motion.at("amplitude").get<float>(),
+            motion.at("period").get<float>()
+        };
+    }
     return result;
 }
 

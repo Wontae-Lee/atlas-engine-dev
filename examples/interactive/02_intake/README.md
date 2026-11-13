@@ -1,0 +1,131 @@
+# 02 — Dynamic intake wings
+
+This example loads `assets/intake/wing1.obj` through `wing12.obj` and
+`support.obj`, preserves their initial assembly, and repeatedly folds all twelve
+wings inward and returns them to their starting positions. The support stays
+fixed. A molecular inflow enters from +Y toward -Y, interacting with the moving
+mesh colliders; six outer sinks remove outgoing particles.
+
+## Build and run
+
+From the repository root, with the dependencies in the
+[build guide](../../../docs/contributing/build.md) installed:
+
+```bash
+cmake --preset tbb-release
+cmake --build --preset tbb-release --target atlas_example_interactive_02_intake
+./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake
+```
+
+Replace `tbb-release` with `cuda-release` for CUDA. Each source mesh is copied
+beside the executable during configuration. Source asset or config changes are
+picked up when CMake regenerates on the next build. No working-directory or
+source-checkout lookup is required at runtime.
+
+The default opens a window and repeats until you close it. One complete cycle
+is paced to about five wall-clock seconds if computation can keep up; slower
+machines take longer. Mouse drag or `W/A/S/D` orbits; right drag or the wheel
+zooms. Press `3` for a view into the intake along its Y axis, or `7` for an
+oblique view. Escape closes the window. The initial camera frames the entire
+intake; edit the Camera setup in `main.cpp` to choose another initial view.
+
+```bash
+# Two complete cycles, paced for viewing.
+./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake 800
+
+# The same simulation without display or wall-clock pacing.
+./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake 800 --headless
+
+# Bounded windowed smoke run at computational speed.
+./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake 40 --unpaced
+```
+
+The optional step count limits total updates exactly: there is no extra step
+on shutdown in this example. Omission or `0` means unlimited windowed execution.
+`--headless` requires a positive step count and never opens a window. It still
+uses this example's rendering-enabled build target; the underlying simulation
+and motion have no graphics dependency. `--help` prints argument syntax.
+
+## Initial geometry and hinges
+
+OBJ headers specify meters. `intake.obj` is the combined assembly and is not
+loaded in addition to the individual parts. There are 8,040 triangles in each
+wing and 824 in the support, for 97,304 triangles total. MTL files accompany the
+OBJ files; the current renderer colors by boundary role rather than CAD material.
+
+The CAD export contains no hinge metadata. This example models each hinge at
+the top of the support ring, using radius `0.25 m` and height `0.05 m`. For wing
+`i` from 1 to 12, with `phi = (i - 1) * pi / 6`:
+
+```text
+pivot = (radius * sin(phi), height, radius * cos(phi))
+axis  = (-cos(phi), 0, sin(phi))
+```
+
+The loader subtracts the pivot from mesh vertices and puts it back as the
+Unit's translation. Thus zero rotation reproduces the original OBJ assembly
+exactly, while positive rotation closes each wing toward the axis. Geometry is
+loaded once; only rigid poses change during stepping. These are prescribed
+hinges, not a mechanical linkage model or a solid-contact simulation. Wings do
+not resolve contact with one another; use conservative angles when changing the
+setup.
+
+## Motion and flow settings
+
+Edit `config.json`, then rebuild before running:
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `motion.closing_angle_degrees` | `20` | Maximum inward angle relative to the original assembly |
+| `motion.period_seconds` | `0.02` | Physical simulation time for close + reopen |
+| `motion.display_seconds_per_cycle` | `5` | Wall-clock pacing target; does not change physics |
+| `motion.hinge_radius`, `hinge_height` | `0.25`, `0.05` | Modeled hinge location in meters |
+| `simulation.dt` | `0.00005` | 400 updates per cycle |
+| `simulation.fluid.buffer_size` | `20000` | Maximum live particle count |
+| `simulation.emitters[0].generator.bulk_velocity` | `[0,-500,0]` | Inflow velocity in m/s |
+| `simulation.emitters[0].source.spacing` | `0.25` | Inflow seed spacing in meters |
+| `simulation.universe.cell_size` | `0.15` | Spatial grid size in meters |
+
+The prescribed angle is:
+
+```text
+theta(t) = A/2 * (1 - cos(2*pi*t/T))
+```
+
+It starts at rest at the original pose, reaches 20 degrees at step 200, returns
+to the original pose at step 400, then repeats. Rotation slows smoothly to zero
+at both ends. Console reports print half-cycle angles and particle counts.
+Floating-point rounding can affect the final digits; stochastic flow counts
+are not exact reference values.
+
+Core `Unit` owns the angular trajectory and its instantaneous angular velocity.
+Moving-wall reflection therefore uses the same motion as the displayed mesh.
+Session stepping advances the simulation, and the renderer only observes its
+current pose. Pausing a Session freezes motion; restarting resets it to the
+initial assembly. Motion is based on simulation time, independent of frame rate.
+
+`config.json` is an **example-specific wrapper** around the ordinary
+`simulation` object plus `motion` controls. The executable expands the OBJ files
+into typed triangle-mesh configuration through `JsonCodec` and `CoreFactory`.
+Do not pass this wrapper directly to `atlas-interactive --config`. The generic
+JSON representation for a moving Unit is documented in the
+[Interactive guide](../../../docs/frontends/interactive.md#simulation-json).
+
+For a geometry-only inspection, set `simulation.emitters` and
+`simulation.solvers` to empty arrays. The initial Fluid has zero particles, so
+the same moving collision geometry remains visible without inflow. For flow
+experiments, tune the timestep, particle weight, emission density, grid, and
+motion period together. The defaults demonstrate coupling and are not a
+validated engineering benchmark.
+
+## Install
+
+```bash
+cmake --build --preset tbb-release --target atlas-interactive-app atlas_examples_interactive
+cmake --install build/tbb-release --prefix "$PWD/build/interactive-install" --component interactive
+./build/interactive-install/bin/atlas_example_interactive_02_intake 800 --headless
+```
+
+The install includes this executable, its config, and its OBJ/MTL files under
+`examples/interactive/02_intake/assets`. Keep the installed `bin/` and
+`examples/` directories together when relocating it.

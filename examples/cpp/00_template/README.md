@@ -98,20 +98,20 @@ entry point prints exceptions and exits with a nonzero status.
 1. Copy the directory:
 
    ```bash
-   cp -R examples/cpp/00_template examples/cpp/02_my_simulation
+   cp -R examples/cpp/00_template examples/cpp/03_my_simulation
    ```
 
 2. Change the first line of the copied `CMakeLists.txt` to:
 
    ```cmake
-   set(example_target atlas_example_cpp_02_my_simulation)
+   set(example_target atlas_example_cpp_03_my_simulation)
    ```
 
    Keep the native/nvcc language selection, Core linkage, optional shared-library
    linkage, and `add_dependencies` call. This gives the example its own build
    target and includes it in `atlas_examples_cpp` automatically.
 
-3. Add `add_subdirectory(02_my_simulation)` to
+3. Add `add_subdirectory(03_my_simulation)` to
    `examples/cpp/CMakeLists.txt`. Keep the directories in numeric order and use
    the same number and name for corresponding Python/Interactive examples.
 4. Edit `build_system()` and reporting in the copied `main.cu`; rename the
@@ -121,8 +121,8 @@ entry point prints exceptions and exits with a nonzero status.
 5. Re-run the configure command, then build and run the new target:
 
    ```bash
-   cmake --build build/examples-tbb --target atlas_example_cpp_02_my_simulation
-   ./build/examples-tbb/examples/cpp/02_my_simulation/atlas_example_cpp_02_my_simulation 40
+   cmake --build build/examples-tbb --target atlas_example_cpp_03_my_simulation
+   ./build/examples-tbb/examples/cpp/03_my_simulation/atlas_example_cpp_03_my_simulation 40
    ```
 
 Check a zero-step run for construction, a short positive run for state changes,

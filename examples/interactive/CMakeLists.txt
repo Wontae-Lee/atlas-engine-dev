@@ -1,3 +1,4 @@
 add_custom_target(atlas_examples_interactive)
 add_subdirectory(00_template)
 add_subdirectory(01_cylinder)
+add_subdirectory(02_intake)

@@ -74,7 +74,7 @@ cmake --build --preset tbb-release --target atlas_examples_interactive
 ```
 
 `atlas_examples_cpp` builds both C++ examples, `atlas_examples_interactive`
-builds both windowed examples, and `atlas_examples` builds all native examples.
+builds all windowed examples, and `atlas_examples` builds all native examples.
 The [examples guide](../../examples/README.md) lists individual targets and
 links each `00_template` writing guide. Python examples are scripts and do not
 have executable CMake targets. Omit `--target` to build all enabled targets.

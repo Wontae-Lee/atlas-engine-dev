@@ -66,7 +66,9 @@ Tests mirror `include/atlas/`: every module has a directory under
   zero/invalid step arguments as well as a finite 40-step run. For Interactive,
   also check installed configuration lookup from a different working directory;
   windowed smoke runs need a display (or Xvfb on Linux). The windowed example
-  performs one final headless step after its bounded window loop.
+  templates and cylinder perform one final headless step after the window loop.
+  The `02_intake` example stops at the exact requested step; use `800 --headless`
+  to check two full wing-motion cycles and a paced window to inspect framing.
 - Benchmark harness changes: build and run the small benchmark smoke configuration; performance claims require a separate deliberate benchmark run.
 
 The [CI guide](../operations/ci.md) lists configured checks. Check a particular

@@ -105,7 +105,7 @@ rules within a Python process.
 
 Both runtime images provide `/opt/atlas/bin/atlas-interactive` and
 `atlas_example_interactive_00_template` and
-`atlas_example_interactive_01_cylinder`. Each example has its own configuration
+`atlas_example_interactive_01_cylinder`, and `atlas_example_interactive_02_intake`. Each example has its own configuration
 under `/opt/atlas/examples/interactive/<number_name>/config.json`. Their default
 command remains `python`; run a
 native executable explicitly when needed. `atlas-interactive` accepts JSONL

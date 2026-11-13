@@ -66,6 +66,17 @@ make_observed_config() {
     return config;
 }
 
+Config
+decode_oscillating_config(const std::string& motion) {
+    return atlas::interactive::JsonCodec::decode_simulation(
+        R"({"dt":0.25,"fluid":{"buffer_size":4},
+            "universe":{"lower_corner":[-3,-3,-3],"upper_corner":[3,3,3],"cell_size":1},
+            "colliders":[{"unit":{
+                "geometry":{"type":"box","lower_corner":[0,0,0],"upper_corner":[1,0.1,0.1]},
+                "translation":[1,0.5,0],"angular_oscillation":)"
+        + motion + "}}]}");
+}
+
 atlas::interactive::Request
 request(const atlas::interactive::Command command, const std::uint64_t session_id) {
     atlas::interactive::Request result;
@@ -213,6 +224,46 @@ TEST(InteractiveConfig, SystemFactoryBuildsAndRebuildsAValidSystem) {
     ASSERT_NE(second, nullptr);
     EXPECT_EQ(second->step(), 0u);
     EXPECT_EQ(second->fluid()->particle_count(), 1u);
+}
+
+TEST(InteractiveConfig, AngularOscillationRequiresItsWireFields) {
+    const auto config = decode_oscillating_config(
+        R"({"axis":[0,0,1],"amplitude":1.57079632679,"period":2})");
+    ASSERT_EQ(config.colliders.size(), 1u);
+    ASSERT_TRUE(config.colliders[0].unit.angular_oscillation.has_value());
+    const auto& motion = *config.colliders[0].unit.angular_oscillation;
+    EXPECT_FLOAT_EQ(motion.axis[2], 1.0f);
+    EXPECT_NEAR(motion.amplitude, 1.57079632679f, 1e-6f);
+    EXPECT_FLOAT_EQ(motion.period, 2.0f);
+
+    for (const std::string malformed : {
+             R"({"amplitude":1,"period":2})",
+             R"({"axis":[0,0,1],"period":2})",
+             R"({"axis":[0,0,1],"amplitude":1})",
+             R"({"axis":[0,1],"amplitude":1,"period":2})",
+             R"({"axis":[0,0,1],"amplitude":"wide","period":2})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":null})",
+             "[]", "null" }) {
+        SCOPED_TRACE(malformed);
+        EXPECT_THROW(decode_oscillating_config(malformed), std::exception);
+    }
+}
+
+TEST(InteractiveConfig, AngularOscillationSemanticValidationComesFromCore) {
+    for (const std::string invalid : {
+             R"({"axis":[0,0,0],"amplitude":1,"period":2})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":0})" }) {
+        SCOPED_TRACE(invalid);
+        const Config config = decode_oscillating_config(invalid);
+        atlas::interactive::CoreFactory factory(config);
+        EXPECT_THROW(factory.create(), std::exception);
+    }
+
+    auto conflict = decode_oscillating_config(
+        R"({"axis":[0,0,1],"amplitude":1,"period":2})");
+    conflict.colliders[0].unit.angular_velocity = Config::Vec3 { 0.0f, 0.0f, 1.0f };
+    atlas::interactive::CoreFactory factory(conflict);
+    EXPECT_THROW(factory.create(), std::exception);
 }
 
 TEST(InteractiveConfig, ExplicitEmptyOptionalFluidStateRemainsAvailable) {
@@ -389,6 +440,40 @@ TEST(InteractiveScene, CoversEveryGeometryTypeAndTracksMovingPoses) {
     const auto after = session.scene_view();
     EXPECT_GT(after.geometries[0].sync.translation.x,
               before.geometries[0].sync.translation.x);
+}
+
+TEST(InteractiveScene, OscillatingColliderClosesReturnsAndRestartsAtItsInitialPose) {
+    const auto config = decode_oscillating_config(
+        R"({"axis":[0,0,1],"amplitude":1.57079632679,"period":2})");
+    atlas::interactive::Session session(config);
+    const atlas::Float3 tip(1.0f, 0.0f, 0.0f);
+    const auto initial = session.scene_view().geometries[0].sync.sync_to_world(tip);
+    EXPECT_FLOAT_EQ(initial.x, 2.0f);
+    EXPECT_FLOAT_EQ(initial.y, 0.5f);
+
+    session.step(4);
+    const auto closed = session.scene_view().geometries[0].sync.sync_to_world(tip);
+    EXPECT_NEAR(closed.x, 1.0f, 1e-5f);
+    EXPECT_NEAR(closed.y, 1.5f, 1e-5f);
+    session.pause();
+    session.update();
+    EXPECT_EQ(session.status().step, 4u);
+
+    session.step(4);
+    const auto reopened = session.scene_view().geometries[0].sync.sync_to_world(tip);
+    EXPECT_NEAR(reopened.x, initial.x, 1e-5f);
+    EXPECT_NEAR(reopened.y, initial.y, 1e-5f);
+
+    session.step(2);
+    session.restart();
+    EXPECT_EQ(session.status().step, 0u);
+    const auto restarted = session.scene_view().geometries[0].sync.sync_to_world(tip);
+    EXPECT_NEAR(restarted.x, initial.x, 1e-5f);
+    EXPECT_NEAR(restarted.y, initial.y, 1e-5f);
+    session.step(4);
+    const auto closed_again = session.scene_view().geometries[0].sync.sync_to_world(tip);
+    EXPECT_NEAR(closed_again.x, closed.x, 1e-5f);
+    EXPECT_NEAR(closed_again.y, closed.y, 1e-5f);
 }
 
 TEST(InteractiveProtocol, JsonRequestAndResponsePreserveCorrelationFields) {

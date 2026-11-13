@@ -107,10 +107,10 @@ Python application. The native Interactive renderer is a separate frontend.
    frontends that demonstrate the same setup:
 
    ```bash
-   cp -r examples/python/00_template examples/python/02_my_simulation
+   cp -r examples/python/00_template examples/python/03_my_simulation
    ```
 
-2. Edit `02_my_simulation/main.py`: set the physical inputs in `build_system()`,
+2. Edit `03_my_simulation/main.py`: set the physical inputs in `build_system()`,
    add the required components, and adapt `run()` and its summary to your output.
    Keep the direct `if __name__ == "__main__"` entry point. No case dispatcher or
    parent registry needs editing.
@@ -123,7 +123,7 @@ Python application. The native Interactive renderer is a separate frontend.
    promises, and update the [example index](../../README.md).
 
 ```bash
-ATLAS_DEFAULT_ENGINE=tbb python examples/python/02_my_simulation/main.py 5
+ATLAS_DEFAULT_ENGINE=tbb python examples/python/03_my_simulation/main.py 5
 ATLAS_DEFAULT_ENGINE=tbb python -X faulthandler -m unittest discover \
     -s tests/python -p test_integration.py -v
 ```

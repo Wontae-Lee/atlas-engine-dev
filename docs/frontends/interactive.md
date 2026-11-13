@@ -86,8 +86,29 @@ explains how to add the next example.
 
 A `unit` contains a required `geometry` and optional `translation`,
 `orientation`, `velocity`, `acceleration`, `angular_velocity`, and
-`angular_acceleration`. It combines local geometry with a world pose and
-optional motion. Geometry types and their principal fields are:
+`angular_acceleration`. For repeated opening and closing, use
+`angular_oscillation` instead of `angular_velocity` / `angular_acceleration`:
+
+```json
+"angular_oscillation": {"axis": [1, 0, 0], "amplitude": 0.34906585, "period": 4.0}
+```
+
+All three fields are required. `axis` is a nonzero world-space rotation axis,
+`amplitude` is the signed maximum angular displacement in radians, and `period`
+is a positive number of simulation seconds for a complete close/open cycle.
+Core builders validate finite values and reject conflicting angular kinematics.
+The angle relative to the initial orientation is
+`amplitude * (1 - cos(2*pi*time/period)) / 2`: it starts at rest at the initial
+pose, reaches `amplitude` halfway through the period, and returns to the initial
+pose at rest. Motion advances only with simulation steps; pause freezes it and
+restart resets it. Rotation is about the Unit's translation, so express mesh
+vertices relative to a hinge and place that hinge with `translation`.
+The live Core collider uses the same pose and angular surface velocity that the
+renderer observes; no separate visual animation is needed. Linear translation
+may be combined with the oscillation.
+
+A Unit combines local geometry with its world pose and optional motion.
+Geometry types and their principal fields are:
 
 | `type` | Fields |
 |---|---|
@@ -172,6 +193,12 @@ flushes CSV and writes `time_step_<step>/fluid.bin` and `universe.bin` through
 Core serialization.
 
 ## Rendering and lifetime
+
+Native applications may construct `RenderManager(initial_camera)` to choose
+their initial framing with a configured `Camera`. Each opened window receives
+a copy of that camera; the default constructor preserves the standard view.
+This affects presentation only and adds no camera state to the Session or JSON
+simulation configuration.
 
 `RenderManager` selects one session by ID. Opening the same session again is
 idempotent; opening another while a window is active fails until the first is

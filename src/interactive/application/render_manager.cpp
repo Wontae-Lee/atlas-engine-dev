@@ -17,6 +17,10 @@ namespace atlas::interactive {
 
 RenderManager::RenderManager() = default;
 
+/** @brief Retains native application camera framing for subsequent windows. */
+RenderManager::RenderManager(const Camera& initial_camera)
+    : _initial_camera(initial_camera) {}
+
 RenderManager::~RenderManager() {
     close();
 }
@@ -28,6 +32,7 @@ RenderManager::open(const std::uint64_t session_id) {
 
     auto window = std::make_unique<WindowTarget>(1280, 720, "Atlas Interactive");
     auto renderer = std::make_unique<Renderer>(std::make_unique<RawStateProvider>());
+    renderer->camera() = _initial_camera;
     renderer->add_layer(std::make_unique<GeometryLayer>());
     renderer->add_layer(std::make_unique<ParticleLayer>(6.0f));
     renderer->initialize(*window);

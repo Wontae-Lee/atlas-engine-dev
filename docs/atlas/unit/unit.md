@@ -20,7 +20,7 @@ captured by value into device lambdas.
 
 ## State it carries
 
-A `Unit` owns six members by value:
+A `Unit` owns its geometry, pose, and motion state by value:
 
 - **`Geometry _geometry`** — the collision shape in its own local frame. It is
   never modified by motion; all movement is carried by the pose.
@@ -31,6 +31,10 @@ A `Unit` owns six members by value:
   `_angular_acceleration` (axis scaled by rad/s²). An empty optional means "this
   channel is absent"; a body with no velocity is *static* and `update` is a no-op
   for it. `dynamic()` reports whether any linear or angular velocity is present.
+- **Optional angular oscillation** — a normalized world-space axis, signed
+  amplitude, positive period, bounded double-precision elapsed phase, current
+  angle, and base orientation. Its analytic derivatives populate the ordinary
+  angular velocity and acceleration fields.
 
 The four kinematic fields are kept in a canonical pairing by
 `canonicalize_kinematics`: if an acceleration is present without its matching
@@ -40,9 +44,9 @@ velocity and lets `dynamic()` decide motion from velocity presence alone.
 
 ## Integrating the pose — `update(dt)`
 
-`update(float dt)` advances the pose by one step using **semi-implicit
-(symplectic) Euler**, and does nothing when `dt` is non-positive (the guard is
-`if (!(dt > 0.0f)) return;`, which also rejects NaN):
+`update(float dt)` advances ordinary kinematics by one step using
+**semi-implicit (symplectic) Euler**, and does nothing when `dt` is non-positive
+or non-finite. Without an angular oscillation, the integration is:
 
 ```cpp
 if (_velocity.has_value()) {
@@ -70,7 +74,57 @@ Two lower-level mutators back `update` and are also public:
 - **`rotate(axis, angle_rad)`** left-multiplies an incremental
   `Quaternion::from_axis_angle` onto the current orientation (world-frame
   rotation), renormalizes to counter drift, and calls `_sync.rebuild_matrices()`.
-  A zero-length axis is a no-op.
+  A zero-length axis is a no-op. With an active oscillation, the base orientation
+  is rebased to preserve the edited pose and the current phase.
+
+## Prescribed angular oscillation
+
+Use `Unit::Builder::with_angular_oscillation(axis, amplitude, period)` for a
+smooth closing/opening cycle. The axis is expressed in world space and passes
+through the Unit's translation; the geometry must be centered on that pivot in
+its local coordinates. The amplitude is the signed angle in radians reached at
+half a cycle, and the period is the duration of a complete cycle in seconds.
+The initial pose is the open/rest pose:
+
+```text
+theta(t) = amplitude / 2 * (1 - cos(2*pi*t/period))
+omega(t) = amplitude * pi / period * sin(2*pi*t/period)
+alpha(t) = 2 * amplitude * pi^2 / period^2 * cos(2*pi*t/period)
+```
+
+The motion starts at zero angular velocity, reaches the specified amplitude at
+half a period with zero angular velocity again, and returns to its initial pose
+at a full period. A negative amplitude reverses the closing direction. Linear
+translation/acceleration may be combined with it, so the pivot can also move.
+
+`update()` evaluates orientation against the stored base orientation rather
+than integrating angular velocity. It reduces double-precision elapsed time
+modulo the period, avoiding unbounded time growth and accumulated orientation
+drift. The angular velocity and acceleration accessors report the analytic
+world-space derivatives at the current phase. Collision responses therefore use
+the same motion as the rendered boundary. As with other moving colliders,
+particle intersections use the boundary pose at the current step; use a small
+time step relative to the motion period.
+
+```cpp
+Unit wing = Unit::builder()
+    .with_geometry(hinge_centered_geometry)
+    .with_sync(hinge_pose)
+    .with_angular_oscillation(Float3(1.0f, 0.0f, 0.0f), 0.35f, 4.0f)
+    .build();
+```
+
+The Core builder rejects a non-finite or zero axis, non-finite amplitude,
+non-finite/non-positive period, angular derivatives outside the finite float
+range, and combinations with explicit angular velocity or acceleration. Axis
+normalization uses double precision, including for very large or small finite
+axis components. Zero amplitude is accepted.
+
+`set_sync()` and `rotate()` rebase the analytic orientation while preserving
+phase, axis, and derivatives; the next update does not snap back to the old
+pose. `move()` translates the pivot normally. Rebuilding the Unit starts a new
+cycle at rest. The motion remains a trivially copyable value inside Unit and
+works through the same TBB/CUDA update path.
 
 ## Surface velocity — `surface_velocity(point)`
 
@@ -119,7 +173,8 @@ holds nothing derived that could go stale.)
 
 `Unit` is trivially copyable: `Geometry` is a `DeviceVariant` (trivially
 copyable), `Sync` is a plain value type, and the four `std::optional<Float3>`
-members are optionals of a trivially copyable type. This is a hard requirement,
+members and the optional angular-oscillation state contain trivially copyable
+types. This is a hard requirement,
 not an accident — `Collider` leaves must be trivially copyable to live in a
 `DeviceVariant` union and be captured into device kernels, and each leaf owns a
 `Unit` by value. The class-level Doxygen phrases this as "trivially movable"; the

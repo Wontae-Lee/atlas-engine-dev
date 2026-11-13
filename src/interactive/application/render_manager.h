@@ -1,6 +1,7 @@
 #pragma once
 
 #include "application/render_control.h"
+#include "rendering/camera.h"
 
 #include <chrono>
 #include <cstdint>
@@ -15,6 +16,8 @@ class WindowTarget;
 class RenderManager final : public RenderControl {
 public:
     RenderManager();
+    /** @brief Starts each opened window with a copy of the supplied camera. */
+    explicit RenderManager(const Camera& initial_camera);
     ~RenderManager() override;
 
     void open(std::uint64_t session_id) override;
@@ -23,6 +26,7 @@ public:
     std::optional<std::uint64_t> session_id() const noexcept override;
 
 private:
+    Camera _initial_camera; ///< Camera framing restored whenever a window is opened.
     std::optional<std::uint64_t> _session_id;
     std::unique_ptr<WindowTarget> _window;
     std::unique_ptr<Renderer> _renderer;

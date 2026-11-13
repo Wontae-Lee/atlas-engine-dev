@@ -12,7 +12,8 @@ examples/
 │   └── 01_cylinder/     # main.cu, CMakeLists.txt, README.md
 ├── interactive/
 │   ├── 00_template/     # main.cpp, config.json, CMakeLists.txt, README.md, reference.jsonc
-│   └── 01_cylinder/     # main.cpp, config.json, CMakeLists.txt, README.md
+│   ├── 01_cylinder/     # main.cpp, config.json, CMakeLists.txt, README.md
+│   └── 02_intake/       # moving OBJ wings, config.json, main.cpp, README.md
 └── python/
     ├── 00_template/     # main.py, README.md, reference.py
     └── 01_cylinder/     # main.py, README.md
@@ -35,7 +36,7 @@ boundaries. Their defaults are smoke runs, not engineering benchmarks.
 | Python script | `python/00_template/main.py` | `python/01_cylinder/main.py` |
 
 `atlas_examples_cpp` builds both C++ programs. `atlas_examples_interactive`
-builds both windowed programs when rendering is enabled. `atlas_examples`
+builds all windowed programs when rendering is enabled. `atlas_examples`
 builds every enabled native example. Python scripts import the installed Atlas
 package and need no per-example CMake target.
 
@@ -98,6 +99,16 @@ explains strict JSON, configuration copying, installation, application/session
 ownership, and headless commands. `reference.jsonc` contains comments and is
 not accepted as runtime JSON.
 
+## Dynamic intake (Interactive)
+
+[`interactive/02_intake`](interactive/02_intake/README.md) loads the twelve intake
+wings and support from `assets/intake`. The wings repeatedly close inward by
+20 degrees and return to their original assembly, with moving-wall particle
+collisions. Build `atlas_example_interactive_02_intake` and run it without
+arguments for a paced window, or with `800 --headless` for two complete cycles.
+Its guide explains the inferred hinges, motion/flow settings, and asset install.
+This example is currently implemented only for Interactive.
+
 ## Python
 
 Install the Atlas package as described in the
@@ -115,8 +126,9 @@ for initialization, ownership, state output, and adding components.
 
 ## Writing the next example
 
-1. Copy the frontend's `00_template` directory to `02_<descriptive_name>`, then
-   continue with `03_...`, `04_...`. Keep matching numbers and names across
+1. Copy the frontend's `00_template` directory to the next unused number,
+   currently `03_<descriptive_name>`. `02_intake` is reserved for the matching
+   intake setup in every frontend. Keep matching numbers and names across
    frontends when they demonstrate the same simulation.
 2. Implement the setup in that directory's `main.cu`, `main.py`, or
    `config.json`, using its template guide. Keep a local README explaining
@@ -125,7 +137,7 @@ for initialization, ownership, state output, and adding components.
    register the directory in the frontend's `CMakeLists.txt`, and add the target
    to its frontend aggregate. Reconfigure CMake. No dispatcher needs editing.
 4. Keep the existing backend/build-type presets. Select the new executable
-   with `cmake --build --preset tbb-release --target atlas_example_<frontend>_02_<name>`;
+   with `cmake --build --preset tbb-release --target atlas_example_<frontend>_03_<name>`;
    the aggregate targets include it through its local `add_dependencies` call.
 5. Build and run the new example and retained template/cylinder smoke runs.
    Keep common configurations physically equivalent where the APIs permit it.

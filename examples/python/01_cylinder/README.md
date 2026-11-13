@@ -30,4 +30,4 @@ results can differ across backends. This is a smoke example, not a validated
 engineering benchmark.
 
 For a smaller starting point, ownership rules, and instructions for creating
-`02_<name>`, use the [Python template guide](../00_template/README.md).
+`03_<name>`, use the [Python template guide](../00_template/README.md).

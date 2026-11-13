@@ -50,19 +50,19 @@ updates in total.
 Mouse drag or `W/A/S/D` orbits the camera; right drag or the wheel zooms;
 `1` through `7` select fixed views; Escape closes the window.
 
-## Create `02_my_simulation`
+## Create `03_my_simulation`
 
 1. Copy the whole directory:
 
    ```bash
-   cp -r examples/interactive/00_template examples/interactive/02_my_simulation
+   cp -r examples/interactive/00_template examples/interactive/03_my_simulation
    ```
 
 2. Change `ATLAS_INTERACTIVE_EXAMPLE_NAME` in the copied `CMakeLists.txt` from
-   `00_template` to `02_my_simulation`. The executable and install destination
-   derive from this name: `atlas_example_interactive_02_my_simulation` and
-   `examples/interactive/02_my_simulation/config.json`.
-3. Add `add_subdirectory(02_my_simulation)` to
+   `00_template` to `03_my_simulation`. The executable and install destination
+   derive from this name: `atlas_example_interactive_03_my_simulation` and
+   `examples/interactive/03_my_simulation/config.json`.
+3. Add `add_subdirectory(03_my_simulation)` to
    `examples/interactive/CMakeLists.txt`. There is no central case dispatcher.
    The directory's existing `add_dependencies` also includes its target in
    `atlas_examples_interactive`.
@@ -72,8 +72,8 @@ Mouse drag or `W/A/S/D` orbits the camera; right drag or the wheel zooms;
 5. Rerun the configure command and build the new target:
 
    ```bash
-   cmake --build build/interactive-tbb --target atlas_example_interactive_02_my_simulation
-   ./build/interactive-tbb/examples/interactive/02_my_simulation/atlas_example_interactive_02_my_simulation 40
+   cmake --build build/interactive-tbb --target atlas_example_interactive_03_my_simulation
+   ./build/interactive-tbb/examples/interactive/03_my_simulation/atlas_example_interactive_03_my_simulation 40
    ```
 
 6. Run a short simulation and verify its final step and particle count before
@@ -150,7 +150,7 @@ cmake --install build/interactive-tbb --prefix "$PWD/build/interactive-install" 
 ./build/interactive-install/bin/atlas_example_interactive_00_template 40
 ```
 
-The `interactive` component installs the JSONL application as well as both
-examples, so build all three executables before installing. Keep installed
+The `interactive` component installs the JSONL application as well as all
+examples, so build the application and example aggregate before installing. Keep installed
 `bin/` and `examples/` together
 when relocating the installation.

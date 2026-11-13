@@ -108,6 +108,12 @@ struct SimulationConfig {
         std::vector<std::array<Vec3, 3>> triangles; ///< Explicit faces for triangle-mesh geometry.
     };
 
+    struct AngularOscillation {
+        Vec3 axis { 0.0f, 0.0f, 1.0f };
+        float amplitude = 0.0f;
+        float period = 1.0f;
+    };
+
     /// Geometry with rigid-body pose and optional kinematics.
     struct Unit {
         Geometry geometry; ///< Local-space boundary geometry.
@@ -117,6 +123,7 @@ struct SimulationConfig {
         std::optional<Vec3> acceleration; ///< Optional linear acceleration.
         std::optional<Vec3> angular_velocity; ///< Optional angular velocity.
         std::optional<Vec3> angular_acceleration; ///< Optional angular acceleration.
+        std::optional<AngularOscillation> angular_oscillation;
     };
 
     /// Fluid capacity, species table, and initial particle states.

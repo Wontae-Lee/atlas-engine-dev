@@ -5,6 +5,7 @@
 #include <atlas/spatial/ray.h>
 #include <atlas/sync/sync.h>
 
+#include <cmath>
 #include <optional>
 #include <utility>
 
@@ -27,6 +28,10 @@ namespace atlas {
  * without its matching velocity (or vice versa) the missing partner is
  * defaulted to zero, so @ref update never has to test acceleration without a
  * velocity to integrate into.
+ *
+ * A builder may instead prescribe an angular oscillation. Its analytic pose
+ * and derivatives replace the angular Euler channel while linear motion remains
+ * independent. The oscillation is stored by value and remains device-copyable.
  *
  * @note Rotation and translation live in the embedded @ref Sync; @ref move and
  *       @ref rotate mutate that pose in place (the rotate path also refreshes
@@ -114,11 +119,14 @@ public:
 
     /**
      * @brief Replaces the pose, leaving geometry and kinematics unchanged.
+     * An active angular oscillation is rebased to this pose without changing
+     * its current phase or derivatives.
      * @param sync The new local-to-world pose; moved in.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     set_sync(Sync sync) noexcept {
         _sync = std::move(sync);
+        rebase_angular_oscillation();
     }
 
     /**
@@ -130,14 +138,15 @@ public:
      * velocity is absent (a static body). For the angular channel the angular
      * velocity's magnitude is the rotation rate and its direction the axis; a
      * zero-magnitude angular velocity applies no rotation to avoid normalizing a
-     * zero axis.
+     * zero axis. A configured oscillation replaces this angular integration
+     * with its analytic pose, angular velocity, and angular acceleration.
      *
-     * @param dt Time step in seconds. Non-positive @p dt (including NaN, which
-     *           fails the `> 0` test) is ignored and the pose is left untouched.
+     * @param dt Time step in seconds. Non-positive or non-finite values are
+     *           ignored and the pose is left untouched.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     update(const float dt) noexcept {
-        if (!(dt > 0.0f)) return;
+        if (!(dt > 0.0f) || !std::isfinite(dt)) return;
 
         if (_velocity.has_value()) {
 
@@ -148,7 +157,9 @@ public:
             move((*_velocity) * dt);
         }
 
-        if (_angular_velocity.has_value()) {
+        if (_angular_oscillation.has_value()) {
+            advance_angular_oscillation(dt);
+        } else if (_angular_velocity.has_value()) {
 
             if (_angular_acceleration.has_value()) {
                 *_angular_velocity += (*_angular_acceleration) * dt;
@@ -181,7 +192,8 @@ public:
      * Composes the incremental rotation on the left of the current orientation
      * (world-frame rotation) and renormalizes to counter drift, then rebuilds
      * the pose's cached matrices. A zero-length axis is a no-op, guarding against
-     * building a rotation from a degenerate axis.
+     * building a rotation from a degenerate axis. An active oscillation is
+     * rebased afterward, preserving its phase and world-space axis.
      *
      * @param axis      Rotation axis in world space; need not be unit length (it
      *                  is normalized internally) but must be non-zero to have effect.
@@ -204,6 +216,7 @@ public:
         _sync.orientation = (rotation * _sync.orientation).normalized();
 
         _sync.rebuild_matrices();
+        rebase_angular_oscillation();
     }
 
     /**
@@ -356,6 +369,46 @@ public:
     }
 
 private:
+    /** @brief Device-copyable parameters and bounded phase of prescribed rotation. */
+    struct AngularOscillation {
+        Float3 axis; ///< Unit world-space axis through the Unit translation.
+        float amplitude; ///< Signed angle reached halfway through a cycle, in radians.
+        float period; ///< Positive cycle duration in seconds.
+        double elapsed = 0.0; ///< Time reduced modulo period to avoid long-run growth.
+        float angle = 0.0f; ///< Current displacement from the base orientation.
+        Quaternion base_orientation; ///< Orientation at zero displacement.
+    };
+
+    /**
+     * @brief Evaluates prescribed orientation and wall-motion derivatives at the next phase.
+     * @param dt Nonnegative finite elapsed time in seconds; zero initializes derivatives.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    advance_angular_oscillation(const float dt) noexcept {
+        auto& motion = *_angular_oscillation;
+        motion.elapsed = std::fmod(motion.elapsed + static_cast<double>(dt),
+                                   static_cast<double>(motion.period));
+        constexpr double two_pi = 6.283185307179586476925286766559;
+        const double frequency = two_pi / static_cast<double>(motion.period);
+        const double phase = frequency * motion.elapsed;
+        const double half_amplitude = 0.5 * static_cast<double>(motion.amplitude);
+        motion.angle = static_cast<float>(half_amplitude * (1.0 - std::cos(phase)));
+        const Quaternion rotation = Quaternion::from_axis_angle(motion.axis, motion.angle);
+        _sync.orientation = (rotation * motion.base_orientation).normalized();
+        _sync.rebuild_matrices();
+        _angular_velocity = motion.axis * static_cast<float>(half_amplitude * frequency * std::sin(phase));
+        _angular_acceleration = motion.axis * static_cast<float>(half_amplitude * frequency * frequency * std::cos(phase));
+    }
+
+    /** @brief Preserves the prescribed phase after a caller replaces or rotates the pose. */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    rebase_angular_oscillation() noexcept {
+        if (!_angular_oscillation) return;
+        auto& motion = *_angular_oscillation;
+        const Quaternion rotation = Quaternion::from_axis_angle(motion.axis, motion.angle);
+        motion.base_orientation = (rotation.conjugate() * _sync.orientation).normalized();
+    }
+
     /**
      * @brief Fills in zero partners so each velocity/acceleration pair is consistent.
      *
@@ -408,6 +461,8 @@ private:
     std::optional<Float3> _angular_velocity; ///< Angular velocity (axis * rad/s), or empty.
 
     std::optional<Float3> _angular_acceleration; ///< Angular acceleration (axis * rad/s^2), or empty.
+
+    std::optional<AngularOscillation> _angular_oscillation; ///< Prescribed rotation, or Euler motion when empty.
 };
 
 /**
@@ -482,6 +537,22 @@ public:
     with_angular_acceleration(const Float3& alpha) noexcept;
 
     /**
+     * @brief Prescribes a smooth repeated rotation from the initial pose and back.
+     *
+     * The angle is amplitude/2 * (1 - cos(2*pi*t/period)); rotation is about a
+     * fixed world-space axis through the Unit translation. The motion starts
+     * at rest and may coexist with linear velocity or acceleration. Explicit
+     * angular velocity or acceleration cannot be combined with this policy.
+     *
+     * @param axis Finite nonzero world-space axis, normalized by build().
+     * @param amplitude Finite signed maximum angle from the initial pose, in radians.
+     * @param period Finite positive full cycle duration in seconds.
+     * @return `*this`, for chaining; build() validates all inputs and derivatives.
+     */
+    ATLAS_HOST Builder&
+    with_angular_oscillation(const Float3& axis, float amplitude, float period) noexcept;
+
+    /**
      * @brief Validates the staged fields, canonicalizes kinematics, and builds the Unit.
      *
      * Moves the geometry, pose, and (zero-filled) kinematic optionals into a new
@@ -490,7 +561,8 @@ public:
      *
      * @return The assembled @ref Unit.
      * @throws std::runtime_error if geometry or sync is unset, or if an
-     *         acceleration is present without its matching velocity.
+     *         acceleration is present without its matching velocity, or the
+     *         oscillation parameters are invalid or conflict with angular kinematics.
      */
     ATLAS_NODISCARD ATLAS_HOST Unit
     build();
@@ -509,7 +581,9 @@ private:
      *
      * @throws std::runtime_error when geometry is unset, sync is unset, a linear
      *         acceleration is present without a linear velocity, or an angular
-     *         acceleration is present without an angular velocity.
+     *         acceleration is present without an angular velocity, or oscillation
+     *         inputs are non-finite, degenerate, conflict with angular kinematics,
+     *         or produce derivatives outside the finite float range.
      */
     ATLAS_HOST void
     validate() const;
@@ -526,6 +600,8 @@ private:
     std::optional<Float3> _angular_velocity; ///< Staged angular velocity, or unset.
 
     std::optional<Float3> _angular_acceleration; ///< Staged angular acceleration, or unset.
+
+    std::optional<Unit::AngularOscillation> _angular_oscillation; ///< Staged prescribed rotation.
 };
 
 }

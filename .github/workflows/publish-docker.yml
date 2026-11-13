@@ -139,7 +139,7 @@ jobs:
           TEST_IMAGE: ${{ steps.image.outputs.reference }}
         run: |
           docker run --rm "$TEST_IMAGE" sh -c \
-            'for executable in atlas-interactive atlas_example_interactive_00_template atlas_example_interactive_01_cylinder; do path="$(command -v "$executable")" && ! ldd "$path" | grep "not found" || exit 1; done'
+            'for executable in atlas-interactive atlas_example_interactive_00_template atlas_example_interactive_01_cylinder atlas_example_interactive_02_intake; do path="$(command -v "$executable")" && ! ldd "$path" | grep "not found" || exit 1; done'
       - name: Log in to GHCR
         if: >-
           inputs.publish &&
