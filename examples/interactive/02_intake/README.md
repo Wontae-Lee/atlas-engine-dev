@@ -62,13 +62,13 @@ Both cases use identical geometry, flow, amplitude, smoothing, and period.
 - **Case 1 — synchronized:** all twelve wings start at phase zero and close and
   open together, matching the original example.
 - **Case 2 — staggered:** wing 1 starts at phase zero; wings 2 through 12 start
-  progressively farther into the same cycle. `motion.phase_spread` sets the
+  progressively farther into the same cycle. `staggered_phase_span` in `main.cpp` sets the
   phase difference from wing 1 to wing 12 as a fraction of one cycle. The default
   `0.25` spreads them over one quarter-cycle, with neighboring wings separated
   by `0.25 / 11` cycles. Every wing still completes a cycle in `period_seconds`.
 
 For case 2, wing `i` has initial elapsed time
-`period_seconds * (phase_spread * (i - 1) / 11)`. These are initial phase offsets,
+`period_seconds * (staggered_phase_span * (i - 1) / 11)`. These are initial phase offsets,
 so the first frame already shows different wing poses; they are not delayed
 starts. With the defaults, wing 1 starts at 0 degrees and wing 12 at 10 degrees.
 The configured phase difference repeats each cycle and is restored on restart.
@@ -100,23 +100,24 @@ setup.
 
 ## Motion and flow settings
 
-Edit `config.json`, then rebuild before running:
+Edit engine settings in `config.json` and example motion/display settings in
+`main.cpp`, then rebuild before running:
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `motion.closing_angle_degrees` | `20` | Maximum inward angle relative to the original assembly |
-| `motion.period_seconds` | `0.02` | Physical simulation time for close + reopen, shared by every wing in both cases |
-| `motion.phase_spread` | `0.25` | Case-2 phase difference from wing 1 to wing 12, in cycles; finite and in `[0, 1)`; case 1 uses zero |
-| `motion.smooth` | `true` | Smooth acceleration and deceleration; `false` moves at constant angular speed between the endpoints |
-| `motion.display_seconds_per_cycle` | `5` | Wall-clock pacing target; does not change physics |
-| `motion.hinge_radius`, `hinge_height` | `0.25`, `0.05` | Modeled hinge location in meters |
-| `simulation.dt` | `0.00005` | 400 updates per cycle |
-| `simulation.fluid.buffer_size` | `20000` | Maximum live particle count |
-| `simulation.emitters[0].generator.bulk_velocity` | `[0,-500,0]` | Inflow velocity in m/s |
-| `simulation.emitters[0].source.spacing` | `0.25` | Inflow seed spacing in meters |
-| `simulation.universe.cell_size` | `0.15` | Spatial grid size in meters |
+| `closing_angle_degrees (main.cpp)` | `20` | Maximum inward angle relative to the original assembly |
+| `period_seconds (main.cpp)` | `0.02` | Physical simulation time for close + reopen, shared by every wing in both cases |
+| `staggered_phase_span` in `main.cpp` | `0.25` | Case-2 phase difference from wing 1 to wing 12, in cycles; case 1 uses zero |
+| `smooth_motion` in `main.cpp` | `true` | Smooth acceleration and deceleration; `false` moves at constant angular speed between the endpoints |
+| `display_seconds_per_cycle (main.cpp)` | `5` | Wall-clock pacing target; does not change physics |
+| `hinge_radius (main.cpp)`, `hinge_height (main.cpp)` | `0.25`, `0.05` | Modeled hinge location in meters |
+| `dt` | `0.00005` | 400 updates per cycle |
+| `fluid.buffer_size` | `20000` | Maximum live particle count |
+| `emitters[0].generator.bulk_velocity` | `[0,-500,0]` | Inflow velocity in m/s |
+| `emitters[0].source.spacing` | `0.25` | Inflow seed spacing in meters |
+| `universe.cell_size` | `0.15` | Spatial grid size in meters |
 
-With `motion.smooth: true` (also the default when omitted), the prescribed angle is:
+With `smooth_motion = true` (the example default), the prescribed angle is:
 
 ```text
 theta(t) = A/2 * (1 - cos(2*pi*t/T))
@@ -128,7 +129,7 @@ at both ends. Console reports print half-cycle angles and particle counts.
 Floating-point rounding can affect the final digits; stochastic flow counts
 are not exact reference values.
 
-Set `motion.smooth` to `false` for constant-speed closing and opening. With
+Set `smooth_motion` in `main.cpp` to `false` for constant-speed closing and opening. With
 `phase = (t mod T) / T`, its angle is `2*A*phase` during the first half-cycle
 and `2*A*(1-phase)` during the second. It reaches the same endpoints at steps
 200 and 400, but reverses direction immediately without slowing down. Angular
@@ -144,15 +145,17 @@ current pose. Pausing a Session freezes motion; restarting restores each wing's
 configured initial phase and pose. Motion is based on simulation time,
 independent of frame rate.
 
-`config.json` is an **example-specific wrapper** around the ordinary
-`simulation` object plus `motion` controls. The executable expands the OBJ files
-into typed triangle-mesh configuration through `JsonCodec` and `CoreFactory`.
-Do not pass this wrapper directly to `atlas-interactive --config`. The generic
-JSON representation for a moving Unit is documented in the
+`config.json` contains only the engine's `SimulationConfig` fields. Case
+selection, phase spacing, hinge geometry, degree conversion, and display pacing
+live in `main.cpp`. The executable adds mesh colliders using the engine's
+`angular_oscillation` fields (`axis`, `amplitude`, `period`, `smooth`, `elapsed`)
+before decoding the simulation. Loading the JSON directly into the generic
+server loads the base flow configuration without these example-created wings.
+The engine JSON format is documented in the
 [Interactive guide](../../../docs/frontends/interactive.md#simulation-json).
 
-For a geometry-only inspection, set `simulation.emitters` and
-`simulation.solvers` to empty arrays. The initial Fluid has zero particles, so
+For a geometry-only inspection, set `emitters` and
+`solvers` to empty arrays. The initial Fluid has zero particles, so
 the same moving collision geometry remains visible without inflow. For flow
 experiments, tune the timestep, particle weight, emission density, grid, and
 motion period together. The defaults demonstrate coupling and are not a

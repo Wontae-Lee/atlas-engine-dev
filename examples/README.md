@@ -108,7 +108,7 @@ wings and support from `assets/intake`. The wings repeatedly close inward by
 collisions. Build `atlas_example_interactive_02_intake` and run it without
 arguments for the synchronized case-1 window, or with `800 --headless` for two
 complete cycles. Pass `--case 2` for the same period with slightly staggered wing
-phases; `motion.phase_spread` controls the phase difference around the ring.
+phases; the case setup in `main.cpp` controls the phase difference around the ring.
 Its guide explains both cases, the inferred hinges, motion/flow settings, and
 asset install.
 This example is currently implemented only for Interactive.

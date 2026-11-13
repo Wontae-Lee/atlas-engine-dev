@@ -28,6 +28,14 @@ namespace {
 using Json = nlohmann::json;
 using Vec3 = std::array<float, 3>;
 
+constexpr float closing_angle_degrees = 20.0f;
+constexpr float period_seconds = 0.02f;
+constexpr bool smooth_motion = true;
+constexpr float display_seconds_per_cycle = 5.0f;
+constexpr float hinge_radius = 0.25f;
+constexpr float hinge_height = 0.05f;
+constexpr float staggered_phase_span = 0.25f;
+
 struct Options {
     std::size_t steps = 0;
     int simulation_case = 1;
@@ -121,18 +129,12 @@ mesh_geometry(const std::filesystem::path& path, const Vec3& pivot) {
 
 atlas::interactive::SimulationConfig
 simulation(const Json& config, const std::filesystem::path& directory, const float phase_spread) {
-    Json scene = config.at("simulation");
-    const auto& motion = config.at("motion");
-    const float amplitude = motion.at("closing_angle_degrees").get<float>() * atlas::pi / 180.0f;
-    const float period = motion.at("period_seconds").get<float>();
-    const Json smooth = motion.value("smooth", Json(true));
+    Json scene = config;
+    const float amplitude = closing_angle_degrees * atlas::pi / 180.0f;
+    const float period = period_seconds;
+    const bool smooth = smooth_motion;
     auto& colliders = scene["colliders"] = Json::array();
     colliders.push_back({ { "unit", { { "geometry", mesh_geometry(directory / "assets" / "support.obj", { 0, 0, 0 }) } } } });
-    const float hinge_radius = motion.at("hinge_radius").get<float>();
-    const float hinge_height = motion.at("hinge_height").get<float>();
-    if (!std::isfinite(hinge_radius) || hinge_radius <= 0.0f || !std::isfinite(hinge_height)) {
-        throw std::invalid_argument("hinge_radius must be finite and positive; hinge_height must be finite");
-    }
     for (int wing = 1; wing <= 12; ++wing) {
         const float azimuth = (wing - 1) * atlas::pi / 6.0f;
         const float sine = std::sin(azimuth);
@@ -183,21 +185,13 @@ main(int argc, char** argv) {
         std::ifstream input(directory / "config.json");
         if (!input) throw std::runtime_error("Cannot read intake config.json");
         const Json config = Json::parse(input);
-        const float display_period = config.at("motion").at("display_seconds_per_cycle").get<float>();
-        if (!(display_period > 0.0f) || !std::isfinite(display_period)) {
-            throw std::invalid_argument("display_seconds_per_cycle must be finite and positive");
-        }
-        const float phase_spread = run.simulation_case == 2
-                                       ? config.at("motion").value("phase_spread", 0.25f)
-                                       : 0.0f;
-        if (!std::isfinite(phase_spread) || phase_spread < 0.0f || phase_spread >= 1.0f) {
-            throw std::invalid_argument("phase_spread must be finite and in [0, 1) cycles");
-        }
+        const float display_period = display_seconds_per_cycle;
+        const float phase_spread = run.simulation_case == 2 ? staggered_phase_span : 0.0f;
         auto scene = simulation(config, directory, phase_spread);
         const float dt = scene.dt;
-        const float period = config.at("motion").at("period_seconds").get<float>();
-        const float amplitude = config.at("motion").at("closing_angle_degrees").get<float>();
-        const bool smooth = config.at("motion").value("smooth", true);
+        const float period = period_seconds;
+        const float amplitude = closing_angle_degrees;
+        const bool smooth = smooth_motion;
 
         std::unique_ptr<atlas::interactive::RenderControl> rendering;
         if (!run.headless) {
