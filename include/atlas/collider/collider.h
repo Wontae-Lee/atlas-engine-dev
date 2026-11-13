@@ -83,7 +83,8 @@ public:
      * @return `*this`.
      */
     ATLAS_ALL_DEVICE Collider&
-    operator=(const Collider& other) noexcept = default;
+    operator=(const Collider& other) noexcept
+        = default;
 
     /// Trivial destructor; leaves own no heap resources requiring teardown.
     ATLAS_ALL_DEVICE

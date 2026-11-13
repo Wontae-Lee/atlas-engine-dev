@@ -17,9 +17,9 @@ namespace atlas::interactive {
  * configures reporting for an interactive client.
  */
 struct OutputConfig {
-    bool csv_enabled = false;                    ///< Enables periodic CSV statistics output.
-    std::filesystem::path output_directory = "."; ///< Directory that receives output files.
-    std::string csv_filename = "statistics.csv"; ///< Name of the statistics CSV file.
+    bool csv_enabled                       = false;            ///< Enables periodic CSV statistics output.
+    std::filesystem::path output_directory = ".";              ///< Directory that receives output files.
+    std::string csv_filename               = "statistics.csv"; ///< Name of the statistics CSV file.
 };
 
 }

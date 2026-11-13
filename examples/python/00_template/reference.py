@@ -101,10 +101,10 @@ def build_system() -> System:
     )
     # Optional Fluid states are created explicitly and remain owned by Fluid.
     for name in (
-        "temperature",
-        "translational_energy",
-        "rotational_energy",
-        "vibrational_energy",
+            "temperature",
+            "translational_energy",
+            "rotational_energy",
+            "vibrational_energy",
     ):
         fluid.set_state(name, np.zeros(2, dtype=np.float32))
 

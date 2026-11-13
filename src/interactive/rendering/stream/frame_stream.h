@@ -17,11 +17,17 @@ public:
     virtual ~FrameStream();
 
     /// Starts accepting frames.
-    virtual void start() = 0;
+    virtual void
+    start()
+        = 0;
     /// Stops accepting frames and releases stream resources.
-    virtual void stop() = 0;
+    virtual void
+    stop()
+        = 0;
     /// Sends or encodes the current framebuffer contents.
-    virtual void send(const opengl::Framebuffer& framebuffer) = 0;
+    virtual void
+    send(const opengl::Framebuffer& framebuffer)
+        = 0;
 };
 
 }

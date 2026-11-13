@@ -97,7 +97,7 @@ Camera::set_clip(const float near_clip, const float far_clip) {
         throw std::invalid_argument("Camera clip planes are invalid.");
     }
     _near_clip = near_clip;
-    _far_clip = far_clip;
+    _far_clip  = far_clip;
 }
 
 const glm::vec3&
@@ -117,13 +117,13 @@ Camera::field_of_view() const noexcept {
 
 void
 Camera::orbit(const float yaw, const float pitch) {
-    glm::vec3 offset = _position - _target;
+    glm::vec3 offset   = _position - _target;
     const glm::vec3 up = glm::normalize(_up);
-    offset = glm::vec3(glm::rotate(glm::mat4(1.0f), yaw, up) * glm::vec4(offset, 0.0f));
+    offset             = glm::vec3(glm::rotate(glm::mat4(1.0f), yaw, up) * glm::vec4(offset, 0.0f));
 
-    const glm::vec3 direction = glm::normalize(-offset);
+    const glm::vec3 direction  = glm::normalize(-offset);
     const glm::vec3 pitch_axis = glm::normalize(glm::cross(up, direction));
-    const glm::vec3 pitched = glm::vec3(
+    const glm::vec3 pitched    = glm::vec3(
         glm::rotate(glm::mat4(1.0f), pitch, pitch_axis) * glm::vec4(offset, 0.0f));
     // Reject pitches at the pole to keep the view basis well-defined.
     if (std::abs(glm::dot(glm::normalize(-pitched), up)) < 0.9999f) offset = pitched;
@@ -133,10 +133,12 @@ Camera::orbit(const float yaw, const float pitch) {
 
 void
 Camera::zoom(const float exponent) {
-    const glm::vec3 offset = _position - _target;
-    const float distance = glm::length(offset);
+    const glm::vec3 offset    = _position - _target;
+    const float distance      = glm::length(offset);
     const float next_distance = std::clamp(
-        distance * std::exp(exponent), _minimum_distance, _maximum_distance);
+        distance * std::exp(exponent),
+        _minimum_distance,
+        _maximum_distance);
     _position = _target + offset * (next_distance / distance);
 }
 
@@ -146,31 +148,31 @@ Camera::set_axis_view(const int index) {
     switch (index) {
     case 0:
         _position = _target + glm::vec3(0.0f, 0.0f, distance);
-        _up = { 0.0f, 1.0f, 0.0f };
+        _up       = { 0.0f, 1.0f, 0.0f };
         break;
     case 1:
         _position = _target + glm::vec3(0.0f, 0.0f, -distance);
-        _up = { 0.0f, 1.0f, 0.0f };
+        _up       = { 0.0f, 1.0f, 0.0f };
         break;
     case 2:
         _position = _target + glm::vec3(0.0f, distance, 0.0f);
-        _up = { 0.0f, 0.0f, -1.0f };
+        _up       = { 0.0f, 0.0f, -1.0f };
         break;
     case 3:
         _position = _target + glm::vec3(0.0f, -distance, 0.0f);
-        _up = { 0.0f, 0.0f, 1.0f };
+        _up       = { 0.0f, 0.0f, 1.0f };
         break;
     case 4:
         _position = _target + glm::vec3(-distance, 0.0f, 0.0f);
-        _up = { 0.0f, 1.0f, 0.0f };
+        _up       = { 0.0f, 1.0f, 0.0f };
         break;
     case 5:
         _position = _target + glm::vec3(distance, 0.0f, 0.0f);
-        _up = { 0.0f, 1.0f, 0.0f };
+        _up       = { 0.0f, 1.0f, 0.0f };
         break;
     case 6:
         _position = _target + glm::normalize(glm::vec3(1.0f, 0.75f, 1.0f)) * distance;
-        _up = { 0.0f, 1.0f, 0.0f };
+        _up       = { 0.0f, 1.0f, 0.0f };
         break;
     default:
         break;
@@ -201,7 +203,7 @@ Camera::initialize_mouse(GLFWwindow* window) {
     if (_window == window) return;
     _window = window;
     glfwGetCursorPos(window, &_last_cursor_x, &_last_cursor_y);
-    _left_drag_active = false;
+    _left_drag_active  = false;
     _right_drag_active = false;
 }
 

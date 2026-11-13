@@ -22,10 +22,10 @@ OffscreenTarget::begin_frame() {
 }
 
 void
-OffscreenTarget::end_frame() {}
+OffscreenTarget::end_frame() { }
 
 void
-OffscreenTarget::present() {}
+OffscreenTarget::present() { }
 
 int
 OffscreenTarget::width() const noexcept {

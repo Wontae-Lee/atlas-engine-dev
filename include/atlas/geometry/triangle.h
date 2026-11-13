@@ -75,10 +75,12 @@ public:
     Triangle(Triangle&& other) noexcept      = default; ///< Trivial move.
     /// Trivial copy assignment.
     Triangle&
-    operator=(const Triangle& other) noexcept = default;
+    operator=(const Triangle& other) noexcept
+        = default;
     /// Trivial move assignment.
     Triangle&
-    operator=(Triangle&& other) noexcept = default;
+    operator=(Triangle&& other) noexcept
+        = default;
 
     ~Triangle() noexcept = default; ///< Trivial destructor.
 

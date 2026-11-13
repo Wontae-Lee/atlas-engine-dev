@@ -10,15 +10,15 @@
 namespace atlas::interactive {
 
 /// Empty CPU-backend implementation state retained for a uniform ABI.
-struct StateBridge::Impl {};
+struct StateBridge::Impl { };
 
 StateBridge::StateBridge()
-    : _impl(std::make_unique<Impl>()) {}
+    : _impl(std::make_unique<Impl>()) { }
 
 StateBridge::~StateBridge() = default;
 
 void
-StateBridge::release(opengl::Buffer&) {}
+StateBridge::release(opengl::Buffer&) { }
 
 void
 StateBridge::upload(const SimulationBufferView& source,

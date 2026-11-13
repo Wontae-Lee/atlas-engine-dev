@@ -19,7 +19,7 @@ RenderManager::RenderManager() = default;
 
 /** @brief Retains native application camera framing for subsequent windows. */
 RenderManager::RenderManager(const Camera& initial_camera)
-    : _initial_camera(initial_camera) {}
+    : _initial_camera(initial_camera) { }
 
 RenderManager::~RenderManager() {
     close();
@@ -30,15 +30,15 @@ RenderManager::open(const std::uint64_t session_id) {
     if (_session_id == session_id) return;
     if (_session_id) throw std::logic_error("renderer is already open for another session");
 
-    auto window = std::make_unique<WindowTarget>(1280, 720, "Atlas Interactive");
-    auto renderer = std::make_unique<Renderer>(std::make_unique<RawStateProvider>());
+    auto window        = std::make_unique<WindowTarget>(1280, 720, "Atlas Interactive");
+    auto renderer      = std::make_unique<Renderer>(std::make_unique<RawStateProvider>());
     renderer->camera() = _initial_camera;
     renderer->add_layer(std::make_unique<GeometryLayer>());
     renderer->add_layer(std::make_unique<ParticleLayer>(6.0f));
     renderer->initialize(*window);
 
-    _window = std::move(window);
-    _renderer = std::move(renderer);
+    _window     = std::move(window);
+    _renderer   = std::move(renderer);
     _session_id = session_id;
     _next_frame = std::chrono::steady_clock::now();
 }

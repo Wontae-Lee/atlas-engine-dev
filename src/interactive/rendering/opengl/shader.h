@@ -19,19 +19,27 @@ public:
     Shader(Shader&& other) noexcept;
     ~Shader();
 
-    Shader& operator=(const Shader&) = delete;
-    Shader& operator=(Shader&& other) noexcept;
+    Shader&
+    operator=(const Shader&)
+        = delete;
+    Shader&
+    operator=(Shader&& other) noexcept;
 
     /// Makes this program current.
-    void use() const;
+    void
+    use() const;
     /// Returns a uniform location, or -1 when it is inactive.
-    int uniform_location(const char* name) const;
+    int
+    uniform_location(const char* name) const;
     /// Returns the OpenGL program object name.
-    unsigned int id() const noexcept;
+    unsigned int
+    id() const noexcept;
 
 private:
-    static unsigned int compile(unsigned int type, std::string_view source);
-    void destroy() noexcept;
+    static unsigned int
+    compile(unsigned int type, std::string_view source);
+    void
+    destroy() noexcept;
 
     unsigned int _id = 0; ///< Linked OpenGL program object name.
 };

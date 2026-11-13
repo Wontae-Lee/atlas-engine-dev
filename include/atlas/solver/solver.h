@@ -14,7 +14,7 @@ namespace atlas {
  *
  * A Solver advances one physical interaction (currently only DSMC collisions, see
  * @ref DsmcSolver) over the fluid, in place, once per System step. Unlike the engine's
- * @c DeviceVariant / @c HostVariant leaves, solvers are heavyweight, own device scratch
+ * @c DeviceVariant / @c HostVariant leaves, solvers are heavyweight, own device scrat
  * buffers, and are dispatched dynamically: the System holds a list of
  * @ref SolverHostPtr and calls @ref solve on each, so classic virtual dispatch is used
  * rather than a tagged union. @ref type lets a caller recover the concrete kind without
@@ -45,7 +45,8 @@ public:
 
     /** @brief Defaulted move assignment; @c noexcept counterpart to the move constructor. */
     Solver&
-    operator=(Solver&&) noexcept = default;
+    operator=(Solver&&) noexcept
+        = default;
 
     /**
      * @brief Reports the concrete solver kind behind this base pointer.
@@ -56,7 +57,8 @@ public:
      * @return The @ref SolverType enumerator naming this solver's concrete class.
      */
     ATLAS_NODISCARD ATLAS_HOST virtual SolverType
-    type() const noexcept = 0;
+    type() const noexcept
+        = 0;
 
     /**
      * @brief Advances this solver's interaction over the fluid by one sub-step, in place.

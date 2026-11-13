@@ -20,26 +20,26 @@ namespace atlas::interactive {
 
 namespace {
 
-/// Creates a byte view over the live prefix of a mandatory Fluid state.
-template <typename State, typename Value>
-SimulationBufferView
-required_buffer(const Fluid& fluid, const std::size_t count) {
-    const State* state = fluid.state<State>();
-    if (state == nullptr) throw std::logic_error("Fluid is missing a required render state.");
-    return { atlas::raw_pointer_cast(state->data().data()), count * sizeof(Value) };
-}
+    /// Creates a byte view over the live prefix of a mandatory Fluid state.
+    template <typename State, typename Value>
+    SimulationBufferView
+    required_buffer(const Fluid& fluid, const std::size_t count) {
+        const State* state = fluid.state<State>();
+        if (state == nullptr) throw std::logic_error("Fluid is missing a required render state.");
+        return { atlas::raw_pointer_cast(state->data().data()), count * sizeof(Value) };
+    }
 
-/// Creates a byte view only when an optional Fluid state exists.
-template <typename State, typename Value>
-std::optional<SimulationBufferView>
-optional_buffer(const Fluid& fluid, const std::size_t count) {
-    const State* state = fluid.state<State>();
-    if (state == nullptr) return std::nullopt;
-    return SimulationBufferView {
-        atlas::raw_pointer_cast(state->data().data()),
-        count * sizeof(Value)
-    };
-}
+    /// Creates a byte view only when an optional Fluid state exists.
+    template <typename State, typename Value>
+    std::optional<SimulationBufferView>
+    optional_buffer(const Fluid& fluid, const std::size_t count) {
+        const State* state = fluid.state<State>();
+        if (state == nullptr) return std::nullopt;
+        return SimulationBufferView {
+            atlas::raw_pointer_cast(state->data().data()),
+            count * sizeof(Value)
+        };
+    }
 
 }
 
@@ -64,12 +64,12 @@ Session::running() const noexcept {
 SessionStatus
 Session::status() const {
     SessionStatus result;
-    result.state = _state;
-    result.step = _system->step();
+    result.state           = _state;
+    result.step            = _system->step();
     result.simulation_time = static_cast<double>(_system->step()) * _system->dt();
-    result.particle_count = _system->fluid()->particle_count();
-    result.source_count = _system->source_count();
-    result.sink_count = _system->sink_count();
+    result.particle_count  = _system->fluid()->particle_count();
+    result.source_count    = _system->source_count();
+    result.sink_count      = _system->sink_count();
     return result;
 }
 
@@ -82,7 +82,7 @@ SimulationRenderView
 Session::render_view() const {
     if (!_system || !_system->fluid()) throw std::logic_error("Session has no renderable System.");
 
-    const Fluid& fluid = *_system->fluid();
+    const Fluid& fluid      = *_system->fluid();
     const std::size_t count = fluid.particle_count();
     return {
         count,
@@ -99,15 +99,15 @@ Session::render_view() const {
 SimulationSceneView
 Session::scene_view() const {
     SimulationSceneView result;
-    result.particles = render_view();
+    result.particles    = render_view();
     result.lower_corner = _system->universe()->lower_corner();
     result.upper_corner = _system->universe()->upper_corner();
 
     // Configuration owns geometry descriptions; System exposes their current transforms.
     const SimulationConfig& config = _factory.config();
-    const auto source_syncs = _system->source_syncs();
-    const auto collider_syncs = _system->collider_syncs();
-    const auto sink_syncs = _system->sink_syncs();
+    const auto source_syncs        = _system->source_syncs();
+    const auto collider_syncs      = _system->collider_syncs();
+    const auto sink_syncs          = _system->sink_syncs();
     if (source_syncs.size() != config.emitters.size()
         || collider_syncs.size() != config.colliders.size()
         || sink_syncs.size() != config.sinks.size()) {
@@ -198,9 +198,9 @@ Session::simulation_config() const noexcept {
 SimulationSample
 Session::collect_sample() const {
     SimulationSample sample;
-    sample.step = _system->step();
+    sample.step            = _system->step();
     sample.simulation_time = static_cast<double>(_system->step()) * _system->dt();
-    sample.particle_count = _system->fluid()->particle_count();
+    sample.particle_count  = _system->fluid()->particle_count();
 
     const auto& spawned = _system->source_spawned_last_step();
     sample.source_spawned.reserve(spawned.size());

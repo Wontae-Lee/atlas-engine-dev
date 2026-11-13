@@ -8,7 +8,8 @@
     "statistical_weight": 1.0,
     "materials": [
       {
-        "type": "molecule", // molecule | atom | ion | neutron | solid
+        "type": "molecule",
+        // molecule | atom | ion | neutron | solid
         "mass": 4.65e-26,
         "translational_energy": 0.0,
         "rotational_energy": 0.0,
@@ -19,17 +20,62 @@
         "scattering_parameter": 1.0
       }
     ],
-    "position": [[-0.5, -0.1, 0.0], [-0.5, 0.1, 0.0]],
-    "velocity": [[10.0, 0.0, 0.0], [10.0, 0.0, 0.0]],
-    "species": [0, 0],
-    "temperature": [300.0, 300.0],
-    "translational_energy": [0.0, 0.0],
-    "rotational_energy": [0.0, 0.0],
-    "vibrational_energy": [0.0, 0.0]
+    "position": [
+      [
+        -0.5,
+        -0.1,
+        0.0
+      ],
+      [
+        -0.5,
+        0.1,
+        0.0
+      ]
+    ],
+    "velocity": [
+      [
+        10.0,
+        0.0,
+        0.0
+      ],
+      [
+        10.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "species": [
+      0,
+      0
+    ],
+    "temperature": [
+      300.0,
+      300.0
+    ],
+    "translational_energy": [
+      0.0,
+      0.0
+    ],
+    "rotational_energy": [
+      0.0,
+      0.0
+    ],
+    "vibrational_energy": [
+      0.0,
+      0.0
+    ]
   },
   "universe": {
-    "lower_corner": [-1.0, -1.0, -1.0],
-    "upper_corner": [1.0, 1.0, 1.0],
+    "lower_corner": [
+      -1.0,
+      -1.0,
+      -1.0
+    ],
+    "upper_corner": [
+      1.0,
+      1.0,
+      1.0
+    ],
     // Use "geometry" instead of corners to derive the domain from a bound:
     // "geometry": {"type": "box", "lower_corner": [-1,-1,-1], "upper_corner": [1,1,1]},
     "cell_size": 0.25
@@ -43,7 +89,8 @@
   },
   "solvers": [
     {
-      "kernel": "variable_hard_sphere", // hard_sphere | variable_hard_sphere | variable_soft_sphere
+      "kernel": "variable_hard_sphere",
+      // hard_sphere | variable_hard_sphere | variable_soft_sphere
       "majorant_sample_pairs": 8,
       "majorant_exhaustive_limit": 5
     }
@@ -51,31 +98,80 @@
   "emitters": [
     {
       "source": {
-        "type": "volume", // volume | surface
+        "type": "volume",
+        // volume | surface
         "unit": {
-          "geometry": {"type": "box", "lower_corner": [-0.9,-0.2,-0.2], "upper_corner": [-0.8,0.2,0.2]},
-          "translation": [0.0, 0.0, 0.0],
-          "orientation": [1.0, 0.0, 0.0, 0.0],
-          "velocity": [0.0, 0.0, 0.0],
-          "acceleration": [0.0, 0.0, 0.0],
-          "angular_velocity": [0.0, 0.0, 0.0],
-          "angular_acceleration": [0.0, 0.0, 0.0]
+          "geometry": {
+            "type": "box",
+            "lower_corner": [
+              -0.9,
+              -0.2,
+              -0.2
+            ],
+            "upper_corner": [
+              -0.8,
+              0.2,
+              0.2
+            ]
+          },
+          "translation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "orientation": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "acceleration": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angular_velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "angular_acceleration": [
+            0.0,
+            0.0,
+            0.0
+          ]
         },
         "spacing": 0.1,
         "tolerance": 0.0
       },
       "generator": {
-        "type": "maxwell_boltzmann", // uniform | jittering | maxwell_sigma | maxwell_boltzmann
-        "species_ratios": [1.0],
-        "species_numbers": [0.0],
-        "species_mass": [4.65e-26],
+        "type": "maxwell_boltzmann",
+        // uniform | jittering | maxwell_sigma | maxwell_boltzmann
+        "species_ratios": [
+          1.0
+        ],
+        "species_numbers": [
+          0.0
+        ],
+        "species_mass": [
+          4.65e-26
+        ],
         "temperature": 300.0,
         "min_value": -1.0,
         "max_value": 1.0,
         "base_value": 0.0,
         "jitter_radius": 0.1,
         "sigma": 1.0,
-        "bulk_velocity": [10.0, 0.0, 0.0],
+        "bulk_velocity": [
+          10.0,
+          0.0,
+          0.0
+        ],
         "seed": 1
       }
     }
@@ -83,16 +179,49 @@
   "colliders": [
     {
       "unit": {
-        "geometry": {"type": "cylinder", "center": [0,0,0], "radius": 0.2, "height": 1.0, "open": true},
-        "angular_oscillation": {"axis": [1,0,0], "amplitude": 0.34906585, "period": 4.0}
+        "geometry": {
+          "type": "cylinder",
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "radius": 0.2,
+          "height": 1.0,
+          "open": true
+        },
+        "angular_oscillation": {
+          "axis": [
+            1,
+            0,
+            0
+          ],
+          "amplitude": 0.34906585,
+          "period": 4.0
+        }
       },
       "momentum_accommodation_coefficient": 1.0,
       "restitution": 1.0,
-      "diffuse_sampling": "uniform" // uniform | cosine_weighted
+      "diffuse_sampling": "uniform"
+      // uniform | cosine_weighted
     }
   ],
   "sinks": [
-    {"type": "volume", "unit": {"geometry": {"type": "sphere", "center": [0.8,0,0], "radius": 0.1}}, "tolerance": 0.0}
+    {
+      "type": "volume",
+      "unit": {
+        "geometry": {
+          "type": "sphere",
+          "center": [
+            0.8,
+            0,
+            0
+          ],
+          "radius": 0.1
+        }
+      },
+      "tolerance": 0.0
+    }
     // Surface and swept alternatives:
     // {"type": "surface", "unit": {"geometry": {"type": "plane", "normal": [1,0,0], "offset": 0.9}}},
     // {"type": "tracing", "unit": {"geometry": {"type": "square", "center": [0.9,0,0], "normal": [1,0,0], "side_length": 1.0}}}

@@ -122,7 +122,8 @@ public:
      * @brief Copy assignment; a plain element-wise copy.
      */
     Float3x3&
-    operator=(const Float3x3&) noexcept = default;
+    operator=(const Float3x3&) noexcept
+        = default;
 
     /**
      * @brief The row count.

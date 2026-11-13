@@ -90,7 +90,8 @@ public:
 
     /** @brief Move assignment transfers the pending buffer and metadata. */
     Logger&
-    operator=(Logger&&) noexcept = default;
+    operator=(Logger&&) noexcept
+        = default;
 
     /**
      * @brief Append one value to the pending message.

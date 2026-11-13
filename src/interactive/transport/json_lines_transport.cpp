@@ -16,7 +16,7 @@ namespace atlas::interactive {
 
 JsonLinesTransport::JsonLinesTransport(std::istream& input, std::ostream& output) noexcept
     : _input(&input)
-    , _output(&output) {}
+    , _output(&output) { }
 
 bool
 JsonLinesTransport::receive(Request& request, Response& error) {
@@ -29,9 +29,9 @@ JsonLinesTransport::receive(Request& request, Response& error) {
             return true;
         } catch (const std::exception& exception) {
             // A malformed line produces an error response without terminating the channel.
-            error = {};
+            error            = {};
             error.request_id = request_id;
-            error.error = exception.what();
+            error.error      = exception.what();
             send(error);
         }
     }

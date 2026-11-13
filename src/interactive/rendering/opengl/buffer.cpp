@@ -14,7 +14,7 @@ namespace atlas::interactive::opengl {
 Buffer::Buffer(Buffer&& other) noexcept
     : _id(std::exchange(other._id, 0))
     , _size(std::exchange(other._size, 0))
-    , _capacity(std::exchange(other._capacity, 0)) {}
+    , _capacity(std::exchange(other._capacity, 0)) { }
 
 Buffer::~Buffer() {
     destroy();
@@ -24,8 +24,8 @@ Buffer&
 Buffer::operator=(Buffer&& other) noexcept {
     if (this == &other) return *this;
     destroy();
-    _id = std::exchange(other._id, 0);
-    _size = std::exchange(other._size, 0);
+    _id       = std::exchange(other._id, 0);
+    _size     = std::exchange(other._size, 0);
     _capacity = std::exchange(other._capacity, 0);
     return *this;
 }
@@ -87,8 +87,8 @@ Buffer::create() {
 void
 Buffer::destroy() noexcept {
     if (_id != 0) glDeleteBuffers(1, &_id);
-    _id = 0;
-    _size = 0;
+    _id       = 0;
+    _size     = 0;
     _capacity = 0;
 }
 

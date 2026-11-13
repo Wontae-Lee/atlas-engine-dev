@@ -115,13 +115,15 @@ public:
      * @brief Copy assignment.
      */
     Quaternion&
-    operator=(const Quaternion&) noexcept = default;
+    operator=(const Quaternion&) noexcept
+        = default;
 
     /**
      * @brief Move assignment (identical to copy for this trivial type).
      */
     Quaternion&
-    operator=(Quaternion&&) noexcept = default;
+    operator=(Quaternion&&) noexcept
+        = default;
 
     /**
      * @brief Build a rotation quaternion from an axis and angle.

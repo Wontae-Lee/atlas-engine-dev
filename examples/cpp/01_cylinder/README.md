@@ -18,14 +18,14 @@ produce an error. The executable name identifies the simulation.
 
 ## Model and editing points
 
-| Setting in `run()` | Default |
-|---|---|
-| Domain lower / upper (m) | `(-1, -0.75, -0.5)` / `(1.5, 0.75, 0.5)` |
-| Cell size / timestep | `0.1` m / `5e-5` s |
-| Freestream velocity / temperature | `(500, 0, 0)` m/s / `300` K |
-| Cylinder radius / height | `0.2` m / `1.0` m, open ends |
-| Particle capacity / initial count | `20000` / `0` |
-| Statistical weight | `3.236e16` |
+| Setting in `run()`                | Default                                  |
+|-----------------------------------|------------------------------------------|
+| Domain lower / upper (m)          | `(-1, -0.75, -0.5)` / `(1.5, 0.75, 0.5)` |
+| Cell size / timestep              | `0.1` m / `5e-5` s                       |
+| Freestream velocity / temperature | `(500, 0, 0)` m/s / `300` K              |
+| Cylinder radius / height          | `0.2` m / `1.0` m, open ends             |
+| Particle capacity / initial count | `20000` / `0`                            |
+| Statistical weight                | `3.236e16`                               |
 
 The volume source emits from an upstream box using a Maxwell–Boltzmann
 velocity generator. A DSMC solver handles particle collisions, an isothermal

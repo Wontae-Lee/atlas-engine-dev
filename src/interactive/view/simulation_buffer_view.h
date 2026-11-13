@@ -16,8 +16,8 @@ namespace atlas::interactive {
  * backend and remains valid only while the owning simulation buffer is stable.
  */
 struct SimulationBufferView final {
-    const void* data = nullptr; ///< Backend address of the first byte.
-    std::size_t bytes = 0; ///< Number of live bytes available from data.
+    const void* data  = nullptr; ///< Backend address of the first byte.
+    std::size_t bytes = 0;       ///< Number of live bytes available from data.
 };
 
 }

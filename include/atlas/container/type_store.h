@@ -69,7 +69,8 @@ public:
 
     /// Move-assigns by transferring ownership of the entire map.
     TypeStore&
-    operator=(TypeStore&&) noexcept = default;
+    operator=(TypeStore&&) noexcept
+        = default;
 
     /**
      * @brief Reserves space for at least @p capacity distinct value types.

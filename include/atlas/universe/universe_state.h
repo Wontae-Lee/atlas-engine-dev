@@ -44,14 +44,16 @@ public:
 
     /// Move assignment transfers the device buffer; defaulted.
     UniverseState&
-    operator=(UniverseState&&) noexcept = default;
+    operator=(UniverseState&&) noexcept
+        = default;
 
     /**
      * @brief Number of stored elements, i.e. the cell count the buffer was sized to.
      * @return Length of the underlying device buffer.
      */
     ATLAS_NODISCARD ATLAS_HOST virtual std::size_t
-    size() const noexcept = 0;
+    size() const noexcept
+        = 0;
 
     /**
      * @brief Zero every element of the field for a fresh accumulation pass.

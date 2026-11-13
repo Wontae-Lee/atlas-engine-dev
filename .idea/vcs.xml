@@ -9,6 +9,7 @@
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/googlebenchmark" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/googletest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/json" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/nanobind" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/nanobind/ext/robin_map" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/protobuf" vcs="Git" />

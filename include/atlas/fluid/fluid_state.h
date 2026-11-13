@@ -51,7 +51,8 @@ public:
 
     /** @brief Move-assigns, transferring ownership of the device buffer. */
     FluidState&
-    operator=(FluidState&&) noexcept = default;
+    operator=(FluidState&&) noexcept
+        = default;
 
     /**
      * @brief Returns the capacity of the underlying buffer, in elements.
@@ -62,7 +63,8 @@ public:
      * @return Number of elements the buffer can hold.
      */
     ATLAS_NODISCARD ATLAS_HOST virtual std::size_t
-    size() const noexcept = 0;
+    size() const noexcept
+        = 0;
 
     /**
      * @brief Gathers the surviving entries to the front of the buffer, in place.

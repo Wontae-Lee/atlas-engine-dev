@@ -60,10 +60,12 @@ public:
     Square(Square&& other) noexcept      = default; ///< Trivial move.
     /// Trivial copy assignment.
     Square&
-    operator=(const Square& other) noexcept = default;
+    operator=(const Square& other) noexcept
+        = default;
     /// Trivial move assignment.
     Square&
-    operator=(Square&& other) noexcept = default;
+    operator=(Square&& other) noexcept
+        = default;
 
     ~Square() noexcept = default; ///< Trivial destructor.
 

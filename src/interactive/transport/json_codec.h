@@ -18,11 +18,14 @@ namespace atlas::interactive {
 class JsonCodec final {
 public:
     /// Decodes one complete simulation configuration document.
-    static SimulationConfig decode_simulation(std::string_view text);
+    static SimulationConfig
+    decode_simulation(std::string_view text);
     /// Decodes one protocol request document.
-    static Request decode_request(std::string_view text, std::string* request_id = nullptr);
+    static Request
+    decode_request(std::string_view text, std::string* request_id = nullptr);
     /// Encodes one protocol response document.
-    static std::string encode_response(const Response& response);
+    static std::string
+    encode_response(const Response& response);
 };
 
 }

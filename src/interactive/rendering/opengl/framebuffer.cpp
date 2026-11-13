@@ -40,7 +40,7 @@ Framebuffer::resize(const int width, const int height) {
     unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    _width = width;
+    _width  = width;
     _height = height;
 }
 
@@ -87,11 +87,11 @@ Framebuffer::destroy() noexcept {
     if (_depth_buffer != 0) glDeleteRenderbuffers(1, &_depth_buffer);
     if (_color_texture != 0) glDeleteTextures(1, &_color_texture);
     if (_id != 0) glDeleteFramebuffers(1, &_id);
-    _id = 0;
+    _id            = 0;
     _color_texture = 0;
-    _depth_buffer = 0;
-    _width = 0;
-    _height = 0;
+    _depth_buffer  = 0;
+    _width         = 0;
+    _height        = 0;
 }
 
 }

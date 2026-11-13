@@ -144,12 +144,12 @@ Unit::Builder::validate() const {
         if (_angular_velocity.has_value() || _angular_acceleration.has_value()) {
             throw std::runtime_error("Unit::Builder: angular oscillation cannot be combined with angular velocity or acceleration.");
         }
-        const float amplitude = std::abs(*_angular_oscillation_amplitude);
-        const float period = *_angular_oscillation_period;
-        const float maximum_speed = (amplitude / period) * (*_angular_oscillation_smooth ? atlas::pi : 2.0f);
+        const float amplitude            = std::abs(*_angular_oscillation_amplitude);
+        const float period               = *_angular_oscillation_period;
+        const float maximum_speed        = (amplitude / period) * (*_angular_oscillation_smooth ? atlas::pi : 2.0f);
         const float maximum_acceleration = *_angular_oscillation_smooth
-                                               ? (maximum_speed / period) * (2.0f * atlas::pi)
-                                               : 0.0f;
+            ? (maximum_speed / period) * (2.0f * atlas::pi)
+            : 0.0f;
         if (!atlas::isfinite(maximum_speed) || !atlas::isfinite(maximum_acceleration)) {
             throw std::runtime_error("Unit::Builder: angular oscillation derivatives must fit the finite float range.");
         }

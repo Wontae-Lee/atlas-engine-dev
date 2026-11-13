@@ -57,10 +57,12 @@ public:
     Box(Box&& other) noexcept      = default; ///< Trivial move.
     /// Trivial copy assignment.
     Box&
-    operator=(const Box& other) noexcept = default;
+    operator=(const Box& other) noexcept
+        = default;
     /// Trivial move assignment.
     Box&
-    operator=(Box&& other) noexcept = default;
+    operator=(Box&& other) noexcept
+        = default;
 
     ~Box() noexcept = default; ///< Trivial destructor.
 

@@ -70,10 +70,12 @@ public:
     Plane(Plane&& other) noexcept      = default; ///< Trivial move.
     /// Trivial copy assignment.
     Plane&
-    operator=(const Plane& other) noexcept = default;
+    operator=(const Plane& other) noexcept
+        = default;
     /// Trivial move assignment.
     Plane&
-    operator=(Plane&& other) noexcept = default;
+    operator=(Plane&& other) noexcept
+        = default;
 
     ~Plane() noexcept = default; ///< Trivial destructor.
 

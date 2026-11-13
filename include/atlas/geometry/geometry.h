@@ -155,7 +155,8 @@ struct Geometry {
      * @return Reference to `*this`.
      */
     ATLAS_ALL_DEVICE Geometry&
-    operator=(const Geometry& other) noexcept = default;
+    operator=(const Geometry& other) noexcept
+        = default;
 
     /**
      * @brief Trivial destructor; leaves are trivially destructible so it is a no-op.

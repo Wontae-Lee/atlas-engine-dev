@@ -186,7 +186,7 @@ MaxwellBoltzmannGenerator::Builder::build() {
     // non-positive total is left as-is (validate() permits zero weights); the draw
     // then falls through to the last species, matching the documented clamp.
     HostBuffer<float> species_ratios = _species_ratios;
-    float total = 0.0f;
+    float total                      = 0.0f;
     for (const float weight : species_ratios) {
         total += weight > 0.0f ? weight : 0.0f;
     }

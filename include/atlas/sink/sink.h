@@ -81,7 +81,8 @@ public:
 
     /// Trivial copy assignment: bitwise-copies the tag and active leaf.
     ATLAS_ALL_DEVICE Sink&
-    operator=(const Sink& other) noexcept = default;
+    operator=(const Sink& other) noexcept
+        = default;
 
     /// Trivial destructor; leaves own no resources requiring cleanup.
     ATLAS_ALL_DEVICE

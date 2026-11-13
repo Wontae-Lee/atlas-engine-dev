@@ -36,7 +36,7 @@ configuration_path(const char* executable) {
     if (std::filesystem::exists("/proc/self/exe")) {
         executable_path = std::filesystem::read_symlink("/proc/self/exe");
     }
-    const auto directory = executable_path.parent_path();
+    const auto directory                     = executable_path.parent_path();
     const std::filesystem::path candidates[] = {
         directory / "config.json",
         directory / ".." / "examples" / "interactive" / ATLAS_INTERACTIVE_EXAMPLE_NAME / "config.json"
@@ -71,20 +71,20 @@ int
 main(int argc, char** argv) {
     try {
         const auto steps = maximum_steps(argc, argv);
-        auto simulation = atlas::interactive::JsonCodec::decode_simulation(
+        auto simulation  = atlas::interactive::JsonCodec::decode_simulation(
             read_file(configuration_path(argv[0])));
 
         atlas::interactive::InteractiveApplication app(
             std::make_unique<atlas::interactive::RenderManager>());
         atlas::interactive::Request create;
-        create.command = atlas::interactive::Command::create;
-        create.simulation = std::move(simulation);
+        create.command     = atlas::interactive::Command::create;
+        create.simulation  = std::move(simulation);
         const auto created = handle(app, create);
         if (!created.session_id) throw std::logic_error("create returned no session_id");
 
         atlas::interactive::Request command;
         command.session_id = *created.session_id;
-        command.command = atlas::interactive::Command::render_open;
+        command.command    = atlas::interactive::Command::render_open;
         handle(app, command);
         command.command = atlas::interactive::Command::start;
         handle(app, command);
@@ -92,7 +92,7 @@ main(int argc, char** argv) {
         while (app.rendering_active()) {
             app.update();
             if (steps > 0) {
-                command.command = atlas::interactive::Command::status;
+                command.command   = atlas::interactive::Command::status;
                 const auto status = handle(app, command);
                 if (status.status && status.status->step >= steps) break;
             }
@@ -102,14 +102,15 @@ main(int argc, char** argv) {
         handle(app, command);
         command.command = atlas::interactive::Command::render_close;
         handle(app, command);
-        command.command = atlas::interactive::Command::step;
+        command.command    = atlas::interactive::Command::step;
         command.step_count = 1;
         handle(app, command);
-        command.command = atlas::interactive::Command::status;
+        command.command         = atlas::interactive::Command::status;
         const auto final_status = handle(app, command);
         if (final_status.status) {
             std::printf(ATLAS_INTERACTIVE_EXAMPLE_NAME ": completed steps=%zu particles=%zu\n",
-                        final_status.status->step, final_status.status->particle_count);
+                        final_status.status->step,
+                        final_status.status->particle_count);
         }
         command.command = atlas::interactive::Command::close;
         handle(app, command);

@@ -7,11 +7,11 @@ stepping and reporting (`run`), and command-line handling (`main`).
 
 ## Files and build target
 
-| File | Purpose |
-|---|---|
-| `main.cu` | Runnable starting point; edit its `build_system()` to define your simulation |
-| `CMakeLists.txt` | Declares `atlas_example_cpp_00_template` and attaches it to `atlas_examples_cpp` |
-| `reference.h` | Broader API construction examples for materials, geometries, optional states, generators, boundaries, solvers, and codecs |
+| File             | Purpose                                                                                                                   |
+|------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `main.cu`        | Runnable starting point; edit its `build_system()` to define your simulation                                              |
+| `CMakeLists.txt` | Declares `atlas_example_cpp_00_template` and attaches it to `atlas_examples_cpp`                                          |
+| `reference.h`    | Broader API construction examples for materials, geometries, optional states, generators, boundaries, solvers, and codecs |
 
 `reference.h` is included so the compiler checks the API examples, but its
 `atlas_examples::template_case::build_system()` is not called. It combines

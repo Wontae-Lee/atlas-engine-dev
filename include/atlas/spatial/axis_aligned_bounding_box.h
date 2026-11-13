@@ -81,14 +81,16 @@ public:
      * @brief Copy constructor (defaulted, trivial).
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
-    AABB(const AABB&) noexcept = default;
+    AABB(const AABB&) noexcept
+        = default;
 
     /**
      * @brief Copy assignment (defaulted, trivial).
      * @return Reference to this box.
      */
     AABB&
-    operator=(const AABB&) noexcept = default;
+    operator=(const AABB&) noexcept
+        = default;
 
     /**
      * @brief Total surface area of the box (the SAH cost metric).

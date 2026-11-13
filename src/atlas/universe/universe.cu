@@ -14,32 +14,34 @@ namespace atlas {
 
 namespace {
 
-/**
- * @brief Install a supplied cell column after the builder validates its length.
- * @tparam State Concrete cell-state column.
- * @tparam Value Element stored by the column.
- * @param universe Grid receiving the staged column.
- * @param values Optional host-side values.
- */
-template <typename State, typename Value>
-void initialize_state(Universe& universe, const std::optional<HostBuffer<Value>>& values) {
-    if (!values) return;
-    State& state = universe.emplace_state<State>(values->size());
-    if (!values->empty()) atlas::copy_host_to_device(&values->front(), state.data(), values->size());
-}
-
-/**
- * @brief Require an explicitly supplied cell column to cover the whole grid.
- * @tparam Value Element stored by the column.
- * @param values Optional staged values.
- * @param cell_count Required grid length.
- */
-template <typename Value>
-void validate_state(const std::optional<HostBuffer<Value>>& values, std::size_t cell_count) {
-    if (values && values->size() != cell_count) {
-        throw std::invalid_argument("Universe::Builder: initial state length must equal cell_count.");
+    /**
+     * @brief Install a supplied cell column after the builder validates its length.
+     * @tparam State Concrete cell-state column.
+     * @tparam Value Element stored by the column.
+     * @param universe Grid receiving the staged column.
+     * @param values Optional host-side values.
+     */
+    template <typename State, typename Value>
+    void
+    initialize_state(Universe& universe, const std::optional<HostBuffer<Value>>& values) {
+        if (!values) return;
+        State& state = universe.emplace_state<State>(values->size());
+        if (!values->empty()) atlas::copy_host_to_device(&values->front(), state.data(), values->size());
     }
-}
+
+    /**
+     * @brief Require an explicitly supplied cell column to cover the whole grid.
+     * @tparam Value Element stored by the column.
+     * @param values Optional staged values.
+     * @param cell_count Required grid length.
+     */
+    template <typename Value>
+    void
+    validate_state(const std::optional<HostBuffer<Value>>& values, std::size_t cell_count) {
+        if (values && values->size() != cell_count) {
+            throw std::invalid_argument("Universe::Builder: initial state length must equal cell_count.");
+        }
+    }
 
 }
 
@@ -207,10 +209,7 @@ Universe::Builder::validate() const {
         << "cell_size=" << _cell_size;
 
     atlas::check<std::invalid_argument>(
-        std::isfinite(_lower_corner.x) && std::isfinite(_lower_corner.y) &&
-        std::isfinite(_lower_corner.z) && std::isfinite(_upper_corner.x) &&
-        std::isfinite(_upper_corner.y) && std::isfinite(_upper_corner.z) &&
-        atlas::all(_upper_corner > _lower_corner))
+        std::isfinite(_lower_corner.x) && std::isfinite(_lower_corner.y) && std::isfinite(_lower_corner.z) && std::isfinite(_upper_corner.x) && std::isfinite(_upper_corner.y) && std::isfinite(_upper_corner.z) && atlas::all(_upper_corner > _lower_corner))
         << "Universe::Builder validation failed: upper_corner must be greater than lower_corner on all axes. "
         << "lower=(" << _lower_corner.x << "," << _lower_corner.y << "," << _lower_corner.z << "), "
         << "upper=(" << _upper_corner.x << "," << _upper_corner.y << "," << _upper_corner.z << ")";
@@ -223,8 +222,7 @@ Universe::Builder::validate() const {
              static_cast<double>(_upper_corner.y) - _lower_corner.y,
              static_cast<double>(_upper_corner.z) - _lower_corner.z }) {
         atlas::check<std::invalid_argument>(
-            std::isfinite(span) && span <= std::numeric_limits<float>::max() &&
-            span / _cell_size < std::numeric_limits<int>::max() - 2)
+            std::isfinite(span) && span <= std::numeric_limits<float>::max() && span / _cell_size < std::numeric_limits<int>::max() - 2)
             << "Universe::Builder validation failed: computed grid_size exceeds int range.";
     }
 
@@ -246,8 +244,7 @@ Universe::Builder::validate() const {
         << "Universe::Builder validation failed: grid_size components must be positive. "
         << "grid_size=(" << gs.x << "," << gs.y << "," << gs.z << ")";
 
-    atlas::check<std::invalid_argument>(nx <= std::numeric_limits<int>::max() / ny &&
-                                        nx * ny <= std::numeric_limits<int>::max() / nz)
+    atlas::check<std::invalid_argument>(nx <= std::numeric_limits<int>::max() / ny && nx * ny <= std::numeric_limits<int>::max() / nz)
         << "Universe::Builder validation failed: cell_count overflow/invalid.";
     const long long cells64 = nx * ny * nz;
 

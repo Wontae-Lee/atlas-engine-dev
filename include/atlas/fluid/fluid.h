@@ -89,7 +89,8 @@ public:
 
     /** @brief Move-assigns, transferring ownership of all columns and buffers. */
     Fluid&
-    operator=(Fluid&&) noexcept = default;
+    operator=(Fluid&&) noexcept
+        = default;
 
     /** @brief Returns a fresh @c Builder for fluent construction. */
     ATLAS_NODISCARD ATLAS_HOST static Builder
@@ -318,19 +319,26 @@ public:
     with_materials(MaterialDictionaryHostPtr materials) noexcept;
 
     /** @brief Stage live positions; when supplied, the length must equal particle_count. */
-    ATLAS_HOST Builder& with_position(HostBuffer<Float3> values);
+    ATLAS_HOST Builder&
+    with_position(HostBuffer<Float3> values);
     /** @brief Stage live velocities; when supplied, the length must equal particle_count. */
-    ATLAS_HOST Builder& with_velocity(HostBuffer<Float3> values);
+    ATLAS_HOST Builder&
+    with_velocity(HostBuffer<Float3> values);
     /** @brief Stage live species IDs; IDs must index the attached dictionary when present. */
-    ATLAS_HOST Builder& with_species(HostBuffer<std::size_t> values);
+    ATLAS_HOST Builder&
+    with_species(HostBuffer<std::size_t> values);
     /** @brief Stage an optional temperature column for every live particle. */
-    ATLAS_HOST Builder& with_temperature(HostBuffer<float> values);
+    ATLAS_HOST Builder&
+    with_temperature(HostBuffer<float> values);
     /** @brief Stage an optional translational-energy column for every live particle. */
-    ATLAS_HOST Builder& with_translational_energy(HostBuffer<float> values);
+    ATLAS_HOST Builder&
+    with_translational_energy(HostBuffer<float> values);
     /** @brief Stage an optional rotational-energy column for every live particle. */
-    ATLAS_HOST Builder& with_rotational_energy(HostBuffer<float> values);
+    ATLAS_HOST Builder&
+    with_rotational_energy(HostBuffer<float> values);
     /** @brief Stage an optional vibrational-energy column for every live particle. */
-    ATLAS_HOST Builder& with_vibrational_energy(HostBuffer<float> values);
+    ATLAS_HOST Builder&
+    with_vibrational_energy(HostBuffer<float> values);
 
     /**
      * @brief Validates the parameters and constructs the fluid by value.
@@ -367,13 +375,13 @@ private:
 
     MaterialDictionaryHostPtr _materials {}; ///< Material dictionary to attach; may be null.
 
-    std::optional<HostBuffer<Float3>> _position; ///< Supplied live positions.
-    std::optional<HostBuffer<Float3>> _velocity; ///< Supplied live velocities.
-    std::optional<HostBuffer<std::size_t>> _species; ///< Supplied live material IDs.
-    std::optional<HostBuffer<float>> _temperature; ///< Supplied live temperatures.
+    std::optional<HostBuffer<Float3>> _position;            ///< Supplied live positions.
+    std::optional<HostBuffer<Float3>> _velocity;            ///< Supplied live velocities.
+    std::optional<HostBuffer<std::size_t>> _species;        ///< Supplied live material IDs.
+    std::optional<HostBuffer<float>> _temperature;          ///< Supplied live temperatures.
     std::optional<HostBuffer<float>> _translational_energy; ///< Supplied live translational energies.
-    std::optional<HostBuffer<float>> _rotational_energy; ///< Supplied live rotational energies.
-    std::optional<HostBuffer<float>> _vibrational_energy; ///< Supplied live vibrational energies.
+    std::optional<HostBuffer<float>> _rotational_energy;    ///< Supplied live rotational energies.
+    std::optional<HostBuffer<float>> _vibrational_energy;   ///< Supplied live vibrational energies.
 };
 
 /** @brief Host-owning pointer to a @c Fluid, the standard way to pass the move-only type. */

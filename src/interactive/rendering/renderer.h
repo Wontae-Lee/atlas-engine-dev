@@ -30,24 +30,30 @@ public:
     ~Renderer();
 
     /// Initializes all layers against the target's current context.
-    void initialize(RenderTarget& target);
+    void
+    initialize(RenderTarget& target);
     /// Adds an owned layer in draw order.
-    void add_layer(std::unique_ptr<Layer> layer);
+    void
+    add_layer(std::unique_ptr<Layer> layer);
     /// Updates render state and draws one frame to target.
-    void render(const SimulationSceneView& view, RenderTarget& target);
+    void
+    render(const SimulationSceneView& view, RenderTarget& target);
     /// Releases all layer resources.
-    void shutdown();
+    void
+    shutdown();
 
     /// Returns the mutable renderer camera.
-    Camera& camera() noexcept;
+    Camera&
+    camera() noexcept;
     /// Returns the renderer camera.
-    const Camera& camera() const noexcept;
+    const Camera&
+    camera() const noexcept;
 
 private:
-    std::unique_ptr<StateProvider> _provider; ///< Owned simulation-to-render strategy.
+    std::unique_ptr<StateProvider> _provider;    ///< Owned simulation-to-render strategy.
     std::vector<std::unique_ptr<Layer>> _layers; ///< Owned layers in draw order.
-    Camera _camera; ///< Camera shared by every layer.
-    bool _initialized = false; ///< Whether layer resources are live.
+    Camera _camera;                              ///< Camera shared by every layer.
+    bool _initialized = false;                   ///< Whether layer resources are live.
 };
 
 }

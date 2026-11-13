@@ -9,11 +9,11 @@ The C++ and Python templates use the same initial state.
 
 ## Files and responsibilities
 
-| File | What to edit |
-|---|---|
-| `config.json` | Runnable strict JSON: initial state, domain, time step, and optional physical components. |
-| `main.cpp` | Application lifecycle and optional step limit. It loads this example's fixed configuration. |
-| `CMakeLists.txt` | Example name, target, configuration copy, and install rules. |
+| File              | What to edit                                                                                                                                                                            |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `config.json`     | Runnable strict JSON: initial state, domain, time step, and optional physical components.                                                                                               |
+| `main.cpp`        | Application lifecycle and optional step limit. It loads this example's fixed configuration.                                                                                             |
+| `CMakeLists.txt`  | Example name, target, configuration copy, and install rules.                                                                                                                            |
 | `reference.jsonc` | Annotated API reference with alternative materials, geometry, sources, generators, sinks, and states. Copy selected fields into `config.json`; JSONC itself is not accepted at runtime. |
 
 ## Build and run

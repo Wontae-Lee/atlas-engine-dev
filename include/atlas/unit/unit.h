@@ -139,8 +139,8 @@ public:
         , _angular_oscillation_angle(angular_oscillation_angle) {
         Unit::canonicalize_kinematics(_velocity, _acceleration, _angular_velocity, _angular_acceleration);
         if (_angular_oscillation_axis.has_value()) {
-            const Float3& axis = *_angular_oscillation_axis;
-            const float scale = atlas::abs(axis).max();
+            const Float3& axis        = *_angular_oscillation_axis;
+            const float scale         = atlas::abs(axis).max();
             _angular_oscillation_axis = atlas::normalized_or(axis / Float3(scale), Float3(0.0f));
             advance_angular_oscillation(0.0f);
         }
@@ -275,13 +275,13 @@ public:
     advance_angular_oscillation(const float dt) noexcept {
         if (!_angular_oscillation_axis.has_value() || !(dt >= 0.0f) || !atlas::isfinite(dt)) return;
 
-        const float period = *_angular_oscillation_period;
-        const float amplitude = *_angular_oscillation_amplitude;
-        const float step = std::fmod(dt, period);
-        const float remaining = period - *_angular_oscillation_elapsed;
-        const float elapsed = step >= remaining
-                                  ? step - remaining
-                                  : *_angular_oscillation_elapsed + step;
+        const float period           = *_angular_oscillation_period;
+        const float amplitude        = *_angular_oscillation_amplitude;
+        const float step             = std::fmod(dt, period);
+        const float remaining        = period - *_angular_oscillation_elapsed;
+        const float elapsed          = step >= remaining
+                     ? step - remaining
+                     : *_angular_oscillation_elapsed + step;
         _angular_oscillation_elapsed = elapsed < period ? elapsed : 0.0f;
 
         const float phase = *_angular_oscillation_elapsed / period;
@@ -290,16 +290,16 @@ public:
         float acceleration;
 
         if (*_angular_oscillation_smooth) {
-            const float radians = 2.0f * atlas::pi * phase;
+            const float radians       = 2.0f * atlas::pi * phase;
             const float maximum_speed = (amplitude / period) * atlas::pi;
-            angle        = amplitude * (0.5f * (1.0f - std::cos(radians)));
-            speed        = maximum_speed * std::sin(radians);
-            acceleration = ((maximum_speed / period) * (2.0f * atlas::pi)) * std::cos(radians);
+            angle                     = amplitude * (0.5f * (1.0f - std::cos(radians)));
+            speed                     = maximum_speed * std::sin(radians);
+            acceleration              = ((maximum_speed / period) * (2.0f * atlas::pi)) * std::cos(radians);
         } else {
             const bool closing = phase < 0.5f;
-            angle        = amplitude * (2.0f * (closing ? phase : 1.0f - phase));
-            speed        = (amplitude / period) * (closing ? 2.0f : -2.0f);
-            acceleration = 0.0f;
+            angle              = amplitude * (2.0f * (closing ? phase : 1.0f - phase));
+            speed              = (amplitude / period) * (closing ? 2.0f : -2.0f);
+            acceleration       = 0.0f;
         }
 
         const Float3& axis = *_angular_oscillation_axis;

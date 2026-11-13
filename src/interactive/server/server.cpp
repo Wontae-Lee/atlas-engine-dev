@@ -14,7 +14,7 @@
 
 namespace atlas::interactive {
 
-Server::Server() = default;
+Server::Server()  = default;
 Server::~Server() = default;
 
 Response
@@ -27,13 +27,13 @@ Server::handle(const Request& request) {
             if (!request.simulation) {
                 throw std::invalid_argument("create requires a simulation configuration");
             }
-            auto session = std::make_unique<Session>(*request.simulation, request.output);
+            auto session           = std::make_unique<Session>(*request.simulation, request.output);
             const std::uint64_t id = _next_session_id++;
             _sessions.emplace(id, std::move(session));
-            response.success = true;
-            response.message = "created";
+            response.success    = true;
+            response.message    = "created";
             response.session_id = id;
-            response.status = _sessions.at(id)->status();
+            response.status     = _sessions.at(id)->status();
             return response;
         }
         if (request.command == Command::validate) {
@@ -53,27 +53,27 @@ Server::handle(const Request& request) {
                 } else {
                     static_cast<void>(factory.build(config));
                 }
-            }, request.validation->config);
+            },
+                       request.validation->config);
             response.success = true;
             response.message = "valid";
             return response;
         }
         if (request.command == Command::shutdown) {
             _shutdown_requested = true;
-            response.success = true;
-            response.message = "shutdown requested";
+            response.success    = true;
+            response.message    = "shutdown requested";
             return response;
         }
-        if (request.command == Command::render_open ||
-            request.command == Command::render_close) {
+        if (request.command == Command::render_open || request.command == Command::render_close) {
             throw std::invalid_argument("render commands require InteractiveApplication");
         }
         if (!request.session_id) throw std::invalid_argument("command requires session_id");
         const std::uint64_t id = *request.session_id;
         if (request.command == Command::close) {
             if (_sessions.erase(id) == 0) throw std::out_of_range("unknown session_id");
-            response.success = true;
-            response.message = "closed";
+            response.success    = true;
+            response.message    = "closed";
             response.session_id = id;
             return response;
         }
@@ -112,9 +112,9 @@ Server::handle(const Request& request) {
         case Command::shutdown:
             break;
         }
-        response.success = true;
+        response.success    = true;
         response.session_id = id;
-        response.status = target.status();
+        response.status     = target.status();
     } catch (const std::exception& error) {
         response.error = error.what();
     }

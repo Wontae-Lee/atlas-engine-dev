@@ -15,14 +15,14 @@ namespace atlas::interactive {
 struct GeometryRenderView {
     /// Semantic boundary role used to select visualization styling.
     enum class Role {
-        source,  ///< Particle-emission boundary.
+        source,   ///< Particle-emission boundary.
         collider, ///< Particle-reflection boundary.
-        sink     ///< Particle-removal boundary.
+        sink      ///< Particle-removal boundary.
     };
 
     const SimulationConfig::Geometry* geometry = nullptr; ///< Borrowed geometry configuration.
-    atlas::Sync sync; ///< Current local-to-world rigid transform.
-    Role role = Role::collider; ///< Boundary role represented by this view.
+    atlas::Sync sync;                                     ///< Current local-to-world rigid transform.
+    Role role = Role::collider;                           ///< Boundary role represented by this view.
 };
 
 }

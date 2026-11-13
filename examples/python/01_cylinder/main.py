@@ -4,7 +4,6 @@ import argparse
 from typing import Tuple
 
 import numpy as np
-
 from atlas import (
     Box,
     Cylinder,
@@ -24,8 +23,8 @@ from atlas import (
 
 
 def box_unit(
-    lower: Tuple[float, float, float],
-    upper: Tuple[float, float, float],
+        lower: Tuple[float, float, float],
+        upper: Tuple[float, float, float],
 ) -> Unit:
     """Create a stationary box boundary from lower and upper corners."""
     return Unit(Box(Float3(*lower), Float3(*upper)))

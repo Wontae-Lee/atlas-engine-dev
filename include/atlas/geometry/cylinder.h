@@ -60,10 +60,12 @@ public:
     Cylinder(Cylinder&& other) noexcept      = default; ///< Trivial move.
     /// Trivial copy assignment.
     Cylinder&
-    operator=(const Cylinder& other) noexcept = default;
+    operator=(const Cylinder& other) noexcept
+        = default;
     /// Trivial move assignment.
     Cylinder&
-    operator=(Cylinder&& other) noexcept = default;
+    operator=(Cylinder&& other) noexcept
+        = default;
 
     ~Cylinder() noexcept = default; ///< Trivial destructor.
 

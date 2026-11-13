@@ -6,7 +6,7 @@
 namespace atlas::interactive {
 
 InteractiveApplication::InteractiveApplication(std::unique_ptr<RenderControl> rendering)
-    : _rendering(std::move(rendering)) {}
+    : _rendering(std::move(rendering)) { }
 
 InteractiveApplication::~InteractiveApplication() = default;
 
@@ -31,7 +31,7 @@ InteractiveApplication::handle(const Request& request) {
                 _rendering->close();
                 response.message = "render closed";
             }
-            response.success = true;
+            response.success    = true;
             response.session_id = id;
         } catch (const std::exception& error) {
             response.error = error.what();
@@ -40,8 +40,7 @@ InteractiveApplication::handle(const Request& request) {
     }
 
     if (_rendering) {
-        if (request.command == Command::close && request.session_id &&
-            _rendering->session_id() == request.session_id) {
+        if (request.command == Command::close && request.session_id && _rendering->session_id() == request.session_id) {
             _rendering->close();
         } else if (request.command == Command::shutdown) {
             _rendering->close();

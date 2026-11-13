@@ -106,7 +106,8 @@ public:
      * @return Reference to this material.
      */
     ATLAS_ALL_DEVICE Material&
-    operator=(const Material& other) noexcept = default;
+    operator=(const Material& other) noexcept
+        = default;
 
     /**
      * @brief Trivial destructor; no leaf owns a resource, so nothing to release.

@@ -87,7 +87,8 @@ public:
 
     /// Move assignment transfers ownership of the grid and its states; defaulted.
     Universe&
-    operator=(Universe&&) noexcept = default;
+    operator=(Universe&&) noexcept
+        = default;
 
     /**
      * @brief Create an empty builder for the fluent construction path.
@@ -343,17 +344,23 @@ public:
     with_cell_size(float h) noexcept;
 
     /** @brief Stage one temperature value per computed grid cell. */
-    ATLAS_HOST Builder& with_temperature(HostBuffer<float> values);
+    ATLAS_HOST Builder&
+    with_temperature(HostBuffer<float> values);
     /** @brief Stage one bulk velocity per computed grid cell. */
-    ATLAS_HOST Builder& with_bulk_velocity(HostBuffer<Float3> values);
+    ATLAS_HOST Builder&
+    with_bulk_velocity(HostBuffer<Float3> values);
     /** @brief Stage one field force per computed grid cell. */
-    ATLAS_HOST Builder& with_field_force(HostBuffer<Float3> values);
+    ATLAS_HOST Builder&
+    with_field_force(HostBuffer<Float3> values);
     /** @brief Stage one gravity value per computed grid cell. */
-    ATLAS_HOST Builder& with_gravity(HostBuffer<Float3> values);
+    ATLAS_HOST Builder&
+    with_gravity(HostBuffer<Float3> values);
     /** @brief Stage one thermal energy per computed grid cell. */
-    ATLAS_HOST Builder& with_thermal_energy(HostBuffer<float> values);
+    ATLAS_HOST Builder&
+    with_thermal_energy(HostBuffer<float> values);
     /** @brief Stage one Knudsen number per computed grid cell. */
-    ATLAS_HOST Builder& with_knudsen_number(HostBuffer<float> values);
+    ATLAS_HOST Builder&
+    with_knudsen_number(HostBuffer<float> values);
 
     /**
      * @brief Validate the configuration and construct the grid by value.
@@ -392,10 +399,10 @@ private:
 
     float _cell_size = 1.0f; ///< Pending cubic cell edge length.
 
-    std::optional<HostBuffer<float>> _temperature; ///< Supplied cell temperatures.
+    std::optional<HostBuffer<float>> _temperature;    ///< Supplied cell temperatures.
     std::optional<HostBuffer<Float3>> _bulk_velocity; ///< Supplied cell bulk velocities.
-    std::optional<HostBuffer<Float3>> _field_force; ///< Supplied cell forces.
-    std::optional<HostBuffer<Float3>> _gravity; ///< Supplied cell gravity values.
+    std::optional<HostBuffer<Float3>> _field_force;   ///< Supplied cell forces.
+    std::optional<HostBuffer<Float3>> _gravity;       ///< Supplied cell gravity values.
     std::optional<HostBuffer<float>> _thermal_energy; ///< Supplied cell thermal energies.
     std::optional<HostBuffer<float>> _knudsen_number; ///< Supplied cell Knudsen numbers.
 };

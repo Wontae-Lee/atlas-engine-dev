@@ -95,7 +95,8 @@ public:
 
     /** @brief Move-assigns, transferring ownership of every subsystem. */
     System&
-    operator=(System&&) noexcept = default;
+    operator=(System&&) noexcept
+        = default;
 
     /**
      * @brief Returns a fresh, empty builder for assembling a system.

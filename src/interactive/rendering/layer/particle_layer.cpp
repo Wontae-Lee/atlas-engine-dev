@@ -20,8 +20,8 @@ namespace atlas::interactive {
 
 namespace {
 
-/// Minimal world-space point vertex shader.
-constexpr const char* vertex_shader = R"(
+    /// Minimal world-space point vertex shader.
+    constexpr const char* vertex_shader = R"(
 #version 330 core
 layout(location = 0) in vec3 position;
 uniform mat4 view_projection;
@@ -30,8 +30,8 @@ void main() {
 }
 )";
 
-/// Uniform-color fragment shader for particles.
-constexpr const char* fragment_shader = R"(
+    /// Uniform-color fragment shader for particles.
+    constexpr const char* fragment_shader = R"(
 #version 330 core
 out vec4 fragment_color;
 uniform vec4 color;
@@ -43,7 +43,7 @@ void main() {
 }
 
 ParticleLayer::ParticleLayer(const float point_size) noexcept
-    : _point_size(point_size) {}
+    : _point_size(point_size) { }
 
 ParticleLayer::~ParticleLayer() = default;
 
@@ -54,9 +54,9 @@ ParticleLayer::initialize() {
     static_assert(std::is_trivially_copyable_v<Float3>);
     static_assert(sizeof(Float3) == 3 * sizeof(float));
 
-    _shader = opengl::Shader(vertex_shader, fragment_shader);
+    _shader                   = opengl::Shader(vertex_shader, fragment_shader);
     _view_projection_location = _shader.uniform_location("view_projection");
-    _color_location = _shader.uniform_location("color");
+    _color_location           = _shader.uniform_location("color");
     glGenVertexArrays(1, &_vao);
 }
 
@@ -85,10 +85,10 @@ ParticleLayer::render(const RenderState& state,
 void
 ParticleLayer::shutdown() {
     if (_vao != 0) glDeleteVertexArrays(1, &_vao);
-    _vao = 0;
+    _vao                      = 0;
     _view_projection_location = -1;
-    _color_location = -1;
-    _shader = opengl::Shader();
+    _color_location           = -1;
+    _shader                   = opengl::Shader();
 }
 
 }

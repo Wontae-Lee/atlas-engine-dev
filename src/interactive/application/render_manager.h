@@ -20,10 +20,14 @@ public:
     explicit RenderManager(const Camera& initial_camera);
     ~RenderManager() override;
 
-    void open(std::uint64_t session_id) override;
-    void close() override;
-    void update(const Server& server) override;
-    std::optional<std::uint64_t> session_id() const noexcept override;
+    void
+    open(std::uint64_t session_id) override;
+    void
+    close() override;
+    void
+    update(const Server& server) override;
+    std::optional<std::uint64_t>
+    session_id() const noexcept override;
 
 private:
     Camera _initial_camera; ///< Camera framing restored whenever a window is opened.

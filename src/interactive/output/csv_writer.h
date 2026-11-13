@@ -28,16 +28,18 @@ public:
               std::size_t sink_count);
 
     /// Appends one step sample and its accumulated totals.
-    void append(const SimulationSample& sample,
-                const SimulationStatistics& statistics);
+    void
+    append(const SimulationSample& sample,
+           const SimulationStatistics& statistics);
 
     /// Flushes buffered output to the underlying file.
-    void flush();
+    void
+    flush();
 
 private:
-    std::ofstream _stream; ///< Owned output stream.
+    std::ofstream _stream;         ///< Owned output stream.
     std::size_t _source_count = 0; ///< Fixed number of source columns.
-    std::size_t _sink_count = 0; ///< Fixed number of sink columns.
+    std::size_t _sink_count   = 0; ///< Fixed number of sink columns.
 };
 
 }

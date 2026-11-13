@@ -15,13 +15,19 @@ public:
     explicit InteractiveApplication(std::unique_ptr<RenderControl> rendering = {});
     ~InteractiveApplication();
 
-    Response handle(const Request& request);
-    void update();
+    Response
+    handle(const Request& request);
+    void
+    update();
 
-    bool shutdown_requested() const noexcept;
-    bool has_running_sessions() const noexcept;
-    bool rendering_active() const noexcept;
-    std::size_t session_count() const noexcept;
+    bool
+    shutdown_requested() const noexcept;
+    bool
+    has_running_sessions() const noexcept;
+    bool
+    rendering_active() const noexcept;
+    std::size_t
+    session_count() const noexcept;
 
 private:
     Server _server;

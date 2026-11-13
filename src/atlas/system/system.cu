@@ -168,7 +168,7 @@ System::emit() {
             break;
         }
 
-        const int spawned = _sources[i]->spawn(positions, count);
+        const int spawned            = _sources[i]->spawn(positions, count);
         _source_spawned_last_step[i] = spawned > 0 ? spawned : 0;
 
         if (spawned <= 0) {

@@ -3,7 +3,6 @@
 import argparse
 
 import numpy as np
-
 from atlas import Float3, Fluid, MaterialDictionary, Molecule, System, Universe
 
 

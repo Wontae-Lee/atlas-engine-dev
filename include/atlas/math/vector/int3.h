@@ -68,7 +68,8 @@ public:
      * @brief Copy assignment; a plain component-wise copy.
      */
     Int3&
-    operator=(const Int3&) noexcept = default;
+    operator=(const Int3&) noexcept
+        = default;
 
     /**
      * @brief The fixed component count.

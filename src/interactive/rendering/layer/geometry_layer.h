@@ -33,21 +33,24 @@ public:
                        const atlas::Float3& domain_upper);
 
     /// @copydoc Layer::initialize
-    void initialize() override;
+    void
+    initialize() override;
     /// @copydoc Layer::render
-    void render(const RenderState& state,
-                const Camera& camera,
-                float aspect_ratio) override;
+    void
+    render(const RenderState& state,
+           const Camera& camera,
+           float aspect_ratio) override;
     /// @copydoc Layer::shutdown
-    void shutdown() override;
+    void
+    shutdown() override;
 
 private:
     std::vector<atlas::Float3> _vertices; ///< Reused CPU tessellation scratch buffer.
-    opengl::Buffer _buffer; ///< Reused line-vertex buffer.
-    opengl::Shader _shader; ///< Uniform-color line shader.
-    unsigned int _vao = 0; ///< Vertex-array object describing line positions.
-    int _view_projection_location = -1; ///< Camera-transform uniform location.
-    int _color_location = -1; ///< Role-color uniform location.
+    opengl::Buffer _buffer;               ///< Reused line-vertex buffer.
+    opengl::Shader _shader;               ///< Uniform-color line shader.
+    unsigned int _vao             = 0;    ///< Vertex-array object describing line positions.
+    int _view_projection_location = -1;   ///< Camera-transform uniform location.
+    int _color_location           = -1;   ///< Role-color uniform location.
 };
 
 }

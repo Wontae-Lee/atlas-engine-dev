@@ -15,9 +15,13 @@ class Transport {
 public:
     virtual ~Transport() = default;
     /// Receives and decodes one request, returning false at end of input.
-    virtual bool receive(Request& request, Response& error) = 0;
+    virtual bool
+    receive(Request& request, Response& error)
+        = 0;
     /// Encodes and sends one response.
-    virtual void send(const Response& response) = 0;
+    virtual void
+    send(const Response& response)
+        = 0;
 };
 
 }

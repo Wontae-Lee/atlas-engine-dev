@@ -93,7 +93,8 @@ public:
      * @brief Copy assignment; a plain component-wise copy.
      */
     Float3&
-    operator=(const Float3&) noexcept = default;
+    operator=(const Float3&) noexcept
+        = default;
 
     /**
      * @brief The fixed component count of the vector.

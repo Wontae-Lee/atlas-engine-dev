@@ -13,33 +13,35 @@ namespace atlas {
 
 namespace {
 
-/**
- * @brief Copy an explicitly supplied live prefix into a fluid column.
- * @tparam State Concrete particle-state column.
- * @tparam Value Element stored by the column.
- * @param fluid Fluid receiving the staged prefix.
- * @param values Optional host-side values; absence leaves the column at its default.
- */
-template <typename State, typename Value>
-void initialize_state(Fluid& fluid, const std::optional<HostBuffer<Value>>& values) {
-    if (!values) return;
-    State* state = fluid.state<State>();
-    if (state == nullptr) state = &fluid.emplace_state<State>(fluid.buffer_size());
-    if (!values->empty()) atlas::copy_host_to_device(&values->front(), state->data(), values->size());
-}
-
-/**
- * @brief Reject a supplied column whose live prefix has the wrong length.
- * @tparam Value Element stored by the column.
- * @param values Optional staged values.
- * @param particle_count Required live prefix length.
- */
-template <typename Value>
-void validate_state(const std::optional<HostBuffer<Value>>& values, std::size_t particle_count) {
-    if (values && values->size() != particle_count) {
-        throw std::runtime_error("Fluid::Builder: initial state length must equal particle_count.");
+    /**
+     * @brief Copy an explicitly supplied live prefix into a fluid column.
+     * @tparam State Concrete particle-state column.
+     * @tparam Value Element stored by the column.
+     * @param fluid Fluid receiving the staged prefix.
+     * @param values Optional host-side values; absence leaves the column at its default.
+     */
+    template <typename State, typename Value>
+    void
+    initialize_state(Fluid& fluid, const std::optional<HostBuffer<Value>>& values) {
+        if (!values) return;
+        State* state = fluid.state<State>();
+        if (state == nullptr) state = &fluid.emplace_state<State>(fluid.buffer_size());
+        if (!values->empty()) atlas::copy_host_to_device(&values->front(), state->data(), values->size());
     }
-}
+
+    /**
+     * @brief Reject a supplied column whose live prefix has the wrong length.
+     * @tparam Value Element stored by the column.
+     * @param values Optional staged values.
+     * @param particle_count Required live prefix length.
+     */
+    template <typename Value>
+    void
+    validate_state(const std::optional<HostBuffer<Value>>& values, std::size_t particle_count) {
+        if (values && values->size() != particle_count) {
+            throw std::runtime_error("Fluid::Builder: initial state length must equal particle_count.");
+        }
+    }
 
 }
 

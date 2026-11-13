@@ -18,8 +18,12 @@ public:
      * @brief Updates graphics resources from the current simulation scene.
      * @return Provider-owned state valid until the next update or destruction.
      */
-    virtual const RenderState& update(const SimulationSceneView& view) = 0;
-    virtual void finish_frame() = 0;
+    virtual const RenderState&
+    update(const SimulationSceneView& view)
+        = 0;
+    virtual void
+    finish_frame()
+        = 0;
 };
 
 }

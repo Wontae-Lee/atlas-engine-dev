@@ -53,7 +53,8 @@ public:
      * @return Reference to this dictionary.
      */
     MaterialDictionary&
-    operator=(MaterialDictionary&&) noexcept = default;
+    operator=(MaterialDictionary&&) noexcept
+        = default;
 
     /**
      * @brief Constructs a dictionary that takes ownership of an existing device table.

@@ -38,43 +38,59 @@ public:
     ~Session();
 
     /// Enables automatic advancement by Server::update.
-    void start();
+    void
+    start();
     /// Stops automatic advancement without discarding state.
-    void pause();
+    void
+    pause();
     /// Advances exactly count simulation steps.
-    void step(std::size_t count = 1);
+    void
+    step(std::size_t count = 1);
     /// Advances once only when the session is running.
-    void update();
+    void
+    update();
     /// Serializes the owned Atlas system to path.
-    void save(const std::filesystem::path& path);
+    void
+    save(const std::filesystem::path& path);
     /// Recreates the system from its original configuration.
-    void restart();
+    void
+    restart();
 
     /// Reports whether automatic advancement is enabled.
-    bool running() const noexcept;
+    bool
+    running() const noexcept;
     /// Returns a current externally reportable status snapshot.
-    SessionStatus status() const;
+    SessionStatus
+    status() const;
     /// Returns accumulated application-side statistics.
-    const SimulationStatistics& statistics() const noexcept;
+    const SimulationStatistics&
+    statistics() const noexcept;
     /// Returns non-owning views of the live particle buffers.
-    SimulationRenderView render_view() const;
+    SimulationRenderView
+    render_view() const;
     /// Returns particle, geometry, and domain views for rendering.
-    SimulationSceneView scene_view() const;
+    SimulationSceneView
+    scene_view() const;
     /// Returns the immutable configuration used to build the system.
-    const SimulationConfig& simulation_config() const noexcept;
+    const SimulationConfig&
+    simulation_config() const noexcept;
 
 private:
-    void initialize();
-    void advance_once();
-    void configure_csv();
-    SimulationSample collect_sample() const;
+    void
+    initialize();
+    void
+    advance_once();
+    void
+    configure_csv();
+    SimulationSample
+    collect_sample() const;
 
-    CoreFactory _factory; ///< Reusable source for initial and restarted systems.
-    OutputConfig _output; ///< Application reporting policy.
-    atlas::SystemHostPtr _system; ///< Owned core simulation.
+    CoreFactory _factory;                      ///< Reusable source for initial and restarted systems.
+    OutputConfig _output;                      ///< Application reporting policy.
+    atlas::SystemHostPtr _system;              ///< Owned core simulation.
     SessionState _state = SessionState::ready; ///< Interactive lifecycle state.
-    SimulationStatistics _statistics; ///< Statistics accumulated since initialization.
-    std::unique_ptr<CsvWriter> _csv_writer; ///< Optional application-level report sink.
+    SimulationStatistics _statistics;          ///< Statistics accumulated since initialization.
+    std::unique_ptr<CsvWriter> _csv_writer;    ///< Optional application-level report sink.
 };
 
 }

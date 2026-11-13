@@ -15,10 +15,10 @@ namespace atlas::interactive::opengl {
 
 Shader::Shader(const std::string_view vertex_source, const std::string_view fragment_source) {
     const unsigned int vertex = compile(GL_VERTEX_SHADER, vertex_source);
-    unsigned int fragment = 0;
+    unsigned int fragment     = 0;
     try {
         fragment = compile(GL_FRAGMENT_SHADER, fragment_source);
-        _id = glCreateProgram();
+        _id      = glCreateProgram();
         glAttachShader(_id, vertex);
         glAttachShader(_id, fragment);
         glLinkProgram(_id);
@@ -45,7 +45,7 @@ Shader::Shader(const std::string_view vertex_source, const std::string_view frag
 }
 
 Shader::Shader(Shader&& other) noexcept
-    : _id(std::exchange(other._id, 0)) {}
+    : _id(std::exchange(other._id, 0)) { }
 
 Shader::~Shader() {
     destroy();
@@ -77,8 +77,8 @@ Shader::id() const noexcept {
 unsigned int
 Shader::compile(const unsigned int type, const std::string_view source) {
     const unsigned int shader = glCreateShader(type);
-    const char* data = source.data();
-    const int length = static_cast<int>(source.size());
+    const char* data          = source.data();
+    const int length          = static_cast<int>(source.size());
     glShaderSource(shader, 1, &data, &length);
     glCompileShader(shader);
 

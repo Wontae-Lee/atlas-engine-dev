@@ -54,7 +54,8 @@ public:
      *         if nothing has been built.
      */
     ATLAS_HOST virtual BvhView
-    view() const = 0;
+    view() const
+        = 0;
 };
 
 /// Host-side shared ownership of a polymorphic BVH.

@@ -19,13 +19,15 @@ public:
     JsonLinesTransport(std::istream& input, std::ostream& output) noexcept;
 
     /// @copydoc Transport::receive
-    bool receive(Request& request, Response& error) override;
+    bool
+    receive(Request& request, Response& error) override;
     /// @copydoc Transport::send
-    void send(const Response& response) override;
+    void
+    send(const Response& response) override;
 
 private:
-    std::istream* _input; ///< Borrowed request stream.
-    std::ostream* _output; ///< Borrowed response stream.
+    std::istream* _input;     ///< Borrowed request stream.
+    std::ostream* _output;    ///< Borrowed response stream.
     std::mutex _output_mutex; ///< Preserves one-line response framing across writers.
 };
 

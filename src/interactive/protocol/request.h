@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "protocol/command.h"
 #include "config/output_config.h"
 #include "config/simulation_config.h"
+#include "protocol/command.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -49,11 +49,11 @@ struct ValidationRequest {
 
 /// Transport-independent command request accepted by Server.
 struct Request {
-    std::string request_id; ///< Client-provided correlation identifier.
-    std::optional<std::uint64_t> session_id; ///< Target session for session-scoped commands.
-    Command command = Command::step; ///< Requested operation.
-    std::size_t step_count = 1; ///< Number of steps for a step command.
-    std::filesystem::path path; ///< Destination used by persistence commands.
+    std::string request_id;                     ///< Client-provided correlation identifier.
+    std::optional<std::uint64_t> session_id;    ///< Target session for session-scoped commands.
+    Command command        = Command::step;     ///< Requested operation.
+    std::size_t step_count = 1;                 ///< Number of steps for a step command.
+    std::filesystem::path path;                 ///< Destination used by persistence commands.
     std::optional<SimulationConfig> simulation; ///< Configuration required by create.
     std::optional<ValidationRequest> validation;
     OutputConfig output; ///< Application output policy for a new session.

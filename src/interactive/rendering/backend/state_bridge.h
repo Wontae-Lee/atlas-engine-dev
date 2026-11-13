@@ -26,22 +26,28 @@ public:
     /// Creates backend-specific transfer state.
     StateBridge();
     StateBridge(const StateBridge&) = delete;
-    StateBridge(StateBridge&&) = delete;
+    StateBridge(StateBridge&&)      = delete;
     /// Releases registrations and backend resources.
     ~StateBridge();
 
-    StateBridge& operator=(const StateBridge&) = delete;
-    StateBridge& operator=(StateBridge&&) = delete;
+    StateBridge&
+    operator=(const StateBridge&)
+        = delete;
+    StateBridge&
+    operator=(StateBridge&&)
+        = delete;
 
     /**
      * @brief Uploads a simulation buffer and sets the target's logical size.
      * @param source Non-owning view whose address belongs to the active backend.
      * @param target Persistent OpenGL destination buffer.
      */
-    void upload(const SimulationBufferView& source, opengl::Buffer& target);
+    void
+    upload(const SimulationBufferView& source, opengl::Buffer& target);
 
     /// Releases backend registration associated with a target buffer.
-    void release(opengl::Buffer& target);
+    void
+    release(opengl::Buffer& target);
 
 private:
     struct Impl;

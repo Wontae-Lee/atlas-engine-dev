@@ -18,20 +18,23 @@ public:
     ~ParticleLayer() override;
 
     /// @copydoc Layer::initialize
-    void initialize() override;
+    void
+    initialize() override;
     /// @copydoc Layer::render
-    void render(const RenderState& state,
-                const Camera& camera,
-                float aspect_ratio) override;
+    void
+    render(const RenderState& state,
+           const Camera& camera,
+           float aspect_ratio) override;
     /// @copydoc Layer::shutdown
-    void shutdown() override;
+    void
+    shutdown() override;
 
 private:
-    opengl::Shader _shader; ///< Point-rendering shader program.
-    unsigned int _vao = 0; ///< Vertex-array object describing position data.
-    int _view_projection_location = -1; ///< Camera-transform uniform location.
-    int _color_location = -1; ///< Point-color uniform location.
-    float _point_size = 3.0f; ///< Point diameter in pixels.
+    opengl::Shader _shader;               ///< Point-rendering shader program.
+    unsigned int _vao             = 0;    ///< Vertex-array object describing position data.
+    int _view_projection_location = -1;   ///< Camera-transform uniform location.
+    int _color_location           = -1;   ///< Point-color uniform location.
+    float _point_size             = 3.0f; ///< Point diameter in pixels.
 };
 
 }

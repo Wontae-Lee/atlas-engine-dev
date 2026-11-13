@@ -16,10 +16,10 @@ namespace atlas::interactive {
 
 /// Complete non-owning scene description consumed by StateProvider.
 struct SimulationSceneView {
-    SimulationRenderView particles; ///< Live particle buffer views.
+    SimulationRenderView particles;             ///< Live particle buffer views.
     std::vector<GeometryRenderView> geometries; ///< Configured boundary views.
-    atlas::Float3 lower_corner; ///< Lower simulation-domain corner.
-    atlas::Float3 upper_corner; ///< Upper simulation-domain corner.
+    atlas::Float3 lower_corner;                 ///< Lower simulation-domain corner.
+    atlas::Float3 upper_corner;                 ///< Upper simulation-domain corner.
 };
 
 }

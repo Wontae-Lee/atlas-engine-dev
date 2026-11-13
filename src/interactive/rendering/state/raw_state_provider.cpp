@@ -14,34 +14,34 @@ namespace atlas::interactive {
 
 namespace {
 
-/// Validates and uploads one mandatory simulation state.
-void
-upload_required(const SimulationBufferView& source,
-                StateBridge& bridge,
-                opengl::Buffer& target) {
-    if (source.bytes > 0 && source.data == nullptr) {
-        throw std::logic_error("Render view contains a null required buffer.");
+    /// Validates and uploads one mandatory simulation state.
+    void
+    upload_required(const SimulationBufferView& source,
+                    StateBridge& bridge,
+                    opengl::Buffer& target) {
+        if (source.bytes > 0 && source.data == nullptr) {
+            throw std::logic_error("Render view contains a null required buffer.");
+        }
+        bridge.upload(source, target);
     }
-    bridge.upload(source, target);
-}
 
-/// Mirrors the presence and contents of one optional simulation state.
-void
-upload_optional(const std::optional<SimulationBufferView>& source,
-                StateBridge& bridge,
-                std::optional<opengl::Buffer>& target) {
-    if (!source) {
-        // Drop both the OpenGL buffer and any backend registration when core state disappears.
-        if (target) bridge.release(*target);
-        target.reset();
-        return;
+    /// Mirrors the presence and contents of one optional simulation state.
+    void
+    upload_optional(const std::optional<SimulationBufferView>& source,
+                    StateBridge& bridge,
+                    std::optional<opengl::Buffer>& target) {
+        if (!source) {
+            // Drop both the OpenGL buffer and any backend registration when core state disappears.
+            if (target) bridge.release(*target);
+            target.reset();
+            return;
+        }
+        if (source->bytes > 0 && source->data == nullptr) {
+            throw std::logic_error("Render view contains a null optional buffer.");
+        }
+        if (!target) target.emplace();
+        bridge.upload(*source, *target);
     }
-    if (source->bytes > 0 && source->data == nullptr) {
-        throw std::logic_error("Render view contains a null optional buffer.");
-    }
-    if (!target) target.emplace();
-    bridge.upload(*source, *target);
-}
 
 }
 
@@ -56,7 +56,7 @@ RawStateProvider::update(const SimulationSceneView& view) {
     upload_optional(view.particles.translational_energy, _bridge, _state.translational_energy);
     upload_optional(view.particles.rotational_energy, _bridge, _state.rotational_energy);
     upload_optional(view.particles.vibrational_energy, _bridge, _state.vibrational_energy);
-    _state.geometries = view.geometries;
+    _state.geometries   = view.geometries;
     _state.lower_corner = view.lower_corner;
     _state.upper_corner = view.upper_corner;
     return _state;

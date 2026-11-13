@@ -29,11 +29,11 @@ boundaries. Their defaults are smoke runs, not engineering benchmarks.
 
 ## Targets and entry points
 
-| Frontend | Template | Cylinder |
-|---|---|---|
-| C++ CMake target | `atlas_example_cpp_00_template` | `atlas_example_cpp_01_cylinder` |
+| Frontend                 | Template                                | Cylinder                                |
+|--------------------------|-----------------------------------------|-----------------------------------------|
+| C++ CMake target         | `atlas_example_cpp_00_template`         | `atlas_example_cpp_01_cylinder`         |
 | Interactive CMake target | `atlas_example_interactive_00_template` | `atlas_example_interactive_01_cylinder` |
-| Python script | `python/00_template/main.py` | `python/01_cylinder/main.py` |
+| Python script            | `python/00_template/main.py`            | `python/01_cylinder/main.py`            |
 
 `atlas_examples_cpp` builds both C++ programs. `atlas_examples_interactive`
 builds all windowed programs when rendering is enabled. `atlas_examples`

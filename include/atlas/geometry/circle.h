@@ -57,10 +57,12 @@ public:
     Circle(Circle&& other) noexcept      = default; ///< Trivial move.
     /// Trivial copy assignment.
     Circle&
-    operator=(const Circle& other) noexcept = default;
+    operator=(const Circle& other) noexcept
+        = default;
     /// Trivial move assignment.
     Circle&
-    operator=(Circle&& other) noexcept = default;
+    operator=(Circle&& other) noexcept
+        = default;
 
     ~Circle() noexcept = default; ///< Trivial destructor.
 

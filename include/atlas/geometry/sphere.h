@@ -48,10 +48,12 @@ public:
     Sphere(Sphere&& other) noexcept      = default; ///< Trivial move.
     /// Trivial copy assignment.
     Sphere&
-    operator=(const Sphere& other) noexcept = default;
+    operator=(const Sphere& other) noexcept
+        = default;
     /// Trivial move assignment.
     Sphere&
-    operator=(Sphere&& other) noexcept = default;
+    operator=(Sphere&& other) noexcept
+        = default;
 
     ~Sphere() noexcept = default; ///< Trivial destructor.
 

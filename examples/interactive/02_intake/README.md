@@ -104,18 +104,18 @@ setup.
 Edit engine settings in `config.json` and example motion/display settings in
 `main.cpp`, then rebuild before running:
 
-| Setting | Default | Meaning |
-|---|---|---|
-| `closing_angle_degrees (main.cpp)` | `20` | Maximum inward angle relative to the original assembly |
-| `period_seconds (main.cpp)` | `0.02` | Physical simulation time for close + reopen, shared by every wing in both cases |
-| `smooth_motion` in `main.cpp` | `true` | Smooth acceleration and deceleration; `false` moves at constant angular speed between the endpoints |
-| `display_seconds_per_cycle (main.cpp)` | `5` | Wall-clock pacing target; does not change physics |
-| `hinge_radius (main.cpp)`, `hinge_height (main.cpp)` | `0.25`, `0.05` | Modeled hinge location in meters |
-| `dt` | `0.00005` | 400 updates per cycle |
-| `fluid.buffer_size` | `20000` | Maximum live particle count |
-| `emitters[0].generator.bulk_velocity` | `[0,-500,0]` | Inflow velocity in m/s |
-| `emitters[0].source.spacing` | `0.25` | Inflow seed spacing in meters |
-| `universe.cell_size` | `0.15` | Spatial grid size in meters |
+| Setting                                              | Default        | Meaning                                                                                             |
+|------------------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------|
+| `closing_angle_degrees (main.cpp)`                   | `20`           | Maximum inward angle relative to the original assembly                                              |
+| `period_seconds (main.cpp)`                          | `0.02`         | Physical simulation time for close + reopen, shared by every wing in both cases                     |
+| `smooth_motion` in `main.cpp`                        | `true`         | Smooth acceleration and deceleration; `false` moves at constant angular speed between the endpoints |
+| `display_seconds_per_cycle (main.cpp)`               | `5`            | Wall-clock pacing target; does not change physics                                                   |
+| `hinge_radius (main.cpp)`, `hinge_height (main.cpp)` | `0.25`, `0.05` | Modeled hinge location in meters                                                                    |
+| `dt`                                                 | `0.00005`      | 400 updates per cycle                                                                               |
+| `fluid.buffer_size`                                  | `20000`        | Maximum live particle count                                                                         |
+| `emitters[0].generator.bulk_velocity`                | `[0,-500,0]`   | Inflow velocity in m/s                                                                              |
+| `emitters[0].source.spacing`                         | `0.25`         | Inflow seed spacing in meters                                                                       |
+| `universe.cell_size`                                 | `0.15`         | Spatial grid size in meters                                                                         |
 
 With `smooth_motion = true` (the example default), the prescribed angle is:
 

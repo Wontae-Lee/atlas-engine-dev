@@ -38,7 +38,7 @@ WindowTarget::WindowTarget(const int width, const int height, std::string title)
     glfwMakeContextCurrent(_window);
     glfwSwapInterval(0);
     // GLEW must be initialized after a context is current.
-    glewExperimental = GL_TRUE;
+    glewExperimental    = GL_TRUE;
     const GLenum result = glewInit();
     if (result != GLEW_OK) {
         glfwDestroyWindow(_window);
@@ -60,7 +60,7 @@ void
 WindowTarget::begin_frame() {
     glfwMakeContextCurrent(_window);
     glfwGetFramebufferSize(_window, &_width, &_height);
-    _width = std::max(_width, 1);
+    _width  = std::max(_width, 1);
     _height = std::max(_height, 1);
     glViewport(0, 0, _width, _height);
     glEnable(GL_DEPTH_TEST);

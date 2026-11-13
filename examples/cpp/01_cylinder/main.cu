@@ -29,7 +29,6 @@ parse_steps(int argc, char** argv) {
     return steps;
 }
 
-
 /// Creates the stationary identity transform shared by example boundary units.
 atlas::SyncHostPtr
 identity_sync() {
@@ -63,11 +62,11 @@ int
 run(const std::size_t steps = 40) {
     const atlas::Float3 domain_lower(-1.0f, -0.75f, -0.5f);
     const atlas::Float3 domain_upper(1.5f, 0.75f, 0.5f);
-    const float         cell_size        = 0.1f;
-    const float         dt               = 5.0e-5f;
-    const float         freestream_speed = 500.0f;
-    const float         temperature      = 300.0f;
-    const float         cylinder_radius  = 0.2f;
+    const float cell_size        = 0.1f;
+    const float dt               = 5.0e-5f;
+    const float freestream_speed = 500.0f;
+    const float temperature      = 300.0f;
+    const float cylinder_radius  = 0.2f;
 
     auto materials = atlas::MaterialDictionary::builder()
                          .with_material(atlas::Material(atlas::Molecule(4.65e-26f,
@@ -168,15 +167,15 @@ run(const std::size_t steps = 40) {
 
     // Copy only the live prefix back to the host for final application-side analysis.
     const std::size_t particle_count = system.fluid()->particle_count();
-    const auto& position_data = system.fluid()->state<atlas::FluidPositionState>()->data();
-    const auto& velocity_data = system.fluid()->state<atlas::FluidVelocityState>()->data();
+    const auto& position_data        = system.fluid()->state<atlas::FluidPositionState>()->data();
+    const auto& velocity_data        = system.fluid()->state<atlas::FluidVelocityState>()->data();
     const atlas::HostBuffer<atlas::Float3> positions(position_data.begin(),
-                                                      position_data.begin() + particle_count);
+                                                     position_data.begin() + particle_count);
     const atlas::HostBuffer<atlas::Float3> velocities(velocity_data.begin(),
-                                                       velocity_data.begin() + particle_count);
+                                                      velocity_data.begin() + particle_count);
 
-    std::size_t downstream = 0;
-    double      mean_streamwise_velocity = 0.0;
+    std::size_t downstream          = 0;
+    double mean_streamwise_velocity = 0.0;
     for (std::size_t index = 0; index < particle_count; ++index) {
         if (positions[index].x > cylinder_radius) ++downstream;
         mean_streamwise_velocity += velocities[index].x;

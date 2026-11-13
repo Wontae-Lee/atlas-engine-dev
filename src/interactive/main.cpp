@@ -57,7 +57,7 @@ main(int argc, char** argv) {
         if (argc == 3 && std::string(argv[1]) == "--config") {
             atlas::interactive::Request request;
             request.request_id = "startup";
-            request.command = atlas::interactive::Command::create;
+            request.command    = atlas::interactive::Command::create;
             request.simulation = atlas::interactive::JsonCodec::decode_simulation(
                 read_file(argv[2]));
             transport.send(app.handle(request));

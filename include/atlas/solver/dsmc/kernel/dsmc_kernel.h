@@ -85,7 +85,8 @@ public:
 
     /** @brief Defaulted copy assignment; trivial for the POD leaves. */
     ATLAS_ALL_DEVICE DsmcKernel&
-    operator=(const DsmcKernel& other) noexcept = default;
+    operator=(const DsmcKernel& other) noexcept
+        = default;
 
     /** @brief Defaulted destructor; the leaves hold no resources. */
     ATLAS_ALL_DEVICE

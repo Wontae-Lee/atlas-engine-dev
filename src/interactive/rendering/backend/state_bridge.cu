@@ -19,24 +19,24 @@ namespace atlas::interactive {
 
 namespace {
 
-/// Converts a CUDA status into an exception with operation context.
-void
-check_cuda(const cudaError_t result, const char* operation) {
-    if (result == cudaSuccess) return;
-    throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(result));
-}
+    /// Converts a CUDA status into an exception with operation context.
+    void
+    check_cuda(const cudaError_t result, const char* operation) {
+        if (result == cudaSuccess) return;
+        throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(result));
+    }
 
 }
 
 /// CUDA registrations and fallback storage owned by one bridge.
 struct StateBridge::Impl {
     std::unordered_map<unsigned int, cudaGraphicsResource*> resources; ///< Persistent VBO registrations.
-    std::vector<std::byte> staging; ///< Host fallback when graphics interop is unavailable.
-    bool interop_available = true; ///< False after the first registration failure.
+    std::vector<std::byte> staging;                                    ///< Host fallback when graphics interop is unavailable.
+    bool interop_available = true;                                     ///< False after the first registration failure.
 };
 
 StateBridge::StateBridge()
-    : _impl(std::make_unique<Impl>()) {}
+    : _impl(std::make_unique<Impl>()) { }
 
 StateBridge::~StateBridge() {
     for (const auto& [buffer, resource] : _impl->resources) {
@@ -57,7 +57,7 @@ StateBridge::release(opengl::Buffer& target) {
 void
 StateBridge::upload(const SimulationBufferView& source_view,
                     opengl::Buffer& target) {
-    const void* source = source_view.data;
+    const void* source      = source_view.data;
     const std::size_t bytes = source_view.bytes;
     if (bytes == 0) {
         target.allocate(0);
@@ -97,10 +97,9 @@ StateBridge::upload(const SimulationBufferView& source_view,
             cudaGraphicsResource* resource = entry->second;
             check_cuda(cudaGraphicsMapResources(1, &resource), "CUDA/OpenGL buffer mapping failed");
 
-            void* mapped = nullptr;
-            std::size_t mapped_bytes = 0;
-            const cudaError_t pointer_result =
-                cudaGraphicsResourceGetMappedPointer(&mapped, &mapped_bytes, resource);
+            void* mapped                     = nullptr;
+            std::size_t mapped_bytes         = 0;
+            const cudaError_t pointer_result = cudaGraphicsResourceGetMappedPointer(&mapped, &mapped_bytes, resource);
             if (pointer_result != cudaSuccess || mapped == nullptr || mapped_bytes < bytes) {
                 cudaGraphicsUnmapResources(1, &resource);
                 if (pointer_result != cudaSuccess) {
@@ -110,7 +109,7 @@ StateBridge::upload(const SimulationBufferView& source_view,
                     "CUDA/OpenGL mapped buffer is smaller than the requested upload.");
             }
 
-            const cudaError_t copy_result = cudaMemcpy(mapped, source, bytes, cudaMemcpyDeviceToDevice);
+            const cudaError_t copy_result  = cudaMemcpy(mapped, source, bytes, cudaMemcpyDeviceToDevice);
             const cudaError_t unmap_result = cudaGraphicsUnmapResources(1, &resource);
             check_cuda(copy_result, "CUDA/OpenGL device-to-device copy failed");
             check_cuda(unmap_result, "CUDA/OpenGL buffer unmapping failed");

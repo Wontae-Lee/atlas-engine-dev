@@ -76,10 +76,12 @@ public:
     Sync(Sync&&) noexcept      = default;
     /// Copy assignment; copies the pose and its cached matrices verbatim.
     Sync&
-    operator=(const Sync&) noexcept = default;
+    operator=(const Sync&) noexcept
+        = default;
     /// Move assignment; equivalent to a copy for this trivially copyable type.
     Sync&
-    operator=(Sync&&) noexcept = default;
+    operator=(Sync&&) noexcept
+        = default;
 
     /// Trivial destructor; the type owns no external resources.
     ~Sync() noexcept = default;
