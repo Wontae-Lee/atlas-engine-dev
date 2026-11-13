@@ -12,14 +12,15 @@ After configuring with `ATLAS_EXAMPLES=ON`, `ATLAS_INTERACTIVE=ON`, and
 
 ```bash
 cmake --build build/interactive-tbb --target atlas_example_interactive_01_cylinder
-./build/interactive-tbb/examples/interactive/01_cylinder/atlas_example_interactive_01_cylinder 40
+./build/interactive-tbb/examples/interactive/01_cylinder/atlas_example_interactive_01_cylinder
 ```
 
-No case name or JSON path argument is needed: this executable loads its own
-`config.json`. The optional nonnegative step limit counts updates while rendering
-is open; omitted or `0` runs until the window closes. One final update after
-closing rendering demonstrates the independent session lifetime, so an
-uninterrupted `40` run reports `completed steps=41`.
+This example follows [`02_intake`](../02_intake/README.md), the standard
+Interactive example. It loads `config.json` and executes the lifecycle directly
+in `main()`, with no CLI options, helper functions, progress output, or exception
+wrapper. The window runs until closed, then the session and application close
+without an extra simulation update. Inline comments explain each stage.
+The camera is initialized with `Camera(position, target)` in `main.cpp`.
 
 Edit the source `config.json` and rebuild to refresh the build-tree copy.
 The same file can be loaded by the headless JSONL application:

@@ -30,30 +30,10 @@ zooms. Press `3` for a view into the intake along its Y axis, or `7` for an
 oblique view. Escape closes the window. The initial camera frames the entire
 intake; edit the Camera setup in `main.cpp` to choose another initial view.
 
-```bash
-# Two complete cycles, paced for viewing.
-./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake 800
-
-# Case 1: the original synchronized motion (also the default).
-./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake 800 --case 1 --headless
-
-# Case 2: a traveling wave with the same period, paced for viewing.
-./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake --case 2
-
-# Two case-2 cycles without display or wall-clock pacing.
-./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake 800 --case 2 --headless
-
-# Bounded windowed smoke run at computational speed.
-./build/tbb-release/examples/interactive/02_intake/atlas_example_interactive_02_intake 40 --unpaced
-```
-
-The optional step count limits total updates exactly: there is no extra step
-on shutdown in this example. Omission or `0` means unlimited windowed execution.
-`--headless` requires a positive step count and never opens a window. It still
-uses this example's rendering-enabled build target; the underlying simulation
-and motion have no graphics dependency. `--case 1` is the default; `--case 2`
-selects the traveling wave. The case option can appear before or after the step
-count and accepts only 1 or 2. `--help` prints argument syntax.
+The example has no command-line options. `main()` loads `config_2.json` and
+runs until the window closes. Change that filename to `config_1.json` and rebuild
+to run synchronized motion. Camera setup and display pacing are directly in
+`main.cpp`; simulation settings remain in the two JSON files.
 
 ## Two simulation cases
 
@@ -67,10 +47,10 @@ Both cases use identical geometry, flow, amplitude, smoothing, and period.
   amplitude; the crest moves around the circumference without a phase seam.
 
 For case 2, wing `i` has initial elapsed time
-`period_seconds * (i - 1) / 12`. These are initial phase offsets, so the first
+`period * (i - 1) / 12`, stored in each wing’s `angular_oscillation.elapsed`. These are initial phase offsets, so the first
 frame already shows a wave. With the defaults, wing 1 starts at 0 degrees,
 wing 7 at 20 degrees, and wing 12 at approximately 1.34 degrees. Restart restores
-this wave. Console reports label `wing1` and `wing12` separately.
+this wave.
 
 This makes the angular motion continuous around the ring. The OBJ wings remain
 independent rigid meshes; this does not weld their edges or deform the meshes.
@@ -91,8 +71,8 @@ pivot = (radius * sin(phi), height, radius * cos(phi))
 axis  = (-cos(phi), 0, sin(phi))
 ```
 
-The loader subtracts the pivot from mesh vertices and puts it back as the
-Unit's translation. Thus zero rotation reproduces the original OBJ assembly
+Each JSON sets geometry `translation` to the negative pivot and the Unit's
+`translation` to the pivot. Thus zero rotation reproduces the original OBJ assembly
 exactly, while positive rotation closes each wing toward the axis. Geometry is
 loaded once; only rigid poses change during stepping. These are prescribed
 hinges, not a mechanical linkage model or a solid-contact simulation. Wings do
@@ -101,23 +81,34 @@ setup.
 
 ## Motion and flow settings
 
-Edit engine settings in `config.json` and example motion/display settings in
-`main.cpp`, then rebuild before running:
+Edit `config_1.json` for synchronized motion or `config_2.json` for the
+traveling wave, then rebuild to copy the updated files beside the executable.
+Both files use only engine `SimulationConfig` fields. Collider 0 is the fixed
+support; colliders 1 through 12 correspond to `wing1.obj` through `wing12.obj`.
+All hinge positions and motion parameters are explicit in these files; selecting
+a case only chooses the file and does not calculate or override motion settings.
 
-| Setting                                              | Default        | Meaning                                                                                             |
-|------------------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------|
-| `closing_angle_degrees (main.cpp)`                   | `20`           | Maximum inward angle relative to the original assembly                                              |
-| `period_seconds (main.cpp)`                          | `0.02`         | Physical simulation time for close + reopen, shared by every wing in both cases                     |
-| `smooth_motion` in `main.cpp`                        | `true`         | Smooth acceleration and deceleration; `false` moves at constant angular speed between the endpoints |
-| `display_seconds_per_cycle (main.cpp)`               | `5`            | Wall-clock pacing target; does not change physics                                                   |
-| `hinge_radius (main.cpp)`, `hinge_height (main.cpp)` | `0.25`, `0.05` | Modeled hinge location in meters                                                                    |
-| `dt`                                                 | `0.00005`      | 400 updates per cycle                                                                               |
-| `fluid.buffer_size`                                  | `20000`        | Maximum live particle count                                                                         |
-| `emitters[0].generator.bulk_velocity`                | `[0,-500,0]`   | Inflow velocity in m/s                                                                              |
-| `emitters[0].source.spacing`                         | `0.25`         | Inflow seed spacing in meters                                                                       |
-| `universe.cell_size`                                 | `0.15`         | Spatial grid size in meters                                                                         |
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `colliders[i].unit.geometry.file` | `assets/support.obj`, `assets/wing1.obj` … | OBJ asset path |
+| `colliders[i].unit.geometry.translation` | Negative hinge position | Local mesh coordinate correction |
+| `colliders[i].unit.translation` | Radius `0.25`, height `0.05` | Hinge position in meters |
+| `colliders[i].unit.angular_oscillation.axis` | Tangent to the ring | Rotation axis |
+| `colliders[i].unit.angular_oscillation.amplitude` | `0.34906585` | Maximum inward angle in radians (20 degrees) |
+| `colliders[i].unit.angular_oscillation.period` | `0.02` | Simulation seconds per cycle |
+| `colliders[i].unit.angular_oscillation.smooth` | `true` | Smooth acceleration and deceleration |
+| `colliders[i].unit.angular_oscillation.elapsed` | Case 1: `0`; case 2: `0.02 * (i - 1) / 12` | Initial time within the cycle |
+| `dt` | `0.00005` | 400 updates per cycle |
+| `fluid.buffer_size` | `20000` | Maximum live particle count |
+| `emitters[0].generator.bulk_velocity` | `[0,-500,0]` | Inflow velocity in m/s |
+| `emitters[0].source.spacing` | `0.25` | Inflow seed spacing in meters |
+| `universe.cell_size` | `0.15` | Spatial grid size in meters |
 
-With `smooth_motion = true` (the example default), the prescribed angle is:
+Display pacing remains `display_seconds_per_cycle = 5` in `main.cpp`; it does
+not change simulation physics. The default cases share a period, and pacing
+uses the first wing's configured period.
+
+With `angular_oscillation.smooth = true` (the example default), the prescribed angle is:
 
 ```text
 theta(t) = A/2 * (1 - cos(2*pi*t/T))
@@ -125,18 +116,18 @@ theta(t) = A/2 * (1 - cos(2*pi*t/T))
 
 In case 1, every wing starts at rest at the original pose, reaches 20 degrees at step 200, returns
 to the original pose at step 400, then repeats. Rotation slows smoothly to zero
-at both ends. Console reports print half-cycle angles and particle counts.
+at both ends.
 Floating-point rounding can affect the final digits; stochastic flow counts
 are not exact reference values.
 
-Set `smooth_motion` in `main.cpp` to `false` for constant-speed closing and opening. With
+Set each wing’s `angular_oscillation.smooth` in the selected JSON file to `false` for constant-speed closing and opening. With
 `phase = (t mod T) / T`, its angle is `2*A*phase` during the first half-cycle
 and `2*A*(1-phase)` during the second. It reaches the same endpoints at steps
 200 and 400, but reverses direction immediately without slowing down. Angular
 velocity is `+2*A/T` while closing and `-2*A/T` while opening; the reversal uses
 the velocity of the new half-cycle. The reported angular acceleration is zero
 between reversals; the idealized instantaneous reversal has no finite
-acceleration value. The console angles follow the selected motion mode and case-specific phases.
+acceleration value.
 
 Core `Unit` owns the angular trajectory and its instantaneous angular velocity.
 Moving-wall reflection therefore uses the same motion as the displayed mesh.
@@ -145,12 +136,12 @@ current pose. Pausing a Session freezes motion; restarting restores each wing's
 configured initial phase and pose. Motion is based on simulation time,
 independent of frame rate.
 
-`config.json` contains only the engine's `SimulationConfig` fields. Case
-selection, phase spacing, hinge geometry, degree conversion, and display pacing
-live in `main.cpp`. The executable adds mesh colliders using the engine's
-`angular_oscillation` fields (`axis`, `amplitude`, `period`, `smooth`, `elapsed`)
-before decoding the simulation. Loading the JSON directly into the generic
-server loads the base flow configuration without these example-created wings.
+`main.cpp` sets the working directory to the example directory and decodes the
+selected JSON using `JsonCodec`. Both JSON files contain the OBJ paths, local
+mesh translations, Unit poses, and motion settings. Interactive's factory loads meshes
+through `atlas::TriangleMesh::load_from_obj()`; the example has no mesh loader or
+triangle-array conversion. The same JSON can be loaded by the generic server
+when its working directory is the example directory with the copied `assets/`.
 The engine JSON format is documented in the
 [Interactive guide](../../../docs/frontends/interactive.md#simulation-json).
 
@@ -166,9 +157,9 @@ validated engineering benchmark.
 ```bash
 cmake --build --preset tbb-release --target atlas-interactive-app atlas_examples_interactive
 cmake --install build/tbb-release --prefix "$PWD/build/interactive-install" --component interactive
-./build/interactive-install/bin/atlas_example_interactive_02_intake 800 --headless
+./build/interactive-install/bin/atlas_example_interactive_02_intake
 ```
 
-The install includes this executable, its config, and its OBJ/MTL files under
+The install includes this executable, both case configs, and its OBJ/MTL files under
 `examples/interactive/02_intake/assets`. Keep the installed `bin/` and
 `examples/` directories together when relocating it.

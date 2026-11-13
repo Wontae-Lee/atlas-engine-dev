@@ -1,4 +1,6 @@
 #include "config/simulation_config.h"
+#include "session/session.h"
+#include "transport/json_codec.h"
 #include "rendering/layer/geometry_layer.h"
 #include "view/geometry_render_view.h"
 
@@ -8,6 +10,8 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <filesystem>
+#include <fstream>
 
 TEST(InteractiveGeometryLayer, DispatchesEveryGeometryTypeToLineVertices) {
     using Config = atlas::interactive::SimulationConfig;
@@ -61,4 +65,43 @@ TEST(InteractiveGeometryLayer, AppliesTheCurrentUnitPose) {
     EXPECT_FLOAT_EQ(vertices.front().x, 3.0f);
     EXPECT_FLOAT_EQ(vertices.front().y, 4.0f);
     EXPECT_FLOAT_EQ(vertices.front().z, 5.0f);
+}
+
+TEST(InteractiveGeometryLayer, RendersLoadedMeshWithHingeTranslationAfterRestart) {
+    struct MeshFile {
+        std::filesystem::path path = std::filesystem::path(testing::TempDir()) / "atlas_render_mesh.obj";
+        ~MeshFile() { std::filesystem::remove(path); }
+    } file;
+    {
+        std::ofstream output(file.path);
+        output << "v 1 2 0\nv 2 2 0\nv 1 3 0\nf 1 2 3\n";
+    }
+    auto config = atlas::interactive::JsonCodec::decode_simulation(R"({
+        "dt":0.01,"fluid":{"buffer_size":4},
+        "universe":{"lower_corner":[-4,-4,-4],"upper_corner":[4,4,4],"cell_size":1},
+        "colliders":[{"unit":{
+            "geometry":{"type":"triangle_mesh","file":"mesh.obj","translation":[-1,-2,0]},
+            "translation":[1,2,0]
+        }}]
+    })");
+    config.colliders[0].unit.geometry.file = file.path.string();
+    atlas::interactive::Session session(std::move(config));
+    for (int iteration = 0; iteration < 2; ++iteration) {
+        const auto scene = session.scene_view();
+        ASSERT_EQ(scene.geometries.size(), 1u);
+        const auto& view = scene.geometries.front();
+        ASSERT_NE(view.mesh, nullptr);
+        EXPECT_TRUE(view.geometry->triangles.empty());
+        const auto vertices = atlas::interactive::GeometryLayer::make_line_vertices(
+            view, scene.lower_corner, scene.upper_corner);
+        ASSERT_EQ(vertices.size(), 6u);
+        EXPECT_FLOAT_EQ(vertices[0].x, 1.0f);
+        EXPECT_FLOAT_EQ(vertices[0].y, 2.0f);
+        EXPECT_FLOAT_EQ(vertices[1].x, 2.0f);
+        EXPECT_FLOAT_EQ(vertices[1].y, 2.0f);
+        if (iteration == 0) {
+            std::filesystem::remove(file.path);
+            session.restart();
+        }
+    }
 }

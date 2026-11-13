@@ -101,15 +101,32 @@ namespace {
             // Geometry stores a device view, so the factory keeps each owning mesh alive.
             if (mesh_index == mesh_owners.size()) {
                 HostBuffer<TriangleContainer4> triangles;
-                triangles.reserve(config.triangles.size());
-                for (const auto& vertices : config.triangles) {
-                    const Triangle triangle = Triangle::builder()
-                                                  .with_vertices(vec3(vertices[0]),
-                                                                 vec3(vertices[1]),
-                                                                 vec3(vertices[2]))
-                                                  .build();
-                    triangles.push_back(
-                        TriangleContainer4(triangle.a, triangle.b, triangle.c, triangle.normal));
+                if (!config.file.empty()) {
+                    if (!config.triangles.empty()) {
+                        throw std::invalid_argument("Triangle mesh requires either file or triangles, not both.");
+                    }
+                    TriangleMesh mesh;
+                    if (!mesh.load_from_obj(config.file)) {
+                        throw std::runtime_error("Cannot load triangle mesh: " + config.file);
+                    }
+                    triangles = std::move(mesh.triangles);
+                } else {
+                    triangles.reserve(config.triangles.size());
+                    for (const auto& vertices : config.triangles) {
+                        const Triangle triangle = Triangle::builder()
+                                                      .with_vertices(vec3(vertices[0]),
+                                                                     vec3(vertices[1]),
+                                                                     vec3(vertices[2]))
+                                                      .build();
+                        triangles.push_back(
+                            TriangleContainer4(triangle.a, triangle.b, triangle.c, triangle.normal));
+                    }
+                }
+                const auto translation = vec3(config.translation);
+                for (auto& triangle : triangles) {
+                    triangle.a() += translation;
+                    triangle.b() += translation;
+                    triangle.c() += translation;
                 }
                 mesh_owners.push_back(TriangleMesh::builder()
                                           .with_triangles(std::move(triangles))
@@ -197,7 +214,11 @@ CoreFactory::build(const SimulationConfig::Material& config) {
 
 Geometry
 CoreFactory::build(const SimulationConfig::Geometry& config) {
-    return make_geometry(config, _mesh_owners, _mesh_index);
+    auto geometry = make_geometry(config, _mesh_owners, _mesh_index);
+    if (config.kind == SimulationConfig::GeometryKind::triangle_mesh) {
+        _geometry_meshes[&config] = _mesh_owners.at(_mesh_index - 1).get();
+    }
+    return geometry;
 }
 
 Unit
@@ -383,6 +404,7 @@ CoreFactory::build(const SimulationConfig::Codec& config) {
 
 atlas::SystemHostPtr
 CoreFactory::build(const SimulationConfig& config) {
+    _geometry_meshes.clear();
     _mesh_index                               = 0;
     const MaterialDictionaryHostPtr materials = build_materials(config.fluid.materials);
     auto fluid                                = build_fluid(config.fluid, materials);
@@ -402,6 +424,12 @@ CoreFactory::build(const SimulationConfig& config) {
 atlas::SystemHostPtr
 CoreFactory::create() {
     return build(_config);
+}
+
+const TriangleMesh*
+CoreFactory::mesh(const SimulationConfig::Geometry& config) const noexcept {
+    const auto found = _geometry_meshes.find(&config);
+    return found == _geometry_meshes.end() ? nullptr : found->second;
 }
 
 const SimulationConfig&

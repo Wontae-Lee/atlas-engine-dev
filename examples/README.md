@@ -13,7 +13,7 @@ examples/
 ├── interactive/
 │   ├── 00_template/     # main.cpp, config.json, CMakeLists.txt, README.md, reference.jsonc
 │   ├── 01_cylinder/     # main.cpp, config.json, CMakeLists.txt, README.md
-│   └── 02_intake/       # moving OBJ wings, config.json, main.cpp, README.md
+│   └── 02_intake/       # moving OBJ wings, config_1.json, config_2.json, main.cpp
 └── python/
     ├── 00_template/     # main.py, README.md, reference.py
     └── 01_cylinder/     # main.py, README.md
@@ -69,8 +69,8 @@ See the [C++ template writing guide](cpp/00_template/README.md).
 ```bash
 cmake --preset tbb-release
 cmake --build --preset tbb-release --target atlas_examples_interactive
-./build/tbb-release/examples/interactive/00_template/atlas_example_interactive_00_template 40
-./build/tbb-release/examples/interactive/01_cylinder/atlas_example_interactive_01_cylinder 40
+./build/tbb-release/examples/interactive/00_template/atlas_example_interactive_00_template
+./build/tbb-release/examples/interactive/01_cylinder/atlas_example_interactive_01_cylinder
 ```
 
 These presets enable execution, rendering, and examples. OpenGL, GLEW, GLFW,
@@ -78,12 +78,11 @@ GLM, and a graphics display are required. For a single program, use
 `cmake --build --preset tbb-release --target atlas_example_interactive_01_cylinder`.
 Use `cuda-release` for the CUDA backend.
 
-The template and cylinder executables each load their own `config.json`; they
-do not accept a case name.
-Omit the step limit (or pass zero) to run until the window closes. The positive
-limit counts simulation updates, not rendered frames. After the window loop,
-the example pauses the session, closes rendering, performs one additional
-headless step to demonstrate independent lifetimes, and closes the session.
+All Interactive examples follow `02_intake`: a sequential `main()`, JSON physics
+settings, constructor-based camera setup, and comments explaining the lifecycle.
+The template and cylinder each load their own `config.json`, accept no CLI
+options, and run until the window closes. They then close the session and
+application without an extra simulation step or progress output.
 Mouse drag or `W/A/S/D` orbits the camera, right drag or the wheel zooms,
 `1` through `7` select fixed views, and Escape closes the window.
 
@@ -106,9 +105,10 @@ not accepted as runtime JSON.
 wings and support from `assets/intake`. The wings repeatedly close inward by
 20 degrees and return to their original assembly, with moving-wall particle
 collisions. Build `atlas_example_interactive_02_intake` and run it without
-arguments for the synchronized case-1 window, or with `800 --headless` for two
-complete cycles. Pass `--case 2` for a traveling wave with the same period:
-neighboring wings differ by 1/12 cycle, including the last-to-first seam.
+arguments for the traveling-wave case-2 window. The example has no CLI options;
+change the filename in `main()` from `config_2.json` to `config_1.json` and rebuild
+for synchronized motion. Both files contain hinge and oscillation settings.
+In case 2, neighboring wings differ by 1/12 cycle, including the last-to-first seam.
 Its guide explains both cases, the inferred hinges, motion/flow settings, and
 asset install.
 This example is currently implemented only for Interactive.

@@ -117,17 +117,20 @@ Session::scene_view() const {
     for (std::size_t index = 0; index < source_syncs.size(); ++index) {
         result.geometries.push_back({ &config.emitters[index].source.unit.geometry,
                                       source_syncs[index],
-                                      GeometryRenderView::Role::source });
+                                      GeometryRenderView::Role::source,
+                                      _factory.mesh(config.emitters[index].source.unit.geometry) });
     }
     for (std::size_t index = 0; index < collider_syncs.size(); ++index) {
         result.geometries.push_back({ &config.colliders[index].unit.geometry,
                                       collider_syncs[index],
-                                      GeometryRenderView::Role::collider });
+                                      GeometryRenderView::Role::collider,
+                                      _factory.mesh(config.colliders[index].unit.geometry) });
     }
     for (std::size_t index = 0; index < sink_syncs.size(); ++index) {
         result.geometries.push_back({ &config.sinks[index].unit.geometry,
                                       sink_syncs[index],
-                                      GeometryRenderView::Role::sink });
+                                      GeometryRenderView::Role::sink,
+                                      _factory.mesh(config.sinks[index].unit.geometry) });
     }
     return result;
 }

@@ -9,6 +9,7 @@
 #include "rendering/state/render_state.h"
 
 #include <atlas/math/math.h>
+#include <atlas/geometry/triangle_mesh.h>
 
 #include <GL/glew.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -204,10 +205,22 @@ void main() {
             world_line(vertices, sync, point(geometry.c), point(geometry.a));
             break;
         case SimulationConfig::GeometryKind::triangle_mesh:
-            for (const auto& triangle : geometry.triangles) {
-                world_line(vertices, sync, point(triangle[0]), point(triangle[1]));
-                world_line(vertices, sync, point(triangle[1]), point(triangle[2]));
-                world_line(vertices, sync, point(triangle[2]), point(triangle[0]));
+            if (view.mesh != nullptr) {
+                for (const auto& triangle : view.mesh->triangles) {
+                    world_line(vertices, sync, triangle.a(), triangle.b());
+                    world_line(vertices, sync, triangle.b(), triangle.c());
+                    world_line(vertices, sync, triangle.c(), triangle.a());
+                }
+            } else {
+                const auto translation = point(geometry.translation);
+                for (const auto& triangle : geometry.triangles) {
+                    const auto a = point(triangle[0]) + translation;
+                    const auto b = point(triangle[1]) + translation;
+                    const auto c = point(triangle[2]) + translation;
+                    world_line(vertices, sync, a, b);
+                    world_line(vertices, sync, b, c);
+                    world_line(vertices, sync, c, a);
+                }
             }
             break;
         case SimulationConfig::GeometryKind::polygonal_prism: {

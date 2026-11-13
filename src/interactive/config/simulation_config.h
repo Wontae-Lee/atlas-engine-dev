@@ -105,6 +105,8 @@ struct SimulationConfig {
         float side_length = 1.0f;                   ///< Square side length.
         int side_count    = 3;                      ///< Polygonal-prism side count.
         bool open         = false;                  ///< Whether a cylinder omits end caps.
+        std::string file;
+        Vec3 translation { 0.0f, 0.0f, 0.0f };
         std::vector<std::array<Vec3, 3>> triangles; ///< Explicit faces for triangle-mesh geometry.
     };
 

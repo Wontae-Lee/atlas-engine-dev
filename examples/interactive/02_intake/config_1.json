@@ -1,0 +1,578 @@
+{
+  "dt": 5e-05,
+  "fluid": {
+    "buffer_size": 20000,
+    "particle_count": 0,
+    "statistical_weight": 3.236e+16,
+    "materials": [
+      {
+        "type": "molecule",
+        "mass": 4.65e-26,
+        "translational_energy": 0.0,
+        "rotational_energy": 0.0,
+        "vibrational_energy": 0.0,
+        "reference_diameter": 4.17e-10,
+        "reference_temperature": 273.0,
+        "viscosity_index": 0.74,
+        "scattering_parameter": 1.0
+      }
+    ]
+  },
+  "universe": {
+    "lower_corner": [
+      -1.6,
+      -0.2,
+      -1.6
+    ],
+    "upper_corner": [
+      1.6,
+      1.9,
+      1.6
+    ],
+    "cell_size": 0.15
+  },
+  "solvers": [
+    {
+      "kernel": "variable_hard_sphere",
+      "majorant_sample_pairs": 8,
+      "majorant_exhaustive_limit": 5
+    }
+  ],
+  "emitters": [
+    {
+      "source": {
+        "type": "volume",
+        "unit": {
+          "geometry": {
+            "type": "box",
+            "lower_corner": [
+              -1.2,
+              1.65,
+              -1.2
+            ],
+            "upper_corner": [
+              1.2,
+              1.7,
+              1.2
+            ]
+          }
+        },
+        "spacing": 0.25,
+        "tolerance": 0.0
+      },
+      "generator": {
+        "type": "maxwell_boltzmann",
+        "species_ratios": [
+          1.0
+        ],
+        "species_numbers": [
+          0.0
+        ],
+        "temperature": 300.0,
+        "bulk_velocity": [
+          0,
+          -500,
+          0
+        ],
+        "seed": 20260921
+      }
+    }
+  ],
+  "sinks": [
+    {
+      "type": "volume",
+      "unit": {
+        "geometry": {
+          "type": "box",
+          "lower_corner": [
+            -1.6,
+            -0.2,
+            -1.6
+          ],
+          "upper_corner": [
+            -1.45,
+            1.9,
+            1.6
+          ]
+        }
+      }
+    },
+    {
+      "type": "volume",
+      "unit": {
+        "geometry": {
+          "type": "box",
+          "lower_corner": [
+            1.45,
+            -0.2,
+            -1.6
+          ],
+          "upper_corner": [
+            1.6,
+            1.9,
+            1.6
+          ]
+        }
+      }
+    },
+    {
+      "type": "volume",
+      "unit": {
+        "geometry": {
+          "type": "box",
+          "lower_corner": [
+            -1.6,
+            -0.2,
+            -1.6
+          ],
+          "upper_corner": [
+            1.6,
+            -0.1,
+            1.6
+          ]
+        }
+      }
+    },
+    {
+      "type": "volume",
+      "unit": {
+        "geometry": {
+          "type": "box",
+          "lower_corner": [
+            -1.6,
+            1.8,
+            -1.6
+          ],
+          "upper_corner": [
+            1.6,
+            1.9,
+            1.6
+          ]
+        }
+      }
+    },
+    {
+      "type": "volume",
+      "unit": {
+        "geometry": {
+          "type": "box",
+          "lower_corner": [
+            -1.6,
+            -0.2,
+            -1.6
+          ],
+          "upper_corner": [
+            1.6,
+            1.9,
+            -1.45
+          ]
+        }
+      }
+    },
+    {
+      "type": "volume",
+      "unit": {
+        "geometry": {
+          "type": "box",
+          "lower_corner": [
+            -1.6,
+            -0.2,
+            1.45
+          ],
+          "upper_corner": [
+            1.6,
+            1.9,
+            1.6
+          ]
+        }
+      }
+    }
+  ],
+  "colliders": [
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/support.obj",
+          "translation": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing1.obj",
+          "translation": [
+            0.0,
+            -0.05,
+            -0.25
+          ]
+        },
+        "translation": [
+          0.0,
+          0.05,
+          0.25
+        ],
+        "angular_oscillation": {
+          "axis": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing2.obj",
+          "translation": [
+            -0.125,
+            -0.05,
+            -0.2165063509
+          ]
+        },
+        "translation": [
+          0.125,
+          0.05,
+          0.2165063509
+        ],
+        "angular_oscillation": {
+          "axis": [
+            -0.8660254038,
+            0.0,
+            0.5
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing3.obj",
+          "translation": [
+            -0.2165063509,
+            -0.05,
+            -0.125
+          ]
+        },
+        "translation": [
+          0.2165063509,
+          0.05,
+          0.125
+        ],
+        "angular_oscillation": {
+          "axis": [
+            -0.5,
+            0.0,
+            0.8660254038
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing4.obj",
+          "translation": [
+            -0.25,
+            -0.05,
+            0.0
+          ]
+        },
+        "translation": [
+          0.25,
+          0.05,
+          0.0
+        ],
+        "angular_oscillation": {
+          "axis": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing5.obj",
+          "translation": [
+            -0.2165063509,
+            -0.05,
+            0.125
+          ]
+        },
+        "translation": [
+          0.2165063509,
+          0.05,
+          -0.125
+        ],
+        "angular_oscillation": {
+          "axis": [
+            0.5,
+            0.0,
+            0.8660254038
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing6.obj",
+          "translation": [
+            -0.125,
+            -0.05,
+            0.2165063509
+          ]
+        },
+        "translation": [
+          0.125,
+          0.05,
+          -0.2165063509
+        ],
+        "angular_oscillation": {
+          "axis": [
+            0.8660254038,
+            0.0,
+            0.5
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing7.obj",
+          "translation": [
+            0.0,
+            -0.05,
+            0.25
+          ]
+        },
+        "translation": [
+          0.0,
+          0.05,
+          -0.25
+        ],
+        "angular_oscillation": {
+          "axis": [
+            1.0,
+            0.0,
+            0.0
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing8.obj",
+          "translation": [
+            0.125,
+            -0.05,
+            0.2165063509
+          ]
+        },
+        "translation": [
+          -0.125,
+          0.05,
+          -0.2165063509
+        ],
+        "angular_oscillation": {
+          "axis": [
+            0.8660254038,
+            0.0,
+            -0.5
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing9.obj",
+          "translation": [
+            0.2165063509,
+            -0.05,
+            0.125
+          ]
+        },
+        "translation": [
+          -0.2165063509,
+          0.05,
+          -0.125
+        ],
+        "angular_oscillation": {
+          "axis": [
+            0.5,
+            0.0,
+            -0.8660254038
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing10.obj",
+          "translation": [
+            0.25,
+            -0.05,
+            0.0
+          ]
+        },
+        "translation": [
+          -0.25,
+          0.05,
+          0.0
+        ],
+        "angular_oscillation": {
+          "axis": [
+            0.0,
+            0.0,
+            -1.0
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing11.obj",
+          "translation": [
+            0.2165063509,
+            -0.05,
+            -0.125
+          ]
+        },
+        "translation": [
+          -0.2165063509,
+          0.05,
+          0.125
+        ],
+        "angular_oscillation": {
+          "axis": [
+            -0.5,
+            0.0,
+            -0.8660254038
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    },
+    {
+      "unit": {
+        "geometry": {
+          "type": "triangle_mesh",
+          "file": "assets/wing12.obj",
+          "translation": [
+            0.125,
+            -0.05,
+            -0.2165063509
+          ]
+        },
+        "translation": [
+          -0.125,
+          0.05,
+          0.2165063509
+        ],
+        "angular_oscillation": {
+          "axis": [
+            -0.8660254038,
+            0.0,
+            -0.5
+          ],
+          "amplitude": 0.3490658503988659,
+          "period": 0.02,
+          "smooth": true,
+          "elapsed": 0.0
+        }
+      },
+      "momentum_accommodation_coefficient": 1.0,
+      "restitution": 1.0
+    }
+  ]
+}

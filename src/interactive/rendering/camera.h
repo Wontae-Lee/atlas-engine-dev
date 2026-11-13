@@ -16,6 +16,9 @@ namespace atlas::interactive {
 class Camera final {
 public:
     Camera() = default;
+    Camera(const glm::vec3& position,
+           const glm::vec3& target,
+           const glm::vec3& up = { 0.0f, 1.0f, 0.0f }) noexcept;
 
     /// Returns the world-to-camera transform.
     glm::mat4

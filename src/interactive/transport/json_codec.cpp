@@ -141,6 +141,8 @@ namespace {
         read(value, "side_length", result.side_length);
         read(value, "side_count", result.side_count);
         read(value, "open", result.open);
+        read(value, "file", result.file);
+        read_vec3(value, "translation", result.translation);
         if (value.contains("triangles")) {
             for (const auto& triangle : array_member(value, "triangles")) {
                 if (!triangle.is_array() || triangle.size() != 3) {
@@ -383,7 +385,7 @@ namespace {
         else if (type == "triangle")
             require_fields(value, { "a", "b", "c" });
         else if (type == "triangle_mesh")
-            require_fields(value, { "triangles" });
+            require_fields(value, { value.contains("file") ? "file" : "triangles" });
         else if (type == "polygonal_prism")
             require_fields(value, { "center", "side_count", "radius", "height" });
     }

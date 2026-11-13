@@ -17,6 +17,11 @@
 
 namespace atlas::interactive {
 
+Camera::Camera(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up) noexcept
+    : _position(position),
+      _target(target),
+      _up(up) {}
+
 glm::mat4
 Camera::view() const {
     return glm::lookAt(_position, _target, _up);

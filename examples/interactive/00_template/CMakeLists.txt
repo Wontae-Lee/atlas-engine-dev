@@ -3,8 +3,6 @@ set(ATLAS_INTERACTIVE_EXAMPLE_TARGET atlas_example_interactive_${ATLAS_INTERACTI
 
 add_executable(${ATLAS_INTERACTIVE_EXAMPLE_TARGET} main.cpp)
 target_link_libraries(${ATLAS_INTERACTIVE_EXAMPLE_TARGET} PRIVATE atlas::interactive-rendering)
-target_compile_definitions(${ATLAS_INTERACTIVE_EXAMPLE_TARGET} PRIVATE
-        ATLAS_INTERACTIVE_EXAMPLE_NAME="${ATLAS_INTERACTIVE_EXAMPLE_NAME}")
 configure_file(config.json config.json COPYONLY)
 add_dependencies(atlas_examples_interactive ${ATLAS_INTERACTIVE_EXAMPLE_TARGET})
 

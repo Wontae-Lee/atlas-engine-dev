@@ -1,126 +1,70 @@
 #include "application/interactive_application.h"
 #include "application/render_manager.h"
+#include "rendering/camera.h"
 #include "transport/json_codec.h"
 
-#include <charconv>
-#include <cstddef>
-#include <cstdio>
-#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <sstream>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <system_error>
-
-namespace {
-
-std::size_t
-maximum_steps(int argc, char** argv) {
-    if (argc > 2) throw std::invalid_argument("usage: " + std::string(argv[0]) + " [steps]");
-    if (argc == 1) return 0;
-    const std::string_view value(argv[1]);
-    std::size_t steps = 0;
-    const auto result = std::from_chars(value.data(), value.data() + value.size(), steps);
-    if (result.ec != std::errc() || result.ptr != value.data() + value.size()) {
-        throw std::invalid_argument("steps must be a nonnegative decimal integer (0 runs until window closes)");
-    }
-    return steps;
-}
-
-std::filesystem::path
-configuration_path(const char* executable) {
-    std::filesystem::path executable_path = std::filesystem::absolute(executable);
-    if (std::filesystem::exists("/proc/self/exe")) {
-        executable_path = std::filesystem::read_symlink("/proc/self/exe");
-    }
-    const auto directory                     = executable_path.parent_path();
-    const std::filesystem::path candidates[] = {
-        directory / "config.json",
-        directory / ".." / "examples" / "interactive" / ATLAS_INTERACTIVE_EXAMPLE_NAME / "config.json"
-    };
-    for (const auto& candidate : candidates) {
-        if (std::filesystem::is_regular_file(candidate)) return candidate;
-    }
-    throw std::runtime_error("Cannot find config.json for " ATLAS_INTERACTIVE_EXAMPLE_NAME
-                             " beside the executable or in the installed examples directory");
-}
-
-std::string
-read_file(const std::filesystem::path& path) {
-    std::ifstream input(path);
-    if (!input) throw std::runtime_error("Cannot open configuration: " + path.string());
-    std::ostringstream content;
-    content << input.rdbuf();
-    return content.str();
-}
-
-atlas::interactive::Response
-handle(atlas::interactive::InteractiveApplication& app,
-       const atlas::interactive::Request& request) {
-    auto response = app.handle(request);
-    if (!response.success) throw std::runtime_error(response.error);
-    return response;
-}
-
-}
+#include <utility>
 
 int
-main(int argc, char** argv) {
-    try {
-        const auto steps = maximum_steps(argc, argv);
-        auto simulation  = atlas::interactive::JsonCodec::decode_simulation(
-            read_file(configuration_path(argv[0])));
+main() {
+    // Build outputs keep their JSON beside the executable. Installed binaries use
+    // the matching examples directory. Resolve paths from the executable so relative
+    // asset paths in JSON work regardless of the directory used to launch the program.
+    const auto directory = std::filesystem::read_symlink("/proc/self/exe").parent_path();
+    std::filesystem::current_path(
+        std::filesystem::is_regular_file(directory / "config.json")
+            ? directory
+            : directory / ".." / "examples" / "interactive" / "00_template");
 
-        atlas::interactive::InteractiveApplication app(
-            std::make_unique<atlas::interactive::RenderManager>());
-        atlas::interactive::Request create;
-        create.command     = atlas::interactive::Command::create;
-        create.simulation  = std::move(simulation);
-        const auto created = handle(app, create);
-        if (!created.session_id) throw std::logic_error("create returned no session_id");
+    // Keep the initial state, domain, timestep, and physical components in JSON.
+    // Interactive constructs the Core system when the session is created below.
+    std::ifstream input("config.json");
+    std::ostringstream content;
+    content << input.rdbuf();
+    auto scene = atlas::interactive::JsonCodec::decode_simulation(content.str());
 
-        atlas::interactive::Request command;
-        command.session_id = *created.session_id;
-        command.command    = atlas::interactive::Command::render_open;
-        handle(app, command);
-        command.command = atlas::interactive::Command::start;
-        handle(app, command);
+    // View the origin from +Z. The constructor takes the world-space position and
+    // orbit target; its default up direction is +Y. Adjust these to frame a new scene.
+    atlas::interactive::Camera camera(
+        { 0.0f, 0.0f, 3.0f },
+        { 0.0f, 0.0f, 0.0f });
+    atlas::interactive::InteractiveApplication app(
+        std::make_unique<atlas::interactive::RenderManager>(camera));
 
-        while (app.rendering_active()) {
-            app.update();
-            if (steps > 0) {
-                command.command   = atlas::interactive::Command::status;
-                const auto status = handle(app, command);
-                if (status.status && status.status->step >= steps) break;
-            }
-        }
+    // Create the simulation through Interactive. Its session owns the Core system;
+    // rendering observes that system rather than advancing a separate simulation.
+    atlas::interactive::Request create;
+    create.command     = atlas::interactive::Command::create;
+    create.simulation  = std::move(scene);
+    const auto created = app.handle(create);
+    if (!created.success || !created.session_id) return 1;
 
-        command.command = atlas::interactive::Command::pause;
-        handle(app, command);
-        command.command = atlas::interactive::Command::render_close;
-        handle(app, command);
-        command.command    = atlas::interactive::Command::step;
-        command.step_count = 1;
-        handle(app, command);
-        command.command         = atlas::interactive::Command::status;
-        const auto final_status = handle(app, command);
-        if (final_status.status) {
-            std::printf(ATLAS_INTERACTIVE_EXAMPLE_NAME ": completed steps=%zu particles=%zu\n",
-                        final_status.status->step,
-                        final_status.status->particle_count);
-        }
-        command.command = atlas::interactive::Command::close;
-        handle(app, command);
+    // Route commands to this session. Open its window and draw the initial state
+    // before starting time integration, so this first draw does not advance physics.
+    atlas::interactive::Request command;
+    command.session_id = *created.session_id;
+    command.command    = atlas::interactive::Command::render_open;
+    if (!app.handle(command).success) return 1;
+    app.update();
 
-        atlas::interactive::Request shutdown;
-        shutdown.command = atlas::interactive::Command::shutdown;
-        handle(app, shutdown);
-        return 0;
-    } catch (const std::exception& error) {
-        std::fprintf(stderr, ATLAS_INTERACTIVE_EXAMPLE_NAME ": %s\n", error.what());
-        return 1;
+    // Advance the session and render its current state until the window closes.
+    // Each simulation update uses the JSON timestep; no CLI step limit or extra
+    // simulation step is applied when the window closes.
+    command.command = atlas::interactive::Command::start;
+    if (!app.handle(command).success) return 1;
+    while (app.rendering_active()) {
+        app.update();
     }
+
+    // The window and session have separate lifetimes. Close the remaining session
+    // explicitly, then shut down the Interactive application.
+    command.command = atlas::interactive::Command::close;
+    if (!app.handle(command).success) return 1;
+    atlas::interactive::Request shutdown;
+    shutdown.command = atlas::interactive::Command::shutdown;
+    return app.handle(shutdown).success ? 0 : 1;
 }

@@ -137,8 +137,15 @@ Geometry types and their principal fields are:
 | `sphere` | `center`, `radius` |
 | `square` | `center`, `normal`, `side_length` |
 | `triangle` | `a`, `b`, `c` |
-| `triangle_mesh` | `triangles`, each a three-vertex array |
+| `triangle_mesh` | `triangles`, each a three-vertex array, or `file` (OBJ path); optional `translation` |
 | `polygonal_prism` | `center`, `side_count`, `radius`, `height` |
+
+For `triangle_mesh`, `file` loads an OBJ through Core's
+`TriangleMesh::load_from_obj()`. Relative paths resolve from the process working
+directory. Use either `file` or nonempty `triangles`, not both. `translation` defaults
+to `[0,0,0]` and translates mesh vertices in local coordinates before the Unit
+pose is applied. For a hinge at `p`, use geometry `translation = -p` and Unit
+`translation = p`. The factory retains the resulting mesh for the session.
 
 `JsonCodec` checks JSON syntax, types, vector dimensions, enum spellings, and
 required fields for partial `validate` targets. Core builders perform Atlas
@@ -215,6 +222,9 @@ Core serialization.
 Native applications may construct `RenderManager(initial_camera)` to choose
 their initial framing with a configured `Camera`. Each opened window receives
 a copy of that camera; the default constructor preserves the standard view.
+Use `Camera(position, target, up)` to set the initial pose at construction;
+`up` defaults to `(0, 1, 0)`. Projection settings retain their defaults and
+can be changed through the existing setters.
 This affects presentation only and adds no camera state to the Session or JSON
 simulation configuration.
 
@@ -222,7 +232,10 @@ simulation configuration.
 idempotent; opening another while a window is active fails until the first is
 closed. Each frame obtains a fresh `Session::scene_view()`: live particle buffer
 views, current boundary poses and geometry descriptions, and Universe bounds.
-These views are borrowed from the live System and stored configuration. They
+Mesh views also borrow the factory-owned Core mesh used by the simulation,
+including its local translation. Rendering does not reload OBJ files or rely on
+an inline JSON triangle array for file-backed meshes.
+These views are borrowed from the live System, retained meshes, and stored configuration. They
 must not survive a resize, restart, or session destruction. `RawStateProvider`
 uploads particle columns to reusable OpenGL buffers, passes geometry poses to
 `GeometryLayer`, and clears borrowed geometry references after the frame.

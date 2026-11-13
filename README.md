@@ -163,7 +163,7 @@ For the native OpenGL window:
 sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev libglm-dev
 cmake --preset tbb-release
 cmake --build --preset tbb-release --target atlas_example_interactive_01_cylinder
-./build/tbb-release/examples/interactive/01_cylinder/atlas_example_interactive_01_cylinder 40
+./build/tbb-release/examples/interactive/01_cylinder/atlas_example_interactive_01_cylinder
 ```
 
 With rendering enabled, `atlas-interactive` accepts `render_open` and

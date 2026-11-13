@@ -13,6 +13,7 @@
 
 #include <cstddef>
 #include <vector>
+#include <unordered_map>
 
 namespace atlas::interactive {
 
@@ -62,6 +63,9 @@ public:
     const SimulationConfig&
     config() const noexcept;
 
+    const atlas::TriangleMesh*
+    mesh(const SimulationConfig::Geometry& config) const noexcept;
+
 private:
     atlas::FluidHostPtr
     build_fluid(const SimulationConfig::Fluid& config,
@@ -70,6 +74,7 @@ private:
     SimulationConfig _config;                                              ///< Source description for every generated system.
     std::vector<atlas::host_shared_ptr<atlas::TriangleMesh>> _mesh_owners; ///< Mesh lifetime anchors.
     std::size_t _mesh_index = 0;
+    std::unordered_map<const SimulationConfig::Geometry*, const atlas::TriangleMesh*> _geometry_meshes;
 };
 
 using SystemFactory = CoreFactory;
