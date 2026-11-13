@@ -3,6 +3,8 @@
 #include "rendering/camera.h"
 #include "transport/json_codec.h"
 
+#include <atlas/math/constants.h>
+
 #include <nlohmann/json.hpp>
 #include <tiny_obj_loader.h>
 
@@ -25,7 +27,6 @@ namespace {
 
 using Json = nlohmann::json;
 using Vec3 = std::array<float, 3>;
-constexpr double pi = 3.14159265358979323846;
 
 struct Options {
     std::size_t steps = 0;
@@ -112,7 +113,7 @@ atlas::interactive::SimulationConfig
 simulation(const Json& config, const std::filesystem::path& directory) {
     Json scene = config.at("simulation");
     const auto& motion = config.at("motion");
-    const double amplitude = motion.at("closing_angle_degrees").get<double>() * pi / 180.0;
+    const double amplitude = motion.at("closing_angle_degrees").get<double>() * atlas::pi_double / 180.0;
     const double period = motion.at("period_seconds").get<double>();
     auto& colliders = scene["colliders"] = Json::array();
     colliders.push_back({ { "unit", { { "geometry", mesh_geometry(directory / "assets" / "support.obj", { 0, 0, 0 }) } } } });
@@ -122,7 +123,7 @@ simulation(const Json& config, const std::filesystem::path& directory) {
         throw std::invalid_argument("hinge_radius must be finite and positive; hinge_height must be finite");
     }
     for (int wing = 1; wing <= 12; ++wing) {
-        const double azimuth = static_cast<double>(wing - 1) * pi / 6.0;
+        const double azimuth = static_cast<double>(wing - 1) * atlas::pi_double / 6.0;
         const float sine = static_cast<float>(std::sin(azimuth));
         const float cosine = static_cast<float>(std::cos(azimuth));
         const Vec3 pivot { hinge_radius * sine, hinge_height, hinge_radius * cosine };
@@ -214,7 +215,7 @@ main(int argc, char** argv) {
                 if (status.status) {
                     const double phase = std::fmod(status.status->simulation_time, period) / period;
                     std::printf("step=%zu angle=%.2fdeg particles=%zu\n", status.status->step,
-                                amplitude * 0.5 * (1.0 - std::cos(2.0 * pi * phase)), status.status->particle_count);
+                                amplitude * 0.5 * (1.0 - std::cos(2.0 * atlas::pi_double * phase)), status.status->particle_count);
                 }
             }
             if (!run.headless && run.paced) std::this_thread::sleep_until(next_update);

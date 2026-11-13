@@ -15,6 +15,14 @@ TEST(Constants, PiMatchesFourArctangentOfOne) {
     EXPECT_NEAR(atlas::pi, 4.0f * std::atan(1.0f), 1.0e-6f);
 }
 
+TEST(Constants, DoublePiPreservesPrecisionBeyondFloat) {
+    const double expected = 4.0 * std::atan(1.0);
+    EXPECT_DOUBLE_EQ(atlas::pi_double, expected);
+    EXPECT_LT(std::abs(atlas::pi_double - expected),
+              std::abs(static_cast<double>(atlas::pi) - expected));
+    EXPECT_FLOAT_EQ(atlas::pi, 4.0f * std::atan(1.0f));
+}
+
 TEST(Constants, SqrtTwoSquaresToTwo) {
     EXPECT_NEAR(atlas::SQRT_TWO * atlas::SQRT_TWO, 2.0f, 1.0e-6f);
 }

@@ -90,16 +90,11 @@ Unit::Builder::build() {
     u._acceleration         = std::move(acceleration);
     u._angular_velocity     = std::move(angular_velocity);
     u._angular_acceleration = std::move(angular_acceleration);
-    if (_angular_oscillation) {
+    if (_angular_oscillation.has_value()) {
         u._angular_oscillation = *_angular_oscillation;
         auto& motion = *u._angular_oscillation;
-        const double length = std::hypot(static_cast<double>(motion.axis.x),
-                                         static_cast<double>(motion.axis.y),
-                                         static_cast<double>(motion.axis.z));
-        motion.axis = Float3(static_cast<float>(motion.axis.x / length),
-                             static_cast<float>(motion.axis.y / length),
-                             static_cast<float>(motion.axis.z / length));
-        motion.base_orientation = u._sync.orientation;
+        const float scale = atlas::abs(motion.axis).max();
+        motion.axis = atlas::normalized_or(motion.axis / Float3(scale), Float3(0.0f));
         u.advance_angular_oscillation(0.0f);
     }
 
@@ -132,19 +127,18 @@ Unit::Builder::validate() const {
         throw std::runtime_error("Unit::Builder: sync is not initialized.");
     }
 
-    if (_angular_oscillation) {
+    if (_angular_oscillation.has_value()) {
         const auto& motion = *_angular_oscillation;
         if (!atlas::isfinite(motion.axis)
             || (motion.axis.x == 0.0f && motion.axis.y == 0.0f && motion.axis.z == 0.0f)
-            || !std::isfinite(motion.amplitude)
-            || !std::isfinite(motion.period) || !(motion.period > 0.0f)) {
+            || !atlas::isfinite(motion.amplitude)
+            || !atlas::isfinite(motion.period) || !(motion.period > 0.0f)) {
             throw std::runtime_error("Unit::Builder: angular oscillation requires a finite nonzero axis, finite amplitude, and finite positive period.");
         }
-        if (_angular_velocity || _angular_acceleration) {
+        if (_angular_velocity.has_value() || _angular_acceleration.has_value()) {
             throw std::runtime_error("Unit::Builder: angular oscillation cannot be combined with angular velocity or acceleration.");
         }
-        constexpr double two_pi = 6.283185307179586476925286766559;
-        const double frequency = two_pi / static_cast<double>(motion.period);
+        const double frequency = 2.0 * atlas::pi_double / static_cast<double>(motion.period);
         const double maximum_speed = 0.5 * std::abs(static_cast<double>(motion.amplitude)) * frequency;
         const double maximum_acceleration = maximum_speed * frequency;
         if (maximum_speed > std::numeric_limits<float>::max()

@@ -33,7 +33,7 @@ A `Unit` owns its geometry, pose, and motion state by value:
   for it. `dynamic()` reports whether any linear or angular velocity is present.
 - **Optional angular oscillation** — a normalized world-space axis, signed
   amplitude, positive period, bounded double-precision elapsed phase, current
-  angle, and base orientation. Its analytic derivatives populate the ordinary
+  prescribed angle. Its analytic derivatives populate the ordinary
   angular velocity and acceleration fields.
 
 The four kinematic fields are kept in a canonical pairing by
@@ -73,9 +73,9 @@ Two lower-level mutators back `update` and are also public:
   the cached matrices are untouched.
 - **`rotate(axis, angle_rad)`** left-multiplies an incremental
   `Quaternion::from_axis_angle` onto the current orientation (world-frame
-  rotation), renormalizes to counter drift, and calls `_sync.rebuild_matrices()`.
-  A zero-length axis is a no-op. With an active oscillation, the base orientation
-  is rebased to preserve the edited pose and the current phase.
+  rotation), renormalizes to counter drift, and updates the cached matrices via
+  `Sync::set_orientation()`. A zero-length axis is a no-op. Oscillation uses this
+  same rotation path and does not change its phase when a caller rotates the pose.
 
 ## Prescribed angular oscillation
 
@@ -97,10 +97,13 @@ half a period with zero angular velocity again, and returns to its initial pose
 at a full period. A negative amplitude reverses the closing direction. Linear
 translation/acceleration may be combined with it, so the pivot can also move.
 
-`update()` evaluates orientation against the stored base orientation rather
-than integrating angular velocity. It reduces double-precision elapsed time
-modulo the period, avoiding unbounded time growth and accumulated orientation
-drift. The angular velocity and acceleration accessors report the analytic
+`update()` evaluates the prescribed angle, subtracts its previous value, and
+passes that increment to the existing `Unit::rotate()`. It reduces double-precision
+elapsed time modulo the period, avoiding unbounded time growth. Rotation retains
+the ordinary quaternion normalization and floating-point roundoff of `rotate()`;
+there is no separate quaternion composition or pose-rebasing implementation.
+Phase calculations use `pi_double` from `math/constants.h`.
+The angular velocity and acceleration accessors report the analytic
 world-space derivatives at the current phase. Collision responses therefore use
 the same motion as the rendered boundary. As with other moving colliders,
 particle intersections use the boundary pose at the current step; use a small
@@ -117,14 +120,16 @@ Unit wing = Unit::builder()
 The Core builder rejects a non-finite or zero axis, non-finite amplitude,
 non-finite/non-positive period, angular derivatives outside the finite float
 range, and combinations with explicit angular velocity or acceleration. Axis
-normalization uses double precision, including for very large or small finite
-axis components. Zero amplitude is accepted.
+normalization scales by the largest absolute component before calling the
+existing `normalized_or()` helper, avoiding squared-length overflow or underflow
+for very large or small finite axes. Zero amplitude is accepted.
 
-`set_sync()` and `rotate()` rebase the analytic orientation while preserving
-phase, axis, and derivatives; the next update does not snap back to the old
-pose. `move()` translates the pivot normally. Rebuilding the Unit starts a new
-cycle at rest. The motion remains a trivially copyable value inside Unit and
-works through the same TBB/CUDA update path.
+`set_sync()` and `rotate()` retain their ordinary pose-editing behavior. They
+leave the oscillation phase, axis, and derivatives unchanged; the next update
+applies only the next angular increment to the edited pose. `move()` translates
+the pivot normally. Rebuilding the Unit starts a new cycle at rest. The motion
+remains a trivially copyable value inside Unit and works through the same
+TBB/CUDA update path.
 
 ## Surface velocity — `surface_velocity(point)`
 

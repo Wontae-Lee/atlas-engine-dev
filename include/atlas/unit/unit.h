@@ -119,14 +119,13 @@ public:
 
     /**
      * @brief Replaces the pose, leaving geometry and kinematics unchanged.
-     * An active angular oscillation is rebased to this pose without changing
-     * its current phase or derivatives.
+     * An active angular oscillation keeps its phase and applies subsequent
+     * angular increments to this pose.
      * @param sync The new local-to-world pose; moved in.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     set_sync(Sync sync) noexcept {
         _sync = std::move(sync);
-        rebase_angular_oscillation();
     }
 
     /**
@@ -146,7 +145,7 @@ public:
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
     update(const float dt) noexcept {
-        if (!(dt > 0.0f) || !std::isfinite(dt)) return;
+        if (!(dt > 0.0f) || !atlas::isfinite(dt)) return;
 
         if (_velocity.has_value()) {
 
@@ -192,8 +191,8 @@ public:
      * Composes the incremental rotation on the left of the current orientation
      * (world-frame rotation) and renormalizes to counter drift, then rebuilds
      * the pose's cached matrices. A zero-length axis is a no-op, guarding against
-     * building a rotation from a degenerate axis. An active oscillation is
-     * rebased afterward, preserving its phase and world-space axis.
+     * building a rotation from a degenerate axis. An active oscillation keeps
+     * its phase and applies subsequent angular increments to the rotated pose.
      *
      * @param axis      Rotation axis in world space; need not be unit length (it
      *                  is normalized internally) but must be non-zero to have effect.
@@ -213,10 +212,7 @@ public:
 
         // Left-multiply: the new rotation is applied in the world frame, and the
         // result is renormalized so repeated steps do not accumulate scale drift.
-        _sync.orientation = (rotation * _sync.orientation).normalized();
-
-        _sync.rebuild_matrices();
-        rebase_angular_oscillation();
+        _sync.set_orientation((rotation * _sync.orientation).normalized());
     }
 
     /**
@@ -375,12 +371,11 @@ private:
         float amplitude; ///< Signed angle reached halfway through a cycle, in radians.
         float period; ///< Positive cycle duration in seconds.
         double elapsed = 0.0; ///< Time reduced modulo period to avoid long-run growth.
-        float angle = 0.0f; ///< Current displacement from the base orientation.
-        Quaternion base_orientation; ///< Orientation at zero displacement.
+        float angle = 0.0f; ///< Last evaluated prescribed angle, used to compute the next increment.
     };
 
     /**
-     * @brief Evaluates prescribed orientation and wall-motion derivatives at the next phase.
+     * @brief Applies the prescribed angular increment through rotate() and updates wall velocity.
      * @param dt Nonnegative finite elapsed time in seconds; zero initializes derivatives.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
@@ -388,25 +383,17 @@ private:
         auto& motion = *_angular_oscillation;
         motion.elapsed = std::fmod(motion.elapsed + static_cast<double>(dt),
                                    static_cast<double>(motion.period));
-        constexpr double two_pi = 6.283185307179586476925286766559;
-        const double frequency = two_pi / static_cast<double>(motion.period);
-        const double phase = frequency * motion.elapsed;
-        const double half_amplitude = 0.5 * static_cast<double>(motion.amplitude);
-        motion.angle = static_cast<float>(half_amplitude * (1.0 - std::cos(phase)));
-        const Quaternion rotation = Quaternion::from_axis_angle(motion.axis, motion.angle);
-        _sync.orientation = (rotation * motion.base_orientation).normalized();
-        _sync.rebuild_matrices();
-        _angular_velocity = motion.axis * static_cast<float>(half_amplitude * frequency * std::sin(phase));
-        _angular_acceleration = motion.axis * static_cast<float>(half_amplitude * frequency * frequency * std::cos(phase));
-    }
 
-    /** @brief Preserves the prescribed phase after a caller replaces or rotates the pose. */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    rebase_angular_oscillation() noexcept {
-        if (!_angular_oscillation) return;
-        auto& motion = *_angular_oscillation;
-        const Quaternion rotation = Quaternion::from_axis_angle(motion.axis, motion.angle);
-        motion.base_orientation = (rotation.conjugate() * _sync.orientation).normalized();
+        const double frequency      = 2.0 * atlas::pi_double / static_cast<double>(motion.period);
+        const double phase          = frequency * motion.elapsed;
+        const double half_amplitude = 0.5 * static_cast<double>(motion.amplitude);
+        const float angle           = static_cast<float>(half_amplitude * (1.0 - std::cos(phase)));
+
+        rotate(motion.axis, angle - motion.angle);
+        motion.angle = angle;
+
+        _angular_velocity     = motion.axis * static_cast<float>(half_amplitude * frequency * std::sin(phase));
+        _angular_acceleration = motion.axis * static_cast<float>(half_amplitude * frequency * frequency * std::cos(phase));
     }
 
     /**

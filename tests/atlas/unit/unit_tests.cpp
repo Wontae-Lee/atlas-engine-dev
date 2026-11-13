@@ -473,7 +473,7 @@ TEST(Unit, AngularOscillationSurfaceVelocityUsesSignedDerivative) {
                     Float3(1.0f, -2.0f * rate, 0.0f));
 }
 
-TEST(Unit, AngularOscillationDoesNotDriftAcrossCyclesOrLargeSteps) {
+TEST(Unit, AngularOscillationReturnsAcrossRepeatedCyclesAndLargeSteps) {
     Unit unit = Unit::builder()
                     .with_geometry(make_unit_box())
                     .with_sync(make_sync(Float3(0.0f)))
@@ -554,4 +554,33 @@ TEST(Unit, AngularOscillationPoseEditsPreservePhaseWithoutSnapBack) {
     const auto rotated = unit.sync();
     unit.update(1.0f);
     expect_vec_near(unit.sync().sync_dir_to_world(direction), rotated.sync_dir_to_world(direction), 1e-5f);
+}
+
+TEST(Unit, AngularOscillationNormalizesVeryLargeAndSmallAxes) {
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    for (const float scale : { std::numeric_limits<float>::max(), std::numeric_limits<float>::denorm_min() }) {
+        Unit unit = Unit::builder()
+                        .with_geometry(make_unit_box())
+                        .with_sync(make_sync(Float3(0.0f)))
+                        .with_angular_oscillation(Float3(0.0f, scale, scale), pi * 0.5f, 2.0f)
+                        .build();
+        unit.update(1.0f);
+        const Float3 expected(0.0f, 1.0f / atlas::SQRT_TWO, -1.0f / atlas::SQRT_TWO);
+        expect_vec_near(unit.sync().sync_dir_to_world(direction), expected, 1e-5f);
+    }
+}
+
+TEST(Unit, AngularOscillationContinuesFromAnEditedPoseAtTheNextPhase) {
+    Unit unit = Unit::builder()
+                    .with_geometry(make_unit_box())
+                    .with_sync(make_sync(Float3(0.0f)))
+                    .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 1.0f, 1.0f)
+                    .build();
+    unit.update(0.25f);
+    unit.rotate(Float3(1.0f, 0.0f, 0.0f), 0.7f);
+    const Float3 direction(1.0f, 0.2f, 0.3f);
+    const Float3 edited = unit.sync().sync_dir_to_world(direction);
+    unit.update(0.25f);
+    const auto increment = Quaternion::from_axis_angle(Float3(0.0f, 0.0f, 1.0f), 0.5f);
+    expect_vec_near(unit.sync().sync_dir_to_world(direction), increment.rotate(edited), 1e-5f);
 }
