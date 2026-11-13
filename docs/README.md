@@ -4,7 +4,7 @@ The root [README](../README.md) introduces Atlas and its quick starts. The guide
 
 | Topic | Start here | What it covers |
 |---|---|---|
-| Use Atlas | [Examples](../examples/README.md) | The maintained cylinder case in C++, Python, and Interactive |
+| Use Atlas | [Examples](../examples/README.md) | Numbered templates, writing guides, and cylinder examples for C++, Python, and Interactive |
 | Core architecture | [Overview](architecture/overview.md) and [simulation pipeline](architecture/simulation-pipeline.md) | State ownership, builders, and step ordering |
 | Core C++ API | [Core modules](atlas/) and [System](atlas/system/system.md) | Object construction, policies, backend views, and persistence |
 | Python | [Python frontend](frontends/python.md) | Engine selection, bindings, and NumPy ownership |

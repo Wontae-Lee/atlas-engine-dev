@@ -1,5 +1,6 @@
 """Run a small freestream-over-cylinder simulation through the Python binding."""
 
+import argparse
 from typing import Tuple
 
 import numpy as np
@@ -121,3 +122,22 @@ def run(steps: int = 40) -> None:
         f"completed: steps={system.step} particles={system.fluid.particle_count} "
         f"downstream={downstream} mean_u={mean_streamwise_velocity:.1f}m/s"
     )
+
+
+def nonnegative_steps(value: str) -> int:
+    if not value.isascii() or not value.isdecimal():
+        raise argparse.ArgumentTypeError("steps must be a nonnegative decimal integer")
+    return int(value)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Run the Atlas cylinder-flow example.")
+    parser.add_argument(
+        "steps", type=nonnegative_steps, nargs="?", default=40,
+        help="number of simulation updates (default: 40; 0 only builds and reports)",
+    )
+    run(parser.parse_args().steps)
+
+
+if __name__ == "__main__":
+    main()

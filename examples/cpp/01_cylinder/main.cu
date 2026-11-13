@@ -3,19 +3,35 @@
  * @brief Defines the native cylinder-flow example case.
  */
 
-#pragma once
-
 #include <atlas/atlas.h>
 
 #include <array>
+#include <charconv>
 #include <cstddef>
 #include <cstdio>
+#include <exception>
+#include <stdexcept>
+#include <string_view>
 #include <utility>
 
-namespace atlas_examples::cylinder {
+namespace {
+
+std::size_t
+parse_steps(int argc, char** argv) {
+    if (argc > 2) throw std::invalid_argument("expected at most one step count");
+    if (argc == 1) return 40;
+    const std::string_view input(argv[1]);
+    std::size_t steps = 0;
+    const auto result = std::from_chars(input.data(), input.data() + input.size(), steps);
+    if (input.empty() || result.ec != std::errc() || result.ptr != input.data() + input.size()) {
+        throw std::invalid_argument("steps must be a nonnegative decimal integer within size_t range");
+    }
+    return steps;
+}
+
 
 /// Creates the stationary identity transform shared by example boundary units.
-inline atlas::SyncHostPtr
+atlas::SyncHostPtr
 identity_sync() {
     return atlas::Sync::builder()
         .with_rigid_pose(atlas::Float3(0.0f), atlas::Quaternion(1.0f, 0.0f, 0.0f, 0.0f))
@@ -28,7 +44,7 @@ identity_sync() {
  * @param upper Upper box corner in world coordinates.
  * @return Unit containing the box and an identity transform.
  */
-inline atlas::Unit
+atlas::Unit
 box_unit(const atlas::Float3& lower, const atlas::Float3& upper) {
     const atlas::Geometry geometry(
         atlas::Box::builder().with_lower_corner(lower).with_upper_corner(upper).build());
@@ -43,7 +59,7 @@ box_unit(const atlas::Float3& lower, const atlas::Float3& upper) {
  * @param steps Number of complete System updates to execute.
  * @return Zero after the simulation and summary reporting complete.
  */
-inline int
+int
 run(const std::size_t steps = 40) {
     const atlas::Float3 domain_lower(-1.0f, -0.75f, -0.5f);
     const atlas::Float3 domain_upper(1.5f, 0.75f, 0.5f);
@@ -177,4 +193,18 @@ run(const std::size_t steps = 40) {
     return 0;
 }
 
+}
+
+int
+main(int argc, char** argv) {
+    if (argc == 2 && std::string_view(argv[1]) == "--help") {
+        std::printf("Usage: %s [steps]\nDefault: 40 steps; 0 constructs without advancing.\n", argv[0]);
+        return 0;
+    }
+    try {
+        return run(parse_steps(argc, argv));
+    } catch (const std::exception& error) {
+        std::fprintf(stderr, "01_cylinder: %s\nUsage: %s [steps]\n", error.what(), argv[0]);
+        return 1;
+    }
 }

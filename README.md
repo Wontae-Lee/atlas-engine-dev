@@ -51,7 +51,7 @@ Build and run the bundled Python cylinder case on TBB:
 ```bash
 docker build --target tbb -t atlas:tbb .
 docker run --rm atlas:tbb \
-    python /opt/atlas/examples/python/main.py cylinder 40
+    python /opt/atlas/examples/python/01_cylinder/main.py 40
 ```
 
 For CUDA, the host needs an NVIDIA driver and NVIDIA Container Toolkit:
@@ -59,7 +59,7 @@ For CUDA, the host needs an NVIDIA driver and NVIDIA Container Toolkit:
 ```bash
 docker build --target cuda -t atlas:cuda .
 docker run --rm --gpus all atlas:cuda \
-    python /opt/atlas/examples/python/main.py cylinder 40
+    python /opt/atlas/examples/python/01_cylinder/main.py 40
 ```
 
 The runtime images also contain the native Interactive executables. Published
@@ -117,7 +117,7 @@ print(system.fluid.positions())
 Run the maintained DSMC case with:
 
 ```bash
-python examples/python/main.py cylinder 40
+python examples/python/01_cylinder/main.py 40
 ```
 
 Engine selection, wheel construction, NumPy ownership, and binding layout are
@@ -128,15 +128,15 @@ documented in the [Python guide](docs/frontends/python.md).
 Build and run the native cylinder example with the TBB backend:
 
 ```bash
-cmake --preset tbb-gcc-release -DATLAS_EXAMPLES=ON
-cmake --build build/tbb-gcc-release --target atlas_example
-./build/tbb-gcc-release/examples/cpp/atlas_example cylinder 40
+cmake --preset tbb-gcc-release
+cmake --build --preset tbb-gcc-release --target atlas_example_cpp_01_cylinder
+./build/tbb-gcc-release/examples/cpp/01_cylinder/atlas_example_cpp_01_cylinder 40
 ```
 
 Use the `cuda-release` preset for the CUDA backend. Atlas public C++ types are
 in the `atlas::` namespace and can be included through `<atlas/atlas.h>`. The
 [examples guide](examples/README.md) explains the entry points, templates, and
-case layout.
+numbered directory layout.
 
 ## Interactive
 
@@ -153,16 +153,16 @@ cmake -S . -B build/interactive-headless-tbb -G Ninja \
     -DATLAS_BENCHMARKS=OFF
 cmake --build build/interactive-headless-tbb --target atlas-interactive-app
 ./build/interactive-headless-tbb/src/interactive/atlas-interactive \
-    --config examples/interactive/cases/cylinder.json
+    --config examples/interactive/01_cylinder/config.json
 ```
 
 For the native OpenGL window:
 
 ```bash
 sudo apt-get install -y libgl1-mesa-dev libglew-dev libglfw3-dev libglm-dev
-cmake --preset tbb-application-release
-cmake --build build/tbb-application-release --target atlas-interactive-example
-./build/tbb-application-release/examples/interactive/atlas-interactive-example cylinder 40
+cmake --preset tbb-release
+cmake --build --preset tbb-release --target atlas_example_interactive_01_cylinder
+./build/tbb-release/examples/interactive/01_cylinder/atlas_example_interactive_01_cylinder 40
 ```
 
 With rendering enabled, `atlas-interactive` accepts `render_open` and
@@ -172,7 +172,7 @@ documents configuration, commands, rendering, and backend state transfer.
 
 ## Documentation
 
-- [Examples and adding a case](examples/README.md)
+- [Examples and writing a new simulation](examples/README.md)
 - [Python binding](docs/frontends/python.md)
 - [Interactive execution and rendering](docs/frontends/interactive.md)
 - [Docker images](docs/operations/docker.md)

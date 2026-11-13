@@ -49,7 +49,7 @@ Start the JSONL server with a case:
 
 ```bash
 ./build/interactive-headless-tbb/src/interactive/atlas-interactive \
-    --config examples/interactive/cases/cylinder.json
+    --config examples/interactive/01_cylinder/config.json
 ```
 
 This emits a `create` response with `request_id: "startup"` and a `session_id`.
@@ -63,9 +63,13 @@ a graphics display. The JSONL transport itself remains stdin/stdout.
 A complete simulation object requires `dt`, `fluid`, and `universe`. Arrays of
 `solvers`, `emitters`, `colliders`, and `sinks`, plus `codec`, are optional. JSON
 uses numeric scalars, three-component vectors, and scalar-first quaternions
-`[w,x,y,z]`. The [cylinder case](../../examples/interactive/cases/cylinder.json)
-is runnable strict JSON; the [template](../../examples/interactive/template.jsonc)
+`[w,x,y,z]`. The [cylinder case](../../examples/interactive/01_cylinder/config.json)
+is runnable strict JSON; the [template](../../examples/interactive/00_template/reference.jsonc)
 shows the broader field set with comments and is not directly parseable JSON.
+The [runnable template](../../examples/interactive/00_template/config.json)
+starts with two moving particles. Each numbered directory has its own executable
+target and configuration; the [writing guide](../../examples/interactive/00_template/README.md)
+explains how to add the next example.
 
 | Object | Fields | Meaning |
 |---|---|---|

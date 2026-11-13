@@ -62,7 +62,11 @@ Tests mirror `include/atlas/`: every module has a directory under
 - Core algorithm or state changes: build and run the relevant C++ module tests on TBB; compile CUDA and run it when a CUDA-capable environment is available.
 - Python binding changes: build the selected native extension and run `tests/python/` against the installed package. Backend parity requires separate processes.
 - Interactive execution changes: run the headless Interactive tests. Rendering changes also build the rendering target and its geometry tests.
-- Example changes: build the corresponding executable or install the Python package, then run the maintained cylinder smoke case.
+- Example changes: build the corresponding executable or install the Python package, then run both `00_template` and `01_cylinder` in the changed frontend. Check
+  zero/invalid step arguments as well as a finite 40-step run. For Interactive,
+  also check installed configuration lookup from a different working directory;
+  windowed smoke runs need a display (or Xvfb on Linux). The windowed example
+  performs one final headless step after its bounded window loop.
 - Benchmark harness changes: build and run the small benchmark smoke configuration; performance claims require a separate deliberate benchmark run.
 
 The [CI guide](../operations/ci.md) lists configured checks. Check a particular

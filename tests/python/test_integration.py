@@ -1,4 +1,5 @@
 import gc
+import re
 import unittest
 from pathlib import Path
 
@@ -63,14 +64,55 @@ class IntegrationTests(unittest.TestCase):
         np.testing.assert_allclose(outputs[-1], [[0.5, 0.5, 0.5]], atol=1e-6)
 
     def test_maintained_cylinder_example_smoke(self):
-        example = Path(__file__).resolve().parents[2] / "examples/python/main.py"
+        example = Path(__file__).resolve().parents[2] / "examples/python/01_cylinder/main.py"
         result = run_python(f"""
             import runpy
             import sys
             sys.argv = [{str(example)!r}]
-            sys.path.insert(0, {str(example.parent)!r})
             runpy.run_path({str(example)!r}, run_name="__main__")
         """, engine=get_default_engine(), timeout=120)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("cylinder flow:", result.stdout)
         self.assertIn("completed: steps=40", result.stdout)
+
+    def test_template_example_has_deterministic_motion(self):
+        example = Path(__file__).resolve().parents[2] / "examples/python/00_template/main.py"
+        result = run_python(f"""
+            import runpy
+            import sys
+            sys.argv = [{str(example)!r}]
+            runpy.run_path({str(example)!r}, run_name="__main__")
+        """, engine=get_default_engine(), timeout=120)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("completed: steps=40 particles=2", result.stdout)
+        position = re.search(r"first_x=([-\d.]+)", result.stdout)
+        self.assertIsNotNone(position, result.stdout)
+        self.assertAlmostEqual(float(position.group(1)), -0.46, places=5)
+
+    def test_numbered_examples_accept_zero_steps(self):
+        for name in ("00_template", "01_cylinder"):
+            with self.subTest(example=name):
+                example = Path(__file__).resolve().parents[2] / "examples/python" / name / "main.py"
+                result = run_python(f"""
+                    import runpy
+                    import sys
+                    sys.argv = [{str(example)!r}, "0"]
+                    runpy.run_path({str(example)!r}, run_name="__main__")
+                """, engine=get_default_engine(), timeout=120)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn("completed: steps=0", result.stdout)
+
+    def test_numbered_examples_reject_invalid_arguments(self):
+        for name in ("00_template", "01_cylinder"):
+            example = Path(__file__).resolve().parents[2] / "examples/python" / name / "main.py"
+            for arguments in (("-1",), ("1.5",), ("cylinder",), ("2", "extra")):
+                with self.subTest(example=name, arguments=arguments):
+                    result = run_python(f"""
+                        import runpy
+                        import sys
+                        sys.argv = [{str(example)!r}] + {list(arguments)!r}
+                        runpy.run_path({str(example)!r}, run_name="__main__")
+                    """, engine=get_default_engine(), timeout=120)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("usage:", result.stderr)
+                    self.assertNotIn("completed:", result.stdout)

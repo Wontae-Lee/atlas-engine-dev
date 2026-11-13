@@ -48,20 +48,54 @@ requires CMake 3.21+. The presets use Ninja. Important presets:
 - Configure: `tbb-debug`, `tbb-release` (CPU; host compiler, no CUDA toolkit),
   `tbb-gcc-debug`, `tbb-gcc-release` (explicit `gcc`/`g++`),
   `tbb-nvcc-debug` (CPU backend built by nvcc),
-  `cuda-debug`, `cuda-release` (GPU; nvcc + Thrust),
-  `tbb-application-release`, `cuda-application-release` (native applications)
+  `cuda-debug`, `cuda-release` (GPU; nvcc + Thrust)
 - Test: `ctest-tbb-debug`, `ctest-tbb-gcc-debug`, `ctest-tbb-nvcc-debug`, `ctest-cuda-debug`
 
-The debug presets enable logging and GoogleTest while keeping Python, examples,
-benchmarks, and interactive rendering off. Release presets produce the core
-only. The two `*-application-release` presets add the native execution/rendering
-targets and examples to their backend's release configuration. Python packaging
-uses `pyproject.toml` rather than a broad all-features preset.
+The debug presets enable every project feature: logging, GoogleTest/CTest,
+Python bindings, benchmarks, examples, Interactive execution, and rendering.
+They therefore require Python development headers, nanobind, GoogleTest,
+Google Benchmark, and the OpenGL stack in addition to the backend toolchain.
+All TBB debug variants remain CPU backends; only `tbb-nvcc-debug` needs nvcc.
+
+Release presets use the same features as debug, but disable `BUILD_TESTING`
+and `ATLAS_GOOGLE_TEST`. Logging, Python, benchmarks, examples, Interactive,
+and rendering remain enabled. Both configurations therefore need the optional
+frontend dependencies. Python packaging uses `pyproject.toml` with its own
+narrow feature selection.
+
+Every visible configure preset has a same-name build preset. Select individual
+targets with `--target` rather than adding feature-specific presets:
+
+```bash
+cmake --preset tbb-release
+cmake --build --preset tbb-release --target atlas_example_cpp_01_cylinder
+./build/tbb-release/examples/cpp/01_cylinder/atlas_example_cpp_01_cylinder 40
+cmake --build --preset tbb-release --target atlas_examples_interactive
+```
+
+`atlas_examples_cpp` builds both C++ examples, `atlas_examples_interactive`
+builds both windowed examples, and `atlas_examples` builds all native examples.
+The [examples guide](../../examples/README.md) lists individual targets and
+links each `00_template` writing guide. Python examples are scripts and do not
+have executable CMake targets. Omit `--target` to build all enabled targets.
+Run the configure preset before using its build preset in a fresh directory.
 
 A direct configuration without a preset defaults the project feature options to
 `ON`. Disable targets explicitly when configuring a narrower build. Presets and
 CI commands keep their declared cache values and therefore override these
 defaults.
+
+On Ubuntu, install the system dependencies for the full debug/release presets
+(the repository submodules provide the remaining libraries):
+
+```bash
+sudo apt-get install -y build-essential cmake ninja-build libtbb-dev python3-dev \
+    libgl1-mesa-dev libglew-dev libglfw3-dev libglm-dev
+```
+
+The minimal `tbb-dev` / `cuda-dev` Docker stages need these graphics development
+packages added before using the full presets. The explicit Core-only command
+below remains usable without graphics or Python development dependencies.
 
 A typical GCC debug configuration and test run is:
 

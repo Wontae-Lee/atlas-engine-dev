@@ -1,0 +1,62 @@
+{
+  "dt": 0.0001,
+  "fluid": {
+    "buffer_size": 1024,
+    "particle_count": 2,
+    "statistical_weight": 1.0,
+    "materials": [
+      {
+        "type": "molecule",
+        "mass": 4.65e-26,
+        "translational_energy": 0.0,
+        "rotational_energy": 0.0,
+        "vibrational_energy": 0.0,
+        "reference_diameter": 4.17e-10,
+        "reference_temperature": 273.0,
+        "viscosity_index": 0.74,
+        "scattering_parameter": 1.0
+      }
+    ],
+    "position": [
+      [
+        -0.5,
+        -0.1,
+        0
+      ],
+      [
+        -0.5,
+        0.1,
+        0
+      ]
+    ],
+    "velocity": [
+      [
+        10,
+        0,
+        0
+      ],
+      [
+        10,
+        0,
+        0
+      ]
+    ],
+    "species": [
+      0,
+      0
+    ]
+  },
+  "universe": {
+    "lower_corner": [
+      -1,
+      -1,
+      -1
+    ],
+    "upper_corner": [
+      1,
+      1,
+      1
+    ],
+    "cell_size": 0.25
+  }
+}

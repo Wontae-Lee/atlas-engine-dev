@@ -1,111 +1,138 @@
 # Atlas Examples
 
-The examples present the same Atlas simulation through three consumers of the
-core: native C++, Python, and the native Interactive application. Each frontend has
-one entry point, a reusable reference template, and focused runnable cases.
+Each frontend uses numbered, independent example directories. `00_template` is
+an executable starting point with a detailed writing guide; `01_cylinder` is the
+maintained freestream-over-cylinder DSMC simulation. Select the executable or
+Python script directly. There is no shared case-selection entry point.
 
 ```text
 examples/
 ├── cpp/
-│   ├── main.cu
-│   ├── template.h
-│   └── cases/cylinder.h
+│   ├── 00_template/     # main.cu, CMakeLists.txt, README.md, reference.h
+│   └── 01_cylinder/     # main.cu, CMakeLists.txt, README.md
 ├── interactive/
-│   ├── main.cpp
-│   ├── template.jsonc
-│   └── cases/cylinder.json
+│   ├── 00_template/     # main.cpp, config.json, CMakeLists.txt, README.md, reference.jsonc
+│   └── 01_cylinder/     # main.cpp, config.json, CMakeLists.txt, README.md
 └── python/
-    ├── main.py
-    ├── template.py
-    └── cases/cylinder.py
+    ├── 00_template/     # main.py, README.md, reference.py
+    └── 01_cylinder/     # main.py, README.md
 ```
 
-`main.*` selects a case and handles command-line arguments. Files under
-`cases/` are small simulations intended to run. The `template.*` files show the
-broader construction surface, including alternatives that a single physical
-case does not need. Copy a template when exploring the API; start from a case
-when building a runnable simulation.
+The templates initialize two particles moving at 10 m/s in an otherwise empty
+domain. They introduce construction, stepping, and state access without a
+collision model. The `reference.*` files preserve the broader API/configuration
+catalogue; copy only the alternatives needed for your simulation. They are not
+validated physical scenarios. The cylinder examples emit a molecular
+freestream, reflect it from an open cylinder, and remove particles near domain
+boundaries. Their defaults are smoke runs, not engineering benchmarks.
 
-## Cylinder flow
+## Targets and entry points
 
-All three frontends default to `cylinder`. The case emits a molecular
-freestream, advances it around an open cylinder, and removes particles that
-leave the domain. The numerical setup is intentionally small enough for a smoke
-run and is not a validated engineering benchmark.
+| Frontend | Template | Cylinder |
+|---|---|---|
+| C++ CMake target | `atlas_example_cpp_00_template` | `atlas_example_cpp_01_cylinder` |
+| Interactive CMake target | `atlas_example_interactive_00_template` | `atlas_example_interactive_01_cylinder` |
+| Python script | `python/00_template/main.py` | `python/01_cylinder/main.py` |
+
+`atlas_examples_cpp` builds both C++ programs. `atlas_examples_interactive`
+builds both windowed programs when rendering is enabled. `atlas_examples`
+builds every enabled native example. Python scripts import the installed Atlas
+package and need no per-example CMake target.
 
 ## Native C++
 
-Enable examples in a TBB build and run the shared example executable:
+From the repository root:
 
 ```bash
-cmake -S . -B build/examples-tbb -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DATLAS_DEVICE_SYSTEM=TBB \
-    -DATLAS_EXAMPLES=ON \
-    -DATLAS_PYTHON=OFF \
-    -DATLAS_INTERACTIVE=OFF
-cmake --build build/examples-tbb --target atlas_example
-./build/examples-tbb/examples/cpp/atlas_example cylinder 40
+cmake --preset tbb-release
+cmake --build --preset tbb-release --target atlas_examples_cpp
+./build/tbb-release/examples/cpp/00_template/atlas_example_cpp_00_template 40
+./build/tbb-release/examples/cpp/01_cylinder/atlas_example_cpp_01_cylinder 40
 ```
 
-Use `ATLAS_DEVICE_SYSTEM=CUDA` with an nvcc-capable toolchain for the CUDA
-variant. A GPU is required when the executable runs.
+To build only the cylinder, use
+`cmake --build --preset tbb-release --target atlas_example_cpp_01_cylinder`.
+Replace `tbb` with `cuda` in the configure/build preset and build directory for
+nvcc/CUDA. Running CUDA executables requires a GPU. Native TBB builds need no
+CUDA toolkit. Full presets also configure Python, benchmarks, and rendering;
+install their [dependencies](../docs/contributing/build.md) first, or use the
+narrow configure command in the template guide.
+
+The sole positional argument is the nonnegative step count (default 40).
+Zero constructs the System and reports its initial state without advancing it.
+Invalid or extra arguments fail instead of silently running another simulation.
+See the [C++ template writing guide](cpp/00_template/README.md).
 
 ## Native Interactive window
 
-Interactive execution and rendering must both be enabled. The example loads a
-JSON case, creates a session through `InteractiveApplication`, opens rendering
-with `render_open`, and starts the session through the same command path as the
-JSONL server. Application updates advance running sessions; `RenderManager`
-draws frames independently. It displays live particles and configured source,
-collider, and sink geometry at their current poses.
-
 ```bash
-cmake -S . -B build/interactive-tbb -G Ninja \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DATLAS_DEVICE_SYSTEM=TBB \
-    -DATLAS_INTERACTIVE=ON \
-    -DATLAS_INTERACTIVE_RENDERING=ON \
-    -DATLAS_EXAMPLES=ON \
-    -DATLAS_PYTHON=OFF
-cmake --build build/interactive-tbb --target atlas-interactive-example
-./build/interactive-tbb/examples/interactive/atlas-interactive-example cylinder 40
+cmake --preset tbb-release
+cmake --build --preset tbb-release --target atlas_examples_interactive
+./build/tbb-release/examples/interactive/00_template/atlas_example_interactive_00_template 40
+./build/tbb-release/examples/interactive/01_cylinder/atlas_example_interactive_01_cylinder 40
 ```
 
-The first argument may also be an explicit JSON file. Omitting the second
-argument runs until the window closes. The optional number limits simulation
-steps, rather than frames. After the window closes, the example pauses,
-closes rendering, steps the still-live session once, and then closes it. Mouse
-drag or `W/A/S/D` orbits the
-camera, right drag or the scroll wheel zooms, keys `1` through `7` select fixed
-views, and Escape closes the window.
+These presets enable execution, rendering, and examples. OpenGL, GLEW, GLFW,
+GLM, and a graphics display are required. For a single program, use
+`cmake --build --preset tbb-release --target atlas_example_interactive_01_cylinder`.
+Use `cuda-release` for the CUDA backend.
 
-`template.jsonc` documents every accepted configuration branch. Runnable case
-files use strict JSON because the same decoder accepts them at runtime.
+Each executable loads its own `config.json`; it does not accept a case name.
+Omit the step limit (or pass zero) to run until the window closes. The positive
+limit counts simulation updates, not rendered frames. After the window loop,
+the example pauses the session, closes rendering, performs one additional
+headless step to demonstrate independent lifetimes, and closes the session.
+Mouse drag or `W/A/S/D` orbits the camera, right drag or the wheel zooms,
+`1` through `7` select fixed views, and Escape closes the window.
+
+Use the JSONL server for arbitrary configurations or display-free execution:
+
+```bash
+./build/tbb-release/src/interactive/atlas-interactive \
+    --config examples/interactive/01_cylinder/config.json
+```
+
+Build that server separately with `--target atlas-interactive-app`. The
+[Interactive template writing guide](interactive/00_template/README.md)
+explains strict JSON, configuration copying, installation, application/session
+ownership, and headless commands. `reference.jsonc` contains comments and is
+not accepted as runtime JSON.
 
 ## Python
 
-Install an Atlas wheel, select the engine before importing native classes when
-needed, and run:
+Install the Atlas package as described in the
+[Python frontend guide](../docs/frontends/python.md), then run:
 
 ```bash
-ATLAS_DEFAULT_ENGINE=tbb python examples/python/main.py cylinder 40
+ATLAS_DEFAULT_ENGINE=tbb python examples/python/00_template/main.py 40
+ATLAS_DEFAULT_ENGINE=tbb python examples/python/01_cylinder/main.py 40
 ```
 
-The Python case mirrors the native setup and reads final Fluid state as owned
-NumPy snapshots for application-side analysis.
+Select the engine before importing native classes. Both scripts accept only an
+optional nonnegative step count, defaulting to 40. Fluid reads return owned
+NumPy snapshots. See the [Python template writing guide](python/00_template/README.md)
+for initialization, ownership, state output, and adding components.
 
-## Adding a case to every frontend
+## Writing the next example
 
-1. Add `examples/cpp/cases/<name>.h` with a `run()` function and dispatch it
-   from `examples/cpp/main.cu`.
-2. Add `examples/python/cases/<name>.py` with a `run()` function and dispatch it
-   from `examples/python/main.py`.
-3. Add `examples/interactive/cases/<name>.json`. The Interactive entry point
-   finds it automatically by case name; no C++ dispatch change is required.
-4. Keep the three configurations physically equivalent where their public APIs
-   permit it, and keep case defaults small enough for a smoke run.
+1. Copy the frontend's `00_template` directory to `02_<descriptive_name>`, then
+   continue with `03_...`, `04_...`. Keep matching numbers and names across
+   frontends when they demonstrate the same simulation.
+2. Implement the setup in that directory's `main.cu`, `main.py`, or
+   `config.json`, using its template guide. Keep a local README explaining
+   purpose, parameters, commands, and expected output.
+3. For C++ and Interactive, rename the target in the copied `CMakeLists.txt`,
+   register the directory in the frontend's `CMakeLists.txt`, and add the target
+   to its frontend aggregate. Reconfigure CMake. No dispatcher needs editing.
+4. Keep the existing backend/build-type presets. Select the new executable
+   with `cmake --build --preset tbb-release --target atlas_example_<frontend>_02_<name>`;
+   the aggregate targets include it through its local `add_dependencies` call.
+5. Build and run the new example and retained template/cylinder smoke runs.
+   Keep common configurations physically equivalent where the APIs permit it.
 
-Frontend architecture and protocol details belong in
-[`docs/frontends/`](../docs/frontends/), while build and validation policy
-belongs in [`docs/contributing/`](../docs/contributing/).
+Previous `atlas_example` / `atlas-interactive-example` targets and
+`main.* cylinder 40` commands have been replaced by the explicit targets and
+paths above. Update local IDE run configurations accordingly.
+
+Architecture and protocol details live in [`docs/frontends/`](../docs/frontends/).
+Build and test policy lives in [`docs/contributing/`](../docs/contributing/).

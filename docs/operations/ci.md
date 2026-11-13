@@ -9,7 +9,7 @@ claiming that validation passed.
 | Workflow | Trigger | Configured coverage | Artifacts |
 |---|---|---|---|
 | [`ci-core.yml`](../../.github/workflows/ci-core.yml) | `main` pull request, manual, reusable call | GCC/G++ TBB C++ tests on Ubuntu 22.04 and 24.04 | CTest failure logs |
-| [`ci-python.yml`](../../.github/workflows/ci-python.yml) | `main` pull request, manual, reusable call | TBB source distribution and wheel on Ubuntu 22.04/Python 3.10 and Ubuntu 24.04/Python 3.12; metadata, engine selection, Python tests, and the maintained example | Source distributions, wheels, and logs |
+| [`ci-python.yml`](../../.github/workflows/ci-python.yml) | `main` pull request, manual, reusable call | TBB source distribution and wheel on Ubuntu 22.04/Python 3.10 and Ubuntu 24.04/Python 3.12; metadata, engine selection, Python tests (including template and cylinder smoke runs), and the cylinder script | Source distributions, wheels, and logs |
 | [`publish-python.yml`](../../.github/workflows/publish-python.yml) | Manual or reusable workflow call | TBB manylinux wheel build and configured cibuildwheel checks | Source distribution and wheels; optional PyPI publication |
 | [`publish-docker.yml`](../../.github/workflows/publish-docker.yml) | Manual or reusable workflow call | TBB and CUDA runtime images on Ubuntu 22.04 and 24.04; package, engine, native-linkage, and TBB example checks | Optional GHCR publication and job summary |
 | [`release.yml`](../../.github/workflows/release.yml) | Manual dispatch from `main` with a new `X.Y.Z` input | Core and Python CI, metadata bump, release commit and tag, package and image builds, PyPI and GHCR publication, GitHub Release creation | CI logs, PyPI distributions, GHCR images, and a GitHub Release |

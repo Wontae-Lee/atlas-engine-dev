@@ -13,14 +13,14 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "BUILD_TESTING": "OFF",
-        "ATLAS_LOGGING": "OFF",
-        "ATLAS_GOOGLE_TEST": "OFF",
-        "ATLAS_PYTHON": "OFF",
-        "ATLAS_BENCHMARKS": "OFF",
-        "ATLAS_EXAMPLES": "OFF",
-        "ATLAS_INTERACTIVE": "OFF",
-        "ATLAS_INTERACTIVE_RENDERING": "OFF",
+        "BUILD_TESTING": "ON",
+        "ATLAS_LOGGING": "ON",
+        "ATLAS_GOOGLE_TEST": "ON",
+        "ATLAS_PYTHON": "ON",
+        "ATLAS_BENCHMARKS": "ON",
+        "ATLAS_EXAMPLES": "ON",
+        "ATLAS_INTERACTIVE": "ON",
+        "ATLAS_INTERACTIVE_RENDERING": "ON",
         "ATLAS_HOST_COMPILER": "native"
       }
     },
@@ -29,10 +29,7 @@
       "hidden": true,
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "BUILD_TESTING": "ON",
-        "ATLAS_LOGGING": "ON",
-        "ATLAS_GOOGLE_TEST": "ON"
+        "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
@@ -40,7 +37,9 @@
       "hidden": true,
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "OFF",
+        "ATLAS_GOOGLE_TEST": "OFF"
       }
     },
     {
@@ -101,28 +100,36 @@
       "cacheVariables": {
         "ATLAS_DEVICE_SYSTEM": "CUDA"
       }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "tbb-debug",
+      "configurePreset": "tbb-debug"
     },
     {
-      "name": "tbb-application-release",
-      "displayName": "Atlas TBB Native Applications",
-      "inherits": "tbb-release",
-      "cacheVariables": {
-        "ATLAS_LOGGING": "ON",
-        "ATLAS_EXAMPLES": "ON",
-        "ATLAS_INTERACTIVE": "ON",
-        "ATLAS_INTERACTIVE_RENDERING": "ON"
-      }
+      "name": "tbb-gcc-debug",
+      "configurePreset": "tbb-gcc-debug"
     },
     {
-      "name": "cuda-application-release",
-      "displayName": "Atlas CUDA Native Applications",
-      "inherits": "cuda-release",
-      "cacheVariables": {
-        "ATLAS_LOGGING": "ON",
-        "ATLAS_EXAMPLES": "ON",
-        "ATLAS_INTERACTIVE": "ON",
-        "ATLAS_INTERACTIVE_RENDERING": "ON"
-      }
+      "name": "tbb-nvcc-debug",
+      "configurePreset": "tbb-nvcc-debug"
+    },
+    {
+      "name": "tbb-release",
+      "configurePreset": "tbb-release"
+    },
+    {
+      "name": "tbb-gcc-release",
+      "configurePreset": "tbb-gcc-release"
+    },
+    {
+      "name": "cuda-debug",
+      "configurePreset": "cuda-debug"
+    },
+    {
+      "name": "cuda-release",
+      "configurePreset": "cuda-release"
     }
   ],
   "testPresets": [

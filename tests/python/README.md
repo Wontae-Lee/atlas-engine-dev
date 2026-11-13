@@ -39,7 +39,8 @@ extension from an old build directory.
   module behavior without duplicating the C++ physics unit suite.
 - `test_system.py`, `test_ownership.py`, and `test_integration.py`: core object
   hierarchy, individual phases, deterministic updates, consumed-object lifetime,
-  mesh/policy retention, repeated collection, and the maintained Python example.
+  mesh/policy retention, repeated collection, and the numbered Python template
+  and cylinder examples, including CLI validation.
 - `test_serialization.py`: temporary-file Fluid, Universe, and System snapshot
   round trips and snapshot independence.
 - `test_errors.py`: controlled Python exceptions for invalid states, arrays, and

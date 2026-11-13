@@ -95,10 +95,10 @@ RUN apt-get update && \
 WORKDIR /src
 COPY . .
 
-RUN cmake --preset tbb-application-release && \
-    cmake --build build/tbb-application-release \
-        --target atlas-interactive-app atlas-interactive-example && \
-    cmake --install build/tbb-application-release \
+RUN cmake --preset tbb-release && \
+    cmake --build build/tbb-release \
+        --target atlas-interactive-app atlas_examples_interactive && \
+    cmake --install build/tbb-release \
         --prefix /opt/atlas \
         --component interactive
 
@@ -117,11 +117,11 @@ RUN apt-get update && \
 WORKDIR /src
 COPY . .
 
-RUN cmake --preset cuda-application-release \
+RUN cmake --preset cuda-release \
         -DCMAKE_CUDA_ARCHITECTURES="${CMAKE_CUDA_ARCHITECTURES}" && \
-    cmake --build build/cuda-application-release \
-        --target atlas-interactive-app atlas-interactive-example && \
-    cmake --install build/cuda-application-release \
+    cmake --build build/cuda-release \
+        --target atlas-interactive-app atlas_examples_interactive && \
+    cmake --install build/cuda-release \
         --prefix /opt/atlas \
         --component interactive
 

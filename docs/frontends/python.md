@@ -194,7 +194,11 @@ The source-distribution include patterns are anchored at the repository root
 so local CMake build trees cannot contribute files to a release archive.
 
 The wheel smoke command checks math imports and operations. The simulation
-example uses the PascalCase classes exported from `atlas`.
+examples use the PascalCase classes exported from `atlas`. Each has an independent
+numbered directory: run `python examples/python/00_template/main.py 40` to start small
+or `python examples/python/01_cylinder/main.py 40` for DSMC flow. The
+[template writing guide](../../examples/python/00_template/README.md) explains
+how to copy a directory and construct a new simulation without case dispatch.
 
 ## Registered modules
 

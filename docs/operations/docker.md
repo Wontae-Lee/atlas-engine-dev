@@ -13,8 +13,8 @@ a source checkout or local compilation:
 
 ```bash
 docker pull ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04
-docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/main.py
-docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/main.py
+docker run --rm ghcr.io/wontae-lee/atlas-engine-dev:tbb-ubuntu22.04 python /opt/atlas/examples/python/01_cylinder/main.py
+docker run --rm --gpus all ghcr.io/wontae-lee/atlas-engine-dev:cuda-ubuntu24.04 python /opt/atlas/examples/python/01_cylinder/main.py
 ```
 
 The engine tags are `tbb-ubuntu22.04`, `tbb-ubuntu24.04`, `cuda-ubuntu22.04`, and
@@ -53,8 +53,8 @@ the Atlas test suites or simulation examples.
 Run the included DSMC example:
 
 ```bash
-docker run --rm atlas:tbb python /opt/atlas/examples/python/main.py
-docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/main.py
+docker run --rm atlas:tbb python /opt/atlas/examples/python/01_cylinder/main.py
+docker run --rm --gpus all atlas:cuda python /opt/atlas/examples/python/01_cylinder/main.py
 ```
 
 CUDA execution requires a compatible NVIDIA driver on the host and the
@@ -104,17 +104,20 @@ rules within a Python process.
 ## Native executables
 
 Both runtime images provide `/opt/atlas/bin/atlas-interactive` and
-`atlas-interactive-example`. Their default command remains `python`; run a
+`atlas_example_interactive_00_template` and
+`atlas_example_interactive_01_cylinder`. Each example has its own configuration
+under `/opt/atlas/examples/interactive/<number_name>/config.json`. Their default
+command remains `python`; run a
 native executable explicitly when needed. `atlas-interactive` accepts JSONL
 without opening a display, although the runtime images also include its
 rendering support. A display is needed only for `render_open` or the example:
 
 ```bash
 docker run --rm -i atlas:tbb atlas-interactive \
-    --config /opt/atlas/examples/interactive/cases/cylinder.json
+    --config /opt/atlas/examples/interactive/01_cylinder/config.json
 ```
 
-The `atlas-interactive-example` executable opens the native window. It needs the
+The `atlas_example_interactive_01_cylinder` executable opens the native window. It needs the
 host display socket and display environment. For a local X11 session, a typical
 TBB invocation is:
 
@@ -122,7 +125,7 @@ TBB invocation is:
 docker run --rm -it \
     -e DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
-    atlas:tbb atlas-interactive-example
+    atlas:tbb atlas_example_interactive_01_cylinder
 ```
 
 Host display authorization policies still apply. The CUDA server needs
