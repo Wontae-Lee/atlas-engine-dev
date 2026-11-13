@@ -90,18 +90,26 @@ A `unit` contains a required `geometry` and optional `translation`,
 `angular_oscillation` instead of `angular_velocity` / `angular_acceleration`:
 
 ```json
-"angular_oscillation": {"axis": [1, 0, 0], "amplitude": 0.34906585, "period": 4.0, "smooth": true}
+"angular_oscillation": {"axis": [1, 0, 0], "amplitude": 0.34906585, "period": 4.0, "smooth": true, "elapsed": 0.0}
 ```
 
 `axis`, `amplitude`, and `period` are required. `axis` is a nonzero world-space rotation axis,
 `amplitude` is the signed maximum angular displacement in radians, and `period`
 is a positive number of simulation seconds for a complete close/open cycle.
 `smooth` is an optional boolean that defaults to `true`; other JSON types are
-rejected. Core builders validate finite values and reject conflicting angular
-kinematics. With `smooth: true`, the angle relative to the initial orientation is
-`amplitude * (1 - cos(2*pi*time/period)) / 2`: it starts at rest at the initial
-pose, reaches `amplitude` halfway through the period, and returns to the initial
-pose at rest. With `smooth: false`, the angle follows a triangular wave:
+rejected. `elapsed` is an optional number in seconds, defaulting to `0.0`;
+booleans, strings, and null are rejected. Core builders require finite
+`0 <= elapsed < period`, validate the other numeric values, and reject
+conflicting angular kinematics. The Unit's configured orientation is the
+zero-angle reference; construction applies the angle and derivatives at
+`elapsed`, so a nonzero value starts partway through the cycle. Linear motion
+is not advanced during this initialization.
+
+In the formulas below, `time = simulation_time + elapsed`. With `smooth: true`,
+the angle relative to the reference orientation is
+`amplitude * (1 - cos(2*pi*time/period)) / 2`: at cycle time zero it is at rest
+at the reference pose, reaches `amplitude` halfway through the period, and
+returns to the reference pose at rest. With `smooth: false`, the angle follows a triangular wave:
 `2*amplitude*phase` for `phase < 0.5`, and `2*amplitude*(1-phase)` otherwise,
 where `phase = (time mod period) / period`. Angular speed stays constant within
 each half-cycle and reverses immediately at the endpoints. At each reversal,
@@ -109,8 +117,9 @@ the angular velocity belongs to the new half-cycle: `+2*amplitude/period` at
 phase zero and `-2*amplitude/period` at phase one-half. The ordinary acceleration
 field is zero; the instantaneous reversal has no finite acceleration value.
 
-Motion advances only with simulation steps; pause freezes it and restart resets
-it. Rotation is about the Unit's translation, so express mesh
+Motion advances only with simulation steps; pause freezes it and restart
+restores the configured elapsed time, pose, and derivatives. Rotation is about
+the Unit's translation, so express mesh
 vertices relative to a hinge and place that hinge with `translation`.
 The live Core collider uses the same pose and angular surface velocity that the
 renderer observes; no separate visual animation is needed. Linear translation

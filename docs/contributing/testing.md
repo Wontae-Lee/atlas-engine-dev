@@ -68,7 +68,10 @@ Tests mirror `include/atlas/`: every module has a directory under
   windowed smoke runs need a display (or Xvfb on Linux). The windowed example
   templates and cylinder perform one final headless step after the window loop.
   The `02_intake` example stops at the exact requested step; use `800 --headless`
-  to check two full wing-motion cycles and a paced window to inspect framing.
+  with both `--case 1` and `--case 2` to check synchronized and staggered phases,
+  plus a paced window to inspect framing. Case 2 keeps the same period and must
+  preserve each wing's configured phase on restart. Reject missing, duplicate,
+  or out-of-range `--case` arguments.
 - Benchmark harness changes: build and run the small benchmark smoke configuration; performance claims require a separate deliberate benchmark run.
 
 The [CI guide](../operations/ci.md) lists configured checks. Check a particular

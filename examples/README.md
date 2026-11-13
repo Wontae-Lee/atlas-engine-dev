@@ -78,7 +78,8 @@ GLM, and a graphics display are required. For a single program, use
 `cmake --build --preset tbb-release --target atlas_example_interactive_01_cylinder`.
 Use `cuda-release` for the CUDA backend.
 
-Each executable loads its own `config.json`; it does not accept a case name.
+The template and cylinder executables each load their own `config.json`; they
+do not accept a case name.
 Omit the step limit (or pass zero) to run until the window closes. The positive
 limit counts simulation updates, not rendered frames. After the window loop,
 the example pauses the session, closes rendering, performs one additional
@@ -105,8 +106,11 @@ not accepted as runtime JSON.
 wings and support from `assets/intake`. The wings repeatedly close inward by
 20 degrees and return to their original assembly, with moving-wall particle
 collisions. Build `atlas_example_interactive_02_intake` and run it without
-arguments for a paced window, or with `800 --headless` for two complete cycles.
-Its guide explains the inferred hinges, motion/flow settings, and asset install.
+arguments for the synchronized case-1 window, or with `800 --headless` for two
+complete cycles. Pass `--case 2` for the same period with slightly staggered wing
+phases; `motion.phase_spread` controls the phase difference around the ring.
+Its guide explains both cases, the inferred hinges, motion/flow settings, and
+asset install.
 This example is currently implemented only for Interactive.
 
 ## Python

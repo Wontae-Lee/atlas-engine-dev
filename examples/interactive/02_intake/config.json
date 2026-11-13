@@ -2,6 +2,7 @@
   "motion": {
     "closing_angle_degrees": 20,
     "period_seconds": 0.02,
+    "phase_spread": 0.25,
     "smooth": true,
     "display_seconds_per_cycle": 5,
     "hinge_radius": 0.25,

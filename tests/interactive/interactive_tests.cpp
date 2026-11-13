@@ -237,6 +237,7 @@ TEST(InteractiveConfig, AngularOscillationRequiresItsWireFields) {
     EXPECT_NEAR(motion.amplitude, 1.57079632679f, 1e-6f);
     EXPECT_FLOAT_EQ(motion.period, 2.0f);
     EXPECT_TRUE(motion.smooth);
+    EXPECT_FLOAT_EQ(motion.elapsed, 0.0f);
 
     for (const std::string malformed : {
              R"({"amplitude":1,"period":2})",
@@ -248,6 +249,10 @@ TEST(InteractiveConfig, AngularOscillationRequiresItsWireFields) {
              R"({"axis":[0,0,1],"amplitude":1,"period":2,"smooth":0})",
              R"({"axis":[0,0,1],"amplitude":1,"period":2,"smooth":"false"})",
              R"({"axis":[0,0,1],"amplitude":1,"period":2,"smooth":null})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"elapsed":"0.25"})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"elapsed":true})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"elapsed":null})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"elapsed":[]})",
              "[]", "null" }) {
         SCOPED_TRACE(malformed);
         EXPECT_THROW(decode_oscillating_config(malformed), std::exception);
@@ -279,7 +284,10 @@ TEST(InteractiveConfig, AngularOscillationSmoothOptionReachesCore) {
 TEST(InteractiveConfig, AngularOscillationSemanticValidationComesFromCore) {
     for (const std::string invalid : {
              R"({"axis":[0,0,0],"amplitude":1,"period":2})",
-             R"({"axis":[0,0,1],"amplitude":1,"period":0})" }) {
+             R"({"axis":[0,0,1],"amplitude":1,"period":0})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"elapsed":-0.25})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"elapsed":2})",
+             R"({"axis":[0,0,1],"amplitude":1,"period":2,"elapsed":3})" }) {
         SCOPED_TRACE(invalid);
         const Config config = decode_oscillating_config(invalid);
         atlas::interactive::CoreFactory factory(config);
@@ -547,4 +555,55 @@ TEST(InteractiveProtocol, CreateRequestSeparatesSimulationAndOutputConfiguration
     EXPECT_TRUE(request.output.csv_enabled);
     EXPECT_EQ(request.output.output_directory, std::filesystem::path("results"));
     EXPECT_EQ(request.output.csv_filename, "run.csv");
+}
+
+TEST(InteractiveConfig, AngularOscillationInitialElapsedReachesCore) {
+    for (const std::string smooth : { "true", "false" }) {
+        SCOPED_TRACE(smooth);
+        const auto config = decode_oscillating_config(
+            R"({"axis":[0,0,1],"amplitude":1,"period":2,"elapsed":0.25,"smooth":)" + smooth + "}");
+        const auto& configured_unit = config.colliders[0].unit;
+        ASSERT_TRUE(configured_unit.angular_oscillation.has_value());
+        EXPECT_FLOAT_EQ(configured_unit.angular_oscillation->elapsed, 0.25f);
+        atlas::interactive::CoreFactory factory;
+        const auto unit = factory.build(configured_unit);
+        const float expected_angle = smooth == "true" ? 0.1464466094f : 0.25f;
+        const auto direction = unit.sync().sync_dir_to_world(atlas::Float3(1.0f, 0.0f, 0.0f));
+        EXPECT_NEAR(direction.x, std::cos(expected_angle), 1e-6f);
+        EXPECT_NEAR(direction.y, std::sin(expected_angle), 1e-6f);
+        ASSERT_TRUE(unit.angular_velocity().has_value());
+        const float expected_speed = smooth == "true" ? 1.110720735f : 1.0f;
+        EXPECT_NEAR(unit.angular_velocity()->z, expected_speed, 1e-6f);
+    }
+}
+
+TEST(InteractiveScene, RestartRestoresTheConfiguredOscillationPhase) {
+    for (const std::string smooth : { "true", "false" }) {
+        SCOPED_TRACE(smooth);
+        const auto config = decode_oscillating_config(
+            R"({"axis":[0,0,1],"amplitude":1,"period":2,"elapsed":0.25,"smooth":)" + smooth + "}");
+        atlas::interactive::Session session(config);
+        const atlas::Float3 tip(1.0f, 0.0f, 0.0f);
+        const float expected_angle = smooth == "true" ? 0.1464466094f : 0.25f;
+        const auto initial = session.scene_view().geometries[0].sync.sync_to_world(tip);
+        EXPECT_NEAR(initial.x, 1.0f + std::cos(expected_angle), 1e-6f);
+        EXPECT_NEAR(initial.y, 0.5f + std::sin(expected_angle), 1e-6f);
+
+        session.step(8);
+        const auto after_cycle = session.scene_view().geometries[0].sync.sync_to_world(tip);
+        EXPECT_NEAR(after_cycle.x, initial.x, 1e-5f);
+        EXPECT_NEAR(after_cycle.y, initial.y, 1e-5f);
+        session.step();
+        const auto first_step = session.scene_view().geometries[0].sync.sync_to_world(tip);
+        session.step(2);
+        session.restart();
+        EXPECT_EQ(session.status().step, 0u);
+        const auto restarted = session.scene_view().geometries[0].sync.sync_to_world(tip);
+        EXPECT_NEAR(restarted.x, initial.x, 1e-5f);
+        EXPECT_NEAR(restarted.y, initial.y, 1e-5f);
+        session.step();
+        const auto first_step_again = session.scene_view().geometries[0].sync.sync_to_world(tip);
+        EXPECT_NEAR(first_step_again.x, first_step.x, 1e-5f);
+        EXPECT_NEAR(first_step_again.y, first_step.y, 1e-5f);
+    }
 }

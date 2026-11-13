@@ -113,6 +113,7 @@ struct SimulationConfig {
         float amplitude = 0.0f;
         float period = 1.0f;
         bool smooth = true;
+        float elapsed = 0.0f;
     };
 
     /// Geometry with rigid-body pose and optional kinematics.

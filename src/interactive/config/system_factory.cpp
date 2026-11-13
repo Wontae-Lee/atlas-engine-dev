@@ -215,7 +215,8 @@ CoreFactory::build(const SimulationConfig::Unit& config) {
     }
     if (config.angular_oscillation) {
         const auto& motion = *config.angular_oscillation;
-        builder.with_angular_oscillation(vec3(motion.axis), motion.amplitude, motion.period, motion.smooth);
+        builder.with_angular_oscillation(vec3(motion.axis), motion.amplitude, motion.period,
+                                        motion.smooth, motion.elapsed);
     }
     return builder.build();
 }

@@ -786,3 +786,59 @@ TEST(Unit, ZeroAmplitudeOscillationRemainsFiniteAtTheSmallestPositivePeriod) {
         expect_vec_near(*unit.angular_acceleration(), Float3(0.0f));
     }
 }
+
+TEST(Unit, AngularOscillationInitialElapsedSetsPoseAndDerivativesAcrossAFullCycle) {
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    for (const bool smooth : { true, false }) {
+        SCOPED_TRACE(smooth);
+        Unit unit = Unit::builder()
+                        .with_geometry(make_unit_box())
+                        .with_sync(make_sync(Float3(2.0f, 3.0f, 4.0f)))
+                        .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 1.0f, 2.0f, smooth, 0.25f)
+                        .build();
+        const float angle = smooth ? 0.5f * (1.0f - 1.0f / atlas::SQRT_TWO) : 0.25f;
+        const auto expected = Quaternion::from_axis_angle(Float3(0.0f, 0.0f, 1.0f), angle);
+        const Float3 initial_direction = unit.sync().sync_dir_to_world(direction);
+        expect_vec_near(initial_direction, expected.rotate(direction));
+        const float speed = smooth ? pi / (2.0f * atlas::SQRT_TWO) : 1.0f;
+        const float acceleration = smooth ? pi * pi / (2.0f * atlas::SQRT_TWO) : 0.0f;
+        expect_vec_near(*unit.angular_velocity(), Float3(0.0f, 0.0f, speed));
+        expect_vec_near(*unit.angular_acceleration(), Float3(0.0f, 0.0f, acceleration));
+
+        for (int step = 0; step < 8; ++step) unit.update(0.25f);
+        expect_vec_near(unit.sync().sync_dir_to_world(direction), initial_direction, 1e-5f);
+        expect_vec_near(unit.sync().translation, Float3(2.0f, 3.0f, 4.0f));
+        expect_vec_near(*unit.angular_velocity(), Float3(0.0f, 0.0f, speed));
+        expect_vec_near(*unit.angular_acceleration(), Float3(0.0f, 0.0f, acceleration));
+    }
+}
+
+TEST(Unit, AngularOscillationInitialElapsedMustBeFiniteWithinThePeriod) {
+    for (const float elapsed : { -0.25f, 2.0f, 3.0f, std::numeric_limits<float>::infinity(),
+                                std::numeric_limits<float>::quiet_NaN() }) {
+        SCOPED_TRACE(elapsed);
+        EXPECT_THROW(static_cast<void>(Unit::builder()
+            .with_geometry(make_unit_box())
+            .with_sync(make_sync(Float3(0.0f)))
+            .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 1.0f, 2.0f, true, elapsed)
+            .build()), std::runtime_error);
+    }
+}
+
+TEST(Unit, AngularOscillationBuilderReuseDefaultsInitialElapsedToZero) {
+    auto builder = Unit::builder();
+    const Unit shifted = builder.with_geometry(make_unit_box())
+                             .with_sync(make_sync(Float3(0.0f)))
+                             .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 1.0f, 2.0f, false, 0.25f)
+                             .build();
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    const auto shifted_rotation = Quaternion::from_axis_angle(Float3(0.0f, 0.0f, 1.0f), 0.25f);
+    expect_vec_near(shifted.sync().sync_dir_to_world(direction), shifted_rotation.rotate(direction));
+
+    const Unit reset = builder.with_geometry(make_unit_box())
+                           .with_sync(make_sync(Float3(0.0f)))
+                           .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 1.0f, 2.0f)
+                           .build();
+    expect_vec_near(reset.sync().sync_dir_to_world(direction), direction);
+    expect_vec_near(*reset.angular_velocity(), Float3(0.0f));
+}

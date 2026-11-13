@@ -174,11 +174,15 @@ unit(const Json& value) {
         if (motion.contains("smooth") && !motion.at("smooth").is_boolean()) {
             throw std::invalid_argument("Expected boolean: angular_oscillation.smooth");
         }
+        if (motion.contains("elapsed") && !motion.at("elapsed").is_number()) {
+            throw std::invalid_argument("Expected number: angular_oscillation.elapsed");
+        }
         result.angular_oscillation = Config::AngularOscillation {
             vec3(motion.at("axis")),
             motion.at("amplitude").get<float>(),
             motion.at("period").get<float>(),
-            motion.value("smooth", true)
+            motion.value("smooth", true),
+            motion.value("elapsed", 0.0f)
         };
     }
     return result;

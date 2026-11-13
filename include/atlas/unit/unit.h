@@ -595,22 +595,26 @@ public:
     with_angular_acceleration(const Float3& alpha) noexcept;
 
     /**
-     * @brief Prescribes repeated rotation with configurable endpoint smoothing.
+     * @brief Prescribes repeated rotation with configurable smoothing and initial phase.
      *
      * Rotation is about a fixed world-space axis through the Unit translation.
      * Smooth motion uses amplitude/2 * (1 - cos(2*pi*t/period)) and starts at
-     * rest. With smoothing disabled, each half-cycle has constant angular speed
-     * and reverses instantly at its endpoint; acceleration is zero between turns.
+     * rest when elapsed is zero. With smoothing disabled, each half-cycle has
+     * constant angular speed and reverses instantly at its endpoint;
+     * acceleration is zero between turns.
+     * Construction applies the angle and derivatives at elapsed to the supplied pose.
      * Linear motion may coexist; explicit angular kinematics may not.
      *
      * @param axis Finite nonzero world-space axis, normalized by build().
-     * @param amplitude Finite signed maximum angle from the initial pose, in radians.
+     * @param amplitude Finite signed maximum angle from the supplied reference pose, in radians.
      * @param period Finite positive full cycle duration in seconds.
      * @param smooth Enables cosine easing; false selects constant-speed half-cycles.
+     * @param elapsed Initial cycle time in seconds, finite and in [0, period).
      * @return `*this`, for chaining; build() validates all inputs and finite derivatives.
      */
     ATLAS_HOST Builder&
-    with_angular_oscillation(const Float3& axis, float amplitude, float period, bool smooth = true) noexcept;
+    with_angular_oscillation(const Float3& axis, float amplitude, float period,
+                             bool smooth = true, float elapsed = 0.0f) noexcept;
 
     /**
      * @brief Validates the staged fields, canonicalizes kinematics, and builds the Unit.
@@ -642,8 +646,9 @@ private:
      * @throws std::runtime_error when geometry is unset, sync is unset, a linear
      *         acceleration is present without a linear velocity, or an angular
      *         acceleration is present without an angular velocity, or oscillation
-     *         inputs are non-finite, degenerate, conflict with angular kinematics,
-     *         or produce derivatives outside the finite float range.
+     *         inputs are non-finite, degenerate, have elapsed time outside
+     *         [0, period), conflict with angular kinematics, or produce
+     *         derivatives outside the finite float range.
      */
     ATLAS_HOST void
     validate() const;
@@ -669,7 +674,7 @@ private:
 
     std::optional<bool> _angular_oscillation_smooth; ///< Staged cosine-easing choice, or unset when oscillation is absent.
 
-    std::optional<float> _angular_oscillation_elapsed; ///< Staged elapsed time, initialized to zero when oscillation is configured.
+    std::optional<float> _angular_oscillation_elapsed; ///< Staged initial cycle time in [0, period), defaulting to zero in the setter.
 
     std::optional<float> _angular_oscillation_angle; ///< Staged angle, initialized to zero when oscillation is configured.
 };

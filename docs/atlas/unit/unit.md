@@ -36,10 +36,11 @@ A `Unit` owns its geometry, pose, and motion state by value:
   time, and the previous prescribed angle are each stored directly on Unit as
   a `std::optional`. All are absent when oscillation is disabled. The builder
   stages the same six optionals. `with_angular_oscillation()` engages them
-  together, initializing elapsed time and the previous angle to zero. A
+  together, setting elapsed time from the optional setter argument (default
+  zero) and the previous angle to zero. A
   successful build transfers all six into Unit before evaluating the initial
-  derivatives into the ordinary angular kinematic fields, then resets every
-  staged optional.
+  pose and derivatives at that elapsed time, then resets every staged optional.
+  Angular derivatives populate the ordinary angular kinematic fields.
 
 The four kinematic fields are kept in a canonical pairing by
 `canonicalize_kinematics`: if an acceleration is present without its matching
@@ -90,17 +91,24 @@ The lower-level motion operations are also public:
 
 ## Prescribed angular oscillation
 
-Use `Unit::Builder::with_angular_oscillation(axis, amplitude, period, smooth)`
-for a repeated closing/opening cycle. The fourth parameter defaults to `true`,
-so existing three-argument calls retain smooth harmonic motion. This is the
-setter's argument default: an unconfigured Unit or builder has no smoothing
+Use `Unit::Builder::with_angular_oscillation(axis, amplitude, period, smooth, elapsed)`
+for a repeated closing/opening cycle. The fourth parameter defaults to `true`
+and the fifth to `0.0f`, so existing three- and four-argument calls retain their
+motion and start at phase zero. These are setter argument defaults: an
+unconfigured Unit or builder has no smoothing
 value because all its oscillation optionals are empty. The axis is expressed
 in world space and passes through the Unit's translation; the
 geometry must be centered on that pivot in its local coordinates. Amplitude is
 the signed angle in radians reached at half a cycle, and period is the duration
-of a complete cycle in seconds.
+of a complete cycle in seconds. `elapsed` selects the initial time within that
+cycle in seconds; it must be finite and satisfy `0 <= elapsed < period`.
+The supplied `Sync` is the zero-angle reference pose. Construction rotates it
+to the angle at `elapsed` and initializes velocity and acceleration at that
+same phase. No linear translation is advanced during this initialization.
 
-With `smooth = true`, the initial pose is the open/rest pose:
+The formulas use cycle time `t = simulation_time + elapsed`. With
+`smooth = true` and the default zero elapsed time, the initial pose is the
+open/rest pose:
 
 ```text
 theta(t) = amplitude / 2 * (1 - cos(2*pi*t/period))
@@ -108,9 +116,10 @@ omega(t) = amplitude * pi / period * sin(2*pi*t/period)
 alpha(t) = 2 * amplitude * pi^2 / period^2 * cos(2*pi*t/period)
 ```
 
-Smooth motion starts at zero angular velocity, reaches the specified amplitude
-at half a period with zero angular velocity again, and returns to its initial
-pose at rest at a full period.
+At cycle time zero smooth motion starts at zero angular velocity, reaches the
+specified amplitude at half a period with zero angular velocity again, and
+returns to the reference pose at rest at a full period. A nonzero initial
+elapsed time starts partway through this same trajectory.
 
 With `smooth = false`, the angle follows a triangular profile. For normalized
 phase `p = (t modulo period) / period`:
@@ -120,7 +129,7 @@ phase `p = (t modulo period) / period`:
 0.5 <= p < 1:  theta = 2 * amplitude * (1 - p), omega = -2 * amplitude / period
 ```
 
-This mode starts moving immediately at constant speed and reverses direction
+This mode moves at constant speed and reverses direction
 instantaneously at each endpoint. At exactly half a period the reported
 velocity is the opening velocity; at exactly a whole period it is the closing
 velocity. Acceleration is reported as zero for each segment, including the
@@ -158,10 +167,17 @@ Unit constant_speed_wing = Unit::builder()
     .with_sync(hinge_pose)
     .with_angular_oscillation(Float3(1.0f, 0.0f, 0.0f), 0.35f, 4.0f, false)
     .build();
+
+Unit phase_shifted_wing = Unit::builder()
+    .with_geometry(hinge_centered_geometry)
+    .with_sync(hinge_pose)
+    .with_angular_oscillation(Float3(1.0f, 0.0f, 0.0f), 0.35f, 4.0f, true, 1.0f)
+    .build();
 ```
 
 The Core builder rejects a non-finite or zero axis, non-finite amplitude,
-non-finite/non-positive period, angular derivatives outside the finite float
+non-finite/non-positive period, elapsed time outside the finite `[0, period)`
+range, angular derivatives outside the finite float
 range, and combinations with explicit angular velocity or acceleration. Axis
 normalization scales by the largest absolute component before calling the
 existing `normalized_or()` helper, avoiding squared-length overflow or underflow
@@ -173,11 +189,13 @@ period` and has zero segment acceleration.
 `set_sync()` and `rotate()` retain their ordinary pose-editing behavior. They
 leave the oscillation phase, axis, and derivatives unchanged; the next update
 applies only the next angular increment to the edited pose. `move()` translates
-the pivot normally. Rebuilding the Unit starts a new cycle at phase zero, with
-zero initial velocity in smooth mode or the closing velocity in constant-speed
-mode. A successful build resets every staged oscillation optional to empty.
-On reuse, calling `with_angular_oscillation()` without a `smooth` argument sets
-that optional to `true`; omitting the setter leaves oscillation disabled. The
+the pivot normally. Rebuilding from the same configuration restores its
+configured initial elapsed time, pose, and derivatives. With elapsed omitted,
+this is phase zero: zero initial velocity in smooth mode or the closing
+velocity in constant-speed mode. A successful build resets every staged
+oscillation optional to empty. On reuse, calling `with_angular_oscillation()`
+without the optional arguments sets smoothing to `true` and elapsed to zero;
+omitting the setter leaves oscillation disabled. The
 direct optional motion members remain trivially copyable and use the same
 TBB/CUDA update path.
 
@@ -262,8 +280,9 @@ matching elapsed time/angle keeps that pose continuous.
 This value constructor assumes a complete, valid oscillation state when its
 axis is present: all six optionals must be engaged, with normalized elapsed time
 in `[0, period)` and valid numerical parameters. The host builder performs the
-parameter checks for normal construction and starts elapsed time and angle at
-zero.
+parameter checks for normal construction and stages the requested initial
+elapsed time with previous angle zero, so the constructor applies the initial
+phase relative to the supplied reference pose.
 
 ## Building a Unit — `Unit::Builder`
 

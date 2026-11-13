@@ -57,12 +57,13 @@ Unit::Builder::with_angular_acceleration(const Float3& alpha) noexcept {
 
 /** @brief Stages a bounded periodic angular-motion policy for builder validation. */
 Unit::Builder&
-Unit::Builder::with_angular_oscillation(const Float3& axis, const float amplitude, const float period, const bool smooth) noexcept {
+Unit::Builder::with_angular_oscillation(const Float3& axis, const float amplitude, const float period,
+                                        const bool smooth, const float elapsed) noexcept {
     _angular_oscillation_axis      = axis;
     _angular_oscillation_amplitude = amplitude;
     _angular_oscillation_period    = period;
     _angular_oscillation_smooth    = smooth;
-    _angular_oscillation_elapsed   = 0.0f;
+    _angular_oscillation_elapsed   = elapsed;
     _angular_oscillation_angle     = 0.0f;
     return *this;
 }
@@ -134,6 +135,11 @@ Unit::Builder::validate() const {
             || !atlas::isfinite(*_angular_oscillation_amplitude)
             || !atlas::isfinite(*_angular_oscillation_period) || !(*_angular_oscillation_period > 0.0f)) {
             throw std::runtime_error("Unit::Builder: angular oscillation requires a finite nonzero axis, finite amplitude, and finite positive period.");
+        }
+        if (!atlas::isfinite(*_angular_oscillation_elapsed)
+            || *_angular_oscillation_elapsed < 0.0f
+            || !(*_angular_oscillation_elapsed < *_angular_oscillation_period)) {
+            throw std::runtime_error("Unit::Builder: angular oscillation elapsed time must be finite and in [0, period).");
         }
         if (_angular_velocity.has_value() || _angular_acceleration.has_value()) {
             throw std::runtime_error("Unit::Builder: angular oscillation cannot be combined with angular velocity or acceleration.");

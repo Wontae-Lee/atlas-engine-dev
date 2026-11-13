@@ -30,13 +30,15 @@ using Vec3 = std::array<float, 3>;
 
 struct Options {
     std::size_t steps = 0;
+    int simulation_case = 1;
     bool headless = false;
     bool paced = true;
 };
 
 void
 usage(const char* executable) {
-    std::printf("Usage: %s [steps] [--headless] [--unpaced]\n"
+    std::printf("Usage: %s [steps] [--case 1|2] [--headless] [--unpaced]\n"
+                "Case 1 (default): synchronized wings; case 2: staggered phases, same period.\n"
                 "Default: repeat until the window closes; 0 means unlimited.\n"
                 "--headless requires a positive step count.\n", executable);
 }
@@ -45,15 +47,23 @@ Options
 options(int argc, char** argv) {
     Options result;
     bool supplied_steps = false;
+    bool supplied_case = false;
     for (int index = 1; index < argc; ++index) {
         const std::string_view value(argv[index]);
         if (value == "--headless") result.headless = true;
         else if (value == "--unpaced") result.paced = false;
-        else {
+        else if (value == "--case") {
+            if (supplied_case || index + 1 >= argc) throw std::invalid_argument("expected --case 1 or --case 2 once");
+            const std::string_view selected(argv[++index]);
+            if (selected == "1") result.simulation_case = 1;
+            else if (selected == "2") result.simulation_case = 2;
+            else throw std::invalid_argument("case must be 1 or 2");
+            supplied_case = true;
+        } else {
             if (supplied_steps) throw std::invalid_argument("expected only one step count");
             const auto parsed = std::from_chars(value.data(), value.data() + value.size(), result.steps);
             if (parsed.ec != std::errc() || parsed.ptr != value.data() + value.size()) {
-                throw std::invalid_argument("expected a nonnegative step count, --headless or --unpaced");
+                throw std::invalid_argument("expected a nonnegative step count, --case 1|2, --headless or --unpaced");
             }
             supplied_steps = true;
         }
@@ -110,7 +120,7 @@ mesh_geometry(const std::filesystem::path& path, const Vec3& pivot) {
 }
 
 atlas::interactive::SimulationConfig
-simulation(const Json& config, const std::filesystem::path& directory) {
+simulation(const Json& config, const std::filesystem::path& directory, const float phase_spread) {
     Json scene = config.at("simulation");
     const auto& motion = config.at("motion");
     const float amplitude = motion.at("closing_angle_degrees").get<float>() * atlas::pi / 180.0f;
@@ -135,7 +145,8 @@ simulation(const Json& config, const std::filesystem::path& directory) {
                 { "axis", Vec3 { -cosine, 0.0f, sine } },
                 { "amplitude", amplitude },
                 { "period", period },
-                { "smooth", smooth }
+                { "smooth", smooth },
+                { "elapsed", period * (phase_spread * (wing - 1) / 11.0f) }
             } }
         };
         colliders.push_back({ { "unit", std::move(unit) },
@@ -143,6 +154,12 @@ simulation(const Json& config, const std::filesystem::path& directory) {
                               { "restitution", 1.0f } });
     }
     return atlas::interactive::JsonCodec::decode_simulation(scene.dump());
+}
+
+float
+motion_angle(const float amplitude, const bool smooth, const float phase) {
+    return smooth ? amplitude * (0.5f * (1.0f - std::cos(2.0f * atlas::pi * phase)))
+                  : amplitude * (2.0f * (phase < 0.5f ? phase : 1.0f - phase));
 }
 
 atlas::interactive::Response
@@ -170,7 +187,13 @@ main(int argc, char** argv) {
         if (!(display_period > 0.0f) || !std::isfinite(display_period)) {
             throw std::invalid_argument("display_seconds_per_cycle must be finite and positive");
         }
-        auto scene = simulation(config, directory);
+        const float phase_spread = run.simulation_case == 2
+                                       ? config.at("motion").value("phase_spread", 0.25f)
+                                       : 0.0f;
+        if (!std::isfinite(phase_spread) || phase_spread < 0.0f || phase_spread >= 1.0f) {
+            throw std::invalid_argument("phase_spread must be finite and in [0, 1) cycles");
+        }
+        auto scene = simulation(config, directory, phase_spread);
         const float dt = scene.dt;
         const float period = config.at("motion").at("period_seconds").get<float>();
         const float amplitude = config.at("motion").at("closing_angle_degrees").get<float>();
@@ -204,8 +227,9 @@ main(int argc, char** argv) {
         }
         command.command = atlas::interactive::Command::start;
         handle(app, command);
-        std::printf("02_intake: 12 wings + support, close=%.1fdeg period=%.6fs smooth=%s dt=%.1es\n",
-                    amplitude, period, smooth ? "true" : "false", dt);
+        std::printf("02_intake: case=%d (%s), 12 wings + support, close=%.1fdeg period=%.6fs smooth=%s phase_spread=%.3fcycles dt=%.1es\n",
+                    run.simulation_case, run.simulation_case == 1 ? "synchronized" : "staggered",
+                    amplitude, period, smooth ? "true" : "false", phase_spread, dt);
         float next_report_time = period * 0.5f;
         std::size_t completed = 0;
         while ((run.headless || app.rendering_active()) && (run.steps == 0 || completed < run.steps)) {
@@ -219,11 +243,15 @@ main(int argc, char** argv) {
                 if (status.status) {
                     const float simulation_time = status.status->simulation_time;
                     const float phase = std::fmod(simulation_time, period) / period;
-                    const float angle = smooth
-                                            ? amplitude * 0.5f * (1.0f - std::cos(2.0f * atlas::pi * phase))
-                                            : 2.0f * amplitude * (phase < 0.5f ? phase : 1.0f - phase);
-                    std::printf("step=%zu angle=%.2fdeg particles=%zu\n", status.status->step,
-                                angle, status.status->particle_count);
+                    const float first_angle = motion_angle(amplitude, smooth, phase);
+                    if (run.simulation_case == 1) {
+                        std::printf("step=%zu angle=%.2fdeg particles=%zu\n", status.status->step,
+                                    first_angle, status.status->particle_count);
+                    } else {
+                        const float last_phase = std::fmod(phase + phase_spread, 1.0f);
+                        std::printf("step=%zu wing1=%.2fdeg wing12=%.2fdeg particles=%zu\n", status.status->step,
+                                    first_angle, motion_angle(amplitude, smooth, last_phase), status.status->particle_count);
+                    }
                 }
             }
             if (!run.headless && run.paced) std::this_thread::sleep_until(next_update);
