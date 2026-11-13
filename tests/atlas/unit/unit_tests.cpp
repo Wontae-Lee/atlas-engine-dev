@@ -695,3 +695,94 @@ TEST(Unit, ConstantSpeedAngularOscillationRunsOnConfiguredBackend) {
     expect_vec_near(*opening.angular_velocity(), Float3(0.0f, 0.0f, -pi * 0.5f));
     expect_vec_near(*opening.angular_acceleration(), Float3(0.0f));
 }
+
+TEST(Unit, FullConstructorInitializesOscillationAndRestoresItsPhase) {
+    Unit unit(make_unit_box(), *make_sync(Float3(3.0f, 0.0f, 0.0f)),
+              Float3(1.0f, 0.0f, 0.0f), std::nullopt, std::nullopt, std::nullopt,
+              Float3(0.0f, 0.0f, 3.0f), pi, 4.0f, false, 0.5f, 0.0f);
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    const Float3 diagonal(1.0f / atlas::SQRT_TWO, 1.0f / atlas::SQRT_TWO, 0.0f);
+    expect_vec_near(unit.sync().sync_dir_to_world(direction), diagonal);
+    expect_vec_near(*unit.velocity(), Float3(1.0f, 0.0f, 0.0f));
+    expect_vec_near(*unit.acceleration(), Float3(0.0f));
+    expect_vec_near(*unit.angular_velocity(), Float3(0.0f, 0.0f, pi * 0.5f));
+    expect_vec_near(*unit.angular_acceleration(), Float3(0.0f));
+
+    unit.advance_angular_oscillation(0.5f);
+    expect_vec_near(unit.sync().sync_dir_to_world(direction), Float3(0.0f, 1.0f, 0.0f));
+    expect_vec_near(unit.sync().translation, Float3(3.0f, 0.0f, 0.0f));
+}
+
+TEST(Unit, PublicOscillationAdvanceIgnoresAbsentMotionAndInvalidSteps) {
+    Unit translating = Unit::builder()
+                           .with_geometry(make_unit_box())
+                           .with_sync(make_sync(Float3(2.0f, 0.0f, 0.0f)))
+                           .with_velocity(Float3(1.0f, 0.0f, 0.0f))
+                           .build();
+    translating.advance_angular_oscillation(0.0f);
+    translating.advance_angular_oscillation(0.5f);
+    expect_vec_near(translating.sync().translation, Float3(2.0f, 0.0f, 0.0f));
+    EXPECT_FALSE(translating.angular_velocity().has_value());
+    EXPECT_FALSE(translating.angular_acceleration().has_value());
+
+    Unit oscillating = Unit::builder()
+                           .with_geometry(make_unit_box())
+                           .with_sync(make_sync(Float3(0.0f)))
+                           .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), pi, 4.0f, false)
+                           .build();
+    oscillating.advance_angular_oscillation(0.5f);
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    const auto expected_direction = oscillating.sync().sync_dir_to_world(direction);
+    const auto expected_velocity = *oscillating.angular_velocity();
+    for (const float dt : { 0.0f, -0.5f, std::numeric_limits<float>::infinity(),
+                            std::numeric_limits<float>::quiet_NaN() }) {
+        oscillating.advance_angular_oscillation(dt);
+        expect_vec_near(oscillating.sync().sync_dir_to_world(direction), expected_direction);
+        expect_vec_near(*oscillating.angular_velocity(), expected_velocity);
+        expect_vec_near(*oscillating.angular_acceleration(), Float3(0.0f));
+    }
+    oscillating.advance_angular_oscillation(0.5f);
+    expect_vec_near(oscillating.sync().sync_dir_to_world(direction), Float3(0.0f, 1.0f, 0.0f));
+}
+
+TEST(Unit, FloatOscillationPhaseHandlesLargeFiniteStepsWithoutOverflowOrPhaseLoss) {
+    const float maximum = std::numeric_limits<float>::max();
+    Unit large_period = Unit::builder()
+                            .with_geometry(make_unit_box())
+                            .with_sync(make_sync(Float3(0.0f)))
+                            .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), pi * 0.5f, maximum, false)
+                            .build();
+    const Float3 direction(1.0f, 0.0f, 0.0f);
+    large_period.update(maximum * 0.75f);
+    large_period.update(maximum * 0.75f);
+    expect_vec_near(large_period.sync().sync_dir_to_world(direction), Float3(0.0f, 1.0f, 0.0f), 1e-5f);
+    EXPECT_TRUE(atlas::isfinite(*large_period.angular_velocity()));
+
+    Unit small_period = Unit::builder()
+                            .with_geometry(make_unit_box())
+                            .with_sync(make_sync(Float3(0.0f)))
+                            .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 1.0f, 1.0f, false)
+                            .build();
+    small_period.update(0.125f);
+    const auto expected_direction = small_period.sync().sync_dir_to_world(direction);
+    small_period.update(maximum);
+    expect_vec_near(small_period.sync().sync_dir_to_world(direction), expected_direction);
+    expect_vec_near(*small_period.angular_velocity(), Float3(0.0f, 0.0f, 2.0f));
+}
+
+TEST(Unit, ZeroAmplitudeOscillationRemainsFiniteAtTheSmallestPositivePeriod) {
+    for (const bool smooth : { true, false }) {
+        Unit unit = Unit::builder()
+                        .with_geometry(make_unit_box())
+                        .with_sync(make_sync(Float3(0.0f)))
+                        .with_angular_oscillation(Float3(0.0f, 0.0f, 1.0f), 0.0f,
+                                                 std::numeric_limits<float>::denorm_min(), smooth)
+                        .build();
+        expect_vec_near(*unit.angular_velocity(), Float3(0.0f));
+        expect_vec_near(*unit.angular_acceleration(), Float3(0.0f));
+        unit.update(1.0f);
+        expect_vec_near(unit.sync().sync_dir_to_world(Float3(1.0f, 0.0f, 0.0f)), Float3(1.0f, 0.0f, 0.0f));
+        expect_vec_near(*unit.angular_velocity(), Float3(0.0f));
+        expect_vec_near(*unit.angular_acceleration(), Float3(0.0f));
+    }
+}

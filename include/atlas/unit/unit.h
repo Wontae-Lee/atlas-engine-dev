@@ -67,18 +67,16 @@ public:
     }
 
     /**
-     * @brief Constructs a Unit with an explicit (optional) kinematic state.
+     * @brief Constructs ordinary linear/angular kinematics with oscillation absent.
      *
-     * The four optional kinematic arguments are first passed through
-     * @ref canonicalize_kinematics, which fills in a zero partner for any lone
-     * velocity/acceleration so the pairs are consistent, and only then stored.
-     *
-     * @param geometry             The collision shape, in its local frame.
-     * @param sync                 The local-to-world pose to place it at.
-     * @param velocity             Linear velocity in world units/second, or none.
-     * @param acceleration         Linear acceleration in world units/second^2, or none.
-     * @param angular_velocity     Angular velocity as an axis scaled by rad/second, or none.
-     * @param angular_acceleration Angular acceleration as an axis scaled by rad/second^2, or none.
+     * Missing velocity/acceleration partners are filled with zero by the full
+     * value constructor. Existing six-argument calls retain this behavior.
+     * @param geometry Local-frame collision shape.
+     * @param sync Local-to-world pose.
+     * @param velocity Optional linear velocity in world units/second.
+     * @param acceleration Optional linear acceleration in world units/second squared.
+     * @param angular_velocity Optional angular velocity in radians/second.
+     * @param angular_acceleration Optional angular acceleration in radians/second squared.
      */
     ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
     Unit(Geometry geometry,
@@ -87,18 +85,65 @@ public:
          std::optional<Float3> acceleration,
          std::optional<Float3> angular_velocity,
          std::optional<Float3> angular_acceleration) noexcept
-        : _geometry(std::move(geometry))
-        , _sync(std::move(sync)) {
-        Unit::canonicalize_kinematics(
-            velocity,
-            acceleration,
-            angular_velocity,
-            angular_acceleration);
+        : Unit(std::move(geometry), std::move(sync),
+               std::move(velocity), std::move(acceleration),
+               std::move(angular_velocity), std::move(angular_acceleration),
+               std::nullopt, std::nullopt, std::nullopt,
+               std::nullopt, std::nullopt, std::nullopt) {
+    }
 
-        _velocity             = std::move(velocity);
-        _acceleration         = std::move(acceleration);
-        _angular_velocity     = std::move(angular_velocity);
-        _angular_acceleration = std::move(angular_acceleration);
+    /**
+     * @brief Constructs every pose, kinematic, and optional oscillation member.
+     *
+     * Oscillation inputs must be either all absent or a complete valid state;
+     * Builder validates this host-side, as with other device-callable value
+     * constructors. A configured axis is normalized and the supplied elapsed
+     * time and angle initialize the current pose increment and derivatives.
+     * @param geometry Local-frame collision shape.
+     * @param sync Local-to-world pose at the supplied oscillation angle.
+     * @param velocity Optional linear velocity in world units/second.
+     * @param acceleration Optional linear acceleration in world units/second squared.
+     * @param angular_velocity Optional ordinary angular velocity.
+     * @param angular_acceleration Optional ordinary angular acceleration.
+     * @param angular_oscillation_axis Optional finite nonzero world-space axis.
+     * @param angular_oscillation_amplitude Optional signed maximum angle in radians.
+     * @param angular_oscillation_period Optional finite positive full cycle duration.
+     * @param angular_oscillation_smooth Optional cosine-easing choice.
+     * @param angular_oscillation_elapsed Optional elapsed time in [0, period).
+     * @param angular_oscillation_angle Optional angle already applied to sync.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE
+    Unit(Geometry geometry,
+         Sync sync,
+         std::optional<Float3> velocity,
+         std::optional<Float3> acceleration,
+         std::optional<Float3> angular_velocity,
+         std::optional<Float3> angular_acceleration,
+         std::optional<Float3> angular_oscillation_axis,
+         std::optional<float> angular_oscillation_amplitude,
+         std::optional<float> angular_oscillation_period,
+         std::optional<bool> angular_oscillation_smooth,
+         std::optional<float> angular_oscillation_elapsed,
+         std::optional<float> angular_oscillation_angle) noexcept
+        : _geometry(std::move(geometry))
+        , _sync(std::move(sync))
+        , _velocity(std::move(velocity))
+        , _acceleration(std::move(acceleration))
+        , _angular_velocity(std::move(angular_velocity))
+        , _angular_acceleration(std::move(angular_acceleration))
+        , _angular_oscillation_axis(std::move(angular_oscillation_axis))
+        , _angular_oscillation_amplitude(angular_oscillation_amplitude)
+        , _angular_oscillation_period(angular_oscillation_period)
+        , _angular_oscillation_smooth(angular_oscillation_smooth)
+        , _angular_oscillation_elapsed(angular_oscillation_elapsed)
+        , _angular_oscillation_angle(angular_oscillation_angle) {
+        Unit::canonicalize_kinematics(_velocity, _acceleration, _angular_velocity, _angular_acceleration);
+        if (_angular_oscillation_axis.has_value()) {
+            const Float3& axis = *_angular_oscillation_axis;
+            const float scale = atlas::abs(axis).max();
+            _angular_oscillation_axis = atlas::normalized_or(axis / Float3(scale), Float3(0.0f));
+            advance_angular_oscillation(0.0f);
+        }
     }
 
     /**
@@ -213,6 +258,56 @@ public:
         // Left-multiply: the new rotation is applied in the world frame, and the
         // result is renormalized so repeated steps do not accumulate scale drift.
         _sync.set_orientation((rotation * _sync.orientation).normalized());
+    }
+
+    /**
+     * @brief Applies the configured periodic angular increment and its wall-motion derivatives.
+     *
+     * Smooth motion uses a cosine profile; otherwise each half-cycle has a
+     * constant signed speed and reverses instantly at its endpoint. Reducing
+     * the step before adding it keeps float phase accumulation finite.
+     * Advances only the angular oscillation, leaving linear motion untouched.
+     * A Unit without oscillation is unchanged.
+     * @param dt Elapsed seconds; zero evaluates the current phase, negative or
+     *           non-finite values are ignored.
+     */
+    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
+    advance_angular_oscillation(const float dt) noexcept {
+        if (!_angular_oscillation_axis.has_value() || !(dt >= 0.0f) || !atlas::isfinite(dt)) return;
+
+        const float period = *_angular_oscillation_period;
+        const float amplitude = *_angular_oscillation_amplitude;
+        const float step = std::fmod(dt, period);
+        const float remaining = period - *_angular_oscillation_elapsed;
+        const float elapsed = step >= remaining
+                                  ? step - remaining
+                                  : *_angular_oscillation_elapsed + step;
+        _angular_oscillation_elapsed = elapsed < period ? elapsed : 0.0f;
+
+        const float phase = *_angular_oscillation_elapsed / period;
+        float angle;
+        float speed;
+        float acceleration;
+
+        if (*_angular_oscillation_smooth) {
+            const float radians = 2.0f * atlas::pi * phase;
+            const float maximum_speed = (amplitude / period) * atlas::pi;
+            angle        = amplitude * (0.5f * (1.0f - std::cos(radians)));
+            speed        = maximum_speed * std::sin(radians);
+            acceleration = ((maximum_speed / period) * (2.0f * atlas::pi)) * std::cos(radians);
+        } else {
+            const bool closing = phase < 0.5f;
+            angle        = amplitude * (2.0f * (closing ? phase : 1.0f - phase));
+            speed        = (amplitude / period) * (closing ? 2.0f : -2.0f);
+            acceleration = 0.0f;
+        }
+
+        const Float3& axis = *_angular_oscillation_axis;
+        rotate(axis, angle - *_angular_oscillation_angle);
+        _angular_oscillation_angle = angle;
+
+        _angular_velocity     = axis * speed;
+        _angular_acceleration = axis * acceleration;
     }
 
     /**
@@ -366,48 +461,6 @@ public:
 
 private:
     /**
-     * @brief Applies the configured periodic angular increment and its wall-motion derivatives.
-     *
-     * Smooth motion uses a cosine profile; otherwise each half-cycle has a
-     * constant signed speed and reverses instantly at its endpoint.
-     * @param dt Nonnegative finite elapsed seconds; zero initializes derivatives.
-     */
-    ATLAS_ALL_DEVICE ATLAS_FORCE_INLINE void
-    advance_angular_oscillation(const float dt) noexcept {
-        _angular_oscillation_elapsed = std::fmod(
-            *_angular_oscillation_elapsed + static_cast<double>(dt),
-            static_cast<double>(*_angular_oscillation_period));
-
-        const double phase = *_angular_oscillation_elapsed / static_cast<double>(*_angular_oscillation_period);
-        double angle;
-        double speed;
-        double acceleration;
-
-        if (*_angular_oscillation_smooth) {
-            const double frequency      = 2.0 * atlas::pi_double / static_cast<double>(*_angular_oscillation_period);
-            const double radians        = frequency * *_angular_oscillation_elapsed;
-            const double half_amplitude = 0.5 * static_cast<double>(*_angular_oscillation_amplitude);
-            angle        = half_amplitude * (1.0 - std::cos(radians));
-            speed        = half_amplitude * frequency * std::sin(radians);
-            acceleration = half_amplitude * frequency * frequency * std::cos(radians);
-        } else {
-            const bool closing = phase < 0.5;
-            angle = 2.0 * static_cast<double>(*_angular_oscillation_amplitude) * (closing ? phase : 1.0 - phase);
-            speed = 2.0 * static_cast<double>(*_angular_oscillation_amplitude)
-                    / static_cast<double>(*_angular_oscillation_period) * (closing ? 1.0 : -1.0);
-            acceleration = 0.0;
-        }
-
-        const float next_angle = static_cast<float>(angle);
-        const Float3& axis = *_angular_oscillation_axis;
-        rotate(axis, next_angle - *_angular_oscillation_angle);
-        _angular_oscillation_angle = next_angle;
-
-        _angular_velocity     = axis * static_cast<float>(speed);
-        _angular_acceleration = axis * static_cast<float>(acceleration);
-    }
-
-    /**
      * @brief Fills in zero partners so each velocity/acceleration pair is consistent.
      *
      * Semi-implicit Euler integration reads acceleration only through its paired
@@ -444,9 +497,6 @@ private:
         }
     }
 
-    /// Grants the builder access to move members directly into a bare Unit.
-    friend class Builder;
-
 private:
     Geometry _geometry; ///< Collision shape in its local frame.
 
@@ -468,7 +518,7 @@ private:
 
     std::optional<bool> _angular_oscillation_smooth; ///< Cosine easing when true; constant-speed half-cycles when false; absent when disabled.
 
-    std::optional<double> _angular_oscillation_elapsed; ///< Time reduced modulo the period, or absent when oscillation is disabled.
+    std::optional<float> _angular_oscillation_elapsed; ///< Time reduced modulo the period, or absent when oscillation is disabled.
 
     std::optional<float> _angular_oscillation_angle; ///< Last evaluated angle for the next increment, or absent when disabled.
 };
@@ -619,7 +669,7 @@ private:
 
     std::optional<bool> _angular_oscillation_smooth; ///< Staged cosine-easing choice, or unset when oscillation is absent.
 
-    std::optional<double> _angular_oscillation_elapsed; ///< Staged elapsed time, initialized to zero when oscillation is configured.
+    std::optional<float> _angular_oscillation_elapsed; ///< Staged elapsed time, initialized to zero when oscillation is configured.
 
     std::optional<float> _angular_oscillation_angle; ///< Staged angle, initialized to zero when oscillation is configured.
 };

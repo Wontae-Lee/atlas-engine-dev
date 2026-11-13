@@ -32,7 +32,7 @@ A `Unit` owns its geometry, pose, and motion state by value:
   channel is absent"; a body with no velocity is *static* and `update` is a no-op
   for it. `dynamic()` reports whether any linear or angular velocity is present.
 - **Angular oscillation members** — normalized world-space axis, signed
-  amplitude, positive period, smoothing flag, bounded double-precision elapsed
+  amplitude, positive period, smoothing flag, bounded single-precision elapsed
   time, and the previous prescribed angle are each stored directly on Unit as
   a `std::optional`. All are absent when oscillation is disabled. The builder
   stages the same six optionals. `with_angular_oscillation()` engages them
@@ -72,7 +72,7 @@ skipped when its velocity is absent. For rotation, the angular velocity's
 magnitude is the rate and its direction the axis; a zero-magnitude angular
 velocity applies no rotation, avoiding a normalize of a zero axis.
 
-Two lower-level mutators back `update` and are also public:
+The lower-level motion operations are also public:
 
 - **`move(delta)`** adds `delta` directly to `_sync.translation`; orientation and
   the cached matrices are untouched.
@@ -81,6 +81,12 @@ Two lower-level mutators back `update` and are also public:
   rotation), renormalizes to counter drift, and updates the cached matrices via
   `Sync::set_orientation()`. A zero-length axis is a no-op. Oscillation uses this
   same rotation path and does not change its phase when a caller rotates the pose.
+- **`advance_angular_oscillation(dt)`** advances only the configured oscillation
+  and its angular derivatives, applying its angle increment through `rotate()`.
+  It leaves translation unchanged. With no oscillation configured, or a negative
+  or non-finite timestep, it does nothing. A zero timestep evaluates the current
+  phase without advancing time; construction uses this to initialize the pose
+  increment and angular derivatives.
 
 ## Prescribed angular oscillation
 
@@ -127,11 +133,13 @@ translation/acceleration may be combined with oscillation, so the pivot can also
 move.
 
 `update()` evaluates the prescribed angle, subtracts its previous value, and
-passes that increment to the existing `Unit::rotate()`. It reduces double-precision
-elapsed time modulo the period, avoiding unbounded time growth. Rotation retains
+passes that increment to the existing `Unit::rotate()`. Elapsed time and all
+phase, angle, velocity, acceleration, and validation calculations use `float`.
+Elapsed time is reduced modulo the period to avoid unbounded growth; phase
+resolution remains limited by single-precision arithmetic. Rotation retains
 the ordinary quaternion normalization and floating-point roundoff of `rotate()`;
 there is no separate quaternion composition or pose-rebasing implementation.
-Phase calculations use `pi_double` from `math/constants.h`.
+Phase calculations use the existing `pi` from `math/constants.h`.
 The angular velocity and acceleration accessors report the analytic
 world-space derivatives at the current phase. Collision responses therefore use
 the same motion as the rendered boundary. As with other moving colliders,
@@ -228,6 +236,35 @@ not an accident — `Collider` leaves must be trivially copyable to live in a
 type is in fact trivially copyable, which is the stronger property the collider
 relies on.
 
+## Value constructors
+
+The geometry/pose constructor creates a static Unit. The existing constructor
+with four additional optional kinematic arguments remains available; it
+delegates with all six oscillation optionals absent.
+
+The full value constructor accepts every motion field directly, in this order:
+
+```cpp
+Unit(geometry, sync,
+     velocity, acceleration, angular_velocity, angular_acceleration,
+     oscillation_axis, oscillation_amplitude, oscillation_period,
+     oscillation_smooth, oscillation_elapsed, oscillation_angle);
+```
+
+All twelve arguments are required for this overload; each motion argument is
+an optional. It canonicalizes the four ordinary kinematic fields, normalizes
+an enabled oscillation axis, and calls `advance_angular_oscillation(0.0f)` to
+evaluate the supplied phase. The elapsed time selects the phase; the previous
+angle records the displacement already represented by the supplied pose. The
+constructor applies their angle difference, so restoring a pose and its
+matching elapsed time/angle keeps that pose continuous.
+
+This value constructor assumes a complete, valid oscillation state when its
+axis is present: all six optionals must be engaged, with normalized elapsed time
+in `[0, period)` and valid numerical parameters. The host builder performs the
+parameter checks for normal construction and starts elapsed time and angle at
+zero.
+
 ## Building a Unit — `Unit::Builder`
 
 `Unit::builder()` returns a host-only fluent builder. Geometry and sync are
@@ -247,11 +284,10 @@ Unit unit = Unit::builder()
 - **`with_sync`** takes a `SyncHostPtr` and stores a *value copy* of the pointee,
   so the built `Unit` owns its pose independently of the shared handle; a null
   handle throws.
-- **`build()`** runs `validate()`, canonicalizes the kinematics on local copies,
-  moves everything into a bare `Unit` (via friendship, bypassing the value
-  constructor since the kinematics are already canonical), then **resets the
-  builder's staged state** — it is single-use and must be reconfigured before a
-  second `build()`.
+- **`build()`** runs `validate()`, passes geometry, pose, and all ten motion
+  optionals to the full Unit constructor, then **resets the builder's staged
+  state**. Construction and phase initialization share the direct constructor's
+  implementation. The builder must be reconfigured before a second `build()`.
 - **`make_host_shared()`** builds and wraps the result in a
   `atlas::host_shared_ptr<Unit>`.
 

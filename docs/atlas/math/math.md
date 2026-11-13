@@ -19,7 +19,7 @@ independently includable and pulls only what it needs.
 | File | Role |
 |---|---|
 | `include/atlas/math/math.h` | Umbrella that aggregates all headers below; adds nothing of its own. |
-| `include/atlas/math/constants.h` | Scalar constants (`pi`, `pi_double`, `eps`, `far`, `inf`, physical constants) and the scalar guards `isfinite`, `sqrt_nonnegative`, `solve_quadratic`. |
+| `include/atlas/math/constants.h` | Scalar constants (`pi`, `eps`, `far`, `inf`, physical constants) and the scalar guards `isfinite`, `sqrt_nonnegative`, `solve_quadratic`. |
 | `include/atlas/math/vector/bool3.h` | `Bool3` aggregate + reductions (`all`, `any`, `none`) and logical operators. |
 | `include/atlas/math/vector/float3.h` | `Float3`, the core 3-D value, plus all vector arithmetic, geometry, and framing free functions. |
 | `include/atlas/math/vector/int3.h` | `Int3`, the grid-index vector, plus its operators and the `Float3` conversions. |
@@ -200,16 +200,13 @@ all four components.
 
 ## `constants.h` — constants and scalar guards
 
-Constants are `inline constexpr`, shared as compile-time values across
-translation units on host and device. They use `float` except for `pi_double`,
-which preserves double precision for periodic phases and angular conversions.
-The existing `pi` remains a `float` with the same value, derived from
-`pi_double`; converting `pi` back to double cannot recover that extra precision.
+Constants are `inline constexpr float`, shared as compile-time values across
+translation units on host and device. Angular conversions and oscillation
+phases use the same single-precision `pi` as the rest of the engine.
 
 | Symbol | Value / meaning | Units |
 |---|---|---|
 | `pi` | 3.14159265… rounded to float | radians |
-| `pi_double` | Double-precision pi for phase calculations | radians |
 | `SQRT_TWO` | √2, precomputed so thermal-velocity math avoids a runtime `sqrt` | — |
 | `eps` | `1e-6f`, near-zero / equality threshold (e.g. `Quaternion::operator==`, `is_identity`) | — |
 | `tol` | `1e-6f`, numerically equal to `eps` but named for convergence-tolerance intent | — |

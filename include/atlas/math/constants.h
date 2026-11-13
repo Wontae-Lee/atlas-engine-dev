@@ -7,23 +7,14 @@
 namespace atlas {
 
 /**
- * @brief The mathematical constant pi in double precision.
- *
- * Used for periodic phases and angular conversions evaluated in double
- * precision. Kept here with the single-precision constants so consumers do
- * not repeat literals or widen an already rounded float value.
- */
-inline constexpr double pi_double = 3.14159265358979323846;
-
-/**
  * @brief The mathematical constant pi in single precision.
  *
- * Rounded to float precision from @ref pi_double; used
+ * Rounded to float precision from the full decimal literal; used
  * across the engine for angular conversions and solid-angle sampling. Declared
  * `inline constexpr` so it is a single compile-time value shared by every
  * translation unit that includes this header, usable on host and device.
  */
-inline constexpr float pi = static_cast<float>(pi_double);
+inline constexpr float pi = 3.14159265358979323846f;
 
 /**
  * @brief The square root of two in single precision.

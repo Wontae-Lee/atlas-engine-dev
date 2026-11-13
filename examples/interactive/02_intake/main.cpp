@@ -97,9 +97,9 @@ mesh_geometry(const std::filesystem::path& path, const Vec3& pivot) {
                     throw std::runtime_error("Invalid OBJ vertex index in " + path.string());
                 }
                 const auto start = static_cast<std::size_t>(vertex) * 3;
-                triangle.push_back(Vec3 { static_cast<float>(vertices[start]) - pivot[0],
-                                          static_cast<float>(vertices[start + 1]) - pivot[1],
-                                          static_cast<float>(vertices[start + 2]) - pivot[2] });
+                triangle.push_back(Vec3 { vertices[start] - pivot[0],
+                                          vertices[start + 1] - pivot[1],
+                                          vertices[start + 2] - pivot[2] });
             }
             triangles.push_back(std::move(triangle));
             offset += 3;
@@ -113,20 +113,20 @@ atlas::interactive::SimulationConfig
 simulation(const Json& config, const std::filesystem::path& directory) {
     Json scene = config.at("simulation");
     const auto& motion = config.at("motion");
-    const double amplitude = motion.at("closing_angle_degrees").get<double>() * atlas::pi_double / 180.0;
-    const double period = motion.at("period_seconds").get<double>();
+    const float amplitude = motion.at("closing_angle_degrees").get<float>() * atlas::pi / 180.0f;
+    const float period = motion.at("period_seconds").get<float>();
     const Json smooth = motion.value("smooth", Json(true));
     auto& colliders = scene["colliders"] = Json::array();
     colliders.push_back({ { "unit", { { "geometry", mesh_geometry(directory / "assets" / "support.obj", { 0, 0, 0 }) } } } });
     const float hinge_radius = motion.at("hinge_radius").get<float>();
     const float hinge_height = motion.at("hinge_height").get<float>();
-    if (!std::isfinite(hinge_radius) || hinge_radius <= 0 || !std::isfinite(hinge_height)) {
+    if (!std::isfinite(hinge_radius) || hinge_radius <= 0.0f || !std::isfinite(hinge_height)) {
         throw std::invalid_argument("hinge_radius must be finite and positive; hinge_height must be finite");
     }
     for (int wing = 1; wing <= 12; ++wing) {
-        const double azimuth = static_cast<double>(wing - 1) * atlas::pi_double / 6.0;
-        const float sine = static_cast<float>(std::sin(azimuth));
-        const float cosine = static_cast<float>(std::cos(azimuth));
+        const float azimuth = (wing - 1) * atlas::pi / 6.0f;
+        const float sine = std::sin(azimuth);
+        const float cosine = std::cos(azimuth);
         const Vec3 pivot { hinge_radius * sine, hinge_height, hinge_radius * cosine };
         Json unit {
             { "geometry", mesh_geometry(directory / "assets" / ("wing" + std::to_string(wing) + ".obj"), pivot) },
@@ -139,8 +139,8 @@ simulation(const Json& config, const std::filesystem::path& directory) {
             } }
         };
         colliders.push_back({ { "unit", std::move(unit) },
-                              { "momentum_accommodation_coefficient", 1.0 },
-                              { "restitution", 1.0 } });
+                              { "momentum_accommodation_coefficient", 1.0f },
+                              { "restitution", 1.0f } });
     }
     return atlas::interactive::JsonCodec::decode_simulation(scene.dump());
 }
@@ -166,14 +166,14 @@ main(int argc, char** argv) {
         std::ifstream input(directory / "config.json");
         if (!input) throw std::runtime_error("Cannot read intake config.json");
         const Json config = Json::parse(input);
-        const double display_period = config.at("motion").at("display_seconds_per_cycle").get<double>();
-        if (!(display_period > 0.0) || !std::isfinite(display_period)) {
+        const float display_period = config.at("motion").at("display_seconds_per_cycle").get<float>();
+        if (!(display_period > 0.0f) || !std::isfinite(display_period)) {
             throw std::invalid_argument("display_seconds_per_cycle must be finite and positive");
         }
         auto scene = simulation(config, directory);
-        const double dt = scene.dt;
-        const double period = config.at("motion").at("period_seconds").get<double>();
-        const double amplitude = config.at("motion").at("closing_angle_degrees").get<double>();
+        const float dt = scene.dt;
+        const float period = config.at("motion").at("period_seconds").get<float>();
+        const float amplitude = config.at("motion").at("closing_angle_degrees").get<float>();
         const bool smooth = config.at("motion").value("smooth", true);
 
         std::unique_ptr<atlas::interactive::RenderControl> rendering;
@@ -189,12 +189,12 @@ main(int argc, char** argv) {
         create.simulation = std::move(scene);
         const auto created = handle(app, create);
         if (!created.session_id) throw std::logic_error("create returned no session_id");
-        const double interval_seconds = display_period * dt / period;
-        if (!std::isfinite(interval_seconds) || interval_seconds > 60.0) {
+        const float interval_seconds = display_period * dt / period;
+        if (!std::isfinite(interval_seconds) || interval_seconds > 60.0f) {
             throw std::invalid_argument("display pacing exceeds 60 seconds per update; reduce display_seconds_per_cycle");
         }
         const auto interval = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-            std::chrono::duration<double>(interval_seconds));
+            std::chrono::duration<float>(interval_seconds));
         atlas::interactive::Request command;
         command.session_id = *created.session_id;
         if (!run.headless) {
@@ -206,21 +206,22 @@ main(int argc, char** argv) {
         handle(app, command);
         std::printf("02_intake: 12 wings + support, close=%.1fdeg period=%.6fs smooth=%s dt=%.1es\n",
                     amplitude, period, smooth ? "true" : "false", dt);
-        double next_report_time = period * 0.5;
+        float next_report_time = period * 0.5f;
         std::size_t completed = 0;
         while ((run.headless || app.rendering_active()) && (run.steps == 0 || completed < run.steps)) {
             const auto next_update = std::chrono::steady_clock::now() + interval;
             app.update();
             ++completed;
-            if (static_cast<double>(completed) * dt >= next_report_time - dt * 0.01 || completed == run.steps) {
-                next_report_time += period * 0.5;
+            if (completed * dt >= next_report_time - dt * 0.01f || completed == run.steps) {
+                next_report_time += period * 0.5f;
                 command.command = atlas::interactive::Command::status;
                 const auto status = handle(app, command);
                 if (status.status) {
-                    const double phase = std::fmod(status.status->simulation_time, period) / period;
-                    const double angle = smooth
-                                             ? amplitude * 0.5 * (1.0 - std::cos(2.0 * atlas::pi_double * phase))
-                                             : 2.0 * amplitude * (phase < 0.5 ? phase : 1.0 - phase);
+                    const float simulation_time = status.status->simulation_time;
+                    const float phase = std::fmod(simulation_time, period) / period;
+                    const float angle = smooth
+                                            ? amplitude * 0.5f * (1.0f - std::cos(2.0f * atlas::pi * phase))
+                                            : 2.0f * amplitude * (phase < 0.5f ? phase : 1.0f - phase);
                     std::printf("step=%zu angle=%.2fdeg particles=%zu\n", status.status->step,
                                 angle, status.status->particle_count);
                 }
